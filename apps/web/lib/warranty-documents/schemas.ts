@@ -92,6 +92,34 @@ export const warrantyDocumentSignerActionSchema = z.object({
   signerId: z.string().uuid("Signer id is required.")
 });
 
+const manualDeliveryRecipientEmailSchema = z
+  .string()
+  .trim()
+  .max(320)
+  .transform((value) => (value.length > 0 ? value : null))
+  .nullable()
+  .optional()
+  .transform((value) => value ?? null)
+  .refine(
+    (value) => value === null || z.string().email().safeParse(value).success,
+    { message: "Recipient email must be valid." }
+  );
+
+export const warrantyDocumentDeliveryEventInputSchema = z.object({
+  warrantyDocumentId: z.string().uuid("Warranty document id is required."),
+  eventType: z.enum(["delivery_recorded", "send_requested"] as const),
+  recipientName: optionalTrimmedString(160),
+  recipientEmail: manualDeliveryRecipientEmailSchema,
+  recipientRole: optionalTrimmedString(80),
+  channel: z.enum(["internal", "manual", "print"] as const),
+  eventNote: optionalTrimmedString(1000)
+});
+
+export const warrantyDocumentEmailSendInputSchema = z.object({
+  warrantyDocumentId: z.string().uuid("Warranty document id is required."),
+  signerId: z.string().uuid("Signer id is required.")
+});
+
 export type CreateWarrantyDocumentFromServiceTicketInput = z.infer<
   typeof createWarrantyDocumentFromServiceTicketSchema
 >;
@@ -106,4 +134,10 @@ export type WarrantyDocumentSignerInput = z.infer<
 >;
 export type WarrantyDocumentSignerActionInput = z.infer<
   typeof warrantyDocumentSignerActionSchema
+>;
+export type WarrantyDocumentDeliveryEventInput = z.infer<
+  typeof warrantyDocumentDeliveryEventInputSchema
+>;
+export type WarrantyDocumentEmailSendInput = z.infer<
+  typeof warrantyDocumentEmailSendInputSchema
 >;

@@ -13,6 +13,14 @@ const actions = readFileSync(
   "utf8"
 );
 
+function getActionSource(name: string) {
+  const start = actions.indexOf(`export async function ${name}`);
+  assert.notEqual(start, -1, `${name} action was not found`);
+  const next = actions.indexOf("\nexport async function ", start + 1);
+
+  return actions.slice(start, next === -1 ? undefined : next);
+}
+
 void test("manual GateKeeper seed maps raw fields to proposed review items", () => {
   const plan = buildGateKeeperManualSeedPlan({
     sourceType: "phone_call",
@@ -114,12 +122,14 @@ void test("manual GateKeeper seed rejects empty summaries and partial subjects",
 });
 
 void test("manual GateKeeper seed action does not introduce canonical execution helpers", () => {
+  const actionSource = getActionSource("seedGateKeeperManualIntakeAction");
+
   assert.match(actions, /seedGateKeeperManualIntakeAction/);
-  assert.match(actions, /buildGateKeeperManualSourceAdapterResult/);
-  assert.match(actions, /createGateKeeperArtifact/);
-  assert.match(actions, /createGateKeeperActionSuggestion/);
+  assert.match(actionSource, /buildGateKeeperManualSourceAdapterResult/);
+  assert.match(actionSource, /buildGateKeeperManualSeedPlanFromAdapterResult/);
+  assert.match(actionSource, /seedGateKeeperPlan/);
   assert.doesNotMatch(
-    actions,
+    actionSource,
     /createOpportunity|updateOpportunity|createProject|createWorkItem|scheduleAppointment|createInvoice|sendEmail|sendSms|twilio|retell|openai/i
   );
 });

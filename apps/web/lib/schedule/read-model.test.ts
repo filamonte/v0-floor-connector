@@ -12,6 +12,7 @@ const baseJob = {
   customerId: "33333333-3333-4333-8333-333333333333",
   projectId: "44444444-4444-4444-8444-444444444444",
   estimateId: null,
+  serviceTicketId: null,
   dispatchStatus: "scheduled" as const,
   scheduledDate: "2026-05-08",
   scheduledStartAt: "2026-05-08T13:00:00.000Z",
@@ -31,6 +32,7 @@ const baseJob = {
     name: "Warehouse floor"
   },
   estimate: null,
+  serviceTicket: null,
   crewVendor: null,
   assignments: [],
   assignmentCount: 0,
@@ -86,7 +88,10 @@ void test("schedule read model returns discriminated jobs and appointments in ra
     items.map((item) => item.type),
     ["appointment", "job"]
   );
-  assert.equal(items[0].href, "/appointments/55555555-5555-4555-8555-555555555555");
+  assert.equal(
+    items[0].href,
+    "/appointments/55555555-5555-4555-8555-555555555555"
+  );
   assert.equal(items[1].href, "/jobs/11111111-1111-4111-8111-111111111111");
 });
 

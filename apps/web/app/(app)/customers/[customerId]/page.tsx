@@ -9,6 +9,7 @@ import { CustomerForm } from "@/components/customer-form";
 import { DetailPageHeader } from "@/components/detail-page-header";
 import { DetailPanel } from "@/components/detail-panel";
 import { DirectoryContextCard } from "@/components/directory-context-card";
+import { GateKeeperSubjectMemoryPanel } from "@/components/gatekeeper-subject-memory-panel";
 import { LinkedRecordCard } from "@/components/linked-record-card";
 import { PortalAccessGrantForm } from "@/components/portal-access-grant-form";
 import { PortalInviteEmailStatus } from "@/components/portal-invite-email-status";
@@ -41,6 +42,7 @@ import {
   updateCustomerContactAction
 } from "@/lib/contacts/actions";
 import { listCustomerContactsByCustomer } from "@/lib/contacts/data";
+import { getGateKeeperSubjectMemory } from "@/lib/gatekeeper/memory";
 import { getActiveOrganizationContext } from "@/lib/organizations/active-context";
 import {
   formatScheduleSummaryWindow,
@@ -174,6 +176,7 @@ export default async function CustomerDetailPage({
     customerContactPortalPermissions,
     customerAppointments,
     communicationPreferenceSummary,
+    gateKeeperMemory,
     communicationThreads
   ] = await Promise.all([
     getCustomerById(customerId, `/customers/${customerId}`),
@@ -189,6 +192,11 @@ export default async function CustomerDetailPage({
       customerId,
       `/customers/${customerId}`
     ),
+    getGateKeeperSubjectMemory({
+      subjectType: "customer",
+      subjectId: customerId,
+      limit: 6
+    }),
     listCommunicationThreadsForSubject("customer", customerId)
   ]);
 
@@ -470,6 +478,7 @@ export default async function CustomerDetailPage({
           description="Customer-level post-install history across linked projects and jobs. Detailed edits stay in Service Tickets and Warranty Documents."
           tickets={customerServiceTickets}
           warrantyDocuments={customerWarrantyDocuments}
+          serviceJobs={customerJobs.filter((job) => job.serviceTicketId)}
           serviceTicketHref={`/service-tickets?customerId=${customer.id}`}
         />
 
@@ -1812,6 +1821,8 @@ export default async function CustomerDetailPage({
           actionClassName="inline-flex items-center rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:bg-slate-50"
           threads={communicationThreads}
         />
+
+        <GateKeeperSubjectMemoryPanel memory={gateKeeperMemory} />
 
         <DetailPanel
           title="Portal Access Snapshot"

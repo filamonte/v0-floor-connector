@@ -4,9 +4,16 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { canTransitionEstimateStatus } from "@floorconnector/domain";
-import type { CatalogItem, EstimateLineItem, EstimateStatus } from "@floorconnector/types";
+import type {
+  CatalogItem,
+  EstimateLineItem,
+  EstimateStatus
+} from "@floorconnector/types";
 
-import { listCatalogItems, upsertOrganizationCatalogItem } from "@/lib/catalogs/data";
+import {
+  listCatalogItems,
+  upsertOrganizationCatalogItem
+} from "@/lib/catalogs/data";
 import {
   buildExpandedSystemPreview,
   type ExpandedSystemPreview
@@ -50,8 +57,6 @@ import {
 } from "./manual-approval";
 import { createCustomer } from "@/lib/customers/data";
 import { customerInputSchema } from "@/lib/customers/schemas";
-import { requireAuthenticatedUser } from "@/lib/auth/session";
-import { assertActiveOrganizationCanPerformProductionAction } from "@/lib/organizations/activation-guard";
 import { recordWorkflowErrorForCurrentUser } from "@/lib/workflow-errors/data";
 
 function getFieldValue(formData: FormData, key: string) {
@@ -61,7 +66,9 @@ function getFieldValue(formData: FormData, key: string) {
 }
 
 function getFieldValues(formData: FormData, key: string) {
-  return formData.getAll(key).map((value) => (typeof value === "string" ? value : ""));
+  return formData
+    .getAll(key)
+    .map((value) => (typeof value === "string" ? value : ""));
 }
 
 function getCheckboxValue(formData: FormData, key: string) {
@@ -106,7 +113,9 @@ function buildRedirect(
 }
 
 function toUuidOrNull(value: string) {
-  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value)
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+    value
+  )
     ? value
     : null;
 }
@@ -127,23 +136,41 @@ function parseEstimateInput(formData: FormData) {
   }
 
   const lineItemRowKeys = getFieldValues(formData, "lineItemRowKey");
-  const lineItemCatalogItemIds = getFieldValues(formData, "lineItemCatalogItemId");
+  const lineItemCatalogItemIds = getFieldValues(
+    formData,
+    "lineItemCatalogItemId"
+  );
   const lineItemSourceTypes = getFieldValues(formData, "lineItemSourceType");
-  const lineItemSourceSystemIds = getFieldValues(formData, "lineItemSourceSystemId");
+  const lineItemSourceSystemIds = getFieldValues(
+    formData,
+    "lineItemSourceSystemId"
+  );
   const lineItemSourceComponentIds = getFieldValues(
     formData,
     "lineItemSourceComponentId"
   );
   const lineItemQuantities = getFieldValues(formData, "lineItemQuantity");
-  const lineItemUnitPriceOverrides = getFieldValues(formData, "lineItemUnitPriceOverride");
-  const lineItemTaxableOverrides = getFieldValues(formData, "lineItemTaxableOverride");
-  const lineItemAssignedToValues = getFieldValues(formData, "lineItemAssignedTo");
+  const lineItemUnitPriceOverrides = getFieldValues(
+    formData,
+    "lineItemUnitPriceOverride"
+  );
+  const lineItemTaxableOverrides = getFieldValues(
+    formData,
+    "lineItemTaxableOverride"
+  );
+  const lineItemAssignedToValues = getFieldValues(
+    formData,
+    "lineItemAssignedTo"
+  );
   const lineItemGroupNames = getFieldValues(formData, "lineItemGroupName");
   const itemGroupIds = getFieldValues(formData, "itemGroupId");
   const itemGroupLabels = getFieldValues(formData, "itemGroupLabel");
   const scopeItemIds = getFieldValues(formData, "scopeItemId");
   const scopeItemTexts = getFieldValues(formData, "scopeItemText");
-  const scopeItemInclusionFlags = getFieldValues(formData, "scopeItemIncludeInOutput");
+  const scopeItemInclusionFlags = getFieldValues(
+    formData,
+    "scopeItemIncludeInOutput"
+  );
 
   const lineItems = lineItemRowKeys
     .map((rowKey, index) => ({
@@ -175,7 +202,9 @@ function parseEstimateInput(formData: FormData) {
       label: itemGroupLabels[index] ?? "",
       sortOrder: index
     }))
-    .filter((group) => group.id.trim().length > 0 && group.label.trim().length > 0);
+    .filter(
+      (group) => group.id.trim().length > 0 && group.label.trim().length > 0
+    );
 
   const scopeItems = scopeItemTexts
     .map((text, index) => ({
@@ -226,14 +255,19 @@ const estimateInlineCustomerQuickCreateInputSchema = z
   .object({
     firstName: z.string().trim().min(1, "First name is required.").max(80),
     lastName: z.string().trim().min(1, "Last name is required.").max(80),
-    email: z.string().trim().min(1, "Email is required.").email("Enter a valid email address."),
+    email: z
+      .string()
+      .trim()
+      .min(1, "Email is required.")
+      .email("Enter a valid email address."),
     phone: z.string().trim().min(1, "Phone is required.").max(40),
     companyName: z
       .string()
       .trim()
       .max(120, "Company name must be 120 characters or fewer.")
       .transform((value) => (value.length > 0 ? value : null)),
-    retainagePercentageDefault: customerInputSchema.shape.retainagePercentageDefault
+    retainagePercentageDefault:
+      customerInputSchema.shape.retainagePercentageDefault
   })
   .transform((value) => ({
     ...value,
@@ -248,12 +282,15 @@ function parseEstimateInlineCustomerQuickCreateInput(formData: FormData) {
     phone: getFieldValue(formData, "inlineCustomerPhone"),
     companyName: getFieldValue(formData, "inlineCustomerCompanyName"),
     retainagePercentageDefault:
-      getFieldValue(formData, "inlineCustomerRetainagePercentageDefault") || "0.00"
+      getFieldValue(formData, "inlineCustomerRetainagePercentageDefault") ||
+      "0.00"
   });
 }
 
 function getQuickCreateEstimateFailureMessage(message: string) {
-  if (/duplicate key|violates|foreign key|null value|invalid input/i.test(message)) {
+  if (
+    /duplicate key|violates|foreign key|null value|invalid input/i.test(message)
+  ) {
     return "Estimate could not be created from that selection. Choose a customer, then select one of that customer's projects or enter a new project name before trying again.";
   }
 
@@ -316,9 +353,14 @@ const quickEstimateCatalogItemInputSchema = z.object({
     .trim()
     .max(2000, "Description must be 2000 characters or fewer.")
     .transform((value) => (value.length > 0 ? value : null)),
-  itemType: z.enum(
-    ["material", "labor", "service", "equipment", "subcontractor", "other"] as const
-  ),
+  itemType: z.enum([
+    "material",
+    "labor",
+    "service",
+    "equipment",
+    "subcontractor",
+    "other"
+  ] as const),
   unit: z.string().trim().min(1, "Unit is required.").max(40),
   category: z
     .string()
@@ -338,9 +380,13 @@ const quickEstimateCatalogItemInputSchema = z.object({
     .trim()
     .transform((value) => (value.length > 0 ? value : null))
     .nullable()
-    .refine((value) => value == null || (!Number.isNaN(Number(value)) && Number(value) >= 0), {
-      message: "Price must be zero or greater."
-    })
+    .refine(
+      (value) =>
+        value == null || (!Number.isNaN(Number(value)) && Number(value) >= 0),
+      {
+        message: "Price must be zero or greater."
+      }
+    )
     .transform((value) => (value == null ? null : Number(value).toFixed(2))),
   taxable: z.boolean()
 });
@@ -375,14 +421,8 @@ const estimateCatalogItemEditInputSchema = z.object({
 const expandedSystemPreviewInputSchema = z.object({
   systemCatalogItemId: z.string().uuid("Select a valid system."),
   inputMode: z.enum(["dimensions", "direct"] as const),
-  length: z
-    .string()
-    .trim()
-    .optional(),
-  width: z
-    .string()
-    .trim()
-    .optional(),
+  length: z.string().trim().optional(),
+  width: z.string().trim().optional(),
   squareFootage: z
     .string()
     .trim()
@@ -470,13 +510,20 @@ export async function saveEstimateAction(
   const estimateId = getFieldValue(formData, "estimateId");
   const expectedUpdatedAt = getFieldValue(formData, "expectedUpdatedAt");
   const result = parseEstimateInput(formData);
-  const retainedAttachmentIds = getFieldValues(formData, "retainedAttachmentId");
+  const retainedAttachmentIds = getFieldValues(
+    formData,
+    "retainedAttachmentId"
+  );
   const uploadFiles = formData
     .getAll("newAttachments")
     .filter((value): value is File => value instanceof File && value.size > 0);
 
   if (!estimateId) {
-    return { ok: false, type: "error", message: "Estimate id is required to save." };
+    return {
+      ok: false,
+      type: "error",
+      message: "Estimate id is required to save."
+    };
   }
 
   if (!result.success) {
@@ -503,7 +550,9 @@ export async function saveEstimateAction(
       retainedAttachmentIds,
       newAttachments: uploadedAttachments
     });
-    removedStoragePaths = removedAttachments.map((attachment) => attachment.storagePath);
+    removedStoragePaths = removedAttachments.map(
+      (attachment) => attachment.storagePath
+    );
   } catch (error) {
     if (error instanceof EstimateVersionConflictError) {
       return { ok: false, type: "conflict", message: error.message };
@@ -512,7 +561,8 @@ export async function saveEstimateAction(
     return {
       ok: false,
       type: "error",
-      message: error instanceof Error ? error.message : "Unable to save estimate."
+      message:
+        error instanceof Error ? error.message : "Unable to save estimate."
     };
   }
 
@@ -542,14 +592,22 @@ export async function updateEstimateStatusSaveAction(formData: FormData) {
   const expectedUpdatedAt = getFieldValue(formData, "expectedUpdatedAt");
 
   if (!estimateId) {
-    return { ok: false, type: "error", message: "Estimate id is required for status updates." } as const;
+    return {
+      ok: false,
+      type: "error",
+      message: "Estimate id is required for status updates."
+    } as const;
   }
 
   if (
     !["draft", "sent", "approved", "rejected"].includes(currentStatus) ||
     !["draft", "sent", "approved", "rejected"].includes(nextStatus)
   ) {
-    return { ok: false, type: "error", message: "Invalid estimate status transition." } as const;
+    return {
+      ok: false,
+      type: "error",
+      message: "Invalid estimate status transition."
+    } as const;
   }
 
   if (
@@ -575,9 +633,13 @@ export async function updateEstimateStatusSaveAction(formData: FormData) {
   }
 
   try {
-    const estimate = await updateEstimateStatus(estimateId, nextStatus as EstimateStatus, {
-      expectedUpdatedAt: expectedUpdatedAt || null
-    });
+    const estimate = await updateEstimateStatus(
+      estimateId,
+      nextStatus as EstimateStatus,
+      {
+        expectedUpdatedAt: expectedUpdatedAt || null
+      }
+    );
     const orchestration =
       estimate.status === "approved"
         ? await resolveEstimateApprovalOrchestration(
@@ -607,15 +669,15 @@ export async function updateEstimateStatusSaveAction(formData: FormData) {
     return {
       ok: false,
       type: "error",
-      message: error instanceof Error ? error.message : "Unable to update estimate status."
+      message:
+        error instanceof Error
+          ? error.message
+          : "Unable to update estimate status."
     } as const;
   }
 }
 
-function revalidateEstimatePaths(estimate: {
-  id: string;
-  projectId: string;
-}) {
+function revalidateEstimatePaths(estimate: { id: string; projectId: string }) {
   revalidatePath("/estimates");
   revalidatePath(`/estimates/${estimate.id}`);
   revalidatePath(`/estimates/${estimate.id}/edit`);
@@ -626,10 +688,7 @@ function revalidateEstimatePaths(estimate: {
 
 export async function quickCreateEstimateCatalogItemAction(
   formData: FormData
-): Promise<
-  | { ok: true; item: CatalogItem }
-  | { ok: false; message: string }
-> {
+): Promise<{ ok: true; item: CatalogItem } | { ok: false; message: string }> {
   const result = quickEstimateCatalogItemInputSchema.safeParse({
     name: getFieldValue(formData, "name"),
     description: getFieldValue(formData, "description"),
@@ -644,7 +703,8 @@ export async function quickCreateEstimateCatalogItemAction(
   if (!result.success) {
     return {
       ok: false,
-      message: result.error.issues[0]?.message ?? "Unable to create inventory item."
+      message:
+        result.error.issues[0]?.message ?? "Unable to create inventory item."
     };
   }
 
@@ -687,7 +747,10 @@ export async function quickCreateEstimateCatalogItemAction(
   } catch (error) {
     return {
       ok: false,
-      message: error instanceof Error ? error.message : "Unable to create inventory item."
+      message:
+        error instanceof Error
+          ? error.message
+          : "Unable to create inventory item."
     };
   }
 }
@@ -700,7 +763,8 @@ export async function updateCatalogItemFromEstimateAction(
   if (!result.success) {
     return {
       ok: false,
-      message: result.error.issues[0]?.message ?? "Unable to update catalog item."
+      message:
+        result.error.issues[0]?.message ?? "Unable to update catalog item."
     };
   }
 
@@ -721,7 +785,10 @@ export async function updateCatalogItemFromEstimateAction(
   } catch (error) {
     return {
       ok: false,
-      message: error instanceof Error ? error.message : "Unable to update catalog item."
+      message:
+        error instanceof Error
+          ? error.message
+          : "Unable to update catalog item."
     };
   }
 }
@@ -749,7 +816,8 @@ export async function previewExpandedSystemAction(input: {
     const catalogItems = await listCatalogItems();
     const systemCatalogItem = catalogItems.find(
       (item) =>
-        item.id === result.data.systemCatalogItemId && item.itemType === "system"
+        item.id === result.data.systemCatalogItemId &&
+        item.itemType === "system"
     );
 
     if (!systemCatalogItem) {
@@ -922,7 +990,9 @@ export async function importEstimateReusableContentAction(
   }
 
   try {
-    const importResult = await importEstimateReusableContentFromEstimate(result.data);
+    const importResult = await importEstimateReusableContentFromEstimate(
+      result.data
+    );
 
     return {
       ok: true,
@@ -1097,7 +1167,10 @@ export async function quickCreateEstimateCustomerAction(formData: FormData) {
 export async function updateEstimateAction(formData: FormData) {
   const estimateId = getFieldValue(formData, "estimateId");
   const result = parseEstimateInput(formData);
-  const retainedAttachmentIds = getFieldValues(formData, "retainedAttachmentId");
+  const retainedAttachmentIds = getFieldValues(
+    formData,
+    "retainedAttachmentId"
+  );
   const uploadFiles = formData
     .getAll("newAttachments")
     .filter((value): value is File => value instanceof File && value.size > 0);
@@ -1132,7 +1205,9 @@ export async function updateEstimateAction(formData: FormData) {
       retainedAttachmentIds,
       newAttachments: uploadedAttachments
     });
-    removedStoragePaths = removedAttachments.map((attachment) => attachment.storagePath);
+    removedStoragePaths = removedAttachments.map(
+      (attachment) => attachment.storagePath
+    );
   } catch (error) {
     redirect(
       buildRedirect(`/estimates/${estimateId}/edit`, {
@@ -1219,13 +1294,19 @@ export async function updateEstimateStatusAction(formData: FormData) {
       );
     }
 
-    manualDecisionEventNote = buildManualEstimateApprovalEvidence(approvalEvidence.data);
+    manualDecisionEventNote = buildManualEstimateApprovalEvidence(
+      approvalEvidence.data
+    );
   }
 
   try {
-    estimate = await updateEstimateStatus(estimateId, nextStatus as EstimateStatus, {
-      manualDecisionEventNote
-    });
+    estimate = await updateEstimateStatus(
+      estimateId,
+      nextStatus as EstimateStatus,
+      {
+        manualDecisionEventNote
+      }
+    );
   } catch (error) {
     redirect(
       buildRedirect(`/estimates/${estimateId}`, {
@@ -1249,7 +1330,9 @@ export async function updateEstimateStatusAction(formData: FormData) {
   );
 }
 
-export async function rebuildApprovedEstimateSnapshotAction(formData: FormData) {
+export async function rebuildApprovedEstimateSnapshotAction(
+  formData: FormData
+) {
   const estimateId = getFieldValue(formData, "estimateId");
 
   if (!estimateId) {
@@ -1316,25 +1399,26 @@ export async function sendEstimateToCustomerAction(formData: FormData) {
     );
   }
 
-  const user = await requireAuthenticatedUser(`/estimates/${result.data.estimateId}`);
-  let estimate;
+  let sendResult;
 
   try {
-    await assertActiveOrganizationCanPerformProductionAction(user.id);
-    estimate = await sendEstimateToCustomer(result.data);
+    sendResult = await sendEstimateToCustomer(result.data);
   } catch (error) {
     redirect(
       buildRedirect(`/estimates/${result.data.estimateId}`, {
-        error: error instanceof Error ? error.message : "Unable to send the estimate."
+        error:
+          error instanceof Error
+            ? error.message
+            : "Unable to send the estimate."
       })
     );
   }
 
-  revalidateEstimatePaths(estimate);
+  revalidateEstimatePaths(sendResult.estimate);
 
   redirect(
-    buildRedirect(`/estimates/${estimate.id}`, {
-      message: "Estimate sent for customer portal review."
+    buildRedirect(`/estimates/${sendResult.estimate.id}`, {
+      message: sendResult.message
     })
   );
 }
@@ -1349,7 +1433,8 @@ export async function customerApproveEstimateAction(formData: FormData) {
   if (!result.success) {
     redirect(
       buildRedirect(`/portal/estimates/${estimateId}`, {
-        error: result.error.issues[0]?.message ?? "Unable to approve the estimate."
+        error:
+          result.error.issues[0]?.message ?? "Unable to approve the estimate."
       })
     );
   }
@@ -1364,7 +1449,10 @@ export async function customerApproveEstimateAction(formData: FormData) {
   } catch (error) {
     redirect(
       buildRedirect(`/portal/estimates/${result.data.estimateId}`, {
-        error: error instanceof Error ? error.message : "Unable to approve the estimate."
+        error:
+          error instanceof Error
+            ? error.message
+            : "Unable to approve the estimate."
       })
     );
   }
@@ -1388,7 +1476,8 @@ export async function customerRejectEstimateAction(formData: FormData) {
   if (!result.success) {
     redirect(
       buildRedirect(`/portal/estimates/${estimateId}`, {
-        error: result.error.issues[0]?.message ?? "Unable to reject the estimate."
+        error:
+          result.error.issues[0]?.message ?? "Unable to reject the estimate."
       })
     );
   }
@@ -1403,7 +1492,10 @@ export async function customerRejectEstimateAction(formData: FormData) {
   } catch (error) {
     redirect(
       buildRedirect(`/portal/estimates/${result.data.estimateId}`, {
-        error: error instanceof Error ? error.message : "Unable to reject the estimate."
+        error:
+          error instanceof Error
+            ? error.message
+            : "Unable to reject the estimate."
       })
     );
   }
@@ -1427,7 +1519,9 @@ export async function customerAddEstimateCommentAction(formData: FormData) {
   if (!result.success) {
     redirect(
       buildRedirect(`/portal/estimates/${estimateId}`, {
-        error: result.error.issues[0]?.message ?? "Unable to save the estimate comment."
+        error:
+          result.error.issues[0]?.message ??
+          "Unable to save the estimate comment."
       })
     );
   }
@@ -1443,7 +1537,9 @@ export async function customerAddEstimateCommentAction(formData: FormData) {
     redirect(
       buildRedirect(`/portal/estimates/${result.data.estimateId}`, {
         error:
-          error instanceof Error ? error.message : "Unable to save the estimate comment."
+          error instanceof Error
+            ? error.message
+            : "Unable to save the estimate comment."
       })
     );
   }
@@ -1480,10 +1576,14 @@ export async function openOrCreateScheduleOfValuesAction(formData: FormData) {
       throw new Error("Estimate not found for this organization.");
     }
 
-    if (estimate.scheduleOfValues.exists && estimate.scheduleOfValues.scheduleOfValuesId) {
+    if (
+      estimate.scheduleOfValues.exists &&
+      estimate.scheduleOfValues.scheduleOfValuesId
+    ) {
       scheduleOfValuesId = estimate.scheduleOfValues.scheduleOfValuesId;
     } else {
-      const { ensureScheduleOfValuesForEstimate } = await import("@/lib/financial/sov");
+      const { ensureScheduleOfValuesForEstimate } =
+        await import("@/lib/financial/sov");
       scheduleOfValuesId = await ensureScheduleOfValuesForEstimate(estimateId);
     }
   } catch (error) {
@@ -1500,7 +1600,8 @@ export async function openOrCreateScheduleOfValuesAction(formData: FormData) {
   if (!scheduleOfValuesId) {
     redirect(
       buildRedirect(`/estimates/${estimateId}`, {
-        error: "Schedule of values could not be located for this approved estimate."
+        error:
+          "Schedule of values could not be located for this approved estimate."
       })
     );
   }

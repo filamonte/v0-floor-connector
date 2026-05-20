@@ -52,7 +52,12 @@ function formatUnitLabel(unit: string) {
   const normalized = unit.trim();
   const lower = normalized.toLowerCase();
 
-  if (lower === "sqft" || lower === "sf" || lower === "square foot" || lower === "square feet") {
+  if (
+    lower === "sqft" ||
+    lower === "sf" ||
+    lower === "square foot" ||
+    lower === "square feet"
+  ) {
     return "sqft";
   }
 
@@ -108,7 +113,13 @@ function getNextAction(status: string, projectId: string) {
 }
 
 function hasHtmlContent(value: string | null | undefined) {
-  return Boolean(value && value.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim().length > 0);
+  return Boolean(
+    value &&
+    value
+      .replace(/<[^>]+>/g, " ")
+      .replace(/\s+/g, " ")
+      .trim().length > 0
+  );
 }
 
 function renderHtmlContent(value: string | null | undefined) {
@@ -132,13 +143,11 @@ function groupEstimateLineItems(
   for (const lineItem of lineItems) {
     const label = lineItem.groupName?.trim() || "Estimate Items";
     const existing = groupsByLabel.get(label);
-    const group =
-      existing ??
-      {
-        label,
-        rows: [],
-        subtotal: 0
-      };
+    const group = existing ?? {
+      label,
+      rows: [],
+      subtotal: 0
+    };
 
     group.rows.push(lineItem);
     group.subtotal += Number(lineItem.lineTotal);
@@ -169,7 +178,10 @@ export default async function PortalEstimateReviewPage({
 
   if (estimate.status === "sent" && !estimate.customerViewedAt) {
     try {
-      await recordPortalViewedEstimate(estimateId, `/portal/estimates/${estimateId}`);
+      await recordPortalViewedEstimate(
+        estimateId,
+        `/portal/estimates/${estimateId}`
+      );
       estimate = await getPortalEstimateReviewData(
         estimateId,
         `/portal/estimates/${estimateId}`
@@ -204,7 +216,10 @@ export default async function PortalEstimateReviewPage({
                 >
                   Print / save PDF
                 </Link>
-                <PortalStatusBadge status={estimate.status} className="px-4 py-2 text-sm">
+                <PortalStatusBadge
+                  status={estimate.status}
+                  className="px-4 py-2 text-sm"
+                >
                   {formatStatusLabel(estimate.status)}
                 </PortalStatusBadge>
               </div>
@@ -231,7 +246,8 @@ export default async function PortalEstimateReviewPage({
                   label: "What this page is for",
                   content: (
                     <p className="text-sm leading-6 text-slate-600">
-                      Review the shared proposal body, line items, and totals for this project.
+                      Review the shared proposal body, line items, and totals
+                      for this project.
                     </p>
                   )
                 },
@@ -246,7 +262,8 @@ export default async function PortalEstimateReviewPage({
                       <p className="mt-2 text-sm text-slate-600">
                         Subtotal {formatMoney(estimate.subtotalAmount)} with{" "}
                         {formatMoney(estimate.taxAmount)} tax and{" "}
-                        {formatMoney(estimate.discountAmount)} discount adjustments.
+                        {formatMoney(estimate.discountAmount)} discount
+                        adjustments.
                       </p>
                     </>
                   )
@@ -260,8 +277,15 @@ export default async function PortalEstimateReviewPage({
                         {formatStatusLabel(estimate.status)}
                       </p>
                       <p>Estimate #{estimate.referenceNumber}</p>
-                      <p>Project: {estimate.project?.name ?? "Unknown project"}</p>
-                      <p>Sent: {estimate.sentAt ? formatDateTime(estimate.sentAt) : "Not yet"}</p>
+                      <p>
+                        Project: {estimate.project?.name ?? "Unknown project"}
+                      </p>
+                      <p>
+                        Sent:{" "}
+                        {estimate.sentAt
+                          ? formatDateTime(estimate.sentAt)
+                          : "Not yet"}
+                      </p>
                       <p>
                         Viewed:{" "}
                         {estimate.customerViewedAt
@@ -307,7 +331,9 @@ export default async function PortalEstimateReviewPage({
                     className="rounded-2xl border border-slate-200 bg-slate-50/70 px-5 py-4"
                   >
                     <div className="flex flex-col gap-2 border-b border-slate-200 pb-3 sm:flex-row sm:items-center sm:justify-between">
-                      <p className="text-sm font-semibold text-slate-950">{group.label}</p>
+                      <p className="text-sm font-semibold text-slate-950">
+                        {group.label}
+                      </p>
                       <p className="text-sm font-semibold text-slate-950">
                         {formatMoney(group.subtotal.toFixed(2))}
                       </p>
@@ -319,15 +345,20 @@ export default async function PortalEstimateReviewPage({
                           className="flex flex-col gap-3 rounded-2xl bg-white px-4 py-3 sm:flex-row sm:items-start sm:justify-between"
                         >
                           <div className="space-y-1">
-                            <p className="text-sm font-semibold text-slate-950">{lineItem.name}</p>
+                            <p className="text-sm font-semibold text-slate-950">
+                              {lineItem.name}
+                            </p>
                             {lineItem.description ? (
                               <p className="text-sm leading-6 text-slate-600">
                                 {lineItem.description}
                               </p>
                             ) : null}
                             <p className="text-sm text-slate-500">
-                              {Number(lineItem.quantity).toLocaleString("en-US")}{" "}
-                              {formatUnitLabel(lineItem.unit)} at {formatMoney(lineItem.unitPrice)}
+                              {Number(lineItem.quantity).toLocaleString(
+                                "en-US"
+                              )}{" "}
+                              {formatUnitLabel(lineItem.unit)} at{" "}
+                              {formatMoney(lineItem.unitPrice)}
                             </p>
                           </div>
                           <p className="text-sm font-semibold text-slate-950">
@@ -347,24 +378,32 @@ export default async function PortalEstimateReviewPage({
 
             <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
               <div className="space-y-3">
-                <p className="text-sm font-medium text-slate-950">Scope of work output</p>
+                <p className="text-sm font-medium text-slate-950">
+                  Scope of work output
+                </p>
                 <div className="rounded-2xl border border-slate-200 bg-white px-5 py-4 text-sm leading-6 text-slate-600">
                   {hasHtmlContent(estimate.content.scopeSummaryHtml) ? (
                     <div className="space-y-4">
                       {renderHtmlContent(estimate.content.scopeSummaryHtml)}
-                      {getIncludedEstimateScopeItems(estimate.content).length > 0 ? (
+                      {getIncludedEstimateScopeItems(estimate.content).length >
+                      0 ? (
                         <ul className="space-y-2 pl-5">
-                          {getIncludedEstimateScopeItems(estimate.content).map((item) => (
-                            <li key={item.id}>{item.text}</li>
-                          ))}
+                          {getIncludedEstimateScopeItems(estimate.content).map(
+                            (item) => (
+                              <li key={item.id}>{item.text}</li>
+                            )
+                          )}
                         </ul>
                       ) : null}
                     </div>
-                  ) : getIncludedEstimateScopeItems(estimate.content).length > 0 ? (
+                  ) : getIncludedEstimateScopeItems(estimate.content).length >
+                    0 ? (
                     <ul className="space-y-2 pl-5">
-                      {getIncludedEstimateScopeItems(estimate.content).map((item) => (
-                        <li key={item.id}>{item.text}</li>
-                      ))}
+                      {getIncludedEstimateScopeItems(estimate.content).map(
+                        (item) => (
+                          <li key={item.id}>{item.text}</li>
+                        )
+                      )}
                     </ul>
                   ) : (
                     "No additional scope output is currently shared."
@@ -372,30 +411,40 @@ export default async function PortalEstimateReviewPage({
                 </div>
                 {hasHtmlContent(estimate.content.termsHtml) ? (
                   <div className="rounded-2xl border border-slate-200 bg-white px-5 py-4 text-sm leading-6 text-slate-600">
-                    <p className="mb-3 text-sm font-medium text-slate-950">Terms</p>
+                    <p className="mb-3 text-sm font-medium text-slate-950">
+                      Terms
+                    </p>
                     {renderHtmlContent(estimate.content.termsHtml)}
                   </div>
                 ) : null}
                 {hasHtmlContent(estimate.content.inclusionsHtml) ? (
                   <div className="rounded-2xl border border-slate-200 bg-white px-5 py-4 text-sm leading-6 text-slate-600">
-                    <p className="mb-3 text-sm font-medium text-slate-950">Inclusions</p>
+                    <p className="mb-3 text-sm font-medium text-slate-950">
+                      Inclusions
+                    </p>
                     {renderHtmlContent(estimate.content.inclusionsHtml)}
                   </div>
                 ) : null}
                 {hasHtmlContent(estimate.content.exclusionsHtml) ? (
                   <div className="rounded-2xl border border-slate-200 bg-white px-5 py-4 text-sm leading-6 text-slate-600">
-                    <p className="mb-3 text-sm font-medium text-slate-950">Exclusions</p>
+                    <p className="mb-3 text-sm font-medium text-slate-950">
+                      Exclusions
+                    </p>
                     {renderHtmlContent(estimate.content.exclusionsHtml)}
                   </div>
                 ) : null}
                 {hasHtmlContent(estimate.content.notesHtml) ? (
                   <div className="rounded-2xl border border-slate-200 bg-white px-5 py-4 text-sm leading-6 text-slate-600">
-                    <p className="mb-3 text-sm font-medium text-slate-950">Notes</p>
+                    <p className="mb-3 text-sm font-medium text-slate-950">
+                      Notes
+                    </p>
                     {renderHtmlContent(estimate.content.notesHtml)}
                   </div>
                 ) : null}
                 <div className="rounded-2xl border border-slate-200 bg-white px-5 py-4 text-sm leading-6 text-slate-600">
-                  <p className="mb-3 text-sm font-medium text-slate-950">Files and images</p>
+                  <p className="mb-3 text-sm font-medium text-slate-950">
+                    Files and images
+                  </p>
                   {estimate.attachments.length > 0 ? (
                     <div className="space-y-3">
                       {estimate.attachments.map((attachment) => (
@@ -408,7 +457,8 @@ export default async function PortalEstimateReviewPage({
                               {attachment.fileName}
                             </p>
                             <p className="text-xs text-slate-500">
-                              {attachment.caption?.trim() || attachment.mimeType}
+                              {attachment.caption?.trim() ||
+                                attachment.mimeType}
                             </p>
                           </div>
                           {attachment.downloadUrl ? (
@@ -420,7 +470,9 @@ export default async function PortalEstimateReviewPage({
                               Open
                             </Link>
                           ) : (
-                            <span className="text-xs text-slate-400">Unavailable</span>
+                            <span className="text-xs text-slate-400">
+                              Unavailable
+                            </span>
                           )}
                         </div>
                       ))}
@@ -432,7 +484,9 @@ export default async function PortalEstimateReviewPage({
               </div>
 
               <div className="rounded-2xl border border-slate-200 bg-slate-50/80 px-5 py-5">
-                <p className="text-sm font-medium text-slate-950">Pricing summary</p>
+                <p className="text-sm font-medium text-slate-950">
+                  Pricing summary
+                </p>
                 <dl className="mt-4 space-y-3 text-sm leading-6 text-slate-600">
                   <div className="flex items-center justify-between gap-4">
                     <dt>Subtotal</dt>
@@ -474,11 +528,15 @@ export default async function PortalEstimateReviewPage({
             {estimate.status === "sent" ? (
               <div className={portalActionBoxClassName}>
                 <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm leading-6 text-emerald-900">
-                  Approval creates the approved commercial snapshot used later for contract,
-                  SOV, and invoice lineage. Do not approve here unless this shared estimate is
-                  ready to become the downstream baseline.
+                  Approval creates the approved commercial snapshot used later
+                  for contract, SOV, and invoice lineage. Do not approve here
+                  unless this shared estimate is ready to become the downstream
+                  baseline.
                 </div>
-                <form action={customerApproveEstimateAction} className="space-y-3">
+                <form
+                  action={customerApproveEstimateAction}
+                  className="space-y-3"
+                >
                   <input type="hidden" name="estimateId" value={estimate.id} />
                   <label className="block space-y-2">
                     <span className="text-sm font-medium text-slate-950">
@@ -500,7 +558,10 @@ export default async function PortalEstimateReviewPage({
                   </button>
                 </form>
 
-                <form action={customerRejectEstimateAction} className="space-y-3">
+                <form
+                  action={customerRejectEstimateAction}
+                  className="space-y-3"
+                >
                   <input type="hidden" name="estimateId" value={estimate.id} />
                   <label className="block space-y-2">
                     <span className="text-sm font-medium text-slate-950">
@@ -522,7 +583,10 @@ export default async function PortalEstimateReviewPage({
                   </button>
                 </form>
 
-                <form action={customerAddEstimateCommentAction} className="space-y-3">
+                <form
+                  action={customerAddEstimateCommentAction}
+                  className="space-y-3"
+                >
                   <input type="hidden" name="estimateId" value={estimate.id} />
                   <label className="block space-y-2">
                     <span className="text-sm font-medium text-slate-950">
@@ -565,7 +629,10 @@ export default async function PortalEstimateReviewPage({
               {
                 label: "Project",
                 value: estimate.project ? (
-                  <Link href={`/portal/projects/${estimate.project.id}`} className="font-medium text-brand-700">
+                  <Link
+                    href={`/portal/projects/${estimate.project.id}`}
+                    className="font-medium text-brand-700"
+                  >
                     {estimate.project.name}
                   </Link>
                 ) : (
@@ -574,15 +641,24 @@ export default async function PortalEstimateReviewPage({
               },
               {
                 label: "Customer",
-                value: estimate.customer?.companyName ?? estimate.customer?.name ?? "Not provided"
+                value:
+                  estimate.customer?.companyName ??
+                  estimate.customer?.name ??
+                  "Not provided"
               },
               {
                 label: "Status",
-                value: <span className="capitalize">{formatStatusLabel(estimate.status)}</span>
+                value: (
+                  <span className="capitalize">
+                    {formatStatusLabel(estimate.status)}
+                  </span>
+                )
               },
               {
                 label: "Sent",
-                value: estimate.sentAt ? formatDateTime(estimate.sentAt) : "Not yet"
+                value: estimate.sentAt
+                  ? formatDateTime(estimate.sentAt)
+                  : "Not yet"
               },
               {
                 label: "Viewed",
@@ -608,11 +684,13 @@ export default async function PortalEstimateReviewPage({
         >
           <div className="space-y-3 text-sm leading-6 text-slate-600">
             <p>
-              Your contractor will guide the next step after review. That may be an updated estimate,
-              a contract to sign, or an invoice when billing is ready.
+              Your contractor will guide the next step after review. That may be
+              an updated estimate, a contract to sign, or an invoice when
+              billing is ready.
             </p>
             <p>
-              Use the project link to return to the rest of the shared project information.
+              Use the project link to return to the rest of the shared project
+              information.
             </p>
           </div>
         </DetailPanel>

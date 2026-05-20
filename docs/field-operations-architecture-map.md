@@ -77,22 +77,23 @@ Dashboard/Project Guidance
 
 ## Canonical Truth Ownership
 
-| Area                  | Canonical truth owner                                                                                        | Notes                                                                           |
-| --------------------- | ------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------- |
-| Project continuity    | `projects` plus linked canonical records                                                                     | Project is the operational hub, not a duplicate workflow engine.                |
-| Job execution         | `jobs`, `job_assignments`, schedule context                                                                  | Jobs own production/service execution context.                                  |
-| Workforce identity    | `people`, memberships, vendors where linked                                                                  | Do not create payroll-only or service-only workers.                             |
-| Time audit            | time punch events                                                                                            | Punch events are the labor audit truth.                                         |
-| Time review           | time cards                                                                                                   | Time cards are reviewed/approved summaries.                                     |
-| Equipment assets      | `equipment_assets`                                                                                           | Physical resource registry, not catalog items.                                  |
-| Equipment readiness   | job equipment requirements + equipment assignments + derived summary                                         | Advisory unless explicitly approved as a hard gate later.                       |
-| Daily field narrative | daily logs and field notes                                                                                   | They summarize field work but do not replace time truth.                        |
-| Service/warranty      | `service_tickets` tied to original customer/project/job context                                              | Not a helpdesk silo; installed-system depth is future.                          |
-| Service/warranty time | `time_punch_events.service_ticket_id` -> derived `time_cards.service_ticket_id`                              | Reuses punch audit truth; not a separate service timesheet.                     |
-| Warranty documents    | `warranty_documents` + warranty `document_templates` attached to customer/project/job/service-ticket context | Not standalone PDFs; customer-facing send/signature is future.                  |
-| Document signatures   | `document_signers` + immutable `document_signature_events` for `warranty_document` subjects only             | Internal signer/request audit now; no contract migration or portal signing yet. |
-| Financial truth       | invoices, payments, payment events, approved snapshots                                                       | Time/equipment/service never mutate this automatically.                         |
-| Documents/evidence    | current attachments plus future shared evidence layer                                                        | Link to canonical records; no file island.                                      |
+| Area                  | Canonical truth owner                                                                                        | Notes                                                                                                        |
+| --------------------- | ------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------ |
+| Project continuity    | `projects` plus linked canonical records                                                                     | Project is the operational hub, not a duplicate workflow engine.                                             |
+| Job execution         | `jobs`, `job_assignments`, schedule context                                                                  | Jobs own production/service execution context.                                                               |
+| Workforce identity    | `people`, memberships, vendors where linked                                                                  | Do not create payroll-only or service-only workers.                                                          |
+| Time audit            | time punch events                                                                                            | Punch events are the labor audit truth.                                                                      |
+| Time review           | time cards                                                                                                   | Time cards are reviewed/approved summaries.                                                                  |
+| Equipment assets      | `equipment_assets`                                                                                           | Physical resource registry, not catalog items.                                                               |
+| Equipment readiness   | job equipment requirements + equipment assignments + derived summary                                         | Advisory unless explicitly approved as a hard gate later.                                                    |
+| Daily field narrative | daily logs and field notes                                                                                   | They summarize field work but do not replace time truth.                                                     |
+| Service/warranty      | `service_tickets` tied to original customer/project/job context                                              | Not a helpdesk silo; installed-system depth is future.                                                       |
+| Service visits        | linked canonical jobs through `jobs.service_ticket_id`                                                       | Follow-up visits use the existing job/schedule/crew/time spine.                                              |
+| Service/warranty time | `time_punch_events.service_ticket_id` -> derived `time_cards.service_ticket_id`                              | Reuses punch audit truth; not a separate service timesheet.                                                  |
+| Warranty documents    | `warranty_documents` + warranty `document_templates` attached to customer/project/job/service-ticket context | Not standalone PDFs; portal review/signing and internal delivery evidence now exist for project-linked docs. |
+| Document signatures   | `document_signers` + immutable `document_signature_events` for `warranty_document` subjects only             | Warranty portal signing now; no contract migration, email, or provider e-sign.                               |
+| Financial truth       | invoices, payments, payment events, approved snapshots                                                       | Time/equipment/service never mutate this automatically.                                                      |
+| Documents/evidence    | current attachments plus future shared evidence layer                                                        | Link to canonical records; no file island.                                                                   |
 
 ## Derived Summaries
 
@@ -198,29 +199,63 @@ Equipment:
 
 Service/warranty:
 
-- first ticket foundation now exists around original customer/project/job context, Project/Customer/Job Workspaces now show compact read-only continuity panels for linked tickets, warranty documents, and signer/request state, and service/warranty time now reuses canonical clocking. Next slices should add service visit scheduling without creating helpdesk, portal-only, billing, or timesheet copies.
+- first ticket foundation now exists around original customer/project/job
+  context, Project/Customer/Job Workspaces now show compact read-only continuity
+  panels for linked tickets, warranty documents, signer/request state, linked
+  service jobs, and service/warranty time now reuses canonical clocking.
+  Service visit scheduling now starts as unscheduled canonical jobs linked by
+  `jobs.service_ticket_id`; deeper dispatch-grade service workflow remains
+  future without creating helpdesk, portal-only, billing, or timesheet copies.
 
 Warranty documents:
 
-- first template/record/print foundation now exists, and the generalized signature groundwork now supports internal signer management, request-signature audit, and Project/Customer/Job read-only visibility summaries for warranty document subjects only. Portal signing and outbound send remain future.
+- first template/record/print foundation now exists, and the generalized signature groundwork now supports internal signer management, request-signature audit, Project/Customer/Job read-only visibility summaries, and project-scoped portal review/signing for warranty document subjects only.
+- portal warranty review/signing uses existing portal project access, customer-safe warranty rendering, signer email validation, immutable generic signature events, signer status updates, and signed document status only after all active customer signers sign.
+- immutable `document_delivery_events` now provide evidence-only warranty
+  document, estimate, invoice, and manual contract delivery history for
+  internal/manual/print recording, and warranty documents now have the first
+  guarded provider-backed review/sign email send through the shared notification
+  delivery path. Provider callbacks, portal-visible delivery proof, countersign,
+  provider e-sign, resend/retry orchestration, and contract signature migration
+  remain future.
 
 Documents/evidence:
 
 - keep near-term links focused; avoid building a broad document manager before the warranty/equipment/service evidence use cases are clear.
+- outbound document delivery and delivery proof now has a dedicated plan at
+  [docs/document-delivery-proof-architecture.md](C:/FloorConnector/docs/document-delivery-proof-architecture.md).
+  It now provides evidence over warranty document, estimate, invoice, and
+  manual contract subjects without replacing notification, signature, payment,
+  portal-view, or document truth.
+- provider-backed outbound document send architecture now has a dedicated plan
+  at
+  [docs/provider-document-send-architecture.md](C:/FloorConnector/docs/provider-document-send-architecture.md).
+  It keeps provider/email attempts in the notification delivery layer, keeps
+  document-facing proof in `document_delivery_events`, and the first
+  provider-backed implementation now starts with warranty document email send
+  before estimates, invoices, and contracts.
 
 Dashboard/project guidance:
 
-- surface high-signal exceptions and route to owning workspaces; do not add dashboard-owned mutation flows first.
+- Dashboard Operational Cockpit now surfaces bounded read-only service/warranty
+  attention signals for high-priority/stale tickets, tickets missing linked
+  service jobs, unscheduled/upcoming/in-progress service jobs, and warranty
+  documents needing internal signer/request attention.
+- continue routing to owning Service Ticket, Warranty Document, Job, Schedule,
+  Project, and Customer Workspaces; do not add dashboard-owned mutation flows,
+  billing actions, signature actions, delivery actions, or cue-state mutation
+  first.
 
 ## Dependency Map
 
 Recommended order:
 
-1. Service visit scheduling, because tickets and service/warranty time now exist but service work still needs calendar/job execution planning.
-2. Admin time correction workflow, because review state and exception visibility now exist but corrections still need explicit audit evidence.
-3. Equipment maintenance/utilization MVP, because registry + assignment now need lifecycle depth and cost inputs.
-4. Portal warranty review/sign planning, because internal tickets, warranty documents, signer/request state, and contractor-side visibility now exist.
-5. Job-costing input map, after labor, equipment, materials, POs/AP, invoices, and payments have reliable inputs.
+1. Admin time correction workflow, because review state and exception visibility now exist but corrections still need explicit audit evidence.
+2. Equipment maintenance/utilization MVP, because registry + assignment now need lifecycle depth and cost inputs.
+3. Estimate/invoice provider-backed document send expansion, after the warranty
+   document send path proves the shared evidence, notification, portal review,
+   and provider guardrails.
+4. Job-costing input map, after labor, equipment, materials, POs/AP, invoices, and payments have reliable inputs.
 
 ## Testing/QA Themes
 

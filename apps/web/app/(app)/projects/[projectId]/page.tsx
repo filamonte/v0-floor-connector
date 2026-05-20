@@ -23,6 +23,7 @@ import { SupportSection } from "@/components/layout/support-section";
 import { ContextFactsList } from "@/components/context-facts-list";
 import { DetailPageHeader } from "@/components/detail-page-header";
 import { DetailPanel } from "@/components/detail-panel";
+import { GateKeeperSubjectMemoryPanel } from "@/components/gatekeeper-subject-memory-panel";
 import { LinkedRecordCard } from "@/components/linked-record-card";
 import { NeedsAttentionPanel } from "@/components/operational-cues/needs-attention-panel";
 import {
@@ -52,6 +53,7 @@ import {
   listProjectEstimateAttachments
 } from "@/lib/estimates/data";
 import { listFieldNotes } from "@/lib/field-notes/data";
+import { getGateKeeperSubjectMemory } from "@/lib/gatekeeper/memory";
 import { getInvoiceById, listInvoices } from "@/lib/invoices/data";
 import { listJobAssignmentsByJobIds, listJobs } from "@/lib/jobs/data";
 import { getOperationalCuesForProject } from "@/lib/operational-cues/data";
@@ -2110,6 +2112,7 @@ export default async function ProjectDetailPage({
     projectAppointments,
     projectPunchlistItems,
     projectProgressBilling,
+    gateKeeperMemory,
     communicationThreads
   ] = await Promise.all([
     getProjectById(projectId, `/projects/${projectId}`),
@@ -2123,6 +2126,11 @@ export default async function ProjectDetailPage({
     listAppointmentsByProject(projectId, `/projects/${projectId}`),
     listPunchlistItemsByProject(projectId, `/projects/${projectId}`),
     listProgressBillingByProject(projectId, `/projects/${projectId}`),
+    getGateKeeperSubjectMemory({
+      subjectType: "project",
+      subjectId: projectId,
+      limit: 6
+    }),
     listCommunicationThreadsForSubject("project", projectId)
   ]);
 
@@ -3214,6 +3222,7 @@ export default async function ProjectDetailPage({
               description="Post-install service tickets, warranty documents, and internal signature-request state linked to this project. This is read-only project continuity, not a service-ticket editor."
               tickets={projectServiceTickets}
               warrantyDocuments={projectWarrantyDocuments}
+              serviceJobs={projectJobs.filter((job) => job.serviceTicketId)}
               serviceTicketHref={`/service-tickets?projectId=${project.id}`}
             />
 
@@ -4943,6 +4952,11 @@ export default async function ProjectDetailPage({
           emptyMessage="No project-scoped communication threads are attached to this canonical project yet."
           actionClassName={getWorkspaceActionLinkClassName("secondary")}
           threads={communicationThreads}
+        />
+
+        <GateKeeperSubjectMemoryPanel
+          memory={gateKeeperMemory}
+          actionClassName={getWorkspaceActionLinkClassName("secondary")}
         />
       </aside>
     </div>

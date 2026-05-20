@@ -6,9 +6,12 @@ import { DetailPanel } from "@/components/detail-panel";
 import { LinkedRecordCard } from "@/components/linked-record-card";
 import { ServiceTicketForm } from "@/components/service-ticket-form";
 import {
+  createServiceJobFromTicketAction,
   updateServiceTicketAction,
   updateServiceTicketStatusAction
 } from "@/lib/service-tickets/actions";
+import { listJobsByServiceTicket } from "@/lib/jobs/data";
+import { buildScheduleHref } from "@/lib/schedule/links";
 import {
   getServiceTicketById,
   listServiceTicketCustomerOptions,
@@ -66,6 +69,7 @@ export default async function ServiceTicketDetailPage({
     jobOptions,
     warrantyDocuments,
     warrantyTemplates,
+    serviceJobs,
     serviceTimeCards,
     servicePunchEvents
   ] = await Promise.all([
@@ -75,6 +79,7 @@ export default async function ServiceTicketDetailPage({
     listServiceTicketJobOptions(),
     listWarrantyDocumentsByServiceTicket(ticketId),
     listWarrantyDocumentTemplates(),
+    listJobsByServiceTicket(ticketId, `/service-tickets/${ticketId}`),
     listTimeCardsByServiceTicket(ticketId, `/service-tickets/${ticketId}`),
     listTimePunchEventsByServiceTicket(ticketId, `/service-tickets/${ticketId}`)
   ]);
@@ -82,6 +87,11 @@ export default async function ServiceTicketDetailPage({
   if (!ticket) {
     notFound();
   }
+
+  const clockingJobId =
+    serviceJobs.find((job) => job.dispatchStatus !== "completed")?.id ??
+    serviceJobs[0]?.id ??
+    ticket.jobId;
 
   return (
     <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
@@ -157,7 +167,7 @@ export default async function ServiceTicketDetailPage({
 
         <DetailPanel
           title="Service / Warranty Details"
-          description="This is internal operational continuity only. Portal requests, warranty documents, signatures, billing, claims, and warranty time are separate future slices."
+          description="This is internal operational continuity only. Portal requests, outbound signatures, billing, claims, and dispatch-grade service workflow remain separate future slices."
         >
           <div className="grid gap-6 xl:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)]">
             <dl className="space-y-4 text-sm leading-6 text-slate-600">
@@ -259,7 +269,7 @@ export default async function ServiceTicketDetailPage({
 
         <DetailPanel
           title="Edit Internal Ticket"
-          description="Keep the ticket tied to the same customer/project/job chain. Billing, documents, portal requests, and warranty time are not part of this form."
+          description="Keep the ticket tied to the same customer/project/job chain. Billing, portal requests, outbound signatures, and dispatch automation are not part of this form."
         >
           <ServiceTicketForm
             action={updateServiceTicketAction}
@@ -287,7 +297,7 @@ export default async function ServiceTicketDetailPage({
               <Link
                 href={`/time?compose=1&eventType=punch_in${
                   ticket.projectId ? `&projectId=${ticket.projectId}` : ""
-                }${ticket.jobId ? `&jobId=${ticket.jobId}` : ""}&serviceTicketId=${
+                }${clockingJobId ? `&jobId=${clockingJobId}` : ""}&serviceTicketId=${
                   ticket.id
                 }#time-punch-create`}
                 className="mt-4 inline-flex items-center rounded-[4px] border border-[#171717] bg-[#171717] px-4 py-2.5 text-sm font-medium text-white transition hover:bg-[#2a2a2a]"
@@ -298,17 +308,19 @@ export default async function ServiceTicketDetailPage({
 
             <section className="space-y-3">
               {serviceTimeCards.length > 0 ? (
-                serviceTimeCards.slice(0, 5).map((timeCard) => (
-                  <LinkedRecordCard
-                    key={timeCard.id}
-                    href={`/time-cards/${timeCard.id}`}
-                    title={timeCard.person?.displayName ?? "Unknown worker"}
-                    subtitle={new Date(
-                      `${timeCard.workDate}T00:00:00`
-                    ).toLocaleDateString()}
-                    meta={`${formatDuration(timeCard.workedMinutes)} worked / ${timeCard.status.replaceAll("_", " ")} / ${timeCard.reviewStatus.replaceAll("_", " ")}`}
-                  />
-                ))
+                serviceTimeCards
+                  .slice(0, 5)
+                  .map((timeCard) => (
+                    <LinkedRecordCard
+                      key={timeCard.id}
+                      href={`/time-cards/${timeCard.id}`}
+                      title={timeCard.person?.displayName ?? "Unknown worker"}
+                      subtitle={new Date(
+                        `${timeCard.workDate}T00:00:00`
+                      ).toLocaleDateString()}
+                      meta={`${formatDuration(timeCard.workedMinutes)} worked / ${timeCard.status.replaceAll("_", " ")} / ${timeCard.reviewStatus.replaceAll("_", " ")}`}
+                    />
+                  ))
               ) : (
                 <p className="rounded-[4px] border border-dashed border-[#d6d6d6] bg-slate-50 px-4 py-4 text-sm leading-6 text-slate-500">
                   No punch-derived time cards are linked to this ticket yet.
@@ -333,6 +345,99 @@ export default async function ServiceTicketDetailPage({
               ))}
             </div>
           ) : null}
+        </DetailPanel>
+
+        <DetailPanel
+          title="Service Jobs / Visits"
+          description="Service visits are canonical jobs linked back to this ticket. Scheduling, crew, equipment readiness, daily logs, and time continue through the existing job foundation."
+        >
+          <div className="grid gap-5 xl:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)]">
+            <section className="rounded-[1.25rem] border border-[#e3d6c7] bg-[#fffaf4] px-5 py-4">
+              <p className="text-sm font-semibold text-[#2b2118]">
+                Create a schedulable service job
+              </p>
+              <p className="mt-2 text-sm leading-6 text-[#665446]">
+                This creates an unscheduled job tied to the ticket and project.
+                It does not schedule automatically, mutate billing, or change
+                the ticket status.
+              </p>
+              {ticket.projectId ? (
+                <form
+                  action={createServiceJobFromTicketAction}
+                  className="mt-4"
+                >
+                  <input type="hidden" name="ticketId" value={ticket.id} />
+                  <button
+                    type="submit"
+                    className="inline-flex items-center rounded-[4px] border border-[#171717] bg-[#171717] px-4 py-2.5 text-sm font-medium text-white transition hover:bg-[#2a2a2a]"
+                  >
+                    Create service job
+                  </button>
+                </form>
+              ) : (
+                <p className="mt-4 rounded-[4px] border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-900">
+                  Link this ticket to a project before creating a service job.
+                </p>
+              )}
+            </section>
+
+            <section className="space-y-3">
+              {serviceJobs.length > 0 ? (
+                serviceJobs.map((job) => (
+                  <div
+                    key={job.id}
+                    className="rounded-[4px] border border-[#e5e5e5] bg-white px-4 py-4"
+                  >
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                      <div>
+                        <Link
+                          href={`/jobs/${job.id}`}
+                          className="text-sm font-semibold text-slate-950 transition hover:text-[#ef7d32]"
+                        >
+                          {job.project?.name ?? "Service job"}
+                        </Link>
+                        <p className="mt-1 text-sm leading-6 text-slate-600">
+                          {formatLabel(job.dispatchStatus)} /{" "}
+                          {job.scheduledDate
+                            ? formatDate(job.scheduledDate)
+                            : "unscheduled"}
+                        </p>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        <Link
+                          href={
+                            buildScheduleHref({
+                              projectId: job.projectId,
+                              view:
+                                job.dispatchStatus === "unscheduled"
+                                  ? "unscheduled"
+                                  : "all",
+                              action: "schedule",
+                              jobId: job.id
+                            }) + "#schedule-action"
+                          }
+                          className="inline-flex items-center rounded-[4px] border border-[#d6d6d6] px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-slate-700 transition hover:border-[#ef7d32] hover:text-slate-950"
+                        >
+                          Schedule
+                        </Link>
+                        <Link
+                          href={`/time?compose=1&eventType=punch_in&projectId=${job.projectId}&jobId=${job.id}&serviceTicketId=${ticket.id}#time-punch-create`}
+                          className="inline-flex items-center rounded-[4px] border border-[#d6d6d6] px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-slate-700 transition hover:border-[#ef7d32] hover:text-slate-950"
+                        >
+                          Clock time
+                        </Link>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <p className="rounded-[4px] border border-dashed border-[#d6d6d6] bg-slate-50 px-4 py-4 text-sm leading-6 text-slate-500">
+                  No linked service jobs yet. Create one when this ticket needs
+                  a real site visit, crew assignment, or schedule commitment.
+                </p>
+              )}
+            </section>
+          </div>
         </DetailPanel>
       </section>
 
@@ -436,7 +541,7 @@ export default async function ServiceTicketDetailPage({
               Warranty sends, customer review, signatures, and delivery proof
             </li>
             <li>Portal customer service requests and customer-safe status</li>
-            <li>Service visit scheduling</li>
+            <li>Dispatch-grade service visit workflow and auto-rescheduling</li>
             <li>Billing automation and manufacturer claims</li>
             <li>Equipment/material usage automation</li>
           </ul>

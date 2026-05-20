@@ -220,12 +220,29 @@ Customer communication should attach to the ticket and original project. Useful 
 - customer acknowledgement or signature later
 
 Provider telemetry is evidence, not business truth.
+The shared outbound document delivery and delivery-proof direction is now
+captured in
+[docs/document-delivery-proof-architecture.md](C:/FloorConnector/docs/document-delivery-proof-architecture.md).
+Service/warranty now consumes that shared layer for internal warranty-document
+delivery evidence through `document_delivery_events`; the same evidence-only
+foundation also covers estimates, invoices, and manual contract evidence.
+Provider-backed outbound document send architecture now lives in
+[docs/provider-document-send-architecture.md](C:/FloorConnector/docs/provider-document-send-architecture.md).
+Warranty document provider-backed email send is now implemented for requested
+customer signers through the shared notification/delivery and
+`document_delivery_events` path. Service-completion notices, denial/resolution
+messages, provider callbacks, resend/retry orchestration, portal-visible proof,
+and service-ticket-owned outbound sends remain future work and should reuse the
+shared delivery/notification path rather than creating a service-ticket-specific
+send log.
 
 ## Portal Visibility Future
 
 Portal customers should eventually see customer-safe service/warranty status for projects they can access. Portal visibility should be scoped through existing portal grants/project access and should never create portal-only warranty records.
 
 Portal request intake should require careful permissions, spam/abuse controls, and contractor review before operational commitment.
+
+Warranty document portal review/signing is planned separately in [docs/portal-warranty-review-sign-plan.md](C:/FloorConnector/docs/portal-warranty-review-sign-plan.md). The recommended first slice exposes issued warranty documents through project-scoped portal access without exposing the internal service-ticket queue, labor/time evidence, billing classification, or contractor-only resolution notes.
 
 ## Billing Rules
 
@@ -337,21 +354,48 @@ Implementation checkpoint:
   punch events can optionally carry `service_ticket_id`, derived time cards keep
   that context for review, `/time` can preselect a service/warranty ticket, and
   Service Ticket detail shows linked punch/time-card evidence.
+- Service visit scheduling now starts from canonical jobs instead of a
+  service-only calendar. A service ticket with project context can create one or
+  more unscheduled linked service jobs through `jobs.service_ticket_id`; the
+  existing Schedule, Job Workspace, crew assignment, equipment readiness, daily
+  log, and time clocking paths then carry the visit forward.
+- Dashboard Operational Cockpit now surfaces bounded read-only service/warranty
+  attention signals: high-priority open tickets, stale open tickets, tickets
+  missing linked service jobs, unscheduled/upcoming/in-progress service jobs,
+  and warranty documents needing internal signer/request attention. These are
+  route links into owning workspaces, not dashboard-owned workflow state.
 - Database validation and server validation both preserve same-company
   customer/project/job relationships. RLS allows active company members to read
   and owner/admin/manager users to create or update.
 - This is intentionally internal post-installation lifecycle continuity, not a
   detached helpdesk and not a portal request system.
-- Outbound sends, customer review/signature, portal warranty review, warranty
-  labor reporting/costing, service visits, billing, manufacturer claims,
-  materials, equipment usage, and AI automation remain separate future slices.
+- Portal warranty document review/signing now exists as a project-scoped
+  customer-facing document workflow over canonical warranty documents and
+  generic document signer/events. It is not a service-ticket portal request
+  workflow and does not expose internal ticket notes, labor, billing, or crew
+  context.
+- Outbound sends, portal-visible delivery proof, warranty labor reporting/costing,
+  dispatch-grade service visit workflow, portal service-ticket requests,
+  billing, manufacturer claims, materials, equipment usage, and AI automation
+  remain separate future slices.
+
+Outbound send/delivery proof planning now lives in
+[docs/document-delivery-proof-architecture.md](C:/FloorConnector/docs/document-delivery-proof-architecture.md).
+The first implementations are evidence-only for warranty documents, estimates,
+invoices, and manual contract evidence and do not add portal service-ticket
+requests, email delivery, billing automation, manufacturer claims,
+service-ticket status mutation, provider callbacks, or provider-owned truth.
+Provider-backed warranty document email send now follows
+[docs/provider-document-send-architecture.md](C:/FloorConnector/docs/provider-document-send-architecture.md)
+and remains document-scoped rather than service-ticket-owned.
 
 Original recommended MVP:
 
 - service/warranty ticket planning against customer + project + optional original job
 - simple status lifecycle and billability classification
 - internal ticket creation from Project/Job/Customer context
-- service visit/schedule handoff to canonical jobs or schedule context
+- service visit/schedule handoff to canonical jobs or schedule context:
+  implemented through optional service-job linkage on `jobs`
 - warranty/service time attribution hook for clocking: implemented through
   canonical punch events and derived time cards
 - document/photo/evidence attachment plan
@@ -374,6 +418,7 @@ Phase 2:
 
 - portal customer request/review
 - service visit jobs
+- deeper service dispatch workflow over linked service jobs
 - warranty time-card reporting
 - materials/equipment usage
 - warranty document send/sign handoff

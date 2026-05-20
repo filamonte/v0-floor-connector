@@ -19,12 +19,14 @@ import {
   ensurePendingPortalInvoicePayment,
   recordInvoicePayment,
   requestInvoicePayment,
+  sendInvoiceReviewEmail,
   startInvoiceCheckout,
   updateInvoice
 } from "./data";
 import {
   invoiceCheckoutStartInputSchema,
   invoiceCustomerPaymentRequestInputSchema,
+  invoiceEmailSendInputSchema,
   invoiceInputSchema,
   invoicePaymentInputSchema,
   invoiceQuickCreateInputSchema
@@ -72,7 +74,10 @@ function hasForbiddenInvoiceLineItemFields(formData: FormData) {
   return forbiddenInvoiceLineItemFields.some((key) => formData.has(key));
 }
 
-function buildRedirect(pathname: string, params: Record<string, string | undefined>) {
+function buildRedirect(
+  pathname: string,
+  params: Record<string, string | undefined>
+) {
   const search = new URLSearchParams();
 
   for (const [key, value] of Object.entries(params)) {
@@ -166,7 +171,8 @@ export async function createInvoiceAction(formData: FormData) {
   } catch (error) {
     redirect(
       buildRedirect("/invoices", {
-        error: error instanceof Error ? error.message : "Unable to create invoice."
+        error:
+          error instanceof Error ? error.message : "Unable to create invoice."
       })
     );
   }
@@ -225,7 +231,10 @@ export async function quickCreateInvoiceAction(formData: FormData) {
         "/invoices"
       );
 
-      if (!changeOrderSource || changeOrderSource.projectId !== result.data.projectId) {
+      if (
+        !changeOrderSource ||
+        changeOrderSource.projectId !== result.data.projectId
+      ) {
         throw new Error(
           "Select an approved change order that belongs to the selected project."
         );
@@ -236,7 +245,9 @@ export async function quickCreateInvoiceAction(formData: FormData) {
       );
 
       if (!changeOrder.invoiceId) {
-        throw new Error("The approved change order did not produce an invoice.");
+        throw new Error(
+          "The approved change order did not produce an invoice."
+        );
       }
 
       invoice = {
@@ -248,7 +259,8 @@ export async function quickCreateInvoiceAction(formData: FormData) {
       invoice = await createInvoice({
         projectId: result.data.projectId,
         estimateId: result.data.estimateId,
-        jobId: result.data.workflowRole === "deposit" ? null : result.data.jobId,
+        jobId:
+          result.data.workflowRole === "deposit" ? null : result.data.jobId,
         workflowRole: result.data.workflowRole,
         status: "draft",
         issueDate: issueDate.toISOString().slice(0, 10),
@@ -267,7 +279,8 @@ export async function quickCreateInvoiceAction(formData: FormData) {
         jobId,
         changeOrderId,
         workflowRole,
-        error: error instanceof Error ? error.message : "Unable to create invoice."
+        error:
+          error instanceof Error ? error.message : "Unable to create invoice."
       })
     );
   }
@@ -313,7 +326,8 @@ export async function updateInvoiceAction(formData: FormData) {
   } catch (error) {
     redirect(
       buildRedirect(`/invoices/${invoiceId}`, {
-        error: error instanceof Error ? error.message : "Unable to update invoice."
+        error:
+          error instanceof Error ? error.message : "Unable to update invoice."
       })
     );
   }
@@ -356,7 +370,8 @@ export async function recordInvoicePaymentAction(formData: FormData) {
   } catch (error) {
     redirect(
       buildRedirect(`/invoices/${result.data.invoiceId}`, {
-        error: error instanceof Error ? error.message : "Unable to record payment."
+        error:
+          error instanceof Error ? error.message : "Unable to record payment."
       })
     );
   }
@@ -369,6 +384,51 @@ export async function recordInvoicePaymentAction(formData: FormData) {
   redirect(
     buildRedirect(`/invoices/${invoice.id}`, {
       message: `${invoice.referenceNumber} payment was recorded successfully.`
+    })
+  );
+}
+
+export async function sendInvoiceReviewEmailAction(formData: FormData) {
+  const invoiceId = getFieldValue(formData, "invoiceId");
+  const result = invoiceEmailSendInputSchema.safeParse({
+    invoiceId,
+    portalUserId: getFieldValue(formData, "portalUserId")
+  });
+
+  if (!result.success) {
+    redirect(
+      buildRedirect(`/invoices/${invoiceId || ""}`, {
+        error:
+          result.error.issues[0]?.message ??
+          "Unable to send invoice review/payment link."
+      })
+    );
+  }
+
+  let response;
+
+  try {
+    response = await sendInvoiceReviewEmail(result.data);
+  } catch (error) {
+    redirect(
+      buildRedirect(`/invoices/${result.data.invoiceId}`, {
+        error:
+          error instanceof Error
+            ? error.message
+            : "Unable to send invoice review/payment link."
+      })
+    );
+  }
+
+  revalidatePath("/invoices");
+  revalidatePath(`/invoices/${response.invoice.id}`);
+  revalidatePath(`/projects/${response.invoice.projectId}`);
+  revalidatePath(`/portal/projects/${response.invoice.projectId}`);
+  revalidatePath(`/portal/invoices/${response.invoice.id}`);
+
+  redirect(
+    buildRedirect(`/invoices/${response.invoice.id}`, {
+      message: response.message
     })
   );
 }
@@ -403,7 +463,9 @@ export async function requestPortalInvoicePaymentAction(formData: FormData) {
   if (!result.success) {
     redirect(
       buildRedirect(nextPath, {
-        error: result.error.issues[0]?.message ?? "Unable to start payment for this invoice."
+        error:
+          result.error.issues[0]?.message ??
+          "Unable to start payment for this invoice."
       })
     );
   }
@@ -412,7 +474,9 @@ export async function requestPortalInvoicePaymentAction(formData: FormData) {
   let checkoutUrl = nextPath;
 
   try {
-    await assertInvoiceOrganizationCanPerformProductionAction(result.data.invoiceId);
+    await assertInvoiceOrganizationCanPerformProductionAction(
+      result.data.invoiceId
+    );
     invoice = await requestInvoicePayment(result.data, nextPath);
     const gateway = getPaymentGatewayAdapter();
     const pendingPayment = await ensurePendingPortalInvoicePayment(
@@ -443,7 +507,8 @@ export async function requestPortalInvoicePaymentAction(formData: FormData) {
           "Checkout was submitted. Payment status will update here after provider confirmation."
       }),
       cancelUrl: buildAbsoluteAppUrl(nextPath, {
-        message: "Checkout was not completed, so the invoice still needs payment."
+        message:
+          "Checkout was not completed, so the invoice still needs payment."
       })
     });
     const checkoutStartResult = invoiceCheckoutStartInputSchema.safeParse({
@@ -477,7 +542,9 @@ export async function requestPortalInvoicePaymentAction(formData: FormData) {
     redirect(
       buildRedirect(nextPath, {
         error:
-          error instanceof Error ? error.message : "Unable to start payment for this invoice."
+          error instanceof Error
+            ? error.message
+            : "Unable to start payment for this invoice."
       })
     );
   }

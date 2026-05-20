@@ -3,6 +3,7 @@ import Link from "next/link";
 import { AppEmptyState } from "@/components/app-empty-state";
 import { DetailPanel } from "@/components/detail-panel";
 import { LinkedRecordCard } from "@/components/linked-record-card";
+import type { JobListItem } from "@/lib/jobs/data";
 import type { ServiceTicketListItem } from "@/lib/service-tickets/data";
 import type { WarrantyDocumentContinuityItem } from "@/lib/warranty-documents/data";
 
@@ -11,6 +12,7 @@ type ServiceWarrantyContinuityPanelProps = {
   description?: string;
   tickets: ServiceTicketListItem[];
   warrantyDocuments: WarrantyDocumentContinuityItem[];
+  serviceJobs?: JobListItem[];
   serviceTicketHref?: string;
 };
 
@@ -78,6 +80,7 @@ export function ServiceWarrantyContinuityPanel({
   description = "Post-install service tickets and warranty documents stay connected to this canonical record without becoming a detached helpdesk.",
   tickets,
   warrantyDocuments,
+  serviceJobs = [],
   serviceTicketHref = "/service-tickets"
 }: ServiceWarrantyContinuityPanelProps) {
   const openTickets = tickets.filter(
@@ -92,12 +95,15 @@ export function ServiceWarrantyContinuityPanel({
       ticket.status === "closed" ||
       ticket.status === "canceled"
   );
-  const hasRecords = tickets.length > 0 || warrantyDocuments.length > 0;
+  const hasRecords =
+    tickets.length > 0 ||
+    warrantyDocuments.length > 0 ||
+    serviceJobs.length > 0;
 
   return (
     <DetailPanel title={title} description={description}>
       <div className="space-y-5">
-        <div className="grid gap-3 sm:grid-cols-3">
+        <div className="grid gap-3 sm:grid-cols-4">
           <div className="rounded-lg border border-[var(--border-warm)] bg-[var(--highlight)] px-4 py-3">
             <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
               Open tickets
@@ -112,6 +118,14 @@ export function ServiceWarrantyContinuityPanel({
             </p>
             <p className="mt-2 text-2xl font-semibold text-[var(--text-primary)]">
               {warrantyDocuments.length}
+            </p>
+          </div>
+          <div className="rounded-lg border border-[var(--border-warm)] bg-[var(--highlight)] px-4 py-3">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
+              Service jobs
+            </p>
+            <p className="mt-2 text-2xl font-semibold text-[var(--text-primary)]">
+              {serviceJobs.length}
             </p>
           </div>
           <div className="rounded-lg border border-[var(--border-warm)] bg-[var(--highlight)] px-4 py-3">
@@ -231,6 +245,42 @@ export function ServiceWarrantyContinuityPanel({
                     </Link>
                   </div>
                 </div>
+              ))}
+            </div>
+          </section>
+        ) : null}
+
+        {serviceJobs.length > 0 ? (
+          <section className="space-y-3">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
+              Linked service jobs
+            </p>
+            <div className="grid gap-3">
+              {serviceJobs.slice(0, 4).map((job) => (
+                <LinkedRecordCard
+                  key={job.id}
+                  href={`/jobs/${job.id}`}
+                  title={
+                    job.serviceTicket?.title ??
+                    job.project?.name ??
+                    "Service job"
+                  }
+                  subtitle={`${formatStatusLabel(job.dispatchStatus)} / ${
+                    job.scheduledDate
+                      ? formatDate(job.scheduledDate)
+                      : "unscheduled"
+                  }`}
+                  meta={[
+                    job.customer?.name,
+                    job.project?.name,
+                    job.serviceTicket
+                      ? `Ticket ${formatStatusLabel(job.serviceTicket.status)}`
+                      : null
+                  ]
+                    .filter(Boolean)
+                    .join(" / ")}
+                  badge={renderStatusBadge("Service job")}
+                />
               ))}
             </div>
           </section>

@@ -18,6 +18,14 @@ const page = readFileSync(
   "utf8"
 );
 
+function getActionSource(name: string) {
+  const start = actions.indexOf(`export async function ${name}`);
+  assert.notEqual(start, -1, `${name} action was not found`);
+  const next = actions.indexOf("\nexport async function ", start + 1);
+
+  return actions.slice(start, next === -1 ? undefined : next);
+}
+
 function artifactTypesFor(key: GateKeeperDemoFixtureKey) {
   return buildGateKeeperDemoFixturePlan(key).artifacts.map(
     (artifact) => artifact.artifactType
@@ -129,10 +137,12 @@ void test("internal workflow note demo flags estimate review without mutation", 
 });
 
 void test("GateKeeper demo fixture action does not introduce execution helpers", () => {
+  const actionSource = getActionSource("seedGateKeeperDemoFixtureAction");
+
   assert.match(actions, /seedGateKeeperDemoFixtureAction/);
-  assert.match(actions, /buildGateKeeperDemoFixturePlan/);
+  assert.match(actionSource, /buildGateKeeperDemoFixturePlan/);
   assert.doesNotMatch(
-    actions,
+    actionSource,
     /createOpportunity|updateOpportunity|createProject|createWorkItem|scheduleAppointment|createInvoice|sendEmail|sendSms|twilio|retell|openai/i
   );
 });

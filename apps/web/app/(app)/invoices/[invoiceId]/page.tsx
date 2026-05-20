@@ -12,6 +12,8 @@ import {
 } from "@/components/action-hierarchy";
 import { DetailPageHeader } from "@/components/detail-page-header";
 import { DetailPanel } from "@/components/detail-panel";
+import { DocumentDeliveryHistoryPanel } from "@/components/document-delivery-history-panel";
+import { EarlyAccessLockNotice } from "@/components/early-access-lock-notice";
 import { InvoiceForm } from "@/components/invoice-form";
 import { InvoicePaymentForm } from "@/components/invoice-payment-form";
 import { LinkedRecordCard } from "@/components/linked-record-card";
@@ -25,19 +27,28 @@ import {
   ScheduleContextMetrics,
   ScheduleContextNotice
 } from "@/components/schedule-context-card";
+import { SendToContactSelect } from "@/components/send-to-contact-select";
 import { WorkItemCreateForm } from "@/components/work-items/work-item-create-form";
 import { WorkItemList } from "@/components/work-items/work-item-list";
 import { listCatalogItems } from "@/lib/catalogs/data";
 import { listInvoiceChangeOrders } from "@/lib/change-orders/data";
 import { listCommunicationThreadsForSubject } from "@/lib/communications/data";
+import { getDocumentDeliveryState } from "@/lib/document-delivery/data";
 import {
   recordInvoicePaymentAction,
+  sendInvoiceReviewEmailAction,
   updateInvoiceAction
 } from "@/lib/invoices/actions";
 import { requireAuthenticatedUser } from "@/lib/auth/session";
-import { getInvoiceById, listInvoiceSourceOptions } from "@/lib/invoices/data";
+import {
+  getInvoiceById,
+  listInvoicePortalRecipients,
+  listInvoiceSourceOptions
+} from "@/lib/invoices/data";
 import { listEstimates } from "@/lib/estimates/data";
 import { listJobAssignmentsByJobIds, listJobs } from "@/lib/jobs/data";
+import { getActiveOrganizationContext } from "@/lib/organizations/active-context";
+import { isOrganizationActivatedForProductionAction } from "@/lib/organizations/activation-guard";
 import { getOrganizationFinancialSettings } from "@/lib/organizations/financial-settings";
 import { getOperationalCuesForSubject } from "@/lib/operational-cues/data";
 import { getCueStateActionSupport } from "@/lib/cue-states/apply";
@@ -315,6 +326,29 @@ export default async function InvoiceDetailPage({
   if (!invoice) {
     notFound();
   }
+
+  const organizationContext = await getActiveOrganizationContext(user.id);
+  const deliveryState = await getDocumentDeliveryState({
+    subjectType: "invoice",
+    subjectId: invoice.id
+  });
+  const canSendInvoiceReviewLink =
+    (invoice.status === "sent" || invoice.status === "partially_paid") &&
+    Number(invoice.balanceDueAmount) > 0;
+  const sendContactOptions = canSendInvoiceReviewLink
+    ? await listInvoicePortalRecipients({
+        organizationId: invoice.organizationId,
+        customerId: invoice.customerId,
+        projectId: invoice.projectId
+      })
+    : [];
+  const isProductionActionLocked = organizationContext
+    ? !isOrganizationActivatedForProductionAction({
+        id: organizationContext.organization.id,
+        tenantStatus: organizationContext.organization.tenantStatus,
+        lifecycleState: organizationContext.organization.lifecycleState
+      })
+    : false;
 
   await ensureInitialRecordRevision({
     organizationId: invoice.organizationId,
@@ -1474,6 +1508,103 @@ export default async function InvoiceDetailPage({
               </div>
             </div>
           </DetailPanel>
+
+          <DetailPanel
+            title="Provider Email Send"
+            description="Send the customer a portal invoice review/payment link without starting checkout."
+          >
+            {canSendInvoiceReviewLink ? (
+              invoice.customer?.email ? (
+                <form
+                  action={sendInvoiceReviewEmailAction}
+                  className="grid gap-4 rounded-[8px] border border-[var(--border-warm)] bg-white px-5 py-5"
+                >
+                  <input type="hidden" name="invoiceId" value={invoice.id} />
+                  {sendContactOptions.length > 0 ? (
+                    <SendToContactSelect
+                      name="portalUserId"
+                      defaultValue={
+                        sendContactOptions.length === 1
+                          ? sendContactOptions[0]?.portalUserId
+                          : sendContactOptions.find(
+                              (option) => option.isPrimaryContact
+                            )?.portalUserId
+                      }
+                      options={sendContactOptions.map((option) => ({
+                        value: option.portalUserId,
+                        label:
+                          option.contactDisplayName ??
+                          option.fullName ??
+                          option.email,
+                        email: option.contactEmail ?? option.email,
+                        isPrimary: option.isPrimaryContact
+                      }))}
+                      hint="People owns contact identity and portal access. Leaving this blank uses the primary customer contact when available, then the existing customer email fallback."
+                    />
+                  ) : (
+                    <div className="rounded-[8px] border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-900">
+                      No portal-ready contact is available for this project.
+                      Manage the contact and project access from People before
+                      sending.
+                    </div>
+                  )}
+                  {isProductionActionLocked ? <EarlyAccessLockNotice /> : null}
+                  {isProductionActionLocked ? (
+                    <p className="rounded-[8px] border border-[var(--border-warm)] bg-[var(--highlight)] px-4 py-3 text-sm leading-6 text-[var(--text-secondary)]">
+                      Submitting while locked records failed delivery evidence
+                      only. It will not email the customer, start checkout,
+                      create payment events, or change invoice status.
+                    </p>
+                  ) : null}
+                  <p className="rounded-[8px] border border-[var(--border-warm)] bg-[var(--highlight)] px-4 py-3 text-sm leading-6 text-[var(--text-secondary)]">
+                    Email send records delivery evidence only. Customer checkout
+                    and payment status remain controlled by the portal payment
+                    workflow.
+                  </p>
+                  <button
+                    type="submit"
+                    disabled={sendContactOptions.length === 0}
+                    className="justify-self-start rounded-full bg-[var(--copper)] px-4 py-2 text-sm font-medium text-white transition hover:bg-[var(--copper-light)] disabled:cursor-not-allowed disabled:bg-[var(--highlight)] disabled:text-[var(--text-secondary)]"
+                  >
+                    Send review/payment link
+                  </button>
+                </form>
+              ) : (
+                <div className="rounded-[8px] border border-amber-200 bg-amber-50 px-5 py-4 text-sm leading-6 text-amber-900">
+                  <p className="font-medium text-amber-950">
+                    Customer email is missing on the canonical customer record.
+                  </p>
+                  <p className="mt-2">
+                    Invoice email send uses the shared customer/project portal
+                    access chain. Add the customer email and confirm project
+                    portal access before retrying send.
+                  </p>
+                  {invoice.customer ? (
+                    <Link
+                      href={`/customers/${invoice.customer.id}`}
+                      className="mt-4 inline-flex rounded-full border border-amber-300 bg-white px-4 py-2 text-sm font-medium text-amber-950 transition hover:bg-amber-100"
+                    >
+                      Open customer
+                    </Link>
+                  ) : null}
+                </div>
+              )
+            ) : (
+              <div className="rounded-[8px] border border-[var(--border-warm)] bg-[var(--highlight)] px-5 py-4 text-sm leading-6 text-[var(--text-secondary)]">
+                Provider-backed invoice email is available only for sent or
+                partially paid invoices with an open balance. Draft invoices
+                should be marked sent through the invoice workflow first; paid
+                and void invoices do not need a payment-link email.
+              </div>
+            )}
+          </DetailPanel>
+
+          <DocumentDeliveryHistoryPanel
+            subjectType="invoice"
+            subjectId={invoice.id}
+            events={deliveryState.events}
+            boundaryCopy="Manual entries record evidence only. The Send review/payment link action writes send_requested plus sent or failed provider evidence; provider email delivery does not start checkout, create payments, change invoice status, or mutate payment events."
+          />
 
           <div id="invoice-editing">
             <DetailPanel

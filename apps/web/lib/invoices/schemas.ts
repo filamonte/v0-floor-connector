@@ -15,11 +15,7 @@ const invoiceStatuses = [
   "void"
 ] as const;
 
-const editableInvoiceStatuses = [
-  "draft",
-  "sent",
-  "void"
-] as const;
+const editableInvoiceStatuses = ["draft", "sent", "void"] as const;
 
 const paymentStatuses = ["pending", "recorded", "void"] as const;
 const paymentEventActorTypes = [
@@ -143,9 +139,12 @@ function optionalUuidField(message: string) {
     .transform((value) => (value.length > 0 ? value : null))
     .nullable()
     .optional()
-    .refine((value) => value === null || z.string().uuid().safeParse(value).success, {
-      message
-    })
+    .refine(
+      (value) => value === null || z.string().uuid().safeParse(value).success,
+      {
+        message
+      }
+    )
     .transform((value) => value ?? null);
 }
 
@@ -203,7 +202,9 @@ export const invoiceLineItemInputSchema = z.object({
   baseUnitPrice: optionalCurrencyAmountField("Base unit price"),
   markupPercent: currencyAmountField("Markup percentage"),
   hiddenMarkupPercent: currencyAmountField("Hidden markup percentage"),
-  unitPriceBeforeHiddenMarkup: currencyAmountField("Pre-hidden-markup unit price"),
+  unitPriceBeforeHiddenMarkup: currencyAmountField(
+    "Pre-hidden-markup unit price"
+  ),
   visibleMarkupAmount: currencyAmountField("Visible markup amount"),
   hiddenMarkupAmount: currencyAmountField("Hidden markup amount"),
   costCode: optionalTrimmedString(120)
@@ -229,11 +230,18 @@ export const invoiceSourceConfigurationSchema = z
     selectedChangeOrderSnapshotItemIds: z
       .array(z.string().uuid("Select a valid change-order snapshot item."))
       .default([]),
-    manualCatalogItems: z.array(invoiceManualCatalogItemInputSchema).default([]),
-    explicitAdjustments: z.array(invoiceExplicitAdjustmentInputSchema).default([])
+    manualCatalogItems: z
+      .array(invoiceManualCatalogItemInputSchema)
+      .default([]),
+    explicitAdjustments: z
+      .array(invoiceExplicitAdjustmentInputSchema)
+      .default([])
   })
   .superRefine((value, ctx) => {
-    if (value.baseSourceType === "sov_items" && value.selectedSovItemIds.length === 0) {
+    if (
+      value.baseSourceType === "sov_items" &&
+      value.selectedSovItemIds.length === 0
+    ) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         message: "Select at least one SOV item.",
@@ -281,7 +289,8 @@ export const invoiceInputSchema = z
     if (value.workflowRole === "deposit" && value.jobId) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: "Deposit invoices should stay tied to project and estimate context, not a job.",
+        message:
+          "Deposit invoices should stay tied to project and estimate context, not a job.",
         path: ["jobId"]
       });
     }
@@ -292,7 +301,8 @@ export const invoiceInputSchema = z
     ) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: "Select an approved estimate before building a full snapshot invoice.",
+        message:
+          "Select an approved estimate before building a full snapshot invoice.",
         path: ["estimateId"]
       });
     }
@@ -310,7 +320,8 @@ export const invoiceQuickCreateInputSchema = z
     if (value.workflowRole === "deposit" && value.jobId) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: "Deposit invoices should stay tied to project and estimate context, not a job.",
+        message:
+          "Deposit invoices should stay tied to project and estimate context, not a job.",
         path: ["jobId"]
       });
     }
@@ -318,7 +329,8 @@ export const invoiceQuickCreateInputSchema = z
     if (value.workflowRole === "deposit" && value.changeOrderId) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: "Deposit invoices should stay tied to deposit context, not a change order.",
+        message:
+          "Deposit invoices should stay tied to deposit context, not a change order.",
         path: ["changeOrderId"]
       });
     }
@@ -350,7 +362,11 @@ export const invoicePaymentInputSchema = z.object({
   invoiceId: z.string().uuid("Invoice id is required."),
   amount: positiveCurrencyAmountField("Payment amount"),
   paymentDate: dateField,
-  paymentMethod: z.string().trim().min(1, "Payment method is required.").max(80),
+  paymentMethod: z
+    .string()
+    .trim()
+    .min(1, "Payment method is required.")
+    .max(80),
   reference: optionalTrimmedString(160),
   notes: optionalTrimmedString(1000)
 });
@@ -361,9 +377,9 @@ const paymentActorContextShape = {
   portalUserId: optionalUuidField("Select a valid acting portal user.")
 } as const;
 
-function withPaymentActorContextValidation<
-  T extends z.ZodRawShape
->(schema: z.ZodObject<T>) {
+function withPaymentActorContextValidation<T extends z.ZodRawShape>(
+  schema: z.ZodObject<T>
+) {
   return schema.superRefine((value, ctx) => {
     if (value.actorType === "portal_user" && !value.portalUserId) {
       ctx.addIssue({
@@ -383,87 +399,112 @@ function withPaymentActorContextValidation<
   });
 }
 
-export const invoiceCustomerPaymentRequestInputSchema = withPaymentActorContextValidation(
-  z.object({
-    ...paymentActorContextShape,
-  invoiceId: z.string().uuid("Invoice id is required."),
-  amount: positiveCurrencyAmountField("Requested payment amount"),
-  payerEmail: optionalTrimmedString(320),
-  notes: optionalTrimmedString(1000),
-  occurredAt: optionalDateTimeField,
-  payload: optionalPayloadField
-  })
-);
+export const invoiceCustomerPaymentRequestInputSchema =
+  withPaymentActorContextValidation(
+    z.object({
+      ...paymentActorContextShape,
+      invoiceId: z.string().uuid("Invoice id is required."),
+      amount: positiveCurrencyAmountField("Requested payment amount"),
+      payerEmail: optionalTrimmedString(320),
+      notes: optionalTrimmedString(1000),
+      occurredAt: optionalDateTimeField,
+      payload: optionalPayloadField
+    })
+  );
 
-export const invoiceCheckoutStartInputSchema = withPaymentActorContextValidation(
-  z.object({
-    ...paymentActorContextShape,
-  paymentId: z.string().uuid("Payment id is required."),
+export const invoiceEmailSendInputSchema = z.object({
   invoiceId: z.string().uuid("Invoice id is required."),
-  amount: positiveCurrencyAmountField("Checkout amount"),
-  gatewayProvider: z.string().trim().min(1, "Gateway provider is required.").max(80),
-  gatewayCheckoutSessionReference: z
-    .string()
-    .trim()
-    .min(1, "Checkout session reference is required.")
-    .max(160),
-  gatewayPaymentIntentReference: optionalTrimmedString(160),
-  gatewayStatus: optionalTrimmedString(80),
-  payerEmail: optionalTrimmedString(320),
-  occurredAt: optionalDateTimeField,
-  payload: optionalPayloadField
-  })
-);
+  portalUserId: optionalUuidField("Select a valid portal contact.")
+});
 
-export const invoicePaymentSuccessInputSchema = withPaymentActorContextValidation(
-  z.object({
-    ...paymentActorContextShape,
-  organizationId: z.string().uuid("Organization id is required."),
-  invoiceId: z.string().uuid("Invoice id is required."),
-  amount: positiveCurrencyAmountField("Payment amount"),
-  paymentDate: optionalDateField,
-  paymentMethod: z.string().trim().min(1, "Payment method is required.").max(80),
-  gatewayProvider: z.string().trim().min(1, "Gateway provider is required.").max(80),
-  gatewayPaymentIntentReference: optionalTrimmedString(160),
-  gatewayCheckoutSessionReference: optionalTrimmedString(160),
-  gatewayStatus: optionalTrimmedString(80),
-  paymentMethodSummary: optionalTrimmedString(160),
-  payerEmail: optionalTrimmedString(320),
-  reference: optionalTrimmedString(160),
-  notes: optionalTrimmedString(1000),
-  providerEventId: optionalTrimmedString(160),
-  occurredAt: optionalDateTimeField,
-  payload: optionalPayloadField
-  })
-);
+export const invoiceCheckoutStartInputSchema =
+  withPaymentActorContextValidation(
+    z.object({
+      ...paymentActorContextShape,
+      paymentId: z.string().uuid("Payment id is required."),
+      invoiceId: z.string().uuid("Invoice id is required."),
+      amount: positiveCurrencyAmountField("Checkout amount"),
+      gatewayProvider: z
+        .string()
+        .trim()
+        .min(1, "Gateway provider is required.")
+        .max(80),
+      gatewayCheckoutSessionReference: z
+        .string()
+        .trim()
+        .min(1, "Checkout session reference is required.")
+        .max(160),
+      gatewayPaymentIntentReference: optionalTrimmedString(160),
+      gatewayStatus: optionalTrimmedString(80),
+      payerEmail: optionalTrimmedString(320),
+      occurredAt: optionalDateTimeField,
+      payload: optionalPayloadField
+    })
+  );
 
-export const invoicePaymentFailureInputSchema = withPaymentActorContextValidation(
-  z.object({
-    ...paymentActorContextShape,
-  organizationId: z.string().uuid("Organization id is required."),
-  invoiceId: z.string().uuid("Invoice id is required."),
-  amount: positiveCurrencyAmountField("Payment amount"),
-  gatewayProvider: z.string().trim().min(1, "Gateway provider is required.").max(80),
-  gatewayPaymentIntentReference: optionalTrimmedString(160),
-  gatewayCheckoutSessionReference: optionalTrimmedString(160),
-  gatewayStatus: optionalTrimmedString(80),
-  payerEmail: optionalTrimmedString(320),
-  notes: optionalTrimmedString(1000),
-  providerEventId: optionalTrimmedString(160),
-  occurredAt: optionalDateTimeField,
-  payload: optionalPayloadField
-  })
-);
+export const invoicePaymentSuccessInputSchema =
+  withPaymentActorContextValidation(
+    z.object({
+      ...paymentActorContextShape,
+      organizationId: z.string().uuid("Organization id is required."),
+      invoiceId: z.string().uuid("Invoice id is required."),
+      amount: positiveCurrencyAmountField("Payment amount"),
+      paymentDate: optionalDateField,
+      paymentMethod: z
+        .string()
+        .trim()
+        .min(1, "Payment method is required.")
+        .max(80),
+      gatewayProvider: z
+        .string()
+        .trim()
+        .min(1, "Gateway provider is required.")
+        .max(80),
+      gatewayPaymentIntentReference: optionalTrimmedString(160),
+      gatewayCheckoutSessionReference: optionalTrimmedString(160),
+      gatewayStatus: optionalTrimmedString(80),
+      paymentMethodSummary: optionalTrimmedString(160),
+      payerEmail: optionalTrimmedString(320),
+      reference: optionalTrimmedString(160),
+      notes: optionalTrimmedString(1000),
+      providerEventId: optionalTrimmedString(160),
+      occurredAt: optionalDateTimeField,
+      payload: optionalPayloadField
+    })
+  );
+
+export const invoicePaymentFailureInputSchema =
+  withPaymentActorContextValidation(
+    z.object({
+      ...paymentActorContextShape,
+      organizationId: z.string().uuid("Organization id is required."),
+      invoiceId: z.string().uuid("Invoice id is required."),
+      amount: positiveCurrencyAmountField("Payment amount"),
+      gatewayProvider: z
+        .string()
+        .trim()
+        .min(1, "Gateway provider is required.")
+        .max(80),
+      gatewayPaymentIntentReference: optionalTrimmedString(160),
+      gatewayCheckoutSessionReference: optionalTrimmedString(160),
+      gatewayStatus: optionalTrimmedString(80),
+      payerEmail: optionalTrimmedString(320),
+      notes: optionalTrimmedString(1000),
+      providerEventId: optionalTrimmedString(160),
+      occurredAt: optionalDateTimeField,
+      payload: optionalPayloadField
+    })
+  );
 
 export const invoicePaymentVoidInputSchema = withPaymentActorContextValidation(
   z.object({
     ...paymentActorContextShape,
-  invoiceId: z.string().uuid("Invoice id is required."),
-  paymentId: z.string().uuid("Payment id is required."),
-  notes: optionalTrimmedString(1000),
-  providerEventId: optionalTrimmedString(160),
-  occurredAt: optionalDateTimeField,
-  payload: optionalPayloadField
+    invoiceId: z.string().uuid("Invoice id is required."),
+    paymentId: z.string().uuid("Payment id is required."),
+    notes: optionalTrimmedString(1000),
+    providerEventId: optionalTrimmedString(160),
+    occurredAt: optionalDateTimeField,
+    payload: optionalPayloadField
   })
 );
 
@@ -472,15 +513,26 @@ export type InvoiceLineItemInput = z.infer<typeof invoiceLineItemInputSchema>;
 export type InvoiceSourceConfiguration = z.infer<
   typeof invoiceSourceConfigurationSchema
 >;
-export type InvoiceQuickCreateInput = z.infer<typeof invoiceQuickCreateInputSchema>;
+export type InvoiceQuickCreateInput = z.infer<
+  typeof invoiceQuickCreateInputSchema
+>;
 export type InvoicePaymentInput = z.infer<typeof invoicePaymentInputSchema>;
+export type InvoiceEmailSendInput = z.infer<typeof invoiceEmailSendInputSchema>;
 export type InvoiceCustomerPaymentRequestInput = z.infer<
   typeof invoiceCustomerPaymentRequestInputSchema
 >;
-export type InvoiceCheckoutStartInput = z.infer<typeof invoiceCheckoutStartInputSchema>;
-export type InvoicePaymentSuccessInput = z.infer<typeof invoicePaymentSuccessInputSchema>;
-export type InvoicePaymentFailureInput = z.infer<typeof invoicePaymentFailureInputSchema>;
-export type InvoicePaymentVoidInput = z.infer<typeof invoicePaymentVoidInputSchema>;
+export type InvoiceCheckoutStartInput = z.infer<
+  typeof invoiceCheckoutStartInputSchema
+>;
+export type InvoicePaymentSuccessInput = z.infer<
+  typeof invoicePaymentSuccessInputSchema
+>;
+export type InvoicePaymentFailureInput = z.infer<
+  typeof invoicePaymentFailureInputSchema
+>;
+export type InvoicePaymentVoidInput = z.infer<
+  typeof invoicePaymentVoidInputSchema
+>;
 export const invoiceStatusesList = invoiceStatuses;
 export const editableInvoiceStatusesList = editableInvoiceStatuses;
 export const paymentStatusesList = paymentStatuses;

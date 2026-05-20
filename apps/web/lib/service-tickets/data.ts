@@ -14,6 +14,7 @@ import type {
 import type { ServiceTicketInput, ServiceTicketStatusInput } from "./schemas";
 import { requireAuthenticatedUser } from "@/lib/auth/session";
 import { getActiveOrganizationContext } from "@/lib/organizations/active-context";
+import { assertProjectReadinessGate } from "@/lib/projects/readiness";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 
 type ServiceTicketScope = {
@@ -69,6 +70,14 @@ export type ServiceTicketOption = {
   label: string;
   customerId?: string;
   projectId?: string;
+};
+
+export type CreatedServiceJobFromTicket = {
+  id: string;
+  customerId: string;
+  projectId: string;
+  serviceTicketId: string;
+  estimateId: string | null;
 };
 
 const mutationRoles = new Set<MembershipRole>(["owner", "admin", "manager"]);
@@ -628,6 +637,80 @@ export async function updateServiceTicketStatus(
   }
 
   return mapServiceTicketListItem(data);
+}
+
+export async function createServiceJobFromTicket(ticketId: string) {
+  const scope = await getServiceTicketScope(`/service-tickets/${ticketId}`);
+  assertCanMutate(scope);
+
+  const ticket = await getServiceTicketById(ticketId);
+
+  if (!ticket) {
+    throw new Error("Service ticket not found for this organization.");
+  }
+
+  if (!ticket.projectId) {
+    throw new Error(
+      "Link this service ticket to a project before creating a service job."
+    );
+  }
+
+  await assertProjectReadinessGate({
+    organizationId: scope.organizationId,
+    projectId: ticket.projectId,
+    errorMessage:
+      "Project is not ready for service job creation yet. Resolve readiness from the project hub before creating a schedulable service job."
+  });
+
+  const supabase = await getSupabaseServerClient();
+  const response = await supabase
+    .from("jobs")
+    .insert({
+      company_id: scope.organizationId,
+      customer_id: ticket.customerId,
+      project_id: ticket.projectId,
+      estimate_id: null,
+      service_ticket_id: ticket.id,
+      dispatch_status: "unscheduled",
+      scheduled_date: null,
+      scheduled_start_at: null,
+      scheduled_end_at: null,
+      schedule_notes: null,
+      crew_vendor_id: null,
+      notes: `Service/warranty follow-up for ticket: ${ticket.title}`,
+      created_by: scope.userId,
+      updated_by: scope.userId
+    })
+    .select("id, customer_id, project_id, estimate_id, service_ticket_id")
+    .single();
+  const data = response.data as {
+    id?: string;
+    customer_id?: string;
+    project_id?: string;
+    estimate_id?: string | null;
+    service_ticket_id?: string | null;
+  } | null;
+
+  if (response.error) {
+    throw new Error(`Unable to create service job: ${response.error.message}`);
+  }
+
+  if (
+    !data?.id ||
+    !data.customer_id ||
+    !data.project_id ||
+    data.service_ticket_id !== ticket.id
+  ) {
+    throw new Error("Unexpected service job response after create.");
+  }
+
+  return {
+    id: data.id,
+    customerId: data.customer_id,
+    projectId: data.project_id,
+    estimateId: data.estimate_id ?? null,
+    serviceTicketId: ticket.id
+  } satisfies CreatedServiceJobFromTicket;
 }
 
 export async function listServiceTicketCustomerOptions() {

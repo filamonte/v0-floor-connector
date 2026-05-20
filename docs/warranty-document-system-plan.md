@@ -52,8 +52,11 @@ Current service/warranty implementation checkpoint:
 - Warranty document templates, canonical generated warranty records, and
   print/save rendering are now implemented as the first warranty document
   foundation.
-- Warranty sends, signatures, delivery proof, customer portal visibility, and
-  versioned warranty document records remain future work.
+- Portal warranty signatures, internal delivery evidence, and the first
+  provider-backed warranty review/sign email send now exist for project-linked
+  warranty documents. Provider callbacks, portal-visible delivery proof,
+  countersign, provider e-sign, resend/retry orchestration, and versioned
+  warranty document records remain future work.
 - The implemented warranty document slice attaches generated warranty output to
   the same customer/project/job/service-ticket context rather than creating
   standalone PDFs.
@@ -71,11 +74,15 @@ Current warranty document implementation checkpoint:
   warranty template context.
 - Service Ticket detail can create and list linked warranty documents.
 - Warranty Document detail supports draft review/edit/re-render, issue, void,
-  connected-record context, and planned-later send/sign placeholders.
+  connected-record context, internal signer management, portal-signing context,
+  and evidence-only delivery history.
 - `/warranty-documents/:id/print` provides the browser print/save view from the
   canonical warranty document record.
-- No warranty send/signature workflow was implemented because the existing
-  signature system is contract-specific and should be generalized before reuse.
+- Portal warranty review/signing now uses the generic warranty-only
+  signer/event foundation, and contractor-side provider-backed warranty email
+  can send the portal review/sign link through the notification/delivery
+  boundary. Provider callbacks, portal-visible delivery proof, countersign, and
+  provider e-sign remain future.
 
 Current generalized signature foundation checkpoint:
 
@@ -92,12 +99,48 @@ Current generalized signature foundation checkpoint:
   counts, latest signature event summary, and links to the canonical warranty
   document and print/save surfaces. These panels do not load rendered warranty
   content or add send/sign actions.
+- Dashboard Operational Cockpit now includes bounded read-only warranty document
+  attention items for draft/issued warranty documents with missing or requested
+  signer activity. These are links into Warranty Document or Service Ticket
+  Workspaces only; they do not send email, expose delivery proof actions, or
+  create provider-owned signature truth.
+- Portal Project Workspace now shows eligible project-linked warranty documents,
+  and `/portal/warranty-documents/:id` supports customer-safe review,
+  print/save, sign, and decline for authenticated portal users whose email
+  matches an eligible customer signer.
+- Portal sign/decline appends immutable generic signature events and updates
+  signer state. A warranty document moves to `signed` only after all active
+  customer signers are signed.
 - Existing contract signature behavior remains on `contracts`,
   `contract_signers`, and `contract_signature_events`; no contract migration was
   performed.
-- Portal review/signing, outbound send, delivery proof, countersign, provider
-  e-sign integration, and warranty document status mutation from signature
-  activity remain future work.
+- Outbound document delivery and delivery-proof architecture now lives in
+  [docs/document-delivery-proof-architecture.md](C:/FloorConnector/docs/document-delivery-proof-architecture.md).
+  It defines the shared evidence layer for estimates, contracts, invoices, and
+  warranty documents while keeping signature and payment truth in their owning
+  event systems.
+- `document_delivery_events` now provides immutable evidence-only delivery
+  history for warranty documents, estimates, invoices, and manual contract
+  evidence. Warranty Document detail can record internal, manual, or print
+  delivery evidence; it does not send email, run provider callbacks, change
+  warranty status, change signature state, or expose delivery proof to portal
+  customers.
+- Provider-backed outbound document send architecture now lives in
+  [docs/provider-document-send-architecture.md](C:/FloorConnector/docs/provider-document-send-architecture.md).
+  It recommends warranty documents as the first safe provider-backed send MVP
+  because warranty already uses the shared template, delivery, portal review,
+  and generic signature foundations while avoiding contract-signature and
+  invoice-payment blast radius.
+- Warranty Document detail can now send a guarded provider-backed review/sign
+  email to a requested customer signer when the signer has active portal project
+  access. The send action records notification intent, notification delivery
+  telemetry, and `document_delivery_events.send_requested` / `sent` / `failed`
+  evidence. It does not update signer status, create signature events, mutate
+  warranty status, attach a stored PDF, process callbacks, or touch contracts,
+  estimates, invoices, payments, jobs, or service tickets.
+- Provider callbacks, portal-visible delivery proof, countersign, provider
+  e-sign integration, resend/retry orchestration, and contract signature
+  migration remain future work.
 
 ## Warranty Template Model
 
@@ -242,7 +285,11 @@ Versioning should preserve what the customer received and signed. Do not mutate 
 
 ## Delivery Proof/Audit Trail
 
-Delivery proof should capture:
+Delivery proof should follow
+[docs/document-delivery-proof-architecture.md](C:/FloorConnector/docs/document-delivery-proof-architecture.md).
+Provider-backed warranty email send should follow
+[docs/provider-document-send-architecture.md](C:/FloorConnector/docs/provider-document-send-architecture.md).
+For warranty documents, the future delivery layer should capture:
 
 - created by
 - sent to
@@ -253,10 +300,22 @@ Delivery proof should capture:
 - declined/voided/superseded states later
 
 Provider telemetry should support the record; it should not become the business source of truth.
+Delivery proof should remain evidence-only by default and should not mutate
+signer status, warranty document status, invoice/payment state, service-ticket
+state, or project/job state unless a later document-specific workflow explicitly
+approves that transition.
 
-## Portal/Customer Visibility Future
+The first provider-backed warranty send now delivers a portal review/sign link,
+creates notification intent and delivery-attempt rows, appends
+`document_delivery_events.send_requested` / `sent` / `failed` evidence, and
+avoids stored PDFs, provider callbacks, countersign, billing automation, or
+automatic signature/status changes.
 
-Portal customers should eventually see warranty documents for shared projects. Visibility must use existing portal grants and project access. The portal should not create warranty copies or support-only records.
+## Portal/Customer Visibility
+
+Portal customers can now see issued/sent/viewed/signed warranty documents for shared projects through `/portal/warranty-documents/:id` and `/portal/warranty-documents/:id/print`. Visibility uses existing portal grants and project access, requires a project-linked warranty document, and does not create warranty copies or support-only records.
+
+The portal warranty review/signing architecture is captured in [docs/portal-warranty-review-sign-plan.md](C:/FloorConnector/docs/portal-warranty-review-sign-plan.md). The first customer-facing slice now implements project-scoped portal warranty review, portal print/save, eligible customer signer validation by authenticated portal email, signer status updates, immutable generic signature events, and `warranty_documents.status = signed` only when all active customer signers are signed. Contractor-side provider-backed warranty email can now send the portal review/sign link to requested signers. Provider callbacks, portal-visible delivery proof, countersign, provider e-sign, and service-ticket portal visibility remain deferred.
 
 ## Template/Token System Concepts
 
@@ -295,19 +354,22 @@ No AI should create, send, sign, or revise warranty documents without human conf
 
 ## MVP Implementation Slice
 
-Recommended MVP:
+Implemented MVP foundation:
 
 - warranty template architecture review using existing document-template foundations
 - seeded default template definitions from Super Admin
 - contractor-owned template copy/customization plan
 - warranty document render from project/job/customer/service-ticket context
-- print/save PDF route or equivalent render path
-- attach warranty document metadata to project/job/customer/warranty context when schema is approved later
+- contractor and portal print/save render paths
+- canonical warranty document metadata attached to customer/project/job/service-ticket
+  context
+- project-scoped portal review/sign/decline over generic signer/event tables
 
 MVP exclusions:
 
-- e-sign provider integration
-- customer portal request intake
+- provider callbacks and portal-visible delivery proof
+- provider e-sign integration
+- customer portal service request intake
 - contractor countersign
 - stored version/revision system if not already ready
 - automated warranty activation from payment
@@ -317,12 +379,12 @@ MVP exclusions:
 
 Phase 2:
 
-- send workflow
-- customer portal review
-- customer signature/acknowledgement
-- delivery proof
+- provider callback reconciliation and resend/retry behavior
+- portal-visible delivery proof policy
 - warranty date tracking
 - project/job warranty status surfaces
+- portal home/account-level warranty summaries beyond the first project
+  workspace panel
 
 Phase 3:
 

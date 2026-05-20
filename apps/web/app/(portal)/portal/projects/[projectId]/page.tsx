@@ -20,7 +20,8 @@ import {
   listPortalProjectChangeOrders,
   listPortalProjectContracts,
   listPortalProjectEstimates,
-  listPortalProjectInvoices
+  listPortalProjectInvoices,
+  listPortalProjectWarrantyDocuments
 } from "@/lib/portal/data";
 
 type PortalProjectDetailPageProps = {
@@ -79,7 +80,10 @@ function getProjectNextAction(input: {
   visibleEstimateCount: number;
   latestEstimateStatus: string | null;
 }) {
-  if (input.visibleInvoiceCount > 0 && input.latestInvoicePaymentEventType === "checkout_started") {
+  if (
+    input.visibleInvoiceCount > 0 &&
+    input.latestInvoicePaymentEventType === "checkout_started"
+  ) {
     return {
       title: `Payment is in progress for ${input.projectName}`,
       description:
@@ -87,7 +91,10 @@ function getProjectNextAction(input: {
     };
   }
 
-  if (input.visibleInvoiceCount > 0 && input.latestInvoicePaymentEventType === "payment_requested") {
+  if (
+    input.visibleInvoiceCount > 0 &&
+    input.latestInvoicePaymentEventType === "payment_requested"
+  ) {
     return {
       title: `Payment has been requested for ${input.projectName}`,
       description:
@@ -95,7 +102,10 @@ function getProjectNextAction(input: {
     };
   }
 
-  if (input.visibleInvoiceCount > 0 && input.latestInvoicePaymentEventType === "payment_succeeded") {
+  if (
+    input.visibleInvoiceCount > 0 &&
+    input.latestInvoicePaymentEventType === "payment_succeeded"
+  ) {
     return {
       title:
         input.latestInvoiceStatus === "partially_paid"
@@ -114,7 +124,10 @@ function getProjectNextAction(input: {
     };
   }
 
-  if (input.visibleInvoiceCount > 0 && input.latestInvoicePaymentEventType === "payment_failed") {
+  if (
+    input.visibleInvoiceCount > 0 &&
+    input.latestInvoicePaymentEventType === "payment_failed"
+  ) {
     return {
       title: `Review the billing follow-up for ${input.projectName}`,
       description:
@@ -122,7 +135,10 @@ function getProjectNextAction(input: {
     };
   }
 
-  if (input.visibleInvoiceCount > 0 && input.latestInvoicePaymentEventType === "payment_voided") {
+  if (
+    input.visibleInvoiceCount > 0 &&
+    input.latestInvoicePaymentEventType === "payment_voided"
+  ) {
     return {
       title: `Billing has reopened for ${input.projectName}`,
       description:
@@ -130,7 +146,10 @@ function getProjectNextAction(input: {
     };
   }
 
-  if (input.visibleInvoiceCount > 0 && input.latestInvoiceStatus === "partially_paid") {
+  if (
+    input.visibleInvoiceCount > 0 &&
+    input.latestInvoiceStatus === "partially_paid"
+  ) {
     return {
       title: `Review the remaining balance for ${input.projectName}`,
       description:
@@ -168,7 +187,10 @@ function getProjectNextAction(input: {
     };
   }
 
-  if (input.visibleContractCount > 0 && input.latestContractStatus === "signed") {
+  if (
+    input.visibleContractCount > 0 &&
+    input.latestContractStatus === "signed"
+  ) {
     return {
       title: `Contract signing is complete for ${input.projectName}`,
       description:
@@ -272,6 +294,35 @@ function getPortalInvoiceSummary(invoice: {
     : `Balance due | ${formatMoney(invoice.balanceDueAmount)} remaining`;
 }
 
+function getPortalWarrantyDocumentSummary(warrantyDocument: {
+  currentUserSignerStatus: string | null;
+  currentUserCanAct: boolean;
+  warrantyStartDate: string | null;
+  warrantyEndDate: string | null;
+  latestSignatureEventType: string | null;
+  latestSignatureEventAt: string | null;
+}) {
+  if (warrantyDocument.currentUserCanAct) {
+    return "Signature is ready for your review";
+  }
+
+  if (warrantyDocument.currentUserSignerStatus === "signed") {
+    return "Your signature is recorded";
+  }
+
+  if (warrantyDocument.currentUserSignerStatus === "declined") {
+    return "Your decline has been recorded";
+  }
+
+  if (warrantyDocument.latestSignatureEventType) {
+    return `${formatStatusLabel(warrantyDocument.latestSignatureEventType)}${warrantyDocument.latestSignatureEventAt ? ` | ${formatDateTime(warrantyDocument.latestSignatureEventAt)}` : ""}`;
+  }
+
+  return `Coverage ${formatDate(warrantyDocument.warrantyStartDate)} to ${formatDate(
+    warrantyDocument.warrantyEndDate
+  )}`;
+}
+
 function RecordSummaryCard({
   eyebrow,
   title,
@@ -294,19 +345,17 @@ function RecordSummaryCard({
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
             {eyebrow}
           </p>
-          <h3 className="mt-2 text-base font-semibold text-slate-950">{title}</h3>
+          <h3 className="mt-2 text-base font-semibold text-slate-950">
+            {title}
+          </h3>
           <p className="mt-2 text-sm leading-6 text-slate-600">{description}</p>
         </div>
-        <PortalStatusBadge status={badge}>
-          {badge}
-        </PortalStatusBadge>
+        <PortalStatusBadge status={badge}>{badge}</PortalStatusBadge>
       </div>
       <p className="mt-3 text-sm leading-6 text-slate-500">{meta}</p>
       {href ? (
         <div className="mt-4">
-          <PortalSecondaryLink href={href}>
-            Review record
-          </PortalSecondaryLink>
+          <PortalSecondaryLink href={href}>Review record</PortalSecondaryLink>
         </div>
       ) : null}
     </div>
@@ -317,13 +366,25 @@ export default async function PortalProjectDetailPage({
   params
 }: PortalProjectDetailPageProps) {
   const { projectId } = await params;
-  const [project, appointments, estimates, contracts, invoices, changeOrders] = await Promise.all([
+  const [
+    project,
+    appointments,
+    estimates,
+    contracts,
+    invoices,
+    changeOrders,
+    warrantyDocuments
+  ] = await Promise.all([
     getPortalProjectDetailSummary(projectId, `/portal/projects/${projectId}`),
     listPortalProjectAppointments(projectId, `/portal/projects/${projectId}`),
     listPortalProjectEstimates(projectId, `/portal/projects/${projectId}`),
     listPortalProjectContracts(projectId, `/portal/projects/${projectId}`),
     listPortalProjectInvoices(projectId, `/portal/projects/${projectId}`),
-    listPortalProjectChangeOrders(projectId, `/portal/projects/${projectId}`)
+    listPortalProjectChangeOrders(projectId, `/portal/projects/${projectId}`),
+    listPortalProjectWarrantyDocuments(
+      projectId,
+      `/portal/projects/${projectId}`
+    )
   ]);
 
   if (!project) {
@@ -355,7 +416,10 @@ export default async function PortalProjectDetailPage({
             backHref="/portal"
             backLabel="Back to portal home"
             actions={
-              <PortalStatusBadge status={project.status ?? "neutral"} className="px-4 py-2 text-sm">
+              <PortalStatusBadge
+                status={project.status ?? "neutral"}
+                className="px-4 py-2 text-sm"
+              >
                 {formatStatusLabel(project.status)}
               </PortalStatusBadge>
             }
@@ -369,11 +433,17 @@ export default async function PortalProjectDetailPage({
                 </p>
                 <div className="mt-4 space-y-3">
                   <div className="flex flex-wrap items-center gap-3">
-                    <PortalStatusBadge status={project.status ?? "neutral"} className="px-3.5 py-1.5 text-sm">
+                    <PortalStatusBadge
+                      status={project.status ?? "neutral"}
+                      className="px-3.5 py-1.5 text-sm"
+                    >
                       {formatStatusLabel(project.status)}
                     </PortalStatusBadge>
                     {project.latestInvoiceStatus ? (
-                      <PortalStatusBadge status={project.latestInvoiceStatus} className="px-3.5 py-1.5 text-sm">
+                      <PortalStatusBadge
+                        status={project.latestInvoiceStatus}
+                        className="px-3.5 py-1.5 text-sm"
+                      >
                         {formatStatusLabel(project.latestInvoiceStatus)}
                       </PortalStatusBadge>
                     ) : null}
@@ -381,24 +451,39 @@ export default async function PortalProjectDetailPage({
                   <p className="text-lg font-semibold tracking-tight text-slate-950">
                     {nextAction.title}
                   </p>
-                  <p className="text-sm leading-6 text-slate-600">{nextAction.description}</p>
+                  <p className="text-sm leading-6 text-slate-600">
+                    {nextAction.description}
+                  </p>
                   <div className={portalInsetPanelClassName}>
                     <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
                       Shared steps
                     </p>
                     <div className="mt-2 space-y-1 text-sm leading-6 text-slate-600">
-                      <p>Estimate: {formatStatusLabel(project.latestEstimateStatus)}</p>
-                      <p>Contract: {formatStatusLabel(project.latestContractStatus)}</p>
-                      <p>Invoice: {formatStatusLabel(project.latestInvoiceStatus)}</p>
+                      <p>
+                        Estimate:{" "}
+                        {formatStatusLabel(project.latestEstimateStatus)}
+                      </p>
+                      <p>
+                        Contract:{" "}
+                        {formatStatusLabel(project.latestContractStatus)}
+                      </p>
+                      <p>
+                        Invoice:{" "}
+                        {formatStatusLabel(project.latestInvoiceStatus)}
+                      </p>
                       {project.latestInvoiceStatus ? (
                         <p>
                           Payment:{" "}
                           {getPortalInvoiceSummary({
-                            workflowRole: project.latestInvoiceWorkflowRole ?? "standard",
+                            workflowRole:
+                              project.latestInvoiceWorkflowRole ?? "standard",
                             status: project.latestInvoiceStatus,
-                            balanceDueAmount: project.latestInvoiceBalanceDueAmount ?? "0",
-                            latestPaymentEventType: project.latestInvoicePaymentEventType,
-                            latestPaymentEventAt: project.latestInvoicePaymentEventAt
+                            balanceDueAmount:
+                              project.latestInvoiceBalanceDueAmount ?? "0",
+                            latestPaymentEventType:
+                              project.latestInvoicePaymentEventType,
+                            latestPaymentEventAt:
+                              project.latestInvoicePaymentEventAt
                           })}
                         </p>
                       ) : null}
@@ -448,7 +533,10 @@ export default async function PortalProjectDetailPage({
                 <RecordSummaryCard
                   key={appointment.id}
                   eyebrow="Appointment"
-                  title={appointment.title || formatStatusLabel(appointment.appointmentType)}
+                  title={
+                    appointment.title ||
+                    formatStatusLabel(appointment.appointmentType)
+                  }
                   description={
                     appointment.customerNotes?.trim() ||
                     "Your contractor shared this appointment time for the project."
@@ -477,7 +565,9 @@ export default async function PortalProjectDetailPage({
           <div className="space-y-8">
             <section className="space-y-4">
               <div>
-                <p className="text-sm font-medium text-slate-950">Estimates and proposals</p>
+                <p className="text-sm font-medium text-slate-950">
+                  Estimates and proposals
+                </p>
                 <p className="mt-1 text-sm leading-6 text-slate-600">
                   Proposal and pricing details tied to this project.
                 </p>
@@ -504,6 +594,41 @@ export default async function PortalProjectDetailPage({
                   eyebrow="No estimates"
                   title="No proposal has been shared yet"
                   description="When your contractor publishes estimate information to this project, it will appear here."
+                />
+              )}
+            </section>
+
+            <section className="space-y-4">
+              <div>
+                <p className="text-sm font-medium text-slate-950">
+                  Warranty documents
+                </p>
+                <p className="mt-1 text-sm leading-6 text-slate-600">
+                  Warranty records your contractor has shared for this project.
+                </p>
+              </div>
+              {warrantyDocuments.length > 0 ? (
+                <div className="grid gap-4">
+                  {warrantyDocuments.map((warrantyDocument) => (
+                    <RecordSummaryCard
+                      key={warrantyDocument.id}
+                      eyebrow="Warranty"
+                      title={warrantyDocument.title}
+                      description={
+                        warrantyDocument.warrantyBasis?.trim() ||
+                        "Warranty terms are shared on this project."
+                      }
+                      meta={getPortalWarrantyDocumentSummary(warrantyDocument)}
+                      badge={formatStatusLabel(warrantyDocument.status)}
+                      href={`/portal/warranty-documents/${warrantyDocument.id}`}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <AppEmptyState
+                  eyebrow="No warranties"
+                  title="No warranty document has been shared yet"
+                  description="Issued warranty documents connected to this project will appear here when your contractor shares them."
                 />
               )}
             </section>
@@ -543,7 +668,9 @@ export default async function PortalProjectDetailPage({
 
             <section className="space-y-4">
               <div>
-                <p className="text-sm font-medium text-slate-950">Change orders</p>
+                <p className="text-sm font-medium text-slate-950">
+                  Change orders
+                </p>
                 <p className="mt-1 text-sm leading-6 text-slate-600">
                   Approved or pending scope adjustments for this project.
                 </p>
@@ -560,7 +687,9 @@ export default async function PortalProjectDetailPage({
                         changeOrder.description?.trim() ||
                         "Scope adjustment shared on this project."
                       }
-                      meta={`${Number(changeOrder.priceAdjustment).toLocaleString("en-US", {
+                      meta={`${Number(
+                        changeOrder.priceAdjustment
+                      ).toLocaleString("en-US", {
                         style: "currency",
                         currency: "USD"
                       })} | Updated ${formatDateTime(changeOrder.updatedAt)}`}
@@ -582,7 +711,8 @@ export default async function PortalProjectDetailPage({
               <div>
                 <p className="text-sm font-medium text-slate-950">Invoices</p>
                 <p className="mt-1 text-sm leading-6 text-slate-600">
-                  Invoice visibility stays project-centered so billing remains easy to follow.
+                  Invoice visibility stays project-centered so billing remains
+                  easy to follow.
                 </p>
               </div>
               {invoices.length > 0 ? (
@@ -590,7 +720,11 @@ export default async function PortalProjectDetailPage({
                   {invoices.map((invoice) => (
                     <RecordSummaryCard
                       key={invoice.id}
-                      eyebrow={invoice.workflowRole === "deposit" ? "Deposit invoice" : "Invoice"}
+                      eyebrow={
+                        invoice.workflowRole === "deposit"
+                          ? "Deposit invoice"
+                          : "Invoice"
+                      }
                       title={invoice.referenceNumber}
                       description={`Total ${formatMoney(invoice.totalAmount)} with ${formatMoney(invoice.balanceDueAmount)} currently due.`}
                       meta={`${getPortalInvoiceSummary(invoice)} | Issued ${formatDate(invoice.issueDate)} | Due ${formatDate(invoice.dueDate)}`}
@@ -620,7 +754,10 @@ export default async function PortalProjectDetailPage({
             items={[
               {
                 label: "Customer",
-                value: project.customer?.companyName ?? project.customer?.name ?? "Not provided"
+                value:
+                  project.customer?.companyName ??
+                  project.customer?.name ??
+                  "Not provided"
               },
               {
                 label: "Contact email",
@@ -643,7 +780,9 @@ export default async function PortalProjectDetailPage({
               },
               {
                 label: "Project description",
-                value: project.description ?? "No additional project description is shared yet."
+                value:
+                  project.description ??
+                  "No additional project description is shared yet."
               },
               {
                 label: "Updated",
@@ -659,7 +798,8 @@ export default async function PortalProjectDetailPage({
         >
           <div className="space-y-3 text-sm leading-6 text-slate-600">
             <p>
-              Contract signing and invoice payment progress update this project, so the next shared step changes here as work moves forward.
+              Contract signing and invoice payment progress update this project,
+              so the next shared step changes here as work moves forward.
             </p>
             <PortalSecondaryLink href="/portal">
               Return to portal home

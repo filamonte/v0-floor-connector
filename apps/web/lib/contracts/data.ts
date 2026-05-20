@@ -11,6 +11,10 @@ import {
   compareContractStatuses
 } from "@floorconnector/domain";
 import { STORAGE_BUCKET_NAMES } from "@floorconnector/config";
+import {
+  isPostmarkEmailConfigured,
+  sendPostmarkEmail
+} from "@floorconnector/integrations";
 import type {
   Contract as ContractRecord,
   ContractInternalApprovalStatus,
@@ -22,6 +26,8 @@ import type {
   ContractSignerRole,
   ContractSignerStatus,
   ContractStatus,
+  DocumentDeliveryChannel,
+  DocumentDeliveryEventType,
   DocumentTemplate,
   PortalAccessGrant,
   SignatureReadinessStatus
@@ -36,6 +42,8 @@ import type {
   UpdateContractDraftInput
 } from "./schemas";
 import { requireAuthenticatedUser } from "@/lib/auth/session";
+import { getAppOrigin } from "@/lib/auth/urls";
+import { buildContractPortalEmailContent } from "./email";
 import {
   buildContractRenderedHtml,
   type ContractEstimateSnapshotItemRenderInput,
@@ -52,8 +60,14 @@ import {
   resolvePortalScopedPermissionForCurrentUser,
   resolvePortalScopedPermissionForGrantRecord
 } from "@/lib/portal-access/data";
-import { recordContractNotificationEvent } from "@/lib/notifications/system";
-import { createRecordRevision, ensureInitialRecordRevision } from "@/lib/revisions/data";
+import {
+  createNotificationEvent,
+  recordContractNotificationEvent
+} from "@/lib/notifications/system";
+import {
+  createRecordRevision,
+  ensureInitialRecordRevision
+} from "@/lib/revisions/data";
 import { buildContractRevisionSnapshot } from "@/lib/revisions/snapshots";
 import { syncProjectCommercialReadiness } from "@/lib/projects/readiness";
 import { getSupabaseAdminClient } from "@/lib/supabase/admin";
@@ -98,36 +112,28 @@ type ContractRow = {
   updated_by: string | null;
   created_at: string;
   updated_at: string;
-  customers?:
-    | {
-        id: string;
-        name: string;
-        company_name: string | null;
-        phone: string | null;
-        email: string | null;
-      }
-    | null;
-  projects?:
-    | {
-        id: string;
-        name: string;
-        status: string;
-      }
-    | null;
-  estimates?:
-    | {
-        id: string;
-        reference_number: string;
-        status: string;
-      }
-    | null;
-  document_templates?:
-    | {
-        id: string;
-        name: string;
-        template_type: string;
-      }
-    | null;
+  customers?: {
+    id: string;
+    name: string;
+    company_name: string | null;
+    phone: string | null;
+    email: string | null;
+  } | null;
+  projects?: {
+    id: string;
+    name: string;
+    status: string;
+  } | null;
+  estimates?: {
+    id: string;
+    reference_number: string;
+    status: string;
+  } | null;
+  document_templates?: {
+    id: string;
+    name: string;
+    template_type: string;
+  } | null;
 };
 
 type ContractRevisionRow = {
@@ -258,6 +264,11 @@ type ContractScope = {
   organizationId: string;
 };
 
+export type ContractProviderEmailSendResult = {
+  contract: ContractRecord;
+  message: string;
+};
+
 type SnapshotNumericValue = string | number;
 
 type EstimateCommercialSnapshotRow = {
@@ -366,9 +377,10 @@ export type ContractSignatureParticipantOption = {
   isPrimaryContact?: boolean;
 };
 
-export type ContractContractorSignerOption = ContractSignatureParticipantOption & {
-  membershipRole: string;
-};
+export type ContractContractorSignerOption =
+  ContractSignatureParticipantOption & {
+    membershipRole: string;
+  };
 
 export type ContractSignatureActionOptions = {
   contractId: string;
@@ -455,31 +467,42 @@ function isContractRow(value: unknown): value is ContractRow {
     typeof row.reference_number === "string" &&
     typeof row.status === "string" &&
     typeof row.title === "string" &&
-    (row.rendered_subject === null || typeof row.rendered_subject === "string") &&
+    (row.rendered_subject === null ||
+      typeof row.rendered_subject === "string") &&
     typeof row.rendered_content === "string" &&
     (row.generated_from_estimate_reference === null ||
       typeof row.generated_from_estimate_reference === "string") &&
     (row.sent_pdf_storage_path === null ||
       typeof row.sent_pdf_storage_path === "string") &&
-    (row.sent_pdf_file_name === null || typeof row.sent_pdf_file_name === "string") &&
-    (row.sent_pdf_mime_type === null || typeof row.sent_pdf_mime_type === "string") &&
+    (row.sent_pdf_file_name === null ||
+      typeof row.sent_pdf_file_name === "string") &&
+    (row.sent_pdf_mime_type === null ||
+      typeof row.sent_pdf_mime_type === "string") &&
     (row.sent_pdf_generated_at === null ||
       typeof row.sent_pdf_generated_at === "string") &&
-    (row.signature_provider === null || typeof row.signature_provider === "string") &&
+    (row.signature_provider === null ||
+      typeof row.signature_provider === "string") &&
     (row.signature_provider_reference === null ||
       typeof row.signature_provider_reference === "string") &&
-    (row.signature_started_at === null || typeof row.signature_started_at === "string") &&
-    (row.customer_viewed_at === null || typeof row.customer_viewed_at === "string") &&
-    (row.customer_signed_at === null || typeof row.customer_signed_at === "string") &&
+    (row.signature_started_at === null ||
+      typeof row.signature_started_at === "string") &&
+    (row.customer_viewed_at === null ||
+      typeof row.customer_viewed_at === "string") &&
+    (row.customer_signed_at === null ||
+      typeof row.customer_signed_at === "string") &&
     (row.contractor_countersigned_at === null ||
       typeof row.contractor_countersigned_at === "string") &&
-    (row.signature_declined_at === null || typeof row.signature_declined_at === "string") &&
-    (row.signature_voided_at === null || typeof row.signature_voided_at === "string") &&
+    (row.signature_declined_at === null ||
+      typeof row.signature_declined_at === "string") &&
+    (row.signature_voided_at === null ||
+      typeof row.signature_voided_at === "string") &&
     typeof row.internal_approval_status === "string" &&
-    (row.internal_approved_at === null || typeof row.internal_approved_at === "string") &&
+    (row.internal_approved_at === null ||
+      typeof row.internal_approved_at === "string") &&
     typeof row.signature_readiness_status === "string" &&
     (row.locked_at === null || typeof row.locked_at === "string") &&
-    (row.edit_lock_reason === null || typeof row.edit_lock_reason === "string") &&
+    (row.edit_lock_reason === null ||
+      typeof row.edit_lock_reason === "string") &&
     (row.sent_at === null || typeof row.sent_at === "string") &&
     (row.viewed_at === null || typeof row.viewed_at === "string") &&
     (row.signed_at === null || typeof row.signed_at === "string") &&
@@ -507,15 +530,20 @@ function isContractRevisionRow(value: unknown): value is ContractRevisionRow {
     typeof row.contract_id === "string" &&
     typeof row.revision_number === "number" &&
     typeof row.title === "string" &&
-    (row.rendered_subject === null || typeof row.rendered_subject === "string") &&
+    (row.rendered_subject === null ||
+      typeof row.rendered_subject === "string") &&
     typeof row.rendered_content === "string" &&
     (row.edit_summary === null || typeof row.edit_summary === "string") &&
     typeof row.created_at === "string"
   );
 }
 
-function isContractRevisionRowArray(value: unknown): value is ContractRevisionRow[] {
-  return Array.isArray(value) && value.every((row) => isContractRevisionRow(row));
+function isContractRevisionRowArray(
+  value: unknown
+): value is ContractRevisionRow[] {
+  return (
+    Array.isArray(value) && value.every((row) => isContractRevisionRow(row))
+  );
 }
 
 function isContractSignerRow(value: unknown): value is ContractSignerRow {
@@ -533,7 +561,8 @@ function isContractSignerRow(value: unknown): value is ContractSignerRow {
     typeof row.signer_status === "string" &&
     (row.customer_id === null || typeof row.customer_id === "string") &&
     (row.portal_user_id === null || typeof row.portal_user_id === "string") &&
-    (row.organization_user_id === null || typeof row.organization_user_id === "string") &&
+    (row.organization_user_id === null ||
+      typeof row.organization_user_id === "string") &&
     typeof row.display_name === "string" &&
     typeof row.email === "string" &&
     typeof row.signer_order === "number" &&
@@ -546,11 +575,15 @@ function isContractSignerRow(value: unknown): value is ContractSignerRow {
   );
 }
 
-function isContractSignerRowArray(value: unknown): value is ContractSignerRow[] {
+function isContractSignerRowArray(
+  value: unknown
+): value is ContractSignerRow[] {
   return Array.isArray(value) && value.every((row) => isContractSignerRow(row));
 }
 
-function isContractSignatureEventRow(value: unknown): value is ContractSignatureEventRow {
+function isContractSignatureEventRow(
+  value: unknown
+): value is ContractSignatureEventRow {
   if (!value || typeof value !== "object") {
     return false;
   }
@@ -561,12 +594,14 @@ function isContractSignatureEventRow(value: unknown): value is ContractSignature
     typeof row.id === "string" &&
     typeof row.company_id === "string" &&
     typeof row.contract_id === "string" &&
-    (row.contract_signer_id === null || typeof row.contract_signer_id === "string") &&
+    (row.contract_signer_id === null ||
+      typeof row.contract_signer_id === "string") &&
     typeof row.event_type === "string" &&
     typeof row.actor_type === "string" &&
     (row.actor_user_id === null || typeof row.actor_user_id === "string") &&
     (row.portal_user_id === null || typeof row.portal_user_id === "string") &&
-    (row.provider_event_id === null || typeof row.provider_event_id === "string") &&
+    (row.provider_event_id === null ||
+      typeof row.provider_event_id === "string") &&
     (row.payload === null ||
       (typeof row.payload === "object" && !Array.isArray(row.payload))) &&
     typeof row.occurred_at === "string" &&
@@ -577,7 +612,10 @@ function isContractSignatureEventRow(value: unknown): value is ContractSignature
 function isContractSignatureEventRowArray(
   value: unknown
 ): value is ContractSignatureEventRow[] {
-  return Array.isArray(value) && value.every((row) => isContractSignatureEventRow(row));
+  return (
+    Array.isArray(value) &&
+    value.every((row) => isContractSignatureEventRow(row))
+  );
 }
 
 function isContractPortalSignerGrantRow(
@@ -591,7 +629,8 @@ function isContractPortalSignerGrantRow(
 
   return (
     typeof row.id === "string" &&
-    (row.customer_contact_id === null || typeof row.customer_contact_id === "string") &&
+    (row.customer_contact_id === null ||
+      typeof row.customer_contact_id === "string") &&
     typeof row.user_id === "string" &&
     typeof row.status === "string"
   );
@@ -600,7 +639,10 @@ function isContractPortalSignerGrantRow(
 function isContractPortalSignerGrantRowArray(
   value: unknown
 ): value is ContractPortalSignerGrantRow[] {
-  return Array.isArray(value) && value.every((row) => isContractPortalSignerGrantRow(row));
+  return (
+    Array.isArray(value) &&
+    value.every((row) => isContractPortalSignerGrantRow(row))
+  );
 }
 
 function getPortalUserFromGrant(grant: ContractPortalSignerGrantRow) {
@@ -648,7 +690,10 @@ function isContractPortalProjectAccessRow(
 function isContractPortalProjectAccessRowArray(
   value: unknown
 ): value is ContractPortalProjectAccessRow[] {
-  return Array.isArray(value) && value.every((row) => isContractPortalProjectAccessRow(row));
+  return (
+    Array.isArray(value) &&
+    value.every((row) => isContractPortalProjectAccessRow(row))
+  );
 }
 
 function isSnapshotNumericValue(value: unknown): value is SnapshotNumericValue {
@@ -682,12 +727,14 @@ function isEstimateCommercialSnapshotRow(
     isSnapshotNumericValue(row.tax_amount) &&
     isSnapshotNumericValue(row.discount_amount) &&
     isSnapshotNumericValue(row.total_amount) &&
-    (row.scope_summary_html === null || typeof row.scope_summary_html === "string") &&
+    (row.scope_summary_html === null ||
+      typeof row.scope_summary_html === "string") &&
     (row.inclusions_html === null || typeof row.inclusions_html === "string") &&
     (row.exclusions_html === null || typeof row.exclusions_html === "string") &&
     (row.terms_html === null || typeof row.terms_html === "string") &&
     (row.content_snapshot === null ||
-      (typeof row.content_snapshot === "object" && !Array.isArray(row.content_snapshot))) &&
+      (typeof row.content_snapshot === "object" &&
+        !Array.isArray(row.content_snapshot))) &&
     typeof row.customer_name_snapshot === "string" &&
     (row.customer_company_name_snapshot === null ||
       typeof row.customer_company_name_snapshot === "string") &&
@@ -711,7 +758,8 @@ function isEstimateCommercialSnapshotRow(
       typeof row.service_address_line_1_snapshot === "string") &&
     (row.service_address_line_2_snapshot === null ||
       typeof row.service_address_line_2_snapshot === "string") &&
-    (row.service_city_snapshot === null || typeof row.service_city_snapshot === "string") &&
+    (row.service_city_snapshot === null ||
+      typeof row.service_city_snapshot === "string") &&
     (row.service_state_region_snapshot === null ||
       typeof row.service_state_region_snapshot === "string") &&
     (row.service_postal_code_snapshot === null ||
@@ -749,7 +797,10 @@ function isEstimateCommercialSnapshotItemRow(
 function isEstimateCommercialSnapshotItemRowArray(
   value: unknown
 ): value is EstimateCommercialSnapshotItemRow[] {
-  return Array.isArray(value) && value.every((row) => isEstimateCommercialSnapshotItemRow(row));
+  return (
+    Array.isArray(value) &&
+    value.every((row) => isEstimateCommercialSnapshotItemRow(row))
+  );
 }
 
 async function getLatestApprovedEstimateCommercialSnapshotForContract(
@@ -863,8 +914,10 @@ async function getLatestApprovedEstimateCommercialSnapshotForContract(
       customerCompanyNameSnapshot: snapshotData.customer_company_name_snapshot,
       customerEmailSnapshot: snapshotData.customer_email_snapshot,
       customerPhoneSnapshot: snapshotData.customer_phone_snapshot,
-      customerAddressLine1Snapshot: snapshotData.customer_address_line_1_snapshot,
-      customerAddressLine2Snapshot: snapshotData.customer_address_line_2_snapshot,
+      customerAddressLine1Snapshot:
+        snapshotData.customer_address_line_1_snapshot,
+      customerAddressLine2Snapshot:
+        snapshotData.customer_address_line_2_snapshot,
       customerCitySnapshot: snapshotData.customer_city_snapshot,
       customerStateRegionSnapshot: snapshotData.customer_state_region_snapshot,
       customerPostalCodeSnapshot: snapshotData.customer_postal_code_snapshot,
@@ -876,8 +929,12 @@ async function getLatestApprovedEstimateCommercialSnapshotForContract(
       servicePostalCodeSnapshot: snapshotData.service_postal_code_snapshot,
       serviceCountryCodeSnapshot: snapshotData.service_country_code_snapshot,
       subtotalAmount: snapshotNumericToString(snapshotData.subtotal_amount),
-      taxableSalesAmount: snapshotNumericToString(snapshotData.taxable_sales_amount),
-      exemptSalesAmount: snapshotNumericToString(snapshotData.exempt_sales_amount),
+      taxableSalesAmount: snapshotNumericToString(
+        snapshotData.taxable_sales_amount
+      ),
+      exemptSalesAmount: snapshotNumericToString(
+        snapshotData.exempt_sales_amount
+      ),
       taxAmount: snapshotNumericToString(snapshotData.tax_amount),
       discountAmount: snapshotNumericToString(snapshotData.discount_amount),
       totalAmount: snapshotNumericToString(snapshotData.total_amount),
@@ -1054,11 +1111,16 @@ function isContractEditable(contract: ContractRecord) {
   );
 }
 
-function getParticipantDisplayName(input: { fullName?: string | null; email: string }) {
+function getParticipantDisplayName(input: {
+  fullName?: string | null;
+  email: string;
+}) {
   return input.fullName?.trim() || input.email;
 }
 
-async function getContractScope(next = "/contracts"): Promise<ContractScope | null> {
+async function getContractScope(
+  next = "/contracts"
+): Promise<ContractScope | null> {
   const user = await requireAuthenticatedUser(next);
   const organizationContext = await getActiveOrganizationContext(user.id);
 
@@ -1097,7 +1159,10 @@ async function createContractRecordRevision(input: {
   ensureInitial?: boolean;
   next?: string;
 }) {
-  const contract = await getContractById(input.contractId, input.next ?? `/contracts/${input.contractId}`);
+  const contract = await getContractById(
+    input.contractId,
+    input.next ?? `/contracts/${input.contractId}`
+  );
 
   if (!contract) {
     return null;
@@ -1113,7 +1178,9 @@ async function createContractRecordRevision(input: {
     createdByUserId: input.createdByUserId
   };
 
-  return input.ensureInitial ? ensureInitialRecordRevision(payload) : createRecordRevision(payload);
+  return input.ensureInitial
+    ? ensureInitialRecordRevision(payload)
+    : createRecordRevision(payload);
 }
 
 async function getContractRecordById(
@@ -1136,7 +1203,9 @@ async function getContractRecordById(
   return isContractRow(data) ? data : null;
 }
 
-async function getContractRecordByIdInCurrentScope(contractId: string): Promise<ContractRow | null> {
+async function getContractRecordByIdInCurrentScope(
+  contractId: string
+): Promise<ContractRow | null> {
   const supabase = await getSupabaseServerClient();
   const response = await supabase
     .from("contracts")
@@ -1150,6 +1219,127 @@ async function getContractRecordByIdInCurrentScope(contractId: string): Promise<
   }
 
   return isContractRow(data) ? data : null;
+}
+
+function getNotificationDeliveryErrorMessage(error: unknown) {
+  return error instanceof Error ? error.message : "Unknown delivery error.";
+}
+
+async function createContractNotificationDelivery(input: {
+  organizationId: string;
+  notificationEventId: string;
+  recipientEmail: string;
+  recipientUserId: string | null;
+  payload: Record<string, unknown>;
+}) {
+  const admin = getSupabaseAdminClient();
+  const response = await admin
+    .from("notification_deliveries")
+    .insert({
+      company_id: input.organizationId,
+      notification_event_id: input.notificationEventId,
+      channel: "email",
+      provider: "postmark",
+      status: "pending",
+      recipient_user_id: input.recipientUserId,
+      recipient_email: input.recipientEmail,
+      payload: input.payload
+    })
+    .select("id")
+    .single();
+  const data = response.data as { id?: string } | null;
+
+  if (response.error || !data?.id) {
+    throw new Error(
+      `Unable to create contract notification delivery: ${response.error?.message ?? "Insert failed."}`
+    );
+  }
+
+  return data.id;
+}
+
+async function markContractNotificationDeliverySent(input: {
+  deliveryId: string;
+  providerMessageId: string;
+  sentAt: string | null;
+}) {
+  const admin = getSupabaseAdminClient();
+  const response = await admin
+    .from("notification_deliveries")
+    .update({
+      provider_message_id: input.providerMessageId,
+      status: "sent",
+      sent_at: input.sentAt ?? new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    })
+    .eq("id", input.deliveryId);
+
+  if (response.error) {
+    throw new Error(
+      `Unable to mark contract notification delivery sent: ${response.error.message}`
+    );
+  }
+}
+
+async function markContractNotificationDeliveryFailed(input: {
+  deliveryId: string;
+  errorMessage: string;
+}) {
+  const admin = getSupabaseAdminClient();
+  const response = await admin
+    .from("notification_deliveries")
+    .update({
+      status: "failed",
+      error_message: input.errorMessage,
+      failed_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    })
+    .eq("id", input.deliveryId);
+
+  if (response.error) {
+    throw new Error(
+      `Unable to mark contract notification delivery failed: ${response.error.message}`
+    );
+  }
+}
+
+async function insertContractDeliveryEvent(input: {
+  scope: ContractScope;
+  contractId: string;
+  eventType: DocumentDeliveryEventType;
+  recipientName: string | null;
+  recipientEmail: string | null;
+  recipientRole: string | null;
+  channel: DocumentDeliveryChannel;
+  provider?: string | null;
+  providerMessageId?: string | null;
+  relatedNotificationEventId?: string | null;
+  eventNote?: string | null;
+  metadata?: Record<string, unknown>;
+}) {
+  const supabase = await getSupabaseServerClient();
+  const response = await supabase.from("document_delivery_events").insert({
+    company_id: input.scope.organizationId,
+    subject_type: "contract",
+    subject_id: input.contractId,
+    event_type: input.eventType,
+    recipient_name: input.recipientName,
+    recipient_email: input.recipientEmail,
+    recipient_role: input.recipientRole,
+    channel: input.channel,
+    provider: input.provider ?? null,
+    provider_message_id: input.providerMessageId ?? null,
+    related_notification_event_id: input.relatedNotificationEventId ?? null,
+    event_note: input.eventNote ?? null,
+    metadata: input.metadata ?? {},
+    created_by: input.scope.userId
+  });
+
+  if (response.error) {
+    throw new Error(
+      `Unable to record contract delivery evidence: ${response.error.message}`
+    );
+  }
 }
 
 async function listContractRevisions(
@@ -1178,7 +1368,9 @@ async function listContractRevisions(
   const data: unknown = response.data;
 
   if (response.error) {
-    throw new Error(`Unable to load contract revisions: ${response.error.message}`);
+    throw new Error(
+      `Unable to load contract revisions: ${response.error.message}`
+    );
   }
 
   if (!isContractRevisionRowArray(data)) {
@@ -1223,7 +1415,9 @@ async function listContractSigners(
   const data: unknown = response.data;
 
   if (response.error) {
-    throw new Error(`Unable to load contract signers: ${response.error.message}`);
+    throw new Error(
+      `Unable to load contract signers: ${response.error.message}`
+    );
   }
 
   if (!isContractSignerRowArray(data)) {
@@ -1309,7 +1503,9 @@ async function listContractSignerRowsAdmin(
   const data: unknown = response.data;
 
   if (response.error) {
-    throw new Error(`Unable to load contract signers: ${response.error.message}`);
+    throw new Error(
+      `Unable to load contract signers: ${response.error.message}`
+    );
   }
 
   if (!isContractSignerRowArray(data)) {
@@ -1340,7 +1536,9 @@ async function ensureActiveOrganizationUser(
   }
 
   if (!data?.user_id) {
-    throw new Error("Contractor signer must be an active member of this organization.");
+    throw new Error(
+      "Contractor signer must be an active member of this organization."
+    );
   }
 }
 
@@ -1372,24 +1570,24 @@ async function ensureActivePortalAccessGrant(
     .eq("user_id", portalUserId)
     .eq("status", "active")
     .maybeSingle();
-  const data = response.data as
-    | {
-        id?: string;
-        company_id?: string;
-        customer_id?: string;
-        user_id?: string;
-        status?: PortalAccessGrant["status"];
-        invited_email?: string | null;
-        invited_by?: string | null;
-        activated_at?: string | null;
-        revoked_at?: string | null;
-        created_at?: string;
-        updated_at?: string;
-      }
-    | null;
+  const data = response.data as {
+    id?: string;
+    company_id?: string;
+    customer_id?: string;
+    user_id?: string;
+    status?: PortalAccessGrant["status"];
+    invited_email?: string | null;
+    invited_by?: string | null;
+    activated_at?: string | null;
+    revoked_at?: string | null;
+    created_at?: string;
+    updated_at?: string;
+  } | null;
 
   if (response.error) {
-    throw new Error(`Unable to validate portal signer access: ${response.error.message}`);
+    throw new Error(
+      `Unable to validate portal signer access: ${response.error.message}`
+    );
   }
 
   if (
@@ -1449,19 +1647,15 @@ async function deriveDefaultCustomerSigner(
     .eq("customer_id", contract.customer_id)
     .eq("status", "active");
   const rows =
-    (response.data as
-      | Array<{
-          user_id?: string;
-          invited_email?: string | null;
-          portal_user?:
-            | {
-                id?: string;
-                email?: string;
-                full_name?: string | null;
-              }
-            | null;
-        }>
-      | null) ?? [];
+    (response.data as Array<{
+      user_id?: string;
+      invited_email?: string | null;
+      portal_user?: {
+        id?: string;
+        email?: string;
+        full_name?: string | null;
+      } | null;
+    }> | null) ?? [];
 
   if (response.error) {
     throw new Error(
@@ -1504,7 +1698,9 @@ async function validateAndNormalizeSendSigners(
   actingUserId: string
 ): Promise<ContractSignerInput[]> {
   const signers =
-    inputSigners.length > 0 ? [...inputSigners] : await deriveDefaultCustomerSigner(contract);
+    inputSigners.length > 0
+      ? [...inputSigners]
+      : await deriveDefaultCustomerSigner(contract);
   const normalized: ContractSignerInput[] = [];
 
   for (const signer of signers) {
@@ -1539,7 +1735,10 @@ async function validateAndNormalizeSendSigners(
   return normalized.sort((left, right) => left.signerOrder - right.signerOrder);
 }
 
-function buildContractSignatureSummary(contract: ContractRow, signers: ContractSignerRow[]) {
+function buildContractSignatureSummary(
+  contract: ContractRow,
+  signers: ContractSignerRow[]
+) {
   return computeContractSignatureWorkflowSummary({
     status: contract.status,
     signatureReadinessStatus: contract.signature_readiness_status,
@@ -1577,26 +1776,27 @@ function buildContractStateFromSigners(input: {
     sent_at: input.contract.sent_at ?? input.nowIso,
     viewed_at:
       summary.anyCustomerInteraction || summary.isDeclined
-        ? input.contract.viewed_at ?? input.nowIso
+        ? (input.contract.viewed_at ?? input.nowIso)
         : input.contract.viewed_at,
     customer_viewed_at:
       summary.anyCustomerInteraction || summary.isDeclined
-        ? input.contract.customer_viewed_at ?? input.nowIso
+        ? (input.contract.customer_viewed_at ?? input.nowIso)
         : input.contract.customer_viewed_at,
     customer_signed_at: summary.allCustomerSignersSigned
-      ? input.contract.customer_signed_at ?? input.nowIso
+      ? (input.contract.customer_signed_at ?? input.nowIso)
       : input.contract.customer_signed_at,
     contractor_countersigned_at:
       summary.requiresCountersign && summary.allRequiredSignersSigned
-        ? input.contract.contractor_countersigned_at ?? input.nowIso
+        ? (input.contract.contractor_countersigned_at ?? input.nowIso)
         : input.contract.contractor_countersigned_at,
     signature_declined_at: summary.isDeclined
-      ? input.contract.signature_declined_at ?? input.nowIso
+      ? (input.contract.signature_declined_at ?? input.nowIso)
       : null,
-    signed_at: isComplete ? input.contract.signed_at ?? input.nowIso : null,
+    signed_at: isComplete ? (input.contract.signed_at ?? input.nowIso) : null,
     signature_readiness_status: isComplete ? "signed" : "out_for_signature",
     locked_at: input.contract.locked_at ?? input.nowIso,
-    edit_lock_reason: input.contract.edit_lock_reason ?? "signature_activity_started",
+    edit_lock_reason:
+      input.contract.edit_lock_reason ?? "signature_activity_started",
     updated_by: input.actorUserId
   };
 }
@@ -1638,15 +1838,19 @@ async function getScopedPortalContract(
   next: string
 ): Promise<ContractPortalScope> {
   const user = await requireAuthenticatedUser(next);
-  const activeGrants = (await listPortalAccessGrantsForCurrentUser(next)).filter(
-    (grant) => grant.status === "active"
-  );
+  const activeGrants = (
+    await listPortalAccessGrantsForCurrentUser(next)
+  ).filter((grant) => grant.status === "active");
 
   if (activeGrants.length === 0) {
-    throw new Error("No active portal access is available for this signature action.");
+    throw new Error(
+      "No active portal access is available for this signature action."
+    );
   }
 
-  const accessibleCustomerIds = new Set(activeGrants.map((grant) => grant.customerId));
+  const accessibleCustomerIds = new Set(
+    activeGrants.map((grant) => grant.customerId)
+  );
   const supabase = await getSupabaseServerClient();
   const projectAccessResponse = await supabase
     .from("portal_project_access")
@@ -1680,7 +1884,9 @@ async function getScopedPortalContract(
     !accessibleProjectIds.has(contract.project_id) ||
     !accessibleCustomerIds.has(contract.customer_id)
   ) {
-    throw new Error("This contract is not available in the current portal scope.");
+    throw new Error(
+      "This contract is not available in the current portal scope."
+    );
   }
 
   return {
@@ -1714,16 +1920,15 @@ export const listContracts = cache(async (): Promise<ContractListItem[]> => {
     }))
   );
 
-  return contracts
-    .sort((left, right) => {
-      const statusComparison = compareContractStatuses(left.status, right.status);
+  return contracts.sort((left, right) => {
+    const statusComparison = compareContractStatuses(left.status, right.status);
 
-      if (statusComparison !== 0) {
-        return statusComparison;
-      }
+    if (statusComparison !== 0) {
+      return statusComparison;
+    }
 
-      return right.updatedAt.localeCompare(left.updatedAt);
-    });
+    return right.updatedAt.localeCompare(left.updatedAt);
+  });
 });
 
 export async function getContractById(
@@ -1759,16 +1964,19 @@ export async function getContractById(
     revisions,
     signers,
     signatureEvents,
-      isEditable: isContractEditable(mapContract(contract))
-    };
-  }
+    isEditable: isContractEditable(mapContract(contract))
+  };
+}
 
 export async function getContractSignatureActionOptions(
   contractId: string,
   next = "/contracts"
 ): Promise<ContractSignatureActionOptions | null> {
   const scope = await requireContractScope(next);
-  const contract = await getContractRecordById(scope.organizationId, contractId);
+  const contract = await getContractRecordById(
+    scope.organizationId,
+    contractId
+  );
 
   if (!contract) {
     return null;
@@ -1813,18 +2021,24 @@ export async function getContractSignatureActionOptions(
   }
 
   const contractorSignerOptions = organizationMembers
-    .filter((member) => member.membership_status === "active" && member.users?.email)
+    .filter(
+      (member) => member.membership_status === "active" && member.users?.email
+    )
     .map((member) => ({
       userId: member.user_id,
       displayName: getParticipantDisplayName({
         fullName: member.users?.full_name,
-        email: member.users?.email ?? member.invitation_email ?? "Unknown member"
+        email:
+          member.users?.email ?? member.invitation_email ?? "Unknown member"
       }),
       email: member.users?.email ?? member.invitation_email ?? "Unknown member",
       membershipRole: member.membership_role
     }));
 
-  if (!isContractPortalSignerGrantRowArray(portalGrantData) || portalGrantData.length === 0) {
+  if (
+    !isContractPortalSignerGrantRowArray(portalGrantData) ||
+    portalGrantData.length === 0
+  ) {
     return {
       contractId: contract.id,
       customerId: contract.customer_id,
@@ -1863,7 +2077,9 @@ export async function getContractSignatureActionOptions(
         .map(async (grant) => {
           const portalUser = getPortalUserFromGrant(grant);
           const customerContact = getCustomerContactFromGrant(grant);
-          const contact = customerContact ? getContactFromCustomerContact(customerContact) : null;
+          const contact = customerContact
+            ? getContactFromCustomerContact(customerContact)
+            : null;
 
           if (!portalUser?.id || !portalUser.email) {
             return null;
@@ -1895,9 +2111,7 @@ export async function getContractSignatureActionOptions(
           } satisfies ContractSignatureParticipantOption;
         })
     )
-  ).filter(
-    (option): option is Exclude<typeof option, null> => option !== null
-  );
+  ).filter((option): option is Exclude<typeof option, null> => option !== null);
 
   return {
     contractId: contract.id,
@@ -1914,7 +2128,10 @@ export const listApprovedEstimatesForContracts = cache(async () => {
 });
 
 async function resolveApprovedEstimateForContract(estimateId: string) {
-  const estimate = await getEstimateById(estimateId, `/contracts?estimateId=${estimateId}`);
+  const estimate = await getEstimateById(
+    estimateId,
+    `/contracts?estimateId=${estimateId}`
+  );
 
   if (!estimate) {
     throw new Error("Estimate not found for this organization.");
@@ -1925,7 +2142,9 @@ async function resolveApprovedEstimateForContract(estimateId: string) {
   }
 
   if (!estimate.project || !estimate.customer) {
-    throw new Error("Approved estimate is missing connected project or customer context.");
+    throw new Error(
+      "Approved estimate is missing connected project or customer context."
+    );
   }
 
   return estimate;
@@ -1936,13 +2155,18 @@ export async function createContractFromEstimate(
 ) {
   const scope = await requireContractScope("/contracts");
   const estimate = await resolveApprovedEstimateForContract(input.estimateId);
-  const snapshotBundle = await getLatestApprovedEstimateCommercialSnapshotForContract(
-    scope.organizationId,
-    input.estimateId
+  const snapshotBundle =
+    await getLatestApprovedEstimateCommercialSnapshotForContract(
+      scope.organizationId,
+      input.estimateId
+    );
+  const workflowSettings = await getOrganizationWorkflowSettings(
+    scope.organizationId
   );
-  const workflowSettings = await getOrganizationWorkflowSettings(scope.organizationId);
   const preferredTemplateId =
-    input.templateId ?? workflowSettings.approvedEstimateContractTemplateId ?? null;
+    input.templateId ??
+    workflowSettings.approvedEstimateContractTemplateId ??
+    null;
   const templateContext = await prepareContractTemplateContextFromEstimate({
     estimateId: input.estimateId,
     templateId: preferredTemplateId,
@@ -1962,7 +2186,9 @@ export async function createContractFromEstimate(
       title:
         templateContext.renderedSubject ??
         `Contract for ${
-          snapshotBundle.snapshot.projectNameSnapshot || estimate.project?.name || estimate.referenceNumber
+          snapshotBundle.snapshot.projectNameSnapshot ||
+          estimate.project?.name ||
+          estimate.referenceNumber
         }`,
       rendered_subject: templateContext.renderedSubject,
       rendered_content: buildContractRenderedHtml({
@@ -1973,10 +2199,12 @@ export async function createContractFromEstimate(
       internal_approval_status: workflowSettings.requireContractInternalApproval
         ? "pending"
         : "not_required",
-      signature_readiness_status: workflowSettings.requireContractInternalApproval
-        ? "draft"
-        : "ready_to_send",
-      generated_from_estimate_reference: snapshotBundle.snapshot.estimateReferenceNumber,
+      signature_readiness_status:
+        workflowSettings.requireContractInternalApproval
+          ? "draft"
+          : "ready_to_send",
+      generated_from_estimate_reference:
+        snapshotBundle.snapshot.estimateReferenceNumber,
       created_by: scope.userId,
       updated_by: scope.userId
     })
@@ -1984,13 +2212,20 @@ export async function createContractFromEstimate(
     .single();
   const data: unknown = response.data;
 
-  if (response.error || !data || typeof (data as { id?: unknown }).id !== "string") {
+  if (
+    response.error ||
+    !data ||
+    typeof (data as { id?: unknown }).id !== "string"
+  ) {
     throw new Error(
       `Unable to generate the contract: ${response.error?.message ?? "Unknown error."}`
     );
   }
 
-  const contract = await getContractRecordById(scope.organizationId, (data as { id: string }).id);
+  const contract = await getContractRecordById(
+    scope.organizationId,
+    (data as { id: string }).id
+  );
 
   if (!contract) {
     throw new Error("Unexpected contract response after generation.");
@@ -2014,9 +2249,16 @@ export async function createContractFromEstimate(
 }
 
 export async function updateContractDraft(input: UpdateContractDraftInput) {
-  const scope = await requireContractScope(`/contracts/${input.contractId}/edit`);
-  const currentContract = await getContractRecordById(scope.organizationId, input.contractId);
-  const workflowSettings = await getOrganizationWorkflowSettings(scope.organizationId);
+  const scope = await requireContractScope(
+    `/contracts/${input.contractId}/edit`
+  );
+  const currentContract = await getContractRecordById(
+    scope.organizationId,
+    input.contractId
+  );
+  const workflowSettings = await getOrganizationWorkflowSettings(
+    scope.organizationId
+  );
 
   if (!currentContract) {
     throw new Error("Contract not found for this organization.");
@@ -2027,11 +2269,14 @@ export async function updateContractDraft(input: UpdateContractDraftInput) {
   }
 
   const supabase = await getSupabaseServerClient();
-  const snapshotResponse = await supabase.rpc("create_contract_revision_snapshot", {
-    target_contract_id: input.contractId,
-    acting_user_id: scope.userId,
-    summary: input.editSummary
-  });
+  const snapshotResponse = await supabase.rpc(
+    "create_contract_revision_snapshot",
+    {
+      target_contract_id: input.contractId,
+      acting_user_id: scope.userId,
+      summary: input.editSummary
+    }
+  );
 
   if (snapshotResponse.error) {
     throw new Error(
@@ -2049,9 +2294,10 @@ export async function updateContractDraft(input: UpdateContractDraftInput) {
         ? "pending"
         : "not_required",
       internal_approved_at: null,
-      signature_readiness_status: workflowSettings.requireContractInternalApproval
-        ? "draft"
-        : "ready_to_send",
+      signature_readiness_status:
+        workflowSettings.requireContractInternalApproval
+          ? "draft"
+          : "ready_to_send",
       updated_by: scope.userId
     })
     .eq("company_id", scope.organizationId)
@@ -2068,7 +2314,10 @@ export async function updateContractDraft(input: UpdateContractDraftInput) {
     throw new Error("Contract not found for this organization.");
   }
 
-  const updated = await getContractRecordById(scope.organizationId, input.contractId);
+  const updated = await getContractRecordById(
+    scope.organizationId,
+    input.contractId
+  );
 
   if (!updated) {
     throw new Error("Contract not found for this organization.");
@@ -2090,10 +2339,17 @@ export async function updateContractDraft(input: UpdateContractDraftInput) {
   return mapContract(updated);
 }
 
-export async function sendContractForSignature(input: SendContractForSignatureInput) {
+export async function sendContractForSignature(
+  input: SendContractForSignatureInput
+) {
   const scope = await requireContractScope(`/contracts/${input.contractId}`);
-  const currentContract = await getContractRecordById(scope.organizationId, input.contractId);
-  const workflowSettings = await getOrganizationWorkflowSettings(scope.organizationId);
+  const currentContract = await getContractRecordById(
+    scope.organizationId,
+    input.contractId
+  );
+  const workflowSettings = await getOrganizationWorkflowSettings(
+    scope.organizationId
+  );
 
   if (!currentContract) {
     throw new Error("Contract not found for this organization.");
@@ -2102,14 +2358,17 @@ export async function sendContractForSignature(input: SendContractForSignatureIn
   const gate = computeContractWorkflowGate({
     status: currentContract.status,
     internalApprovalStatus: currentContract.internal_approval_status,
-    requireContractInternalApproval: workflowSettings.requireContractInternalApproval,
+    requireContractInternalApproval:
+      workflowSettings.requireContractInternalApproval,
     signatureStartedAt: currentContract.signature_started_at,
     lockedAt: currentContract.locked_at
   });
 
   if (!gate.canSend) {
     if (gate.sendBlockers.includes("internal_approval_pending")) {
-      throw new Error("Contract must be internally approved before it can be sent.");
+      throw new Error(
+        "Contract must be internally approved before it can be sent."
+      );
     }
 
     if (gate.sendBlockers.includes("internal_approval_rejected")) {
@@ -2121,10 +2380,15 @@ export async function sendContractForSignature(input: SendContractForSignatureIn
     throw new Error("Contract is not ready to send.");
   }
 
-  const existingSigners = await listContractSignerRowsAdmin(scope.organizationId, input.contractId);
+  const existingSigners = await listContractSignerRowsAdmin(
+    scope.organizationId,
+    input.contractId
+  );
 
   if (existingSigners.length > 0) {
-    throw new Error("This contract already has signer routing and cannot be resent from draft.");
+    throw new Error(
+      "This contract already has signer routing and cannot be resent from draft."
+    );
   }
 
   const normalizedSigners = await validateAndNormalizeSendSigners(
@@ -2187,7 +2451,10 @@ export async function sendContractForSignature(input: SendContractForSignatureIn
     );
   }
 
-  if (!isContractSignerRowArray(insertedSignerData) || insertedSignerData.length === 0) {
+  if (
+    !isContractSignerRowArray(insertedSignerData) ||
+    insertedSignerData.length === 0
+  ) {
     throw new Error("Unexpected contract signer response after send.");
   }
 
@@ -2203,7 +2470,8 @@ export async function sendContractForSignature(input: SendContractForSignatureIn
       sent_at: currentContract.sent_at ?? nowIso,
       signature_readiness_status: "out_for_signature",
       locked_at: currentContract.locked_at ?? nowIso,
-      edit_lock_reason: currentContract.edit_lock_reason ?? "signature_activity_started",
+      edit_lock_reason:
+        currentContract.edit_lock_reason ?? "signature_activity_started",
       updated_by: scope.userId
     })
     .eq("company_id", scope.organizationId)
@@ -2228,8 +2496,8 @@ export async function sendContractForSignature(input: SendContractForSignatureIn
         )
       },
       occurredAt: nowIso
-      }
-    ]);
+    }
+  ]);
   await recordContractNotificationEvent({
     organizationId: scope.organizationId,
     contractId: input.contractId,
@@ -2245,7 +2513,10 @@ export async function sendContractForSignature(input: SendContractForSignatureIn
     }
   });
 
-  const updated = await getContractRecordById(scope.organizationId, input.contractId);
+  const updated = await getContractRecordById(
+    scope.organizationId,
+    input.contractId
+  );
 
   if (!updated) {
     throw new Error("Contract not found for this organization.");
@@ -2259,7 +2530,8 @@ export async function sendContractForSignature(input: SendContractForSignatureIn
   await createContractRecordRevision({
     contractId: input.contractId,
     revisionKind: "pre_signature",
-    revisionReason: "Contract sent for signature and locked for signing activity.",
+    revisionReason:
+      "Contract sent for signature and locked for signing activity.",
     createdByUserId: scope.userId,
     next: `/contracts/${input.contractId}`
   });
@@ -2267,7 +2539,237 @@ export async function sendContractForSignature(input: SendContractForSignatureIn
   return mapContract(updated);
 }
 
-export async function recordCustomerViewedContract(contractId: string, next = "/portal") {
+export async function sendContractForSignatureWithProviderEmail(
+  input: SendContractForSignatureInput
+): Promise<ContractProviderEmailSendResult> {
+  const contract = await sendContractForSignature(input);
+  const scope = await requireContractScope(`/contracts/${input.contractId}`);
+  const currentContract = await getContractRecordById(
+    scope.organizationId,
+    input.contractId
+  );
+
+  if (!currentContract) {
+    throw new Error("Contract not found after signature send.");
+  }
+
+  const signers = await listContractSignerRowsAdmin(
+    scope.organizationId,
+    input.contractId
+  );
+  const customerSigner = signers.find(
+    (signer) =>
+      signer.signer_role === "customer" &&
+      signer.signer_status === "pending" &&
+      Boolean(signer.email.trim())
+  );
+
+  if (!customerSigner) {
+    return {
+      contract,
+      message: `${contract.title} was sent for signature. No eligible customer signer email was available for provider-backed delivery.`
+    };
+  }
+
+  const organizationContext = await getActiveOrganizationContext(scope.userId);
+  const nowIso = new Date().toISOString();
+  const appOrigin = getAppOrigin();
+  const portalUrl = new URL(
+    `/portal/contracts/${currentContract.id}`,
+    appOrigin
+  );
+  const deliveryPayload = {
+    subjectType: "contract",
+    subjectId: currentContract.id,
+    portalPath: `/portal/contracts/${currentContract.id}`,
+    portalUserId: customerSigner.portal_user_id,
+    contractReferenceNumber: currentContract.reference_number,
+    contractTitle: currentContract.title,
+    customerName: currentContract.customers?.name ?? null,
+    signatureTruth: "contract_signature_events",
+    signatureMutationFromDelivery: false,
+    statusMutationFromDelivery: false
+  };
+  const notificationEvent = await createNotificationEvent({
+    organizationId: scope.organizationId,
+    category: "contracts",
+    severity: "neutral",
+    eventType: "contract.email_send_requested",
+    subjectType: "contract",
+    subjectId: currentContract.id,
+    customerId: currentContract.customer_id,
+    projectId: currentContract.project_id,
+    actorType: "organization_user",
+    actorUserId: scope.userId,
+    title: `Contract ${currentContract.reference_number} email requested`,
+    message: `Contract ${currentContract.reference_number} signature email was requested for the customer signer.`,
+    linkPath: `/contracts/${currentContract.id}`,
+    groupKey: `contract:${currentContract.id}`,
+    payload: deliveryPayload,
+    occurredAt: nowIso
+  });
+  const deliveryId = await createContractNotificationDelivery({
+    organizationId: scope.organizationId,
+    notificationEventId: notificationEvent.id,
+    recipientEmail: customerSigner.email,
+    recipientUserId: customerSigner.portal_user_id,
+    payload: deliveryPayload
+  });
+
+  await insertContractDeliveryEvent({
+    scope,
+    contractId: currentContract.id,
+    eventType: "send_requested",
+    recipientName: customerSigner.display_name,
+    recipientEmail: customerSigner.email,
+    recipientRole: "customer_signer",
+    channel: "email",
+    provider: "postmark",
+    relatedNotificationEventId: notificationEvent.id,
+    eventNote: "Provider-backed contract signature email was requested.",
+    metadata: {
+      source: "contractor_app_provider_send",
+      evidenceOnly: true,
+      providerSend: true,
+      notificationDeliveryId: deliveryId,
+      signatureTruth: "contract_signature_events",
+      signatureMutation: false,
+      statusMutation: false
+    }
+  });
+
+  if (!isPostmarkEmailConfigured()) {
+    const errorMessage =
+      "Postmark email delivery is not configured for this environment.";
+
+    await markContractNotificationDeliveryFailed({
+      deliveryId,
+      errorMessage
+    });
+    await insertContractDeliveryEvent({
+      scope,
+      contractId: currentContract.id,
+      eventType: "failed",
+      recipientName: customerSigner.display_name,
+      recipientEmail: customerSigner.email,
+      recipientRole: "customer_signer",
+      channel: "email",
+      provider: "postmark",
+      relatedNotificationEventId: notificationEvent.id,
+      eventNote: errorMessage,
+      metadata: {
+        source: "contractor_app_provider_send",
+        evidenceOnly: true,
+        providerSend: false,
+        notificationDeliveryId: deliveryId,
+        failureReason: "not_configured",
+        signatureTruth: "contract_signature_events",
+        signatureMutation: false,
+        statusMutation: false
+      }
+    });
+
+    return {
+      contract,
+      message: `${contract.title} was sent for signature. Email was not sent because Postmark email delivery is not configured. Failed delivery evidence was recorded.`
+    };
+  }
+
+  const emailContent = buildContractPortalEmailContent({
+    recipientName: customerSigner.display_name,
+    organizationName:
+      organizationContext?.organization.displayName ??
+      organizationContext?.organization.legalName ??
+      "FloorConnector",
+    contractReferenceNumber: currentContract.reference_number,
+    contractTitle: currentContract.title,
+    projectName: currentContract.projects?.name ?? null,
+    portalUrl: portalUrl.toString()
+  });
+
+  try {
+    const result = await sendPostmarkEmail({
+      toEmail: customerSigner.email,
+      subject: emailContent.subject,
+      htmlBody: emailContent.htmlBody,
+      textBody: emailContent.textBody
+    });
+
+    await markContractNotificationDeliverySent({
+      deliveryId,
+      providerMessageId: result.messageId,
+      sentAt: result.submittedAt
+    });
+    await insertContractDeliveryEvent({
+      scope,
+      contractId: currentContract.id,
+      eventType: "sent",
+      recipientName: customerSigner.display_name,
+      recipientEmail: customerSigner.email,
+      recipientRole: "customer_signer",
+      channel: "email",
+      provider: "postmark",
+      providerMessageId: result.messageId,
+      relatedNotificationEventId: notificationEvent.id,
+      eventNote: "Postmark accepted the contract signature email.",
+      metadata: {
+        source: "contractor_app_provider_send",
+        evidenceOnly: true,
+        providerSend: true,
+        notificationDeliveryId: deliveryId,
+        submittedAt: result.submittedAt,
+        to: result.to,
+        signatureTruth: "contract_signature_events",
+        signatureMutation: false,
+        statusMutation: false
+      }
+    });
+
+    return {
+      contract,
+      message: `${contract.title} was sent for signature. Email delivery was accepted for ${customerSigner.email}.`
+    };
+  } catch (error) {
+    const errorMessage = getNotificationDeliveryErrorMessage(error);
+
+    await markContractNotificationDeliveryFailed({
+      deliveryId,
+      errorMessage
+    });
+    await insertContractDeliveryEvent({
+      scope,
+      contractId: currentContract.id,
+      eventType: "failed",
+      recipientName: customerSigner.display_name,
+      recipientEmail: customerSigner.email,
+      recipientRole: "customer_signer",
+      channel: "email",
+      provider: "postmark",
+      relatedNotificationEventId: notificationEvent.id,
+      eventNote: errorMessage,
+      metadata: {
+        source: "contractor_app_provider_send",
+        evidenceOnly: true,
+        providerSend: true,
+        notificationDeliveryId: deliveryId,
+        failureReason: "provider_failed",
+        signatureTruth: "contract_signature_events",
+        signatureMutation: false,
+        statusMutation: false
+      }
+    });
+
+    return {
+      contract,
+      message: `${contract.title} was sent for signature. Email delivery failed, and failed delivery evidence was recorded. Signature workflow state remains tracked separately.`
+    };
+  }
+}
+
+export async function recordCustomerViewedContract(
+  contractId: string,
+  next = "/portal"
+) {
   const portalScope = await getScopedPortalContract(contractId, next);
   const signers = await listContractSignerRowsAdmin(
     portalScope.contract.company_id,
@@ -2281,14 +2783,21 @@ export async function recordCustomerViewedContract(contractId: string, next = "/
   );
 
   if (matchingSigners.length === 0) {
-    throw new Error("No active customer signer is available for this portal user.");
+    throw new Error(
+      "No active customer signer is available for this portal user."
+    );
   }
 
-  if (portalScope.contract.status === "signed" || portalScope.contract.status === "void") {
+  if (
+    portalScope.contract.status === "signed" ||
+    portalScope.contract.status === "void"
+  ) {
     return mapContract(portalScope.contract);
   }
 
-  const signersToUpdate = matchingSigners.filter((signer) => signer.signer_status === "pending");
+  const signersToUpdate = matchingSigners.filter(
+    (signer) => signer.signer_status === "pending"
+  );
   const nowIso = new Date().toISOString();
   const admin = getSupabaseAdminClient();
 
@@ -2304,7 +2813,9 @@ export async function recordCustomerViewedContract(contractId: string, next = "/
       .in("id", signerIds);
 
     if (response.error) {
-      throw new Error(`Unable to record contract view: ${response.error.message}`);
+      throw new Error(
+        `Unable to record contract view: ${response.error.message}`
+      );
     }
 
     await insertContractSignatureEvents(
@@ -2320,8 +2831,8 @@ export async function recordCustomerViewedContract(contractId: string, next = "/
           signerOrder: signer.signer_order
         },
         occurredAt: nowIso
-        }))
-      );
+      }))
+    );
     await recordContractNotificationEvent({
       organizationId: portalScope.contract.company_id,
       contractId: portalScope.contract.id,
@@ -2352,7 +2863,9 @@ export async function recordCustomerViewedContract(contractId: string, next = "/
     .eq("id", portalScope.contract.id);
 
   if (contractUpdateResponse.error) {
-    throw new Error(`Unable to update contract view state: ${contractUpdateResponse.error.message}`);
+    throw new Error(
+      `Unable to update contract view state: ${contractUpdateResponse.error.message}`
+    );
   }
 
   const updated = await getContractRecordByIdInCurrentScope(contractId);
@@ -2399,7 +2912,9 @@ export async function recordCustomerSignedContract(
   const summary = buildContractSignatureSummary(portalScope.contract, signers);
 
   if (!summary.canCustomerAct || matchingSigners.length === 0) {
-    throw new Error("This contract is not currently available for customer signature.");
+    throw new Error(
+      "This contract is not currently available for customer signature."
+    );
   }
 
   const nowIso = new Date().toISOString();
@@ -2418,14 +2933,19 @@ export async function recordCustomerSignedContract(
     .in("id", signerIds);
 
   if (signerUpdateResponse.error) {
-    throw new Error(`Unable to record the customer signature: ${signerUpdateResponse.error.message}`);
+    throw new Error(
+      `Unable to record the customer signature: ${signerUpdateResponse.error.message}`
+    );
   }
 
   const refreshedSigners = await listContractSignerRowsAdmin(
     portalScope.contract.company_id,
     portalScope.contract.id
   );
-  const refreshedSummary = buildContractSignatureSummary(portalScope.contract, refreshedSigners);
+  const refreshedSummary = buildContractSignatureSummary(
+    portalScope.contract,
+    refreshedSigners
+  );
 
   await insertContractSignatureEvents(
     portalScope.contract.company_id,
@@ -2457,8 +2977,8 @@ export async function recordCustomerSignedContract(
             }
           ]
         : [])
-      ]
-    );
+    ]
+  );
   if (refreshedSummary.allRequiredSignersSigned) {
     await recordContractNotificationEvent({
       organizationId: portalScope.contract.company_id,
@@ -2513,7 +3033,10 @@ export async function recordOnsiteContractSignature(
   input: ContractOnsiteSignatureActionInput
 ) {
   const scope = await requireContractScope(`/contracts/${input.contractId}`);
-  const contract = await getContractRecordById(scope.organizationId, input.contractId);
+  const contract = await getContractRecordById(
+    scope.organizationId,
+    input.contractId
+  );
 
   if (!contract) {
     throw new Error("Contract not found for this organization.");
@@ -2534,7 +3057,9 @@ export async function recordOnsiteContractSignature(
   }
 
   if (signer.signer_role !== "customer") {
-    throw new Error("Onsite customer signature cannot complete a contractor countersign slot.");
+    throw new Error(
+      "Onsite customer signature cannot complete a contractor countersign slot."
+    );
   }
 
   if (signer.signed_at !== null || signer.signer_status === "signed") {
@@ -2542,24 +3067,34 @@ export async function recordOnsiteContractSignature(
   }
 
   if (signer.signer_status !== "pending" && signer.signer_status !== "viewed") {
-    throw new Error("This customer signer is not currently available for signature.");
+    throw new Error(
+      "This customer signer is not currently available for signature."
+    );
   }
 
   const firstUnsignedCustomerSigner = signers.find(
     (candidate) =>
       candidate.signer_role === "customer" &&
       candidate.signed_at === null &&
-      (candidate.signer_status === "pending" || candidate.signer_status === "viewed")
+      (candidate.signer_status === "pending" ||
+        candidate.signer_status === "viewed")
   );
 
-  if (!firstUnsignedCustomerSigner || firstUnsignedCustomerSigner.id !== signer.id) {
-    throw new Error("Complete the first unsigned customer signer before later signers.");
+  if (
+    !firstUnsignedCustomerSigner ||
+    firstUnsignedCustomerSigner.id !== signer.id
+  ) {
+    throw new Error(
+      "Complete the first unsigned customer signer before later signers."
+    );
   }
 
   const summary = buildContractSignatureSummary(contract, signers);
 
   if (!summary.canCustomerAct) {
-    throw new Error("This contract is not currently available for customer signature.");
+    throw new Error(
+      "This contract is not currently available for customer signature."
+    );
   }
 
   const nowIso = new Date().toISOString();
@@ -2587,7 +3122,10 @@ export async function recordOnsiteContractSignature(
     scope.organizationId,
     contract.id
   );
-  const refreshedSummary = buildContractSignatureSummary(contract, refreshedSigners);
+  const refreshedSummary = buildContractSignatureSummary(
+    contract,
+    refreshedSigners
+  );
 
   await insertContractSignatureEvents(scope.organizationId, contract.id, [
     {
@@ -2662,7 +3200,10 @@ export async function recordOnsiteContractSignature(
     );
   }
 
-  const updated = await getContractRecordById(scope.organizationId, input.contractId);
+  const updated = await getContractRecordById(
+    scope.organizationId,
+    input.contractId
+  );
 
   if (!updated) {
     throw new Error("Contract not found for this organization.");
@@ -2706,7 +3247,9 @@ export async function recordCustomerDeclinedContract(
   const summary = buildContractSignatureSummary(portalScope.contract, signers);
 
   if (!summary.canCustomerAct || matchingSigners.length === 0) {
-    throw new Error("This contract is not currently available for customer decline.");
+    throw new Error(
+      "This contract is not currently available for customer decline."
+    );
   }
 
   const nowIso = new Date().toISOString();
@@ -2744,9 +3287,9 @@ export async function recordCustomerDeclinedContract(
         signerOrder: signer.signer_order,
         declineReason: input.declineReason ?? null
       },
-        occurredAt: nowIso
-      }))
-    );
+      occurredAt: nowIso
+    }))
+  );
   await recordContractNotificationEvent({
     organizationId: portalScope.contract.company_id,
     contractId: portalScope.contract.id,
@@ -2765,15 +3308,20 @@ export async function recordCustomerDeclinedContract(
   const contractUpdateResponse = await admin
     .from("contracts")
     .update({
-      status: portalScope.contract.status === "sent" ? "viewed" : portalScope.contract.status,
+      status:
+        portalScope.contract.status === "sent"
+          ? "viewed"
+          : portalScope.contract.status,
       signature_started_at: portalScope.contract.signature_started_at ?? nowIso,
       sent_at: portalScope.contract.sent_at ?? nowIso,
       viewed_at: portalScope.contract.viewed_at ?? nowIso,
       customer_viewed_at: portalScope.contract.customer_viewed_at ?? nowIso,
-      signature_declined_at: portalScope.contract.signature_declined_at ?? nowIso,
+      signature_declined_at:
+        portalScope.contract.signature_declined_at ?? nowIso,
       signature_readiness_status: "out_for_signature",
       locked_at: portalScope.contract.locked_at ?? nowIso,
-      edit_lock_reason: portalScope.contract.edit_lock_reason ?? "signature_activity_started",
+      edit_lock_reason:
+        portalScope.contract.edit_lock_reason ?? "signature_activity_started",
       updated_by: portalScope.userId
     })
     .eq("company_id", portalScope.contract.company_id)
@@ -2801,13 +3349,19 @@ export async function recordCustomerDeclinedContract(
 
 export async function countersignContract(contractId: string) {
   const scope = await requireContractScope(`/contracts/${contractId}`);
-  const contract = await getContractRecordById(scope.organizationId, contractId);
+  const contract = await getContractRecordById(
+    scope.organizationId,
+    contractId
+  );
 
   if (!contract) {
     throw new Error("Contract not found for this organization.");
   }
 
-  const signers = await listContractSignerRowsAdmin(scope.organizationId, contractId);
+  const signers = await listContractSignerRowsAdmin(
+    scope.organizationId,
+    contractId
+  );
   const summary = buildContractSignatureSummary(contract, signers);
 
   if (!summary.canContractorCountersign) {
@@ -2824,7 +3378,9 @@ export async function countersignContract(contractId: string) {
   );
 
   if (matchingSigners.length === 0) {
-    throw new Error("No contractor countersigner is assigned to the current user.");
+    throw new Error(
+      "No contractor countersigner is assigned to the current user."
+    );
   }
 
   const nowIso = new Date().toISOString();
@@ -2848,8 +3404,14 @@ export async function countersignContract(contractId: string) {
     );
   }
 
-  const refreshedSigners = await listContractSignerRowsAdmin(scope.organizationId, contractId);
-  const refreshedSummary = buildContractSignatureSummary(contract, refreshedSigners);
+  const refreshedSigners = await listContractSignerRowsAdmin(
+    scope.organizationId,
+    contractId
+  );
+  const refreshedSummary = buildContractSignatureSummary(
+    contract,
+    refreshedSigners
+  );
 
   await insertContractSignatureEvents(scope.organizationId, contractId, [
     ...matchingSigners.map((signer) => ({
@@ -2927,21 +3489,31 @@ export async function countersignContract(contractId: string) {
 
 export async function voidContractSignature(contractId: string) {
   const scope = await requireContractScope(`/contracts/${contractId}`);
-  const contract = await getContractRecordById(scope.organizationId, contractId);
+  const contract = await getContractRecordById(
+    scope.organizationId,
+    contractId
+  );
 
   if (!contract) {
     throw new Error("Contract not found for this organization.");
   }
 
   if (contract.status === "signed") {
-    throw new Error("Signed contracts cannot be voided from the signature workflow.");
+    throw new Error(
+      "Signed contracts cannot be voided from the signature workflow."
+    );
   }
 
   if (!canTransitionContractStatus(contract.status, "void")) {
-    throw new Error(`Contract status cannot move from ${contract.status} to void.`);
+    throw new Error(
+      `Contract status cannot move from ${contract.status} to void.`
+    );
   }
 
-  const signers = await listContractSignerRowsAdmin(scope.organizationId, contractId);
+  const signers = await listContractSignerRowsAdmin(
+    scope.organizationId,
+    contractId
+  );
   const signersToVoid = signers.filter((signer) =>
     canTransitionContractSignerStatus(signer.signer_status, "voided")
   );
@@ -2973,7 +3545,7 @@ export async function voidContractSignature(contractId: string) {
       status: "void",
       signature_voided_at:
         contract.signature_started_at !== null
-          ? contract.signature_voided_at ?? nowIso
+          ? (contract.signature_voided_at ?? nowIso)
           : contract.signature_voided_at,
       locked_at: contract.locked_at ?? nowIso,
       edit_lock_reason: "voided",
@@ -2983,7 +3555,9 @@ export async function voidContractSignature(contractId: string) {
     .eq("id", contractId);
 
   if (contractUpdateResponse.error) {
-    throw new Error(`Unable to void contract signature flow: ${contractUpdateResponse.error.message}`);
+    throw new Error(
+      `Unable to void contract signature flow: ${contractUpdateResponse.error.message}`
+    );
   }
 
   await insertContractSignatureEvents(scope.organizationId, contractId, [
@@ -3038,8 +3612,13 @@ export async function updateContractInternalApprovalStatus(
   nextStatus: ContractInternalApprovalStatus
 ) {
   const scope = await requireContractScope(`/contracts/${contractId}`);
-  const currentContract = await getContractRecordById(scope.organizationId, contractId);
-  const workflowSettings = await getOrganizationWorkflowSettings(scope.organizationId);
+  const currentContract = await getContractRecordById(
+    scope.organizationId,
+    contractId
+  );
+  const workflowSettings = await getOrganizationWorkflowSettings(
+    scope.organizationId
+  );
 
   if (!currentContract) {
     throw new Error("Contract not found for this organization.");
@@ -3051,8 +3630,14 @@ export async function updateContractInternalApprovalStatus(
     );
   }
 
-  if (currentContract.status !== "draft" || currentContract.signature_started_at || currentContract.locked_at) {
-    throw new Error("Only unlocked draft contracts can change internal approval state.");
+  if (
+    currentContract.status !== "draft" ||
+    currentContract.signature_started_at ||
+    currentContract.locked_at
+  ) {
+    throw new Error(
+      "Only unlocked draft contracts can change internal approval state."
+    );
   }
 
   if (
@@ -3073,7 +3658,8 @@ export async function updateContractInternalApprovalStatus(
     .update({
       internal_approval_status: nextStatus,
       internal_approved_at: nextStatus === "approved" ? nowIso : null,
-      signature_readiness_status: nextStatus === "approved" ? "ready_to_send" : "draft",
+      signature_readiness_status:
+        nextStatus === "approved" ? "ready_to_send" : "draft",
       updated_by: scope.userId
     })
     .eq("company_id", scope.organizationId)
@@ -3109,5 +3695,7 @@ export async function updateContractInternalApprovalStatus(
 export async function getContractTemplateOptions() {
   const templates = await listDocumentTemplates("contract");
 
-  return templates.filter((template: DocumentTemplate) => template.status === "active");
+  return templates.filter(
+    (template: DocumentTemplate) => template.status === "active"
+  );
 }

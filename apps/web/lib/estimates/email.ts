@@ -1,7 +1,3 @@
-import "server-only";
-
-import { isPostmarkEmailConfigured } from "@floorconnector/integrations";
-
 type BuildEstimatePortalEmailInput = {
   recipientName: string | null;
   organizationName: string;
@@ -27,14 +23,11 @@ function escapeHtml(value: string) {
     .replaceAll("'", "&#39;");
 }
 
-export function isEstimatePortalEmailConfigured() {
-  return isPostmarkEmailConfigured();
-}
-
 export function buildEstimatePortalEmailContent(
   input: BuildEstimatePortalEmailInput
 ): EstimatePortalEmailContent {
-  const estimateLabel = input.estimateTitle?.trim() || input.estimateReferenceNumber;
+  const estimateLabel =
+    input.estimateTitle?.trim() || input.estimateReferenceNumber;
   const customerName = input.recipientName?.trim() || "there";
   const projectLine = input.projectName?.trim()
     ? `Project: ${escapeHtml(input.projectName.trim())}`

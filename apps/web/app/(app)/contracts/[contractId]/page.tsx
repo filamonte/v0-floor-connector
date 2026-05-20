@@ -13,6 +13,7 @@ import {
   primaryActionClassName,
   secondaryActionClassName
 } from "@/components/action-hierarchy";
+import { DocumentDeliveryHistoryPanel } from "@/components/document-delivery-history-panel";
 import { OnsiteSignatureModal } from "@/components/contracts/onsite-signature-modal";
 import { ContextFactsList } from "@/components/context-facts-list";
 import { DetailPageHeader } from "@/components/detail-page-header";
@@ -35,6 +36,7 @@ import {
   getContractById,
   getContractSignatureActionOptions
 } from "@/lib/contracts/data";
+import { getDocumentDeliveryState } from "@/lib/document-delivery/data";
 import { listInvoices } from "@/lib/invoices/data";
 import { listJobAssignmentsByJobIds, listJobs } from "@/lib/jobs/data";
 import { getActiveOrganizationContext } from "@/lib/organizations/active-context";
@@ -501,6 +503,11 @@ export default async function ContractDetailPage({
   if (!contract) {
     notFound();
   }
+
+  const deliveryState = await getDocumentDeliveryState({
+    subjectType: "contract",
+    subjectId: contract.id
+  });
 
   await ensureInitialRecordRevision({
     organizationId: contract.organizationId,
@@ -1336,6 +1343,14 @@ export default async function ContractDetailPage({
                 </div>
               </div>
             </DetailPanel>
+
+            <DocumentDeliveryHistoryPanel
+              subjectType="contract"
+              subjectId={contract.id}
+              events={deliveryState.events}
+              description="Manual and provider-backed delivery proof for this canonical contract."
+              boundaryCopy="This records delivery evidence only. Contract signature status and signer history remain separate. Provider email results do not sign the contract, create signed events, change readiness, or replace contract signature history."
+            />
 
             <DetailPanel
               title="Connected Workflow"

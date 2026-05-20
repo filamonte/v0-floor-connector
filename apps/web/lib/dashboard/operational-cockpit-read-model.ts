@@ -8,13 +8,19 @@ import type {
   AppointmentStatus,
   AppointmentType,
   ContractStatus,
+  DocumentSignatureEventType,
+  DocumentSignerStatus,
   EquipmentAssignmentStatus,
   EquipmentOperationalStatus,
   EquipmentOwnershipStatus,
   EquipmentType,
   EstimateStatus,
   InvoiceStatus,
-  JobStatus
+  JobStatus,
+  ServiceTicketPriority,
+  ServiceTicketStatus,
+  ServiceTicketType,
+  WarrantyDocumentStatus
 } from "@floorconnector/types";
 
 import {
@@ -99,6 +105,7 @@ type CockpitJobRow = {
   customer_id: string;
   project_id: string;
   estimate_id: string | null;
+  service_ticket_id?: string | null;
   dispatch_status: JobStatus;
   scheduled_date: string | null;
   scheduled_start_at: string | null;
@@ -107,6 +114,70 @@ type CockpitJobRow = {
   customers?: Relation<CockpitCustomerRow>;
   projects?: Relation<CockpitProjectRow>;
   estimates?: Relation<CockpitEstimateSummaryRow>;
+  service_tickets?: Relation<{
+    id: string;
+    title: string;
+    status: ServiceTicketStatus;
+    ticket_type: ServiceTicketType;
+    priority: ServiceTicketPriority;
+  }>;
+};
+
+type CockpitServiceTicketRow = {
+  id: string;
+  customer_id: string;
+  project_id: string | null;
+  job_id: string | null;
+  ticket_type: ServiceTicketType;
+  status: ServiceTicketStatus;
+  priority: ServiceTicketPriority;
+  title: string;
+  reported_on: string;
+  warranty_start_date: string | null;
+  warranty_end_date: string | null;
+  updated_at: string;
+  customers?: Relation<CockpitCustomerRow>;
+  projects?: Relation<CockpitProjectRow>;
+  jobs?: Relation<{
+    id: string;
+    dispatch_status: JobStatus;
+  }>;
+};
+
+type CockpitWarrantyDocumentRow = {
+  id: string;
+  customer_id: string;
+  project_id: string | null;
+  job_id: string | null;
+  service_ticket_id: string | null;
+  status: WarrantyDocumentStatus;
+  title: string;
+  warranty_start_date: string | null;
+  warranty_end_date: string | null;
+  issued_at: string | null;
+  updated_at: string;
+  customers?: Relation<CockpitCustomerRow>;
+  projects?: Relation<CockpitProjectRow>;
+  jobs?: Relation<{
+    id: string;
+    dispatch_status: JobStatus;
+  }>;
+  service_tickets?: Relation<{
+    id: string;
+    title: string;
+    status: ServiceTicketStatus;
+  }>;
+};
+
+type CockpitDocumentSignerSummaryRow = {
+  subject_id: string;
+  status: DocumentSignerStatus;
+};
+
+type CockpitDocumentSignatureEventSummaryRow = {
+  subject_id: string;
+  event_type: DocumentSignatureEventType;
+  created_at: string;
 };
 
 type DashboardEquipmentJobRow = {
@@ -267,6 +338,7 @@ export type CockpitJobPreview = {
   customerId: string;
   projectId: string;
   estimateId: string | null;
+  serviceTicketId: string | null;
   dispatchStatus: JobStatus;
   scheduledDate: string | null;
   scheduledStartAt: string | null;
@@ -285,6 +357,80 @@ export type CockpitJobPreview = {
     referenceNumber: string;
     status: string;
   } | null;
+  serviceTicket: {
+    id: string;
+    title: string;
+    status: ServiceTicketStatus;
+    ticketType: ServiceTicketType;
+    priority: ServiceTicketPriority;
+  } | null;
+};
+
+export type CockpitServiceTicketPreview = {
+  id: string;
+  customerId: string;
+  projectId: string | null;
+  jobId: string | null;
+  ticketType: ServiceTicketType;
+  status: ServiceTicketStatus;
+  priority: ServiceTicketPriority;
+  title: string;
+  reportedOn: string;
+  warrantyStartDate: string | null;
+  warrantyEndDate: string | null;
+  updatedAt: string;
+  customer: {
+    id: string;
+    name: string;
+    companyName: string | null;
+  } | null;
+  project: {
+    id: string;
+    name: string;
+  } | null;
+  job: {
+    id: string;
+    dispatchStatus: JobStatus;
+  } | null;
+};
+
+export type CockpitWarrantyDocumentPreview = {
+  id: string;
+  customerId: string;
+  projectId: string | null;
+  jobId: string | null;
+  serviceTicketId: string | null;
+  status: WarrantyDocumentStatus;
+  title: string;
+  warrantyStartDate: string | null;
+  warrantyEndDate: string | null;
+  issuedAt: string | null;
+  updatedAt: string;
+  customer: {
+    id: string;
+    name: string;
+    companyName: string | null;
+  } | null;
+  project: {
+    id: string;
+    name: string;
+  } | null;
+  job: {
+    id: string;
+    dispatchStatus: JobStatus;
+  } | null;
+  serviceTicket: {
+    id: string;
+    title: string;
+    status: ServiceTicketStatus;
+  } | null;
+  signatureSummary: {
+    signerCount: number;
+    requestedSignerCount: number;
+    signedSignerCount: number;
+    latestEventType: DocumentSignatureEventType | null;
+    latestEventCreatedAt: string | null;
+  };
 };
 
 export type CockpitAppointmentPreview = {
@@ -352,6 +498,13 @@ export type DashboardOperationalCockpitReadModel = {
   jobsTodayOrInProgress: CockpitJobPreview[];
   appointmentFollowUps: CockpitAppointmentPreview[];
   equipmentWarnings: DashboardEquipmentWarningPreview[];
+  highPriorityServiceTickets: CockpitServiceTicketPreview[];
+  staleOpenServiceTickets: CockpitServiceTicketPreview[];
+  serviceTicketsMissingServiceJob: CockpitServiceTicketPreview[];
+  unscheduledServiceJobs: CockpitJobPreview[];
+  upcomingServiceJobs: CockpitJobPreview[];
+  inProgressServiceJobs: CockpitJobPreview[];
+  warrantyDocumentsNeedingSignature: CockpitWarrantyDocumentPreview[];
 };
 
 const cockpitContractSelect = `
@@ -420,6 +573,7 @@ const cockpitJobSelect = `
   customer_id,
   project_id,
   estimate_id,
+  service_ticket_id,
   dispatch_status,
   scheduled_date,
   scheduled_start_at,
@@ -436,6 +590,73 @@ const cockpitJobSelect = `
   estimates (
     id,
     reference_number,
+    status
+  ),
+  service_tickets (
+    id,
+    title,
+    status,
+    ticket_type,
+    priority
+  )
+`;
+
+const cockpitServiceTicketSelect = `
+  id,
+  customer_id,
+  project_id,
+  job_id,
+  ticket_type,
+  status,
+  priority,
+  title,
+  reported_on,
+  warranty_start_date,
+  warranty_end_date,
+  updated_at,
+  customers (
+    id,
+    name,
+    company_name
+  ),
+  projects (
+    id,
+    name
+  ),
+  jobs (
+    id,
+    dispatch_status
+  )
+`;
+
+const cockpitWarrantyDocumentSelect = `
+  id,
+  customer_id,
+  project_id,
+  job_id,
+  service_ticket_id,
+  status,
+  title,
+  warranty_start_date,
+  warranty_end_date,
+  issued_at,
+  updated_at,
+  customers (
+    id,
+    name,
+    company_name
+  ),
+  projects (
+    id,
+    name
+  ),
+  jobs (
+    id,
+    dispatch_status
+  ),
+  service_tickets (
+    id,
+    title,
     status
   )
 `;
@@ -639,12 +860,14 @@ function mapInvoice(row: CockpitInvoiceRow): CockpitInvoicePreview {
 
 function mapJob(row: CockpitJobRow): CockpitJobPreview {
   const estimate = firstRelation(row.estimates);
+  const serviceTicket = firstRelation(row.service_tickets);
 
   return {
     id: row.id,
     customerId: row.customer_id,
     projectId: row.project_id,
     estimateId: row.estimate_id,
+    serviceTicketId: row.service_ticket_id ?? null,
     dispatchStatus: row.dispatch_status,
     scheduledDate: row.scheduled_date,
     scheduledStartAt: row.scheduled_start_at,
@@ -657,7 +880,93 @@ function mapJob(row: CockpitJobRow): CockpitJobPreview {
           referenceNumber: estimate.reference_number,
           status: estimate.status ?? ""
         }
+      : null,
+    serviceTicket: serviceTicket
+      ? {
+          id: serviceTicket.id,
+          title: serviceTicket.title,
+          status: serviceTicket.status,
+          ticketType: serviceTicket.ticket_type,
+          priority: serviceTicket.priority
+        }
       : null
+  };
+}
+
+function mapServiceTicket(
+  row: CockpitServiceTicketRow
+): CockpitServiceTicketPreview {
+  const job = firstRelation(row.jobs);
+
+  return {
+    id: row.id,
+    customerId: row.customer_id,
+    projectId: row.project_id,
+    jobId: row.job_id,
+    ticketType: row.ticket_type,
+    status: row.status,
+    priority: row.priority,
+    title: row.title,
+    reportedOn: row.reported_on,
+    warrantyStartDate: row.warranty_start_date,
+    warrantyEndDate: row.warranty_end_date,
+    updatedAt: row.updated_at,
+    customer: mapCustomer(row.customers),
+    project: mapProject(row.projects),
+    job: job
+      ? {
+          id: job.id,
+          dispatchStatus: job.dispatch_status
+        }
+      : null
+  };
+}
+
+function getEmptyWarrantySignatureSummary() {
+  return {
+    signerCount: 0,
+    requestedSignerCount: 0,
+    signedSignerCount: 0,
+    latestEventType: null,
+    latestEventCreatedAt: null
+  } satisfies CockpitWarrantyDocumentPreview["signatureSummary"];
+}
+
+function mapWarrantyDocument(
+  row: CockpitWarrantyDocumentRow,
+  signatureSummary: CockpitWarrantyDocumentPreview["signatureSummary"]
+): CockpitWarrantyDocumentPreview {
+  const job = firstRelation(row.jobs);
+  const serviceTicket = firstRelation(row.service_tickets);
+
+  return {
+    id: row.id,
+    customerId: row.customer_id,
+    projectId: row.project_id,
+    jobId: row.job_id,
+    serviceTicketId: row.service_ticket_id,
+    status: row.status,
+    title: row.title,
+    warrantyStartDate: row.warranty_start_date,
+    warrantyEndDate: row.warranty_end_date,
+    issuedAt: row.issued_at,
+    updatedAt: row.updated_at,
+    customer: mapCustomer(row.customers),
+    project: mapProject(row.projects),
+    job: job
+      ? {
+          id: job.id,
+          dispatchStatus: job.dispatch_status
+        }
+      : null,
+    serviceTicket: serviceTicket
+      ? {
+          id: serviceTicket.id,
+          title: serviceTicket.title,
+          status: serviceTicket.status
+        }
+      : null,
+    signatureSummary
   };
 }
 
@@ -832,6 +1141,64 @@ function sortJobsForDashboard(jobs: CockpitJobPreview[]) {
 
     return right.updatedAt.localeCompare(left.updatedAt);
   });
+}
+
+function addDaysDateKey(dateKey: string, days: number) {
+  const date = new Date(`${dateKey}T00:00:00.000Z`);
+  date.setUTCDate(date.getUTCDate() + days);
+  return date.toISOString().slice(0, 10);
+}
+
+function summarizeWarrantySignatures(input: {
+  warrantyDocumentIds: string[];
+  signers: CockpitDocumentSignerSummaryRow[];
+  events: CockpitDocumentSignatureEventSummaryRow[];
+}) {
+  const summaries = new Map<
+    string,
+    CockpitWarrantyDocumentPreview["signatureSummary"]
+  >();
+
+  for (const warrantyDocumentId of input.warrantyDocumentIds) {
+    summaries.set(warrantyDocumentId, getEmptyWarrantySignatureSummary());
+  }
+
+  for (const signer of input.signers) {
+    const summary = summaries.get(signer.subject_id);
+
+    if (!summary) {
+      continue;
+    }
+
+    summary.signerCount += 1;
+
+    if (signer.status === "requested") {
+      summary.requestedSignerCount += 1;
+    }
+
+    if (signer.status === "signed") {
+      summary.signedSignerCount += 1;
+    }
+  }
+
+  for (const event of input.events) {
+    const summary = summaries.get(event.subject_id);
+
+    if (!summary) {
+      continue;
+    }
+
+    if (
+      !summary.latestEventCreatedAt ||
+      new Date(event.created_at).getTime() >
+        new Date(summary.latestEventCreatedAt).getTime()
+    ) {
+      summary.latestEventType = event.event_type;
+      summary.latestEventCreatedAt = event.created_at;
+    }
+  }
+
+  return summaries;
 }
 
 async function listApprovedEstimatesReadyForContract(input: {
@@ -1013,6 +1380,7 @@ async function listUnscheduledJobs(input: {
     .select(cockpitJobSelect)
     .eq("company_id", input.organizationId)
     .eq("dispatch_status", "unscheduled")
+    .is("service_ticket_id", null)
     .order("updated_at", { ascending: false })
     .limit(input.limit);
   const rows = (response.data as CockpitJobRow[] | null) ?? [];
@@ -1038,6 +1406,7 @@ async function listJobsTodayOrInProgress(input: {
       .select(cockpitJobSelect)
       .eq("company_id", input.organizationId)
       .eq("dispatch_status", "in_progress")
+      .is("service_ticket_id", null)
       .order("scheduled_start_at", { ascending: true, nullsFirst: false })
       .order("updated_at", { ascending: false })
       .limit(input.limit),
@@ -1047,6 +1416,7 @@ async function listJobsTodayOrInProgress(input: {
       .eq("company_id", input.organizationId)
       .eq("scheduled_date", input.today)
       .neq("dispatch_status", "in_progress")
+      .is("service_ticket_id", null)
       .order("scheduled_start_at", { ascending: true, nullsFirst: false })
       .order("updated_at", { ascending: false })
       .limit(input.limit)
@@ -1068,6 +1438,233 @@ async function listJobsTodayOrInProgress(input: {
   }
 
   return sortJobsForDashboard([...jobsById.values()]).slice(0, input.limit);
+}
+
+async function listHighPriorityServiceTickets(input: {
+  organizationId: string;
+  limit: number;
+}) {
+  const supabase = await getSupabaseServerClient();
+  const response = await supabase
+    .from("service_tickets")
+    .select(cockpitServiceTicketSelect)
+    .eq("company_id", input.organizationId)
+    .in("status", ["open", "scheduled", "in_progress"])
+    .in("priority", ["high", "urgent"])
+    .order("priority", { ascending: false })
+    .order("reported_on", { ascending: true })
+    .limit(input.limit);
+  const rows = (response.data as CockpitServiceTicketRow[] | null) ?? [];
+
+  if (response.error) {
+    throw new Error(
+      `Unable to load dashboard high-priority service tickets: ${response.error.message}`
+    );
+  }
+
+  return rows.map(mapServiceTicket);
+}
+
+async function listStaleOpenServiceTickets(input: {
+  organizationId: string;
+  today: string;
+  limit: number;
+}) {
+  const staleBefore = addDaysDateKey(input.today, -14);
+  const supabase = await getSupabaseServerClient();
+  const response = await supabase
+    .from("service_tickets")
+    .select(cockpitServiceTicketSelect)
+    .eq("company_id", input.organizationId)
+    .in("status", ["open", "scheduled", "in_progress"])
+    .lt("reported_on", staleBefore)
+    .order("reported_on", { ascending: true })
+    .limit(input.limit);
+  const rows = (response.data as CockpitServiceTicketRow[] | null) ?? [];
+
+  if (response.error) {
+    throw new Error(
+      `Unable to load dashboard stale service tickets: ${response.error.message}`
+    );
+  }
+
+  return rows.map(mapServiceTicket);
+}
+
+async function listServiceTicketsMissingServiceJob(input: {
+  organizationId: string;
+  limit: number;
+}) {
+  const supabase = await getSupabaseServerClient();
+  const candidateLimit = input.limit * 4;
+  const ticketResponse = await supabase
+    .from("service_tickets")
+    .select(cockpitServiceTicketSelect)
+    .eq("company_id", input.organizationId)
+    .in("status", ["open", "scheduled", "in_progress"])
+    .not("project_id", "is", null)
+    .order("priority", { ascending: false })
+    .order("reported_on", { ascending: true })
+    .limit(candidateLimit);
+  const rows = (ticketResponse.data as CockpitServiceTicketRow[] | null) ?? [];
+
+  if (ticketResponse.error) {
+    throw new Error(
+      `Unable to load dashboard service tickets needing service jobs: ${ticketResponse.error.message}`
+    );
+  }
+
+  if (rows.length === 0) {
+    return [];
+  }
+
+  const ticketIds = rows.map((ticket) => ticket.id);
+  const jobsResponse = await supabase
+    .from("jobs")
+    .select("service_ticket_id")
+    .eq("company_id", input.organizationId)
+    .in("service_ticket_id", ticketIds);
+
+  if (jobsResponse.error) {
+    throw new Error(
+      `Unable to load dashboard linked service jobs: ${jobsResponse.error.message}`
+    );
+  }
+
+  const ticketIdsWithJobs = new Set(
+    (
+      (jobsResponse.data as Array<{
+        service_ticket_id: string | null;
+      }> | null) ?? []
+    )
+      .map((row) => row.service_ticket_id)
+      .filter((value): value is string => Boolean(value))
+  );
+
+  return rows
+    .filter((ticket) => !ticketIdsWithJobs.has(ticket.id))
+    .map(mapServiceTicket)
+    .slice(0, input.limit);
+}
+
+async function listServiceJobs(input: {
+  organizationId: string;
+  today: string;
+  kind: "unscheduled" | "upcoming" | "in_progress";
+  limit: number;
+}) {
+  const supabase = await getSupabaseServerClient();
+  let query = supabase
+    .from("jobs")
+    .select(cockpitJobSelect)
+    .eq("company_id", input.organizationId)
+    .not("service_ticket_id", "is", null)
+    .limit(input.limit);
+
+  if (input.kind === "unscheduled") {
+    query = query
+      .eq("dispatch_status", "unscheduled")
+      .order("updated_at", { ascending: false });
+  } else if (input.kind === "upcoming") {
+    query = query
+      .eq("dispatch_status", "scheduled")
+      .gte("scheduled_date", input.today)
+      .order("scheduled_date", { ascending: true, nullsFirst: false })
+      .order("scheduled_start_at", { ascending: true, nullsFirst: false });
+  } else {
+    query = query
+      .eq("dispatch_status", "in_progress")
+      .order("scheduled_start_at", { ascending: true, nullsFirst: false })
+      .order("updated_at", { ascending: false });
+  }
+
+  const response = await query;
+  const rows = (response.data as CockpitJobRow[] | null) ?? [];
+
+  if (response.error) {
+    throw new Error(
+      `Unable to load dashboard service jobs: ${response.error.message}`
+    );
+  }
+
+  return rows.map(mapJob);
+}
+
+async function listWarrantyDocumentsNeedingSignature(input: {
+  organizationId: string;
+  limit: number;
+}) {
+  const supabase = await getSupabaseServerClient();
+  const response = await supabase
+    .from("warranty_documents")
+    .select(cockpitWarrantyDocumentSelect)
+    .eq("company_id", input.organizationId)
+    .in("status", ["draft", "issued"])
+    .order("updated_at", { ascending: false })
+    .limit(input.limit * 2);
+  const rows = (response.data as CockpitWarrantyDocumentRow[] | null) ?? [];
+
+  if (response.error) {
+    throw new Error(
+      `Unable to load dashboard warranty documents: ${response.error.message}`
+    );
+  }
+
+  if (rows.length === 0) {
+    return [];
+  }
+
+  const warrantyDocumentIds = rows.map((row) => row.id);
+  const [signersResponse, eventsResponse] = await Promise.all([
+    supabase
+      .from("document_signers")
+      .select("subject_id, status")
+      .eq("company_id", input.organizationId)
+      .eq("subject_type", "warranty_document")
+      .in("subject_id", warrantyDocumentIds),
+    supabase
+      .from("document_signature_events")
+      .select("subject_id, event_type, created_at")
+      .eq("company_id", input.organizationId)
+      .eq("subject_type", "warranty_document")
+      .in("subject_id", warrantyDocumentIds)
+      .order("created_at", { ascending: false })
+      .limit(100)
+  ]);
+
+  const signerRows =
+    (signersResponse.data as CockpitDocumentSignerSummaryRow[] | null) ?? [];
+  const eventRows =
+    (eventsResponse.data as CockpitDocumentSignatureEventSummaryRow[] | null) ??
+    [];
+  const summaryError = signersResponse.error ?? eventsResponse.error;
+
+  if (summaryError) {
+    throw new Error(
+      `Unable to load dashboard warranty signature summaries: ${summaryError.message}`
+    );
+  }
+
+  const summaries = summarizeWarrantySignatures({
+    warrantyDocumentIds,
+    signers: signerRows,
+    events: eventRows
+  });
+
+  return rows
+    .map((row) =>
+      mapWarrantyDocument(
+        row,
+        summaries.get(row.id) ?? getEmptyWarrantySignatureSummary()
+      )
+    )
+    .filter(
+      (document) =>
+        document.status === "draft" ||
+        document.signatureSummary.requestedSignerCount >
+          document.signatureSummary.signedSignerCount
+    )
+    .slice(0, input.limit);
 }
 
 async function listAppointmentFollowUps(input: {
@@ -1455,7 +2052,14 @@ export const getDashboardOperationalCockpitReadModel = cache(
       unscheduledJobs,
       jobsTodayOrInProgress,
       appointmentFollowUps,
-      equipmentWarnings
+      equipmentWarnings,
+      highPriorityServiceTickets,
+      staleOpenServiceTickets,
+      serviceTicketsMissingServiceJob,
+      unscheduledServiceJobs,
+      upcomingServiceJobs,
+      inProgressServiceJobs,
+      warrantyDocumentsNeedingSignature
     ] = await Promise.all([
       listApprovedEstimatesReadyForContract({
         organizationId: input.organizationId,
@@ -1483,6 +2087,41 @@ export const getDashboardOperationalCockpitReadModel = cache(
         organizationId: input.organizationId,
         today: input.today,
         limit: 3
+      }),
+      listHighPriorityServiceTickets({
+        organizationId: input.organizationId,
+        limit: 2
+      }),
+      listStaleOpenServiceTickets({
+        organizationId: input.organizationId,
+        today: input.today,
+        limit: 2
+      }),
+      listServiceTicketsMissingServiceJob({
+        organizationId: input.organizationId,
+        limit: 2
+      }),
+      listServiceJobs({
+        organizationId: input.organizationId,
+        today: input.today,
+        kind: "unscheduled",
+        limit: 2
+      }),
+      listServiceJobs({
+        organizationId: input.organizationId,
+        today: input.today,
+        kind: "upcoming",
+        limit: 2
+      }),
+      listServiceJobs({
+        organizationId: input.organizationId,
+        today: input.today,
+        kind: "in_progress",
+        limit: 2
+      }),
+      listWarrantyDocumentsNeedingSignature({
+        organizationId: input.organizationId,
+        limit: 2
       })
     ]);
 
@@ -1495,7 +2134,14 @@ export const getDashboardOperationalCockpitReadModel = cache(
       unscheduledJobs,
       jobsTodayOrInProgress,
       appointmentFollowUps,
-      equipmentWarnings
+      equipmentWarnings,
+      highPriorityServiceTickets,
+      staleOpenServiceTickets,
+      serviceTicketsMissingServiceJob,
+      unscheduledServiceJobs,
+      upcomingServiceJobs,
+      inProgressServiceJobs,
+      warrantyDocumentsNeedingSignature
     };
   }
 );

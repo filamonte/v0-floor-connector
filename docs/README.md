@@ -76,6 +76,11 @@ Document roles:
 - `docs/vision.md`: long-term product direction and platform thesis
 - `docs/gatekeeper-system-vision.md`: target GateKeeper operational intelligence and communications doctrine; planning only, not implemented status
 - `docs/gatekeeper-source-adapters.md`: provider-neutral GateKeeper source adapter boundary for future manual, phone, voice, transcription, chat, SMS/email, portal, internal-note, and support/onboarding sources
+- `docs/gatekeeper-controlled-action-bridge.md`: planning boundary for future review-approved GateKeeper suggestions becoming explicit, audited canonical actions
+- `docs/gatekeeper-controlled-execution-readiness-audit.md`: audit of whether GateKeeper is ready for first controlled execution, recommending `create_opportunity` as the first candidate only after missing safety layers are planned
+- `docs/gatekeeper-create-opportunity-controlled-execution-plan.md`: detailed non-mutating plan for the future `create_opportunity` controlled execution bridge, including draft mapping, duplicate checks, audit/linkage, and canonical owner boundaries
+- `docs/gatekeeper-create-opportunity-execution-implementation-plan.md`: refreshed implementation-ready plan for the first future real `create_opportunity` execution service using the actual ledger/request path and Opportunities-owned creation boundary
+- `docs/gatekeeper-phase-1-demo-script.md`: QA/demo runbook for the implemented GateKeeper Phase 1 path from manual/demo source through controlled `create_opportunity` execution and result linkage
 - `docs/ai-assisted-operating-system.md`: target AI-assisted operating system strategy across contractor and FloorConnector-facing AI
 - `docs/ai-contractor-workflows.md`: target contractor-side AI copilot, drafting, summaries, scheduling suggestions, and approval queues
 - `docs/communications-and-ai-intake.md`: target unified communications, website AI chat/intake, AI receptionist, voice, missed-call, consent, and human handoff direction
@@ -133,6 +138,11 @@ Read these first for most implementation or documentation tasks:
 - `docs/intelligence-layer.md` defines the future canonical-first Intelligence Layer, including tenant-scoped analytics, opt-in network benchmarking, and later predictive/AI intelligence.
 - `docs/gatekeeper-system-vision.md` describes GateKeeper as the future operational memory, communications, AI guidance, and continuity layer over canonical records.
 - `docs/gatekeeper-source-adapters.md` defines the future provider-neutral ingestion boundary for GateKeeper source events before any vendor-specific adapter is implemented.
+- `docs/gatekeeper-controlled-action-bridge.md` defines the future safety boundary between reviewable suggestions and explicit canonical workflow execution.
+- `docs/gatekeeper-controlled-execution-readiness-audit.md` audits the first controlled execution candidate and records the missing safety layer before any real GateKeeper execution is built.
+- `docs/gatekeeper-create-opportunity-controlled-execution-plan.md` defines the future `create_opportunity` execution contract and keeps the first real bridge owned by the canonical Opportunities workflow.
+- `docs/gatekeeper-create-opportunity-execution-implementation-plan.md` refreshes the first real `create_opportunity` execution implementation plan after the ledger-backed draft, preflight, duplicate preview, and `execution_requested` state were implemented.
+- `docs/gatekeeper-phase-1-demo-script.md` documents the repeatable QA/demo path for the implemented GateKeeper Phase 1 create-opportunity loop.
 - `docs/contractor-foreman-gap-decision-list.md` records owner decisions from the Contractor Foreman baseline comparison.
 - `docs/future-feature-coverage-map.md` is the broad future coverage map so roadmap/current-state do not become feature encyclopedias.
 
@@ -153,6 +163,11 @@ Read these first for most implementation or documentation tasks:
 - `docs/ai/README.md` and `docs/ai/*.md` define AI-readable boundaries.
 - `docs/gatekeeper-system-vision.md` is the first-class doctrine document for future GateKeeper communications, operational memory, workflow reinforcement, human approval queues, and multi-agent direction.
 - `docs/gatekeeper-source-adapters.md` is the planning contract for future GateKeeper source ingestion and adapter anti-drift rules.
+- `docs/gatekeeper-controlled-action-bridge.md` is the planning contract for future non-autonomous, audited suggestion execution handoffs.
+- `docs/gatekeeper-controlled-execution-readiness-audit.md` is the current audit checkpoint for deciding whether `create_opportunity` can become the first controlled execution bridge after more safety planning.
+- `docs/gatekeeper-create-opportunity-controlled-execution-plan.md` is the current non-mutating plan for the first future controlled execution candidate.
+- `docs/gatekeeper-create-opportunity-execution-implementation-plan.md` is the current implementation-ready plan for the first future real `create_opportunity` controlled execution slice.
+- `docs/gatekeeper-phase-1-demo-script.md` is the current QA/demo script for proving the Phase 1 controlled `create_opportunity` path end to end.
 - `docs/ai-guided-system-plan.md` captures deterministic guidance to future AI boundaries.
 - Future AI docs are planning/reference only unless `current-state.md` says otherwise.
 

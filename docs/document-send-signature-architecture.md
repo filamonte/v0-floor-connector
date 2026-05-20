@@ -113,8 +113,13 @@ Current internal signer-management checkpoint:
 - Project, Customer, and Job Workspaces now show read-only signer/request
   summaries for linked warranty documents. The summaries include signer count,
   requested signer count, signed signer count, and latest signature event
-  type/date, but they do not add send, portal signing, email, countersign, or
+  type/date, but they do not add send, email, countersign, provider e-sign, or
   document-status automation.
+- Dashboard Operational Cockpit now includes bounded read-only warranty document
+  signature attention items when draft/issued warranty documents need internal
+  signer/request follow-up. These links route back to Warranty Document or
+  Service Ticket Workspaces and do not add email, delivery proof, countersign,
+  provider e-sign, or cue-state mutation.
 
 Not implemented in this slice:
 
@@ -152,7 +157,49 @@ Portal warranty signing should use existing portal access foundations:
 
 If a warranty document is not project-linked, the portal visibility rule needs an explicit customer-scoped access decision before implementation.
 
+The detailed portal warranty review/signing plan now lives in [docs/portal-warranty-review-sign-plan.md](C:/FloorConnector/docs/portal-warranty-review-sign-plan.md). It recommends requiring project-scoped portal access for MVP, keeping customer-only warranty documents internal, requiring signer email alignment for signing, using `document_signers` / `document_signature_events` for the customer action, and leaving contract signature tables untouched.
+
+Implementation checkpoint: the first portal warranty review/sign MVP now uses
+that model for `warranty_document` subjects only. Portal customers can review
+project-linked issued/sent/viewed/signed warranty documents, print/save the
+customer-safe rendering, sign or decline only when their authenticated portal
+email matches an eligible customer signer, and write immutable generic signature
+events. Contracts still use the existing contract-specific signature tables.
+
 ## Send And Delivery Proof Strategy
+
+Outbound delivery proof is now planned and partially implemented separately in
+[docs/document-delivery-proof-architecture.md](C:/FloorConnector/docs/document-delivery-proof-architecture.md).
+That plan treats delivery evidence as a document-subject evidence layer across
+estimates, contracts, invoices, and warranty documents. The implemented
+foundation adds immutable `document_delivery_events` for warranty documents,
+estimates, invoices, and contracts, with manual/internal evidence recording on
+the supported document workspaces. It does not replace
+`contract_signature_events`,
+`document_signature_events`, `payment_events`, `notification_events`, or portal
+view evidence.
+
+Provider-backed outbound document send architecture now lives in
+[docs/provider-document-send-architecture.md](C:/FloorConnector/docs/provider-document-send-architecture.md).
+That plan keeps send/delivery mechanics in `notification_events` and
+`notification_deliveries`, keeps document-subject proof in
+`document_delivery_events`, and keeps contract and warranty signature truth in
+their signature event systems. Provider email callbacks must not sign, decline,
+countersign, approve, pay, void, or otherwise mutate signature/payment truth.
+The first provider-send implementations now cover warranty documents,
+estimates, invoices, and contracts. Warranty Document detail can send a portal
+review/sign email to a requested customer signer, record notification delivery
+telemetry, and append `document_delivery_events.send_requested` / `sent` /
+`failed` evidence without updating signer status or writing signature events.
+Estimate Workspace can send a portal review email to an active project-scoped
+portal recipient with the same delivery evidence pattern and without
+approving/rejecting the estimate or mutating payment/signature truth. Invoice
+Workspace can send a portal review/payment email with the same evidence ladder
+without starting checkout, creating payments, writing `payment_events`, or
+changing invoice paid/partial/status truth. Contract send-for-signature now
+attempts provider email after the existing signature workflow succeeds, appends
+`send_requested` / `sent` / `failed` delivery evidence, and keeps signer routing,
+readiness, status, and signature-event truth in the contract-specific workflow.
 
 Send should eventually be a controlled workflow:
 
@@ -160,9 +207,19 @@ Send should eventually be a controlled workflow:
 - record a signature-requested event
 - create delivery proof through a shared communication/notification path
 - expose a portal-safe review URL only after access is scoped
-- avoid external provider sending until provider adapters and staging proof exist
+- keep provider-backed sending behind the existing notification/provider boundary
 
-No external email/provider send was implemented in this slice.
+Provider-backed email is implemented for warranty documents, estimates,
+invoices, and the guarded contract send-for-signature path. Signature-driven
+delivery proof mutation outside that path, provider callbacks, contract
+signature migration, and provider-owned signature/payment truth remain deferred.
+
+Contract-specific delivery-proof reconciliation is now documented in
+[docs/contracts-delivery-proof-reconciliation-plan.md](C:/FloorConnector/docs/contracts-delivery-proof-reconciliation-plan.md).
+That plan keeps contract send/sign/view/decline/countersign truth in
+`contract_signature_events`, keeps notification intent in `notification_events`,
+and records that contract provider-send evidence may wrap the existing
+send-for-signature action without replacing the signature timeline.
 
 ## Signature Event Strategy
 
@@ -195,12 +252,21 @@ Signature events provide signature lifecycle audit evidence. Warranty document v
 
 ## Recommended Next Implementation Slice
 
-Plan portal warranty review/signing after internal visibility:
+The signature-adjacent delivery/send ladder is now implemented through the
+current guarded provider-send slices:
 
-- keep the internal signer/audit panel narrow and production-tested
-- use the Project/Customer/Job visibility panels as the contractor-side context
-  for linked warranty documents and signer request state
-- plan portal warranty review/signing with scoped portal access before any
-  customer-facing action is implemented
-- keep external delivery deferred until delivery proof and provider adapter
-  boundaries are explicit
+- warranty signing remains on generic `document_signers` /
+  `document_signature_events`
+- contracts remain on existing contract-specific signer/signature machinery
+- `document_delivery_events` records delivery proof for warranty documents,
+  estimates, invoices, and contracts without replacing signature or payment
+  truth
+- provider-backed email sends now exist for warranty documents, estimates,
+  invoices, and the guarded contract send-for-signature path
+
+The next signature-adjacent work should stay in regression or planning mode
+before adding new send behavior: audit the four provider-send surfaces, then
+plan provider callbacks/resend orchestration or portal-visible proof with
+idempotency and source-ownership rules. Provider e-sign, contract signature
+migration, automatic signature-event mirroring, and merged document activity
+remain deferred.

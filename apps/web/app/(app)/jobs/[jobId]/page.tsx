@@ -578,12 +578,22 @@ export default async function JobDetailPage({
             backHref="/jobs"
             backLabel="Back to jobs"
             actions={
-              <Link
-                href={`/projects/${job.projectId}`}
-                className="inline-flex items-center rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:bg-white"
-              >
-                Open project hub
-              </Link>
+              <>
+                {job.serviceTicket ? (
+                  <Link
+                    href={`/service-tickets/${job.serviceTicket.id}`}
+                    className="inline-flex items-center rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:bg-white"
+                  >
+                    Open service ticket
+                  </Link>
+                ) : null}
+                <Link
+                  href={`/projects/${job.projectId}`}
+                  className="inline-flex items-center rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:bg-white"
+                >
+                  Open project hub
+                </Link>
+              </>
             }
           />
 
@@ -1221,8 +1231,26 @@ export default async function JobDetailPage({
           description="Post-install service tickets and warranty documents tied back to this original job. This panel is read-only and does not change scheduling, billing, time, or signature behavior."
           tickets={jobServiceTickets}
           warrantyDocuments={jobWarrantyDocuments}
+          serviceJobs={job.serviceTicketId ? [job] : []}
           serviceTicketHref={`/service-tickets?jobId=${job.id}`}
         />
+
+        {job.serviceTicket ? (
+          <DetailPanel
+            title="Service Job Context"
+            description="This job is a follow-up service/warranty visit created from a canonical service ticket. Scheduling, crew, equipment, daily logs, and time stay on this job while ticket decisions stay on the service ticket."
+          >
+            <LinkedRecordCard
+              href={`/service-tickets/${job.serviceTicket.id}`}
+              title={job.serviceTicket.title}
+              subtitle={`${formatStatusLabel(job.serviceTicket.ticketType)} / ${formatStatusLabel(
+                job.serviceTicket.priority
+              )}`}
+              meta={`Ticket status ${formatStatusLabel(job.serviceTicket.status)}`}
+              badge={renderStatusBadge("Service job")}
+            />
+          </DetailPanel>
+        ) : null}
 
         <DetailPanel
           title="Daily Execution Context"
@@ -1297,6 +1325,19 @@ export default async function JobDetailPage({
                 value: linkedEstimate
                   ? linkedEstimate.referenceNumber
                   : "No linked estimate"
+              },
+              {
+                label: "Service ticket",
+                value: job.serviceTicket ? (
+                  <Link
+                    href={`/service-tickets/${job.serviceTicket.id}`}
+                    className="font-medium text-brand-700"
+                  >
+                    {job.serviceTicket.title}
+                  </Link>
+                ) : (
+                  "Not a service job"
+                )
               },
               {
                 label: "Invoice linkage",

@@ -6,8 +6,14 @@ import {
   canTransitionEstimateStatus,
   compareEstimateStatuses
 } from "@floorconnector/domain";
+import {
+  isPostmarkEmailConfigured,
+  sendPostmarkEmail
+} from "@floorconnector/integrations";
 import type {
   CatalogItem,
+  DocumentDeliveryChannel,
+  DocumentDeliveryEventType,
   EstimateAttachment,
   EstimateCustomerEvent,
   Estimate as EstimateRecord,
@@ -36,10 +42,9 @@ import {
   formatMoneyValue,
   parseNumericValue
 } from "@/lib/catalogs/pricing";
-import {
-  buildExpandedSystemLineItemSnapshots
-} from "@/lib/catalogs/system-expansion";
+import { buildExpandedSystemLineItemSnapshots } from "@/lib/catalogs/system-expansion";
 import { getActiveOrganizationContext } from "@/lib/organizations/active-context";
+import { getOrganizationProductionActionLockState } from "@/lib/organizations/activation-guard";
 import { getOrganizationWorkflowSettings } from "@/lib/organizations/workflow-settings";
 import {
   listPortalAccessGrantsForCurrentUser,
@@ -59,18 +64,17 @@ import {
   getCurrentUserPreferredEstimateTemplate,
   resolvePreferredEstimateTemplateForCreate
 } from "@/lib/user-preferences/estimate-template-preference";
-import {
-  buildEstimatePortalEmailContent
-} from "./email";
+import { buildEstimatePortalEmailContent } from "./email";
 import {
   createNotificationEvent,
-  deleteNotificationEvent,
   recordEstimateNotificationEvent,
-  sendTrackedNotificationEmail,
   trackNotificationDeliveryClicked,
   trackNotificationDeliveryOpened
 } from "@/lib/notifications/system";
-import { createRecordRevision, ensureInitialRecordRevision } from "@/lib/revisions/data";
+import {
+  createRecordRevision,
+  ensureInitialRecordRevision
+} from "@/lib/revisions/data";
 import { buildEstimateRevisionSnapshot } from "@/lib/revisions/snapshots";
 import type {
   EstimatePortalCommentInput,
@@ -114,43 +118,37 @@ type EstimateRow = {
   updated_by: string | null;
   created_at: string;
   updated_at: string;
-  customers?:
-    | {
-        id: string;
-        name: string;
-        company_name: string | null;
-        phone: string | null;
-        email: string | null;
-        is_tax_exempt: boolean;
-        address_line_1: string | null;
-        address_line_2: string | null;
-        city: string | null;
-        state_region: string | null;
-        postal_code: string | null;
-        country_code: string | null;
-      }
-    | null;
-  opportunities?:
-    | {
-        id: string;
-        title: string;
-        status: string;
-      }
-    | null;
-  projects?:
-    | {
-        id: string;
-        name: string;
-        status: string;
-        description: string | null;
-        address_line_1: string | null;
-        address_line_2: string | null;
-        city: string | null;
-        state_region: string | null;
-        postal_code: string | null;
-        country_code: string | null;
-      }
-    | null;
+  customers?: {
+    id: string;
+    name: string;
+    company_name: string | null;
+    phone: string | null;
+    email: string | null;
+    is_tax_exempt: boolean;
+    address_line_1: string | null;
+    address_line_2: string | null;
+    city: string | null;
+    state_region: string | null;
+    postal_code: string | null;
+    country_code: string | null;
+  } | null;
+  opportunities?: {
+    id: string;
+    title: string;
+    status: string;
+  } | null;
+  projects?: {
+    id: string;
+    name: string;
+    status: string;
+    description: string | null;
+    address_line_1: string | null;
+    address_line_2: string | null;
+    city: string | null;
+    state_region: string | null;
+    postal_code: string | null;
+    country_code: string | null;
+  } | null;
 };
 
 type EstimateLineItemRow = {
@@ -285,13 +283,11 @@ type CatalogSystemComponentSourceRow = {
 };
 
 type ProjectEstimateAttachmentRow = EstimateAttachmentRow & {
-  estimates?:
-    | {
-        id: string;
-        reference_number: string;
-        project_id: string;
-      }
-    | null;
+  estimates?: {
+    id: string;
+    reference_number: string;
+    project_id: string;
+  } | null;
 };
 
 export type EstimateListItem = EstimateRecord & {
@@ -364,7 +360,9 @@ export type ProjectEstimateAttachmentListItem = {
 
 export class EstimateVersionConflictError extends Error {
   constructor() {
-    super("This estimate was updated somewhere else. Refresh to review the latest saved version.");
+    super(
+      "This estimate was updated somewhere else. Refresh to review the latest saved version."
+    );
     this.name = "EstimateVersionConflictError";
   }
 }
@@ -376,6 +374,11 @@ type EstimateScope = {
 
 type IdRow = {
   id: string;
+};
+
+type NotificationDeliveryRow = {
+  id: string;
+  status: "pending" | "sent" | "delivered" | "opened" | "clicked" | "failed";
 };
 
 type SortOrderRow = {
@@ -472,7 +475,8 @@ function isEstimateRow(value: unknown): value is EstimateRow {
     (row.expiration_date === null || typeof row.expiration_date === "string") &&
     (row.project_type === null || typeof row.project_type === "string") &&
     (row.sector === null || typeof row.sector === "string") &&
-    (typeof row.subtotal_amount === "string" || typeof row.subtotal_amount === "number") &&
+    (typeof row.subtotal_amount === "string" ||
+      typeof row.subtotal_amount === "number") &&
     (typeof row.taxable_sales_amount === "string" ||
       typeof row.taxable_sales_amount === "number") &&
     (typeof row.exempt_sales_amount === "string" ||
@@ -481,13 +485,17 @@ function isEstimateRow(value: unknown): value is EstimateRow {
       typeof row.tax_rate_applied === "number") &&
     typeof row.tax_behavior_applied === "string" &&
     typeof row.customer_tax_exempt_snapshot === "boolean" &&
-    (typeof row.tax_amount === "string" || typeof row.tax_amount === "number") &&
-    (typeof row.discount_amount === "string" || typeof row.discount_amount === "number") &&
-    (typeof row.total_amount === "string" || typeof row.total_amount === "number") &&
+    (typeof row.tax_amount === "string" ||
+      typeof row.tax_amount === "number") &&
+    (typeof row.discount_amount === "string" ||
+      typeof row.discount_amount === "number") &&
+    (typeof row.total_amount === "string" ||
+      typeof row.total_amount === "number") &&
     (row.content === null || typeof row.content === "object") &&
     (row.sent_at === null || typeof row.sent_at === "string") &&
     (row.sent_by === null || typeof row.sent_by === "string") &&
-    (row.customer_viewed_at === null || typeof row.customer_viewed_at === "string") &&
+    (row.customer_viewed_at === null ||
+      typeof row.customer_viewed_at === "string") &&
     (row.approved_at === null || typeof row.approved_at === "string") &&
     (row.approved_by_portal_user_id === null ||
       typeof row.approved_by_portal_user_id === "string") &&
@@ -519,17 +527,21 @@ function isEstimateLineItemRow(value: unknown): value is EstimateLineItemRow {
     (row.catalog_item_id === null || typeof row.catalog_item_id === "string") &&
     (row.tax_code_id === null || typeof row.tax_code_id === "string") &&
     typeof row.source_type === "string" &&
-    (row.source_system_id === null || typeof row.source_system_id === "string") &&
-    (row.source_component_id === null || typeof row.source_component_id === "string") &&
+    (row.source_system_id === null ||
+      typeof row.source_system_id === "string") &&
+    (row.source_component_id === null ||
+      typeof row.source_component_id === "string") &&
     (row.item_type === null || typeof row.item_type === "string") &&
     typeof row.name === "string" &&
     (typeof row.quantity === "string" || typeof row.quantity === "number") &&
     typeof row.unit === "string" &&
-    (typeof row.base_unit_cost === "string" || typeof row.base_unit_cost === "number") &&
+    (typeof row.base_unit_cost === "string" ||
+      typeof row.base_unit_cost === "number") &&
     (row.base_unit_price === null ||
       typeof row.base_unit_price === "string" ||
       typeof row.base_unit_price === "number") &&
-    (typeof row.markup_percent === "string" || typeof row.markup_percent === "number") &&
+    (typeof row.markup_percent === "string" ||
+      typeof row.markup_percent === "number") &&
     (typeof row.hidden_markup_percent === "string" ||
       typeof row.hidden_markup_percent === "number") &&
     (typeof row.unit_price_before_hidden_markup === "string" ||
@@ -538,28 +550,39 @@ function isEstimateLineItemRow(value: unknown): value is EstimateLineItemRow {
       typeof row.visible_markup_amount === "number") &&
     (typeof row.hidden_markup_amount === "string" ||
       typeof row.hidden_markup_amount === "number") &&
-    (typeof row.unit_price === "string" || typeof row.unit_price === "number") &&
+    (typeof row.unit_price === "string" ||
+      typeof row.unit_price === "number") &&
     typeof row.taxable === "boolean" &&
     (typeof row.tax_rate_snapshot === "string" ||
       typeof row.tax_rate_snapshot === "number") &&
-    (typeof row.discount_amount === "string" || typeof row.discount_amount === "number") &&
-    (typeof row.line_subtotal === "string" || typeof row.line_subtotal === "number") &&
-    (typeof row.tax_amount === "string" || typeof row.tax_amount === "number") &&
+    (typeof row.discount_amount === "string" ||
+      typeof row.discount_amount === "number") &&
+    (typeof row.line_subtotal === "string" ||
+      typeof row.line_subtotal === "number") &&
+    (typeof row.tax_amount === "string" ||
+      typeof row.tax_amount === "number") &&
     (row.cost_code === null || typeof row.cost_code === "string") &&
     (row.group_name === null || typeof row.group_name === "string") &&
     (row.assigned_to === null || typeof row.assigned_to === "string") &&
-    (typeof row.line_total === "string" || typeof row.line_total === "number") &&
+    (typeof row.line_total === "string" ||
+      typeof row.line_total === "number") &&
     typeof row.sort_order === "number" &&
     typeof row.created_at === "string" &&
     typeof row.updated_at === "string"
   );
 }
 
-function isEstimateLineItemRowArray(value: unknown): value is EstimateLineItemRow[] {
-  return Array.isArray(value) && value.every((row) => isEstimateLineItemRow(row));
+function isEstimateLineItemRowArray(
+  value: unknown
+): value is EstimateLineItemRow[] {
+  return (
+    Array.isArray(value) && value.every((row) => isEstimateLineItemRow(row))
+  );
 }
 
-function isEstimateAttachmentRow(value: unknown): value is EstimateAttachmentRow {
+function isEstimateAttachmentRow(
+  value: unknown
+): value is EstimateAttachmentRow {
   if (!value || typeof value !== "object") {
     return false;
   }
@@ -582,11 +605,17 @@ function isEstimateAttachmentRow(value: unknown): value is EstimateAttachmentRow
   );
 }
 
-function isEstimateAttachmentRowArray(value: unknown): value is EstimateAttachmentRow[] {
-  return Array.isArray(value) && value.every((row) => isEstimateAttachmentRow(row));
+function isEstimateAttachmentRowArray(
+  value: unknown
+): value is EstimateAttachmentRow[] {
+  return (
+    Array.isArray(value) && value.every((row) => isEstimateAttachmentRow(row))
+  );
 }
 
-function isEstimateCustomerEventRow(value: unknown): value is EstimateCustomerEventRow {
+function isEstimateCustomerEventRow(
+  value: unknown
+): value is EstimateCustomerEventRow {
   if (!value || typeof value !== "object") {
     return false;
   }
@@ -601,13 +630,16 @@ function isEstimateCustomerEventRow(value: unknown): value is EstimateCustomerEv
     typeof row.project_id === "string" &&
     typeof row.event_type === "string" &&
     typeof row.actor_type === "string" &&
-    (row.organization_user_id === null || typeof row.organization_user_id === "string") &&
+    (row.organization_user_id === null ||
+      typeof row.organization_user_id === "string") &&
     (row.portal_user_id === null || typeof row.portal_user_id === "string") &&
     (row.event_note === null || typeof row.event_note === "string") &&
     (row.email_recipient === null || typeof row.email_recipient === "string") &&
-    (row.email_tracking_token === null || typeof row.email_tracking_token === "string") &&
+    (row.email_tracking_token === null ||
+      typeof row.email_tracking_token === "string") &&
     (row.email_opened_at === null || typeof row.email_opened_at === "string") &&
-    (row.email_clicked_at === null || typeof row.email_clicked_at === "string") &&
+    (row.email_clicked_at === null ||
+      typeof row.email_clicked_at === "string") &&
     (row.payload === null || typeof row.payload === "object") &&
     typeof row.occurred_at === "string" &&
     typeof row.created_at === "string"
@@ -617,7 +649,10 @@ function isEstimateCustomerEventRow(value: unknown): value is EstimateCustomerEv
 function isEstimateCustomerEventRowArray(
   value: unknown
 ): value is EstimateCustomerEventRow[] {
-  return Array.isArray(value) && value.every((row) => isEstimateCustomerEventRow(row));
+  return (
+    Array.isArray(value) &&
+    value.every((row) => isEstimateCustomerEventRow(row))
+  );
 }
 
 function isProjectEstimateAttachmentRowArray(
@@ -739,10 +774,14 @@ function mapEstimateLineItem(row: EstimateLineItemRow): EstimateLineItem {
     unit: row.unit,
     baseUnitCost: Number(row.base_unit_cost).toFixed(2),
     baseUnitPrice:
-      row.base_unit_price == null ? null : Number(row.base_unit_price).toFixed(2),
+      row.base_unit_price == null
+        ? null
+        : Number(row.base_unit_price).toFixed(2),
     markupPercent: Number(row.markup_percent).toFixed(2),
     hiddenMarkupPercent: Number(row.hidden_markup_percent).toFixed(2),
-    unitPriceBeforeHiddenMarkup: Number(row.unit_price_before_hidden_markup).toFixed(2),
+    unitPriceBeforeHiddenMarkup: Number(
+      row.unit_price_before_hidden_markup
+    ).toFixed(2),
     visibleMarkupAmount: Number(row.visible_markup_amount).toFixed(2),
     hiddenMarkupAmount: Number(row.hidden_markup_amount).toFixed(2),
     unitPrice: Number(row.unit_price).toFixed(2),
@@ -791,7 +830,9 @@ function mapCatalogItemSource(row: CatalogItemSourceRow): CatalogItem {
     unit: row.unit,
     defaultUnitCost: Number(row.default_unit_cost).toFixed(2),
     defaultUnitPrice:
-      row.default_unit_price == null ? null : Number(row.default_unit_price).toFixed(2),
+      row.default_unit_price == null
+        ? null
+        : Number(row.default_unit_price).toFixed(2),
     markupPercent: Number(row.markup_percent).toFixed(2),
     hiddenMarkupPercent: Number(row.hidden_markup_percent).toFixed(2),
     taxable: row.taxable,
@@ -814,7 +855,9 @@ function sanitizeEstimateFileName(value: string) {
   return value.replace(/[^a-zA-Z0-9._-]+/g, "-").replace(/-+/g, "-");
 }
 
-async function getEstimateScope(next = "/estimates"): Promise<EstimateScope | null> {
+async function getEstimateScope(
+  next = "/estimates"
+): Promise<EstimateScope | null> {
   const user = await requireAuthenticatedUser(next);
   const organizationContext = await getActiveOrganizationContext(user.id);
 
@@ -853,7 +896,10 @@ async function createEstimateRecordRevision(input: {
   ensureInitial?: boolean;
   next?: string;
 }) {
-  const estimate = await getEstimateById(input.estimateId, input.next ?? `/estimates/${input.estimateId}`);
+  const estimate = await getEstimateById(
+    input.estimateId,
+    input.next ?? `/estimates/${input.estimateId}`
+  );
 
   if (!estimate) {
     return null;
@@ -869,7 +915,9 @@ async function createEstimateRecordRevision(input: {
     createdByUserId: input.createdByUserId
   };
 
-  return input.ensureInitial ? ensureInitialRecordRevision(payload) : createRecordRevision(payload);
+  return input.ensureInitial
+    ? ensureInitialRecordRevision(payload)
+    : createRecordRevision(payload);
 }
 
 export async function listEstimatePortalRecipients(input: {
@@ -904,55 +952,53 @@ export async function listEstimatePortalRecipients(input: {
     .eq("customer_id", input.customerId)
     .eq("status", "active");
   const grantRows =
-    (grantResponse.data as
-      | Array<{
-          id?: string;
-          user_id?: string | null;
-          customer_contact_id?: string | null;
-          portal_user?:
-            | {
-                id?: string;
-                email?: string | null;
-                full_name?: string | null;
-              }
-            | Array<{
-                id?: string;
-                email?: string | null;
-                full_name?: string | null;
-              }>
-            | null;
-          customer_contact?:
-            | {
-                id?: string;
-                is_primary?: boolean;
-                contacts?:
-                  | {
-                      display_name?: string | null;
-                      email?: string | null;
-                    }
-                  | Array<{
-                      display_name?: string | null;
-                      email?: string | null;
-                    }>
-                  | null;
-              }
-            | Array<{
-                id?: string;
-                is_primary?: boolean;
-                contacts?:
-                  | {
-                      display_name?: string | null;
-                      email?: string | null;
-                    }
-                  | Array<{
-                      display_name?: string | null;
-                      email?: string | null;
-                    }>
-                  | null;
-              }>
-            | null;
-        }>
-      | null) ?? [];
+    (grantResponse.data as Array<{
+      id?: string;
+      user_id?: string | null;
+      customer_contact_id?: string | null;
+      portal_user?:
+        | {
+            id?: string;
+            email?: string | null;
+            full_name?: string | null;
+          }
+        | Array<{
+            id?: string;
+            email?: string | null;
+            full_name?: string | null;
+          }>
+        | null;
+      customer_contact?:
+        | {
+            id?: string;
+            is_primary?: boolean;
+            contacts?:
+              | {
+                  display_name?: string | null;
+                  email?: string | null;
+                }
+              | Array<{
+                  display_name?: string | null;
+                  email?: string | null;
+                }>
+              | null;
+          }
+        | Array<{
+            id?: string;
+            is_primary?: boolean;
+            contacts?:
+              | {
+                  display_name?: string | null;
+                  email?: string | null;
+                }
+              | Array<{
+                  display_name?: string | null;
+                  email?: string | null;
+                }>
+              | null;
+          }>
+        | null;
+    }> | null) ?? [];
 
   if (grantResponse.error) {
     throw new Error(
@@ -979,9 +1025,9 @@ export async function listEstimatePortalRecipients(input: {
     .eq("project_id", input.projectId)
     .eq("status", "active");
   const accessRows =
-    (projectAccessResponse.data as
-      | Array<{ portal_access_grant_id?: string | null }>
-      | null) ?? [];
+    (projectAccessResponse.data as Array<{
+      portal_access_grant_id?: string | null;
+    }> | null) ?? [];
 
   if (projectAccessResponse.error) {
     throw new Error(
@@ -1001,13 +1047,13 @@ export async function listEstimatePortalRecipients(input: {
       const portalAccessGrantId = row.id;
       const portalUser = Array.isArray(row.portal_user)
         ? (row.portal_user[0] ?? null)
-        : row.portal_user ?? null;
+        : (row.portal_user ?? null);
       const customerContact = Array.isArray(row.customer_contact)
         ? (row.customer_contact[0] ?? null)
-        : row.customer_contact ?? null;
+        : (row.customer_contact ?? null);
       const contact = Array.isArray(customerContact?.contacts)
         ? (customerContact?.contacts[0] ?? null)
-        : customerContact?.contacts ?? null;
+        : (customerContact?.contacts ?? null);
 
       if (!portalAccessGrantId || !portalUser?.id || !portalUser.email) {
         return null;
@@ -1049,7 +1095,8 @@ function resolveEstimatePortalRecipient(input: {
   }
 
   const primaryContactRecipient =
-    input.portalRecipients.find((recipient) => recipient.isPrimaryContact) ?? null;
+    input.portalRecipients.find((recipient) => recipient.isPrimaryContact) ??
+    null;
 
   if (primaryContactRecipient) {
     return primaryContactRecipient;
@@ -1058,7 +1105,8 @@ function resolveEstimatePortalRecipient(input: {
   const normalizedCustomerEmail = input.customerEmail.trim().toLowerCase();
   const exactMatch =
     input.portalRecipients.find(
-      (recipient) => recipient.email.trim().toLowerCase() === normalizedCustomerEmail
+      (recipient) =>
+        recipient.email.trim().toLowerCase() === normalizedCustomerEmail
     ) ?? null;
 
   if (exactMatch) {
@@ -1143,6 +1191,129 @@ async function insertEstimateCustomerEvent(input: {
   return mapEstimateCustomerEvent(row);
 }
 
+function getNotificationDeliveryErrorMessage(error: unknown) {
+  return error instanceof Error ? error.message : "Unknown delivery error.";
+}
+
+async function createEstimateNotificationDelivery(input: {
+  organizationId: string;
+  notificationEventId: string;
+  recipientEmail: string;
+  recipientUserId: string | null;
+  trackingToken: string;
+  payload: Record<string, unknown>;
+}) {
+  const admin = getSupabaseAdminClient();
+  const response = await admin
+    .from("notification_deliveries")
+    .insert({
+      company_id: input.organizationId,
+      notification_event_id: input.notificationEventId,
+      channel: "email",
+      provider: "postmark",
+      status: "pending",
+      recipient_user_id: input.recipientUserId,
+      recipient_email: input.recipientEmail,
+      tracking_token: input.trackingToken,
+      payload: input.payload
+    })
+    .select("id, status")
+    .single();
+  const data = response.data as NotificationDeliveryRow | null;
+
+  if (response.error || !data?.id) {
+    throw new Error(
+      `Unable to create estimate notification delivery: ${response.error?.message ?? "Insert failed."}`
+    );
+  }
+
+  return data.id;
+}
+
+async function markEstimateNotificationDeliverySent(input: {
+  deliveryId: string;
+  providerMessageId: string;
+  sentAt: string | null;
+}) {
+  const admin = getSupabaseAdminClient();
+  const response = await admin
+    .from("notification_deliveries")
+    .update({
+      provider_message_id: input.providerMessageId,
+      status: "sent",
+      sent_at: input.sentAt ?? new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    })
+    .eq("id", input.deliveryId);
+
+  if (response.error) {
+    throw new Error(
+      `Unable to mark estimate notification delivery sent: ${response.error.message}`
+    );
+  }
+}
+
+async function markEstimateNotificationDeliveryFailed(input: {
+  deliveryId: string;
+  errorMessage: string;
+}) {
+  const admin = getSupabaseAdminClient();
+  const response = await admin
+    .from("notification_deliveries")
+    .update({
+      status: "failed",
+      error_message: input.errorMessage,
+      failed_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    })
+    .eq("id", input.deliveryId);
+
+  if (response.error) {
+    throw new Error(
+      `Unable to mark estimate notification delivery failed: ${response.error.message}`
+    );
+  }
+}
+
+async function insertEstimateDeliveryEvent(input: {
+  scope: EstimateScope;
+  estimateId: string;
+  eventType: DocumentDeliveryEventType;
+  recipientName: string | null;
+  recipientEmail: string | null;
+  recipientRole: string | null;
+  channel: DocumentDeliveryChannel;
+  provider?: string | null;
+  providerMessageId?: string | null;
+  relatedNotificationEventId?: string | null;
+  eventNote?: string | null;
+  metadata?: Record<string, unknown>;
+}) {
+  const supabase = await getSupabaseServerClient();
+  const response = await supabase.from("document_delivery_events").insert({
+    company_id: input.scope.organizationId,
+    subject_type: "estimate",
+    subject_id: input.estimateId,
+    event_type: input.eventType,
+    recipient_name: input.recipientName,
+    recipient_email: input.recipientEmail,
+    recipient_role: input.recipientRole,
+    channel: input.channel,
+    provider: input.provider ?? null,
+    provider_message_id: input.providerMessageId ?? null,
+    related_notification_event_id: input.relatedNotificationEventId ?? null,
+    event_note: input.eventNote ?? null,
+    metadata: input.metadata ?? {},
+    created_by: input.scope.userId
+  });
+
+  if (response.error) {
+    throw new Error(
+      `Unable to record estimate delivery evidence: ${response.error.message}`
+    );
+  }
+}
+
 async function getEstimateCustomerEventByTrackingToken(
   token: string
 ): Promise<EstimateCustomerEventRow | null> {
@@ -1189,15 +1360,17 @@ async function getScopedPortalEstimate(
   next: string
 ): Promise<EstimatePortalScope> {
   const user = await requireAuthenticatedUser(next);
-  const activeGrants = (await listPortalAccessGrantsForCurrentUser(next)).filter(
-    (grant) => grant.status === "active"
-  );
+  const activeGrants = (
+    await listPortalAccessGrantsForCurrentUser(next)
+  ).filter((grant) => grant.status === "active");
 
   if (activeGrants.length === 0) {
     throw new Error("No active portal access is available for this estimate.");
   }
 
-  const accessibleCustomerIds = new Set(activeGrants.map((grant) => grant.customerId));
+  const accessibleCustomerIds = new Set(
+    activeGrants.map((grant) => grant.customerId)
+  );
   const supabase = await getSupabaseServerClient();
   const projectAccessResponse = await supabase
     .from("portal_project_access")
@@ -1215,7 +1388,10 @@ async function getScopedPortalEstimate(
   }
 
   const accessibleProjectIds = new Set(
-    ((projectAccessResponse.data as Array<{ project_id?: string }> | null) ?? [])
+    (
+      (projectAccessResponse.data as Array<{ project_id?: string }> | null) ??
+      []
+    )
       .map((row) => row.project_id)
       .filter((value): value is string => typeof value === "string")
   );
@@ -1226,7 +1402,9 @@ async function getScopedPortalEstimate(
     .maybeSingle();
 
   if (response.error) {
-    throw new Error(`Unable to load the portal estimate: ${response.error.message}`);
+    throw new Error(
+      `Unable to load the portal estimate: ${response.error.message}`
+    );
   }
 
   const estimate = response.data as EstimateRow | null;
@@ -1239,7 +1417,9 @@ async function getScopedPortalEstimate(
     !accessibleCustomerIds.has(estimate.customer_id) ||
     !accessibleProjectIds.has(estimate.project_id)
   ) {
-    throw new Error("This estimate is not available in the current portal scope.");
+    throw new Error(
+      "This estimate is not available in the current portal scope."
+    );
   }
 
   return {
@@ -1372,7 +1552,9 @@ async function getEstimateAttachments(
   const data: unknown = response.data;
 
   if (response.error) {
-    throw new Error(`Unable to load estimate attachments: ${response.error.message}`);
+    throw new Error(
+      `Unable to load estimate attachments: ${response.error.message}`
+    );
   }
 
   if (!isEstimateAttachmentRowArray(data)) {
@@ -1491,7 +1673,9 @@ export async function listProjectEstimateAttachments(
   const data: unknown = response.data;
 
   if (response.error) {
-    throw new Error(`Unable to load project estimate attachments: ${response.error.message}`);
+    throw new Error(
+      `Unable to load project estimate attachments: ${response.error.message}`
+    );
   }
 
   if (!isProjectEstimateAttachmentRowArray(data)) {
@@ -1513,7 +1697,8 @@ export async function listProjectEstimateAttachments(
   return data.map((attachment) => ({
     id: attachment.id,
     estimateId: attachment.estimate_id,
-    estimateReferenceNumber: attachment.estimates?.reference_number ?? "Estimate attachment",
+    estimateReferenceNumber:
+      attachment.estimates?.reference_number ?? "Estimate attachment",
     fileName: attachment.file_name,
     mimeType: attachment.mime_type,
     attachmentType: attachment.attachment_type,
@@ -1550,17 +1735,15 @@ async function replaceEstimateLineItems(
     return;
   }
 
-  const insertResponse = await supabase
-    .from("estimate_line_items")
-    .insert(
-      await buildEstimateLineInsertRows({
-        organizationId,
-        userId,
-        estimateId,
-        lineItems: seededLineItems,
-        sortOrderStart: 0
-      })
-    );
+  const insertResponse = await supabase.from("estimate_line_items").insert(
+    await buildEstimateLineInsertRows({
+      organizationId,
+      userId,
+      estimateId,
+      lineItems: seededLineItems,
+      sortOrderStart: 0
+    })
+  );
 
   if (insertResponse.error) {
     throw new Error(
@@ -1600,22 +1783,25 @@ async function appendEstimateLineItemSnapshots(
   lineItems: Awaited<ReturnType<typeof seedEstimateLineItemsFromSources>>
 ) {
   if (lineItems.length === 0) {
-    throw new Error("Estimate insertion requires at least one canonical line item snapshot.");
+    throw new Error(
+      "Estimate insertion requires at least one canonical line item snapshot."
+    );
   }
 
-  const sortOrderStart = await getNextEstimateLineItemSortOrder(organizationId, estimateId);
+  const sortOrderStart = await getNextEstimateLineItemSortOrder(
+    organizationId,
+    estimateId
+  );
   const supabase = await getSupabaseServerClient();
-  const insertResponse = await supabase
-    .from("estimate_line_items")
-    .insert(
-      await buildEstimateLineInsertRows({
-        organizationId,
-        userId,
-        estimateId,
-        lineItems,
-        sortOrderStart
-      })
-    );
+  const insertResponse = await supabase.from("estimate_line_items").insert(
+    await buildEstimateLineInsertRows({
+      organizationId,
+      userId,
+      estimateId,
+      lineItems,
+      sortOrderStart
+    })
+  );
 
   if (insertResponse.error) {
     throw new Error(
@@ -1639,7 +1825,9 @@ async function syncEstimateProjectReadiness(
   projectIds: Array<string | null | undefined>
 ) {
   const uniqueProjectIds = [
-    ...new Set(projectIds.filter((projectId): projectId is string => Boolean(projectId)))
+    ...new Set(
+      projectIds.filter((projectId): projectId is string => Boolean(projectId))
+    )
   ];
 
   for (const projectId of uniqueProjectIds) {
@@ -1683,14 +1871,18 @@ async function loadCatalogItemsForEstimateSources(
     .in("id", catalogItemIds);
 
   if (response.error) {
-    throw new Error(`Unable to load estimate pricing sources: ${response.error.message}`);
+    throw new Error(
+      `Unable to load estimate pricing sources: ${response.error.message}`
+    );
   }
 
   const rows = Array.isArray(response.data)
     ? (response.data as CatalogItemSourceRow[])
     : [];
 
-  return new Map(rows.map((row) => [row.id, mapCatalogItemSource(row)] as const));
+  return new Map(
+    rows.map((row) => [row.id, mapCatalogItemSource(row)] as const)
+  );
 }
 
 async function loadSystemComponentsForEstimateSources(
@@ -1723,12 +1915,19 @@ async function loadSystemComponentsForEstimateSources(
     .in("id", componentIds);
 
   if (response.error) {
-    throw new Error(`Unable to load system estimate sources: ${response.error.message}`);
+    throw new Error(
+      `Unable to load system estimate sources: ${response.error.message}`
+    );
   }
 
   const rows = Array.isArray(response.data)
     ? (response.data as Array<
-        Omit<CatalogSystemComponentSourceRow, "component_item_name" | "component_item_description" | "component_item_unit"> & {
+        Omit<
+          CatalogSystemComponentSourceRow,
+          | "component_item_name"
+          | "component_item_description"
+          | "component_item_unit"
+        > & {
           component_items?:
             | { name: string; description: string | null; unit: string }
             | Array<{ name: string; description: string | null; unit: string }>
@@ -1765,7 +1964,13 @@ export async function seedEstimateLineItemsFromSources(
   organizationId: string,
   lineItems: EstimateLineItemInput[]
 ) {
-  const catalogItemIds = [...new Set(lineItems.flatMap((lineItem) => [lineItem.catalogItemId].filter(Boolean) as string[]))];
+  const catalogItemIds = [
+    ...new Set(
+      lineItems.flatMap(
+        (lineItem) => [lineItem.catalogItemId].filter(Boolean) as string[]
+      )
+    )
+  ];
   const componentIds = [
     ...new Set(
       lineItems.flatMap((lineItem) =>
@@ -1788,52 +1993,66 @@ export async function seedEstimateLineItemsFromSources(
     const catalogItem = catalogItemsById.get(lineItem.catalogItemId);
 
     if (!catalogItem) {
-      throw new Error("Estimate row pricing source was not found in this organization.");
+      throw new Error(
+        "Estimate row pricing source was not found in this organization."
+      );
     }
 
     if (lineItem.sourceType === "catalog_item") {
       return applyEstimateLineTaxableOverride(
-        applyEstimateLineUnitPriceOverride(buildCatalogItemPricingSnapshot({
-          catalogItem,
-          quantity: lineItem.quantity,
-          sourceType: "catalog_item",
-          groupName: lineItem.groupName,
-          assignedTo: lineItem.assignedTo
-        }), lineItem.unitPriceOverride),
+        applyEstimateLineUnitPriceOverride(
+          buildCatalogItemPricingSnapshot({
+            catalogItem,
+            quantity: lineItem.quantity,
+            sourceType: "catalog_item",
+            groupName: lineItem.groupName,
+            assignedTo: lineItem.assignedTo
+          }),
+          lineItem.unitPriceOverride
+        ),
         lineItem.taxableOverride
       );
     }
 
     if (!lineItem.sourceSystemId || !lineItem.sourceComponentId) {
-      throw new Error("System-derived estimate rows must include system lineage.");
+      throw new Error(
+        "System-derived estimate rows must include system lineage."
+      );
     }
 
     const component = systemComponentsById.get(lineItem.sourceComponentId);
 
     if (!component) {
-      throw new Error("System component source was not found for this estimate row.");
+      throw new Error(
+        "System component source was not found for this estimate row."
+      );
     }
 
     if (
       component.system_catalog_item_id !== lineItem.sourceSystemId ||
       component.component_catalog_item_id !== lineItem.catalogItemId
     ) {
-      throw new Error("System-derived estimate row lineage does not match its catalog source.");
+      throw new Error(
+        "System-derived estimate row lineage does not match its catalog source."
+      );
     }
 
     return applyEstimateLineTaxableOverride(
-      applyEstimateLineUnitPriceOverride(buildCatalogItemPricingSnapshot({
-        catalogItem,
-        quantity: lineItem.quantity,
-        sourceType: "system_component",
-        sourceSystemId: lineItem.sourceSystemId,
-        sourceComponentId: lineItem.sourceComponentId,
-        groupName: lineItem.groupName,
-        assignedTo: lineItem.assignedTo,
-        name: component.component_item_name,
-        description: component.component_item_description,
-        unit: component.component_item_unit
-      }), lineItem.unitPriceOverride),
+      applyEstimateLineUnitPriceOverride(
+        buildCatalogItemPricingSnapshot({
+          catalogItem,
+          quantity: lineItem.quantity,
+          sourceType: "system_component",
+          sourceSystemId: lineItem.sourceSystemId,
+          sourceComponentId: lineItem.sourceComponentId,
+          groupName: lineItem.groupName,
+          assignedTo: lineItem.assignedTo,
+          name: component.component_item_name,
+          description: component.component_item_description,
+          unit: component.component_item_unit
+        }),
+        lineItem.unitPriceOverride
+      ),
       lineItem.taxableOverride
     );
   });
@@ -1848,7 +2067,9 @@ function applyEstimateLineUnitPriceOverride(
   }
 
   const unitPrice = formatMoneyValue(parseNumericValue(unitPriceOverride));
-  const lineTotal = formatMoneyValue(calculateLineTotal(snapshot.quantity, unitPrice));
+  const lineTotal = formatMoneyValue(
+    calculateLineTotal(snapshot.quantity, unitPrice)
+  );
 
   return {
     ...snapshot,
@@ -1872,7 +2093,9 @@ function applyEstimateLineTaxableOverride(
   };
 }
 
-type EstimateLineItemSeed = Awaited<ReturnType<typeof seedEstimateLineItemsFromSources>>[number];
+type EstimateLineItemSeed = Awaited<
+  ReturnType<typeof seedEstimateLineItemsFromSources>
+>[number];
 
 async function getEstimateTaxSnapshotContext(
   organizationId: string,
@@ -1891,7 +2114,10 @@ async function getEstimateTaxSnapshotContext(
   };
 }
 
-async function listTaxCodeRatesById(organizationId: string, taxCodeIds: string[]) {
+async function listTaxCodeRatesById(
+  organizationId: string,
+  taxCodeIds: string[]
+) {
   if (taxCodeIds.length === 0) {
     return new Map<string, string>();
   }
@@ -1904,14 +2130,18 @@ async function listTaxCodeRatesById(organizationId: string, taxCodeIds: string[]
     .in("id", taxCodeIds);
 
   if (response.error) {
-    throw new Error(`Unable to load tax code snapshots: ${response.error.message}`);
+    throw new Error(
+      `Unable to load tax code snapshots: ${response.error.message}`
+    );
   }
 
   const rows = Array.isArray(response.data)
     ? (response.data as Array<{ id: string; rate: string | number }>)
     : [];
 
-  return new Map(rows.map((row) => [row.id, Number(row.rate).toFixed(6)] as const));
+  return new Map(
+    rows.map((row) => [row.id, Number(row.rate).toFixed(6)] as const)
+  );
 }
 
 async function buildEstimateLineInsertRows(input: {
@@ -1925,23 +2155,20 @@ async function buildEstimateLineInsertRows(input: {
     input.organizationId,
     input.estimateId
   );
-  const taxCodeRatesById = await listTaxCodeRatesById(
-    input.organizationId,
-    [
-      ...new Set(
-        input.lineItems.flatMap((lineItem) =>
-          lineItem.taxCodeId ? [lineItem.taxCodeId] : []
-        )
+  const taxCodeRatesById = await listTaxCodeRatesById(input.organizationId, [
+    ...new Set(
+      input.lineItems.flatMap((lineItem) =>
+        lineItem.taxCodeId ? [lineItem.taxCodeId] : []
       )
-    ]
-  );
+    )
+  ]);
 
   return input.lineItems.map((lineItem, index) => {
     const lineSubtotal = formatMoneyValue(
       calculateLineTotal(lineItem.quantity, lineItem.unitPrice)
     );
     const taxRateSnapshot = lineItem.taxCodeId
-      ? taxCodeRatesById.get(lineItem.taxCodeId) ?? taxContext.fallbackRate
+      ? (taxCodeRatesById.get(lineItem.taxCodeId) ?? taxContext.fallbackRate)
       : !lineItem.taxable ||
           taxContext.customerTaxExempt ||
           taxContext.taxBehavior === "none"
@@ -2000,7 +2227,9 @@ export async function syncEstimateAttachments(input: {
   retainedAttachmentIds: string[];
   newAttachments: NewEstimateAttachmentUploadInput[];
 }) {
-  const scope = await requireEstimateScope(`/estimates/${input.estimateId}/edit`);
+  const scope = await requireEstimateScope(
+    `/estimates/${input.estimateId}/edit`
+  );
   const existingAttachments = await getEstimateAttachments(
     scope.organizationId,
     input.estimateId
@@ -2062,7 +2291,9 @@ export async function uploadEstimateAttachmentFiles(input: {
     return [];
   }
 
-  const scope = await requireEstimateScope(`/estimates/${input.estimateId}/edit`);
+  const scope = await requireEstimateScope(
+    `/estimates/${input.estimateId}/edit`
+  );
   const supabase = await getSupabaseServerClient();
   const uploaded: NewEstimateAttachmentUploadInput[] = [];
 
@@ -2078,7 +2309,9 @@ export async function uploadEstimateAttachmentFiles(input: {
       });
 
     if (uploadResponse.error) {
-      throw new Error(`Unable to upload estimate attachment: ${uploadResponse.error.message}`);
+      throw new Error(
+        `Unable to upload estimate attachment: ${uploadResponse.error.message}`
+      );
     }
 
     uploaded.push({
@@ -2092,9 +2325,7 @@ export async function uploadEstimateAttachmentFiles(input: {
   return uploaded;
 }
 
-export async function deleteEstimateAttachmentFiles(
-  storagePaths: string[]
-) {
+export async function deleteEstimateAttachmentFiles(storagePaths: string[]) {
   if (storagePaths.length === 0) {
     return;
   }
@@ -2105,7 +2336,9 @@ export async function deleteEstimateAttachmentFiles(
     .remove(storagePaths);
 
   if (response.error) {
-    throw new Error(`Unable to delete estimate attachments: ${response.error.message}`);
+    throw new Error(
+      `Unable to delete estimate attachments: ${response.error.message}`
+    );
   }
 }
 
@@ -2156,7 +2389,10 @@ export const listEstimates = cache(async (): Promise<EstimateListItem[]> => {
 });
 
 export const listEstimatesByProjectIds = cache(
-  async (projectIds: string[], next = "/estimates"): Promise<EstimateListItem[]> => {
+  async (
+    projectIds: string[],
+    next = "/estimates"
+  ): Promise<EstimateListItem[]> => {
     const scope = await requireEstimateScope(next);
     const scopedProjectIds = [...new Set(projectIds.filter(Boolean))];
 
@@ -2215,18 +2451,20 @@ export async function getEstimateById(
   next = "/estimates"
 ): Promise<EstimateDetail | null> {
   const scope = await requireEstimateScope(next);
-  const [estimate, lineItems, attachments, workflowSettings] = await Promise.all([
-    getEstimateRecordById(scope.organizationId, estimateId),
-    getEstimateLineItems(scope.organizationId, estimateId),
-    getEstimateAttachments(scope.organizationId, estimateId),
-    getOrganizationWorkflowSettings(scope.organizationId)
-  ]);
+  const [estimate, lineItems, attachments, workflowSettings] =
+    await Promise.all([
+      getEstimateRecordById(scope.organizationId, estimateId),
+      getEstimateLineItems(scope.organizationId, estimateId),
+      getEstimateAttachments(scope.organizationId, estimateId),
+      getOrganizationWorkflowSettings(scope.organizationId)
+    ]);
 
   if (!estimate) {
     return null;
   }
 
-  const resolvedAttachments = await resolveEstimateAttachmentDownloadUrls(attachments);
+  const resolvedAttachments =
+    await resolveEstimateAttachmentDownloadUrls(attachments);
   const mappedEstimate = mapEstimate(estimate);
   const resolvedDefaults = {
     termsHtml: workflowSettings.defaultEstimateTermsHtml,
@@ -2298,7 +2536,8 @@ export async function createEstimate(
 ) {
   const scope = await requireEstimateScope("/estimates");
   const project = await resolveScopedProject(input.projectId, "/estimates");
-  const plainNotes = stripHtmlToPlainText(input.content.notesHtml) ?? input.notes;
+  const plainNotes =
+    stripHtmlToPlainText(input.content.notesHtml) ?? input.notes;
   const supabase = await getSupabaseServerClient();
   const response = await supabase
     .from("estimates")
@@ -2326,7 +2565,9 @@ export async function createEstimate(
   const error = response.error;
 
   if (error || !isIdRow(data)) {
-    throw new Error(`Unable to create the estimate: ${error?.message ?? "Unknown error."}`);
+    throw new Error(
+      `Unable to create the estimate: ${error?.message ?? "Unknown error."}`
+    );
   }
 
   try {
@@ -2372,7 +2613,10 @@ export async function updateEstimate(
   options?: { expectedUpdatedAt?: string | null }
 ) {
   const scope = await requireEstimateScope(`/estimates/${estimateId}`);
-  const currentEstimate = await getEstimateRecordById(scope.organizationId, estimateId);
+  const currentEstimate = await getEstimateRecordById(
+    scope.organizationId,
+    estimateId
+  );
 
   if (!currentEstimate) {
     throw new Error("Estimate not found for this organization.");
@@ -2385,8 +2629,12 @@ export async function updateEstimate(
     throw new EstimateVersionConflictError();
   }
 
-  const project = await resolveScopedProject(input.projectId, `/estimates/${estimateId}`);
-  const plainNotes = stripHtmlToPlainText(input.content.notesHtml) ?? input.notes;
+  const project = await resolveScopedProject(
+    input.projectId,
+    `/estimates/${estimateId}`
+  );
+  const plainNotes =
+    stripHtmlToPlainText(input.content.notesHtml) ?? input.notes;
   const supabase = await getSupabaseServerClient();
   const response = await supabase
     .from("estimates")
@@ -2427,7 +2675,10 @@ export async function updateEstimate(
     input.lineItems
   );
 
-  const estimate = await getEstimateRecordById(scope.organizationId, estimateId);
+  const estimate = await getEstimateRecordById(
+    scope.organizationId,
+    estimateId
+  );
 
   if (!estimate) {
     throw new Error("Estimate not found for this organization.");
@@ -2458,7 +2709,10 @@ export async function updateEstimateStatus(
   }
 ) {
   const scope = await requireEstimateScope(`/estimates/${estimateId}`);
-  const currentEstimate = await getEstimateRecordById(scope.organizationId, estimateId);
+  const currentEstimate = await getEstimateRecordById(
+    scope.organizationId,
+    estimateId
+  );
 
   if (!currentEstimate) {
     throw new Error("Estimate not found for this organization.");
@@ -2535,7 +2789,10 @@ export async function updateEstimateStatus(
     throw new Error("Estimate not found for this organization.");
   }
 
-  const updatedEstimate = await getEstimateRecordById(scope.organizationId, estimateId);
+  const updatedEstimate = await getEstimateRecordById(
+    scope.organizationId,
+    estimateId
+  );
 
   if (!updatedEstimate) {
     throw new Error("Estimate not found for this organization.");
@@ -2596,7 +2853,9 @@ export async function updateEstimateStatus(
     });
   }
 
-  await syncEstimateProjectReadiness(scope.organizationId, [currentEstimate.project_id]);
+  await syncEstimateProjectReadiness(scope.organizationId, [
+    currentEstimate.project_id
+  ]);
 
   await createEstimateRecordRevision({
     estimateId,
@@ -2612,7 +2871,11 @@ export async function updateEstimateStatus(
 async function loadLatestEstimateCommercialSnapshotSummary(
   organizationId: string,
   estimateId: string
-): Promise<{ id: string; snapshot_version: number; created_at: string } | null> {
+): Promise<{
+  id: string;
+  snapshot_version: number;
+  created_at: string;
+} | null> {
   const supabase = await getSupabaseServerClient();
   const response = await supabase
     .from("estimate_commercial_snapshots")
@@ -2625,7 +2888,9 @@ async function loadLatestEstimateCommercialSnapshotSummary(
     .maybeSingle();
 
   if (response.error) {
-    throw new Error(`Unable to load approved estimate snapshot state: ${response.error.message}`);
+    throw new Error(
+      `Unable to load approved estimate snapshot state: ${response.error.message}`
+    );
   }
 
   const data: unknown = response.data;
@@ -2649,7 +2914,12 @@ async function loadLatestEstimateCommercialSnapshotSummary(
 async function verifyApprovedEstimateSnapshotForContractGeneration(
   organizationId: string,
   estimateId: string
-): Promise<{ id: string; snapshot_version: number; created_at: string; itemCount: number } | null> {
+): Promise<{
+  id: string;
+  snapshot_version: number;
+  created_at: string;
+  itemCount: number;
+} | null> {
   const supabase = await getSupabaseServerClient();
   const snapshotResponse = await supabase
     .from("estimate_commercial_snapshots")
@@ -2706,20 +2976,18 @@ async function verifyApprovedEstimateSnapshotForContractGeneration(
     );
   }
 
-  const snapshotData = snapshotResponse.data as
-    | {
-        id?: unknown;
-        company_id?: unknown;
-        estimate_id?: unknown;
-        customer_id?: unknown;
-        project_id?: unknown;
-        snapshot_version?: unknown;
-        estimate_reference_number?: unknown;
-        customer_name_snapshot?: unknown;
-        project_name_snapshot?: unknown;
-        created_at?: unknown;
-      }
-    | null;
+  const snapshotData = snapshotResponse.data as {
+    id?: unknown;
+    company_id?: unknown;
+    estimate_id?: unknown;
+    customer_id?: unknown;
+    project_id?: unknown;
+    snapshot_version?: unknown;
+    estimate_reference_number?: unknown;
+    customer_name_snapshot?: unknown;
+    project_name_snapshot?: unknown;
+    created_at?: unknown;
+  } | null;
 
   if (!snapshotData) {
     return null;
@@ -2783,9 +3051,14 @@ async function verifyApprovedEstimateSnapshotForContractGeneration(
   };
 }
 
-export async function rebuildApprovedEstimateCommercialSnapshot(estimateId: string) {
+export async function rebuildApprovedEstimateCommercialSnapshot(
+  estimateId: string
+) {
   const scope = await requireEstimateScope(`/estimates/${estimateId}`);
-  const currentEstimate = await getEstimateRecordById(scope.organizationId, estimateId);
+  const currentEstimate = await getEstimateRecordById(
+    scope.organizationId,
+    estimateId
+  );
 
   if (!currentEstimate) {
     throw new Error("Estimate not found for this organization.");
@@ -2801,10 +3074,11 @@ export async function rebuildApprovedEstimateCommercialSnapshot(estimateId: stri
   );
 
   if (existingSnapshot) {
-    const verifiedSnapshot = await verifyApprovedEstimateSnapshotForContractGeneration(
-      scope.organizationId,
-      estimateId
-    );
+    const verifiedSnapshot =
+      await verifyApprovedEstimateSnapshotForContractGeneration(
+        scope.organizationId,
+        estimateId
+      );
 
     if (!verifiedSnapshot) {
       throw new Error(
@@ -2827,13 +3101,16 @@ export async function rebuildApprovedEstimateCommercialSnapshot(estimateId: stri
   });
 
   if (response.error) {
-    throw new Error(`Unable to rebuild the approved estimate snapshot: ${response.error.message}`);
+    throw new Error(
+      `Unable to rebuild the approved estimate snapshot: ${response.error.message}`
+    );
   }
 
-  const rebuiltSnapshot = await verifyApprovedEstimateSnapshotForContractGeneration(
-    scope.organizationId,
-    estimateId
-  );
+  const rebuiltSnapshot =
+    await verifyApprovedEstimateSnapshotForContractGeneration(
+      scope.organizationId,
+      estimateId
+    );
 
   if (!rebuiltSnapshot) {
     throw new Error(
@@ -2853,7 +3130,10 @@ export async function sendEstimateToCustomer(
   input: EstimateSendToCustomerInput
 ) {
   const scope = await requireEstimateScope(`/estimates/${input.estimateId}`);
-  const estimate = await getEstimateRecordById(scope.organizationId, input.estimateId);
+  const estimate = await getEstimateRecordById(
+    scope.organizationId,
+    input.estimateId
+  );
   const organizationContext = await getActiveOrganizationContext(scope.userId);
 
   if (!estimate) {
@@ -2861,11 +3141,15 @@ export async function sendEstimateToCustomer(
   }
 
   if (estimate.status !== "draft" && estimate.status !== "rejected") {
-    throw new Error("Only draft or rejected estimates can be sent for customer review.");
+    throw new Error(
+      "Only draft or rejected estimates can be sent for customer review."
+    );
   }
 
   if (!estimate.projects?.id || !estimate.customers?.id) {
-    throw new Error("Estimate must stay linked to a real customer and project before sending.");
+    throw new Error(
+      "Estimate must stay linked to a real customer and project before sending."
+    );
   }
 
   if (!estimate.customers.email?.trim()) {
@@ -2904,6 +3188,264 @@ export async function sendEstimateToCustomer(
   const admin = getSupabaseAdminClient();
 
   const revertEstimateToRejected = estimate.status === "rejected";
+  const deliveryPayload = {
+    subjectType: "estimate",
+    subjectId: estimate.id,
+    portalPath: `/portal/estimates/${estimate.id}`,
+    portalUserId: portalRecipient.portalUserId,
+    portalAccessGrantId: portalRecipient.portalAccessGrantId,
+    customerContactId: portalRecipient.customerContactId,
+    estimateReferenceNumber: estimate.reference_number,
+    customerName: estimate.customers.name,
+    trackingToken
+  };
+  const notificationEvent = await createNotificationEvent({
+    organizationId: scope.organizationId,
+    category: "estimates",
+    severity: "neutral",
+    eventType: "estimate.email_send_requested",
+    subjectType: "estimate",
+    subjectId: estimate.id,
+    customerId: estimate.customer_id,
+    projectId: estimate.project_id,
+    actorType: "organization_user",
+    actorUserId: scope.userId,
+    title: `Estimate ${estimate.reference_number} email requested`,
+    message: `Estimate ${estimate.reference_number} review email was requested for the customer.`,
+    linkPath: `/estimates/${estimate.id}`,
+    groupKey: `estimate:${estimate.id}`,
+    payload: deliveryPayload,
+    occurredAt: nowIso
+  });
+  const deliveryId = await createEstimateNotificationDelivery({
+    organizationId: scope.organizationId,
+    notificationEventId: notificationEvent.id,
+    recipientEmail: portalRecipient.email,
+    recipientUserId: portalRecipient.portalUserId,
+    trackingToken,
+    payload: deliveryPayload
+  });
+  await insertEstimateDeliveryEvent({
+    scope,
+    estimateId: estimate.id,
+    eventType: "send_requested",
+    recipientName: portalRecipient.fullName ?? estimate.customers.name,
+    recipientEmail: portalRecipient.email,
+    recipientRole: "customer",
+    channel: "email",
+    provider: "postmark",
+    relatedNotificationEventId: notificationEvent.id,
+    eventNote: "Provider-backed estimate review email was requested.",
+    metadata: {
+      source: "contractor_app_provider_send",
+      evidenceOnly: true,
+      providerSend: true,
+      notificationDeliveryId: deliveryId,
+      approvalMutation: false,
+      statusMutation: false
+    }
+  });
+
+  const lockState = await getOrganizationProductionActionLockState(
+    scope.organizationId
+  );
+
+  if (lockState.isLocked) {
+    const errorMessage = "Provider-backed email is locked during early access.";
+
+    await markEstimateNotificationDeliveryFailed({
+      deliveryId,
+      errorMessage
+    });
+    await insertEstimateDeliveryEvent({
+      scope,
+      estimateId: estimate.id,
+      eventType: "failed",
+      recipientName: portalRecipient.fullName ?? estimate.customers.name,
+      recipientEmail: portalRecipient.email,
+      recipientRole: "customer",
+      channel: "email",
+      provider: "postmark",
+      relatedNotificationEventId: notificationEvent.id,
+      eventNote: errorMessage,
+      metadata: {
+        source: "contractor_app_provider_send",
+        evidenceOnly: true,
+        providerSend: false,
+        notificationDeliveryId: deliveryId,
+        failureReason: "activation_locked"
+      }
+    });
+
+    const currentEstimate = await getEstimateById(
+      estimate.id,
+      `/estimates/${estimate.id}`
+    );
+
+    if (!currentEstimate) {
+      throw new Error(
+        "Estimate not found after recording failed delivery evidence."
+      );
+    }
+
+    return {
+      estimate: currentEstimate,
+      message:
+        "Estimate email was not sent because provider-backed sends are locked during early access. Failed delivery evidence was recorded."
+    };
+  }
+
+  if (!isPostmarkEmailConfigured()) {
+    const errorMessage =
+      "Postmark email delivery is not configured for this environment.";
+
+    await markEstimateNotificationDeliveryFailed({
+      deliveryId,
+      errorMessage
+    });
+    await insertEstimateDeliveryEvent({
+      scope,
+      estimateId: estimate.id,
+      eventType: "failed",
+      recipientName: portalRecipient.fullName ?? estimate.customers.name,
+      recipientEmail: portalRecipient.email,
+      recipientRole: "customer",
+      channel: "email",
+      provider: "postmark",
+      relatedNotificationEventId: notificationEvent.id,
+      eventNote: errorMessage,
+      metadata: {
+        source: "contractor_app_provider_send",
+        evidenceOnly: true,
+        providerSend: false,
+        notificationDeliveryId: deliveryId,
+        failureReason: "not_configured"
+      }
+    });
+
+    const currentEstimate = await getEstimateById(
+      estimate.id,
+      `/estimates/${estimate.id}`
+    );
+
+    if (!currentEstimate) {
+      throw new Error(
+        "Estimate not found after recording failed delivery evidence."
+      );
+    }
+
+    return {
+      estimate: currentEstimate,
+      message:
+        "Estimate email was not sent because Postmark email delivery is not configured. Failed delivery evidence was recorded."
+    };
+  }
+
+  const emailContent = buildEstimatePortalEmailContent({
+    recipientName: portalRecipient.fullName ?? estimate.customers.name,
+    organizationName:
+      organizationContext?.organization.displayName ??
+      organizationContext?.organization.legalName ??
+      "FloorConnector",
+    estimateReferenceNumber: estimate.reference_number,
+    estimateTitle: estimate.title,
+    projectName: estimate.projects?.name ?? null,
+    trackedPortalLink: trackedPortalLink.toString(),
+    trackedOpenPixelUrl: trackedOpenPixelUrl.toString()
+  });
+
+  try {
+    const result = await sendPostmarkEmail({
+      toEmail: portalRecipient.email,
+      subject: emailContent.subject,
+      htmlBody: emailContent.htmlBody,
+      textBody: emailContent.textBody
+    });
+
+    await markEstimateNotificationDeliverySent({
+      deliveryId,
+      providerMessageId: result.messageId,
+      sentAt: result.submittedAt
+    });
+    await insertEstimateDeliveryEvent({
+      scope,
+      estimateId: estimate.id,
+      eventType: "sent",
+      recipientName: portalRecipient.fullName ?? estimate.customers.name,
+      recipientEmail: portalRecipient.email,
+      recipientRole: "customer",
+      channel: "email",
+      provider: "postmark",
+      providerMessageId: result.messageId,
+      relatedNotificationEventId: notificationEvent.id,
+      eventNote: "Postmark accepted the estimate review email.",
+      metadata: {
+        source: "contractor_app_provider_send",
+        evidenceOnly: true,
+        providerSend: true,
+        notificationDeliveryId: deliveryId,
+        submittedAt: result.submittedAt,
+        to: result.to
+      }
+    });
+  } catch (error) {
+    const errorMessage = getNotificationDeliveryErrorMessage(error);
+
+    await markEstimateNotificationDeliveryFailed({
+      deliveryId,
+      errorMessage
+    });
+    await insertEstimateDeliveryEvent({
+      scope,
+      estimateId: estimate.id,
+      eventType: "failed",
+      recipientName: portalRecipient.fullName ?? estimate.customers.name,
+      recipientEmail: portalRecipient.email,
+      recipientRole: "customer",
+      channel: "email",
+      provider: "postmark",
+      relatedNotificationEventId: notificationEvent.id,
+      eventNote: errorMessage,
+      metadata: {
+        source: "contractor_app_provider_send",
+        evidenceOnly: true,
+        providerSend: true,
+        notificationDeliveryId: deliveryId,
+        failureReason: "provider_failed"
+      }
+    });
+
+    const currentEstimate = await getEstimateById(
+      estimate.id,
+      `/estimates/${estimate.id}`
+    );
+
+    if (!currentEstimate) {
+      throw new Error(
+        "Estimate not found after recording failed delivery evidence."
+      );
+    }
+
+    return {
+      estimate: currentEstimate,
+      message:
+        "The provider email send failed. Failed delivery evidence was recorded."
+    };
+  }
+
+  const sentEvent = await insertEstimateCustomerEvent({
+    organizationId: scope.organizationId,
+    estimateId: estimate.id,
+    customerId: estimate.customer_id,
+    projectId: estimate.project_id,
+    eventType: "sent",
+    actorType: "organization_user",
+    organizationUserId: scope.userId,
+    emailRecipient: portalRecipient.email,
+    emailTrackingToken: trackingToken,
+    payload: deliveryPayload,
+    occurredAt: nowIso
+  });
 
   const updateResponse = await supabase
     .from("estimates")
@@ -2924,101 +3466,11 @@ export async function sendEstimateToCustomer(
     .maybeSingle();
 
   if (updateResponse.error || !isIdRow(updateResponse.data)) {
-    throw new Error(
-      `Unable to mark the estimate as sent: ${updateResponse.error?.message ?? "Update failed."}`
-    );
-  }
-
-  let sentEvent: EstimateCustomerEventListItem | null = null;
-  let notificationEventId: string | null = null;
-
-  try {
-    sentEvent = await insertEstimateCustomerEvent({
-      organizationId: scope.organizationId,
-      estimateId: estimate.id,
-      customerId: estimate.customer_id,
-      projectId: estimate.project_id,
-      eventType: "sent",
-      actorType: "organization_user",
-      organizationUserId: scope.userId,
-      emailRecipient: portalRecipient.email,
-      emailTrackingToken: trackingToken,
-      payload: {
-        portalPath: `/portal/estimates/${estimate.id}`,
-        portalUserId: portalRecipient.portalUserId,
-        portalAccessGrantId: portalRecipient.portalAccessGrantId,
-        customerContactId: portalRecipient.customerContactId,
-        estimateReferenceNumber: estimate.reference_number,
-        customerName: estimate.customers.name
-      },
-      occurredAt: nowIso
-    });
-
-    const notificationEvent = await createNotificationEvent({
-      organizationId: scope.organizationId,
-      category: "estimates",
-      severity: "neutral",
-      eventType: "estimate.sent",
-      subjectType: "estimate",
-      subjectId: estimate.id,
-      customerId: estimate.customer_id,
-      projectId: estimate.project_id,
-      actorType: "organization_user",
-      actorUserId: scope.userId,
-      title: `Estimate ${estimate.reference_number} sent`,
-      message: `Estimate ${estimate.reference_number} was sent to the customer for portal review.`,
-      linkPath: `/estimates/${estimate.id}`,
-      groupKey: `estimate:${estimate.id}`,
-      payload: {
-        portalPath: `/portal/estimates/${estimate.id}`,
-        portalUserId: portalRecipient.portalUserId,
-        portalAccessGrantId: portalRecipient.portalAccessGrantId,
-        customerContactId: portalRecipient.customerContactId
-      },
-      occurredAt: nowIso
-    });
-    notificationEventId = notificationEvent.id;
-
-    const emailContent = buildEstimatePortalEmailContent({
-      recipientName: portalRecipient.fullName ?? estimate.customers.name,
-      organizationName:
-        organizationContext?.organization.displayName ??
-        organizationContext?.organization.legalName ??
-        "FloorConnector",
-      estimateReferenceNumber: estimate.reference_number,
-      estimateTitle: estimate.title,
-      projectName: estimate.projects?.name ?? null,
-      trackedPortalLink: trackedPortalLink.toString(),
-      trackedOpenPixelUrl: trackedOpenPixelUrl.toString()
-    });
-
-    await sendTrackedNotificationEmail({
-      organizationId: scope.organizationId,
-      notificationEventId: notificationEvent.id,
-      recipientEmail: portalRecipient.email,
-      recipientUserId: portalRecipient.portalUserId,
-      trackingToken,
-      subject: emailContent.subject,
-      htmlBody: emailContent.htmlBody,
-      textBody: emailContent.textBody,
-      payload: {
-        subjectType: "estimate",
-        subjectId: estimate.id,
-        portalPath: `/portal/estimates/${estimate.id}`
-      }
-    });
-  } catch (error) {
-    if (sentEvent) {
-      await admin
-        .from("estimate_customer_events")
-        .delete()
-        .eq("company_id", scope.organizationId)
-        .eq("id", sentEvent.id);
-    }
-
-    if (notificationEventId) {
-      await deleteNotificationEvent(scope.organizationId, notificationEventId);
-    }
+    await admin
+      .from("estimate_customer_events")
+      .delete()
+      .eq("company_id", scope.organizationId)
+      .eq("id", sentEvent.id);
 
     await supabase
       .from("estimates")
@@ -3036,7 +3488,9 @@ export async function sendEstimateToCustomer(
       .eq("company_id", scope.organizationId)
       .eq("id", estimate.id);
 
-    throw error;
+    throw new Error(
+      `Unable to mark the estimate as sent after provider acceptance: ${updateResponse.error?.message ?? "Update failed."}`
+    );
   }
 
   const updatedEstimate = await getEstimateById(
@@ -3048,7 +3502,9 @@ export async function sendEstimateToCustomer(
     throw new Error("Estimate not found after sending it to the customer.");
   }
 
-  await syncEstimateProjectReadiness(scope.organizationId, [estimate.project_id]);
+  await syncEstimateProjectReadiness(scope.organizationId, [
+    estimate.project_id
+  ]);
 
   await createEstimateRecordRevision({
     estimateId: estimate.id,
@@ -3058,7 +3514,10 @@ export async function sendEstimateToCustomer(
     next: `/estimates/${estimate.id}`
   });
 
-  return updatedEstimate;
+  return {
+    estimate: updatedEstimate,
+    message: `Estimate review email sent to ${portalRecipient.email}.`
+  };
 }
 
 export async function recordPortalViewedEstimate(
@@ -3082,7 +3541,9 @@ export async function recordPortalViewedEstimate(
     .eq("id", scope.estimate.id);
 
   if (response.error) {
-    throw new Error(`Unable to record the portal estimate review: ${response.error.message}`);
+    throw new Error(
+      `Unable to record the portal estimate review: ${response.error.message}`
+    );
   }
 
   await insertEstimateCustomerEvent({
@@ -3120,7 +3581,9 @@ export async function addEstimatePortalComment(
   const scope = await getScopedPortalEstimate(input.estimateId, next);
 
   if (scope.estimate.status === "draft") {
-    throw new Error("This estimate is not currently open for customer comments.");
+    throw new Error(
+      "This estimate is not currently open for customer comments."
+    );
   }
 
   const nowIso = new Date().toISOString();
@@ -3295,7 +3758,9 @@ export async function approveEstimateFromPortal(
     eventNote: input.decisionNote
   });
 
-  await syncEstimateProjectReadiness(updatedRow.company_id, [updatedRow.project_id]);
+  await syncEstimateProjectReadiness(updatedRow.company_id, [
+    updatedRow.project_id
+  ]);
 
   const refreshed = await getScopedPortalEstimate(input.estimateId, next);
   return mapEstimate(refreshed.estimate);
@@ -3400,7 +3865,9 @@ export async function rejectEstimateFromPortal(
     eventNote: input.decisionNote
   });
 
-  await syncEstimateProjectReadiness(updatedRow.company_id, [updatedRow.project_id]);
+  await syncEstimateProjectReadiness(updatedRow.company_id, [
+    updatedRow.project_id
+  ]);
 
   const refreshed = await getScopedPortalEstimate(input.estimateId, next);
   return mapEstimate(refreshed.estimate);
@@ -3535,7 +4002,9 @@ export async function quickCreateEstimateFromContext(input: {
         throw new Error("Select an opportunity to start the estimate.");
       case "customer":
         if (!input.customerId) {
-          throw new Error("Customer-started estimates need customer continuity.");
+          throw new Error(
+            "Customer-started estimates need customer continuity."
+          );
         }
 
         flow = await ensureOpportunityEstimateFlowFromCustomer({
@@ -3564,7 +4033,8 @@ export async function quickCreateEstimateFromContext(input: {
     }
   }
 
-  const preferredTemplate = await getCurrentUserPreferredEstimateTemplate("/estimates");
+  const preferredTemplate =
+    await getCurrentUserPreferredEstimateTemplate("/estimates");
 
   return createEstimate({
     opportunityId: flow.opportunityId,
@@ -3588,20 +4058,28 @@ export async function insertCatalogItemToEstimate(input: {
   catalogItemId: string;
   groupName?: string | null;
 }) {
-  const scope = await requireEstimateScope(`/estimates/${input.estimateId}/edit`);
-  const estimate = await getEstimateRecordById(scope.organizationId, input.estimateId);
+  const scope = await requireEstimateScope(
+    `/estimates/${input.estimateId}/edit`
+  );
+  const estimate = await getEstimateRecordById(
+    scope.organizationId,
+    input.estimateId
+  );
 
   if (!estimate) {
     throw new Error("Estimate not found for this organization.");
   }
 
-  const catalogItemsById = await loadCatalogItemsForEstimateSources(scope.organizationId, [
-    input.catalogItemId
-  ]);
+  const catalogItemsById = await loadCatalogItemsForEstimateSources(
+    scope.organizationId,
+    [input.catalogItemId]
+  );
   const catalogItem = catalogItemsById.get(input.catalogItemId);
 
   if (!catalogItem) {
-    throw new Error("The selected catalog item could not be found in active inventory.");
+    throw new Error(
+      "The selected catalog item could not be found in active inventory."
+    );
   }
 
   if (catalogItem.status !== "active") {
@@ -3609,7 +4087,9 @@ export async function insertCatalogItemToEstimate(input: {
   }
 
   if (catalogItem.itemType === "system") {
-    throw new Error("Systems must be inserted through the canonical system expansion flow.");
+    throw new Error(
+      "Systems must be inserted through the canonical system expansion flow."
+    );
   }
 
   const lineItemSnapshot = buildCatalogItemPricingSnapshot({
@@ -3619,9 +4099,12 @@ export async function insertCatalogItemToEstimate(input: {
     groupName: input.groupName ?? null
   });
 
-  await appendEstimateLineItemSnapshots(scope.organizationId, scope.userId, input.estimateId, [
-    lineItemSnapshot
-  ]);
+  await appendEstimateLineItemSnapshots(
+    scope.organizationId,
+    scope.userId,
+    input.estimateId,
+    [lineItemSnapshot]
+  );
 
   const updatedEstimate = await getEstimateById(
     input.estimateId,
@@ -3653,8 +4136,13 @@ export async function updateCatalogItemFromEstimateLine(input: {
   defaultUnitPrice: string;
   taxable: boolean;
 }) {
-  const scope = await requireEstimateScope(`/estimates/${input.estimateId}/edit`);
-  const estimate = await getEstimateRecordById(scope.organizationId, input.estimateId);
+  const scope = await requireEstimateScope(
+    `/estimates/${input.estimateId}/edit`
+  );
+  const estimate = await getEstimateRecordById(
+    scope.organizationId,
+    input.estimateId
+  );
 
   if (!estimate) {
     throw new Error("Estimate not found for this organization.");
@@ -3675,7 +4163,9 @@ export async function updateCatalogItemFromEstimateLine(input: {
     .maybeSingle();
 
   if (lineItemResponse.error) {
-    throw new Error(`Unable to load estimate line item: ${lineItemResponse.error.message}`);
+    throw new Error(
+      `Unable to load estimate line item: ${lineItemResponse.error.message}`
+    );
   }
 
   if (!lineItemResponse.data) {
@@ -3698,16 +4188,21 @@ export async function updateCatalogItemFromEstimateLine(input: {
     .single();
 
   if (catalogUpdateResponse.error) {
-    throw new Error(`Unable to update catalog item: ${catalogUpdateResponse.error.message}`);
+    throw new Error(
+      `Unable to update catalog item: ${catalogUpdateResponse.error.message}`
+    );
   }
 
-  const catalogItemsById = await loadCatalogItemsForEstimateSources(scope.organizationId, [
-    input.catalogItemId
-  ]);
+  const catalogItemsById = await loadCatalogItemsForEstimateSources(
+    scope.organizationId,
+    [input.catalogItemId]
+  );
   const catalogItem = catalogItemsById.get(input.catalogItemId);
 
   if (!catalogItem) {
-    throw new Error("Updated catalog item could not be loaded for estimate snapshot.");
+    throw new Error(
+      "Updated catalog item could not be loaded for estimate snapshot."
+    );
   }
 
   const currentLineItem = lineItemResponse.data as EstimateLineItemRow;
@@ -3759,7 +4254,9 @@ export async function updateCatalogItemFromEstimateLine(input: {
     .eq("id", input.estimateId);
 
   if (estimateUpdateResponse.error) {
-    throw new Error(`Unable to refresh estimate totals: ${estimateUpdateResponse.error.message}`);
+    throw new Error(
+      `Unable to refresh estimate totals: ${estimateUpdateResponse.error.message}`
+    );
   }
 
   const updatedEstimate = await getEstimateById(
@@ -3790,8 +4287,13 @@ export async function insertSystemToEstimate(input: {
   count?: string | null;
   groupName?: string | null;
 }) {
-  const scope = await requireEstimateScope(`/estimates/${input.estimateId}/edit`);
-  const estimate = await getEstimateRecordById(scope.organizationId, input.estimateId);
+  const scope = await requireEstimateScope(
+    `/estimates/${input.estimateId}/edit`
+  );
+  const estimate = await getEstimateRecordById(
+    scope.organizationId,
+    input.estimateId
+  );
 
   if (!estimate) {
     throw new Error("Estimate not found for this organization.");
@@ -3810,7 +4312,9 @@ export async function insertSystemToEstimate(input: {
   );
 
   if (!systemCatalogItem) {
-    throw new Error("The selected system could not be found in active inventory.");
+    throw new Error(
+      "The selected system could not be found in active inventory."
+    );
   }
 
   const squareFootage = Number(input.squareFootage);
@@ -3829,7 +4333,9 @@ export async function insertSystemToEstimate(input: {
   });
 
   if (lineItemSnapshots.length === 0) {
-    throw new Error("This system has no active components available to insert.");
+    throw new Error(
+      "This system has no active components available to insert."
+    );
   }
 
   await appendEstimateLineItemSnapshots(
@@ -3863,7 +4369,9 @@ export async function importEstimateLineItemsFromEstimate(input: {
   destinationEstimateId: string;
   sourceEstimateId: string;
 }) {
-  const scope = await requireEstimateScope(`/estimates/${input.destinationEstimateId}/edit`);
+  const scope = await requireEstimateScope(
+    `/estimates/${input.destinationEstimateId}/edit`
+  );
   const destinationEstimate = await getEstimateRecordById(
     scope.organizationId,
     input.destinationEstimateId
@@ -3874,7 +4382,9 @@ export async function importEstimateLineItemsFromEstimate(input: {
   }
 
   if (destinationEstimate.status !== "draft") {
-    throw new Error("Only draft estimates can import line items from another estimate.");
+    throw new Error(
+      "Only draft estimates can import line items from another estimate."
+    );
   }
 
   if (input.sourceEstimateId === input.destinationEstimateId) {
@@ -3890,17 +4400,23 @@ export async function importEstimateLineItemsFromEstimate(input: {
     throw new Error("Source estimate not found for this organization.");
   }
 
-  const sourceLineItems = await getEstimateLineItems(scope.organizationId, input.sourceEstimateId);
+  const sourceLineItems = await getEstimateLineItems(
+    scope.organizationId,
+    input.sourceEstimateId
+  );
 
   if (sourceLineItems.length === 0) {
-    throw new Error(`${sourceEstimate.reference_number} has no line items to import yet.`);
+    throw new Error(
+      `${sourceEstimate.reference_number} has no line items to import yet.`
+    );
   }
 
   const importableLineItems = sourceLineItems
     .filter(
       (lineItem) =>
         Boolean(lineItem.catalogItemId) &&
-        (lineItem.sourceType === "catalog_item" || lineItem.sourceType === "system_component")
+        (lineItem.sourceType === "catalog_item" ||
+          lineItem.sourceType === "system_component")
     )
     .map((lineItem, index) => ({
       rowKey: `import-${index + 1}`,
@@ -3972,7 +4488,9 @@ export async function importEstimateReusableContentFromEstimate(input: {
   sourceEstimateId: string;
   section: "scope" | "terms" | "inclusions" | "exclusions";
 }) {
-  const scope = await requireEstimateScope(`/estimates/${input.destinationEstimateId}/edit`);
+  const scope = await requireEstimateScope(
+    `/estimates/${input.destinationEstimateId}/edit`
+  );
   const destinationEstimate = await getEstimateRecordById(
     scope.organizationId,
     input.destinationEstimateId
@@ -3983,14 +4501,19 @@ export async function importEstimateReusableContentFromEstimate(input: {
   }
 
   if (destinationEstimate.status !== "draft") {
-    throw new Error("Only draft estimates can import reusable content from another estimate.");
+    throw new Error(
+      "Only draft estimates can import reusable content from another estimate."
+    );
   }
 
   if (input.sourceEstimateId === input.destinationEstimateId) {
     throw new Error("Choose a different estimate to import from.");
   }
 
-  const sourceEstimate = await getEstimateRecordById(scope.organizationId, input.sourceEstimateId);
+  const sourceEstimate = await getEstimateRecordById(
+    scope.organizationId,
+    input.sourceEstimateId
+  );
 
   if (!sourceEstimate) {
     throw new Error("Source estimate not found for this organization.");
@@ -4003,23 +4526,34 @@ export async function importEstimateReusableContentFromEstimate(input: {
 
   switch (input.section) {
     case "scope":
-      if (!sourceContent.scopeSummaryHtml && sourceContent.scopeItems.length === 0) {
-        throw new Error(`${sourceEstimate.reference_number} has no reusable scope / SOW to import.`);
+      if (
+        !sourceContent.scopeSummaryHtml &&
+        sourceContent.scopeItems.length === 0
+      ) {
+        throw new Error(
+          `${sourceEstimate.reference_number} has no reusable scope / SOW to import.`
+        );
       }
       break;
     case "terms":
       if (!sourceContent.termsHtml) {
-        throw new Error(`${sourceEstimate.reference_number} has no reusable terms to import.`);
+        throw new Error(
+          `${sourceEstimate.reference_number} has no reusable terms to import.`
+        );
       }
       break;
     case "inclusions":
       if (!sourceContent.inclusionsHtml) {
-        throw new Error(`${sourceEstimate.reference_number} has no reusable inclusions to import.`);
+        throw new Error(
+          `${sourceEstimate.reference_number} has no reusable inclusions to import.`
+        );
       }
       break;
     case "exclusions":
       if (!sourceContent.exclusionsHtml) {
-        throw new Error(`${sourceEstimate.reference_number} has no reusable exclusions to import.`);
+        throw new Error(
+          `${sourceEstimate.reference_number} has no reusable exclusions to import.`
+        );
       }
       break;
     default:

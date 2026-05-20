@@ -111,6 +111,28 @@ function formatStatusLabel(value: string) {
   return value.replaceAll("_", " ");
 }
 
+function getScheduleJobTitle(job: {
+  project?: { name: string } | null;
+  serviceTicket?: { title: string; ticketType: string } | null;
+}) {
+  return job.serviceTicket?.title ?? job.project?.name ?? "Untitled job";
+}
+
+function getScheduleJobSubtitle(job: {
+  customer?: { name: string } | null;
+  estimate?: { referenceNumber: string } | null;
+  serviceTicket?: { ticketType: string } | null;
+}) {
+  const serviceContext = job.serviceTicket
+    ? `${formatStatusLabel(job.serviceTicket.ticketType)} service`
+    : null;
+
+  return [
+    job.customer?.name ?? "Unknown customer",
+    serviceContext ?? job.estimate?.referenceNumber ?? "Project-based work"
+  ].join(" · ");
+}
+
 function formatDate(value: string | null) {
   return value
     ? new Date(`${value}T00:00:00`).toLocaleDateString("en-US", {
@@ -1258,6 +1280,8 @@ export default async function SchedulePage({
             job.project?.name ?? "",
             job.customer?.name ?? "",
             job.estimate?.referenceNumber ?? "",
+            job.serviceTicket?.title ?? "",
+            job.serviceTicket?.ticketType ?? "",
             job.crewVendor?.name ?? "",
             job.dispatchStatus,
             job.scheduledDate ?? "",
@@ -2143,9 +2167,9 @@ export default async function SchedulePage({
                     label="Selected job"
                     value={
                       selectedJob
-                        ? `${getScheduleActionSummaryLabel(selectedAction)} · ${
-                            selectedJob.project?.name ?? "Untitled job"
-                          }`
+                        ? `${getScheduleActionSummaryLabel(selectedAction)} · ${getScheduleJobTitle(
+                            selectedJob
+                          )}`
                         : getScheduleActionSummaryLabel(selectedAction)
                     }
                     clearHref={clearSelectedContextHref}
@@ -2233,7 +2257,7 @@ export default async function SchedulePage({
                                 href={`/jobs/${job.id}`}
                                 className="text-sm font-semibold text-[var(--text-primary)] transition hover:text-[var(--copper)]"
                               >
-                                {job.project?.name ?? "Untitled job"}
+                                {getScheduleJobTitle(job)}
                               </Link>
                               <p className="mt-1 text-xs leading-5 text-[var(--text-secondary)]">
                                 {job.customer?.name ?? "Unknown customer"} ·{" "}
@@ -2297,8 +2321,8 @@ export default async function SchedulePage({
                     action: primaryAction.action,
                     jobId: job.id
                   }),
-                  title: job.project?.name ?? "Untitled job",
-                  subtitle: `${job.customer?.name ?? "Unknown customer"} · ${job.estimate?.referenceNumber ?? "Project-based work"}`,
+                  title: getScheduleJobTitle(job),
+                  subtitle: getScheduleJobSubtitle(job),
                   meta:
                     crewState.label === "Assigned"
                       ? `${formatAssignmentLabel(job.assignmentCount)} ready once timing is set`
@@ -2329,8 +2353,8 @@ export default async function SchedulePage({
                           jobId: job.id
                         })
                       : `/jobs/${job.id}`,
-                  title: job.project?.name ?? "Untitled job",
-                  subtitle: `${job.customer?.name ?? "Unknown customer"} · ${formatDateTime(job.scheduledStartAt)}`,
+                  title: getScheduleJobTitle(job),
+                  subtitle: `${getScheduleJobSubtitle(job)} · ${formatDateTime(job.scheduledStartAt)}`,
                   meta:
                     crewState.label === "Assigned"
                       ? `Crew ${crewState.detail}`
@@ -2366,8 +2390,8 @@ export default async function SchedulePage({
                     action: primaryAction.action,
                     jobId: job.id
                   }),
-                  title: job.project?.name ?? "Untitled job",
-                  subtitle: `${job.customer?.name ?? "Unknown customer"} · ${formatDate(job.scheduledDate)}`,
+                  title: getScheduleJobTitle(job),
+                  subtitle: `${getScheduleJobSubtitle(job)} · ${formatDate(job.scheduledDate)}`,
                   meta:
                     crewState.label === "Assigned"
                       ? `${formatAssignmentLabel(job.assignmentCount)} in place`
@@ -2397,7 +2421,7 @@ export default async function SchedulePage({
                     action: "assign",
                     jobId: job.id
                   }),
-                  title: job.project?.name ?? "Untitled job",
+                  title: getScheduleJobTitle(job),
                   subtitle: `${formatAssignmentLabel(job.assignmentCount)} · ${job.crewSummary.join(", ")}`,
                   meta: job.crewVendor?.name
                     ? `Crew vendor ${job.crewVendor.name}`
@@ -2569,7 +2593,7 @@ export default async function SchedulePage({
                                     href={`/jobs/${job.id}`}
                                     className="mt-1 block text-sm font-semibold text-[var(--text-primary)] transition hover:text-[var(--copper)]"
                                   >
-                                    {job.project?.name ?? "Untitled job"}
+                                    {getScheduleJobTitle(job)}
                                   </Link>
                                   <p className="mt-1 text-xs leading-5 text-[var(--text-secondary)]">
                                     {job.customer?.name ?? "Unknown customer"}
@@ -2709,7 +2733,7 @@ export default async function SchedulePage({
                                           href={`/jobs/${job.id}`}
                                           className="mt-1 block text-sm font-semibold text-[var(--text-primary)] transition hover:text-[var(--copper)]"
                                         >
-                                          {job.project?.name ?? "Untitled job"}
+                                          {getScheduleJobTitle(job)}
                                         </Link>
                                         <p className="mt-1 text-xs leading-5 text-[var(--text-secondary)]">
                                           {job.customer?.name ??
@@ -2839,7 +2863,7 @@ export default async function SchedulePage({
                                           href={`/jobs/${job.id}`}
                                           className="mt-1 block text-sm font-semibold text-[var(--text-primary)] transition hover:text-[var(--copper)]"
                                         >
-                                          {job.project?.name ?? "Untitled job"}
+                                          {getScheduleJobTitle(job)}
                                         </Link>
                                         <p className="mt-1 text-xs leading-5 text-[var(--text-secondary)]">
                                           {job.customer?.name ??
@@ -3004,7 +3028,7 @@ export default async function SchedulePage({
                                       href={`/jobs/${job.id}`}
                                       className="mt-1 block text-sm font-semibold text-[var(--text-primary)] transition hover:text-[var(--copper)]"
                                     >
-                                      {job.project?.name ?? "Untitled job"}
+                                      {getScheduleJobTitle(job)}
                                     </Link>
                                     <p className="mt-1 text-sm leading-6 text-[var(--text-secondary)]">
                                       {job.customer?.name ?? "Unknown customer"}
@@ -3272,14 +3296,16 @@ export default async function SchedulePage({
                             href={`/jobs/${job.id}`}
                             className="mt-2 block text-base font-semibold text-[var(--text-primary)] transition hover:text-[var(--copper)]"
                           >
-                            {job.project?.name ?? "Untitled job"}
+                            {getScheduleJobTitle(job)}
                           </Link>
                           <p className="mt-2 text-sm font-medium text-[var(--text-primary)]">
                             {boardCardState.title}
                           </p>
                           <p className="mt-2 text-sm leading-6 text-[var(--text-secondary)]">
-                            {job.estimate?.referenceNumber ??
-                              "Project-based work"}{" "}
+                            {job.serviceTicket
+                              ? `${formatStatusLabel(job.serviceTicket.ticketType)} service`
+                              : (job.estimate?.referenceNumber ??
+                                "Project-based work")}{" "}
                             ·{" "}
                             <span className="capitalize">
                               {formatStatusLabel(job.dispatchStatus)}
@@ -3382,7 +3408,7 @@ export default async function SchedulePage({
           }
           description={
             selectedJob
-              ? `Working from ${selectedJob.project?.name ?? "this job"} keeps the schedule surface tied to the same project and job chain.`
+              ? `Working from ${getScheduleJobTitle(selectedJob)} keeps the schedule surface tied to the same project and job chain.`
               : "Pick a job from the schedule surface to adjust date commitment or crew assignment."
           }
           open={showComposer}
@@ -3409,7 +3435,7 @@ export default async function SchedulePage({
               </div>
               <div className={scheduleInsetPanelClassName}>
                 <p className="font-semibold text-[var(--text-primary)]">
-                  {selectedJob.project?.name ?? "Untitled job"}
+                  {getScheduleJobTitle(selectedJob)}
                 </p>
                 <p className="mt-1">
                   {selectedJob.customer?.name ?? "Unknown customer"} ·{" "}
@@ -3417,6 +3443,17 @@ export default async function SchedulePage({
                     {formatStatusLabel(selectedJob.dispatchStatus)}
                   </span>
                 </p>
+                {selectedJob.serviceTicket ? (
+                  <p className="mt-1">
+                    Service ticket:{" "}
+                    <Link
+                      href={`/service-tickets/${selectedJob.serviceTicket.id}`}
+                      className="font-medium text-[var(--copper)] transition hover:text-[var(--copper-light)]"
+                    >
+                      {selectedJob.serviceTicket.title}
+                    </Link>
+                  </p>
+                ) : null}
                 <p className="mt-1">
                   {selectedJobAssignments.length > 0
                     ? `${formatAssignmentLabel(selectedJobAssignments.length)} already attached`

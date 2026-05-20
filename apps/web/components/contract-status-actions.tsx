@@ -73,22 +73,29 @@ export function ContractStatusActions({
 
   if (
     nextStatuses.length === 0 &&
-    (!requireContractInternalApproval || currentStatus !== "draft" || isLocked) &&
+    (!requireContractInternalApproval ||
+      currentStatus !== "draft" ||
+      isLocked) &&
     !canCountersign
   ) {
     return (
       <div className="rounded-[1.5rem] border border-[var(--border-warm)] bg-[var(--highlight)] px-4 py-4 text-sm leading-6 text-[var(--text-secondary)]">
-        This contract is in a final state. No further status changes are available from here.
+        This contract is in a final state. No further status changes are
+        available from here.
       </div>
     );
   }
 
   return (
     <div className="space-y-4">
-      {requireContractInternalApproval && currentStatus === "draft" && !isLocked ? (
+      {requireContractInternalApproval &&
+      currentStatus === "draft" &&
+      !isLocked ? (
         <div className="space-y-3 rounded-[1.5rem] border border-[var(--border-warm)] bg-[var(--highlight)] px-4 py-4">
           <div className="text-sm leading-6 text-[var(--text-secondary)]">
-            <p className="font-medium text-[var(--text-primary)]">Internal approval</p>
+            <p className="font-medium text-[var(--text-primary)]">
+              Internal approval
+            </p>
             <p className="mt-1 capitalize">
               Current state: {formatStatusLabel(currentInternalApprovalStatus)}
             </p>
@@ -170,10 +177,18 @@ export function ContractStatusActions({
       {currentStatus === "draft" ? (
         <div className="space-y-3 rounded-[1.5rem] border border-[var(--border-warm)] bg-white px-4 py-4">
           <div className="space-y-1 text-sm leading-6 text-[var(--text-secondary)]">
-            <p className="font-medium text-[var(--text-primary)]">Send to contact for signature</p>
+            <p className="font-medium text-[var(--text-primary)]">
+              Send to contact for signature
+            </p>
             <p>
-              Choose the portal-ready customer contact for this project, then optionally add the
-              contractor countersigner who should complete the final signature if required.
+              Choose the portal-ready customer contact for this project, then
+              optionally add the contractor countersigner who should complete
+              the final signature if required. This opens the contract signature
+              workflow and attempts provider-backed email delivery.
+            </p>
+            <p className="text-xs leading-5 text-[var(--text-tertiary)]">
+              Delivery proof records email/send evidence only. Signature status
+              and signer history remain tracked separately.
             </p>
           </div>
 
@@ -181,8 +196,9 @@ export function ContractStatusActions({
 
           {customerPortalSignerOptions.length === 0 ? (
             <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-900">
-              No eligible customer signer is available for this project. Manage the contact,
-              portal access, and contract-signing permission from People before sending.
+              No eligible customer signer is available for this project. Manage
+              the contact, portal access, and contract-signing permission from
+              People before sending.
             </div>
           ) : (
             <form action={sendContractForSignatureAction} className="space-y-4">

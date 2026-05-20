@@ -7,8 +7,14 @@ import {
   compareInvoiceStatuses,
   computeInvoicePaymentWorkflowGate
 } from "@floorconnector/domain";
-import type { PaymentGatewayWebhookEvent } from "@floorconnector/integrations";
+import {
+  isPostmarkEmailConfigured,
+  sendPostmarkEmail,
+  type PaymentGatewayWebhookEvent
+} from "@floorconnector/integrations";
 import type {
+  DocumentDeliveryChannel,
+  DocumentDeliveryEventType,
   Invoice as InvoiceRecord,
   InvoiceLineItem,
   InvoiceWorkflowRole,
@@ -26,6 +32,7 @@ import type {
 import type {
   InvoiceCheckoutStartInput,
   InvoiceCustomerPaymentRequestInput,
+  InvoiceEmailSendInput,
   InvoicePaymentFailureInput,
   InvoiceInput,
   InvoicePaymentInput,
@@ -33,20 +40,29 @@ import type {
   InvoicePaymentVoidInput,
   InvoiceSourceConfiguration
 } from "./schemas";
+import { buildInvoicePortalEmailContent } from "./email";
 import { requireAuthenticatedUser } from "@/lib/auth/session";
+import { getAppOrigin } from "@/lib/auth/urls";
 import { buildCatalogItemPricingSnapshot } from "@/lib/catalogs/pricing";
 import { getEstimateById } from "@/lib/estimates/data";
 import { ensureScheduleOfValuesForEstimate } from "@/lib/financial/sov";
 import { getJobById } from "@/lib/jobs/data";
 import { getActiveOrganizationContext } from "@/lib/organizations/active-context";
+import { getOrganizationProductionActionLockState } from "@/lib/organizations/activation-guard";
 import { listPortalAccessGrantsForCurrentUser } from "@/lib/portal-access/data";
-import { recordInvoiceNotificationEvent } from "@/lib/notifications/system";
+import {
+  createNotificationEvent,
+  recordInvoiceNotificationEvent
+} from "@/lib/notifications/system";
 import { getProjectById } from "@/lib/projects/data";
 import {
   assertInvoiceCommercialReadiness,
   syncProjectCommercialReadiness
 } from "@/lib/projects/readiness";
-import { createRecordRevision, ensureInitialRecordRevision } from "@/lib/revisions/data";
+import {
+  createRecordRevision,
+  ensureInitialRecordRevision
+} from "@/lib/revisions/data";
 import { buildInvoiceRevisionSnapshot } from "@/lib/revisions/snapshots";
 import { getSupabaseAdminClient } from "@/lib/supabase/admin";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
@@ -83,37 +99,29 @@ type InvoiceRow = {
   updated_by: string | null;
   created_at: string;
   updated_at: string;
-  customers?:
-    | {
-        id: string;
-        name: string;
-        company_name: string | null;
-        phone: string | null;
-        email: string | null;
-        is_tax_exempt: boolean;
-        retainage_percentage_default: string | number;
-      }
-    | null;
-  projects?:
-    | {
-        id: string;
-        name: string;
-        status: string;
-      }
-    | null;
-  estimates?:
-    | {
-        id: string;
-        reference_number: string;
-        status: string;
-      }
-    | null;
-  jobs?:
-    | {
-        id: string;
-        dispatch_status: string;
-      }
-    | null;
+  customers?: {
+    id: string;
+    name: string;
+    company_name: string | null;
+    phone: string | null;
+    email: string | null;
+    is_tax_exempt: boolean;
+    retainage_percentage_default: string | number;
+  } | null;
+  projects?: {
+    id: string;
+    name: string;
+    status: string;
+  } | null;
+  estimates?: {
+    id: string;
+    reference_number: string;
+    status: string;
+  } | null;
+  jobs?: {
+    id: string;
+    dispatch_status: string;
+  } | null;
 };
 
 type InvoiceLineItemRow = {
@@ -130,7 +138,10 @@ type InvoiceLineItemRow = {
   estimate_snapshot_item_id: string | null;
   schedule_of_value_item_id: string | null;
   change_order_snapshot_item_id: string | null;
-  invoice_only_adjustment_kind: "manual_catalog_item" | "explicit_adjustment" | null;
+  invoice_only_adjustment_kind:
+    | "manual_catalog_item"
+    | "explicit_adjustment"
+    | null;
   catalog_item_id: string | null;
   tax_code_id: string | null;
   name: string;
@@ -217,6 +228,24 @@ type PaymentEventInsert = {
   payload?: Record<string, unknown> | null;
   occurredAt?: string;
 };
+
+type InvoicePortalRecipient = {
+  portalAccessGrantId: string;
+  portalUserId: string;
+  email: string;
+  fullName: string | null;
+  customerContactId: string | null;
+  contactDisplayName: string | null;
+  contactEmail: string | null;
+  isPrimaryContact: boolean;
+};
+
+type NotificationDeliveryRow = {
+  id: string;
+  status: "pending" | "sent" | "delivered" | "opened" | "clicked" | "failed";
+};
+
+const invoiceProviderSendRoles = new Set(["owner", "admin", "manager"]);
 
 export type InvoiceListItem = InvoiceRecord & {
   customer: {
@@ -366,19 +395,30 @@ function isInvoiceRow(value: unknown): value is InvoiceRow {
     typeof row.status === "string" &&
     typeof row.issue_date === "string" &&
     (row.due_date === null || typeof row.due_date === "string") &&
-    (typeof row.tax_rate_applied === "string" || typeof row.tax_rate_applied === "number") &&
+    (typeof row.tax_rate_applied === "string" ||
+      typeof row.tax_rate_applied === "number") &&
     typeof row.tax_behavior_applied === "string" &&
     typeof row.customer_tax_exempt_snapshot === "boolean" &&
-    (typeof row.subtotal_amount === "string" || typeof row.subtotal_amount === "number") &&
-    (typeof row.taxable_sales_amount === "string" || typeof row.taxable_sales_amount === "number") &&
-    (typeof row.exempt_sales_amount === "string" || typeof row.exempt_sales_amount === "number") &&
-    (typeof row.tax_amount === "string" || typeof row.tax_amount === "number") &&
-    (typeof row.tax_collected_amount === "string" || typeof row.tax_collected_amount === "number") &&
-    (typeof row.discount_amount === "string" || typeof row.discount_amount === "number") &&
-    (typeof row.retainage_percentage === "string" || typeof row.retainage_percentage === "number") &&
-    (typeof row.retainage_held_amount === "string" || typeof row.retainage_held_amount === "number") &&
-    (typeof row.total_amount === "string" || typeof row.total_amount === "number") &&
-    (typeof row.balance_due_amount === "string" || typeof row.balance_due_amount === "number") &&
+    (typeof row.subtotal_amount === "string" ||
+      typeof row.subtotal_amount === "number") &&
+    (typeof row.taxable_sales_amount === "string" ||
+      typeof row.taxable_sales_amount === "number") &&
+    (typeof row.exempt_sales_amount === "string" ||
+      typeof row.exempt_sales_amount === "number") &&
+    (typeof row.tax_amount === "string" ||
+      typeof row.tax_amount === "number") &&
+    (typeof row.tax_collected_amount === "string" ||
+      typeof row.tax_collected_amount === "number") &&
+    (typeof row.discount_amount === "string" ||
+      typeof row.discount_amount === "number") &&
+    (typeof row.retainage_percentage === "string" ||
+      typeof row.retainage_percentage === "number") &&
+    (typeof row.retainage_held_amount === "string" ||
+      typeof row.retainage_held_amount === "number") &&
+    (typeof row.total_amount === "string" ||
+      typeof row.total_amount === "number") &&
+    (typeof row.balance_due_amount === "string" ||
+      typeof row.balance_due_amount === "number") &&
     (row.created_by === null || typeof row.created_by === "string") &&
     (row.updated_by === null || typeof row.updated_by === "string") &&
     typeof row.created_at === "string" &&
@@ -401,7 +441,8 @@ function isInvoiceLineItemRow(value: unknown): value is InvoiceLineItemRow {
     typeof row.id === "string" &&
     typeof row.company_id === "string" &&
     typeof row.invoice_id === "string" &&
-    (row.estimate_line_item_id === null || typeof row.estimate_line_item_id === "string") &&
+    (row.estimate_line_item_id === null ||
+      typeof row.estimate_line_item_id === "string") &&
     (row.lineage_type === null || typeof row.lineage_type === "string") &&
     (row.estimate_snapshot_item_id === null ||
       typeof row.estimate_snapshot_item_id === "string") &&
@@ -423,7 +464,8 @@ function isInvoiceLineItemRow(value: unknown): value is InvoiceLineItemRow {
     (row.base_unit_price === null ||
       typeof row.base_unit_price === "string" ||
       typeof row.base_unit_price === "number") &&
-    (typeof row.markup_percent === "string" || typeof row.markup_percent === "number") &&
+    (typeof row.markup_percent === "string" ||
+      typeof row.markup_percent === "number") &&
     (typeof row.hidden_markup_percent === "string" ||
       typeof row.hidden_markup_percent === "number") &&
     (typeof row.unit_price_before_hidden_markup === "string" ||
@@ -432,22 +474,31 @@ function isInvoiceLineItemRow(value: unknown): value is InvoiceLineItemRow {
       typeof row.visible_markup_amount === "number") &&
     (typeof row.hidden_markup_amount === "string" ||
       typeof row.hidden_markup_amount === "number") &&
-    (typeof row.unit_price === "string" || typeof row.unit_price === "number") &&
+    (typeof row.unit_price === "string" ||
+      typeof row.unit_price === "number") &&
     (typeof row.tax_rate_snapshot === "string" ||
       typeof row.tax_rate_snapshot === "number") &&
-    (typeof row.discount_amount === "string" || typeof row.discount_amount === "number") &&
-    (typeof row.line_subtotal === "string" || typeof row.line_subtotal === "number") &&
-    (typeof row.tax_amount === "string" || typeof row.tax_amount === "number") &&
+    (typeof row.discount_amount === "string" ||
+      typeof row.discount_amount === "number") &&
+    (typeof row.line_subtotal === "string" ||
+      typeof row.line_subtotal === "number") &&
+    (typeof row.tax_amount === "string" ||
+      typeof row.tax_amount === "number") &&
     (row.cost_code === null || typeof row.cost_code === "string") &&
-    (typeof row.line_total === "string" || typeof row.line_total === "number") &&
+    (typeof row.line_total === "string" ||
+      typeof row.line_total === "number") &&
     typeof row.sort_order === "number" &&
     typeof row.created_at === "string" &&
     typeof row.updated_at === "string"
   );
 }
 
-function isInvoiceLineItemRowArray(value: unknown): value is InvoiceLineItemRow[] {
-  return Array.isArray(value) && value.every((row) => isInvoiceLineItemRow(row));
+function isInvoiceLineItemRowArray(
+  value: unknown
+): value is InvoiceLineItemRow[] {
+  return (
+    Array.isArray(value) && value.every((row) => isInvoiceLineItemRow(row))
+  );
 }
 
 function isPaymentRow(value: unknown): value is PaymentRow {
@@ -492,8 +543,10 @@ function isPaymentEventRow(value: unknown): value is PaymentEventRow {
     typeof row.actor_type === "string" &&
     (row.actor_user_id === null || typeof row.actor_user_id === "string") &&
     (row.portal_user_id === null || typeof row.portal_user_id === "string") &&
-    (row.gateway_provider === null || typeof row.gateway_provider === "string") &&
-    (row.provider_event_id === null || typeof row.provider_event_id === "string") &&
+    (row.gateway_provider === null ||
+      typeof row.gateway_provider === "string") &&
+    (row.provider_event_id === null ||
+      typeof row.provider_event_id === "string") &&
     (row.payload === null ||
       (typeof row.payload === "object" && !Array.isArray(row.payload))) &&
     typeof row.occurred_at === "string" &&
@@ -570,10 +623,14 @@ function mapInvoiceLineItem(row: InvoiceLineItemRow): InvoiceLineItem {
     baseUnitCost:
       row.base_unit_cost == null ? null : Number(row.base_unit_cost).toFixed(2),
     baseUnitPrice:
-      row.base_unit_price == null ? null : Number(row.base_unit_price).toFixed(2),
+      row.base_unit_price == null
+        ? null
+        : Number(row.base_unit_price).toFixed(2),
     markupPercent: Number(row.markup_percent).toFixed(2),
     hiddenMarkupPercent: Number(row.hidden_markup_percent).toFixed(2),
-    unitPriceBeforeHiddenMarkup: Number(row.unit_price_before_hidden_markup).toFixed(2),
+    unitPriceBeforeHiddenMarkup: Number(
+      row.unit_price_before_hidden_markup
+    ).toFixed(2),
     visibleMarkupAmount: Number(row.visible_markup_amount).toFixed(2),
     hiddenMarkupAmount: Number(row.hidden_markup_amount).toFixed(2),
     unitPrice: Number(row.unit_price).toFixed(2),
@@ -669,7 +726,9 @@ function mapInvoiceListItem(row: InvoiceRow): InvoiceListItem {
   };
 }
 
-async function getInvoiceScope(next = "/invoices"): Promise<InvoiceScope | null> {
+async function getInvoiceScope(
+  next = "/invoices"
+): Promise<InvoiceScope | null> {
   const user = await requireAuthenticatedUser(next);
   const organizationContext = await getActiveOrganizationContext(user.id);
 
@@ -708,7 +767,10 @@ async function createInvoiceRecordRevision(input: {
   ensureInitial?: boolean;
   next?: string;
 }) {
-  const invoice = await getInvoiceById(input.invoiceId, input.next ?? `/invoices/${input.invoiceId}`);
+  const invoice = await getInvoiceById(
+    input.invoiceId,
+    input.next ?? `/invoices/${input.invoiceId}`
+  );
 
   if (!invoice) {
     return null;
@@ -724,7 +786,9 @@ async function createInvoiceRecordRevision(input: {
     createdByUserId: input.createdByUserId
   };
 
-  return input.ensureInitial ? ensureInitialRecordRevision(payload) : createRecordRevision(payload);
+  return input.ensureInitial
+    ? ensureInitialRecordRevision(payload)
+    : createRecordRevision(payload);
 }
 
 function sortInvoices(invoices: InvoiceListItem[]) {
@@ -848,6 +912,159 @@ async function getInvoiceLineItems(
   }
 
   return data.map((row) => mapInvoiceLineItem(row));
+}
+
+export async function listInvoicePortalRecipients(input: {
+  organizationId: string;
+  customerId: string;
+  projectId: string;
+}): Promise<InvoicePortalRecipient[]> {
+  const supabase = await getSupabaseServerClient();
+  const grantResponse = await supabase
+    .from("portal_access_grants")
+    .select(
+      `
+        id,
+        customer_contact_id,
+        user_id,
+        portal_user:users!portal_access_grants_user_id_fkey (
+          id,
+          email,
+          full_name
+        ),
+        customer_contact:customer_contacts!portal_access_grants_company_customer_contact_fkey (
+          id,
+          is_primary,
+          contacts:contacts!customer_contacts_contact_company_fkey (
+            display_name,
+            email
+          )
+        )
+      `
+    )
+    .eq("company_id", input.organizationId)
+    .eq("customer_id", input.customerId)
+    .eq("status", "active");
+  const grantRows =
+    (grantResponse.data as Array<{
+      id?: string;
+      user_id?: string | null;
+      customer_contact_id?: string | null;
+      portal_user?:
+        | {
+            id?: string;
+            email?: string | null;
+            full_name?: string | null;
+          }
+        | Array<{
+            id?: string;
+            email?: string | null;
+            full_name?: string | null;
+          }>
+        | null;
+      customer_contact?:
+        | {
+            id?: string;
+            is_primary?: boolean;
+            contacts?:
+              | {
+                  display_name?: string | null;
+                  email?: string | null;
+                }
+              | Array<{
+                  display_name?: string | null;
+                  email?: string | null;
+                }>
+              | null;
+          }
+        | Array<{
+            id?: string;
+            is_primary?: boolean;
+            contacts?:
+              | {
+                  display_name?: string | null;
+                  email?: string | null;
+                }
+              | Array<{
+                  display_name?: string | null;
+                  email?: string | null;
+                }>
+              | null;
+          }>
+        | null;
+    }> | null) ?? [];
+
+  if (grantResponse.error) {
+    throw new Error(
+      `Unable to load active portal recipients for the invoice: ${grantResponse.error.message}`
+    );
+  }
+
+  if (grantRows.length === 0) {
+    return [];
+  }
+
+  const grantIds = grantRows
+    .map((row) => row.id)
+    .filter((value): value is string => typeof value === "string");
+
+  if (grantIds.length === 0) {
+    return [];
+  }
+
+  const projectAccessResponse = await supabase
+    .from("portal_project_access")
+    .select("portal_access_grant_id")
+    .in("portal_access_grant_id", grantIds)
+    .eq("project_id", input.projectId)
+    .eq("status", "active");
+  const accessRows =
+    (projectAccessResponse.data as Array<{
+      portal_access_grant_id?: string | null;
+    }> | null) ?? [];
+
+  if (projectAccessResponse.error) {
+    throw new Error(
+      `Unable to validate project-scoped portal access for the invoice: ${projectAccessResponse.error.message}`
+    );
+  }
+
+  const activeGrantIds = new Set(
+    accessRows
+      .map((row) => row.portal_access_grant_id)
+      .filter((value): value is string => typeof value === "string")
+  );
+
+  return grantRows
+    .filter((row) => typeof row.id === "string" && activeGrantIds.has(row.id))
+    .map((row) => {
+      const portalAccessGrantId = row.id;
+      const portalUser = Array.isArray(row.portal_user)
+        ? (row.portal_user[0] ?? null)
+        : (row.portal_user ?? null);
+      const customerContact = Array.isArray(row.customer_contact)
+        ? (row.customer_contact[0] ?? null)
+        : (row.customer_contact ?? null);
+      const contact = Array.isArray(customerContact?.contacts)
+        ? (customerContact?.contacts[0] ?? null)
+        : (customerContact?.contacts ?? null);
+
+      if (!portalAccessGrantId || !portalUser?.id || !portalUser.email) {
+        return null;
+      }
+
+      return {
+        portalAccessGrantId,
+        portalUserId: portalUser.id,
+        email: portalUser.email,
+        fullName: portalUser.full_name ?? null,
+        customerContactId: row.customer_contact_id ?? null,
+        contactDisplayName: contact?.display_name ?? null,
+        contactEmail: contact?.email ?? null,
+        isPrimaryContact: customerContact?.is_primary === true
+      } satisfies InvoicePortalRecipient;
+    })
+    .filter((value): value is InvoicePortalRecipient => value !== null);
 }
 
 async function listInvoicePayments(
@@ -1002,6 +1219,176 @@ export async function recordPaymentEvent(input: {
   return mapPaymentEvent(data);
 }
 
+function resolveInvoicePortalRecipient(input: {
+  customerEmail: string;
+  customerName: string | null;
+  selectedPortalUserId?: string | null;
+  portalRecipients: InvoicePortalRecipient[];
+}) {
+  if (input.selectedPortalUserId) {
+    const selectedRecipient =
+      input.portalRecipients.find(
+        (recipient) => recipient.portalUserId === input.selectedPortalUserId
+      ) ?? null;
+
+    if (!selectedRecipient) {
+      throw new Error(
+        "Select an active contact with project portal access before sending this invoice."
+      );
+    }
+
+    return selectedRecipient;
+  }
+
+  const primaryContactRecipient =
+    input.portalRecipients.find((recipient) => recipient.isPrimaryContact) ??
+    null;
+
+  if (primaryContactRecipient) {
+    return primaryContactRecipient;
+  }
+
+  const normalizedCustomerEmail = input.customerEmail.trim().toLowerCase();
+  const exactMatch =
+    input.portalRecipients.find(
+      (recipient) =>
+        recipient.email.trim().toLowerCase() === normalizedCustomerEmail
+    ) ?? null;
+
+  if (exactMatch) {
+    return exactMatch;
+  }
+
+  if (input.portalRecipients.length === 1) {
+    return input.portalRecipients[0];
+  }
+
+  throw new Error(
+    "Customer portal access is required before sending this invoice. Select one active contact for this project, or manage the customer's primary contact and project access from People."
+  );
+}
+
+function getNotificationDeliveryErrorMessage(error: unknown) {
+  return error instanceof Error ? error.message : "Unknown delivery error.";
+}
+
+async function createInvoiceNotificationDelivery(input: {
+  organizationId: string;
+  notificationEventId: string;
+  recipientEmail: string;
+  recipientUserId: string | null;
+  payload: Record<string, unknown>;
+}) {
+  const admin = getSupabaseAdminClient();
+  const response = await admin
+    .from("notification_deliveries")
+    .insert({
+      company_id: input.organizationId,
+      notification_event_id: input.notificationEventId,
+      channel: "email",
+      provider: "postmark",
+      status: "pending",
+      recipient_user_id: input.recipientUserId,
+      recipient_email: input.recipientEmail,
+      payload: input.payload
+    })
+    .select("id, status")
+    .single();
+  const data = response.data as NotificationDeliveryRow | null;
+
+  if (response.error || !data?.id) {
+    throw new Error(
+      `Unable to create invoice notification delivery: ${response.error?.message ?? "Insert failed."}`
+    );
+  }
+
+  return data.id;
+}
+
+async function markInvoiceNotificationDeliverySent(input: {
+  deliveryId: string;
+  providerMessageId: string;
+  sentAt: string | null;
+}) {
+  const admin = getSupabaseAdminClient();
+  const response = await admin
+    .from("notification_deliveries")
+    .update({
+      provider_message_id: input.providerMessageId,
+      status: "sent",
+      sent_at: input.sentAt ?? new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    })
+    .eq("id", input.deliveryId);
+
+  if (response.error) {
+    throw new Error(
+      `Unable to mark invoice notification delivery sent: ${response.error.message}`
+    );
+  }
+}
+
+async function markInvoiceNotificationDeliveryFailed(input: {
+  deliveryId: string;
+  errorMessage: string;
+}) {
+  const admin = getSupabaseAdminClient();
+  const response = await admin
+    .from("notification_deliveries")
+    .update({
+      status: "failed",
+      error_message: input.errorMessage,
+      failed_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    })
+    .eq("id", input.deliveryId);
+
+  if (response.error) {
+    throw new Error(
+      `Unable to mark invoice notification delivery failed: ${response.error.message}`
+    );
+  }
+}
+
+async function insertInvoiceDeliveryEvent(input: {
+  scope: InvoiceScope;
+  invoiceId: string;
+  eventType: DocumentDeliveryEventType;
+  recipientName: string | null;
+  recipientEmail: string | null;
+  recipientRole: string | null;
+  channel: DocumentDeliveryChannel;
+  provider?: string | null;
+  providerMessageId?: string | null;
+  relatedNotificationEventId?: string | null;
+  eventNote?: string | null;
+  metadata?: Record<string, unknown>;
+}) {
+  const supabase = await getSupabaseServerClient();
+  const response = await supabase.from("document_delivery_events").insert({
+    company_id: input.scope.organizationId,
+    subject_type: "invoice",
+    subject_id: input.invoiceId,
+    event_type: input.eventType,
+    recipient_name: input.recipientName,
+    recipient_email: input.recipientEmail,
+    recipient_role: input.recipientRole,
+    channel: input.channel,
+    provider: input.provider ?? null,
+    provider_message_id: input.providerMessageId ?? null,
+    related_notification_event_id: input.relatedNotificationEventId ?? null,
+    event_note: input.eventNote ?? null,
+    metadata: input.metadata ?? {},
+    created_by: input.scope.userId
+  });
+
+  if (response.error) {
+    throw new Error(
+      `Unable to record invoice delivery evidence: ${response.error.message}`
+    );
+  }
+}
+
 async function findPaymentEventByProviderReference(
   organizationId: string,
   gatewayProvider: string,
@@ -1071,7 +1458,9 @@ function getDuplicateProviderEventCandidate(
   events: readonly PaymentEventInsert[]
 ) {
   return events.find(
-    (event): event is PaymentEventInsert & {
+    (
+      event
+    ): event is PaymentEventInsert & {
       gatewayProvider: string;
       providerEventId: string;
     } =>
@@ -1084,7 +1473,9 @@ function getDuplicateProviderEventCandidate(
         organizationId,
         invoiceId,
         gatewayProvider: events.find(
-          (event): event is PaymentEventInsert & {
+          (
+            event
+          ): event is PaymentEventInsert & {
             gatewayProvider: string;
             providerEventId: string;
           } =>
@@ -1094,7 +1485,9 @@ function getDuplicateProviderEventCandidate(
             event.providerEventId.length > 0
         )!.gatewayProvider,
         providerEventId: events.find(
-          (event): event is PaymentEventInsert & {
+          (
+            event
+          ): event is PaymentEventInsert & {
             gatewayProvider: string;
             providerEventId: string;
           } =>
@@ -1144,7 +1537,9 @@ async function insertPaymentEventsAdmin(
       throw new DuplicateProviderPaymentEventError(duplicateCandidate);
     }
 
-    throw new Error(`Unable to record payment events: ${response.error.message}`);
+    throw new Error(
+      `Unable to record payment events: ${response.error.message}`
+    );
   }
 }
 
@@ -1153,15 +1548,19 @@ async function getScopedPortalInvoice(
   next: string
 ): Promise<PortalInvoiceScope> {
   const user = await requireAuthenticatedUser(next);
-  const activeGrants = (await listPortalAccessGrantsForCurrentUser(next)).filter(
-    (grant) => grant.status === "active"
-  );
+  const activeGrants = (
+    await listPortalAccessGrantsForCurrentUser(next)
+  ).filter((grant) => grant.status === "active");
 
   if (activeGrants.length === 0) {
-    throw new Error("No active portal access is available for this payment action.");
+    throw new Error(
+      "No active portal access is available for this payment action."
+    );
   }
 
-  const accessibleCustomerIds = new Set(activeGrants.map((grant) => grant.customerId));
+  const accessibleCustomerIds = new Set(
+    activeGrants.map((grant) => grant.customerId)
+  );
   const supabase = await getSupabaseServerClient();
   const projectAccessResponse = await supabase
     .from("portal_project_access")
@@ -1198,7 +1597,9 @@ async function getScopedPortalInvoice(
     !accessibleCustomerIds.has(invoice.customer_id) ||
     !accessibleProjectIds.has(invoice.project_id)
   ) {
-    throw new Error("This invoice is not available in the current portal scope.");
+    throw new Error(
+      "This invoice is not available in the current portal scope."
+    );
   }
 
   return {
@@ -1207,7 +1608,9 @@ async function getScopedPortalInvoice(
   };
 }
 
-function resolveRecordedVia(actorType: PaymentEventActorType): PaymentRecordedVia {
+function resolveRecordedVia(
+  actorType: PaymentEventActorType
+): PaymentRecordedVia {
   if (actorType === "portal_user") {
     return "customer_portal";
   }
@@ -1249,7 +1652,9 @@ function assertInvoiceAllowsCustomerPayment(
   }
 
   if (numericAmount > Number(invoice.balance_due_amount)) {
-    throw new Error("Payment amount cannot be greater than the current balance due.");
+    throw new Error(
+      "Payment amount cannot be greater than the current balance due."
+    );
   }
 }
 
@@ -1259,7 +1664,9 @@ async function findInvoicePaymentById(
   paymentId: string,
   useAdmin = false
 ): Promise<PaymentRow | null> {
-  const supabase = useAdmin ? getSupabaseAdminClient() : await getSupabaseServerClient();
+  const supabase = useAdmin
+    ? getSupabaseAdminClient()
+    : await getSupabaseServerClient();
   const response = await supabase
     .from("payments")
     .select(
@@ -1293,7 +1700,9 @@ async function findInvoicePaymentById(
   const data: unknown = response.data;
 
   if (response.error) {
-    throw new Error(`Unable to load invoice payment: ${response.error.message}`);
+    throw new Error(
+      `Unable to load invoice payment: ${response.error.message}`
+    );
   }
 
   return isPaymentRow(data) ? data : null;
@@ -1340,12 +1749,17 @@ async function findPaymentByGatewayReference(
       .eq("company_id", organizationId)
       .eq("invoice_id", invoiceId)
       .eq("gateway_provider", input.gatewayProvider)
-      .eq("gateway_payment_intent_reference", input.gatewayPaymentIntentReference)
+      .eq(
+        "gateway_payment_intent_reference",
+        input.gatewayPaymentIntentReference
+      )
       .maybeSingle();
     const intentData: unknown = intentResponse.data;
 
     if (intentResponse.error) {
-      throw new Error(`Unable to load provider payment: ${intentResponse.error.message}`);
+      throw new Error(
+        `Unable to load provider payment: ${intentResponse.error.message}`
+      );
     }
 
     if (isPaymentRow(intentData)) {
@@ -1383,12 +1797,17 @@ async function findPaymentByGatewayReference(
       .eq("company_id", organizationId)
       .eq("invoice_id", invoiceId)
       .eq("gateway_provider", input.gatewayProvider)
-      .eq("gateway_checkout_session_reference", input.gatewayCheckoutSessionReference)
+      .eq(
+        "gateway_checkout_session_reference",
+        input.gatewayCheckoutSessionReference
+      )
       .maybeSingle();
     const sessionData: unknown = sessionResponse.data;
 
     if (sessionResponse.error) {
-      throw new Error(`Unable to load checkout payment: ${sessionResponse.error.message}`);
+      throw new Error(
+        `Unable to load checkout payment: ${sessionResponse.error.message}`
+      );
     }
 
     if (isPaymentRow(sessionData)) {
@@ -1470,7 +1889,10 @@ export type PersistedInvoiceLineItemInput = {
   estimateSnapshotItemId?: string | null;
   scheduleOfValueItemId?: string | null;
   changeOrderSnapshotItemId?: string | null;
-  invoiceOnlyAdjustmentKind?: "manual_catalog_item" | "explicit_adjustment" | null;
+  invoiceOnlyAdjustmentKind?:
+    | "manual_catalog_item"
+    | "explicit_adjustment"
+    | null;
   catalogItemId: string | null;
   taxCodeId?: string | null;
   name: string;
@@ -1623,7 +2045,9 @@ async function loadLatestEstimateSnapshotItems(
       : null;
 
   if (!snapshotId) {
-    throw new Error("The latest approved estimate snapshot could not be found.");
+    throw new Error(
+      "The latest approved estimate snapshot could not be found."
+    );
   }
 
   const itemsResponse = await supabase
@@ -1851,7 +2275,9 @@ async function loadCatalogItemsForInvoiceSources(
     .in("id", catalogItemIds);
 
   if (response.error) {
-    throw new Error(`Unable to load invoice catalog item sources: ${response.error.message}`);
+    throw new Error(
+      `Unable to load invoice catalog item sources: ${response.error.message}`
+    );
   }
 
   const rows = (response.data as CatalogItemSourceRow[] | null) ?? [];
@@ -1886,16 +2312,21 @@ function mapEstimateSnapshotRowToInvoiceLineItem(
     taxable: row.taxable,
     baseUnitCost: formatMoneySnapshot(row.base_unit_cost),
     baseUnitPrice:
-      row.base_unit_price == null ? null : formatMoneySnapshot(row.base_unit_price),
+      row.base_unit_price == null
+        ? null
+        : formatMoneySnapshot(row.base_unit_price),
     markupPercent: formatMoneySnapshot(row.markup_percent),
     hiddenMarkupPercent: formatMoneySnapshot(row.hidden_markup_percent),
-    unitPriceBeforeHiddenMarkup: formatMoneySnapshot(row.unit_price_before_hidden_markup),
+    unitPriceBeforeHiddenMarkup: formatMoneySnapshot(
+      row.unit_price_before_hidden_markup
+    ),
     visibleMarkupAmount: formatMoneySnapshot(row.visible_markup_amount),
     hiddenMarkupAmount: formatMoneySnapshot(row.hidden_markup_amount),
     unitPrice: formatMoneySnapshot(row.unit_price),
     taxRateSnapshot: Number(row.tax_rate_snapshot ?? 0).toFixed(6),
     discountAmount: formatMoneySnapshot(row.discount_amount),
-    lineSubtotal: overrides?.lineSubtotal ?? formatMoneySnapshot(row.line_subtotal),
+    lineSubtotal:
+      overrides?.lineSubtotal ?? formatMoneySnapshot(row.line_subtotal),
     taxAmount: formatMoneySnapshot(row.tax_amount),
     costCode: row.cost_code,
     lineTotal: overrides?.lineTotal ?? formatMoneySnapshot(row.line_total)
@@ -1921,10 +2352,14 @@ function mapChangeOrderSnapshotRowToInvoiceLineItem(
     taxable: row.taxable,
     baseUnitCost: formatMoneySnapshot(row.base_unit_cost),
     baseUnitPrice:
-      row.base_unit_price == null ? null : formatMoneySnapshot(row.base_unit_price),
+      row.base_unit_price == null
+        ? null
+        : formatMoneySnapshot(row.base_unit_price),
     markupPercent: formatMoneySnapshot(row.markup_percent),
     hiddenMarkupPercent: formatMoneySnapshot(row.hidden_markup_percent),
-    unitPriceBeforeHiddenMarkup: formatMoneySnapshot(row.unit_price_before_hidden_markup),
+    unitPriceBeforeHiddenMarkup: formatMoneySnapshot(
+      row.unit_price_before_hidden_markup
+    ),
     visibleMarkupAmount: formatMoneySnapshot(row.visible_markup_amount),
     hiddenMarkupAmount: formatMoneySnapshot(row.hidden_markup_amount),
     unitPrice: formatMoneySnapshot(row.unit_price),
@@ -1990,7 +2425,10 @@ async function buildInvoiceLineItemsFromSourceConfiguration(input: {
 
     for (const snapshotItem of snapshotItems) {
       baseLineItems.push(
-        mapEstimateSnapshotRowToInvoiceLineItem(snapshotItem, "estimate_snapshot_item")
+        mapEstimateSnapshotRowToInvoiceLineItem(
+          snapshotItem,
+          "estimate_snapshot_item"
+        )
       );
     }
   }
@@ -2012,10 +2450,14 @@ async function buildInvoiceLineItemsFromSourceConfiguration(input: {
         throw new Error("SOV invoice lines require approved snapshot lineage.");
       }
 
-      const snapshotItem = snapshotItemsById.get(sovItem.source_estimate_snapshot_item_id);
+      const snapshotItem = snapshotItemsById.get(
+        sovItem.source_estimate_snapshot_item_id
+      );
 
       if (!snapshotItem) {
-        throw new Error("A selected SOV item is missing its approved estimate snapshot source.");
+        throw new Error(
+          "A selected SOV item is missing its approved estimate snapshot source."
+        );
       }
 
       baseLineItems.push(
@@ -2026,20 +2468,26 @@ async function buildInvoiceLineItemsFromSourceConfiguration(input: {
     }
   }
 
-  if (input.sourceConfiguration.baseSourceType === "change_order_snapshot_items") {
+  if (
+    input.sourceConfiguration.baseSourceType === "change_order_snapshot_items"
+  ) {
     const snapshotItems = await loadChangeOrderSnapshotItemsByIds(
       input.organizationId,
       input.sourceConfiguration.selectedChangeOrderSnapshotItemIds
     );
 
     for (const snapshotItem of snapshotItems) {
-      baseLineItems.push(mapChangeOrderSnapshotRowToInvoiceLineItem(snapshotItem));
+      baseLineItems.push(
+        mapChangeOrderSnapshotRowToInvoiceLineItem(snapshotItem)
+      );
     }
   }
 
   const catalogItemsById = await loadCatalogItemsForInvoiceSources(
     input.organizationId,
-    input.sourceConfiguration.manualCatalogItems.map((item) => item.catalogItemId)
+    input.sourceConfiguration.manualCatalogItems.map(
+      (item) => item.catalogItemId
+    )
   );
 
   for (const manualItem of input.sourceConfiguration.manualCatalogItems) {
@@ -2062,7 +2510,9 @@ async function buildInvoiceLineItemsFromSourceConfiguration(input: {
             ? null
             : formatMoneySnapshot(catalogItem.default_unit_price),
         markupPercent: formatMoneySnapshot(catalogItem.markup_percent),
-        hiddenMarkupPercent: formatMoneySnapshot(catalogItem.hidden_markup_percent),
+        hiddenMarkupPercent: formatMoneySnapshot(
+          catalogItem.hidden_markup_percent
+        ),
         taxable: catalogItem.taxable,
         taxCodeId: catalogItem.tax_code_id,
         costCode: catalogItem.cost_code
@@ -2325,7 +2775,9 @@ function validateConnectedRecords(
   }
 
   if (job.estimateId !== estimateId) {
-    throw new Error("Job and estimate must refer to the same project workflow.");
+    throw new Error(
+      "Job and estimate must refer to the same project workflow."
+    );
   }
 }
 
@@ -2359,7 +2811,10 @@ export const listInvoices = cache(async (): Promise<InvoiceListItem[]> => {
 });
 
 export const listInvoicesByCustomer = cache(
-  async (customerId: string, next = "/invoices"): Promise<InvoiceListItem[]> => {
+  async (
+    customerId: string,
+    next = "/invoices"
+  ): Promise<InvoiceListItem[]> => {
     const scope = await requireInvoiceScope(next);
     const supabase = await getSupabaseServerClient();
     const response = await supabase
@@ -2383,165 +2838,172 @@ export const listInvoicesByCustomer = cache(
   }
 );
 
-export const listInvoiceSourceOptions = cache(async (): Promise<InvoiceSourceOptions> => {
-  const scope = await requireInvoiceScope("/invoices");
-  const supabase = await getSupabaseServerClient();
-  const [
-    scheduleOfValuesResponse,
-    scheduleOfValueItemsResponse,
-    changeOrderSnapshotsResponse,
-    changeOrderSnapshotItemsResponse
-  ] = await Promise.all([
-    supabase
-      .from("schedule_of_values")
-      .select("id, estimate_id, project_id")
-      .eq("company_id", scope.organizationId),
-    supabase
-      .from("schedule_of_value_items")
-      .select("id, schedule_of_values_id, name, description, scheduled_value_amount")
-      .eq("company_id", scope.organizationId)
-      .eq("lineage_type", "estimate_snapshot_item")
-      .order("sort_order", { ascending: true })
-      .order("created_at", { ascending: true }),
-    supabase
-      .from("change_order_commercial_snapshots")
-      .select("id, change_order_id, project_id, invoice_id, snapshot_version, created_at")
-      .eq("company_id", scope.organizationId)
-      .order("snapshot_version", { ascending: false })
-      .order("created_at", { ascending: false }),
-    supabase
-      .from("change_order_commercial_snapshot_items")
-      .select(
-        "id, change_order_commercial_snapshot_id, change_order_id, name, description, line_total"
-      )
-      .eq("company_id", scope.organizationId)
-      .order("sort_order", { ascending: true })
-      .order("created_at", { ascending: true })
-  ]);
+export const listInvoiceSourceOptions = cache(
+  async (): Promise<InvoiceSourceOptions> => {
+    const scope = await requireInvoiceScope("/invoices");
+    const supabase = await getSupabaseServerClient();
+    const [
+      scheduleOfValuesResponse,
+      scheduleOfValueItemsResponse,
+      changeOrderSnapshotsResponse,
+      changeOrderSnapshotItemsResponse
+    ] = await Promise.all([
+      supabase
+        .from("schedule_of_values")
+        .select("id, estimate_id, project_id")
+        .eq("company_id", scope.organizationId),
+      supabase
+        .from("schedule_of_value_items")
+        .select(
+          "id, schedule_of_values_id, name, description, scheduled_value_amount"
+        )
+        .eq("company_id", scope.organizationId)
+        .eq("lineage_type", "estimate_snapshot_item")
+        .order("sort_order", { ascending: true })
+        .order("created_at", { ascending: true }),
+      supabase
+        .from("change_order_commercial_snapshots")
+        .select(
+          "id, change_order_id, project_id, invoice_id, snapshot_version, created_at"
+        )
+        .eq("company_id", scope.organizationId)
+        .order("snapshot_version", { ascending: false })
+        .order("created_at", { ascending: false }),
+      supabase
+        .from("change_order_commercial_snapshot_items")
+        .select(
+          "id, change_order_commercial_snapshot_id, change_order_id, name, description, line_total"
+        )
+        .eq("company_id", scope.organizationId)
+        .order("sort_order", { ascending: true })
+        .order("created_at", { ascending: true })
+    ]);
 
-  if (scheduleOfValuesResponse.error) {
-    throw new Error(
-      `Unable to load invoice SOV sources: ${scheduleOfValuesResponse.error.message}`
-    );
-  }
-
-  if (scheduleOfValueItemsResponse.error) {
-    throw new Error(
-      `Unable to load invoice SOV item sources: ${scheduleOfValueItemsResponse.error.message}`
-    );
-  }
-
-  if (changeOrderSnapshotsResponse.error) {
-    throw new Error(
-      `Unable to load invoice change-order snapshot sources: ${changeOrderSnapshotsResponse.error.message}`
-    );
-  }
-
-  if (changeOrderSnapshotItemsResponse.error) {
-    throw new Error(
-      `Unable to load invoice change-order item sources: ${changeOrderSnapshotItemsResponse.error.message}`
-    );
-  }
-
-  const scheduleOfValuesRows =
-    (scheduleOfValuesResponse.data as Array<{
-      id: string;
-      estimate_id: string;
-      project_id: string;
-    }> | null) ?? [];
-  const scheduleOfValuesById = new Map(
-    scheduleOfValuesRows.map((row) => [row.id, row] as const)
-  );
-  const changeOrderSnapshotsRows =
-    (changeOrderSnapshotsResponse.data as Array<{
-      id: string;
-      change_order_id: string;
-      project_id: string;
-      invoice_id: string | null;
-      snapshot_version: number;
-      created_at: string;
-    }> | null) ?? [];
-  const latestSnapshotByChangeOrderId = new Map<
-    string,
-    (typeof changeOrderSnapshotsRows)[number]
-  >();
-
-  for (const row of changeOrderSnapshotsRows) {
-    if (!latestSnapshotByChangeOrderId.has(row.change_order_id)) {
-      latestSnapshotByChangeOrderId.set(row.change_order_id, row);
+    if (scheduleOfValuesResponse.error) {
+      throw new Error(
+        `Unable to load invoice SOV sources: ${scheduleOfValuesResponse.error.message}`
+      );
     }
-  }
 
-  return {
-    scheduleOfValueItems: (
-      (scheduleOfValueItemsResponse.data as Array<{
+    if (scheduleOfValueItemsResponse.error) {
+      throw new Error(
+        `Unable to load invoice SOV item sources: ${scheduleOfValueItemsResponse.error.message}`
+      );
+    }
+
+    if (changeOrderSnapshotsResponse.error) {
+      throw new Error(
+        `Unable to load invoice change-order snapshot sources: ${changeOrderSnapshotsResponse.error.message}`
+      );
+    }
+
+    if (changeOrderSnapshotItemsResponse.error) {
+      throw new Error(
+        `Unable to load invoice change-order item sources: ${changeOrderSnapshotItemsResponse.error.message}`
+      );
+    }
+
+    const scheduleOfValuesRows =
+      (scheduleOfValuesResponse.data as Array<{
         id: string;
-        schedule_of_values_id: string;
-        name: string;
-        description: string | null;
-        scheduled_value_amount: string | number;
-      }> | null) ?? []
-    )
-      .map((row) => {
-        const header = scheduleOfValuesById.get(row.schedule_of_values_id);
-
-        if (!header) {
-          return null;
-        }
-
-        return {
-          id: row.id,
-          scheduleOfValuesId: row.schedule_of_values_id,
-          estimateId: header.estimate_id,
-          projectId: header.project_id,
-          name: row.name,
-          description: row.description,
-          scheduledValueAmount: Number(row.scheduled_value_amount).toFixed(2)
-        };
-      })
-      .filter(
-        (
-          row
-        ): row is InvoiceSourceOptions["scheduleOfValueItems"][number] => Boolean(row)
-      ),
-    changeOrderSnapshotItems: (
-      (changeOrderSnapshotItemsResponse.data as Array<{
+        estimate_id: string;
+        project_id: string;
+      }> | null) ?? [];
+    const scheduleOfValuesById = new Map(
+      scheduleOfValuesRows.map((row) => [row.id, row] as const)
+    );
+    const changeOrderSnapshotsRows =
+      (changeOrderSnapshotsResponse.data as Array<{
         id: string;
-        change_order_commercial_snapshot_id: string;
         change_order_id: string;
-        name: string;
-        description: string | null;
-        line_total: string | number;
-      }> | null) ?? []
-    )
-      .map((row) => {
-        const latestSnapshot = latestSnapshotByChangeOrderId.get(row.change_order_id);
+        project_id: string;
+        invoice_id: string | null;
+        snapshot_version: number;
+        created_at: string;
+      }> | null) ?? [];
+    const latestSnapshotByChangeOrderId = new Map<
+      string,
+      (typeof changeOrderSnapshotsRows)[number]
+    >();
 
-        if (
-          !latestSnapshot ||
-          latestSnapshot.id !== row.change_order_commercial_snapshot_id
-        ) {
-          return null;
-        }
+    for (const row of changeOrderSnapshotsRows) {
+      if (!latestSnapshotByChangeOrderId.has(row.change_order_id)) {
+        latestSnapshotByChangeOrderId.set(row.change_order_id, row);
+      }
+    }
 
-        return {
-          id: row.id,
-          changeOrderId: row.change_order_id,
-          projectId: latestSnapshot.project_id,
-          invoiceId: latestSnapshot.invoice_id,
-          name: row.name,
-          description: row.description,
-          lineTotal: Number(row.line_total).toFixed(2)
-        };
-      })
-      .filter(
-        (
-          row
-        ): row is InvoiceSourceOptions["changeOrderSnapshotItems"][number] =>
-          Boolean(row)
+    return {
+      scheduleOfValueItems: (
+        (scheduleOfValueItemsResponse.data as Array<{
+          id: string;
+          schedule_of_values_id: string;
+          name: string;
+          description: string | null;
+          scheduled_value_amount: string | number;
+        }> | null) ?? []
       )
-  };
-});
+        .map((row) => {
+          const header = scheduleOfValuesById.get(row.schedule_of_values_id);
+
+          if (!header) {
+            return null;
+          }
+
+          return {
+            id: row.id,
+            scheduleOfValuesId: row.schedule_of_values_id,
+            estimateId: header.estimate_id,
+            projectId: header.project_id,
+            name: row.name,
+            description: row.description,
+            scheduledValueAmount: Number(row.scheduled_value_amount).toFixed(2)
+          };
+        })
+        .filter(
+          (row): row is InvoiceSourceOptions["scheduleOfValueItems"][number] =>
+            Boolean(row)
+        ),
+      changeOrderSnapshotItems: (
+        (changeOrderSnapshotItemsResponse.data as Array<{
+          id: string;
+          change_order_commercial_snapshot_id: string;
+          change_order_id: string;
+          name: string;
+          description: string | null;
+          line_total: string | number;
+        }> | null) ?? []
+      )
+        .map((row) => {
+          const latestSnapshot = latestSnapshotByChangeOrderId.get(
+            row.change_order_id
+          );
+
+          if (
+            !latestSnapshot ||
+            latestSnapshot.id !== row.change_order_commercial_snapshot_id
+          ) {
+            return null;
+          }
+
+          return {
+            id: row.id,
+            changeOrderId: row.change_order_id,
+            projectId: latestSnapshot.project_id,
+            invoiceId: latestSnapshot.invoice_id,
+            name: row.name,
+            description: row.description,
+            lineTotal: Number(row.line_total).toFixed(2)
+          };
+        })
+        .filter(
+          (
+            row
+          ): row is InvoiceSourceOptions["changeOrderSnapshotItems"][number] =>
+            Boolean(row)
+        )
+    };
+  }
+);
 
 export async function getInvoiceById(
   invoiceId: string,
@@ -2632,7 +3094,11 @@ export async function createInvoice(
     );
   }
 
-  if (input.workflowRole === "standard" && job && job.dispatchStatus !== "completed") {
+  if (
+    input.workflowRole === "standard" &&
+    job &&
+    job.dispatchStatus !== "completed"
+  ) {
     throw new Error(
       "Standard job invoices require completed work before invoice creation."
     );
@@ -2674,7 +3140,9 @@ export async function createInvoice(
   const error = response.error;
 
   if (error || !isIdRow(data)) {
-    throw new Error(`Unable to create the invoice: ${error?.message ?? "Unknown error."}`);
+    throw new Error(
+      `Unable to create the invoice: ${error?.message ?? "Unknown error."}`
+    );
   }
 
   const invoice = await getInvoiceRecordById(scope.organizationId, data.id);
@@ -2716,7 +3184,10 @@ export async function createInvoice(
 
 export async function updateInvoice(invoiceId: string, input: InvoiceInput) {
   const scope = await requireInvoiceScope(`/invoices/${invoiceId}`);
-  const currentInvoice = await getInvoiceRecordById(scope.organizationId, invoiceId);
+  const currentInvoice = await getInvoiceRecordById(
+    scope.organizationId,
+    invoiceId
+  );
 
   if (!currentInvoice) {
     throw new Error("Invoice not found for this organization.");
@@ -2728,13 +3199,20 @@ export async function updateInvoice(invoiceId: string, input: InvoiceInput) {
     );
   }
 
-  const project = await resolveScopedProject(input.projectId, `/invoices/${invoiceId}`);
+  const project = await resolveScopedProject(
+    input.projectId,
+    `/invoices/${invoiceId}`
+  );
   const estimate = await resolveApprovedEstimate(
     input.estimateId,
     input.projectId,
     `/invoices/${invoiceId}`
   );
-  const job = await resolveScopedJob(input.jobId, input.projectId, `/invoices/${invoiceId}`);
+  const job = await resolveScopedJob(
+    input.jobId,
+    input.projectId,
+    `/invoices/${invoiceId}`
+  );
   const resolvedEstimateId = estimate?.id ?? job?.estimateId ?? null;
 
   validateConnectedRecords(resolvedEstimateId, job);
@@ -2749,13 +3227,21 @@ export async function updateInvoice(invoiceId: string, input: InvoiceInput) {
     await ensureScheduleOfValuesForEstimate(resolvedEstimateId);
   }
 
-  const existingLineItems = await getInvoiceLineItems(scope.organizationId, invoiceId);
+  const existingLineItems = await getInvoiceLineItems(
+    scope.organizationId,
+    invoiceId
+  );
   const isLegacyInvoice = hasLegacyInvoiceLineItems(existingLineItems);
 
   if (
-    shouldRequireManualAdjustmentQuantities(input.status, input.sourceConfiguration)
+    shouldRequireManualAdjustmentQuantities(
+      input.status,
+      input.sourceConfiguration
+    )
   ) {
-    throw new Error("Manual invoice items must have quantity greater than zero before send.");
+    throw new Error(
+      "Manual invoice items must have quantity greater than zero before send."
+    );
   }
 
   const nextBillingModel =
@@ -2878,9 +3364,372 @@ export async function updateInvoice(invoiceId: string, input: InvoiceInput) {
   return mapInvoice(invoice);
 }
 
+function formatInvoiceEmailAmount(amount: string | number) {
+  return Number(amount).toLocaleString("en-US", {
+    style: "currency",
+    currency: "USD"
+  });
+}
+
+export async function sendInvoiceReviewEmail(input: InvoiceEmailSendInput) {
+  const scope = await requireInvoiceScope(`/invoices/${input.invoiceId}`);
+  const invoice = await getInvoiceRecordById(
+    scope.organizationId,
+    input.invoiceId
+  );
+  const organizationContext = await getActiveOrganizationContext(scope.userId);
+
+  if (!invoice) {
+    throw new Error("Invoice not found for this organization.");
+  }
+
+  if (
+    !organizationContext ||
+    organizationContext.organization.id !== scope.organizationId
+  ) {
+    throw new Error(
+      "No active organization is available for invoice email send."
+    );
+  }
+
+  if (!invoiceProviderSendRoles.has(organizationContext.membership.role)) {
+    throw new Error("Manager, admin, or owner access is required.");
+  }
+
+  if (invoice.status === "draft") {
+    throw new Error(
+      "Mark the invoice sent through the invoice workflow before emailing the customer."
+    );
+  }
+
+  if (invoice.status === "paid" || Number(invoice.balance_due_amount) <= 0) {
+    throw new Error("Paid invoices do not need a payment-link email send.");
+  }
+
+  if (invoice.status === "void") {
+    throw new Error("Void invoices cannot be emailed for customer payment.");
+  }
+
+  if (!invoice.projects?.id || !invoice.customers?.id) {
+    throw new Error(
+      "Invoice must stay linked to a real customer and project before sending."
+    );
+  }
+
+  if (!invoice.customers.email?.trim()) {
+    throw new Error(
+      "Canonical customer.email is required before sending the invoice. Update the customer account email and retry."
+    );
+  }
+
+  const portalRecipients = await listInvoicePortalRecipients({
+    organizationId: scope.organizationId,
+    customerId: invoice.customer_id,
+    projectId: invoice.project_id
+  });
+
+  if (portalRecipients.length === 0) {
+    throw new Error(
+      "An active customer portal user with access to this project is required before sending the invoice."
+    );
+  }
+
+  const portalRecipient = resolveInvoicePortalRecipient({
+    customerEmail: invoice.customers.email,
+    customerName: invoice.customers.name,
+    selectedPortalUserId: input.portalUserId,
+    portalRecipients
+  });
+  const nowIso = new Date().toISOString();
+  const appOrigin = getAppOrigin();
+  const portalUrl = new URL(`/portal/invoices/${invoice.id}`, appOrigin);
+  const deliveryPayload = {
+    subjectType: "invoice",
+    subjectId: invoice.id,
+    portalPath: `/portal/invoices/${invoice.id}`,
+    portalUserId: portalRecipient.portalUserId,
+    portalAccessGrantId: portalRecipient.portalAccessGrantId,
+    customerContactId: portalRecipient.customerContactId,
+    invoiceReferenceNumber: invoice.reference_number,
+    customerName: invoice.customers.name,
+    amountDue: Number(invoice.balance_due_amount).toFixed(2),
+    paymentMutation: false,
+    checkoutStarted: false
+  };
+  const notificationEvent = await createNotificationEvent({
+    organizationId: scope.organizationId,
+    category: "invoices",
+    severity: "neutral",
+    eventType: "invoice.email_send_requested",
+    subjectType: "invoice",
+    subjectId: invoice.id,
+    customerId: invoice.customer_id,
+    projectId: invoice.project_id,
+    actorType: "organization_user",
+    actorUserId: scope.userId,
+    title: `Invoice ${invoice.reference_number} email requested`,
+    message: `Invoice ${invoice.reference_number} review/payment email was requested for the customer.`,
+    linkPath: `/invoices/${invoice.id}`,
+    groupKey: `invoice:${invoice.id}`,
+    payload: deliveryPayload,
+    occurredAt: nowIso
+  });
+  const deliveryId = await createInvoiceNotificationDelivery({
+    organizationId: scope.organizationId,
+    notificationEventId: notificationEvent.id,
+    recipientEmail: portalRecipient.email,
+    recipientUserId: portalRecipient.portalUserId,
+    payload: deliveryPayload
+  });
+
+  await insertInvoiceDeliveryEvent({
+    scope,
+    invoiceId: invoice.id,
+    eventType: "send_requested",
+    recipientName: portalRecipient.fullName ?? invoice.customers.name,
+    recipientEmail: portalRecipient.email,
+    recipientRole: "customer",
+    channel: "email",
+    provider: "postmark",
+    relatedNotificationEventId: notificationEvent.id,
+    eventNote: "Provider-backed invoice review/payment email was requested.",
+    metadata: {
+      source: "contractor_app_provider_send",
+      evidenceOnly: true,
+      providerSend: true,
+      notificationDeliveryId: deliveryId,
+      checkoutStarted: false,
+      paymentMutation: false,
+      paymentEventMutation: false,
+      statusMutation: false
+    }
+  });
+
+  const lockState = await getOrganizationProductionActionLockState(
+    scope.organizationId
+  );
+
+  if (lockState.isLocked) {
+    const errorMessage = "Provider-backed email is locked during early access.";
+
+    await markInvoiceNotificationDeliveryFailed({
+      deliveryId,
+      errorMessage
+    });
+    await insertInvoiceDeliveryEvent({
+      scope,
+      invoiceId: invoice.id,
+      eventType: "failed",
+      recipientName: portalRecipient.fullName ?? invoice.customers.name,
+      recipientEmail: portalRecipient.email,
+      recipientRole: "customer",
+      channel: "email",
+      provider: "postmark",
+      relatedNotificationEventId: notificationEvent.id,
+      eventNote: errorMessage,
+      metadata: {
+        source: "contractor_app_provider_send",
+        evidenceOnly: true,
+        providerSend: false,
+        notificationDeliveryId: deliveryId,
+        failureReason: "activation_locked",
+        checkoutStarted: false,
+        paymentMutation: false,
+        paymentEventMutation: false,
+        statusMutation: false
+      }
+    });
+
+    const currentInvoice = await getInvoiceById(
+      invoice.id,
+      `/invoices/${invoice.id}`
+    );
+
+    if (!currentInvoice) {
+      throw new Error(
+        "Invoice not found after recording failed delivery evidence."
+      );
+    }
+
+    return {
+      invoice: currentInvoice,
+      message:
+        "Invoice email was not sent because provider-backed sends are locked during early access. Failed delivery evidence was recorded."
+    };
+  }
+
+  if (!isPostmarkEmailConfigured()) {
+    const errorMessage =
+      "Postmark email delivery is not configured for this environment.";
+
+    await markInvoiceNotificationDeliveryFailed({
+      deliveryId,
+      errorMessage
+    });
+    await insertInvoiceDeliveryEvent({
+      scope,
+      invoiceId: invoice.id,
+      eventType: "failed",
+      recipientName: portalRecipient.fullName ?? invoice.customers.name,
+      recipientEmail: portalRecipient.email,
+      recipientRole: "customer",
+      channel: "email",
+      provider: "postmark",
+      relatedNotificationEventId: notificationEvent.id,
+      eventNote: errorMessage,
+      metadata: {
+        source: "contractor_app_provider_send",
+        evidenceOnly: true,
+        providerSend: false,
+        notificationDeliveryId: deliveryId,
+        failureReason: "not_configured",
+        checkoutStarted: false,
+        paymentMutation: false,
+        paymentEventMutation: false,
+        statusMutation: false
+      }
+    });
+
+    const currentInvoice = await getInvoiceById(
+      invoice.id,
+      `/invoices/${invoice.id}`
+    );
+
+    if (!currentInvoice) {
+      throw new Error(
+        "Invoice not found after recording failed delivery evidence."
+      );
+    }
+
+    return {
+      invoice: currentInvoice,
+      message:
+        "Invoice email was not sent because Postmark email delivery is not configured. Failed delivery evidence was recorded."
+    };
+  }
+
+  const emailContent = buildInvoicePortalEmailContent({
+    recipientName: portalRecipient.fullName ?? invoice.customers.name,
+    organizationName:
+      organizationContext.organization.displayName ??
+      organizationContext.organization.legalName ??
+      "FloorConnector",
+    invoiceReferenceNumber: invoice.reference_number,
+    projectName: invoice.projects?.name ?? null,
+    amountDue: formatInvoiceEmailAmount(invoice.balance_due_amount),
+    portalUrl: portalUrl.toString()
+  });
+
+  try {
+    const result = await sendPostmarkEmail({
+      toEmail: portalRecipient.email,
+      subject: emailContent.subject,
+      htmlBody: emailContent.htmlBody,
+      textBody: emailContent.textBody
+    });
+
+    await markInvoiceNotificationDeliverySent({
+      deliveryId,
+      providerMessageId: result.messageId,
+      sentAt: result.submittedAt
+    });
+    await insertInvoiceDeliveryEvent({
+      scope,
+      invoiceId: invoice.id,
+      eventType: "sent",
+      recipientName: portalRecipient.fullName ?? invoice.customers.name,
+      recipientEmail: portalRecipient.email,
+      recipientRole: "customer",
+      channel: "email",
+      provider: "postmark",
+      providerMessageId: result.messageId,
+      relatedNotificationEventId: notificationEvent.id,
+      eventNote: "Postmark accepted the invoice review/payment email.",
+      metadata: {
+        source: "contractor_app_provider_send",
+        evidenceOnly: true,
+        providerSend: true,
+        notificationDeliveryId: deliveryId,
+        submittedAt: result.submittedAt,
+        to: result.to,
+        checkoutStarted: false,
+        paymentMutation: false,
+        paymentEventMutation: false,
+        statusMutation: false
+      }
+    });
+  } catch (error) {
+    const errorMessage = getNotificationDeliveryErrorMessage(error);
+
+    await markInvoiceNotificationDeliveryFailed({
+      deliveryId,
+      errorMessage
+    });
+    await insertInvoiceDeliveryEvent({
+      scope,
+      invoiceId: invoice.id,
+      eventType: "failed",
+      recipientName: portalRecipient.fullName ?? invoice.customers.name,
+      recipientEmail: portalRecipient.email,
+      recipientRole: "customer",
+      channel: "email",
+      provider: "postmark",
+      relatedNotificationEventId: notificationEvent.id,
+      eventNote: errorMessage,
+      metadata: {
+        source: "contractor_app_provider_send",
+        evidenceOnly: true,
+        providerSend: true,
+        notificationDeliveryId: deliveryId,
+        failureReason: "provider_failed",
+        checkoutStarted: false,
+        paymentMutation: false,
+        paymentEventMutation: false,
+        statusMutation: false
+      }
+    });
+
+    const currentInvoice = await getInvoiceById(
+      invoice.id,
+      `/invoices/${invoice.id}`
+    );
+
+    if (!currentInvoice) {
+      throw new Error(
+        "Invoice not found after recording failed delivery evidence."
+      );
+    }
+
+    return {
+      invoice: currentInvoice,
+      message:
+        "The provider email send failed. Failed delivery evidence was recorded."
+    };
+  }
+
+  const currentInvoice = await getInvoiceById(
+    invoice.id,
+    `/invoices/${invoice.id}`
+  );
+
+  if (!currentInvoice) {
+    throw new Error(
+      "Invoice not found after sending the review/payment email."
+    );
+  }
+
+  return {
+    invoice: currentInvoice,
+    message: `Invoice review/payment email sent to ${portalRecipient.email}.`
+  };
+}
+
 export async function recordInvoicePayment(input: InvoicePaymentInput) {
   const scope = await requireInvoiceScope(`/invoices/${input.invoiceId}`);
-  const invoice = await getInvoiceRecordById(scope.organizationId, input.invoiceId);
+  const invoice = await getInvoiceRecordById(
+    scope.organizationId,
+    input.invoiceId
+  );
 
   if (!invoice) {
     throw new Error("Invoice not found for this organization.");
@@ -2891,7 +3740,9 @@ export async function recordInvoicePayment(input: InvoicePaymentInput) {
   }
 
   if (Number(input.amount) > Number(invoice.balance_due_amount)) {
-    throw new Error("Payment amount cannot be greater than the current balance due.");
+    throw new Error(
+      "Payment amount cannot be greater than the current balance due."
+    );
   }
 
   const supabase = await getSupabaseServerClient();
@@ -2917,10 +3768,15 @@ export async function recordInvoicePayment(input: InvoicePaymentInput) {
   const error = response.error;
 
   if (error || !isIdRow(data)) {
-    throw new Error(`Unable to record payment: ${error?.message ?? "Unknown error."}`);
+    throw new Error(
+      `Unable to record payment: ${error?.message ?? "Unknown error."}`
+    );
   }
 
-  const updatedInvoice = await getInvoiceRecordById(scope.organizationId, input.invoiceId);
+  const updatedInvoice = await getInvoiceRecordById(
+    scope.organizationId,
+    input.invoiceId
+  );
 
   if (!updatedInvoice) {
     throw new Error("Invoice not found for this organization.");
@@ -2946,24 +3802,34 @@ export async function requestInvoicePayment(
   const portalScope = await getScopedPortalInvoice(input.invoiceId, next);
 
   if (input.portalUserId !== portalScope.userId) {
-    throw new Error("This payment request is not available for the current portal user.");
+    throw new Error(
+      "This payment request is not available for the current portal user."
+    );
   }
 
-  assertInvoiceAllowsCustomerPayment(portalScope.invoice, input.amount, "request");
+  assertInvoiceAllowsCustomerPayment(
+    portalScope.invoice,
+    input.amount,
+    "request"
+  );
 
-  await insertPaymentEventsAdmin(portalScope.invoice.company_id, input.invoiceId, [
-    {
-      eventType: "payment_requested",
-      actorType: "portal_user",
-      portalUserId: portalScope.userId,
-      payload: {
-        amount: input.amount,
-        payerEmail: input.payerEmail,
-        notes: input.notes
-      },
-      occurredAt: input.occurredAt ?? undefined
-    }
-  ]);
+  await insertPaymentEventsAdmin(
+    portalScope.invoice.company_id,
+    input.invoiceId,
+    [
+      {
+        eventType: "payment_requested",
+        actorType: "portal_user",
+        portalUserId: portalScope.userId,
+        payload: {
+          amount: input.amount,
+          payerEmail: input.payerEmail,
+          notes: input.notes
+        },
+        occurredAt: input.occurredAt ?? undefined
+      }
+    ]
+  );
   await recordInvoiceNotificationEvent({
     organizationId: portalScope.invoice.company_id,
     invoiceId: portalScope.invoice.id,
@@ -2984,24 +3850,33 @@ export async function requestInvoicePayment(
   return mapInvoice(portalScope.invoice);
 }
 
-export async function ensurePendingPortalInvoicePayment(input: {
-  actorType: PaymentEventActorType;
-  actorUserId?: string | null;
-  portalUserId?: string | null;
-  invoiceId: string;
-  amount: string;
-  gatewayProvider: string;
-  payerEmail?: string | null;
-  notes?: string | null;
-  occurredAt?: string | null;
-}, next = "/portal") {
+export async function ensurePendingPortalInvoicePayment(
+  input: {
+    actorType: PaymentEventActorType;
+    actorUserId?: string | null;
+    portalUserId?: string | null;
+    invoiceId: string;
+    amount: string;
+    gatewayProvider: string;
+    payerEmail?: string | null;
+    notes?: string | null;
+    occurredAt?: string | null;
+  },
+  next = "/portal"
+) {
   const portalScope = await getScopedPortalInvoice(input.invoiceId, next);
 
   if (input.portalUserId !== portalScope.userId) {
-    throw new Error("This checkout payment is not available for the current portal user.");
+    throw new Error(
+      "This checkout payment is not available for the current portal user."
+    );
   }
 
-  assertInvoiceAllowsCustomerPayment(portalScope.invoice, input.amount, "checkout");
+  assertInvoiceAllowsCustomerPayment(
+    portalScope.invoice,
+    input.amount,
+    "checkout"
+  );
 
   const paymentDate =
     input.occurredAt?.slice(0, 10) ?? new Date().toISOString().slice(0, 10);
@@ -3137,10 +4012,16 @@ export async function startInvoiceCheckout(
   const portalScope = await getScopedPortalInvoice(input.invoiceId, next);
 
   if (input.portalUserId !== portalScope.userId) {
-    throw new Error("This checkout session is not available for the current portal user.");
+    throw new Error(
+      "This checkout session is not available for the current portal user."
+    );
   }
 
-  assertInvoiceAllowsCustomerPayment(portalScope.invoice, input.amount, "checkout");
+  assertInvoiceAllowsCustomerPayment(
+    portalScope.invoice,
+    input.amount,
+    "checkout"
+  );
 
   const payment = await findInvoicePaymentById(
     portalScope.invoice.company_id,
@@ -3150,7 +4031,9 @@ export async function startInvoiceCheckout(
   );
 
   if (!payment) {
-    throw new Error("The canonical checkout payment could not be found for this invoice.");
+    throw new Error(
+      "The canonical checkout payment could not be found for this invoice."
+    );
   }
 
   if (payment.status === "void") {
@@ -3158,11 +4041,15 @@ export async function startInvoiceCheckout(
   }
 
   if (payment.status === "recorded") {
-    throw new Error("A completed canonical payment does not need a new checkout session.");
+    throw new Error(
+      "A completed canonical payment does not need a new checkout session."
+    );
   }
 
   if (Number(payment.amount) !== Number(input.amount)) {
-    throw new Error("Checkout amount must match the canonical pending payment amount.");
+    throw new Error(
+      "Checkout amount must match the canonical pending payment amount."
+    );
   }
 
   const admin = getSupabaseAdminClient();
@@ -3180,7 +4067,8 @@ export async function startInvoiceCheckout(
       payer_user_id: input.portalUserId ?? input.actorUserId ?? null,
       payer_email: input.payerEmail,
       reference:
-        input.gatewayPaymentIntentReference ?? input.gatewayCheckoutSessionReference,
+        input.gatewayPaymentIntentReference ??
+        input.gatewayCheckoutSessionReference,
       updated_by: input.actorUserId ?? input.portalUserId ?? null
     })
     .eq("company_id", portalScope.invoice.company_id)
@@ -3196,32 +4084,42 @@ export async function startInvoiceCheckout(
     );
   }
 
-  await insertPaymentEventsAdmin(portalScope.invoice.company_id, input.invoiceId, [
-    {
-      paymentId: input.paymentId,
-      eventType: "checkout_started",
-      actorType: input.actorType,
-      actorUserId: input.actorUserId,
-      portalUserId: input.portalUserId ?? portalScope.userId,
-      gatewayProvider: input.gatewayProvider,
-      payload: {
-        amount: input.amount,
+  await insertPaymentEventsAdmin(
+    portalScope.invoice.company_id,
+    input.invoiceId,
+    [
+      {
+        paymentId: input.paymentId,
+        eventType: "checkout_started",
+        actorType: input.actorType,
+        actorUserId: input.actorUserId,
+        portalUserId: input.portalUserId ?? portalScope.userId,
         gatewayProvider: input.gatewayProvider,
-        gatewayCheckoutSessionReference: input.gatewayCheckoutSessionReference,
-        gatewayPaymentIntentReference: input.gatewayPaymentIntentReference,
-        gatewayStatus: input.gatewayStatus,
-        payerEmail: input.payerEmail,
-        ...(input.payload ?? {})
-      },
-      occurredAt: input.occurredAt ?? undefined
-    }
-  ]);
+        payload: {
+          amount: input.amount,
+          gatewayProvider: input.gatewayProvider,
+          gatewayCheckoutSessionReference:
+            input.gatewayCheckoutSessionReference,
+          gatewayPaymentIntentReference: input.gatewayPaymentIntentReference,
+          gatewayStatus: input.gatewayStatus,
+          payerEmail: input.payerEmail,
+          ...(input.payload ?? {})
+        },
+        occurredAt: input.occurredAt ?? undefined
+      }
+    ]
+  );
 
   return mapInvoice(portalScope.invoice);
 }
 
-export async function recordInvoicePaymentSuccess(input: InvoicePaymentSuccessInput) {
-  const invoice = await getInvoiceRecordByIdAdmin(input.organizationId, input.invoiceId);
+export async function recordInvoicePaymentSuccess(
+  input: InvoicePaymentSuccessInput
+) {
+  const invoice = await getInvoiceRecordByIdAdmin(
+    input.organizationId,
+    input.invoiceId
+  );
 
   if (!invoice) {
     throw new Error("Invoice not found for this organization.");
@@ -3240,15 +4138,21 @@ export async function recordInvoicePaymentSuccess(input: InvoicePaymentSuccessIn
   if (!existingPayment) {
     assertInvoiceAllowsCustomerPayment(invoice, input.amount, "success");
   } else if (existingPayment.status === "void") {
-    throw new Error("A voided canonical payment cannot be finalized as successful.");
+    throw new Error(
+      "A voided canonical payment cannot be finalized as successful."
+    );
   } else if (Number(existingPayment.amount) !== Number(input.amount)) {
-    throw new Error("Existing canonical payment amount does not match this payment success.");
+    throw new Error(
+      "Existing canonical payment amount does not match this payment success."
+    );
   }
 
   const admin = getSupabaseAdminClient();
   const paymentDate =
     input.paymentDate ??
-    (input.occurredAt ? input.occurredAt.slice(0, 10) : new Date().toISOString().slice(0, 10));
+    (input.occurredAt
+      ? input.occurredAt.slice(0, 10)
+      : new Date().toISOString().slice(0, 10));
   let paymentId = existingPayment?.id ?? null;
 
   if (existingPayment) {
@@ -3260,7 +4164,8 @@ export async function recordInvoicePaymentSuccess(input: InvoicePaymentSuccessIn
         recorded_via: resolveRecordedVia(input.actorType),
         gateway_provider: input.gatewayProvider,
         gateway_payment_intent_reference: input.gatewayPaymentIntentReference,
-        gateway_checkout_session_reference: input.gatewayCheckoutSessionReference,
+        gateway_checkout_session_reference:
+          input.gatewayCheckoutSessionReference,
         gateway_status: input.gatewayStatus,
         payment_method_summary: input.paymentMethodSummary,
         payer_user_id: input.portalUserId ?? input.actorUserId ?? null,
@@ -3299,7 +4204,8 @@ export async function recordInvoicePaymentSuccess(input: InvoicePaymentSuccessIn
         recorded_via: resolveRecordedVia(input.actorType),
         gateway_provider: input.gatewayProvider,
         gateway_payment_intent_reference: input.gatewayPaymentIntentReference,
-        gateway_checkout_session_reference: input.gatewayCheckoutSessionReference,
+        gateway_checkout_session_reference:
+          input.gatewayCheckoutSessionReference,
         gateway_status: input.gatewayStatus,
         payment_method_summary: input.paymentMethodSummary,
         payer_user_id: input.portalUserId ?? input.actorUserId ?? null,
@@ -3349,7 +4255,10 @@ export async function recordInvoicePaymentSuccess(input: InvoicePaymentSuccessIn
     }
   ]);
 
-  const updatedInvoice = await getInvoiceRecordByIdAdmin(input.organizationId, input.invoiceId);
+  const updatedInvoice = await getInvoiceRecordByIdAdmin(
+    input.organizationId,
+    input.invoiceId
+  );
 
   if (!updatedInvoice) {
     throw new Error("Invoice not found for this organization.");
@@ -3379,8 +4288,13 @@ export async function recordInvoicePaymentSuccess(input: InvoicePaymentSuccessIn
   return mapInvoice(updatedInvoice);
 }
 
-export async function recordInvoicePaymentFailure(input: InvoicePaymentFailureInput) {
-  const invoice = await getInvoiceRecordByIdAdmin(input.organizationId, input.invoiceId);
+export async function recordInvoicePaymentFailure(
+  input: InvoicePaymentFailureInput
+) {
+  const invoice = await getInvoiceRecordByIdAdmin(
+    input.organizationId,
+    input.invoiceId
+  );
 
   if (!invoice) {
     throw new Error("Invoice not found for this organization.");
@@ -3400,14 +4314,19 @@ export async function recordInvoicePaymentFailure(input: InvoicePaymentFailureIn
     }
   );
 
-  if (existingPayment && existingPayment.status !== "recorded" && existingPayment.status !== "void") {
+  if (
+    existingPayment &&
+    existingPayment.status !== "recorded" &&
+    existingPayment.status !== "void"
+  ) {
     const admin = getSupabaseAdminClient();
     const updateResponse = await admin
       .from("payments")
       .update({
         gateway_provider: input.gatewayProvider,
         gateway_payment_intent_reference: input.gatewayPaymentIntentReference,
-        gateway_checkout_session_reference: input.gatewayCheckoutSessionReference,
+        gateway_checkout_session_reference:
+          input.gatewayCheckoutSessionReference,
         gateway_status: input.gatewayStatus ?? "failed",
         payer_email: input.payerEmail,
         notes: input.notes,
@@ -3472,7 +4391,10 @@ export async function recordInvoicePaymentFailure(input: InvoicePaymentFailureIn
 
 export async function voidInvoicePayment(input: InvoicePaymentVoidInput) {
   const scope = await requireInvoiceScope(`/invoices/${input.invoiceId}`);
-  const invoice = await getInvoiceRecordById(scope.organizationId, input.invoiceId);
+  const invoice = await getInvoiceRecordById(
+    scope.organizationId,
+    input.invoiceId
+  );
 
   if (!invoice) {
     throw new Error("Invoice not found for this organization.");
@@ -3509,7 +4431,9 @@ export async function voidInvoicePayment(input: InvoicePaymentVoidInput) {
   const error = response.error;
 
   if (error || !isIdRow(data)) {
-    throw new Error(`Unable to void payment: ${error?.message ?? "Unknown error."}`);
+    throw new Error(
+      `Unable to void payment: ${error?.message ?? "Unknown error."}`
+    );
   }
 
   await recordPaymentEvent({
@@ -3529,7 +4453,10 @@ export async function voidInvoicePayment(input: InvoicePaymentVoidInput) {
     occurredAt: input.occurredAt ?? undefined
   });
 
-  const updatedInvoice = await getInvoiceRecordById(scope.organizationId, input.invoiceId);
+  const updatedInvoice = await getInvoiceRecordById(
+    scope.organizationId,
+    input.invoiceId
+  );
 
   if (!updatedInvoice) {
     throw new Error("Invoice not found for this organization.");
@@ -3566,7 +4493,10 @@ async function voidInvoicePaymentFromProvider(input: {
   payload?: Record<string, unknown> | null;
   occurredAt?: string | null;
 }) {
-  const invoice = await getInvoiceRecordByIdAdmin(input.organizationId, input.invoiceId);
+  const invoice = await getInvoiceRecordByIdAdmin(
+    input.organizationId,
+    input.invoiceId
+  );
 
   if (!invoice) {
     throw new Error("Invoice not found for this organization.");
@@ -3585,7 +4515,9 @@ async function voidInvoicePaymentFromProvider(input: {
 
   if (payment.status !== "void") {
     if (!canTransitionPaymentStatus(payment.status, "void")) {
-      throw new Error("This canonical payment cannot be voided from its current status.");
+      throw new Error(
+        "This canonical payment cannot be voided from its current status."
+      );
     }
 
     const admin = getSupabaseAdminClient();
@@ -3626,7 +4558,10 @@ async function voidInvoicePaymentFromProvider(input: {
     }
   ]);
 
-  const updatedInvoice = await getInvoiceRecordByIdAdmin(input.organizationId, input.invoiceId);
+  const updatedInvoice = await getInvoiceRecordByIdAdmin(
+    input.organizationId,
+    input.invoiceId
+  );
 
   if (!updatedInvoice) {
     throw new Error("Invoice not found for this organization.");
@@ -3673,7 +4608,10 @@ export async function processProviderPaymentWebhookEvent(
       handled: true,
       duplicate: true,
       reason: "duplicate_provider_event",
-      invoice: await getInvoiceByIdAdminSafe(event.organizationId, event.invoiceId)
+      invoice: await getInvoiceByIdAdminSafe(
+        event.organizationId,
+        event.invoiceId
+      )
     } as const;
   }
 
@@ -3713,7 +4651,8 @@ export async function processProviderPaymentWebhookEvent(
           gateway_checkout_session_reference:
             event.gatewayCheckoutSessionReference ??
             referencedPayment.gateway_checkout_session_reference,
-          gateway_status: event.gatewayStatus ?? referencedPayment.gateway_status,
+          gateway_status:
+            event.gatewayStatus ?? referencedPayment.gateway_status,
           payer_email: event.payerEmail ?? referencedPayment.payer_email,
           updated_by: null
         })
@@ -3750,7 +4689,8 @@ export async function processProviderPaymentWebhookEvent(
         paymentMethodSummary: event.paymentMethodSummary,
         payerEmail: event.payerEmail,
         reference:
-          event.gatewayPaymentIntentReference ?? event.gatewayCheckoutSessionReference,
+          event.gatewayPaymentIntentReference ??
+          event.gatewayCheckoutSessionReference,
         notes: event.notes,
         providerEventId: event.providerEventId,
         occurredAt: event.occurredAt,
@@ -3793,11 +4733,16 @@ export async function processProviderPaymentWebhookEvent(
     const paymentId =
       event.paymentId ??
       (
-        await findPaymentByGatewayReference(event.organizationId, event.invoiceId, {
-          gatewayProvider: event.gatewayProvider,
-          gatewayPaymentIntentReference: event.gatewayPaymentIntentReference,
-          gatewayCheckoutSessionReference: event.gatewayCheckoutSessionReference
-        })
+        await findPaymentByGatewayReference(
+          event.organizationId,
+          event.invoiceId,
+          {
+            gatewayProvider: event.gatewayProvider,
+            gatewayPaymentIntentReference: event.gatewayPaymentIntentReference,
+            gatewayCheckoutSessionReference:
+              event.gatewayCheckoutSessionReference
+          }
+        )
       )?.id ??
       null;
 
@@ -3832,7 +4777,10 @@ export async function processProviderPaymentWebhookEvent(
         handled: true,
         duplicate: true,
         reason: "duplicate_provider_event",
-        invoice: await getInvoiceByIdAdminSafe(event.organizationId, event.invoiceId)
+        invoice: await getInvoiceByIdAdminSafe(
+          event.organizationId,
+          event.invoiceId
+        )
       } as const;
     }
 
@@ -3846,7 +4794,10 @@ export async function appendChangeOrderSnapshotItemsToInvoice(input: {
   invoiceId: string;
   changeOrderSnapshotItemIds: string[];
 }) {
-  const existingLineItems = await getInvoiceLineItems(input.organizationId, input.invoiceId);
+  const existingLineItems = await getInvoiceLineItems(
+    input.organizationId,
+    input.invoiceId
+  );
 
   if (hasLegacyInvoiceLineItems(existingLineItems)) {
     throw new Error(
@@ -3865,16 +4816,25 @@ export async function appendChangeOrderSnapshotItemsToInvoice(input: {
 
   if (nextSnapshotItemIds.length === 0) {
     return existingLineItems.filter((lineItem) =>
-      input.changeOrderSnapshotItemIds.includes(lineItem.changeOrderSnapshotItemId ?? "")
+      input.changeOrderSnapshotItemIds.includes(
+        lineItem.changeOrderSnapshotItemId ?? ""
+      )
     );
   }
 
   const snapshotLineItems = (
-    await loadChangeOrderSnapshotItemsByIds(input.organizationId, nextSnapshotItemIds)
-  ).map((snapshotItem) => mapChangeOrderSnapshotRowToInvoiceLineItem(snapshotItem));
+    await loadChangeOrderSnapshotItemsByIds(
+      input.organizationId,
+      nextSnapshotItemIds
+    )
+  ).map((snapshotItem) =>
+    mapChangeOrderSnapshotRowToInvoiceLineItem(snapshotItem)
+  );
 
   const nextLineItems = [
-    ...existingLineItems.map((lineItem) => mapInvoiceLineItemToPersistedInput(lineItem)),
+    ...existingLineItems.map((lineItem) =>
+      mapInvoiceLineItemToPersistedInput(lineItem)
+    ),
     ...snapshotLineItems
   ];
 
@@ -3885,13 +4845,21 @@ export async function appendChangeOrderSnapshotItemsToInvoice(input: {
     nextLineItems
   );
 
-  const refreshedLineItems = await getInvoiceLineItems(input.organizationId, input.invoiceId);
+  const refreshedLineItems = await getInvoiceLineItems(
+    input.organizationId,
+    input.invoiceId
+  );
   return refreshedLineItems.filter((lineItem) =>
-    input.changeOrderSnapshotItemIds.includes(lineItem.changeOrderSnapshotItemId ?? "")
+    input.changeOrderSnapshotItemIds.includes(
+      lineItem.changeOrderSnapshotItemId ?? ""
+    )
   );
 }
 
-async function getInvoiceByIdAdminSafe(organizationId: string, invoiceId: string) {
+async function getInvoiceByIdAdminSafe(
+  organizationId: string,
+  invoiceId: string
+) {
   const invoice = await getInvoiceRecordByIdAdmin(organizationId, invoiceId);
   return invoice ? mapInvoice(invoice) : null;
 }

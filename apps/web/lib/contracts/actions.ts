@@ -18,7 +18,7 @@ import {
   recordOnsiteContractSignature,
   recordCustomerDeclinedContract,
   recordCustomerSignedContract,
-  sendContractForSignature,
+  sendContractForSignatureWithProviderEmail,
   updateContractInternalApprovalStatus,
   updateContractDraft,
   updateContractStatus
@@ -41,7 +41,10 @@ function getFieldValue(formData: FormData, key: string) {
   return typeof value === "string" ? value : "";
 }
 
-function buildRedirect(pathname: string, params: Record<string, string | undefined>) {
+function buildRedirect(
+  pathname: string,
+  params: Record<string, string | undefined>
+) {
   const search = new URLSearchParams();
 
   for (const [key, value] of Object.entries(params)) {
@@ -66,7 +69,9 @@ function getStatusActionLabel(status: ContractStatus) {
   }
 }
 
-function getInternalApprovalActionLabel(status: ContractInternalApprovalStatus) {
+function getInternalApprovalActionLabel(
+  status: ContractInternalApprovalStatus
+) {
   switch (status) {
     case "approved":
       return "approved for send";
@@ -80,9 +85,13 @@ function getInternalApprovalActionLabel(status: ContractInternalApprovalStatus) 
 }
 
 function getContractGenerationErrorMessage(error: unknown) {
-  const message = error instanceof Error ? error.message : "Unable to generate contract.";
+  const message =
+    error instanceof Error ? error.message : "Unable to generate contract.";
 
-  if (message === "Approved estimate snapshot is missing. Re-approve the estimate before generating a contract.") {
+  if (
+    message ===
+    "Approved estimate snapshot is missing. Re-approve the estimate before generating a contract."
+  ) {
     return "This estimate was approved, but its approved snapshot is missing. Rebuild the approval snapshot from the estimate, then generate the contract again.";
   }
 
@@ -90,7 +99,9 @@ function getContractGenerationErrorMessage(error: unknown) {
 }
 
 function toUuidOrNull(value: string) {
-  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value)
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+    value
+  )
     ? value
     : null;
 }
@@ -140,7 +151,8 @@ export async function createContractFromEstimateAction(formData: FormData) {
   });
 
   if (!result.success) {
-    const message = result.error.issues[0]?.message ?? "Unable to generate contract.";
+    const message =
+      result.error.issues[0]?.message ?? "Unable to generate contract.";
     await logContractGenerationFailure({
       estimateId,
       templateId,
@@ -184,7 +196,9 @@ export async function createContractFromEstimateAction(formData: FormData) {
   );
 }
 
-export async function quickCreateContractFromEstimateAction(formData: FormData) {
+export async function quickCreateContractFromEstimateAction(
+  formData: FormData
+) {
   const estimateId = getFieldValue(formData, "estimateId");
   const templateId = getFieldValue(formData, "templateId");
   const result = createContractFromEstimateInputSchema.safeParse({
@@ -193,7 +207,8 @@ export async function quickCreateContractFromEstimateAction(formData: FormData) 
   });
 
   if (!result.success) {
-    const message = result.error.issues[0]?.message ?? "Unable to generate contract.";
+    const message =
+      result.error.issues[0]?.message ?? "Unable to generate contract.";
     await logContractGenerationFailure({
       estimateId,
       templateId,
@@ -272,7 +287,8 @@ export async function updateContractDraftAction(formData: FormData) {
   } catch (error) {
     redirect(
       buildRedirect(`/contracts/${contractId}/edit`, {
-        error: error instanceof Error ? error.message : "Unable to update contract."
+        error:
+          error instanceof Error ? error.message : "Unable to update contract."
       })
     );
   }
@@ -326,12 +342,17 @@ export async function updateContractStatusAction(formData: FormData) {
   let contract;
 
   try {
-    contract = await updateContractStatus(contractId, nextStatus as ContractStatus);
+    contract = await updateContractStatus(
+      contractId,
+      nextStatus as ContractStatus
+    );
   } catch (error) {
     redirect(
       buildRedirect(`/contracts/${contractId}`, {
         error:
-          error instanceof Error ? error.message : "Unable to update contract status."
+          error instanceof Error
+            ? error.message
+            : "Unable to update contract status."
       })
     );
   }
@@ -345,9 +366,14 @@ export async function updateContractStatusAction(formData: FormData) {
   );
 }
 
-export async function updateContractInternalApprovalStatusAction(formData: FormData) {
+export async function updateContractInternalApprovalStatusAction(
+  formData: FormData
+) {
   const contractId = getFieldValue(formData, "contractId");
-  const currentStatus = getFieldValue(formData, "currentInternalApprovalStatus");
+  const currentStatus = getFieldValue(
+    formData,
+    "currentInternalApprovalStatus"
+  );
   const nextStatus = getFieldValue(formData, "nextInternalApprovalStatus");
 
   if (!contractId) {
@@ -359,7 +385,9 @@ export async function updateContractInternalApprovalStatusAction(formData: FormD
   }
 
   if (
-    !["not_required", "pending", "approved", "rejected"].includes(currentStatus) ||
+    !["not_required", "pending", "approved", "rejected"].includes(
+      currentStatus
+    ) ||
     !["not_required", "pending", "approved", "rejected"].includes(nextStatus)
   ) {
     redirect(
@@ -431,12 +459,15 @@ export async function sendContractForSignatureAction(formData: FormData) {
     redirect(
       buildRedirect(`/contracts/${contractId}`, {
         error:
-          result.error.issues[0]?.message ?? "Unable to prepare contract signature send."
+          result.error.issues[0]?.message ??
+          "Unable to prepare contract signature send."
       })
     );
   }
 
-  const user = await requireAuthenticatedUser(`/contracts/${result.data.contractId}`);
+  const user = await requireAuthenticatedUser(
+    `/contracts/${result.data.contractId}`
+  );
   const options = await getContractSignatureActionOptions(
     result.data.contractId,
     `/contracts/${result.data.contractId}`
@@ -478,10 +509,11 @@ export async function sendContractForSignatureAction(formData: FormData) {
   }
 
   let contract;
+  let sendMessage = "";
 
   try {
     await assertActiveOrganizationCanPerformProductionAction(user.id);
-    contract = await sendContractForSignature({
+    const sendResult = await sendContractForSignatureWithProviderEmail({
       contractId: result.data.contractId,
       signers: [
         {
@@ -508,6 +540,8 @@ export async function sendContractForSignatureAction(formData: FormData) {
           : [])
       ]
     });
+    contract = sendResult.contract;
+    sendMessage = sendResult.message;
   } catch (error) {
     redirect(
       buildRedirect(`/contracts/${result.data.contractId}`, {
@@ -523,7 +557,7 @@ export async function sendContractForSignatureAction(formData: FormData) {
 
   redirect(
     buildRedirect(`/contracts/${contract.id}`, {
-      message: `${contract.title} was sent for signature.`
+      message: sendMessage || `${contract.title} was sent for signature.`
     })
   );
 }
@@ -544,7 +578,8 @@ export async function countersignContractAction(formData: FormData) {
     redirect(
       buildRedirect(`/contracts/${contractId}`, {
         error:
-          result.error.issues[0]?.message ?? "Unable to complete contractor countersign."
+          result.error.issues[0]?.message ??
+          "Unable to complete contractor countersign."
       })
     );
   }
@@ -592,7 +627,8 @@ export async function customerSignContractAction(formData: FormData) {
     redirect(
       buildRedirect(`/portal/contracts/${contractId}`, {
         error:
-          result.error.issues[0]?.message ?? "Unable to complete customer signature."
+          result.error.issues[0]?.message ??
+          "Unable to complete customer signature."
       })
     );
   }
@@ -600,7 +636,10 @@ export async function customerSignContractAction(formData: FormData) {
   let contract;
 
   try {
-    contract = await recordCustomerSignedContract(result.data, `/portal/contracts/${contractId}`);
+    contract = await recordCustomerSignedContract(
+      result.data,
+      `/portal/contracts/${contractId}`
+    );
   } catch (error) {
     redirect(
       buildRedirect(`/portal/contracts/${contractId}`, {
@@ -656,7 +695,9 @@ export async function customerDeclineContractAction(formData: FormData) {
     redirect(
       buildRedirect(`/portal/contracts/${contractId}`, {
         error:
-          error instanceof Error ? error.message : "Unable to decline the contract."
+          error instanceof Error
+            ? error.message
+            : "Unable to decline the contract."
       })
     );
   }
@@ -681,7 +722,8 @@ export async function recordOnsiteContractSignatureAction(input: {
     return {
       ok: false as const,
       error:
-        result.error.issues[0]?.message ?? "Unable to complete onsite signature."
+        result.error.issues[0]?.message ??
+        "Unable to complete onsite signature."
     };
   }
 
@@ -698,7 +740,9 @@ export async function recordOnsiteContractSignatureAction(input: {
     return {
       ok: false as const,
       error:
-        error instanceof Error ? error.message : "Unable to complete onsite signature."
+        error instanceof Error
+          ? error.message
+          : "Unable to complete onsite signature."
     };
   }
 }

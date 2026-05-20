@@ -37,7 +37,9 @@ function buildDocumentBrand(
   };
 }
 
-export default async function EstimatePdfPage({ params }: EstimatePdfPageProps) {
+export default async function EstimatePdfPage({
+  params
+}: EstimatePdfPageProps) {
   const { estimateId } = await params;
   const user = await requireAuthenticatedUser(`/estimates/${estimateId}/pdf`);
   const [estimate, organizationContext] = await Promise.all([
@@ -80,11 +82,26 @@ export default async function EstimatePdfPage({ params }: EstimatePdfPageProps) 
       backHref={`/estimates/${estimate.id}`}
       backLabel="Back to estimate"
       facts={[
-        { label: "Customer", value: estimate.customer?.name ?? "Unknown customer" },
-        { label: "Project", value: estimate.project?.name ?? "Unknown project" },
-        { label: "Estimate date", value: formatDocumentDate(estimate.estimateDate) },
-        { label: "Expires", value: formatDocumentDate(estimate.expirationDate) },
-        { label: "Subtotal", value: formatDocumentMoney(estimate.subtotalAmount) },
+        {
+          label: "Customer",
+          value: estimate.customer?.name ?? "Unknown customer"
+        },
+        {
+          label: "Project",
+          value: estimate.project?.name ?? "Unknown project"
+        },
+        {
+          label: "Estimate date",
+          value: formatDocumentDate(estimate.estimateDate)
+        },
+        {
+          label: "Expires",
+          value: formatDocumentDate(estimate.expirationDate)
+        },
+        {
+          label: "Subtotal",
+          value: formatDocumentMoney(estimate.subtotalAmount)
+        },
         { label: "Total", value: formatDocumentMoney(estimate.totalAmount) }
       ]}
     >
@@ -92,7 +109,11 @@ export default async function EstimatePdfPage({ params }: EstimatePdfPageProps) 
         <div className="grid gap-4 text-sm text-[var(--text-secondary)] sm:grid-cols-2">
           <div>
             <p className="font-semibold text-[var(--text-primary)]">Customer</p>
-            <p>{estimate.customer?.companyName ?? estimate.customer?.name ?? "Not provided"}</p>
+            <p>
+              {estimate.customer?.companyName ??
+                estimate.customer?.name ??
+                "Not provided"}
+            </p>
             <p>{estimate.customer?.email ?? "No email on file"}</p>
             <p>{customerAddress}</p>
           </div>
@@ -100,7 +121,9 @@ export default async function EstimatePdfPage({ params }: EstimatePdfPageProps) 
             <p className="font-semibold text-[var(--text-primary)]">Project</p>
             <p>{estimate.project?.name ?? "Not provided"}</p>
             <p>{projectAddress}</p>
-            <p className="capitalize">Status: {estimate.project?.status ?? "Not provided"}</p>
+            <p className="capitalize">
+              Status: {estimate.project?.status ?? "Not provided"}
+            </p>
           </div>
         </div>
       </CustomerDocumentSection>
@@ -144,7 +167,10 @@ export default async function EstimatePdfPage({ params }: EstimatePdfPageProps) 
       </CustomerDocumentSection>
 
       <div className="print:hidden">
-        <Link href={`/estimates/${estimate.id}`} className="text-sm font-medium text-[var(--copper)]">
+        <Link
+          href={`/estimates/${estimate.id}`}
+          className="text-sm font-medium text-[var(--copper)]"
+        >
           Return to estimate workspace
         </Link>
       </div>

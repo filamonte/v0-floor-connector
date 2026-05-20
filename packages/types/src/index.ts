@@ -72,6 +72,7 @@ export type ServiceTicketId = string;
 export type WarrantyDocumentId = string;
 export type DocumentSignerId = string;
 export type DocumentSignatureEventId = string;
+export type DocumentDeliveryEventId = string;
 export type DailyLogId = string;
 export type FieldNoteId = string;
 export type ExecutionAttachmentId = string;
@@ -522,6 +523,26 @@ export type DocumentSignatureEventType =
   | "signed"
   | "declined"
   | "voided";
+export type DocumentDeliverySubjectType =
+  | "warranty_document"
+  | "estimate"
+  | "invoice"
+  | "contract";
+export type DocumentDeliveryEventType =
+  | "delivery_recorded"
+  | "send_requested"
+  | "sent"
+  | "viewed"
+  | "failed"
+  | "bounced"
+  | "opened"
+  | "clicked";
+export type DocumentDeliveryChannel =
+  | "internal"
+  | "portal"
+  | "email"
+  | "print"
+  | "manual";
 export type DailyLogStatus = "draft" | "finalized";
 export type PunchlistStatus = "open" | "in_progress" | "resolved" | "closed";
 export type AppointmentType =
@@ -1244,6 +1265,7 @@ export interface Job {
   customerId: CustomerId;
   projectId: ProjectId;
   estimateId: EstimateId | null;
+  serviceTicketId: ServiceTicketId | null;
   dispatchStatus: JobStatus;
   scheduledDate: string | null;
   scheduledStartAt: string | null;
@@ -2533,6 +2555,26 @@ export interface DocumentSignatureEvent {
   subjectId: WarrantyDocumentId;
   signerId: DocumentSignerId | null;
   eventType: DocumentSignatureEventType;
+  eventNote: string | null;
+  metadata: Record<string, unknown>;
+  createdByUserId: ProfileId | null;
+  createdAt: string;
+}
+
+export interface DocumentDeliveryEvent {
+  id: DocumentDeliveryEventId;
+  organizationId: OrganizationId;
+  subjectType: DocumentDeliverySubjectType;
+  subjectId: WarrantyDocumentId | EstimateId | InvoiceId | ContractId;
+  eventType: DocumentDeliveryEventType;
+  recipientName: string | null;
+  recipientEmail: string | null;
+  recipientRole: string | null;
+  channel: DocumentDeliveryChannel;
+  provider: string | null;
+  providerMessageId: string | null;
+  providerEventId: string | null;
+  relatedNotificationEventId: string | null;
   eventNote: string | null;
   metadata: Record<string, unknown>;
   createdByUserId: ProfileId | null;

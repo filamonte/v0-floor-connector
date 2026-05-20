@@ -20,6 +20,14 @@ const navigation = readFileSync(
   "utf8"
 );
 
+function getActionSource(name: string) {
+  const start = actions.indexOf(`export async function ${name}`);
+  assert.notEqual(start, -1, `${name} action was not found`);
+  const next = actions.indexOf("\nexport async function ", start + 1);
+
+  return actions.slice(start, next === -1 ? undefined : next);
+}
+
 void test("GateKeeper review queue is a contractor-facing review surface", () => {
   assert.match(page, /export default async function GateKeeperPage/);
   assert.match(page, /getGateKeeperReviewQueue/);
@@ -30,11 +38,20 @@ void test("GateKeeper review queue is a contractor-facing review surface", () =>
 });
 
 void test("GateKeeper review actions update review state without execution imports", () => {
-  assert.match(actions, /reviewGateKeeperArtifact/);
-  assert.match(actions, /reviewGateKeeperActionSuggestion/);
-  assert.match(actions, /No action was executed/);
+  const reviewActionSource = [
+    getActionSource("acceptGateKeeperArtifactAction"),
+    getActionSource("rejectGateKeeperArtifactAction"),
+    getActionSource("dismissGateKeeperArtifactAction"),
+    getActionSource("approveGateKeeperSuggestionReviewAction"),
+    getActionSource("rejectGateKeeperSuggestionAction"),
+    getActionSource("dismissGateKeeperSuggestionAction")
+  ].join("\n");
+
+  assert.match(reviewActionSource, /reviewArtifact/);
+  assert.match(reviewActionSource, /reviewSuggestion/);
+  assert.match(reviewActionSource, /No action was executed/);
   assert.doesNotMatch(
-    actions,
+    reviewActionSource,
     /createWorkItem|createOpportunity|createProject|scheduleAppointment|sendEmail|twilio|retell|openai/i
   );
 });

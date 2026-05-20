@@ -35,16 +35,23 @@ export default async function InvoiceEditPage({
     notFound();
   }
 
-  const [invoice, projects, estimates, jobs, organizationFinancialSettings, sourceOptions, catalogItems] =
-    await Promise.all([
-      getInvoiceById(invoiceId, `/invoices/${invoiceId}/edit`),
-      listProjects(),
-      listEstimates(),
-      listJobs(),
-      getOrganizationFinancialSettings(organizationContext.organization.id),
-      listInvoiceSourceOptions(),
-      listCatalogItems()
-    ]);
+  const [
+    invoice,
+    projects,
+    estimates,
+    jobs,
+    organizationFinancialSettings,
+    sourceOptions,
+    catalogItems
+  ] = await Promise.all([
+    getInvoiceById(invoiceId, `/invoices/${invoiceId}/edit`),
+    listProjects(),
+    listEstimates(),
+    listJobs(),
+    getOrganizationFinancialSettings(organizationContext.organization.id),
+    listInvoiceSourceOptions(),
+    listCatalogItems()
+  ]);
 
   if (!invoice) {
     notFound();
@@ -103,30 +110,59 @@ export default async function InvoiceEditPage({
                 Invoice status
               </p>
               <div className="mt-1 space-y-1">
-                <p className="capitalize">{invoice.status.replaceAll("_", " ")}</p>
-                <p className="capitalize">{invoice.workflowRole.replaceAll("_", " ")}</p>
+                <p className="capitalize">
+                  {invoice.status.replaceAll("_", " ")}
+                </p>
+                <p className="capitalize">
+                  {invoice.workflowRole.replaceAll("_", " ")}
+                </p>
               </div>
             </div>
           )
         }}
         sidebar={[
-          { id: "details", label: "Details", iconName: "file-text", href: "#details" },
-          { id: "items", label: "Items", iconName: "receipt-text", href: "#items" },
+          {
+            id: "details",
+            label: "Details",
+            iconName: "file-text",
+            href: "#details"
+          },
+          {
+            id: "items",
+            label: "Items",
+            iconName: "receipt-text",
+            href: "#items"
+          },
           {
             id: "billing-notes-terms",
             label: "Billing Notes / Terms",
             iconName: "scroll-text",
             href: "#billing-notes-terms"
           },
-          { id: "files", label: "Files", iconName: "folder-open", href: "#files" },
+          {
+            id: "files",
+            label: "Files",
+            iconName: "folder-open",
+            href: "#files"
+          },
           {
             id: "payments",
             label: "Payments",
             iconName: "circle-dollar-sign",
             href: "#payments"
           },
-          { id: "notes", label: "Notes", iconName: "notebook-pen", href: "#notes" },
-          { id: "review-send", label: "Review / Send", iconName: "send", href: "#review-send" }
+          {
+            id: "notes",
+            label: "Notes",
+            iconName: "notebook-pen",
+            href: "#notes"
+          },
+          {
+            id: "review-send",
+            label: "Review / Send",
+            iconName: "send",
+            href: "#review-send"
+          }
         ]}
       >
         <InvoiceForm

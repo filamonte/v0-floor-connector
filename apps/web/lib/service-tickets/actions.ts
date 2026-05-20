@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import {
+  createServiceJobFromTicket,
   createServiceTicket,
   updateServiceTicket,
   updateServiceTicketStatus
@@ -87,6 +88,22 @@ function revalidateServiceTicketRoutes(input: {
   if (input.jobId) {
     revalidatePath(`/jobs/${input.jobId}`);
   }
+}
+
+function revalidateCreatedServiceJobRoutes(input: {
+  ticketId: string;
+  customerId: string;
+  projectId: string;
+  jobId: string;
+}) {
+  revalidateServiceTicketRoutes({
+    ticketId: input.ticketId,
+    customerId: input.customerId,
+    projectId: input.projectId,
+    jobId: input.jobId
+  });
+  revalidatePath("/jobs");
+  revalidatePath("/schedule");
 }
 
 export async function createServiceTicketAction(formData: FormData) {
@@ -229,6 +246,47 @@ export async function updateServiceTicketStatusAction(formData: FormData) {
   redirect(
     buildRedirect(`/service-tickets/${ticket.id}`, {
       message: `Service/warranty ticket moved to ${ticket.status.replaceAll("_", " ")}.`
+    })
+  );
+}
+
+export async function createServiceJobFromTicketAction(formData: FormData) {
+  const ticketId = getFieldValue(formData, "ticketId");
+
+  if (!ticketId) {
+    redirect(
+      buildRedirect("/service-tickets", {
+        error: "Service ticket id is required."
+      })
+    );
+  }
+
+  let job;
+
+  try {
+    job = await createServiceJobFromTicket(ticketId);
+  } catch (error) {
+    redirect(
+      buildRedirect(`/service-tickets/${ticketId}`, {
+        error:
+          error instanceof Error
+            ? error.message
+            : "Unable to create service job."
+      })
+    );
+  }
+
+  revalidateCreatedServiceJobRoutes({
+    ticketId: job.serviceTicketId,
+    customerId: job.customerId,
+    projectId: job.projectId,
+    jobId: job.id
+  });
+
+  redirect(
+    buildRedirect(`/service-tickets/${job.serviceTicketId}`, {
+      message:
+        "Service job was created. Schedule and crew assignment stay on the canonical job record."
     })
   );
 }

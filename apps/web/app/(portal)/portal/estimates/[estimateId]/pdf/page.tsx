@@ -19,7 +19,9 @@ type PortalEstimatePdfPageProps = {
   }>;
 };
 
-export default async function PortalEstimatePdfPage({ params }: PortalEstimatePdfPageProps) {
+export default async function PortalEstimatePdfPage({
+  params
+}: PortalEstimatePdfPageProps) {
   const { estimateId } = await params;
   const estimate = await getPortalEstimateReviewData(
     estimateId,
@@ -41,11 +43,20 @@ export default async function PortalEstimatePdfPage({ params }: PortalEstimatePd
       backHref={`/portal/estimates/${estimate.id}`}
       backLabel="Back to estimate"
       facts={[
-        { label: "Customer", value: estimate.customer?.name ?? "Unknown customer" },
-        { label: "Project", value: estimate.project?.name ?? "Unknown project" },
+        {
+          label: "Customer",
+          value: estimate.customer?.name ?? "Unknown customer"
+        },
+        {
+          label: "Project",
+          value: estimate.project?.name ?? "Unknown project"
+        },
         { label: "Shared", value: formatDocumentDate(estimate.sentAt) },
         { label: "Approved", value: formatDocumentDate(estimate.approvedAt) },
-        { label: "Subtotal", value: formatDocumentMoney(estimate.subtotalAmount) },
+        {
+          label: "Subtotal",
+          value: formatDocumentMoney(estimate.subtotalAmount)
+        },
         { label: "Total", value: formatDocumentMoney(estimate.totalAmount) }
       ]}
     >

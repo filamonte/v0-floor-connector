@@ -10,6 +10,7 @@ import {
 } from "@/components/action-hierarchy";
 import { DetailPageHeader } from "@/components/detail-page-header";
 import { DetailPanel } from "@/components/detail-panel";
+import { DocumentDeliveryHistoryPanel } from "@/components/document-delivery-history-panel";
 import { EstimateStatusActions } from "@/components/estimate-status-actions";
 import { EstimateApprovalNextStepsPanel } from "@/components/estimates/approval-next-steps-panel";
 import { EstimateCustomerTimeline } from "@/components/estimates/estimate-customer-timeline";
@@ -32,6 +33,7 @@ import { requireAuthenticatedUser } from "@/lib/auth/session";
 import { listCommunicationThreadsForSubject } from "@/lib/communications/data";
 import { quickCreateContractFromEstimateAction } from "@/lib/contracts/actions";
 import { listContracts } from "@/lib/contracts/data";
+import { getDocumentDeliveryState } from "@/lib/document-delivery/data";
 import {
   openOrCreateScheduleOfValuesAction,
   rebuildApprovedEstimateSnapshotAction,
@@ -52,7 +54,10 @@ import { getActiveOrganizationContext } from "@/lib/organizations/active-context
 import { isOrganizationActivatedForProductionAction } from "@/lib/organizations/activation-guard";
 import { listPeople } from "@/lib/people/data";
 import { getProjectFinancialReadinessSnapshot } from "@/lib/projects/readiness";
-import { ensureInitialRecordRevision, listRecordRevisions } from "@/lib/revisions/data";
+import {
+  ensureInitialRecordRevision,
+  listRecordRevisions
+} from "@/lib/revisions/data";
 import { buildEstimateRevisionSnapshot } from "@/lib/revisions/snapshots";
 import { buildScheduleHref } from "@/lib/schedule/links";
 import {
@@ -77,7 +82,10 @@ import {
   WorkflowBar,
   getStatusBadgeClassName
 } from "@floorconnector/ui";
-import type { ProjectStateSummaryProps, WorkflowStep } from "@floorconnector/ui";
+import type {
+  ProjectStateSummaryProps,
+  WorkflowStep
+} from "@floorconnector/ui";
 
 function formatStatusLabel(status: string) {
   return status.replaceAll("_", " ");
@@ -100,7 +108,12 @@ function formatUnitLabel(unit: string) {
   const normalized = unit.trim();
   const lower = normalized.toLowerCase();
 
-  if (lower === "sqft" || lower === "sf" || lower === "square foot" || lower === "square feet") {
+  if (
+    lower === "sqft" ||
+    lower === "sf" ||
+    lower === "square foot" ||
+    lower === "square feet"
+  ) {
     return "sqft";
   }
 
@@ -134,7 +147,8 @@ function getEstimateNextAction(input: {
   if (input.estimateStatus === "draft") {
     return {
       title: "Review and send estimate",
-      description: "Finish the proposal review, then use the existing send or manual decision actions when the customer is ready to respond.",
+      description:
+        "Finish the proposal review, then use the existing send or manual decision actions when the customer is ready to respond.",
       href: `/estimates/${input.estimateId}/edit`,
       label: "Back to edit"
     };
@@ -143,7 +157,8 @@ function getEstimateNextAction(input: {
   if (input.estimateStatus === "sent") {
     return {
       title: "Record customer decision",
-      description: "Use the manual decision actions only when the customer approved or rejected outside the portal, such as paper signature, verbal approval, fake email during testing, or a non-portal customer.",
+      description:
+        "Use the manual decision actions only when the customer approved or rejected outside the portal, such as paper signature, verbal approval, fake email during testing, or a non-portal customer.",
       href: `/estimates/${input.estimateId}#estimate-decision-actions`,
       label: "Review decision actions"
     };
@@ -152,7 +167,8 @@ function getEstimateNextAction(input: {
   if (input.estimateStatus === "rejected") {
     return {
       title: "Revise or resend estimate",
-      description: "Review the rejected proposal, update the scope or pricing if needed, then resend through the existing estimate workflow.",
+      description:
+        "Review the rejected proposal, update the scope or pricing if needed, then resend through the existing estimate workflow.",
       href: `/estimates/${input.estimateId}/edit`,
       label: "Revise estimate"
     };
@@ -161,16 +177,21 @@ function getEstimateNextAction(input: {
   if (!input.contractId) {
     return {
       title: "Generate the contract",
-      description: "Approved scope is ready to move into the canonical contract workflow.",
+      description:
+        "Approved scope is ready to move into the canonical contract workflow.",
       href: `/contracts?estimateId=${input.estimateId}`,
       label: "Generate contract"
     };
   }
 
-  if (input.readinessStatus === "waiting_on_deposit" && input.depositInvoiceId) {
+  if (
+    input.readinessStatus === "waiting_on_deposit" &&
+    input.depositInvoiceId
+  ) {
     return {
       title: "Collect the deposit",
-      description: "A deposit request exists and the project hub is tracking it as the active blocker.",
+      description:
+        "A deposit request exists and the project hub is tracking it as the active blocker.",
       href: `/invoices/${input.depositInvoiceId}`,
       label: "Review deposit invoice"
     };
@@ -178,7 +199,8 @@ function getEstimateNextAction(input: {
 
   return {
     title: "Use the project readiness hub",
-    description: "The project page is now the authoritative place to clear contract, signature, and financial blockers in order.",
+    description:
+      "The project page is now the authoritative place to clear contract, signature, and financial blockers in order.",
     href: `/projects/${input.projectId}`,
     label: "Open project workspace"
   };
@@ -201,7 +223,13 @@ function getEstimateMeaning(status: string) {
 }
 
 function hasHtmlContent(value: string | null | undefined) {
-  return Boolean(value && value.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim().length > 0);
+  return Boolean(
+    value &&
+    value
+      .replace(/<[^>]+>/g, " ")
+      .replace(/\s+/g, " ")
+      .trim().length > 0
+  );
 }
 
 function renderHtmlContent(value: string | null | undefined) {
@@ -233,7 +261,10 @@ function buildGroupedLineItems(
     if (lineItem.groupName) {
       const normalizedGroupName = lineItem.groupName.trim().toLowerCase();
 
-      if (normalizedGroupName.length > 0 && !groupMap.has(normalizedGroupName)) {
+      if (
+        normalizedGroupName.length > 0 &&
+        !groupMap.has(normalizedGroupName)
+      ) {
         const nextGroup = {
           id: `group-${groups.length + 1}`,
           label: lineItem.groupName,
@@ -279,27 +310,40 @@ export default async function EstimateDetailPage({
   const { estimateId } = await params;
   const resolvedSearchParams = (await searchParams) ?? {};
   const user = await requireAuthenticatedUser(`/estimates/${estimateId}`);
-  const [estimate, organizationContext, contracts, jobs, invoices, customerEvents, communicationThreads] =
-    await Promise.all([
-      getEstimateById(estimateId, `/estimates/${estimateId}`),
-      getActiveOrganizationContext(user.id),
-      listContracts(),
-      listJobs(),
-      listInvoices(),
-      listEstimateCustomerEvents(estimateId, `/estimates/${estimateId}`),
-      listCommunicationThreadsForSubject("estimate", estimateId)
-    ]);
+  const [
+    estimate,
+    organizationContext,
+    contracts,
+    jobs,
+    invoices,
+    customerEvents,
+    communicationThreads
+  ] = await Promise.all([
+    getEstimateById(estimateId, `/estimates/${estimateId}`),
+    getActiveOrganizationContext(user.id),
+    listContracts(),
+    listJobs(),
+    listInvoices(),
+    listEstimateCustomerEvents(estimateId, `/estimates/${estimateId}`),
+    listCommunicationThreadsForSubject("estimate", estimateId)
+  ]);
 
   if (!estimate) {
     notFound();
   }
+
+  const deliveryState = await getDocumentDeliveryState({
+    subjectType: "estimate",
+    subjectId: estimate.id
+  });
 
   await ensureInitialRecordRevision({
     organizationId: estimate.organizationId,
     subjectType: "estimate",
     subjectId: estimate.id,
     revisionKind: "system_snapshot",
-    revisionReason: "Initial revision captured from the existing canonical estimate.",
+    revisionReason:
+      "Initial revision captured from the existing canonical estimate.",
     snapshot: buildEstimateRevisionSnapshot(estimate),
     createdByUserId: user.id
   });
@@ -324,27 +368,44 @@ export default async function EstimateDetailPage({
         lifecycleState: organizationContext.organization.lifecycleState
       })
     : false;
-  const estimateContracts = contracts.filter((contract) => contract.estimateId === estimate.id);
+  const estimateContracts = contracts.filter(
+    (contract) => contract.estimateId === estimate.id
+  );
   const estimateJobs = jobs.filter((job) => job.estimateId === estimate.id);
-  const estimateInvoices = invoices.filter((invoice) => invoice.estimateId === estimate.id);
-  const projectJobs = jobs.filter((job) => job.projectId === estimate.projectId);
+  const estimateInvoices = invoices.filter(
+    (invoice) => invoice.estimateId === estimate.id
+  );
+  const projectJobs = jobs.filter(
+    (job) => job.projectId === estimate.projectId
+  );
   const projectJobAssignments = await listJobAssignmentsByJobIds(
     projectJobs.map((job) => job.id),
     `/estimates/${estimate.id}`
   );
-  const scheduledProjectJobs = projectJobs.filter((job) => job.dispatchStatus === "scheduled");
-  const unscheduledProjectJobs = projectJobs.filter((job) => job.dispatchStatus === "unscheduled");
-  const inProgressProjectJobs = projectJobs.filter((job) => job.dispatchStatus === "in_progress");
+  const scheduledProjectJobs = projectJobs.filter(
+    (job) => job.dispatchStatus === "scheduled"
+  );
+  const unscheduledProjectJobs = projectJobs.filter(
+    (job) => job.dispatchStatus === "unscheduled"
+  );
+  const inProgressProjectJobs = projectJobs.filter(
+    (job) => job.dispatchStatus === "in_progress"
+  );
   const nextScheduledProjectJob =
     [...scheduledProjectJobs]
       .filter((job) => job.scheduledDate)
-      .sort((left, right) => getScheduleSummarySortValue(left) - getScheduleSummarySortValue(right))[0] ??
-    null;
+      .sort(
+        (left, right) =>
+          getScheduleSummarySortValue(left) - getScheduleSummarySortValue(right)
+      )[0] ?? null;
   const nextScheduledProjectAssignments = nextScheduledProjectJob
-    ? projectJobAssignments.get(nextScheduledProjectJob.id) ?? []
+    ? (projectJobAssignments.get(nextScheduledProjectJob.id) ?? [])
     : [];
   const nextScheduledProjectAssignmentNames = nextScheduledProjectAssignments
-    .map((assignment) => assignment.person?.displayName ?? assignment.vendor?.name ?? null)
+    .map(
+      (assignment) =>
+        assignment.person?.displayName ?? assignment.vendor?.name ?? null
+    )
     .filter((value): value is string => Boolean(value));
   const nextScheduledProjectCrewSummary = nextScheduledProjectJob
     ? getScheduleAssignmentSummary({
@@ -404,7 +465,8 @@ export default async function EstimateDetailPage({
     estimateStatus: estimate.status,
     projectId: estimate.projectId,
     estimateId: estimate.id,
-    contractId: readinessSnapshot?.contractId ?? estimateContracts[0]?.id ?? null,
+    contractId:
+      readinessSnapshot?.contractId ?? estimateContracts[0]?.id ?? null,
     readinessStatus: readinessSnapshot?.status ?? null,
     depositInvoiceId: readinessSnapshot?.depositInvoiceId ?? null
   });
@@ -430,10 +492,14 @@ export default async function EstimateDetailPage({
         estimate.project.countryCode
       ])
     : null;
-  const readinessStatusLabel = formatReadinessLabel(readinessSnapshot?.status ?? null);
+  const readinessStatusLabel = formatReadinessLabel(
+    readinessSnapshot?.status ?? null
+  );
   const readinessBlockersLabel =
     readinessSnapshot && readinessSnapshot.blockers.length > 0
-      ? readinessSnapshot.blockers.map((blocker) => blocker.replaceAll("_", " ")).join(", ")
+      ? readinessSnapshot.blockers
+          .map((blocker) => blocker.replaceAll("_", " "))
+          .join(", ")
       : "No active project-level commercial blockers recorded.";
   const estimateMeaning = getEstimateMeaning(estimate.status);
   const lineItemCount = estimate.lineItems.length;
@@ -452,7 +518,9 @@ export default async function EstimateDetailPage({
           }
         : null;
   const hasSignedContract = primaryContract?.status === "signed";
-  const completedEstimateJobs = estimateJobs.filter((job) => job.dispatchStatus === "completed");
+  const completedEstimateJobs = estimateJobs.filter(
+    (job) => job.dispatchStatus === "completed"
+  );
   const actionBarStatusTone =
     estimate.status === "approved"
       ? "success"
@@ -461,14 +529,13 @@ export default async function EstimateDetailPage({
         : estimate.status === "sent"
           ? "warning"
           : "neutral";
-  const contractStepState =
-    primaryContract
-      ? hasSignedContract
-        ? "complete"
-        : "current"
-      : estimate.status === "approved"
-        ? "current"
-        : "upcoming";
+  const contractStepState = primaryContract
+    ? hasSignedContract
+      ? "complete"
+      : "current"
+    : estimate.status === "approved"
+      ? "current"
+      : "upcoming";
   const jobStepState =
     estimateJobs.length > 0
       ? completedEstimateJobs.length > 0
@@ -501,7 +568,9 @@ export default async function EstimateDetailPage({
       id: "contract",
       label: "Contract",
       state: contractStepState,
-      description: primaryContract ? formatStatusLabel(primaryContract.status) : "After approval"
+      description: primaryContract
+        ? formatStatusLabel(primaryContract.status)
+        : "After approval"
     },
     {
       id: "job",
@@ -545,7 +614,10 @@ export default async function EstimateDetailPage({
       label: "Line Items",
       value: `${lineItemCount} item${lineItemCount === 1 ? "" : "s"}`,
       tone: lineItemCount > 0 ? "active" : "needsAction",
-      detail: lineItemCount > 0 ? "Readonly proposal review below" : "Add items from the editor"
+      detail:
+        lineItemCount > 0
+          ? "Readonly proposal review below"
+          : "Add items from the editor"
     },
     {
       id: "readiness",
@@ -594,11 +666,17 @@ export default async function EstimateDetailPage({
             primaryAction={
               estimatePrimaryAction ? (
                 estimatePrimaryAction.href.startsWith("#") ? (
-                  <a href={estimatePrimaryAction.href} className={primaryActionClassName}>
+                  <a
+                    href={estimatePrimaryAction.href}
+                    className={primaryActionClassName}
+                  >
                     {estimatePrimaryAction.label}
                   </a>
                 ) : (
-                  <Link href={estimatePrimaryAction.href} className={primaryActionClassName}>
+                  <Link
+                    href={estimatePrimaryAction.href}
+                    className={primaryActionClassName}
+                  >
                     {estimatePrimaryAction.label}
                   </Link>
                 )
@@ -619,11 +697,17 @@ export default async function EstimateDetailPage({
                   Edit
                 </Link>
                 <ActionOverflowMenu>
-                  <Link href={`/projects/${estimate.projectId}`} className={overflowActionClassName}>
+                  <Link
+                    href={`/projects/${estimate.projectId}`}
+                    className={overflowActionClassName}
+                  >
                     View Project
                   </Link>
                   {estimate.customer ? (
-                    <Link href={`/customers/${estimate.customer.id}`} className={overflowActionClassName}>
+                    <Link
+                      href={`/customers/${estimate.customer.id}`}
+                      className={overflowActionClassName}
+                    >
                       View Customer
                     </Link>
                   ) : null}
@@ -632,15 +716,18 @@ export default async function EstimateDetailPage({
             }
             meta={
               <span>
-                Estimate #{estimate.referenceNumber} | {estimate.customer?.name ?? "Unknown customer"}
+                Estimate #{estimate.referenceNumber} |{" "}
+                {estimate.customer?.name ?? "Unknown customer"}
               </span>
             }
           />
 
           <WorkflowBar title="Estimate workflow" steps={workflowSteps} />
 
-          <ProjectStateSummary title="Estimate state summary" items={estimateStateItems} />
-
+          <ProjectStateSummary
+            title="Estimate state summary"
+            items={estimateStateItems}
+          />
         </div>
 
         {estimate.status === "approved" && approvalOrchestration ? (
@@ -670,8 +757,8 @@ export default async function EstimateDetailPage({
                 {estimate.title ?? estimate.referenceNumber}
               </h2>
               <p className="mt-3 max-w-3xl text-sm leading-6 text-[var(--text-secondary)]">
-                Review the proposal scope, pricing, customer context, and downstream handoff from
-                one canonical estimate record.
+                Review the proposal scope, pricing, customer context, and
+                downstream handoff from one canonical estimate record.
               </p>
             </div>
 
@@ -704,7 +791,10 @@ export default async function EstimateDetailPage({
 
             {projectAddress ? (
               <p className="text-sm leading-6 text-[var(--text-secondary)]">
-                Service location: <span className="font-medium text-[var(--text-primary)]">{projectAddress}</span>
+                Service location:{" "}
+                <span className="font-medium text-[var(--text-primary)]">
+                  {projectAddress}
+                </span>
               </p>
             ) : null}
           </div>
@@ -719,7 +809,9 @@ export default async function EstimateDetailPage({
             <dl className="mt-4 grid gap-3 text-sm text-[var(--text-secondary)]">
               <div className="flex items-center justify-between gap-4 border-t border-[var(--border-warm)] pt-3">
                 <dt>Estimate reference</dt>
-                <dd className="font-medium text-[var(--text-primary)]">#{estimate.referenceNumber}</dd>
+                <dd className="font-medium text-[var(--text-primary)]">
+                  #{estimate.referenceNumber}
+                </dd>
               </div>
               <div className="flex items-center justify-between gap-4 border-t border-[var(--border-warm)] pt-3">
                 <dt>Subtotal</dt>
@@ -730,7 +822,8 @@ export default async function EstimateDetailPage({
               <div className="flex items-center justify-between gap-4 border-t border-[var(--border-warm)] pt-3">
                 <dt>Tax / discount</dt>
                 <dd className="font-medium text-[var(--text-primary)]">
-                  {formatMoney(estimate.taxAmount)} / {formatMoney(estimate.discountAmount)}
+                  {formatMoney(estimate.taxAmount)} /{" "}
+                  {formatMoney(estimate.discountAmount)}
                 </dd>
               </div>
             </dl>
@@ -743,7 +836,8 @@ export default async function EstimateDetailPage({
               Prepared by
             </p>
             <h2 className="mt-3 text-2xl font-semibold text-[var(--text-primary)]">
-              {organizationContext?.organization.displayName ?? "FloorConnector"}
+              {organizationContext?.organization.displayName ??
+                "FloorConnector"}
             </h2>
             <p className="mt-2 text-sm leading-6 text-[var(--text-secondary)]">
               {organizationContext?.organization.legalName ??
@@ -760,7 +854,10 @@ export default async function EstimateDetailPage({
                 {formatStatusLabel(estimate.status)}
               </p>
               <p>Estimate #{estimate.referenceNumber}</p>
-              <p>{lineItemCount} line item{lineItemCount === 1 ? "" : "s"} in the current proposal.</p>
+              <p>
+                {lineItemCount} line item{lineItemCount === 1 ? "" : "s"} in the
+                current proposal.
+              </p>
             </div>
           </section>
         </div>
@@ -770,18 +867,23 @@ export default async function EstimateDetailPage({
             Scope
           </p>
           <p className="mt-3 max-w-3xl text-sm leading-6 text-[var(--text-secondary)]">
-            Review the proposal pricing, grouped scope, quantities, and totals here first. Workflow
-            guidance stays above while lower sections carry customer, project, notes, and activity context.
+            Review the proposal pricing, grouped scope, quantities, and totals
+            here first. Workflow guidance stays above while lower sections carry
+            customer, project, notes, and activity context.
           </p>
           <div className="mt-6 space-y-6">
             {buildGroupedLineItems(estimate).map((group) => (
-              <div key={group.id ?? "ungrouped"} className="rounded-3xl border border-[var(--border-warm)] bg-[var(--highlight)] p-4">
+              <div
+                key={group.id ?? "ungrouped"}
+                className="rounded-3xl border border-[var(--border-warm)] bg-[var(--highlight)] p-4"
+              >
                 <div className="mb-4 flex items-center justify-between gap-4">
                   <p className="text-sm font-semibold uppercase tracking-[0.24em] text-[var(--text-secondary)]">
                     {group.label}
                   </p>
                   <p className="text-sm font-medium text-[var(--text-primary)]">
-                    {group.items.length} item{group.items.length === 1 ? "" : "s"}
+                    {group.items.length} item
+                    {group.items.length === 1 ? "" : "s"}
                   </p>
                 </div>
                 <div className="overflow-x-auto">
@@ -797,9 +899,14 @@ export default async function EstimateDetailPage({
                     </thead>
                     <tbody>
                       {group.items.map((lineItem) => (
-                        <tr key={lineItem.id} className="align-top text-sm leading-6 text-[var(--text-primary)]">
+                        <tr
+                          key={lineItem.id}
+                          className="align-top text-sm leading-6 text-[var(--text-primary)]"
+                        >
                           <td className="rounded-l-2xl border-y border-l border-[var(--border-warm)] bg-white px-4 py-4">
-                            <p className="font-medium text-[var(--text-primary)]">{lineItem.name}</p>
+                            <p className="font-medium text-[var(--text-primary)]">
+                              {lineItem.name}
+                            </p>
                             {lineItem.description ? (
                               <p className="mt-1 text-sm leading-6 text-[var(--text-secondary)]">
                                 {lineItem.description}
@@ -837,9 +944,15 @@ export default async function EstimateDetailPage({
               <p className="text-lg font-semibold text-[var(--text-primary)]">
                 {estimate.customer?.name ?? "Unknown customer"}
               </p>
-              {estimate.customer?.companyName ? <p>{estimate.customer.companyName}</p> : null}
-              {estimate.customer?.email ? <p>{estimate.customer.email}</p> : null}
-              {estimate.customer?.phone ? <p>{estimate.customer.phone}</p> : null}
+              {estimate.customer?.companyName ? (
+                <p>{estimate.customer.companyName}</p>
+              ) : null}
+              {estimate.customer?.email ? (
+                <p>{estimate.customer.email}</p>
+              ) : null}
+              {estimate.customer?.phone ? (
+                <p>{estimate.customer.phone}</p>
+              ) : null}
               {customerAddress ? <p>{customerAddress}</p> : null}
             </div>
           </section>
@@ -857,7 +970,9 @@ export default async function EstimateDetailPage({
                   Current status: {formatStatusLabel(estimate.project.status)}
                 </p>
               ) : null}
-              {estimate.project?.description ? <p>{estimate.project.description}</p> : null}
+              {estimate.project?.description ? (
+                <p>{estimate.project.description}</p>
+              ) : null}
               <div className="rounded-2xl border border-[var(--border-warm)] bg-[var(--highlight)]/70 px-4 py-3">
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
                   Service location
@@ -865,13 +980,17 @@ export default async function EstimateDetailPage({
                 {projectAddress ? (
                   <dl className="mt-3 grid gap-2 text-sm sm:grid-cols-2">
                     <div>
-                      <dt className="text-[var(--text-secondary)]">Address line 1</dt>
+                      <dt className="text-[var(--text-secondary)]">
+                        Address line 1
+                      </dt>
                       <dd className="font-medium text-[var(--text-primary)]">
                         {estimate.project?.addressLine1 ?? "Not provided"}
                       </dd>
                     </div>
                     <div>
-                      <dt className="text-[var(--text-secondary)]">Address line 2</dt>
+                      <dt className="text-[var(--text-secondary)]">
+                        Address line 2
+                      </dt>
                       <dd className="font-medium text-[var(--text-primary)]">
                         {estimate.project?.addressLine2 ?? "Not provided"}
                       </dd>
@@ -883,9 +1002,14 @@ export default async function EstimateDetailPage({
                       </dd>
                     </div>
                     <div>
-                      <dt className="text-[var(--text-secondary)]">State / Postal</dt>
+                      <dt className="text-[var(--text-secondary)]">
+                        State / Postal
+                      </dt>
                       <dd className="font-medium text-[var(--text-primary)]">
-                        {[estimate.project?.stateRegion, estimate.project?.postalCode]
+                        {[
+                          estimate.project?.stateRegion,
+                          estimate.project?.postalCode
+                        ]
                           .filter(Boolean)
                           .join(" ") || "Not provided"}
                       </dd>
@@ -897,7 +1021,8 @@ export default async function EstimateDetailPage({
                   </p>
                 )}
                 <p className="mt-3 text-xs leading-5 text-[var(--text-secondary)]">
-                  This jobsite address is separate from the customer contact or billing address.
+                  This jobsite address is separate from the customer contact or
+                  billing address.
                 </p>
               </div>
             </div>
@@ -914,11 +1039,14 @@ export default async function EstimateDetailPage({
                 </p>
                 <div className="mt-3 space-y-4 rounded-2xl border border-[var(--border-warm)] bg-[var(--highlight)]/70 px-5 py-4 text-sm leading-7 text-[var(--text-primary)]">
                   {renderHtmlContent(estimate.content.scopeSummaryHtml)}
-                  {getIncludedEstimateScopeItems(estimate.content).length > 0 ? (
+                  {getIncludedEstimateScopeItems(estimate.content).length >
+                  0 ? (
                     <ul className="space-y-2 pl-5">
-                      {getIncludedEstimateScopeItems(estimate.content).map((item) => (
-                        <li key={item.id}>{item.text}</li>
-                      ))}
+                      {getIncludedEstimateScopeItems(estimate.content).map(
+                        (item) => (
+                          <li key={item.id}>{item.text}</li>
+                        )
+                      )}
                     </ul>
                   ) : null}
                 </div>
@@ -975,7 +1103,8 @@ export default async function EstimateDetailPage({
                   Reusable estimate content
                 </p>
                 <div className="mt-3 rounded-2xl border border-dashed border-[var(--border-warm)] bg-[var(--highlight)] px-5 py-4 text-sm leading-6 text-[var(--text-secondary)]">
-                  No reusable terms, inclusions, or exclusions are filled on this estimate yet.
+                  No reusable terms, inclusions, or exclusions are filled on
+                  this estimate yet.
                 </div>
               </section>
             ) : null}
@@ -1009,9 +1138,10 @@ export default async function EstimateDetailPage({
                           Send prerequisites
                         </p>
                         <p className="mt-2">
-                          This estimate can be sent only after the customer email/contact has
-                          authenticated portal access with active visibility to this project.
-                          Manage contact identity, invite state, and project visibility from
+                          This estimate can be sent only after the customer
+                          email/contact has authenticated portal access with
+                          active visibility to this project. Manage contact
+                          identity, invite state, and project visibility from
                           People; this estimate action only triggers the send.
                         </p>
                         {estimate.customer ? (
@@ -1028,19 +1158,27 @@ export default async function EstimateDetailPage({
                         action={sendEstimateToCustomerAction}
                         className="space-y-4"
                       >
-                        <input type="hidden" name="estimateId" value={estimate.id} />
+                        <input
+                          type="hidden"
+                          name="estimateId"
+                          value={estimate.id}
+                        />
                         {sendContactOptions.length > 0 ? (
                           <SendToContactSelect
                             name="portalUserId"
                             defaultValue={
                               sendContactOptions.length === 1
                                 ? sendContactOptions[0]?.portalUserId
-                                : sendContactOptions.find((option) => option.isPrimaryContact)
-                                    ?.portalUserId
+                                : sendContactOptions.find(
+                                    (option) => option.isPrimaryContact
+                                  )?.portalUserId
                             }
                             options={sendContactOptions.map((option) => ({
                               value: option.portalUserId,
-                              label: option.contactDisplayName ?? option.fullName ?? option.email,
+                              label:
+                                option.contactDisplayName ??
+                                option.fullName ??
+                                option.email,
                               email: option.contactEmail ?? option.email,
                               isPrimary: option.isPrimaryContact
                             }))}
@@ -1048,41 +1186,51 @@ export default async function EstimateDetailPage({
                           />
                         ) : (
                           <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-900">
-                            No portal-ready contact is available for this project. Manage the
-                            contact and project access from People before sending.
+                            No portal-ready contact is available for this
+                            project. Manage the contact and project access from
+                            People before sending.
                           </div>
                         )}
                         {isProductionActionLocked ? (
                           <EarlyAccessLockNotice />
                         ) : null}
+                        {isProductionActionLocked ? (
+                          <p className="rounded-[8px] border border-[var(--border-warm)] bg-[var(--highlight)] px-4 py-3 text-sm leading-6 text-[var(--text-secondary)]">
+                            Submitting while locked records failed delivery
+                            evidence only. It will not email the customer or
+                            mark the estimate sent.
+                          </p>
+                        ) : null}
                         <button
                           type="submit"
-                          disabled={
-                            isProductionActionLocked || sendContactOptions.length === 0
-                          }
+                          disabled={sendContactOptions.length === 0}
                           className="inline-flex items-center rounded-full bg-[var(--copper)] px-4 py-2 text-sm font-medium text-white transition hover:bg-[var(--copper-light)] disabled:cursor-not-allowed disabled:bg-[var(--highlight)] disabled:text-[var(--text-secondary)]"
                         >
-                          Send estimate
+                          Send review link
                         </button>
                       </form>
                     </div>
                   ) : (
                     <div className="rounded-[1.5rem] border border-amber-200 bg-amber-50 px-4 py-4 text-sm leading-6 text-amber-900">
                       <p className="font-medium text-amber-950">
-                        Customer email is missing on the canonical customer record.
+                        Customer email is missing on the canonical customer
+                        record.
                       </p>
                       <p className="mt-2">
-                        Estimate send uses the shared estimate -&gt; customer chain and an active
-                        portal contact. People is the management surface for contact identity,
-                        portal invite state, and project visibility.
+                        Estimate send uses the shared estimate -&gt; customer
+                        chain and an active portal contact. People is the
+                        management surface for contact identity, portal invite
+                        state, and project visibility.
                       </p>
                       <p className="mt-2">
-                        Add the direct email on the customer first, or review the linked lead if
-                        the contact handoff into the customer record looks incomplete.
+                        Add the direct email on the customer first, or review
+                        the linked lead if the contact handoff into the customer
+                        record looks incomplete.
                       </p>
                       <p className="mt-2">
-                        After the email is saved, confirm the same customer also has an active
-                        portal access grant with visibility to this project before retrying send.
+                        After the email is saved, confirm the same customer also
+                        has an active portal access grant with visibility to
+                        this project before retrying send.
                       </p>
                       <div className="mt-4 flex flex-wrap gap-3">
                         {estimate.customer ? (
@@ -1106,7 +1254,10 @@ export default async function EstimateDetailPage({
                   )}
                 </div>
               ) : null}
-              <EstimateStatusActions estimateId={estimate.id} currentStatus={estimate.status} />
+              <EstimateStatusActions
+                estimateId={estimate.id}
+                currentStatus={estimate.status}
+              />
               {estimate.status !== "approved" ? (
                 <p className="mt-4 text-sm leading-6 text-[var(--text-secondary)]">
                   {estimate.status === "sent"
@@ -1115,8 +1266,9 @@ export default async function EstimateDetailPage({
                 </p>
               ) : (
                 <p className="mt-4 text-sm leading-6 text-[var(--text-secondary)]">
-                  Approved estimates should now move through the project readiness hub for contract,
-                  signature, and financial handoff before downstream jobs or standard invoices.
+                  Approved estimates should now move through the project
+                  readiness hub for contract, signature, and financial handoff
+                  before downstream jobs or standard invoices.
                 </p>
               )}
             </DetailPanel>
@@ -1127,6 +1279,13 @@ export default async function EstimateDetailPage({
             >
               <EstimateCustomerTimeline events={customerEvents} />
             </DetailPanel>
+
+            <DocumentDeliveryHistoryPanel
+              subjectType="estimate"
+              subjectId={estimate.id}
+              events={deliveryState.events}
+              boundaryCopy="Manual entries record evidence only. The Send review link action writes send_requested plus sent or failed provider evidence; provider email delivery never approves the estimate, creates contracts or invoices, or mutates payment state."
+            />
 
             <section
               id="work-items"
@@ -1141,14 +1300,21 @@ export default async function EstimateDetailPage({
                     Team work tied to this estimate
                   </h3>
                   <p className="mt-1 max-w-[68ch] text-sm leading-6 text-slate-600">
-                    Create a work item when this estimate needs team follow-up. Cue prefill is
-                    only a draft; nothing is created until you submit.
+                    Create a work item when this estimate needs team follow-up.
+                    Cue prefill is only a draft; nothing is created until you
+                    submit.
                   </p>
                 </div>
                 <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-600 md:w-56">
-                  <p className="font-semibold text-slate-950">Open linked items</p>
+                  <p className="font-semibold text-slate-950">
+                    Open linked items
+                  </p>
                   <p className="mt-1 text-2xl font-semibold tracking-tight text-slate-950">
-                    {linkedWorkItems.filter((workItem) => workItem.status === "open").length}
+                    {
+                      linkedWorkItems.filter(
+                        (workItem) => workItem.status === "open"
+                      ).length
+                    }
                   </p>
                 </div>
               </div>
@@ -1161,8 +1327,8 @@ export default async function EstimateDetailPage({
                         Create internal work item
                       </p>
                       <p className="mt-2 text-sm leading-6 text-slate-600">
-                        Internal follow-through is available when needed, but proposal review
-                        stays primary on this estimate.
+                        Internal follow-through is available when needed, but
+                        proposal review stays primary on this estimate.
                       </p>
                     </div>
                     <span className="inline-flex rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-slate-600">
@@ -1183,15 +1349,22 @@ export default async function EstimateDetailPage({
                       linkPath={defaultEstimateWorkItemSource.linkPath}
                       customerId={estimate.customerId}
                       projectId={estimate.projectId}
-                      defaultKind={estimateWorkItemPrefill?.kind ?? "estimate_follow_up"}
+                      defaultKind={
+                        estimateWorkItemPrefill?.kind ?? "estimate_follow_up"
+                      }
                       defaultTitle={estimateWorkItemPrefill?.title}
                       defaultDescription={estimateWorkItemPrefill?.description}
                       defaultDueAt={estimateWorkItemPrefill?.dueAt}
-                      defaultPriority={estimateWorkItemPrefill?.priority ?? "normal"}
+                      defaultPriority={
+                        estimateWorkItemPrefill?.priority ?? "normal"
+                      }
                       dedupeKey={estimateWorkItemPrefill?.dedupeKey}
                       metadata={estimateWorkItemPrefill?.metadata}
                       kindOptions={[
-                        { value: "estimate_follow_up", label: "Estimate follow-up" },
+                        {
+                          value: "estimate_follow_up",
+                          label: "Estimate follow-up"
+                        },
                         { value: "human_handoff", label: "Human handoff" },
                         { value: "manual", label: "Manual" }
                       ]}
@@ -1230,7 +1403,8 @@ export default async function EstimateDetailPage({
                   Revision History
                 </p>
                 <p className="mt-2 text-sm leading-6 text-[var(--text-secondary)]">
-                  Latest proposal snapshots are available when needed; they stay secondary to the active proposal.
+                  Latest proposal snapshots are available when needed; they stay
+                  secondary to the active proposal.
                 </p>
               </summary>
               <div className="mt-5">
@@ -1316,7 +1490,11 @@ export default async function EstimateDetailPage({
                     href={`/jobs/${estimateJobs[0].id}`}
                     title={estimateJobs[0].project?.name ?? "Job"}
                     subtitle="Current job"
-                    meta={estimateJobs[0].scheduledDate ? `Scheduled ${new Date(`${estimateJobs[0].scheduledDate}T00:00:00`).toLocaleDateString()}` : "Unscheduled"}
+                    meta={
+                      estimateJobs[0].scheduledDate
+                        ? `Scheduled ${new Date(`${estimateJobs[0].scheduledDate}T00:00:00`).toLocaleDateString()}`
+                        : "Unscheduled"
+                    }
                     badge={
                       <span
                         className={`inline-flex rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] ${getStatusBadgeClassName(
@@ -1328,7 +1506,9 @@ export default async function EstimateDetailPage({
                     }
                   />
                 ) : null}
-                {estimateContracts.length > 1 || estimateJobs.length > 1 || estimateInvoices.length > 1 ? (
+                {estimateContracts.length > 1 ||
+                estimateJobs.length > 1 ||
+                estimateInvoices.length > 1 ? (
                   <details className="rounded-lg border border-[var(--border-warm)] bg-[var(--highlight)] px-4 py-3 text-sm leading-6 text-[var(--text-secondary)]">
                     <summary className="cursor-pointer list-none font-semibold text-[var(--text-primary)]">
                       View all linked records
@@ -1376,7 +1556,11 @@ export default async function EstimateDetailPage({
                           href={`/jobs/${job.id}`}
                           title={job.project?.name ?? "Job"}
                           subtitle="Job"
-                          meta={job.scheduledDate ? `Scheduled ${new Date(`${job.scheduledDate}T00:00:00`).toLocaleDateString()}` : "Unscheduled"}
+                          meta={
+                            job.scheduledDate
+                              ? `Scheduled ${new Date(`${job.scheduledDate}T00:00:00`).toLocaleDateString()}`
+                              : "Unscheduled"
+                          }
                           badge={
                             <span
                               className={`inline-flex rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] ${getStatusBadgeClassName(
@@ -1391,16 +1575,24 @@ export default async function EstimateDetailPage({
                     </div>
                   </details>
                 ) : null}
-                {estimateContracts.length === 0 && estimateJobs.length === 0 && estimateInvoices.length === 0 ? (
+                {estimateContracts.length === 0 &&
+                estimateJobs.length === 0 &&
+                estimateInvoices.length === 0 ? (
                   <p className="rounded-2xl border border-dashed border-[var(--border-warm)] bg-[var(--highlight)] px-4 py-4 text-sm leading-6 text-[var(--text-secondary)]">
-                    No downstream contract, job, or invoice records are linked to this estimate yet. Use the project readiness hub once this estimate is approved.
+                    No downstream contract, job, or invoice records are linked
+                    to this estimate yet. Use the project readiness hub once
+                    this estimate is approved.
                   </p>
                 ) : null}
               </div>
             </DetailPanel>
 
             <DetailPanel
-              title={estimate.status === "approved" ? "Production Schedule" : "Schedule Handoff"}
+              title={
+                estimate.status === "approved"
+                  ? "Production Schedule"
+                  : "Schedule Handoff"
+              }
               description={
                 estimate.status === "approved"
                   ? "Compact production context from canonical project jobs and job assignments, with scheduling work still handed off to the shared schedule workspace."
@@ -1412,16 +1604,26 @@ export default async function EstimateDetailPage({
                   <>
                     <ScheduleContextMetrics
                       items={[
-                        { label: "Scheduled", value: scheduledProjectJobs.length },
-                        { label: "Unscheduled", value: unscheduledProjectJobs.length },
-                        { label: "In progress", value: inProgressProjectJobs.length }
+                        {
+                          label: "Scheduled",
+                          value: scheduledProjectJobs.length
+                        },
+                        {
+                          label: "Unscheduled",
+                          value: unscheduledProjectJobs.length
+                        },
+                        {
+                          label: "In progress",
+                          value: inProgressProjectJobs.length
+                        }
                       ]}
                     />
 
                     {nextScheduledProjectJob ? (
                       <ScheduleContextFocusCard
                         eyebrow={
-                          nextScheduledProjectJob.dispatchStatus === "in_progress"
+                          nextScheduledProjectJob.dispatchStatus ===
+                          "in_progress"
                             ? "Work in progress"
                             : "Next scheduled job"
                         }
@@ -1431,10 +1633,13 @@ export default async function EstimateDetailPage({
                           "Project job"
                         }
                         titleHref={`/jobs/${nextScheduledProjectJob.id}`}
-                        statusLabel={formatStatusLabel(nextScheduledProjectJob.dispatchStatus)}
+                        statusLabel={formatStatusLabel(
+                          nextScheduledProjectJob.dispatchStatus
+                        )}
                         summary={formatScheduleSummaryWindow({
                           scheduledDate: nextScheduledProjectJob.scheduledDate,
-                          scheduledStartAt: nextScheduledProjectJob.scheduledStartAt,
+                          scheduledStartAt:
+                            nextScheduledProjectJob.scheduledStartAt,
                           scheduledEndAt: nextScheduledProjectJob.scheduledEndAt
                         })}
                         detailRows={[
@@ -1443,7 +1648,8 @@ export default async function EstimateDetailPage({
                             value:
                               nextScheduledProjectAssignments.length > 0
                                 ? nextScheduledProjectCrewSummary
-                                : nextScheduledProjectJob.dispatchStatus === "scheduled"
+                                : nextScheduledProjectJob.dispatchStatus ===
+                                    "scheduled"
                                   ? "Scheduled, but crew assignment still needs to be confirmed"
                                   : nextScheduledProjectCrewSummary
                           }
@@ -1451,7 +1657,11 @@ export default async function EstimateDetailPage({
                       />
                     ) : (
                       <ScheduleContextNotice
-                        eyebrow={projectJobs.length > 0 ? "Ready for scheduling" : "No jobs yet"}
+                        eyebrow={
+                          projectJobs.length > 0
+                            ? "Ready for scheduling"
+                            : "No jobs yet"
+                        }
                         title={
                           projectJobs.length > 0
                             ? "Approved work exists, but no schedule commitment is set yet"
@@ -1482,11 +1692,14 @@ export default async function EstimateDetailPage({
                         {
                           label: "Crew assignment state",
                           value:
-                            nextScheduledProjectJob && nextScheduledProjectCrewSummary
+                            nextScheduledProjectJob &&
+                            nextScheduledProjectCrewSummary
                               ? nextScheduledProjectCrewSummary
                               : projectJobsWithoutAssignments.length > 0
                                 ? `${projectJobsWithoutAssignments.length} job${
-                                    projectJobsWithoutAssignments.length === 1 ? "" : "s"
+                                    projectJobsWithoutAssignments.length === 1
+                                      ? ""
+                                      : "s"
                                   } still need crew assignment rows`
                                 : projectJobs.length > 0
                                   ? "Crew coverage is already attached where needed"

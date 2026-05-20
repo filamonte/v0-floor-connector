@@ -15,6 +15,7 @@ Use this with:
 - [docs/communications-and-ai-intake.md](C:/FloorConnector/docs/communications-and-ai-intake.md)
 - [docs/ai-assisted-operating-system.md](C:/FloorConnector/docs/ai-assisted-operating-system.md)
 - [docs/calendar-and-scheduling-intelligence.md](C:/FloorConnector/docs/calendar-and-scheduling-intelligence.md)
+- [docs/gatekeeper-controlled-action-bridge.md](C:/FloorConnector/docs/gatekeeper-controlled-action-bridge.md)
 
 ## 1. GateKeeper Vision
 
@@ -63,6 +64,14 @@ AI memory must not become a private knowledge base that competes with FloorConne
 ### No Disconnected Communication Databases
 
 Calls, SMS, voicemail, email, web chat, portal messages, app messages, and manual logs should resolve into canonical communication records and timelines. Provider systems are adapters and telemetry sources, not the business source of truth.
+
+### Multi-Line Communications Without Silos
+
+FloorConnector should not assume one company has only one phone number or that all voice/SMS ownership belongs to the owner. Contractors may need company main lines, owner lines, sales rep lines, account manager lines, estimator lines, office/admin lines, department or team lines, after-hours assistant lines, campaign or tracking numbers, branch/location numbers, and later project-specific or temporary numbers.
+
+Principle: **Bring your numbers. Keep your numbers. Leave with your numbers. Route them to the right people.**
+
+Every managed line should remain tenant-owned/configured and should feed the same canonical communications and GateKeeper memory layer. A line may be assigned to a person, team, department, location, campaign, or assistant workflow, but it must not create a sales-rep-only CRM, account-manager inbox silo, or separate per-user communication truth.
 
 ### Human-Governed Operational Intelligence
 
@@ -233,6 +242,59 @@ Target communication behavior:
 - route uncertain matches to human review instead of guessing
 - preserve provider events as telemetry, not business truth
 
+### Contractor Number Strategy
+
+FloorConnector should eventually support multiple managed numbers across the same organization, not only one primary company line. Future number patterns may include:
+
+- company main line
+- owner line
+- sales rep lines
+- account manager lines
+- estimator lines
+- office/admin line
+- department/team lines
+- after-hours assistant line
+- campaign/tracking numbers
+- location/branch numbers
+- temporary project/event numbers later if useful
+
+Each number should be configurable for assigned user or team, inbound routing, business hours, after-hours GateKeeper behavior, voicemail/transcription, SMS ownership, call recording settings, live assist permissions, escalation rules, fallback/forwarding behavior, and visibility in customer/project timelines.
+
+A contractor should be able to port in or forward multiple existing numbers, not just one primary line. A contractor should also be able to port out individual numbers when appropriate, subject to security, authorization, and audit rules. Number ownership should be trust-oriented: bring your numbers, keep your numbers, leave with your numbers.
+
+Number configuration must not fork communication truth. Whether a call arrives through a company main line, individual sales rep line, campaign number, branch number, or assistant line, it should still resolve into canonical communications, GateKeeper artifacts, reviewable suggestions, and the relevant opportunity/customer/project timeline when context is known.
+
+### Number Port-In Planning
+
+Future port-in planning should support:
+
+- multi-number port orders
+- single-number port-in for owner, sales, account manager, estimator, office/admin, or department lines
+- bulk/location-based port-in later
+- pre-port mapping so each number has a planned destination before cutover
+- assigning each ported number to a user, team, location, campaign, or workflow after port completion
+- cutover checks for every number, not only the main company line
+- per-number call/SMS readiness status
+- per-number consent, recording, assistant, voicemail, transcription, escalation, and visibility settings
+
+### Number Port-Out Planning
+
+Future port-out should work per number, not only as part of full account cancellation. Admins should be able to see which user, team, workflow, campaign, routing rule, customer communication path, and GateKeeper history depend on a number before releasing it.
+
+Port-out should warn about affected call routing, SMS ownership, automations, campaign tracking, customer communications, timeline visibility, and GateKeeper history. Number release should require appropriate admin authorization and audit history.
+
+### Forwarding Number Strategy
+
+Forwarding should be treated as a lower-risk adoption bridge before porting. Each sales rep, account manager, estimator, office/admin user, or department/team may forward an existing line to a FloorConnector-managed routing number. Forwarding may be per-user, per-team, branch/location-specific, campaign-specific, or after-hours only.
+
+Limitations should be explicit: SMS forwarding is not the same as voice forwarding, outbound identity may differ, provider analytics may be limited, and caller ID behavior depends on carrier/provider rules. Forwarded activity should still feed canonical communications and GateKeeper memory where legally and technically available.
+
+### FloorConnector-Provisioned Number Strategy
+
+Future provisioned numbers may be created for individuals, roles, departments, teams, locations, campaigns, or assistant workflows. The model should support direct-assigned numbers for sales reps/account managers, shared team numbers for office/sales/service, after-hours assistant numbers, and pooled marketing attribution numbers later.
+
+Each provisioned number should have routing, permissions, recording, assistant, escalation, fallback, SMS ownership, and visibility settings. Provisioned numbers must not become separate provider-side inboxes detached from customers, opportunities, projects, or canonical communication timelines.
+
 Communication timelines should eventually appear where they help users understand context:
 
 - project timeline
@@ -353,7 +415,11 @@ Implemented foundation slice:
 - static demo examples can seed representative GateKeeper review flows for new inquiries, scheduling requests, missed-call follow-up, and internal workflow observations; these fixtures are QA/demo scaffolding only
 - `apps/web/lib/gatekeeper/source-adapters.ts` defines a lightweight provider-neutral source-event interface and adapter-result shape for future ingestion planning only
 - `apps/web/lib/gatekeeper/manual-source-adapter.ts` implements the manual adapter pattern without providers, AI, webhooks, background workers, outbound communication, or execution behavior
+- Project, Customer, and Lead/Opportunity workspaces now show GateKeeper operational memory panels for subject-linked artifacts, suggestions, and communication evidence
+- `apps/web/lib/gatekeeper/internal-note-adapter.ts` lets those workspaces add contractor-only internal notes through the same provider-neutral adapter contract; the notes create reviewable memory and optional review-only suggestions without execution
 - `docs/gatekeeper-source-adapters.md` documents the adapter boundary, idempotency, metadata, privacy, human-governance, anti-drift, and sequencing rules for future source adapters
+- `docs/gatekeeper-controlled-action-bridge.md` and `apps/web/lib/gatekeeper/action-bridge.ts` define the planning-only boundary for future controlled execution previews; review approval still does not execute suggestions
+- `apps/web/lib/gatekeeper/execution-preview.ts` and `/gatekeeper` suggestion cards now show non-mutating future-action previews with owner, risk, validation, display-only payload, and blocked execution status
 - no provider integration, AI runtime, worker, transcription, telephony, SMS/email send, autonomous workflow execution, or portal access is implemented by this slice
 
 ### Phase 2: Workflow Reinforcement
@@ -419,6 +485,10 @@ GateKeeper must not:
 
 - create AI-only leads, customers, projects, estimates, jobs, invoices, payments, calendars, or communication logs
 - let provider payloads become business truth
+- create per-user phone silos disconnected from canonical communications
+- create sales-rep-only or account-manager-only inboxes that hide customer, opportunity, or project context
+- create campaign tracking numbers disconnected from the customer/opportunity/project chain
+- trap contractors in a number ownership model that prevents legitimate port-out
 - send risky customer-facing messages without approved workflow boundaries
 - commit pricing, discounts, dates, contract terms, payment requests, permission changes, or compliance actions without human approval
 - describe planned capabilities as implemented

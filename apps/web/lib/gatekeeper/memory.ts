@@ -1,6 +1,13 @@
 import "server-only";
 
 import type {
+  CommunicationChannelKind,
+  CommunicationMessageDirection,
+  CommunicationMessageKind,
+  CommunicationMessageSourceKind,
+  CommunicationMessageVisibility,
+  CommunicationThreadCategory,
+  CommunicationThreadStatus,
   CommunicationMessageId,
   CommunicationThreadId,
   GateKeeperActionSuggestion,
@@ -71,6 +78,44 @@ type GateKeeperActionSuggestionRow = {
   updated_at: string;
 };
 
+type GateKeeperSubjectMemoryMessageRow = {
+  id: string;
+  company_id: string;
+  thread_id: string;
+  direction: CommunicationMessageDirection;
+  source_kind: CommunicationMessageSourceKind;
+  channel_kind: CommunicationChannelKind;
+  message_kind: CommunicationMessageKind;
+  visibility: CommunicationMessageVisibility;
+  body: string;
+  occurred_at: string;
+  created_at: string;
+};
+
+type GateKeeperSubjectMemoryThreadRow = {
+  id: string;
+  company_id: string;
+  thread_category: CommunicationThreadCategory;
+  channel_kind: CommunicationChannelKind;
+  thread_status: CommunicationThreadStatus;
+  last_message_at: string | null;
+  last_message_preview: string | null;
+  updated_at: string;
+};
+
+type GateKeeperSubjectExecutionResultRow = {
+  id: string;
+  company_id: string;
+  suggestion_id: string;
+  action_type: GateKeeperActionSuggestionType;
+  status: string;
+  executed_at: string | null;
+  execution_error: string | null;
+  result_subject_type: string | null;
+  result_subject_id: string | null;
+  updated_at: string;
+};
+
 export type GateKeeperReviewQueueSummary = {
   proposedArtifactCount: number;
   proposedSuggestionCount: number;
@@ -82,6 +127,55 @@ export type GateKeeperReviewQueue = {
   summary: GateKeeperReviewQueueSummary;
   artifacts: GateKeeperArtifact[];
   suggestions: GateKeeperActionSuggestion[];
+};
+
+export type GateKeeperSubjectMemoryMessage = {
+  id: string;
+  organizationId: string;
+  threadId: string;
+  direction: CommunicationMessageDirection;
+  sourceKind: CommunicationMessageSourceKind;
+  channelKind: CommunicationChannelKind;
+  messageKind: CommunicationMessageKind;
+  visibility: CommunicationMessageVisibility;
+  bodyPreview: string;
+  occurredAt: string;
+  createdAt: string;
+};
+
+export type GateKeeperSubjectMemoryThread = {
+  id: string;
+  organizationId: string;
+  threadCategory: CommunicationThreadCategory;
+  channelKind: CommunicationChannelKind;
+  threadStatus: CommunicationThreadStatus;
+  lastMessageAt: string | null;
+  lastMessagePreview: string | null;
+  updatedAt: string;
+};
+
+export type GateKeeperSubjectExecutionResult = {
+  id: string;
+  organizationId: string;
+  suggestionId: string;
+  actionType: GateKeeperActionSuggestionType;
+  status: "executed" | "failed";
+  executedAt: string | null;
+  executionError: string | null;
+  resultSubjectType: string | null;
+  resultSubjectId: string | null;
+  resultHref: string | null;
+  updatedAt: string;
+};
+
+export type GateKeeperSubjectMemory = {
+  subjectType: GateKeeperSubjectType;
+  subjectId: string;
+  artifacts: GateKeeperArtifact[];
+  suggestions: GateKeeperActionSuggestion[];
+  communicationMessages: GateKeeperSubjectMemoryMessage[];
+  communicationThreads: GateKeeperSubjectMemoryThread[];
+  executionResults: GateKeeperSubjectExecutionResult[];
 };
 
 const artifactSelect = `
@@ -124,6 +218,44 @@ const suggestionSelect = `
   created_by,
   updated_by,
   created_at,
+  updated_at
+`;
+
+const subjectMemoryMessageSelect = `
+  id,
+  company_id,
+  thread_id,
+  direction,
+  source_kind,
+  channel_kind,
+  message_kind,
+  visibility,
+  body,
+  occurred_at,
+  created_at
+`;
+
+const subjectMemoryThreadSelect = `
+  id,
+  company_id,
+  thread_category,
+  channel_kind,
+  thread_status,
+  last_message_at,
+  last_message_preview,
+  updated_at
+`;
+
+const subjectExecutionResultSelect = `
+  id,
+  company_id,
+  suggestion_id,
+  action_type,
+  status,
+  executed_at,
+  execution_error,
+  result_subject_type,
+  result_subject_id,
   updated_at
 `;
 
@@ -203,6 +335,77 @@ function mapSuggestion(
     createdByUserId: row.created_by,
     updatedByUserId: row.updated_by,
     createdAt: row.created_at,
+    updatedAt: row.updated_at
+  };
+}
+
+function buildPreview(value: string | null | undefined, limit = 180) {
+  const normalized = value?.replace(/\s+/g, " ").trim() ?? "";
+
+  if (normalized.length <= limit) {
+    return normalized;
+  }
+
+  return `${normalized.slice(0, limit - 3)}...`;
+}
+
+function mapSubjectMemoryMessage(
+  row: GateKeeperSubjectMemoryMessageRow
+): GateKeeperSubjectMemoryMessage {
+  return {
+    id: row.id,
+    organizationId: row.company_id,
+    threadId: row.thread_id,
+    direction: row.direction,
+    sourceKind: row.source_kind,
+    channelKind: row.channel_kind,
+    messageKind: row.message_kind,
+    visibility: row.visibility,
+    bodyPreview: buildPreview(row.body),
+    occurredAt: row.occurred_at,
+    createdAt: row.created_at
+  };
+}
+
+function mapSubjectMemoryThread(
+  row: GateKeeperSubjectMemoryThreadRow
+): GateKeeperSubjectMemoryThread {
+  return {
+    id: row.id,
+    organizationId: row.company_id,
+    threadCategory: row.thread_category,
+    channelKind: row.channel_kind,
+    threadStatus: row.thread_status,
+    lastMessageAt: row.last_message_at,
+    lastMessagePreview: buildPreview(row.last_message_preview),
+    updatedAt: row.updated_at
+  };
+}
+
+function mapSubjectExecutionResult(
+  row: GateKeeperSubjectExecutionResultRow
+): GateKeeperSubjectExecutionResult | null {
+  if (row.status !== "executed" && row.status !== "failed") {
+    return null;
+  }
+
+  return {
+    id: row.id,
+    organizationId: row.company_id,
+    suggestionId: row.suggestion_id,
+    actionType: row.action_type,
+    status: row.status,
+    executedAt: row.executed_at,
+    executionError: buildPreview(row.execution_error, 280) || null,
+    resultSubjectType: row.result_subject_type,
+    resultSubjectId: row.result_subject_id,
+    resultHref: getGateKeeperSubjectHref({
+      subjectType:
+        row.result_subject_type === "opportunity"
+          ? "opportunity"
+          : (row.result_subject_type as GateKeeperSubjectType | null),
+      subjectId: row.result_subject_id
+    }),
     updatedAt: row.updated_at
   };
 }
@@ -475,6 +678,182 @@ export async function listGateKeeperActionSuggestionsForSubject(input: {
   return ((response.data as GateKeeperActionSuggestionRow[] | null) ?? []).map(
     mapSuggestion
   );
+}
+
+export async function getGateKeeperSubjectMemory(input: {
+  subjectType: GateKeeperSubjectType;
+  subjectId: string;
+  limit?: number;
+}): Promise<GateKeeperSubjectMemory> {
+  const scope = await requireGateKeeperScope();
+  const supabase = await getSupabaseServerClient();
+  const limit = input.limit ?? 8;
+
+  const [artifactsResponse, suggestionsResponse] = await Promise.all([
+    supabase
+      .from("gatekeeper_artifacts")
+      .select(artifactSelect)
+      .eq("company_id", scope.organizationId)
+      .eq("subject_type", input.subjectType)
+      .eq("subject_id", input.subjectId)
+      .order("created_at", { ascending: false })
+      .limit(limit),
+    supabase
+      .from("gatekeeper_action_suggestions")
+      .select(suggestionSelect)
+      .eq("company_id", scope.organizationId)
+      .eq("subject_type", input.subjectType)
+      .eq("subject_id", input.subjectId)
+      .order("created_at", { ascending: false })
+      .limit(limit)
+  ]);
+
+  if (artifactsResponse.error) {
+    throw new Error(
+      `Unable to load GateKeeper subject artifacts: ${artifactsResponse.error.message}`
+    );
+  }
+
+  if (suggestionsResponse.error) {
+    throw new Error(
+      `Unable to load GateKeeper subject action suggestions: ${suggestionsResponse.error.message}`
+    );
+  }
+
+  const artifacts = (
+    (artifactsResponse.data as GateKeeperArtifactRow[] | null) ?? []
+  ).map(mapArtifact);
+  const suggestions = (
+    (suggestionsResponse.data as GateKeeperActionSuggestionRow[] | null) ?? []
+  ).map(mapSuggestion);
+  const suggestionIds = suggestions.map((suggestion) => suggestion.id);
+  const messageIds = Array.from(
+    new Set(
+      [...artifacts, ...suggestions]
+        .map((item) => item.communicationMessageId)
+        .filter((value): value is string => Boolean(value))
+    )
+  );
+  const threadIds = new Set(
+    [...artifacts, ...suggestions]
+      .map((item) => item.communicationThreadId)
+      .filter((value): value is string => Boolean(value))
+  );
+  let communicationMessages: GateKeeperSubjectMemoryMessage[] = [];
+
+  if (messageIds.length > 0) {
+    const messagesResponse = await supabase
+      .from("communication_messages")
+      .select(subjectMemoryMessageSelect)
+      .eq("company_id", scope.organizationId)
+      .in("id", messageIds)
+      .order("occurred_at", { ascending: false })
+      .limit(limit);
+
+    if (messagesResponse.error) {
+      throw new Error(
+        `Unable to load GateKeeper subject communication evidence: ${messagesResponse.error.message}`
+      );
+    }
+
+    communicationMessages = (
+      (messagesResponse.data as GateKeeperSubjectMemoryMessageRow[] | null) ??
+      []
+    ).map(mapSubjectMemoryMessage);
+
+    for (const message of communicationMessages) {
+      threadIds.add(message.threadId);
+    }
+  }
+
+  let communicationThreads: GateKeeperSubjectMemoryThread[] = [];
+
+  if (threadIds.size > 0) {
+    const threadsResponse = await supabase
+      .from("communication_threads")
+      .select(subjectMemoryThreadSelect)
+      .eq("company_id", scope.organizationId)
+      .in("id", Array.from(threadIds))
+      .order("updated_at", { ascending: false })
+      .limit(limit);
+
+    if (threadsResponse.error) {
+      throw new Error(
+        `Unable to load GateKeeper subject communication threads: ${threadsResponse.error.message}`
+      );
+    }
+
+    communicationThreads = (
+      (threadsResponse.data as GateKeeperSubjectMemoryThreadRow[] | null) ?? []
+    ).map(mapSubjectMemoryThread);
+  }
+
+  const executionResultQueries = [];
+
+  if (suggestionIds.length > 0) {
+    executionResultQueries.push(
+      supabase
+        .from("gatekeeper_execution_attempts")
+        .select(subjectExecutionResultSelect)
+        .eq("company_id", scope.organizationId)
+        .in("suggestion_id", suggestionIds)
+        .in("status", ["executed", "failed"])
+        .order("updated_at", { ascending: false })
+        .limit(limit)
+    );
+  }
+
+  executionResultQueries.push(
+    supabase
+      .from("gatekeeper_execution_attempts")
+      .select(subjectExecutionResultSelect)
+      .eq("company_id", scope.organizationId)
+      .eq("result_subject_type", input.subjectType)
+      .eq("result_subject_id", input.subjectId)
+      .in("status", ["executed", "failed"])
+      .order("updated_at", { ascending: false })
+      .limit(limit)
+  );
+
+  const executionResultResponses = await Promise.all(executionResultQueries);
+  const executionResultError = executionResultResponses.find(
+    (response) => response.error
+  )?.error;
+
+  if (executionResultError) {
+    throw new Error(
+      `Unable to load GateKeeper execution results: ${executionResultError.message}`
+    );
+  }
+
+  const seenExecutionResultIds = new Set<string>();
+  const executionResults = executionResultResponses
+    .flatMap(
+      (response) =>
+        (response.data as GateKeeperSubjectExecutionResultRow[] | null) ?? []
+    )
+    .map(mapSubjectExecutionResult)
+    .filter((result): result is GateKeeperSubjectExecutionResult =>
+      Boolean(result)
+    )
+    .filter((result) => {
+      if (seenExecutionResultIds.has(result.id)) {
+        return false;
+      }
+
+      seenExecutionResultIds.add(result.id);
+      return true;
+    });
+
+  return {
+    subjectType: input.subjectType,
+    subjectId: input.subjectId,
+    artifacts,
+    suggestions,
+    communicationMessages,
+    communicationThreads,
+    executionResults
+  };
 }
 
 export async function createGateKeeperArtifact(

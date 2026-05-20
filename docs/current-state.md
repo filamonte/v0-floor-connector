@@ -72,13 +72,16 @@ These high-value route notes exist to prevent target-vs-current drift:
 
 - `/reports` is the current implemented reporting entry surface; no `/reports/tax` route exists today.
 - `/document-writer` is the current implemented document-writing route; `/documents` remains target IA language only and is not an implemented route today.
-- Good-enough customer-facing print/PDF views now exist for canonical estimate, contract, and invoice records at `/estimates/:id/pdf`, `/contracts/:id/pdf`, `/invoices/:id/pdf`, plus portal-scoped equivalents at `/portal/estimates/:id/pdf`, `/portal/contracts/:id/pdf`, and `/portal/invoices/:id/pdf`. Warranty documents now have a contractor-side print/save route at `/warranty-documents/:id/print`. These are browser print/save renderings of canonical records, not stored document records or a document source of truth. Portal print routes now use the same safe organization branding fields already stored on the contractor company after portal record access is scoped.
+- Good-enough customer-facing print/PDF views now exist for canonical estimate, contract, and invoice records at `/estimates/:id/pdf`, `/contracts/:id/pdf`, `/invoices/:id/pdf`, plus portal-scoped equivalents at `/portal/estimates/:id/pdf`, `/portal/contracts/:id/pdf`, and `/portal/invoices/:id/pdf`. Warranty documents now have contractor-side print/save at `/warranty-documents/:id/print` and portal-scoped print/save at `/portal/warranty-documents/:id/print`. These are browser print/save renderings of canonical records, not stored document records or a document source of truth. Portal print routes now use the same safe organization branding fields already stored on the contractor company after portal record access is scoped.
 - `/materials`, `/forms-checklists`, `/directory`, and `/cost-items-database` exist as current contractor routes/foundations, but their deeper production workflows are not complete. `/materials` is currently an intentional route alias that redirects to `/cost-items-database/items`.
 - `/equipment` and `/equipment/:id` now exist as the equipment asset registry foundation. They create and edit tenant-scoped canonical equipment assets, and the first job equipment foundation now adds job equipment requirements, equipment-to-job assignments, and derived advisory readiness warnings. Maintenance, utilization, job costing, procurement/AP, portal exposure, warranty/service behavior, AI automation, autonomous rescheduling, and hard equipment readiness blocks remain future work.
-- `/service-tickets` and `/service-tickets/:id` now exist as the first internal service/warranty continuity foundation. They create, list, search, filter, update, and status-manage tenant-scoped service tickets tied to canonical customers, optional projects, and optional original jobs. Service ticket detail now shows linked punch-derived time and routes users to the shared `/time` composer with service/warranty context prefilled. This is not a detached helpdesk: same-company customer/project/job validation, RLS, and manager/admin/owner mutation policies keep the records on the canonical lifecycle. Portal requests, warranty PDFs/signatures, billing/manufacturer claims, job-costing mutation, equipment/material automation, and AI automation remain future work.
-- `/warranty-documents/:id` and `/warranty-documents/:id/print` now exist as the first warranty document foundation. Warranty documents are canonical tenant-scoped records tied to customer/project/job/service-ticket context and rendered from the shared `document_templates` system with a new `warranty` template type. The print route is a browser print/save rendering of the canonical warranty document; it is not a detached PDF store, send workflow, portal review route, or customer-facing signature system.
-- A generic document signature foundation now exists through tenant-scoped `document_signers` and immutable `document_signature_events`, initially constrained to `warranty_document` subjects only. Warranty Document detail now has internal signer management and request-signature audit events. This is operational request evidence only; no contract migration, portal warranty review/signing, outbound send, delivery proof, countersign workflow, provider e-sign integration, or warranty document status mutation from signatures is implemented yet.
+- `/service-tickets` and `/service-tickets/:id` now exist as the first internal service/warranty continuity foundation. They create, list, search, filter, update, and status-manage tenant-scoped service tickets tied to canonical customers, optional projects, and optional original jobs. Service ticket detail now shows linked punch-derived time and routes users to the shared `/time` composer with service/warranty context prefilled. This is not a detached helpdesk: same-company customer/project/job validation, RLS, and manager/admin/owner mutation policies keep the records on the canonical lifecycle. Portal service-ticket requests/status, outbound warranty sends, delivery proof, billing/manufacturer claims, job-costing mutation, equipment/material automation, and AI automation remain future work.
+- Service tickets can now create linked unscheduled service jobs on the canonical `jobs` table when a ticket has project context. These jobs carry optional `service_ticket_id`, appear on the existing Schedule and Job surfaces, and keep schedule, crew, equipment readiness, daily logs, and time clocking on the same job foundation instead of creating a service-only calendar.
+- `/warranty-documents/:id`, `/warranty-documents/:id/print`, `/portal/warranty-documents/:id`, and `/portal/warranty-documents/:id/print` now exist as the first warranty document foundation. Warranty documents are canonical tenant-scoped records tied to customer/project/job/service-ticket context and rendered from the shared `document_templates` system with a new `warranty` template type. The print routes are browser print/save renderings of the canonical warranty document; they are not detached PDF stores or provider e-sign integrations. Warranty documents now have delivery history through immutable `document_delivery_events` for manual/internal/print proof plus the first guarded provider-backed warranty review/sign email send. Provider-backed warranty send creates notification intent, notification delivery telemetry, and `send_requested` / `sent` / `failed` document delivery evidence; it does not process provider callbacks, auto-complete signatures, or mutate payments/jobs/service tickets.
+- `/estimates/:id`, `/invoices/:id`, and `/contracts/:id` now also show evidence-only Delivery History panels backed by the same immutable `document_delivery_events` foundation. Contractor users can record internal/manual/print delivery evidence for estimates, invoices, and contracts. Estimates now also support guarded provider-backed portal review-link email from draft/rejected estimates to active project-scoped portal recipients. Invoices now support guarded provider-backed portal review/payment-link email for sent or partially paid invoices with an open balance and active project-scoped portal recipients; the send writes notification delivery telemetry and `send_requested` / `sent` / `failed` document delivery evidence without starting checkout, creating payments, changing invoice status, or writing payment events. Contract send-for-signature now attempts provider-backed email delivery to the customer signer after the existing contract signature workflow succeeds; the provider result writes delivery evidence only and does not mark signers signed, create signed/declined/countersign events, replace `contract_signature_events`, start payment, update payment events, or create portal-visible proof.
+- A generic document signature foundation now exists through tenant-scoped `document_signers` and immutable `document_signature_events`, initially constrained to `warranty_document` subjects only. Warranty Document detail has internal signer management and request-signature audit events. Portal warranty review/signing now uses project-scoped portal access, requires project-linked issued/sent/viewed/signed warranty documents, requires the authenticated portal user's email to match a customer signer row for sign/decline actions, appends immutable generic signature events, updates signer status/timestamps, and marks the warranty document `signed` only when all active customer signers are signed. It does not migrate contracts, send email, add countersign workflow, use provider e-sign, expose service tickets to the portal, or mutate invoices/payments/jobs/service tickets.
 - Project Workspace, Customer Workspace, and Job Workspace now include compact read-only Service & Warranty continuity panels. These panels show bounded linked service tickets, warranty documents, warranty date ranges, signer/request counts, signed counts, latest signature event summaries, and links to the canonical service ticket, warranty document, and print/save surfaces. They do not edit service tickets, send/sign warranty documents, mutate jobs, mutate billing, create dashboard-owned state, or expose portal behavior.
+- Dashboard Operational Cockpit now includes bounded read-only service/warranty signals: high-priority open tickets, stale open tickets, tickets missing linked service jobs, unscheduled/upcoming/in-progress linked service jobs, and warranty documents needing internal signer/request attention. These items route to Service Ticket, Warranty Document, Job, Schedule, and Project Workspaces only; they do not create dashboard-owned persistence, mutate service tickets/jobs/signatures/time/billing, send email, expose portal links, or add signing behavior.
 - package/billing governance lives under `/super-admin/packages`, including read-only detail routes for package definitions, assignments, provider mappings, and support reviews.
 
 ## Current Architecture
@@ -141,10 +144,12 @@ Current shared canonical model includes:
 - communication messages
 - GateKeeper memory artifacts
 - GateKeeper action suggestions
+- GateKeeper execution attempts
 - communication preferences
 - work items
 - workflow error events
 - payments
+- document delivery events
 
 Equipment asset registry foundation is implemented through tenant-scoped
 `equipment_assets`, `/equipment`, and `/equipment/:id`. This first slice tracks
@@ -195,18 +200,24 @@ Implemented behavior:
   fields, linked customer/project/job cards, and explicit planned-later
   placeholders
 - compact read-only Project, Customer, and Job Workspace continuity panels that
-  show linked service/warranty tickets and route back to the canonical ticket
-  detail workspace without creating a helpdesk surface
+  show linked service/warranty tickets, linked service jobs, and route back to
+  the canonical ticket/job detail workspaces without creating a helpdesk surface
+- optional `jobs.service_ticket_id` linkage for follow-up service/warranty jobs,
+  with same-company/project validation and no service-only schedule table
+- Service Ticket detail can create an unscheduled service job from ticket
+  context, list linked service jobs, link to the existing Schedule action panel,
+  and prefill `/time` against the linked service job and ticket
 - focused migration assertion tests for the canonical table, relationship/RLS
   guardrails, and excluded deferred systems
 
 Not implemented in this slice:
 
 - customer portal service request intake or portal-safe service status
-- warranty document sends, signatures, delivery proof, or portal-visible
-  warranty document versions
+- outbound warranty document sends, portal-visible delivery proof, contractor
+  countersign, or stored portal-only warranty document versions
 - warranty/service time clocking context
-- service visit scheduling
+- dispatch-grade service visit scheduling depth beyond the first linked service
+  job foundation
 - billing automation, manufacturer claims, invoice/payment mutation, or
   job-costing mutation
 - equipment/material usage automation or AI automation
@@ -242,8 +253,9 @@ Implemented behavior:
   title/date/basis fields, re-render from the saved warranty template, issue a
   draft, void a document, and open the print/save rendering.
 - `/warranty-documents/:id/print` renders a customer-facing browser print/save
-  view from the canonical warranty document record and clearly states that
-  send/signature/delivery proof are not implemented in this slice.
+  view from the canonical warranty document record. The print route remains a
+  rendering surface over the canonical record, not stored PDF truth or provider
+  delivery proof.
 - `document_signers` and `document_signature_events` now provide a generic,
   tenant-scoped signature groundwork for warranty documents only. The tables
   validate same-company `warranty_documents` ownership, keep events immutable,
@@ -255,26 +267,127 @@ Implemented behavior:
 - Requesting signature updates the signer to `requested` where valid and appends
   an immutable event. It does not send email, expose a portal link, change
   warranty document status to signed, or create delivery proof.
+- `document_delivery_events` now provides immutable evidence-only delivery
+  history for warranty documents, estimates, invoices, and contracts. The table
+  validates same-company subject ownership, allows active-member read access and
+  owner/admin/manager insert access, supports manual/internal/print evidence
+  recording from the supported document workspaces, and can store provider
+  metadata for future phases without treating provider data as document truth.
+- Warranty Document detail now includes a Delivery History panel and a small
+  internal form to record manual evidence such as printed/shared/notified
+  activity. Recording delivery evidence does not send email, update warranty
+  document status, update signer/signature state, mutate payments, or touch
+  contract signature behavior.
+- Warranty Document detail now also supports the first provider-backed warranty
+  review/sign email action for requested customer signers. The action requires a
+  project-linked, customer-visible warranty document, active portal project
+  access for the signer email, owner/admin/manager access, active organization
+  membership, and an enabled provider/activation path before a real email can be
+  sent. It creates `notification_events` communication intent,
+  `notification_deliveries` provider-attempt telemetry, and
+  `document_delivery_events.send_requested` evidence before delivery. It records
+  `sent` evidence when Postmark accepts the email and `failed` evidence when
+  activation/config/provider checks block or fail delivery.
+- Provider-backed warranty email sends a customer-safe portal
+  `/portal/warranty-documents/:id` review/sign link. If Postmark is not
+  configured or the organization is locked for production sends, the action
+  records failed/no-send telemetry and does not pretend the email was sent.
+  Email delivery does not update warranty document status, signer status,
+  signature events, invoices, payments, jobs, service tickets, or contract
+  signature behavior.
+- Estimate Workspace now supports the same guarded provider-backed review-link
+  email pattern for draft or rejected estimates with project-scoped portal
+  recipients. The action creates `notification_events` communication intent,
+  `notification_deliveries` provider-attempt telemetry, and
+  `document_delivery_events.send_requested` evidence before delivery. It records
+  `sent` evidence when Postmark accepts the email and records `failed` evidence
+  when activation/config/provider checks block or fail delivery. Provider email
+  delivery does not approve/reject the estimate, create contracts, create
+  invoices, mutate payments, or touch contract/warranty signature state.
 - Project, Customer, and Job Workspaces now show compact read-only warranty
   document summaries with warranty date ranges, signer counts, requested/signed
   counts, latest signature event type/date, and links to the canonical warranty
   document and print/save route. These summaries do not load rendered document
   content into workspace panels.
+- Portal Project Workspace now shows customer-safe issued/sent/viewed/signed
+  warranty documents linked to the accessible project. It links to
+  `/portal/warranty-documents/:id`, shows the current portal user's signer
+  status where available, and keeps internal service-ticket details hidden.
+- `/portal/warranty-documents/:id` lets an authorized portal customer review
+  the canonical warranty document, see customer-safe project/warranty context,
+  print/save, and sign or decline only when their authenticated portal email
+  matches an eligible customer signer. Sign/decline actions append immutable
+  `document_signature_events`, update `document_signers`, and set
+  `warranty_documents.status = signed` only after all active customer signers
+  are signed. Decline records signer state and an event but does not void the
+  warranty document.
 - Focused tests cover warranty template rendering, HTML escaping, migration
   shape, relationship/RLS guardrails, signer input validation, signer status
   transitions, signer summary mapping, and excluded deferred systems.
 
 Not implemented in this slice:
 
-- send-through-system workflow
-- customer portal warranty review or request flow
-- customer signature, contractor countersign, outbound delivery, or delivery
-  proof
+- customer portal service request flow or customer-safe service-ticket status
+- provider callbacks, open/click/bounce reconciliation, resend/retry
+  orchestration, portal-visible delivery proof, contractor countersign, or
+  provider e-sign
 - stored generated PDF files as document truth
 - billing automation, manufacturer claims, invoice/payment mutation, or
   job-costing mutation
-- warranty/service time clocking
+- warranty document signing does not mutate service/warranty time, payroll, or
+  job costing
 - AI drafting or automation
+
+## Estimate / Invoice / Contract Delivery Evidence
+
+The first cross-document delivery evidence expansion is implemented for
+estimates, invoices, and contracts. Contracts now support both manual evidence
+and the guarded provider-backed send-for-signature email path, while still
+keeping delivery evidence separate from the existing contract signature
+workflow.
+
+Implemented behavior:
+
+- `document_delivery_events.subject_type` supports `warranty_document`,
+  `estimate`, `invoice`, and `contract`.
+- Database validation requires estimate, invoice, and contract subjects to
+  belong to the same company as the event.
+- Estimate Workspace, Invoice Workspace, and Contract Workspace show bounded
+  Delivery History panels that list event type, recipient, channel, note, and
+  created date.
+- Owner/admin/manager users can record manual/internal/print evidence from the
+  supported document workspaces.
+- Estimate Workspace can send a provider-backed customer portal review link to
+  an active project-scoped portal recipient. That send appends
+  `send_requested`, then `sent` or `failed` delivery evidence, and uses the
+  existing estimate customer-event/portal tracking path only after provider
+  acceptance.
+- Invoice Workspace can send a provider-backed customer portal review/payment
+  link for sent or partially paid invoices with an open balance and active
+  project-scoped portal recipients. That send appends `send_requested`, then
+  `sent` or `failed` delivery evidence, but it does not start checkout, create
+  payments, write `payment_events`, mark invoices paid/partially paid, or change
+  invoice status.
+- Contract send-for-signature now attempts provider-backed email delivery to the
+  customer signer after the existing contract signature workflow succeeds. It
+  appends `send_requested`, then `sent` or `failed` delivery evidence, while
+  `contract_signature_events`, `contract_signers`, and existing contract
+  status/readiness fields remain the signature workflow source of truth.
+- Delivery evidence remains append-only and evidence-only.
+- Contract provider delivery evidence does not mark signers signed, create
+  signed/declined/countersign events, update readiness beyond the existing
+  send-for-signature path, or mirror portal view/sign/decline/countersign
+  behavior.
+
+Not implemented:
+
+- automatic contract signature-event mirroring or contract signature migration
+- provider callbacks/webhooks
+- resend/retry orchestration
+- estimate/invoice/contract status automation
+- portal approval mutation, payment mutation, payment event mutation, or
+  signature mutation
+- stored PDF generation or portal-visible delivery proof
 
 ## Canonical Revision Snapshots
 
@@ -1570,6 +1683,7 @@ Implemented:
   - `communication_messages` now have provider-neutral direction, source kind, channel kind, and occurrence timestamp fields for future timelines
   - `gatekeeper_artifacts` stores tenant-scoped, reviewable memory artifacts such as call summaries, transcript placeholders, extracted requirements, commitments, risk signals, workflow observations, and onboarding notes
   - `gatekeeper_action_suggestions` stores tenant-scoped proposed actions requiring human review, with no execution behavior
+  - `gatekeeper_execution_attempts` stores tenant-scoped controlled execution ledger rows for execution requests, attempts, idempotency, result linkage, and failure/audit metadata; the first implemented execution path is limited to reviewed `create_opportunity` requests through the Opportunities-owned creation boundary
   - lightweight server-side utilities can list/create/review GateKeeper artifacts and suggestions against canonical subjects, threads, and messages
 - first contractor-side GateKeeper review queue at `/gatekeeper`
   - shows tenant-scoped memory artifacts and action suggestions from the canonical GateKeeper tables
@@ -1583,10 +1697,38 @@ Implemented:
   - manual simulation now flows through the first concrete provider-neutral GateKeeper source adapter before persistence; the adapter normalizes source family, channel, direction, participant hints, raw text, optional subject link, idempotency key, and review-only artifact/suggestion drafts
   - demo fixtures are static demo-only payloads over the same manual source adapter path and produce reviewable GateKeeper artifacts/suggestions only
   - when a safe existing opportunity/customer/project subject link is provided, manual simulation can attach the source text to the canonical communication thread/message foundation; otherwise it seeds GateKeeper review data without inventing a thread or business record
+  - GateKeeper operational memory panels now appear on Project, Customer, and Lead/Opportunity workspaces; they show linked artifacts, action suggestions, and communication evidence for the current canonical subject, with links back to `/gatekeeper` for review
+  - those subject memory panels now include an internal GateKeeper note form that sends contractor-entered notes through the provider-neutral internal-note adapter, creates internal communication evidence where supported, creates a reviewable `workflow_observation` artifact, and creates optional review-only suggestions only for explicit follow-up, estimate, invoice, contract, or scheduling concern note types
+  - action suggestion cards include a focused review-detail drawer that shows suggestion identity, source references, linked subject context, rationale, future-action preview details, blockers, validation requirements, and display-only proposed payload content
+  - `create_opportunity` suggestions now get a specialized opportunity draft preview in that drawer, showing safely extracted contact, service, contact method, location, notes, requested visit text, missing recommended fields, future validation requirements, and blocked creation status
+  - `create_opportunity` suggestions now also include a confirmation preview panel that lets the contractor inspect and edit a future opportunity draft, see read-only duplicate warnings, see missing recommended fields, and save/request execution state before the final controlled action appears
+  - the confirmation panel can explicitly save a `confirmation_started` draft to `gatekeeper_execution_attempts`; this ledger write stores the original proposed payload snapshot, the edited draft payload as ledger-only preflight data, preflight warnings, idempotency metadata, and source suggestion/artifact/thread/message references only
+  - saving that confirmation draft does not call opportunity actions, does not execute the suggestion, and does not create or update contacts/opportunities/customers/projects/estimates/tasks/schedules/messages
+  - saved `create_opportunity` confirmation drafts now reload into a preflight summary in the suggestion drawer; the preflight uses the saved ledger draft, reruns duplicate warnings against that saved draft, reports missing fields, names Leads/Opportunities validation, and only becomes executable from an `execution_requested` ledger row
+  - an approved `create_opportunity` suggestion with a saved draft that passes required-field preflight and has no high-confidence duplicate warning can now be explicitly marked as `execution_requested` in `gatekeeper_execution_attempts`; this updates only the GateKeeper ledger request fields and still does not call Opportunities actions or create/update contacts/opportunities/customers/projects/estimates/tasks/schedules/messages
+  - an eligible `execution_requested` `create_opportunity` ledger row can now run the first controlled GateKeeper execution action: the server rechecks the approved suggestion, saved draft, required fields, and duplicate warnings, maps only allowed draft fields, calls the Opportunities-owned typed creation helper, creates exactly one canonical opportunity through the existing opportunity workflow, and then updates the ledger to `executed` with `result_subject_type = 'opportunity'` and the created opportunity id
+  - failed canonical opportunity creation updates the same ledger row to `failed` with a safe error message; if the opportunity is created but the post-create ledger linkage fails, the action reports that partial-linkage risk and does not retry creation
+  - executed and failed `create_opportunity` ledger rows now surface back into `/gatekeeper`: suggestion cards show compact result badges, the suggestion detail drawer/preflight panel shows executed/failed state, created opportunity links point to the canonical lead/opportunity workspace, failed rows show safe error copy, and executed/failed rows do not show the final create action again
+  - GateKeeper subject memory panels now include read-only execution-result context for linked suggestions or result subjects when ledger rows are executed or failed; this is a company-scoped ledger read model only and does not create new timeline/event records
+  - the duplicate preview for `create_opportunity` checks bounded tenant-scoped opportunities, customers, contacts, and prior GateKeeper execution-attempt ledger rows by exact email, normalized phone, name, and service/location context; matches are warnings only and do not merge, link, or create records, though high-confidence warnings block the ledger-only execution-request transition until reviewed in a later slice
+  - the Phase 1 `/gatekeeper` copy is now frozen around the implemented state ladder: review approval is not execution, saving a confirmation draft is ledger-only, requesting future execution still creates no opportunity, and `Create opportunity` appears only for the final controlled `create_opportunity` execution state
+  - `schedule_site_assessment` suggestions now get a specialized site assessment scheduling preview in that drawer, showing safely extracted contact, service, contact method, location, requested timing text, scheduling notes, linked subject context, missing recommended fields, future validation requirements, and blocked scheduling status
 - GateKeeper source adapter planning foundation:
   - [docs/gatekeeper-source-adapters.md](C:/FloorConnector/docs/gatekeeper-source-adapters.md) defines the future provider-neutral ingestion boundary for manual, phone, voice-agent, transcription, chat, SMS, email, portal, internal-note, and support/onboarding sources
+  - [docs/gatekeeper-controlled-action-bridge.md](C:/FloorConnector/docs/gatekeeper-controlled-action-bridge.md) defines the future safety boundary between reviewable suggestions and explicit canonical workflow execution
   - `apps/web/lib/gatekeeper/source-adapters.ts` defines planning-only source-family/channel/direction/event/result types and a pure adapter-result helper
   - `apps/web/lib/gatekeeper/manual-source-adapter.ts` implements the first safe manual adapter pattern over the same contract, but it still only prepares provider-neutral communication context, GateKeeper artifacts, and GateKeeper action suggestions for review
+  - `apps/web/lib/gatekeeper/internal-note-adapter.ts` implements a provider-neutral internal-note adapter for contractor-entered operational notes on project/customer/opportunity records
+  - `apps/web/lib/gatekeeper/action-bridge.ts` defines risk/owner/preview-policy helpers for controlled action planning; `create_opportunity` is the only suggestion type marked execution-capable in the current slice, and it still requires an approved suggestion plus an `execution_requested` ledger row
+  - `apps/web/lib/gatekeeper/execution-preview.ts` builds non-mutating future-action previews for GateKeeper suggestions, including owner, risk tier, validation requirements, blocked/request-required execution status, and display-only proposed payload previews
+  - `apps/web/lib/gatekeeper/execution-ledger.ts` builds pure non-persisting execution ledger draft objects and idempotency keys for future controlled execution attempts
+  - `apps/web/lib/gatekeeper/create-opportunity-confirmation.ts` builds the pure display model for the `create_opportunity` confirmation preview; the display helper is draft/readiness presentation only, while the explicit save action writes only the GateKeeper execution ledger and never writes canonical records
+  - `apps/web/lib/gatekeeper/create-opportunity-execution-draft.ts` builds the ledger-only `create_opportunity` confirmation draft payload and preflight warnings used by the explicit save action
+  - `apps/web/lib/gatekeeper/create-opportunity-preflight.ts` and `apps/web/lib/gatekeeper/create-opportunity-preflight-data.ts` build and load preflight summaries from saved ledger drafts; they read `gatekeeper_execution_attempts` plus duplicate-warning context only, build executed/failed result display state, and do not mutate canonical records
+  - `apps/web/lib/gatekeeper/create-opportunity-execution-request.ts` defines the pure eligibility and ledger-update shape for the `create_opportunity` execution-request status transition; the server action updates only `gatekeeper_execution_attempts.status`, `requested_by`, `requested_at`, and updater metadata
+  - `apps/web/lib/gatekeeper/create-opportunity-execution.ts` defines the controlled execution eligibility, allowed-field mapper, safe ledger success/failure updates, and error sanitization for the first real `create_opportunity` execution path
+  - `apps/web/lib/gatekeeper/create-opportunity-duplicates.ts` and `apps/web/lib/gatekeeper/create-opportunity-duplicates-data.ts` build and load the read-only `create_opportunity` duplicate preview; they query existing tenant records for warning context only and do not import mutation actions
+  - `apps/web/lib/opportunities/create-opportunity-service.ts` is the Opportunities-owned typed creation boundary used by GateKeeper execution; it validates with `opportunityInputSchema` and calls the existing `createOpportunity` flow instead of exposing the FormData/redirect action
   - this adapter layer does not call providers, call AI, create webhooks, add credentials, add schema, send communications, or execute suggestions
 - first contractor-side communication review surface at `/communications`
   - review-first queue over canonical threads and unread notifications
@@ -1621,11 +1763,14 @@ Current design notes:
 - appointment reminder utilities and UI do not create reminder schedules, automate sends, use SMS, mutate appointment status/notes, or expose anything to customers
 - communication messages are immutable and extend shared workflow continuity rather than replacing estimate, contract, invoice, or change-order records
 - GateKeeper artifacts and action suggestions extend canonical communication memory without creating a disconnected AI memory silo, duplicate CRM, autonomous workflow engine, provider-specific table set, or portal-only communication copy
-- approved GateKeeper action suggestions are review state only; they do not execute tasks, send messages, schedule appointments, update projects, mutate estimates/contracts/invoices, call providers, or run AI
+- approved GateKeeper action suggestions are review state only; approval still does not execute tasks, send messages, schedule appointments, update projects, mutate estimates/contracts/invoices, call providers, run AI, or create opportunities
 - the `/gatekeeper` route is contractor-only review surface over the GateKeeper memory foundation; it is not a customer portal, AI assistant runtime, provider inbox, or automation queue
 - GateKeeper manual simulation creates reviewable memory and proposed suggestion rows only; suggestions remain `proposed` until reviewed and there is no execution path behind the seed form. The manual path is now the first source-adapter implementation, but it remains deterministic, human-entered, provider-free, and review-only.
 - GateKeeper demo fixtures are QA/demo scaffolding only; they reuse the manual source adapter and do not add live data ingestion, fake customers, fake projects, fake schedules, or automatic execution
-- GateKeeper source adapters are currently limited to the manual simulation implementation plus provider-neutral contracts/documentation; future providers must enter through normalized events and still land in canonical communication messages, memory artifacts, and proposed action suggestions
+- GateKeeper source adapters are currently limited to manual simulation and internal-note implementations plus provider-neutral contracts/documentation; future providers must enter through normalized events and still land in canonical communication messages, memory artifacts, and proposed action suggestions
+- GateKeeper subject memory panels can now create contractor-only internal notes, but they do not review suggestions inline, execute proposed payloads, send messages, schedule work, create tasks or business records, mutate canonical workflow state, run AI, call providers, or expose anything to the portal
+- GateKeeper controlled action bridge helpers classify suggestion risk and owner modules, and `/gatekeeper` can show non-mutating future-action previews for suggestions in the queue and detail drawer. `create_opportunity` is now the only controlled execution-capable action, and only after a separate confirmation draft, duplicate/preflight pass, approved review, and `execution_requested` ledger state; review approval remains review state only.
+- GateKeeper execution attempts are ledger/audit infrastructure for controlled execution state. They separate execution state from suggestion review state, record `create_opportunity` confirmation drafts, reload saved drafts into preflight, accept an explicit `execution_requested` transition, link a successful controlled create to the canonical opportunity id, and surface executed/failed results in the GateKeeper queue, drawer, and subject memory panel. GateKeeper still does not create customers, projects, estimates, tasks, jobs, schedules, invoices, contracts, payments, messages, portal records, provider calls, or AI output from those ledger rows.
 - portal/customer access to opportunity communication is not implemented; the new customer-visible flag is stored for future safe display and RLS blocks internal message reads from portal users
 - internal lead follow-up visibility is implemented as a contractor-side read model over canonical opportunities and opportunity communication recency; it does not send customer reminders, auto-create work items, or expose internal follow-up notes to portal users
 - appointment create/edit surfaces now expose explicit customer-visible appointment controls plus separate internal appointment notes and customer-visible appointment notes; portal home and project workspaces can now display project-linked customer-visible appointments using only customer-safe fields
@@ -2139,6 +2284,7 @@ Not implemented yet:
 Future-looking note:
 
 - the public homepage and early-access intake are implemented for FloorConnector onboarding, but contractor-owned websites, tenant-owned domains, SEO/service/location pages, landing pages, marketing attribution, generated marketing content, public AI intake, reviews/reputation, testimonials, and before/after galleries are target platform direction only; they should eventually feed the same canonical opportunity/customer/project workflow rather than becoming a separate website, CRM, marketing-contact, or AI knowledge system.
+- future GateKeeper/communications planning now explicitly supports multi-line and role-based number strategy as target architecture only: company main lines, owner lines, sales rep/account manager/estimator/admin/team lines, after-hours assistant lines, campaign/tracking numbers, branch/location numbers, forwarding, port-in, and per-number port-out should all feed the same canonical communications and GateKeeper memory layer rather than creating per-user phone silos, campaign-number silos, or separate CRM inboxes.
 - the current vendors, people, compliance, jobs, daily logs, time, communication, notification, and portal access foundations could support future scoped collaboration, but no contractor network, marketplace, open contractor chat, or external subcontractor/vendor collaboration surface is implemented today.
 - the current projects, estimates, estimate line items, reusable catalog item foundations, platform starter catalog foundations, organization-owned catalog items, document-template/settings foundations, selected-system schema foundation, files/attachments foundations, site-assessment fields, communication/notification foundations, and customer/project workflow could support future visual/product/finish selection, selected-system/spec workflows, shared file/evidence linking, delivery proof, activity timelines, measurement-driven estimating, System Template generation, add-ons/options, Templates & Systems administration, Takeoff & Scope Intelligence, and AI Capture.
 - the current lead Scope Intake fields can now prefill reviewable Estimate Editor system inputs from captured measurements, but they do not automatically generate estimate lines, SOW, labor plans, material plans, takeoff records, AI suggestions, invoices, or customer-facing commercial scope.
@@ -2158,7 +2304,7 @@ Implemented UI behavior now:
 
 - Project remains the primary workflow and readiness hub.
 - Dashboard emphasizes high-signal priorities before passive metrics.
-- Dashboard now includes an Operational Cockpit section that groups existing notifications, deterministic project cues, approved-estimate handoffs, ready-project/job handoffs, customer/signature/payment waiting states, and field/production follow-up into `Needs attention`, `Ready to move`, `Waiting on customer/payment/signature`, and `Field/production follow-up` buckets. The buckets are presentation-only over existing records and links.
+- Dashboard now includes an Operational Cockpit section that groups existing notifications, deterministic project cues, approved-estimate handoffs, ready-project/job handoffs, service/warranty ticket and service-job attention, warranty document signature-request visibility, customer/signature/payment waiting states, and field/production follow-up into `Needs attention`, `Ready to move`, `Waiting on customer/payment/signature`, and `Field/production follow-up` buckets. The buckets are presentation-only over existing records and links.
 - Project, Estimate, Contract, Invoice, and Job Workspaces lead with next-action and workflow-state context before supporting panels.
 - Project Workspace now includes a compact workflow summary that names current stage, blocker, next action, and the related linked record or Project Workspace fallback driving the next step. This reuses existing readiness snapshots, workflow guidance preferences, linked-record recency, and next-action calculations without changing readiness behavior.
 - Estimate, Contract, Invoice, Job, and Project Workspaces share the same baseline grammar: compact header band, semantic status pill, next-action card, workflow summary, state facts, primary record surface, context rail, connected records, and internal follow-through sections.

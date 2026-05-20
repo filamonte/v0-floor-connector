@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { AppEmptyState } from "@/components/app-empty-state";
 import { ContractorWorkspacePage } from "@/components/contractor-workspace-page";
+import { GateKeeperSuggestionDetailDrawer } from "@/components/gatekeeper-suggestion-detail-drawer";
 import {
   acceptGateKeeperArtifactAction,
   approveGateKeeperSuggestionReviewAction,
@@ -17,6 +18,11 @@ import {
   gateKeeperManualSeedSourceOptions,
   gateKeeperManualSeedSubjectOptions
 } from "@/lib/gatekeeper/manual-seed";
+import { buildGateKeeperExecutionPreview } from "@/lib/gatekeeper/execution-preview";
+import type { GateKeeperCreateOpportunityDuplicatePreview } from "@/lib/gatekeeper/create-opportunity-duplicates";
+import { getGateKeeperCreateOpportunityDuplicatePreviews } from "@/lib/gatekeeper/create-opportunity-duplicates-data";
+import type { GateKeeperCreateOpportunityPreflight } from "@/lib/gatekeeper/create-opportunity-preflight";
+import { getGateKeeperCreateOpportunityPreflights } from "@/lib/gatekeeper/create-opportunity-preflight-data";
 import {
   getGateKeeperReviewQueue,
   getGateKeeperSubjectContext
@@ -93,6 +99,17 @@ function formatLabel(value: string) {
   return value.replaceAll("_", " ");
 }
 
+function formatReviewStatus(value: string) {
+  switch (value) {
+    case "approved":
+      return "reviewed";
+    case "accepted":
+      return "reviewed";
+    default:
+      return formatLabel(value);
+  }
+}
+
 function truncate(value: string, maxLength = 340) {
   if (value.length <= maxLength) {
     return value;
@@ -142,6 +159,16 @@ function getSuggestionStatusTone(status: GateKeeperActionSuggestionStatus) {
   }
 }
 
+function getExecutionResultTone(
+  status: NonNullable<
+    GateKeeperCreateOpportunityPreflight["executionResult"]
+  >["status"]
+) {
+  return status === "executed"
+    ? "border-emerald-200 bg-emerald-50 text-emerald-800"
+    : "border-rose-200 bg-rose-50 text-rose-800";
+}
+
 function getArtifactSourceLabel(artifact: GateKeeperArtifact) {
   if (artifact.communicationMessageId) {
     return `Message ${artifact.communicationMessageId.slice(0, 8)}`;
@@ -168,6 +195,21 @@ function getSuggestionSourceLabel(suggestion: GateKeeperActionSuggestion) {
   }
 
   return "No source artifact";
+}
+
+function getSuggestionSourceContext(suggestion: GateKeeperActionSuggestion) {
+  return {
+    artifactLabel: suggestion.sourceArtifactId
+      ? `Artifact ${suggestion.sourceArtifactId.slice(0, 8)}`
+      : null,
+    messageLabel: suggestion.communicationMessageId
+      ? `Message ${suggestion.communicationMessageId.slice(0, 8)}`
+      : null,
+    sourceLabel: getSuggestionSourceLabel(suggestion),
+    threadLabel: suggestion.communicationThreadId
+      ? `Thread ${suggestion.communicationThreadId.slice(0, 8)}`
+      : null
+  };
 }
 
 function matchesArtifactStatus(
@@ -372,13 +414,24 @@ function ArtifactCard({
 }
 
 function SuggestionCard({
+  duplicatePreview,
+  preflight,
   returnTo,
   suggestion
 }: {
+  duplicatePreview: GateKeeperCreateOpportunityDuplicatePreview | null;
+  preflight: GateKeeperCreateOpportunityPreflight | null;
   returnTo: string;
   suggestion: GateKeeperActionSuggestion;
 }) {
   const isProposed = suggestion.status === "proposed";
+  const executionPreview = buildGateKeeperExecutionPreview(suggestion);
+  const executionResult = preflight?.executionResult ?? null;
+  const subjectContext = getGateKeeperSubjectContext({
+    subjectId: suggestion.subjectId,
+    subjectType: suggestion.subjectType
+  });
+  const sourceContext = getSuggestionSourceContext(suggestion);
 
   return (
     <article className="border border-[#e5e5e5] bg-white px-4 py-4">
@@ -394,8 +447,36 @@ function SuggestionCard({
                 getSuggestionStatusTone(suggestion.status)
               ].join(" ")}
             >
-              {formatLabel(suggestion.status)}
+              {formatReviewStatus(suggestion.status)}
             </span>
+            {executionResult ? (
+              executionResult.href ? (
+                <Link
+                  href={executionResult.href}
+                  className={[
+                    "inline-flex rounded-full border px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] transition hover:opacity-80",
+                    getExecutionResultTone(executionResult.status)
+                  ].join(" ")}
+                >
+                  {executionResult.status === "executed"
+                    ? "Executed"
+                    : "Failed"}{" "}
+                  result
+                </Link>
+              ) : (
+                <span
+                  className={[
+                    "inline-flex rounded-full border px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.14em]",
+                    getExecutionResultTone(executionResult.status)
+                  ].join(" ")}
+                >
+                  {executionResult.status === "executed"
+                    ? "Executed"
+                    : "Failed"}{" "}
+                  result
+                </span>
+              )
+            ) : null}
           </div>
 
           <h3 className="mt-3 text-base font-semibold text-slate-950">
@@ -413,6 +494,50 @@ function SuggestionCard({
             <pre className="mt-2 max-h-52 overflow-auto whitespace-pre-wrap text-xs leading-5 text-slate-600">
               {formatJsonPreview(suggestion.proposedPayload)}
             </pre>
+          </div>
+
+          <div className="mt-4 rounded-[4px] border border-[#e4d7ca] bg-[#fbf5ee] px-3 py-3">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#666666]">
+                  Future action preview
+                </p>
+                <p className="mt-1 text-xs leading-5 text-slate-600">
+                  Owner: {formatLabel(executionPreview.owner)} | Risk:{" "}
+                  {formatLabel(executionPreview.riskTier)} | canExecuteNow:{" "}
+                  {String(executionPreview.canExecuteNow)}
+                </p>
+              </div>
+              <GateKeeperSuggestionDetailDrawer
+                createdLabel={formatDateTime(suggestion.createdAt)}
+                duplicatePreview={duplicatePreview}
+                executionPreview={executionPreview}
+                preflight={preflight}
+                returnTo={returnTo}
+                sourceContext={sourceContext}
+                subjectContext={subjectContext}
+                suggestion={suggestion}
+              />
+            </div>
+            <p className="mt-2 text-xs leading-5 text-amber-900">
+              {executionPreview.blockers[0]?.message ??
+                "Execution requires a separate controlled request and owning-workflow validation."}
+            </p>
+            {executionResult ? (
+              <div className="mt-3 rounded-[4px] border border-white/70 bg-white px-3 py-2 text-xs leading-5 text-slate-700">
+                <p className="font-semibold">
+                  Execution result: {executionResult.message}
+                </p>
+                {executionResult.href ? (
+                  <Link
+                    href={executionResult.href}
+                    className="mt-1 inline-flex font-semibold text-[#8f5b32] transition hover:text-[#6c4324]"
+                  >
+                    Open {executionResult.label}
+                  </Link>
+                ) : null}
+              </div>
+            ) : null}
           </div>
 
           <div className="mt-4 flex flex-wrap gap-2">
@@ -520,6 +645,13 @@ export default async function GateKeeperPage({
   const visibleSuggestions = queue.suggestions.filter((suggestion) =>
     matchesSuggestionStatus(suggestion, status)
   );
+  const duplicatePreviews =
+    await getGateKeeperCreateOpportunityDuplicatePreviews({
+      suggestions: visibleSuggestions
+    });
+  const preflights = await getGateKeeperCreateOpportunityPreflights({
+    suggestions: visibleSuggestions
+  });
   const activeItems =
     view === "memory" ? visibleArtifacts.length : visibleSuggestions.length;
 
@@ -548,7 +680,7 @@ export default async function GateKeeperPage({
           </div>
           <div className="border border-[#e5e5e5] bg-white px-4 py-3">
             <p className="text-[11px] uppercase tracking-[0.14em] text-[#666666]">
-              Accepted reviews
+              Reviewed items
             </p>
             <p className="mt-1 text-2xl font-semibold tracking-tight text-[#171717]">
               {queue.summary.acceptedReviewedCount}
@@ -912,6 +1044,10 @@ export default async function GateKeeperPage({
               {visibleSuggestions.map((suggestion) => (
                 <SuggestionCard
                   key={suggestion.id}
+                  duplicatePreview={
+                    duplicatePreviews.get(suggestion.id) ?? null
+                  }
+                  preflight={preflights.get(suggestion.id) ?? null}
                   returnTo={returnTo}
                   suggestion={suggestion}
                 />
@@ -922,7 +1058,7 @@ export default async function GateKeeperPage({
               <AppEmptyState
                 eyebrow="No action suggestions"
                 title="Future GateKeeper suggestions will wait here for approval"
-                description="Follow-up ideas, scheduling recommendations, review flags, and workflow observations will be reviewable here before any future execution path exists. This queue currently updates review state only."
+                description="Follow-up ideas, scheduling recommendations, review flags, and workflow observations will be reviewable here before any controlled execution path is available. Review state remains separate from execution."
               />
             </div>
           )}

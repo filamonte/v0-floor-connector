@@ -23,6 +23,9 @@ import type {
   ContractInternalApprovalStatus,
   DocumentSignatureEventType,
   DocumentSignatureSubjectType,
+  DocumentDeliveryChannel,
+  DocumentDeliveryEventType,
+  DocumentDeliverySubjectType,
   DocumentSignerRole,
   DocumentSignerStatus,
   DocumentTemplateStatus,
@@ -274,6 +277,32 @@ export const documentSignatureEventTypes = [
   "declined",
   "voided"
 ] as const satisfies readonly DocumentSignatureEventType[];
+
+export const documentDeliverySubjectTypes = [
+  "warranty_document",
+  "estimate",
+  "invoice",
+  "contract"
+] as const satisfies readonly DocumentDeliverySubjectType[];
+
+export const documentDeliveryEventTypes = [
+  "delivery_recorded",
+  "send_requested",
+  "sent",
+  "viewed",
+  "failed",
+  "bounced",
+  "opened",
+  "clicked"
+] as const satisfies readonly DocumentDeliveryEventType[];
+
+export const documentDeliveryChannels = [
+  "internal",
+  "portal",
+  "email",
+  "print",
+  "manual"
+] as const satisfies readonly DocumentDeliveryChannel[];
 
 export const paymentStatuses = [
   "pending",

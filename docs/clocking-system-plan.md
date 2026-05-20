@@ -43,7 +43,14 @@ The service/warranty time slice now adds the first post-installation time attrib
 - Service Ticket detail shows linked punch events and time cards, and routes users to `/time` with service ticket/project/job context prefilled.
 - Time Card Workspace shows linked service/warranty context when present.
 
-Still deferred: service visit scheduling, warranty/service labor reporting, billing automation, manufacturer claims, payroll export, GPS verification, job-costing mutation, equipment/material usage automation, portal service requests, offline mode, and AI automation.
+Service visit scheduling foundation now exists through linked canonical service
+jobs, so service/warranty time can be prefilled against the ticket and the
+follow-up job when available.
+
+Still deferred: warranty/service labor reporting, billing automation,
+manufacturer claims, payroll export, GPS verification, job-costing mutation,
+equipment/material usage automation, portal service requests, offline mode,
+dispatch-grade service scheduling, and AI automation.
 
 ### First Clocking MVP Checkpoint
 

@@ -6,7 +6,9 @@ import { DetailPanel } from "@/components/detail-panel";
 import { LinkedRecordCard } from "@/components/linked-record-card";
 import {
   addWarrantyDocumentSignerAction,
+  recordWarrantyDocumentDeliveryEventAction,
   requestWarrantyDocumentSignatureAction,
+  sendWarrantyDocumentReviewEmailAction,
   updateWarrantyDocumentDraftAction,
   updateWarrantyDocumentSignerAction,
   voidWarrantyDocumentSignerAction,
@@ -14,6 +16,7 @@ import {
 } from "@/lib/warranty-documents/actions";
 import {
   getWarrantyDocumentById,
+  getWarrantyDocumentDeliveryState,
   getWarrantyDocumentSignatureState
 } from "@/lib/warranty-documents/data";
 import { sanitizeHtml } from "@/lib/html/sanitize";
@@ -53,6 +56,8 @@ export default async function WarrantyDocumentDetailPage({
 
   const signatureState =
     await getWarrantyDocumentSignatureState(warrantyDocumentId);
+  const deliveryState =
+    await getWarrantyDocumentDeliveryState(warrantyDocumentId);
   const canEditDraft = document.status === "draft";
 
   return (
@@ -213,13 +218,162 @@ export default async function WarrantyDocumentDetailPage({
         </DetailPanel>
 
         <DetailPanel
-          title="Internal Signature Routing"
-          description="Manage warranty signers and record request-signature audit events. This does not send customer email or expose portal signing yet."
+          title="Delivery History"
+          description="Evidence-only delivery trail for this canonical warranty document."
         >
           <div className="grid gap-6">
             <div className="rounded-[4px] border border-[#d6d6d6] bg-[#f7f4ef] px-5 py-4 text-sm leading-6 text-slate-700">
-              Request signature records an internal audit event only. Customer
-              portal signing and email delivery are not active yet.
+              Manual rows record internal delivery evidence only. Provider email
+              rows record send attempts and provider acceptance without updating
+              document status or signature state.
+            </div>
+
+            {deliveryState.events.length > 0 ? (
+              <div className="grid gap-3">
+                {deliveryState.events.map((event) => (
+                  <div
+                    key={event.id}
+                    className="rounded-[4px] border border-[#e5e5e5] bg-white px-4 py-4"
+                  >
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <p className="text-sm font-semibold capitalize text-slate-950">
+                        {formatLabel(event.eventType)}
+                      </p>
+                      <p className="text-xs text-slate-500">
+                        {formatDateTime(event.createdAt)}
+                      </p>
+                    </div>
+                    <div className="mt-2 flex flex-wrap gap-2 text-xs font-medium capitalize">
+                      <span className="rounded-full border border-[#d6d6d6] bg-[#f7f4ef] px-3 py-1 text-slate-700">
+                        {formatLabel(event.channel)}
+                      </span>
+                      {event.provider ? (
+                        <span className="rounded-full border border-[#d6d6d6] bg-white px-3 py-1 text-slate-700">
+                          {formatLabel(event.provider)}
+                        </span>
+                      ) : null}
+                      {event.recipientRole ? (
+                        <span className="rounded-full border border-[#d6d6d6] bg-white px-3 py-1 text-slate-700">
+                          {formatLabel(event.recipientRole)}
+                        </span>
+                      ) : null}
+                    </div>
+                    <p className="mt-3 text-sm leading-6 text-slate-600">
+                      {event.recipientName ?? "No recipient name recorded."}
+                      {event.recipientEmail ? ` - ${event.recipientEmail}` : ""}
+                    </p>
+                    <p className="mt-1 text-sm leading-6 text-slate-600">
+                      {formatEventNote(event.eventNote)}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="rounded-[4px] border border-dashed border-[#d6d6d6] bg-white px-5 py-5 text-sm leading-6 text-slate-600">
+                No delivery evidence has been recorded yet.
+              </div>
+            )}
+
+            <form
+              action={recordWarrantyDocumentDeliveryEventAction}
+              className="grid gap-4 rounded-[4px] border border-[#e5e5e5] bg-white px-5 py-5"
+            >
+              <input
+                type="hidden"
+                name="warrantyDocumentId"
+                value={document.id}
+              />
+              <div className="grid gap-4 md:grid-cols-3">
+                <label className="block">
+                  <span className="mb-2 block text-xs font-medium uppercase tracking-[0.18em] text-slate-500">
+                    Evidence type
+                  </span>
+                  <select
+                    name="eventType"
+                    defaultValue="delivery_recorded"
+                    className="w-full rounded-[4px] border border-[#d6d6d6] bg-white px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-[#ef7d32]"
+                  >
+                    <option value="delivery_recorded">Delivery recorded</option>
+                    <option value="send_requested">Send requested</option>
+                  </select>
+                </label>
+                <label className="block">
+                  <span className="mb-2 block text-xs font-medium uppercase tracking-[0.18em] text-slate-500">
+                    Channel
+                  </span>
+                  <select
+                    name="channel"
+                    defaultValue="internal"
+                    className="w-full rounded-[4px] border border-[#d6d6d6] bg-white px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-[#ef7d32]"
+                  >
+                    <option value="internal">Internal</option>
+                    <option value="manual">Manual</option>
+                    <option value="print">Print</option>
+                  </select>
+                </label>
+                <label className="block">
+                  <span className="mb-2 block text-xs font-medium uppercase tracking-[0.18em] text-slate-500">
+                    Recipient role
+                  </span>
+                  <input
+                    name="recipientRole"
+                    placeholder="Customer, billing contact..."
+                    className="w-full rounded-[4px] border border-[#d6d6d6] bg-white px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-[#ef7d32]"
+                  />
+                </label>
+              </div>
+              <div className="grid gap-4 md:grid-cols-2">
+                <label className="block">
+                  <span className="mb-2 block text-xs font-medium uppercase tracking-[0.18em] text-slate-500">
+                    Recipient name
+                  </span>
+                  <input
+                    name="recipientName"
+                    className="w-full rounded-[4px] border border-[#d6d6d6] bg-white px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-[#ef7d32]"
+                  />
+                </label>
+                <label className="block">
+                  <span className="mb-2 block text-xs font-medium uppercase tracking-[0.18em] text-slate-500">
+                    Recipient email
+                  </span>
+                  <input
+                    type="email"
+                    name="recipientEmail"
+                    className="w-full rounded-[4px] border border-[#d6d6d6] bg-white px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-[#ef7d32]"
+                  />
+                </label>
+              </div>
+              <label className="block">
+                <span className="mb-2 block text-xs font-medium uppercase tracking-[0.18em] text-slate-500">
+                  Evidence note
+                </span>
+                <textarea
+                  name="eventNote"
+                  rows={3}
+                  placeholder="Example: Printed and handed to owner during closeout."
+                  className="w-full rounded-[4px] border border-[#d6d6d6] bg-white px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-[#ef7d32]"
+                />
+              </label>
+              <button
+                type="submit"
+                className="justify-self-start rounded-[4px] border border-[#171717] bg-[#171717] px-4 py-2 text-sm font-medium text-white transition hover:bg-[#2a2a2a]"
+              >
+                Record delivery evidence
+              </button>
+            </form>
+          </div>
+        </DetailPanel>
+
+        <DetailPanel
+          title="Internal Signature Routing"
+          description="Manage warranty signers, record request-signature audit events, and send the first guarded warranty review link through the provider boundary."
+        >
+          <div className="grid gap-6">
+            <div className="rounded-[4px] border border-[#d6d6d6] bg-[#f7f4ef] px-5 py-4 text-sm leading-6 text-slate-700">
+              Request signature records an internal audit event only. It does
+              not send customer email by itself. Send review/sign link records
+              notification telemetry and delivery evidence, and does not change
+              signature state.
             </div>
 
             {signatureState.signers.length > 0 ? (
@@ -230,6 +384,13 @@ export default async function WarrantyDocumentDetailPage({
                   const canRequestSignature =
                     signer.status === "pending" ||
                     signer.status === "requested";
+                  const canSendReviewEmail =
+                    signer.signerRole === "customer" &&
+                    (signer.status === "requested" ||
+                      signer.status === "viewed") &&
+                    document.projectId !== null &&
+                    document.status !== "draft" &&
+                    document.status !== "void";
 
                   return (
                     <section
@@ -333,6 +494,25 @@ export default async function WarrantyDocumentDetailPage({
                             className="rounded-[4px] border border-[#171717] bg-[#171717] px-4 py-2 text-sm font-medium text-white transition hover:bg-[#2a2a2a] disabled:cursor-not-allowed disabled:border-slate-300 disabled:bg-slate-300"
                           >
                             Record request
+                          </button>
+                        </form>
+                        <form action={sendWarrantyDocumentReviewEmailAction}>
+                          <input
+                            type="hidden"
+                            name="warrantyDocumentId"
+                            value={document.id}
+                          />
+                          <input
+                            type="hidden"
+                            name="signerId"
+                            value={signer.id}
+                          />
+                          <button
+                            type="submit"
+                            disabled={!canSendReviewEmail}
+                            className="rounded-[4px] border border-[#171717] bg-white px-4 py-2 text-sm font-medium text-slate-900 transition hover:border-[#ef7d32] disabled:cursor-not-allowed disabled:border-slate-300 disabled:bg-slate-100 disabled:text-slate-400"
+                          >
+                            Send review/sign link
                           </button>
                         </form>
                         <form action={voidWarrantyDocumentSignerAction}>
@@ -538,13 +718,13 @@ export default async function WarrantyDocumentDetailPage({
 
         <DetailPanel
           title="Planned Later"
-          description="These need a generalized document signature/delivery layer before warranty can use them safely."
+          description="These remain deferred after the first provider-backed warranty send slice."
         >
           <ul className="space-y-3 text-sm leading-6 text-slate-600">
-            <li>Send warranty through the system</li>
-            <li>Customer review/signature</li>
             <li>Contractor countersign</li>
-            <li>Delivery proof and portal visibility</li>
+            <li>Provider delivery callbacks and bounce/open reconciliation</li>
+            <li>Resend/retry orchestration</li>
+            <li>Portal-visible delivery proof</li>
           </ul>
         </DetailPanel>
       </aside>

@@ -562,6 +562,20 @@ export default async function DashboardPage({
     operationalCockpitReadModel.appointmentFollowUps;
   const cockpitEquipmentWarnings =
     operationalCockpitReadModel.equipmentWarnings;
+  const cockpitHighPriorityServiceTickets =
+    operationalCockpitReadModel.highPriorityServiceTickets;
+  const cockpitStaleOpenServiceTickets =
+    operationalCockpitReadModel.staleOpenServiceTickets;
+  const cockpitServiceTicketsMissingServiceJob =
+    operationalCockpitReadModel.serviceTicketsMissingServiceJob;
+  const cockpitUnscheduledServiceJobs =
+    operationalCockpitReadModel.unscheduledServiceJobs;
+  const cockpitUpcomingServiceJobs =
+    operationalCockpitReadModel.upcomingServiceJobs;
+  const cockpitInProgressServiceJobs =
+    operationalCockpitReadModel.inProgressServiceJobs;
+  const cockpitWarrantyDocumentsNeedingSignature =
+    operationalCockpitReadModel.warrantyDocumentsNeedingSignature;
   const operationalCockpitBuckets: OperationalGuidanceBucket[] = [
     {
       key: "needs-attention",
@@ -608,6 +622,45 @@ export default async function DashboardPage({
             : null,
           secondaryLabel: invoice.project ? "Open project" : null,
           badge: "Overdue"
+        })),
+        ...cockpitHighPriorityServiceTickets.map((ticket) => ({
+          id: `service-ticket-priority-${ticket.id}`,
+          title: ticket.title,
+          description: `${ticket.customer?.name ?? "Unknown customer"} / ${ticket.project?.name ?? "No project linked"}`,
+          why: `${labelize(ticket.priority)} priority ${labelize(ticket.ticketType)} ticket is still ${labelize(ticket.status)}.`,
+          href: `/service-tickets/${ticket.id}`,
+          actionLabel: "Open ticket",
+          secondaryHref: ticket.project
+            ? `/projects/${ticket.project.id}`
+            : null,
+          secondaryLabel: ticket.project ? "Open project" : null,
+          badge: labelize(ticket.priority)
+        })),
+        ...cockpitServiceTicketsMissingServiceJob.map((ticket) => ({
+          id: `service-ticket-no-job-${ticket.id}`,
+          title: ticket.title,
+          description: `${ticket.customer?.name ?? "Unknown customer"} / ${ticket.project?.name ?? "No project linked"}`,
+          why: "This service/warranty ticket has project context but no linked canonical service job yet.",
+          href: `/service-tickets/${ticket.id}`,
+          actionLabel: "Open ticket",
+          secondaryHref: ticket.project
+            ? `/projects/${ticket.project.id}`
+            : null,
+          secondaryLabel: ticket.project ? "Open project" : null,
+          badge: "Needs job"
+        })),
+        ...cockpitStaleOpenServiceTickets.map((ticket) => ({
+          id: `service-ticket-stale-${ticket.id}`,
+          title: ticket.title,
+          description: `${ticket.customer?.name ?? "Unknown customer"} / reported ${formatShortDate(ticket.reportedOn)}`,
+          why: "Open service/warranty work older than 14 days should stay visible for triage.",
+          href: `/service-tickets/${ticket.id}`,
+          actionLabel: "Open ticket",
+          secondaryHref: ticket.project
+            ? `/projects/${ticket.project.id}`
+            : null,
+          secondaryLabel: ticket.project ? "Open project" : null,
+          badge: "Stale"
         }))
       ].slice(0, 5)
     },
@@ -710,6 +763,31 @@ export default async function DashboardPage({
           badge: isOverdueInvoice(invoice.dueDate, today)
             ? "Overdue"
             : labelize(invoice.status)
+        })),
+        ...cockpitWarrantyDocumentsNeedingSignature.map((document) => ({
+          id: `warranty-document-signature-${document.id}`,
+          title: document.title,
+          description: `${document.customer?.name ?? "Unknown customer"} / ${document.project?.name ?? document.serviceTicket?.title ?? "Warranty document"}`,
+          why:
+            document.signatureSummary.requestedSignerCount > 0
+              ? `${document.signatureSummary.requestedSignerCount} signer request${document.signatureSummary.requestedSignerCount === 1 ? "" : "s"} recorded internally; portal signing and email are still deferred.`
+              : "Draft warranty document needs internal signer routing or issue review before customer-facing signing exists.",
+          href: `/warranty-documents/${document.id}`,
+          actionLabel: "Open warranty",
+          secondaryHref: document.serviceTicket
+            ? `/service-tickets/${document.serviceTicket.id}`
+            : document.project
+              ? `/projects/${document.project.id}`
+              : null,
+          secondaryLabel: document.serviceTicket
+            ? "Open ticket"
+            : document.project
+              ? "Open project"
+              : null,
+          badge:
+            document.signatureSummary.requestedSignerCount > 0
+              ? "Requested"
+              : labelize(document.status)
         }))
       ].slice(0, 5)
     },
@@ -751,6 +829,57 @@ export default async function DashboardPage({
           secondaryHref: job.project ? `/projects/${job.project.id}` : null,
           secondaryLabel: job.project ? "Open project" : null,
           badge: "Unscheduled"
+        })),
+        ...cockpitUnscheduledServiceJobs.map((job) => ({
+          id: `unscheduled-service-job-${job.id}`,
+          title: job.serviceTicket?.title ?? job.project?.name ?? "Service job",
+          description: `${job.customer?.name ?? "Unknown customer"} / ${job.project?.name ?? "Unknown project"}`,
+          why: "A service/warranty visit exists as a canonical job, but still needs schedule placement.",
+          href:
+            buildScheduleHref({
+              projectId: job.projectId,
+              view: "unscheduled",
+              action: "schedule",
+              jobId: job.id
+            }) + "#schedule-action",
+          actionLabel: "Open schedule",
+          secondaryHref: job.serviceTicket
+            ? `/service-tickets/${job.serviceTicket.id}`
+            : null,
+          secondaryLabel: job.serviceTicket ? "Open ticket" : null,
+          badge: "Service job"
+        })),
+        ...cockpitInProgressServiceJobs.map((job) => ({
+          id: `in-progress-service-job-${job.id}`,
+          title: job.serviceTicket?.title ?? job.project?.name ?? "Service job",
+          description: `${job.customer?.name ?? "Unknown customer"} / ${job.scheduledDate ? formatShortDate(job.scheduledDate) : "In progress"}`,
+          why: "Active service/warranty field work should stay visible in the operating cockpit.",
+          href: `/jobs/${job.id}`,
+          actionLabel: "Open job",
+          secondaryHref: job.serviceTicket
+            ? `/service-tickets/${job.serviceTicket.id}`
+            : null,
+          secondaryLabel: job.serviceTicket ? "Open ticket" : null,
+          badge: "In progress"
+        })),
+        ...cockpitUpcomingServiceJobs.map((job) => ({
+          id: `upcoming-service-job-${job.id}`,
+          title: job.serviceTicket?.title ?? job.project?.name ?? "Service job",
+          description: `${job.customer?.name ?? "Unknown customer"} / ${job.scheduledDate ? formatShortDate(job.scheduledDate) : "Upcoming"}`,
+          why: "Scheduled follow-up service work now runs through the same job and schedule spine as production.",
+          href:
+            buildScheduleHref({
+              projectId: job.projectId,
+              view: "upcoming",
+              action: "schedule",
+              jobId: job.id
+            }) + "#schedule-action",
+          actionLabel: "Open schedule",
+          secondaryHref: job.serviceTicket
+            ? `/service-tickets/${job.serviceTicket.id}`
+            : null,
+          secondaryLabel: job.serviceTicket ? "Open ticket" : null,
+          badge: "Upcoming"
         })),
         ...cockpitJobsTodayOrInProgress.map((job) => ({
           id: `active-job-${job.id}`,

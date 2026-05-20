@@ -39,13 +39,21 @@ export default async function EstimateEditPage({
 }: EstimateEditPageProps) {
   const { estimateId } = await params;
   const resolvedSearchParams = (await searchParams) ?? {};
-  const estimate = await getEstimateById(estimateId, `/estimates/${estimateId}/edit`);
+  const estimate = await getEstimateById(
+    estimateId,
+    `/estimates/${estimateId}/edit`
+  );
 
   if (!estimate) {
     notFound();
   }
 
-  const [catalogItems, contentBlocks, organizationFinancialSettings, estimates] = await Promise.all([
+  const [
+    catalogItems,
+    contentBlocks,
+    organizationFinancialSettings,
+    estimates
+  ] = await Promise.all([
     listCatalogItems(),
     listEstimateContentBlocks(),
     getOrganizationFinancialSettings(estimate.organizationId),
@@ -57,7 +65,8 @@ export default async function EstimateEditPage({
         `/estimates/${estimate.id}/edit`
       )
     : null;
-  const sourceAssessment = buildEstimateSourceAssessmentContext(sourceOpportunity);
+  const sourceAssessment =
+    buildEstimateSourceAssessmentContext(sourceOpportunity);
   const importSourceEstimates = estimates
     .filter((sourceEstimate) => sourceEstimate.id !== estimate.id)
     .map((sourceEstimate) => ({
@@ -69,7 +78,8 @@ export default async function EstimateEditPage({
       status: sourceEstimate.status,
       updatedAt: sourceEstimate.updatedAt,
       hasScopeContent: Boolean(
-        sourceEstimate.content.scopeSummaryHtml || sourceEstimate.content.scopeItems.length > 0
+        sourceEstimate.content.scopeSummaryHtml ||
+        sourceEstimate.content.scopeItems.length > 0
       ),
       hasTermsContent: Boolean(sourceEstimate.content.termsHtml),
       hasInclusionsContent: Boolean(sourceEstimate.content.inclusionsHtml),
@@ -124,9 +134,13 @@ export default async function EstimateEditPage({
         insertCatalogItemAction={insertCatalogItemToEstimateAction}
         insertSystemAction={insertSystemToEstimateAction}
         importLineItemsFromEstimateAction={importEstimateLineItemsAction}
-        importReusableContentFromEstimateAction={importEstimateReusableContentAction}
+        importReusableContentFromEstimateAction={
+          importEstimateReusableContentAction
+        }
         quickCreateCatalogItemAction={quickCreateEstimateCatalogItemAction}
-        updateCatalogItemFromEstimateAction={updateCatalogItemFromEstimateAction}
+        updateCatalogItemFromEstimateAction={
+          updateCatalogItemFromEstimateAction
+        }
         importSourceEstimates={importSourceEstimates}
         sourceAssessment={sourceAssessment}
         approvalOrchestration={approvalOrchestration}

@@ -1,12 +1,19 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
 import {
+  customerDeclinePortalWarrantyDocument,
+  customerSignPortalWarrantyDocument
+} from "@/lib/portal/data";
+import {
   addWarrantyDocumentSigner,
+  appendWarrantyDocumentDeliveryEvent,
   createWarrantyDocumentFromServiceTicket,
   requestWarrantyDocumentSignature,
+  sendWarrantyDocumentReviewEmail,
   updateWarrantyDocumentDraft,
   updateWarrantyDocumentSigner,
   voidWarrantyDocumentSigner,
@@ -16,9 +23,12 @@ import {
   createWarrantyDocumentFromServiceTicketSchema,
   warrantyDocumentSignerActionSchema,
   warrantyDocumentSignerInputSchema,
+  warrantyDocumentDeliveryEventInputSchema,
+  warrantyDocumentEmailSendInputSchema,
   warrantyDocumentDraftInputSchema,
   warrantyDocumentStatusInputSchema
 } from "./schemas";
+import { getRequestOrigin } from "@/lib/auth/urls";
 
 function getFieldValue(formData: FormData, key: string) {
   const value = formData.get(key);
@@ -385,6 +395,183 @@ export async function requestWarrantyDocumentSignatureAction(
     buildRedirect(`/warranty-documents/${result.data.warrantyDocumentId}`, {
       message:
         "Signature request audit was recorded. No customer email or portal link was sent."
+    })
+  );
+}
+
+export async function recordWarrantyDocumentDeliveryEventAction(
+  formData: FormData
+) {
+  const result = warrantyDocumentDeliveryEventInputSchema.safeParse({
+    warrantyDocumentId: getFieldValue(formData, "warrantyDocumentId"),
+    eventType: getFieldValue(formData, "eventType"),
+    recipientName: getFieldValue(formData, "recipientName"),
+    recipientEmail: getFieldValue(formData, "recipientEmail"),
+    recipientRole: getFieldValue(formData, "recipientRole"),
+    channel: getFieldValue(formData, "channel"),
+    eventNote: getFieldValue(formData, "eventNote")
+  });
+  const fallbackId = getFieldValue(formData, "warrantyDocumentId");
+
+  if (!result.success) {
+    redirect(
+      buildRedirect(`/warranty-documents/${fallbackId}`, {
+        error:
+          result.error.issues[0]?.message ??
+          "Unable to record warranty delivery evidence."
+      })
+    );
+  }
+
+  try {
+    await appendWarrantyDocumentDeliveryEvent(result.data);
+  } catch (error) {
+    redirect(
+      buildRedirect(`/warranty-documents/${result.data.warrantyDocumentId}`, {
+        error:
+          error instanceof Error
+            ? error.message
+            : "Unable to record warranty delivery evidence."
+      })
+    );
+  }
+
+  revalidateWarrantyDocumentRoutes({
+    warrantyDocumentId: result.data.warrantyDocumentId
+  });
+
+  redirect(
+    buildRedirect(`/warranty-documents/${result.data.warrantyDocumentId}`, {
+      message: "Delivery evidence was recorded. No customer email was sent."
+    })
+  );
+}
+
+export async function sendWarrantyDocumentReviewEmailAction(
+  formData: FormData
+) {
+  const result = warrantyDocumentEmailSendInputSchema.safeParse({
+    warrantyDocumentId: getFieldValue(formData, "warrantyDocumentId"),
+    signerId: getFieldValue(formData, "signerId")
+  });
+  const fallbackId = getFieldValue(formData, "warrantyDocumentId");
+
+  if (!result.success) {
+    redirect(
+      buildRedirect(`/warranty-documents/${fallbackId}`, {
+        error:
+          result.error.issues[0]?.message ??
+          "Unable to send warranty document email."
+      })
+    );
+  }
+
+  let sendResult;
+
+  try {
+    const requestHeaders = await headers();
+    sendResult = await sendWarrantyDocumentReviewEmail({
+      ...result.data,
+      origin: getRequestOrigin(requestHeaders)
+    });
+  } catch (error) {
+    redirect(
+      buildRedirect(`/warranty-documents/${result.data.warrantyDocumentId}`, {
+        error:
+          error instanceof Error
+            ? error.message
+            : "Unable to send warranty document email."
+      })
+    );
+  }
+
+  revalidateWarrantyDocumentRoutes({
+    warrantyDocumentId: result.data.warrantyDocumentId
+  });
+
+  redirect(
+    buildRedirect(`/warranty-documents/${result.data.warrantyDocumentId}`, {
+      message: sendResult.message
+    })
+  );
+}
+
+export async function customerSignWarrantyDocumentAction(formData: FormData) {
+  const warrantyDocumentId = getFieldValue(formData, "warrantyDocumentId");
+
+  if (!warrantyDocumentId) {
+    redirect(
+      buildRedirect("/portal", {
+        error: "Unable to sign warranty document."
+      })
+    );
+  }
+
+  try {
+    await customerSignPortalWarrantyDocument(
+      warrantyDocumentId,
+      `/portal/warranty-documents/${warrantyDocumentId}`
+    );
+  } catch (error) {
+    redirect(
+      buildRedirect(`/portal/warranty-documents/${warrantyDocumentId}`, {
+        error:
+          error instanceof Error
+            ? error.message
+            : "Unable to sign warranty document."
+      })
+    );
+  }
+
+  revalidatePath(`/portal/warranty-documents/${warrantyDocumentId}`);
+  revalidatePath(`/portal/warranty-documents/${warrantyDocumentId}/print`);
+
+  redirect(
+    buildRedirect(`/portal/warranty-documents/${warrantyDocumentId}`, {
+      message: "Warranty signature was recorded."
+    })
+  );
+}
+
+export async function customerDeclineWarrantyDocumentAction(
+  formData: FormData
+) {
+  const warrantyDocumentId = getFieldValue(formData, "warrantyDocumentId");
+  const declineReason = getFieldValue(formData, "declineReason").slice(0, 500);
+
+  if (!warrantyDocumentId) {
+    redirect(
+      buildRedirect("/portal", {
+        error: "Unable to decline warranty document."
+      })
+    );
+  }
+
+  try {
+    await customerDeclinePortalWarrantyDocument(
+      {
+        warrantyDocumentId,
+        declineReason
+      },
+      `/portal/warranty-documents/${warrantyDocumentId}`
+    );
+  } catch (error) {
+    redirect(
+      buildRedirect(`/portal/warranty-documents/${warrantyDocumentId}`, {
+        error:
+          error instanceof Error
+            ? error.message
+            : "Unable to decline warranty document."
+      })
+    );
+  }
+
+  revalidatePath(`/portal/warranty-documents/${warrantyDocumentId}`);
+  revalidatePath(`/portal/warranty-documents/${warrantyDocumentId}/print`);
+
+  redirect(
+    buildRedirect(`/portal/warranty-documents/${warrantyDocumentId}`, {
+      message: "Warranty decline was recorded for contractor follow-up."
     })
   );
 }

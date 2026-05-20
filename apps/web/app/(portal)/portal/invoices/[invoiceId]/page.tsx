@@ -241,8 +241,7 @@ function getNextAction(input: {
   if (input.canRequestPayment) {
     return {
       title: "Continue to secure checkout",
-      description:
-        "This page can now open secure checkout for this invoice.",
+      description: "This page can now open secure checkout for this invoice.",
       label: "Return to project workspace",
       href: `/portal/projects/${input.projectId}`
     };
@@ -297,10 +296,15 @@ export default async function PortalInvoiceReviewPage({
             backLabel="Back to project workspace"
             actions={
               <div className="flex flex-wrap items-center gap-3">
-                <PortalSecondaryLink href={`/portal/invoices/${invoice.id}/pdf`}>
+                <PortalSecondaryLink
+                  href={`/portal/invoices/${invoice.id}/pdf`}
+                >
                   Print / save PDF
                 </PortalSecondaryLink>
-                <PortalStatusBadge status={invoice.status} className="px-4 py-2 text-sm">
+                <PortalStatusBadge
+                  status={invoice.status}
+                  className="px-4 py-2 text-sm"
+                >
                   {formatStatusLabel(invoice.status)}
                 </PortalStatusBadge>
               </div>
@@ -333,18 +337,24 @@ export default async function PortalInvoiceReviewPage({
                 </p>
                 <div className="mt-4 space-y-3">
                   <div className="flex flex-wrap items-center gap-3">
-                    <PortalStatusBadge status={invoice.status} className="px-3.5 py-1.5 text-sm">
+                    <PortalStatusBadge
+                      status={invoice.status}
+                      className="px-3.5 py-1.5 text-sm"
+                    >
                       {formatStatusLabel(invoice.status)}
                     </PortalStatusBadge>
                     <span className="inline-flex rounded-full border border-slate-200 bg-white px-3.5 py-1.5 text-sm font-medium text-slate-600">
-                      {invoice.workflowRole === "deposit" ? "Deposit request" : "Standard invoice"}
+                      {invoice.workflowRole === "deposit"
+                        ? "Deposit request"
+                        : "Standard invoice"}
                     </span>
                   </div>
                   <p className="text-[2rem] font-semibold tracking-tight text-slate-950">
                     {formatMoney(invoice.balanceDueAmount)}
                   </p>
                   <p className="text-sm leading-6 text-slate-600">
-                    {formatMoney(invoice.paidAmount)} paid of {formatMoney(invoice.totalAmount)} total
+                    {formatMoney(invoice.paidAmount)} paid of{" "}
+                    {formatMoney(invoice.totalAmount)} total
                   </p>
                   <div className={portalInsetPanelClassName}>
                     <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
@@ -358,11 +368,13 @@ export default async function PortalInvoiceReviewPage({
                         status: invoice.status,
                         workflowRole: invoice.workflowRole,
                         balanceDueAmount: invoice.balanceDueAmount,
-                        latestPaymentEventType: invoice.paymentEvents[0]?.eventType ?? null
+                        latestPaymentEventType:
+                          invoice.paymentEvents[0]?.eventType ?? null
                       })}
                     </p>
                     <p className="mt-2 text-sm leading-6 text-slate-600">
-                      Issue date {formatDate(invoice.issueDate)} | Due date {formatDate(invoice.dueDate)}
+                      Issue date {formatDate(invoice.issueDate)} | Due date{" "}
+                      {formatDate(invoice.dueDate)}
                     </p>
                   </div>
                 </div>
@@ -397,7 +409,9 @@ export default async function PortalInvoiceReviewPage({
                         {invoice.paymentWorkflow.canRequestPayment
                           ? "Payment can start from this invoice now."
                           : invoice.paymentWorkflow.requestBlockers[0]
-                            ? formatPaymentBlocker(invoice.paymentWorkflow.requestBlockers[0])
+                            ? formatPaymentBlocker(
+                                invoice.paymentWorkflow.requestBlockers[0]
+                              )
                             : "Payment is not currently available from this invoice."}
                       </p>
                     )
@@ -416,7 +430,9 @@ export default async function PortalInvoiceReviewPage({
             <div className="min-w-0 space-y-6">
               <section className="min-w-0 space-y-4">
                 <div className="min-w-0">
-                  <p className="text-sm font-medium text-slate-950">Line items</p>
+                  <p className="text-sm font-medium text-slate-950">
+                    Line items
+                  </p>
                   <p className="mt-1 text-sm leading-6 text-slate-600">
                     The work and charges included on this invoice.
                   </p>
@@ -439,7 +455,10 @@ export default async function PortalInvoiceReviewPage({
                               </p>
                             ) : null}
                             <p className="text-sm text-slate-500">
-                              {Number(lineItem.quantity).toLocaleString("en-US")} {lineItem.unit} at{" "}
+                              {Number(lineItem.quantity).toLocaleString(
+                                "en-US"
+                              )}{" "}
+                              {lineItem.unit} at{" "}
                               {formatMoney(lineItem.unitPrice)}
                             </p>
                           </div>
@@ -459,14 +478,19 @@ export default async function PortalInvoiceReviewPage({
 
               <section className="grid min-w-0 gap-6 lg:grid-cols-2">
                 <div className="min-w-0 space-y-3">
-                  <p className="text-sm font-medium text-slate-950">Invoice notes</p>
+                  <p className="text-sm font-medium text-slate-950">
+                    Invoice notes
+                  </p>
                   <div className="min-w-0 break-words rounded-2xl border border-slate-200 bg-white px-5 py-4 text-sm leading-6 text-slate-600 [overflow-wrap:anywhere]">
-                    {invoice.notes ?? "No billing notes are currently shared on this invoice."}
+                    {invoice.notes ??
+                      "No billing notes are currently shared on this invoice."}
                   </div>
                 </div>
 
                 <div className="min-w-0 space-y-3">
-                  <p className="text-sm font-medium text-slate-950">Payment records</p>
+                  <p className="text-sm font-medium text-slate-950">
+                    Payment records
+                  </p>
                   {invoice.payments.length > 0 ? (
                     <div className="min-w-0 space-y-3">
                       {invoice.payments.map((payment) => (
@@ -477,11 +501,16 @@ export default async function PortalInvoiceReviewPage({
                           <p className="font-semibold text-slate-950">
                             {formatMoney(payment.amount)}
                           </p>
-                          <p className="mt-1">{formatDate(payment.paymentDate)}</p>
-                          <p className="capitalize">
-                            {formatStatusLabel(payment.status)} via {payment.paymentMethod}
+                          <p className="mt-1">
+                            {formatDate(payment.paymentDate)}
                           </p>
-                          {payment.reference ? <p>Ref: {payment.reference}</p> : null}
+                          <p className="capitalize">
+                            {formatStatusLabel(payment.status)} via{" "}
+                            {payment.paymentMethod}
+                          </p>
+                          {payment.reference ? (
+                            <p>Ref: {payment.reference}</p>
+                          ) : null}
                         </div>
                       ))}
                     </div>
@@ -535,7 +564,9 @@ export default async function PortalInvoiceReviewPage({
                     </dd>
                   </div>
                   <div className="flex items-center justify-between gap-4">
-                    <dt className="font-semibold text-slate-950">Balance due</dt>
+                    <dt className="font-semibold text-slate-950">
+                      Balance due
+                    </dt>
                     <dd className="font-semibold text-slate-950">
                       {formatMoney(invoice.balanceDueAmount)}
                     </dd>
@@ -544,12 +575,16 @@ export default async function PortalInvoiceReviewPage({
               </div>
 
               <div className="rounded-2xl border border-slate-200 bg-white px-5 py-5">
-                <p className="text-sm font-medium text-slate-950">Billing context</p>
+                <p className="text-sm font-medium text-slate-950">
+                  Billing context
+                </p>
                 <dl className="mt-4 space-y-3 text-sm leading-6 text-slate-600">
                   <div className="flex items-center justify-between gap-4">
                     <dt>Invoice type</dt>
                     <dd className="text-right text-slate-950">
-                      {invoice.workflowRole === "deposit" ? "Deposit request" : "Standard invoice"}
+                      {invoice.workflowRole === "deposit"
+                        ? "Deposit request"
+                        : "Standard invoice"}
                     </dd>
                   </div>
                   <div className="flex items-center justify-between gap-4">
@@ -560,7 +595,9 @@ export default async function PortalInvoiceReviewPage({
                   </div>
                   <div className="flex items-center justify-between gap-4">
                     <dt>Due date</dt>
-                    <dd className="text-right text-slate-950">{formatDate(invoice.dueDate)}</dd>
+                    <dd className="text-right text-slate-950">
+                      {formatDate(invoice.dueDate)}
+                    </dd>
                   </div>
                   <div className="flex items-center justify-between gap-4">
                     <dt>Project</dt>
@@ -585,24 +622,39 @@ export default async function PortalInvoiceReviewPage({
               {isProductionActionLocked
                 ? "Checkout is locked during early access. You can still review this invoice and its payment state."
                 : invoice.paymentWorkflow.canRequestPayment
-                ? "Continue to secure checkout for this invoice."
-                : invoice.paymentWorkflow.requestBlockers[0]
-                  ? formatPaymentBlocker(invoice.paymentWorkflow.requestBlockers[0])
-                  : "Customer payment is not currently available from this invoice."}
+                  ? "Continue to secure checkout for this invoice."
+                  : invoice.paymentWorkflow.requestBlockers[0]
+                    ? formatPaymentBlocker(
+                        invoice.paymentWorkflow.requestBlockers[0]
+                      )
+                    : "Customer payment is not currently available from this invoice."}
             </p>
-            <p>{getPaymentProgressSummary({
-              status: invoice.status,
-              workflowRole: invoice.workflowRole,
-              balanceDueAmount: invoice.balanceDueAmount,
-              latestPaymentEventType: invoice.paymentEvents[0]?.eventType ?? null
-            })}</p>
+            <p>
+              {getPaymentProgressSummary({
+                status: invoice.status,
+                workflowRole: invoice.workflowRole,
+                balanceDueAmount: invoice.balanceDueAmount,
+                latestPaymentEventType:
+                  invoice.paymentEvents[0]?.eventType ?? null
+              })}
+            </p>
 
-            {invoice.paymentWorkflow.canRequestPayment && !isProductionActionLocked ? (
-              <form action={requestPortalInvoicePaymentAction} className={portalActionBoxClassName}>
+            {invoice.paymentWorkflow.canRequestPayment &&
+            !isProductionActionLocked ? (
+              <form
+                action={requestPortalInvoicePaymentAction}
+                className={portalActionBoxClassName}
+              >
                 <input type="hidden" name="invoiceId" value={invoice.id} />
-                <input type="hidden" name="amount" value={invoice.balanceDueAmount} />
+                <input
+                  type="hidden"
+                  name="amount"
+                  value={invoice.balanceDueAmount}
+                />
                 <label className="block space-y-2">
-                  <span className="text-sm font-medium text-slate-950">Optional payment note</span>
+                  <span className="text-sm font-medium text-slate-950">
+                    Optional payment note
+                  </span>
                   <textarea
                     name="notes"
                     rows={3}
@@ -615,7 +667,8 @@ export default async function PortalInvoiceReviewPage({
                   type="submit"
                   className="inline-flex w-full items-center justify-center rounded-full bg-brand-700 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-brand-900"
                 >
-                  Continue to checkout for {formatMoney(invoice.balanceDueAmount)}
+                  Continue to checkout for{" "}
+                  {formatMoney(invoice.balanceDueAmount)}
                 </button>
               </form>
             ) : isProductionActionLocked ? (
@@ -637,7 +690,10 @@ export default async function PortalInvoiceReviewPage({
               {
                 label: "Project",
                 value: invoice.project ? (
-                  <Link href={`/portal/projects/${invoice.project.id}`} className="font-medium text-brand-700">
+                  <Link
+                    href={`/portal/projects/${invoice.project.id}`}
+                    className="font-medium text-brand-700"
+                  >
                     {invoice.project.name}
                   </Link>
                 ) : (
@@ -646,15 +702,25 @@ export default async function PortalInvoiceReviewPage({
               },
               {
                 label: "Customer",
-                value: invoice.customer?.companyName ?? invoice.customer?.name ?? "Not provided"
+                value:
+                  invoice.customer?.companyName ??
+                  invoice.customer?.name ??
+                  "Not provided"
               },
               {
                 label: "Status",
-                value: <span className="capitalize">{formatStatusLabel(invoice.status)}</span>
+                value: (
+                  <span className="capitalize">
+                    {formatStatusLabel(invoice.status)}
+                  </span>
+                )
               },
               {
                 label: "Invoice type",
-                value: invoice.workflowRole === "deposit" ? "Deposit request" : "Standard invoice"
+                value:
+                  invoice.workflowRole === "deposit"
+                    ? "Deposit request"
+                    : "Standard invoice"
               },
               {
                 label: "Created",
@@ -693,7 +759,9 @@ export default async function PortalInvoiceReviewPage({
                       <p>Amount: {formatMoney(event.payload.amount)}</p>
                     ) : null}
                     {typeof event.payload?.gatewayStatus === "string" ? (
-                      <p>Status: {formatStatusLabel(event.payload.gatewayStatus)}</p>
+                      <p>
+                        Status: {formatStatusLabel(event.payload.gatewayStatus)}
+                      </p>
                     ) : null}
                   </div>
                 </div>

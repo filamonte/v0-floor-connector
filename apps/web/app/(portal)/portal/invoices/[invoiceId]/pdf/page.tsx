@@ -18,7 +18,9 @@ type PortalInvoicePdfPageProps = {
   }>;
 };
 
-export default async function PortalInvoicePdfPage({ params }: PortalInvoicePdfPageProps) {
+export default async function PortalInvoicePdfPage({
+  params
+}: PortalInvoicePdfPageProps) {
   const { invoiceId } = await params;
   const invoice = await getPortalInvoiceReviewData(
     invoiceId,
@@ -29,7 +31,9 @@ export default async function PortalInvoicePdfPage({ params }: PortalInvoicePdfP
     notFound();
   }
 
-  const activePayments = invoice.payments.filter((payment) => payment.status !== "void");
+  const activePayments = invoice.payments.filter(
+    (payment) => payment.status !== "void"
+  );
 
   return (
     <CustomerDocumentPrintView
@@ -40,12 +44,18 @@ export default async function PortalInvoicePdfPage({ params }: PortalInvoicePdfP
       backHref={`/portal/invoices/${invoice.id}`}
       backLabel="Back to invoice"
       facts={[
-        { label: "Customer", value: invoice.customer?.name ?? "Unknown customer" },
+        {
+          label: "Customer",
+          value: invoice.customer?.name ?? "Unknown customer"
+        },
         { label: "Project", value: invoice.project?.name ?? "Unknown project" },
         { label: "Issued", value: formatDocumentDate(invoice.issueDate) },
         { label: "Due", value: formatDocumentDate(invoice.dueDate) },
         { label: "Paid", value: formatDocumentMoney(invoice.paidAmount) },
-        { label: "Balance due", value: formatDocumentMoney(invoice.balanceDueAmount) }
+        {
+          label: "Balance due",
+          value: formatDocumentMoney(invoice.balanceDueAmount)
+        }
       ]}
       footerNote="This PDF/print view is a customer-facing rendering of the shared invoice. Payment still happens through the portal invoice page."
     >
@@ -62,7 +72,11 @@ export default async function PortalInvoicePdfPage({ params }: PortalInvoicePdfP
             { label: "Retainage held", value: invoice.retainageHeldAmount },
             { label: "Total", value: invoice.totalAmount },
             { label: "Paid", value: invoice.paidAmount },
-            { label: "Balance due", value: invoice.balanceDueAmount, isTotal: true }
+            {
+              label: "Balance due",
+              value: invoice.balanceDueAmount,
+              isTotal: true
+            }
           ]}
           totalLabel="Balance due"
         />
@@ -73,7 +87,8 @@ export default async function PortalInvoicePdfPage({ params }: PortalInvoicePdfP
           <div className="space-y-2 text-sm text-[var(--text-secondary)]">
             {activePayments.map((payment) => (
               <p key={payment.id}>
-                {formatDocumentMoney(payment.amount)} recorded {formatDocumentDate(payment.paymentDate)} via{" "}
+                {formatDocumentMoney(payment.amount)} recorded{" "}
+                {formatDocumentDate(payment.paymentDate)} via{" "}
                 {payment.paymentMethod}
                 {payment.reference ? ` (${payment.reference})` : ""}.
               </p>

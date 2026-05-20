@@ -2,11 +2,15 @@ import "server-only";
 
 import {
   computeContractSignatureWorkflowSummary,
+  canTransitionDocumentSignerStatus,
   computeInvoicePaymentWorkflowGate
 } from "@floorconnector/domain";
 import type {
   ContractSignerRole,
   ContractSignerStatus,
+  DocumentSignatureEventType,
+  DocumentSignerRole,
+  DocumentSignerStatus,
   ContractStatus,
   EstimateAttachment,
   EstimateWorkspaceContent,
@@ -15,7 +19,8 @@ import type {
   PaymentEventActorType,
   PaymentEventType,
   PortalRecordViewSubjectType,
-  ProjectStatus
+  ProjectStatus,
+  WarrantyDocumentStatus
 } from "@floorconnector/types";
 
 import { requireAuthenticatedUser } from "@/lib/auth/session";
@@ -26,6 +31,13 @@ import {
   type PortalAppointmentSafeRow,
   type PortalSafeAppointmentListItem
 } from "@/lib/portal/appointment-visibility";
+import {
+  isPortalWarrantyDocumentStatusVisible,
+  isPortalWarrantySignerActionable,
+  normalizePortalSignerEmail,
+  resolvePortalWarrantySignerState,
+  shouldMarkWarrantyDocumentSigned
+} from "@/lib/portal/warranty-documents";
 import { listPortalAccessGrantsForCurrentUser } from "@/lib/portal-access/data";
 import { STORAGE_BUCKET_NAMES } from "@floorconnector/config";
 import { getSupabaseAdminClient } from "@/lib/supabase/admin";
@@ -46,15 +58,13 @@ type PortalProjectRow = {
   country_code: string | null;
   created_at: string;
   updated_at: string;
-  customers?:
-    | {
-        id: string;
-        name: string;
-        company_name: string | null;
-        email: string | null;
-        phone: string | null;
-      }
-    | null;
+  customers?: {
+    id: string;
+    name: string;
+    company_name: string | null;
+    email: string | null;
+    phone: string | null;
+  } | null;
 };
 
 type PortalEstimateRow = {
@@ -77,20 +87,16 @@ type PortalEstimateRow = {
   rejected_at: string | null;
   created_at: string;
   updated_at: string;
-  customers?:
-    | {
-        id: string;
-        name: string;
-        company_name: string | null;
-      }
-    | null;
-  projects?:
-    | {
-        id: string;
-        name: string;
-        status: string;
-      }
-    | null;
+  customers?: {
+    id: string;
+    name: string;
+    company_name: string | null;
+  } | null;
+  projects?: {
+    id: string;
+    name: string;
+    status: string;
+  } | null;
 };
 
 type PortalEstimateAttachmentRow = {
@@ -143,27 +149,21 @@ type PortalContractRow = {
   signed_at: string | null;
   created_at: string;
   updated_at: string;
-  customers?:
-    | {
-        id: string;
-        name: string;
-        company_name: string | null;
-      }
-    | null;
-  projects?:
-    | {
-        id: string;
-        name: string;
-        status: string;
-      }
-    | null;
-  estimates?:
-    | {
-        id: string;
-        reference_number: string;
-        status: string;
-      }
-    | null;
+  customers?: {
+    id: string;
+    name: string;
+    company_name: string | null;
+  } | null;
+  projects?: {
+    id: string;
+    name: string;
+    status: string;
+  } | null;
+  estimates?: {
+    id: string;
+    reference_number: string;
+    status: string;
+  } | null;
 };
 
 type PortalContractSignerRow = {
@@ -202,20 +202,16 @@ type PortalInvoiceRow = {
   notes: string | null;
   created_at: string;
   updated_at: string;
-  customers?:
-    | {
-        id: string;
-        name: string;
-        company_name: string | null;
-      }
-    | null;
-  projects?:
-    | {
-        id: string;
-        name: string;
-        status: string;
-      }
-    | null;
+  customers?: {
+    id: string;
+    name: string;
+    company_name: string | null;
+  } | null;
+  projects?: {
+    id: string;
+    name: string;
+    status: string;
+  } | null;
 };
 
 type PortalChangeOrderRow = {
@@ -238,35 +234,27 @@ type PortalChangeOrderRow = {
   rejected_at: string | null;
   created_at: string;
   updated_at: string;
-  customers?:
-    | {
-        id: string;
-        name: string;
-        company_name: string | null;
-      }
-    | null;
-  projects?:
-    | {
-        id: string;
-        name: string;
-        status: string;
-      }
-    | null;
-  contracts?:
-    | {
-        id: string;
-        title: string;
-        status: string;
-      }
-    | null;
-  invoices?:
-    | {
-        id: string;
-        reference_number: string;
-        status: string;
-        balance_due_amount: string | number;
-      }
-    | null;
+  customers?: {
+    id: string;
+    name: string;
+    company_name: string | null;
+  } | null;
+  projects?: {
+    id: string;
+    name: string;
+    status: string;
+  } | null;
+  contracts?: {
+    id: string;
+    title: string;
+    status: string;
+  } | null;
+  invoices?: {
+    id: string;
+    reference_number: string;
+    status: string;
+    balance_due_amount: string | number;
+  } | null;
 };
 
 type PortalInvoiceLineItemRow = {
@@ -299,6 +287,65 @@ type PortalPaymentEventRow = {
   actor_type: PaymentEventActorType;
   occurred_at: string;
   payload: Record<string, unknown> | null;
+};
+
+type PortalWarrantyDocumentRow = {
+  id: string;
+  company_id: string;
+  customer_id: string;
+  project_id: string | null;
+  job_id: string | null;
+  service_ticket_id: string | null;
+  status: WarrantyDocumentStatus;
+  title: string;
+  warranty_start_date: string | null;
+  warranty_end_date: string | null;
+  warranty_basis: string | null;
+  rendered_content: string | null;
+  issued_at: string | null;
+  voided_at: string | null;
+  created_at: string;
+  updated_at: string;
+  customers?: {
+    id: string;
+    name: string;
+    company_name: string | null;
+  } | null;
+  projects?: {
+    id: string;
+    name: string;
+    status: string;
+  } | null;
+  jobs?: {
+    id: string;
+    dispatch_status: string;
+  } | null;
+};
+
+type PortalDocumentSignerRow = {
+  id: string;
+  company_id: string;
+  subject_type: "warranty_document";
+  subject_id: string;
+  signer_role: DocumentSignerRole;
+  signer_name: string;
+  signer_email: string;
+  status: DocumentSignerStatus;
+  signed_at: string | null;
+  declined_at: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+type PortalDocumentSignatureEventRow = {
+  id: string;
+  company_id: string;
+  subject_type: "warranty_document";
+  subject_id: string;
+  signer_id: string | null;
+  event_type: DocumentSignatureEventType;
+  event_note: string | null;
+  created_at: string;
 };
 
 type ProjectStatusRow = {
@@ -466,6 +513,30 @@ export type PortalProjectChangeOrderListItem = {
 };
 
 export type PortalProjectAppointmentListItem = PortalSafeAppointmentListItem;
+
+export type PortalProjectWarrantyDocumentListItem = {
+  id: string;
+  organizationId: string;
+  customerId: string;
+  projectId: string;
+  jobId: string | null;
+  serviceTicketId: string | null;
+  status: WarrantyDocumentStatus;
+  title: string;
+  warrantyStartDate: string | null;
+  warrantyEndDate: string | null;
+  warrantyBasis: string | null;
+  currentUserSignerStatus: DocumentSignerStatus | null;
+  currentUserCanAct: boolean;
+  signerCount: number;
+  requestedSignerCount: number;
+  signedSignerCount: number;
+  latestSignatureEventType: DocumentSignatureEventType | null;
+  latestSignatureEventAt: string | null;
+  issuedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
 
 export type PortalUpcomingAppointmentListItem = PortalSafeAppointmentListItem;
 
@@ -721,8 +792,59 @@ export type PortalChangeOrderReviewDetail = {
   updatedAt: string;
 };
 
+export type PortalWarrantyDocumentReviewDetail = {
+  id: string;
+  organizationId: string;
+  customerId: string;
+  projectId: string;
+  jobId: string | null;
+  serviceTicketId: string | null;
+  status: WarrantyDocumentStatus;
+  title: string;
+  renderedContent: string | null;
+  warrantyStartDate: string | null;
+  warrantyEndDate: string | null;
+  warrantyBasis: string | null;
+  issuedAt: string | null;
+  currentUserSignerId: string | null;
+  currentUserSignerStatus: DocumentSignerStatus | null;
+  currentUserCanSign: boolean;
+  currentUserCanDecline: boolean;
+  signerSummary: {
+    customerSignerCount: number;
+    signedCustomerSignerCount: number;
+    requestedCustomerSignerCount: number;
+    declinedCustomerSignerCount: number;
+    allCustomerSignersSigned: boolean;
+  };
+  signatureEvents: Array<{
+    id: string;
+    eventType: DocumentSignatureEventType;
+    eventNote: string | null;
+    createdAt: string;
+  }>;
+  customer: {
+    id: string;
+    name: string;
+    companyName: string | null;
+  } | null;
+  contractorBrand: PortalDocumentBrand;
+  project: {
+    id: string;
+    name: string;
+    status: string;
+  } | null;
+  job: {
+    id: string;
+    dispatchStatus: string;
+  } | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
 type PortalScope = {
   userId: string;
+  userEmail: string | null;
   activeCustomerIds: string[];
   accessibleProjectIds: string[];
 };
@@ -934,6 +1056,65 @@ const portalAppointmentWithProjectSelect = `
   )
 `;
 
+const portalWarrantyDocumentSelect = `
+  id,
+  company_id,
+  customer_id,
+  project_id,
+  job_id,
+  service_ticket_id,
+  status,
+  title,
+  warranty_start_date,
+  warranty_end_date,
+  warranty_basis,
+  rendered_content,
+  issued_at,
+  voided_at,
+  created_at,
+  updated_at,
+  customers (
+    id,
+    name,
+    company_name
+  ),
+  projects (
+    id,
+    name,
+    status
+  ),
+  jobs (
+    id,
+    dispatch_status
+  )
+`;
+
+const portalDocumentSignerSelect = `
+  id,
+  company_id,
+  subject_type,
+  subject_id,
+  signer_role,
+  signer_name,
+  signer_email,
+  status,
+  signed_at,
+  declined_at,
+  created_at,
+  updated_at
+`;
+
+const portalDocumentSignatureEventSelect = `
+  id,
+  company_id,
+  subject_type,
+  subject_id,
+  signer_id,
+  event_type,
+  event_note,
+  created_at
+`;
+
 function formatMoney(value: string | number) {
   return Number(value).toFixed(2);
 }
@@ -942,7 +1123,9 @@ function formatQuantity(value: string | number) {
   return Number(value).toFixed(2);
 }
 
-function mapPortalEstimateAttachment(row: PortalEstimateAttachmentRow): EstimateAttachment {
+function mapPortalEstimateAttachment(
+  row: PortalEstimateAttachmentRow
+): EstimateAttachment {
   return {
     id: row.id,
     organizationId: row.company_id,
@@ -1021,7 +1204,9 @@ function mapPortalPaymentEvent(row: PortalPaymentEventRow) {
   };
 }
 
-function mapPortalProjectChangeOrder(row: PortalChangeOrderRow): PortalProjectChangeOrderListItem {
+function mapPortalProjectChangeOrder(
+  row: PortalChangeOrderRow
+): PortalProjectChangeOrderListItem {
   return {
     id: row.id,
     organizationId: row.company_id,
@@ -1045,17 +1230,156 @@ function mapPortalProjectChangeOrder(row: PortalChangeOrderRow): PortalProjectCh
   };
 }
 
-async function getPortalScope(next = "/portal"): Promise<PortalScope> {
-  const user = await requireAuthenticatedUser(next);
-  const activeGrants = (await listPortalAccessGrantsForCurrentUser(next)).filter(
-    (grant) => grant.status === "active"
+function getWarrantySignerRowsForState(signers: PortalDocumentSignerRow[]) {
+  return signers.map((signer) => ({
+    signerRole: signer.signer_role,
+    signerEmail: signer.signer_email,
+    status: signer.status
+  }));
+}
+
+function getPortalWarrantySignerSummary(signers: PortalDocumentSignerRow[]) {
+  const customerSigners = signers.filter(
+    (signer) => signer.signer_role === "customer" && signer.status !== "voided"
   );
 
-  const activeCustomerIds = [...new Set(activeGrants.map((grant) => grant.customerId))];
+  return {
+    customerSignerCount: customerSigners.length,
+    signedCustomerSignerCount: customerSigners.filter(
+      (signer) => signer.status === "signed"
+    ).length,
+    requestedCustomerSignerCount: customerSigners.filter(
+      (signer) => signer.status === "requested"
+    ).length,
+    declinedCustomerSignerCount: customerSigners.filter(
+      (signer) => signer.status === "declined"
+    ).length,
+    allCustomerSignersSigned: shouldMarkWarrantyDocumentSigned(
+      getWarrantySignerRowsForState(signers)
+    )
+  };
+}
+
+function isWarrantyDocumentAccessibleToPortalScope(
+  row: PortalWarrantyDocumentRow,
+  scope: PortalScope
+) {
+  return (
+    typeof row.project_id === "string" &&
+    scope.accessibleProjectIds.includes(row.project_id) &&
+    scope.activeCustomerIds.includes(row.customer_id) &&
+    isPortalWarrantyDocumentStatusVisible(row.status)
+  );
+}
+
+function canPortalCompleteWarrantySignerStatus(
+  from: DocumentSignerStatus,
+  to: Extract<DocumentSignerStatus, "signed" | "declined">
+) {
+  return (
+    isPortalWarrantySignerActionable(from) &&
+    (from === "pending" || canTransitionDocumentSignerStatus(from, to))
+  );
+}
+
+async function loadPortalWarrantyDocumentContext(
+  warrantyDocumentId: string,
+  next: string
+) {
+  const scope = await getPortalScope(next);
+  const admin = getSupabaseAdminClient();
+  const documentResponse = await admin
+    .from("warranty_documents")
+    .select(portalWarrantyDocumentSelect)
+    .eq("id", warrantyDocumentId)
+    .maybeSingle();
+  const row = documentResponse.data as PortalWarrantyDocumentRow | null;
+
+  if (documentResponse.error) {
+    throw new Error(
+      `Unable to load the portal warranty document: ${documentResponse.error.message}`
+    );
+  }
+
+  if (!row || !isWarrantyDocumentAccessibleToPortalScope(row, scope)) {
+    return null;
+  }
+
+  const [signersResponse, eventsResponse, contractorBrand] = await Promise.all([
+    admin
+      .from("document_signers")
+      .select(portalDocumentSignerSelect)
+      .eq("company_id", row.company_id)
+      .eq("subject_type", "warranty_document")
+      .eq("subject_id", row.id)
+      .order("created_at", { ascending: true }),
+    admin
+      .from("document_signature_events")
+      .select(portalDocumentSignatureEventSelect)
+      .eq("company_id", row.company_id)
+      .eq("subject_type", "warranty_document")
+      .eq("subject_id", row.id)
+      .order("created_at", { ascending: false })
+      .limit(20),
+    getPortalDocumentBrand(row.company_id)
+  ]);
+  const signers =
+    (signersResponse.data as PortalDocumentSignerRow[] | null) ?? [];
+  const events =
+    (eventsResponse.data as PortalDocumentSignatureEventRow[] | null) ?? [];
+
+  if (signersResponse.error) {
+    throw new Error(
+      `Unable to load portal warranty signer routing: ${signersResponse.error.message}`
+    );
+  }
+
+  if (eventsResponse.error) {
+    throw new Error(
+      `Unable to load portal warranty signature events: ${eventsResponse.error.message}`
+    );
+  }
+
+  const signerState = resolvePortalWarrantySignerState(
+    getWarrantySignerRowsForState(signers),
+    scope.userEmail
+  );
+  const currentUserSignerIds = new Set(
+    signers
+      .filter(
+        (signer) =>
+          signer.signer_role === "customer" &&
+          normalizePortalSignerEmail(signer.signer_email) === scope.userEmail
+      )
+      .map((signer) => signer.id)
+  );
+
+  return {
+    scope,
+    row,
+    signers,
+    events,
+    contractorBrand,
+    currentUserSignerIds,
+    signerState,
+    signerSummary: getPortalWarrantySignerSummary(signers)
+  };
+}
+
+async function getPortalScope(next = "/portal"): Promise<PortalScope> {
+  const user = await requireAuthenticatedUser(next);
+  const activeGrants = (
+    await listPortalAccessGrantsForCurrentUser(next)
+  ).filter((grant) => grant.status === "active");
+
+  const activeCustomerIds = [
+    ...new Set(activeGrants.map((grant) => grant.customerId))
+  ];
 
   if (activeGrants.length === 0) {
     return {
       userId: user.id,
+      userEmail: normalizePortalSignerEmail(user.email),
       activeCustomerIds,
       accessibleProjectIds: []
     };
@@ -1070,9 +1394,8 @@ async function getPortalScope(next = "/portal"): Promise<PortalScope> {
       activeGrants.map((grant) => grant.id)
     )
     .eq("status", "active");
-  const projectAccessRows = (projectAccessResponse.data as
-    | Array<{ project_id?: string }>
-    | null) ?? [];
+  const projectAccessRows =
+    (projectAccessResponse.data as Array<{ project_id?: string }> | null) ?? [];
 
   if (projectAccessResponse.error) {
     throw new Error(
@@ -1082,6 +1405,7 @@ async function getPortalScope(next = "/portal"): Promise<PortalScope> {
 
   return {
     userId: user.id,
+    userEmail: normalizePortalSignerEmail(user.email),
     activeCustomerIds,
     accessibleProjectIds: [
       ...new Set(
@@ -1116,7 +1440,9 @@ async function createPortalRecordView(
     .maybeSingle();
 
   if (existingResponse.error) {
-    throw new Error(`Unable to inspect the portal view event: ${existingResponse.error.message}`);
+    throw new Error(
+      `Unable to inspect the portal view event: ${existingResponse.error.message}`
+    );
   }
 
   const response = await supabase.from("portal_record_views").insert({
@@ -1129,7 +1455,9 @@ async function createPortalRecordView(
   });
 
   if (response.error) {
-    throw new Error(`Unable to record the portal view event: ${response.error.message}`);
+    throw new Error(
+      `Unable to record the portal view event: ${response.error.message}`
+    );
   }
 
   return {
@@ -1138,7 +1466,9 @@ async function createPortalRecordView(
   };
 }
 
-async function getPortalDocumentBrand(companyId: string): Promise<PortalDocumentBrand> {
+async function getPortalDocumentBrand(
+  companyId: string
+): Promise<PortalDocumentBrand> {
   const admin = getSupabaseAdminClient();
   const response = await admin
     .from("companies")
@@ -1149,7 +1479,9 @@ async function getPortalDocumentBrand(companyId: string): Promise<PortalDocument
     .maybeSingle();
 
   if (response.error) {
-    throw new Error(`Unable to load portal document branding: ${response.error.message}`);
+    throw new Error(
+      `Unable to load portal document branding: ${response.error.message}`
+    );
   }
 
   const row = response.data as PortalDocumentBrandRow | null;
@@ -1205,8 +1537,10 @@ async function getLatestStatusesByProjectIds(projectIds: string[]) {
     );
   }
 
-  const estimateRows = (estimatesResponse.data as ProjectStatusRow[] | null) ?? [];
-  const contractRows = (contractsResponse.data as ProjectStatusRow[] | null) ?? [];
+  const estimateRows =
+    (estimatesResponse.data as ProjectStatusRow[] | null) ?? [];
+  const contractRows =
+    (contractsResponse.data as ProjectStatusRow[] | null) ?? [];
 
   const estimateMap = new Map<string, string>();
   const contractMap = new Map<string, string>();
@@ -1302,7 +1636,10 @@ async function getLatestInvoiceSummariesByProjectIds(projectIds: string[]) {
     );
   }
 
-  const latestInvoicesByProject = new Map<string, PortalProjectLatestInvoiceRow>();
+  const latestInvoicesByProject = new Map<
+    string,
+    PortalProjectLatestInvoiceRow
+  >();
 
   for (const row of rows) {
     const current = latestInvoicesByProject.get(row.project_id);
@@ -1312,14 +1649,18 @@ async function getLatestInvoiceSummariesByProjectIds(projectIds: string[]) {
       continue;
     }
 
-    if (!isCustomerActiveInvoiceStatus(current.status) && isCustomerActiveInvoiceStatus(row.status)) {
+    if (
+      !isCustomerActiveInvoiceStatus(current.status) &&
+      isCustomerActiveInvoiceStatus(row.status)
+    ) {
       latestInvoicesByProject.set(row.project_id, row);
     }
   }
 
-  const latestPaymentEventsByInvoiceId = await getLatestPaymentEventsByInvoiceIds(
-    [...latestInvoicesByProject.values()].map((row) => row.id)
-  );
+  const latestPaymentEventsByInvoiceId =
+    await getLatestPaymentEventsByInvoiceIds(
+      [...latestInvoicesByProject.values()].map((row) => row.id)
+    );
 
   return new Map(
     [...latestInvoicesByProject.entries()].map(([projectId, row]) => {
@@ -1358,10 +1699,14 @@ export async function listPortalAccessibleProjects(
   const rows = (response.data as PortalProjectRow[] | null) ?? [];
 
   if (response.error) {
-    throw new Error(`Unable to load portal projects: ${response.error.message}`);
+    throw new Error(
+      `Unable to load portal projects: ${response.error.message}`
+    );
   }
 
-  const latestStatuses = await getLatestStatusesByProjectIds(scope.accessibleProjectIds);
+  const latestStatuses = await getLatestStatusesByProjectIds(
+    scope.accessibleProjectIds
+  );
   const latestInvoiceSummaries = await getLatestInvoiceSummariesByProjectIds(
     scope.accessibleProjectIds
   );
@@ -1370,31 +1715,35 @@ export async function listPortalAccessibleProjects(
     const latestInvoiceSummary = latestInvoiceSummaries.get(row.id) ?? null;
 
     return {
-    id: row.id,
-    organizationId: row.company_id,
-    customerId: row.customer_id,
-    name: row.name,
-    status: row.status,
-    description: row.description,
-    customer: row.customers
-      ? {
-          id: row.customers.id,
-          name: row.customers.name,
-          companyName: row.customers.company_name,
-          email: row.customers.email,
-          phone: row.customers.phone
-        }
-      : null,
-    locationSummary: formatLocationSummary(row),
-    latestEstimateStatus: latestStatuses.estimates.get(row.id) ?? null,
-    latestContractStatus: latestStatuses.contracts.get(row.id) ?? null,
-    latestInvoiceStatus: latestInvoiceSummary?.status ?? null,
-    latestInvoiceReferenceNumber: latestInvoiceSummary?.referenceNumber ?? null,
-    latestInvoiceWorkflowRole: latestInvoiceSummary?.workflowRole ?? null,
-    latestInvoiceBalanceDueAmount: latestInvoiceSummary?.balanceDueAmount ?? null,
-    latestInvoicePaymentEventType: latestInvoiceSummary?.latestPaymentEventType ?? null,
-    latestInvoicePaymentEventAt: latestInvoiceSummary?.latestPaymentEventAt ?? null,
-    updatedAt: row.updated_at
+      id: row.id,
+      organizationId: row.company_id,
+      customerId: row.customer_id,
+      name: row.name,
+      status: row.status,
+      description: row.description,
+      customer: row.customers
+        ? {
+            id: row.customers.id,
+            name: row.customers.name,
+            companyName: row.customers.company_name,
+            email: row.customers.email,
+            phone: row.customers.phone
+          }
+        : null,
+      locationSummary: formatLocationSummary(row),
+      latestEstimateStatus: latestStatuses.estimates.get(row.id) ?? null,
+      latestContractStatus: latestStatuses.contracts.get(row.id) ?? null,
+      latestInvoiceStatus: latestInvoiceSummary?.status ?? null,
+      latestInvoiceReferenceNumber:
+        latestInvoiceSummary?.referenceNumber ?? null,
+      latestInvoiceWorkflowRole: latestInvoiceSummary?.workflowRole ?? null,
+      latestInvoiceBalanceDueAmount:
+        latestInvoiceSummary?.balanceDueAmount ?? null,
+      latestInvoicePaymentEventType:
+        latestInvoiceSummary?.latestPaymentEventType ?? null,
+      latestInvoicePaymentEventAt:
+        latestInvoiceSummary?.latestPaymentEventAt ?? null,
+      updatedAt: row.updated_at
     };
   });
 }
@@ -1433,14 +1782,22 @@ export async function getPortalProjectDetailSummary(
     invoiceCountResponse,
     latestStatuses,
     latestInvoiceSummaries
-  ] =
-    await Promise.all([
-      supabase.from("estimates").select("id", { count: "exact", head: true }).eq("project_id", projectId),
-      supabase.from("contracts").select("id", { count: "exact", head: true }).eq("project_id", projectId),
-      supabase.from("invoices").select("id", { count: "exact", head: true }).eq("project_id", projectId),
-      getLatestStatusesByProjectIds([projectId]),
-      getLatestInvoiceSummariesByProjectIds([projectId])
-    ]);
+  ] = await Promise.all([
+    supabase
+      .from("estimates")
+      .select("id", { count: "exact", head: true })
+      .eq("project_id", projectId),
+    supabase
+      .from("contracts")
+      .select("id", { count: "exact", head: true })
+      .eq("project_id", projectId),
+    supabase
+      .from("invoices")
+      .select("id", { count: "exact", head: true })
+      .eq("project_id", projectId),
+    getLatestStatusesByProjectIds([projectId]),
+    getLatestInvoiceSummariesByProjectIds([projectId])
+  ]);
 
   if (estimateCountResponse.error) {
     throw new Error(
@@ -1505,9 +1862,12 @@ export async function getPortalProjectDetailSummary(
     latestInvoiceStatus: latestInvoiceSummary?.status ?? null,
     latestInvoiceReferenceNumber: latestInvoiceSummary?.referenceNumber ?? null,
     latestInvoiceWorkflowRole: latestInvoiceSummary?.workflowRole ?? null,
-    latestInvoiceBalanceDueAmount: latestInvoiceSummary?.balanceDueAmount ?? null,
-    latestInvoicePaymentEventType: latestInvoiceSummary?.latestPaymentEventType ?? null,
-    latestInvoicePaymentEventAt: latestInvoiceSummary?.latestPaymentEventAt ?? null,
+    latestInvoiceBalanceDueAmount:
+      latestInvoiceSummary?.balanceDueAmount ?? null,
+    latestInvoicePaymentEventType:
+      latestInvoiceSummary?.latestPaymentEventType ?? null,
+    latestInvoicePaymentEventAt:
+      latestInvoiceSummary?.latestPaymentEventAt ?? null,
     createdAt: row.created_at,
     updatedAt: row.updated_at
   };
@@ -1619,31 +1979,31 @@ export async function listPortalProjectInvoices(
     );
   }
 
-  const latestPaymentEventsByInvoiceId = await getLatestPaymentEventsByInvoiceIds(
-    rows.map((row) => row.id)
-  );
+  const latestPaymentEventsByInvoiceId =
+    await getLatestPaymentEventsByInvoiceIds(rows.map((row) => row.id));
 
   return rows.map((row) => {
-    const latestPaymentEvent = latestPaymentEventsByInvoiceId.get(row.id) ?? null;
+    const latestPaymentEvent =
+      latestPaymentEventsByInvoiceId.get(row.id) ?? null;
 
     return {
-    id: row.id,
-    organizationId: row.company_id,
-    customerId: row.customer_id,
-    projectId: row.project_id,
-    estimateId: row.estimate_id,
-    jobId: row.job_id,
-    referenceNumber: row.reference_number,
-    workflowRole: row.workflow_role,
-    status: row.status,
-    issueDate: row.issue_date,
-    dueDate: row.due_date,
-    totalAmount: formatMoney(row.total_amount),
-    balanceDueAmount: formatMoney(row.balance_due_amount),
-    latestPaymentEventType: latestPaymentEvent?.event_type ?? null,
-    latestPaymentEventAt: latestPaymentEvent?.occurred_at ?? null,
-    createdAt: row.created_at,
-    updatedAt: row.updated_at
+      id: row.id,
+      organizationId: row.company_id,
+      customerId: row.customer_id,
+      projectId: row.project_id,
+      estimateId: row.estimate_id,
+      jobId: row.job_id,
+      referenceNumber: row.reference_number,
+      workflowRole: row.workflow_role,
+      status: row.status,
+      issueDate: row.issue_date,
+      dueDate: row.due_date,
+      totalAmount: formatMoney(row.total_amount),
+      balanceDueAmount: formatMoney(row.balance_due_amount),
+      latestPaymentEventType: latestPaymentEvent?.event_type ?? null,
+      latestPaymentEventAt: latestPaymentEvent?.occurred_at ?? null,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at
     };
   });
 }
@@ -1703,6 +2063,120 @@ export async function listPortalProjectAppointments(
   return rows
     .filter((row) => row.project_id === projectId)
     .map(mapPortalSafeAppointment);
+}
+
+export async function listPortalProjectWarrantyDocuments(
+  projectId: string,
+  next = "/portal"
+): Promise<PortalProjectWarrantyDocumentListItem[]> {
+  const scope = await getPortalScope(next);
+
+  if (!scope.accessibleProjectIds.includes(projectId)) {
+    return [];
+  }
+
+  const admin = getSupabaseAdminClient();
+  const response = await admin
+    .from("warranty_documents")
+    .select(portalWarrantyDocumentSelect)
+    .eq("project_id", projectId)
+    .order("updated_at", { ascending: false })
+    .limit(10);
+  const rows = (response.data as PortalWarrantyDocumentRow[] | null) ?? [];
+
+  if (response.error) {
+    throw new Error(
+      `Unable to load portal warranty documents for the project: ${response.error.message}`
+    );
+  }
+
+  const documents = rows.filter((row) =>
+    isWarrantyDocumentAccessibleToPortalScope(row, scope)
+  );
+  const documentIds = documents.map((document) => document.id);
+
+  if (documentIds.length === 0) {
+    return [];
+  }
+
+  const [signersResponse, eventsResponse] = await Promise.all([
+    admin
+      .from("document_signers")
+      .select(portalDocumentSignerSelect)
+      .eq("subject_type", "warranty_document")
+      .in("subject_id", documentIds),
+    admin
+      .from("document_signature_events")
+      .select(portalDocumentSignatureEventSelect)
+      .eq("subject_type", "warranty_document")
+      .in("subject_id", documentIds)
+      .order("created_at", { ascending: false })
+      .limit(50)
+  ]);
+  const signers =
+    (signersResponse.data as PortalDocumentSignerRow[] | null) ?? [];
+  const events =
+    (eventsResponse.data as PortalDocumentSignatureEventRow[] | null) ?? [];
+
+  if (signersResponse.error) {
+    throw new Error(
+      `Unable to load portal warranty signer summaries: ${signersResponse.error.message}`
+    );
+  }
+
+  if (eventsResponse.error) {
+    throw new Error(
+      `Unable to load portal warranty signature summaries: ${eventsResponse.error.message}`
+    );
+  }
+
+  return documents.map((document) => {
+    const documentSigners = signers.filter(
+      (signer) =>
+        signer.company_id === document.company_id &&
+        signer.subject_id === document.id
+    );
+    const documentEvents = events.filter(
+      (event) =>
+        event.company_id === document.company_id &&
+        event.subject_id === document.id
+    );
+    const signerState = resolvePortalWarrantySignerState(
+      getWarrantySignerRowsForState(documentSigners),
+      scope.userEmail
+    );
+    const latestEvent = documentEvents[0] ?? null;
+
+    return {
+      id: document.id,
+      organizationId: document.company_id,
+      customerId: document.customer_id,
+      projectId: document.project_id ?? projectId,
+      jobId: document.job_id,
+      serviceTicketId: document.service_ticket_id,
+      status: document.status,
+      title: document.title,
+      warrantyStartDate: document.warranty_start_date,
+      warrantyEndDate: document.warranty_end_date,
+      warrantyBasis: document.warranty_basis,
+      currentUserSignerStatus: signerState.currentUserSignerStatus,
+      currentUserCanAct: signerState.currentUserCanAct,
+      signerCount: documentSigners.filter(
+        (signer) => signer.status !== "voided"
+      ).length,
+      requestedSignerCount: documentSigners.filter(
+        (signer) => signer.status === "requested"
+      ).length,
+      signedSignerCount: documentSigners.filter(
+        (signer) => signer.status === "signed"
+      ).length,
+      latestSignatureEventType: latestEvent?.event_type ?? null,
+      latestSignatureEventAt: latestEvent?.created_at ?? null,
+      issuedAt: document.issued_at,
+      createdAt: document.created_at,
+      updatedAt: document.updated_at
+    };
+  });
 }
 
 export async function listPortalUpcomingAppointments(
@@ -1968,15 +2442,23 @@ export async function getPortalContractReviewData(
     }))
   });
   const currentUserSignerRows = signerRows.filter(
-    (signer) => signer.signer_role === "customer" && signer.portal_user_id === scope.userId
+    (signer) =>
+      signer.signer_role === "customer" &&
+      signer.portal_user_id === scope.userId
   );
   const currentUserSignerStatus =
     currentUserSignerRows.length > 0
-      ? currentUserSignerRows.some((signer) => signer.signer_status === "declined")
+      ? currentUserSignerRows.some(
+          (signer) => signer.signer_status === "declined"
+        )
         ? "declined"
-        : currentUserSignerRows.some((signer) => signer.signer_status === "signed")
+        : currentUserSignerRows.some(
+              (signer) => signer.signer_status === "signed"
+            )
           ? "signed"
-          : currentUserSignerRows.some((signer) => signer.signer_status === "viewed")
+          : currentUserSignerRows.some(
+                (signer) => signer.signer_status === "viewed"
+              )
             ? "viewed"
             : "pending"
       : null;
@@ -2007,12 +2489,16 @@ export async function getPortalContractReviewData(
     currentUserCanSign:
       signatureSummary.canCustomerAct &&
       currentUserSignerRows.some(
-        (signer) => signer.signer_status === "pending" || signer.signer_status === "viewed"
+        (signer) =>
+          signer.signer_status === "pending" ||
+          signer.signer_status === "viewed"
       ),
     currentUserCanDecline:
       signatureSummary.canCustomerAct &&
       currentUserSignerRows.some(
-        (signer) => signer.signer_status === "pending" || signer.signer_status === "viewed"
+        (signer) =>
+          signer.signer_status === "pending" ||
+          signer.signer_status === "viewed"
       ),
     customer: row.customers
       ? {
@@ -2041,6 +2527,317 @@ export async function getPortalContractReviewData(
   };
 }
 
+export async function getPortalWarrantyDocumentReviewData(
+  warrantyDocumentId: string,
+  next = "/portal"
+): Promise<PortalWarrantyDocumentReviewDetail | null> {
+  const context = await loadPortalWarrantyDocumentContext(
+    warrantyDocumentId,
+    next
+  );
+
+  if (!context) {
+    return null;
+  }
+
+  const {
+    row,
+    signers,
+    events,
+    contractorBrand,
+    currentUserSignerIds,
+    signerState,
+    signerSummary
+  } = context;
+  const currentUserSigner = signers.find((signer) =>
+    currentUserSignerIds.has(signer.id)
+  );
+
+  return {
+    id: row.id,
+    organizationId: row.company_id,
+    customerId: row.customer_id,
+    projectId: row.project_id ?? "",
+    jobId: row.job_id,
+    serviceTicketId: row.service_ticket_id,
+    status: row.status,
+    title: row.title,
+    renderedContent: row.rendered_content,
+    warrantyStartDate: row.warranty_start_date,
+    warrantyEndDate: row.warranty_end_date,
+    warrantyBasis: row.warranty_basis,
+    issuedAt: row.issued_at,
+    currentUserSignerId: currentUserSigner?.id ?? null,
+    currentUserSignerStatus: signerState.currentUserSignerStatus,
+    currentUserCanSign: signerState.currentUserCanAct,
+    currentUserCanDecline: signerState.currentUserCanAct,
+    signerSummary,
+    signatureEvents: events
+      .filter(
+        (event) => event.signer_id && currentUserSignerIds.has(event.signer_id)
+      )
+      .slice(0, 8)
+      .map((event) => ({
+        id: event.id,
+        eventType: event.event_type,
+        eventNote: event.event_note,
+        createdAt: event.created_at
+      })),
+    customer: row.customers
+      ? {
+          id: row.customers.id,
+          name: row.customers.name,
+          companyName: row.customers.company_name
+        }
+      : null,
+    contractorBrand,
+    project: row.projects
+      ? {
+          id: row.projects.id,
+          name: row.projects.name,
+          status: row.projects.status
+        }
+      : null,
+    job: row.jobs
+      ? {
+          id: row.jobs.id,
+          dispatchStatus: row.jobs.dispatch_status
+        }
+      : null,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at
+  };
+}
+
+export async function recordPortalWarrantyDocumentViewed(
+  warrantyDocumentId: string,
+  next = "/portal"
+) {
+  const context = await loadPortalWarrantyDocumentContext(
+    warrantyDocumentId,
+    next
+  );
+
+  if (!context) {
+    return null;
+  }
+
+  const signer = context.signers.find(
+    (candidate) =>
+      candidate.signer_role === "customer" &&
+      context.currentUserSignerIds.has(candidate.id) &&
+      (candidate.status === "pending" || candidate.status === "requested")
+  );
+
+  if (!signer || !canTransitionDocumentSignerStatus(signer.status, "viewed")) {
+    return null;
+  }
+
+  const existingViewedEvent = context.events.some(
+    (event) => event.signer_id === signer.id && event.event_type === "viewed"
+  );
+  const admin = getSupabaseAdminClient();
+  const updateResponse = await admin
+    .from("document_signers")
+    .update({
+      status: "viewed",
+      updated_by: context.scope.userId
+    })
+    .eq("company_id", context.row.company_id)
+    .eq("subject_type", "warranty_document")
+    .eq("subject_id", warrantyDocumentId)
+    .eq("id", signer.id);
+
+  if (updateResponse.error) {
+    throw new Error(
+      `Unable to mark warranty signer viewed: ${updateResponse.error.message}`
+    );
+  }
+
+  if (existingViewedEvent) {
+    return null;
+  }
+
+  const eventResponse = await admin
+    .from("document_signature_events")
+    .insert({
+      company_id: context.row.company_id,
+      subject_type: "warranty_document",
+      subject_id: warrantyDocumentId,
+      signer_id: signer.id,
+      event_type: "viewed",
+      event_note: "Customer portal warranty document view.",
+      metadata: {
+        source: "portal",
+        portalUserId: context.scope.userId,
+        signerRole: signer.signer_role
+      },
+      created_by: context.scope.userId
+    })
+    .select(portalDocumentSignatureEventSelect)
+    .single();
+
+  if (eventResponse.error) {
+    throw new Error(
+      `Unable to record warranty viewed event: ${eventResponse.error.message}`
+    );
+  }
+
+  return eventResponse.data as PortalDocumentSignatureEventRow;
+}
+
+async function updatePortalWarrantySignerStatus(input: {
+  warrantyDocumentId: string;
+  targetStatus: Extract<DocumentSignerStatus, "signed" | "declined">;
+  declineReason?: string | null;
+  next: string;
+}) {
+  const context = await loadPortalWarrantyDocumentContext(
+    input.warrantyDocumentId,
+    input.next
+  );
+
+  if (!context) {
+    throw new Error(
+      "Warranty document is not available in this portal project."
+    );
+  }
+
+  const signer = context.signers.find(
+    (candidate) =>
+      candidate.signer_role === "customer" &&
+      context.currentUserSignerIds.has(candidate.id) &&
+      isPortalWarrantySignerActionable(candidate.status)
+  );
+
+  if (!signer) {
+    throw new Error(
+      "This warranty document is not assigned to your portal email."
+    );
+  }
+
+  if (
+    !canPortalCompleteWarrantySignerStatus(signer.status, input.targetStatus)
+  ) {
+    throw new Error(
+      `Signer status cannot move from ${signer.status} to ${input.targetStatus}.`
+    );
+  }
+
+  const admin = getSupabaseAdminClient();
+  const now = new Date().toISOString();
+  const signerUpdate =
+    input.targetStatus === "signed"
+      ? {
+          status: "signed",
+          signed_at: now,
+          updated_by: context.scope.userId
+        }
+      : {
+          status: "declined",
+          declined_at: now,
+          updated_by: context.scope.userId
+        };
+  const signerResponse = await admin
+    .from("document_signers")
+    .update(signerUpdate)
+    .eq("company_id", context.row.company_id)
+    .eq("subject_type", "warranty_document")
+    .eq("subject_id", input.warrantyDocumentId)
+    .eq("id", signer.id)
+    .select(portalDocumentSignerSelect)
+    .single();
+  const updatedSigner = signerResponse.data as PortalDocumentSignerRow | null;
+
+  if (signerResponse.error) {
+    throw new Error(
+      `Unable to update warranty signer status: ${signerResponse.error.message}`
+    );
+  }
+
+  if (!updatedSigner) {
+    throw new Error("Warranty signer status update did not return a signer.");
+  }
+
+  const eventResponse = await admin.from("document_signature_events").insert({
+    company_id: context.row.company_id,
+    subject_type: "warranty_document",
+    subject_id: input.warrantyDocumentId,
+    signer_id: signer.id,
+    event_type: input.targetStatus,
+    event_note:
+      input.targetStatus === "declined"
+        ? input.declineReason?.trim() || "Customer declined warranty document."
+        : "Customer signed warranty document through the portal.",
+    metadata: {
+      source: "portal",
+      portalUserId: context.scope.userId,
+      previousStatus: signer.status,
+      signerRole: signer.signer_role
+    },
+    created_by: context.scope.userId
+  });
+
+  if (eventResponse.error) {
+    throw new Error(
+      `Unable to record warranty signature event: ${eventResponse.error.message}`
+    );
+  }
+
+  const nextSigners = context.signers.map((candidate) =>
+    candidate.id === updatedSigner.id ? updatedSigner : candidate
+  );
+
+  if (
+    input.targetStatus === "signed" &&
+    context.row.status !== "signed" &&
+    shouldMarkWarrantyDocumentSigned(getWarrantySignerRowsForState(nextSigners))
+  ) {
+    const documentStatusResponse = await admin
+      .from("warranty_documents")
+      .update({
+        status: "signed",
+        updated_by: context.scope.userId
+      })
+      .eq("company_id", context.row.company_id)
+      .eq("id", input.warrantyDocumentId);
+
+    if (documentStatusResponse.error) {
+      throw new Error(
+        `Unable to mark warranty document signed: ${documentStatusResponse.error.message}`
+      );
+    }
+  }
+
+  return updatedSigner;
+}
+
+export async function customerSignPortalWarrantyDocument(
+  warrantyDocumentId: string,
+  next = "/portal"
+) {
+  return updatePortalWarrantySignerStatus({
+    warrantyDocumentId,
+    targetStatus: "signed",
+    next
+  });
+}
+
+export async function customerDeclinePortalWarrantyDocument(
+  input: {
+    warrantyDocumentId: string;
+    declineReason?: string | null;
+  },
+  next = "/portal"
+) {
+  return updatePortalWarrantySignerStatus({
+    warrantyDocumentId: input.warrantyDocumentId,
+    targetStatus: "declined",
+    declineReason: input.declineReason,
+    next
+  });
+}
+
 export async function getPortalInvoiceReviewData(
   invoiceId: string,
   next = "/portal"
@@ -2065,7 +2862,12 @@ export async function getPortalInvoiceReviewData(
   }
 
   const admin = getSupabaseAdminClient();
-  const [lineItemsResponse, paymentsResponse, paymentEventsResponse, contractorBrand] = await Promise.all([
+  const [
+    lineItemsResponse,
+    paymentsResponse,
+    paymentEventsResponse,
+    contractorBrand
+  ] = await Promise.all([
     supabase
       .from("invoice_line_items")
       .select(
@@ -2120,7 +2922,8 @@ export async function getPortalInvoiceReviewData(
 
   const lineItemRows =
     (lineItemsResponse.data as PortalInvoiceLineItemRow[] | null) ?? [];
-  const paymentRows = (paymentsResponse.data as PortalPaymentRow[] | null) ?? [];
+  const paymentRows =
+    (paymentsResponse.data as PortalPaymentRow[] | null) ?? [];
   const paymentEventRows =
     (paymentEventsResponse.data as PortalPaymentEventRow[] | null) ?? [];
 
@@ -2166,7 +2969,10 @@ export async function getPortalInvoiceReviewData(
     });
   }
 
-  const paidAmount = paymentRows.reduce((sum, payment) => sum + Number(payment.amount), 0);
+  const paidAmount = paymentRows.reduce(
+    (sum, payment) => sum + Number(payment.amount),
+    0
+  );
   const paymentWorkflow = computeInvoicePaymentWorkflowGate({
     invoiceStatus: row.status,
     balanceDueAmount: formatMoney(row.balance_due_amount)
