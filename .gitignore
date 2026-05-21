@@ -1,0 +1,41 @@
+# dependencies
+node_modules
+
+# build
+.turbo
+dist
+.next
+coverage
+*.tsbuildinfo
+playwright/.auth/
+playwright-report/
+test-results/
+.playwright-tmp/
+tmp-visual-audit-phase*/
+
+# env
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# logs
+*.log
+pnpm-debug.log*
+
+# system
+.DS_Store
+Thumbs.db
+
+# local leftovers
+Floorconnectorgit/
+
+# Google Drive tmp files
+.tmp.driveuploads/
+.tmp.drivedownloads/
+
+# Other Repositories
+.agent/skills
+
+
