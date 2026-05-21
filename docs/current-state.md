@@ -2325,11 +2325,35 @@ The paid early-access planning boundary is documented in [docs/paid-early-access
 Implemented UI behavior now:
 
 - Project remains the primary workflow and readiness hub.
+- Project Workspace now carries the first operating-core visibility stack:
+  ProjectPulse, FieldTrail, MessageCenter, CloseoutTrail, and Proof Center.
+  These are read-only layers over existing project, job, field, communication,
+  commercial, invoice, payment, warranty/service, and customer-access records.
+  They do not create separate subsystems, duplicate business records, AI
+  summaries, automation, schema, migrations, route changes, or workflow
+  mutations.
 - Dashboard emphasizes high-signal priorities before passive metrics.
 - Dashboard now includes an Operational Cockpit section that groups existing notifications, deterministic project cues, approved-estimate handoffs, ready-project/job handoffs, service/warranty ticket and service-job attention, warranty document signature-request visibility, customer/signature/payment waiting states, and field/production follow-up into `Needs attention`, `Ready to move`, `Waiting on customer/payment/signature`, and `Field/production follow-up` buckets. The buckets are presentation-only over existing records and links.
 - Project, Estimate, Contract, Invoice, and Job Workspaces lead with next-action and workflow-state context before supporting panels.
 - Project Workspace now includes a compact workflow summary that names current stage, blocker, next action, and the related linked record or Project Workspace fallback driving the next step. This reuses existing readiness snapshots, workflow guidance preferences, linked-record recency, and next-action calculations without changing readiness behavior.
 - Project Workspace now includes Proof Center Phase 1, a read-only project document/evidence/proof index below CloseoutTrail. It groups existing estimates, contracts, change orders, Signature Trail, Send Trail, Customer Access, invoices, Payment Trail, Daily Job Logs, Job Notes, field evidence, warranty documents, and service tickets into source-record links and a deterministic Proof Next Move. It does not add document management, uploads, schema, migrations, route changes, portal-only copies, provider sends, AI summaries, automation, or payment/signature/field/portal behavior changes.
+- Estimate, Contract, and Invoice Workspaces now present existing document
+  delivery evidence as Send Trail. Send Trail summarizes send events,
+  viewed/acted evidence, pending/failed attention, and source-record review
+  moves without changing provider sends, signatures, payments, estimate math,
+  invoice math, portal grants, or document storage behavior.
+- `/schedule` now presents as CrewBoard on the existing route. CrewBoard uses
+  canonical jobs, appointments, job assignments, people, vendors, projects, and
+  customers for scheduling visibility, URL-backed date/layout context,
+  advisory schedule warnings, and project/job handoffs. It does not implement
+  drag/drop scheduling, automated dispatch, route optimization, notifications,
+  external calendar sync, or new schedule/dispatch records.
+- `/reports` now includes Reports Phase 1, a read-only operations and
+  collections visibility workspace over existing projects, jobs, schedule
+  warnings, contracts, invoices, payments, Daily Job Logs, Job Notes, field
+  evidence, closeout, and proof signals. It links back to source workspaces and
+  does not add an analytics warehouse, report builder, fake metrics, export
+  system, automation, AI, schema, migrations, or payment/signature behavior.
 - Estimate, Contract, Invoice, Job, and Project Workspaces share the same baseline grammar: compact header band, semantic status pill, next-action card, workflow summary, state facts, primary record surface, context rail, connected records, and internal follow-through sections.
 - Dashboard, Project, Schedule, Contract, Invoice, Job, and Daily Log surfaces now share grouped lifecycle language around `opportunity -> customer/project -> estimate/contract -> job/schedule -> invoice/payment`. Contract Workspace clarifies draft, approval, signature, decline, countersign, deposit, and downstream handoff context; Invoice Workspace clarifies draft, sent/open, partial, paid, void, billing-source, collection, payment, and upstream-readiness context; Job Workspace clarifies schedule, crew, field evidence, closeout, and downstream billing handoff; Daily Log Workspace clarifies project-day narrative, field notes, labor/time continuity, attachments, and upstream Project Workspace resolution. This is presentation-only and does not change signature, readiness, scheduling, time-card, billing, payment, portal, schema, RLS, or server-action behavior.
 - Projects, Estimates, Invoices, Jobs, Contracts, and Customers Manager Pages use the shared Manager Page rhythm with clearer status scanning, primary create actions, and compact continuity cues.

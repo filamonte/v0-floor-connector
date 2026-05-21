@@ -62,6 +62,8 @@ Document roles:
 - `docs/design/proof-center-phase-1-project-document-evidence-index.md`: implementation note for the first Proof Center project document and evidence index over existing commercial, customer-action, billing, field, warranty, service, and Customer Access records
 - `docs/design/reporting-phase-1-operations-collections-visibility.md`: implementation note for the first read-only Reports operations and collections visibility workspace over existing project, job, contract, field, invoice, payment, closeout, and proof signals
 - `docs/design/sendtrail-phase-1-document-delivery-proof-visibility.md`: implementation note for the first Send Trail document delivery proof visibility pass over existing document delivery, signature, payment, portal view, and communication evidence
+- `docs/design/operating-core-checkpoint.md`: post Trail Systems checkpoint for current-state, roadmap, workflow, language, validation, and next-build recommendation after the operating-core expansion
+- `docs/operating-core-validation-checklist.md`: focused validation inventory for recent operating-core summary helpers, routes, and browser QA caveats
 - `docs/design/project-workspace-lifecycle-qa.md`: lifecycle QA note for the Project Workspace operating loop after CrewBoard, FieldTrail, MessageCenter, ProjectPulse, and CloseoutTrail
 - `docs/enterprise-ui-system-audit.md`: secured-app route audit, Phase 1-4 polish history, drift watch list, and authenticated visual QA rules
 - `docs/floorconnector-ui-build-rules.md`: mandatory contractor UI build rules, including the accepted Graphite & Copper visual foundation and shell/workspace guardrails
@@ -169,6 +171,8 @@ Read these first for most implementation or documentation tasks:
 - `docs/contractor-foreman-gap-decision-list.md` records owner decisions from the Contractor Foreman baseline comparison.
 - `docs/future-feature-coverage-map.md` is the broad future coverage map so roadmap/current-state do not become feature encyclopedias.
 - `docs/product-language.md` defines the approved user-facing product terms that sit on top of the existing canonical architecture without renaming routes, schema, or internal models.
+- `docs/design/operating-core-checkpoint.md` records the latest post-expansion
+  audit and next-build recommendation.
 
 ### Workflow And System Architecture
 
@@ -184,6 +188,7 @@ Read these first for most implementation or documentation tasks:
 - `docs/enterprise-ui-system-audit.md` records the secured-app visual audit and drift watch list.
 - `docs/floorconnector-ui-build-rules.md` contains mandatory UI build rules.
 - `docs/product-language.md` and `docs/product-language-audit.md` govern product naming and terminology. They are UX copy guidance, not schema, route, or domain-model rename instructions.
+- `docs/design/operating-core-checkpoint.md` and `docs/operating-core-validation-checklist.md` capture the current operating-core audit, validation inventory, and recommended next build direction after CrewBoard, FieldTrail, MessageCenter, ProjectPulse, CloseoutTrail, Proof Center, Reports, and Send Trail.
 
 ### AI Guidance And Planning
 

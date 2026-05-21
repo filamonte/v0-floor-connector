@@ -46,6 +46,7 @@ The database can stay boring. The product should speak human.
 | CloseoutTrail         | Project closeout readiness and proof summary from existing records.  | Project Workspace closeout checklist and closeout Next Move.         | New closeout tables, auto-close behavior, or customer package generation.    |
 | Proof Center          | Project document, evidence, and proof index from existing records.   | Project Workspace proof categories and Proof Next Move.              | Full document management, new upload models, or generated closeout packages. |
 | Send Trail            | Document send and delivery history.                                  | Project, estimate, contract, invoice, and warranty delivery review.  | Provider payload fields, webhook code, or fake delivery events.              |
+| Reports               | Read-only company operations and collections visibility.             | `/reports` workspace and source-record reporting summaries.          | Analytics warehouse, report-builder promises, fake metrics, or exports.      |
 
 ## Terms To Avoid In User-Facing UI
 
@@ -69,22 +70,23 @@ architecture names.
 
 ## Terminology Map
 
-| Internal / technical term         | Preferred user-facing term   | Where to use                                                        | Where not to use                               |
-| --------------------------------- | ---------------------------- | ------------------------------------------------------------------- | ---------------------------------------------- |
-| Project readiness gate            | GateKeeper                   | Project Workspace, schedule handoff, blocker summaries.             | Database table names, readiness helper names.  |
-| Workflow cues / suggested actions | Next Move suggestions        | Dashboard My Work, Project Workspace suggestions, attention panels. | Internal `operational-cues` folders or types.  |
-| Operational command center        | Command Center               | Dashboard and project operating summaries.                          | Every manager or detail page.                  |
-| Commercial readiness              | Ready Check                  | Commercial handoff summaries and project facts.                     | Stored enum/status values.                     |
-| Project health summary            | ProjectPulse                 | Project Workspace summary of health, blockers, and Next Move.       | Database status models or health-score tables. |
-| Project closeout readiness        | CloseoutTrail                | Project Workspace closeout proof and readiness checklist.           | Closeout database tables or auto-close logic.  |
-| Project proof index               | Proof Center                 | Project Workspace document, evidence, and proof review.             | File/document tables or upload behavior.       |
-| Payment events                    | Payment Trail                | Invoice/payment evidence sections.                                  | Provider event mapping or webhook code.        |
-| Contract signature events         | Signature Trail              | Contract signature history sections.                                | Signature provider integration code.           |
-| Portal access grants              | Customer Access              | Contractor/customer access copy.                                    | Access-grant implementation names.             |
-| Cost Items Database               | Cost Library                 | Visible navigation and workspace title.                             | Route path `/cost-items-database`.             |
-| Module controls                   | Feature Controls             | Settings/super-admin visible labels.                                | Low-level entitlement policy code.             |
-| Platform defaults                 | Starter Settings             | Super-admin default settings.                                       | Tenant-owned settings.                         |
-| Tenant/org                        | Company / Contractor Account | Customer-safe or contractor-facing copy.                            | Developer docs and database ownership docs.    |
+| Internal / technical term          | Preferred user-facing term   | Where to use                                                        | Where not to use                               |
+| ---------------------------------- | ---------------------------- | ------------------------------------------------------------------- | ---------------------------------------------- |
+| Project readiness gate             | GateKeeper                   | Project Workspace, schedule handoff, blocker summaries.             | Database table names, readiness helper names.  |
+| Workflow cues / suggested actions  | Next Move suggestions        | Dashboard My Work, Project Workspace suggestions, attention panels. | Internal `operational-cues` folders or types.  |
+| Operational command center         | Command Center               | Dashboard and project operating summaries.                          | Every manager or detail page.                  |
+| Commercial readiness               | Ready Check                  | Commercial handoff summaries and project facts.                     | Stored enum/status values.                     |
+| Project health summary             | ProjectPulse                 | Project Workspace summary of health, blockers, and Next Move.       | Database status models or health-score tables. |
+| Project closeout readiness         | CloseoutTrail                | Project Workspace closeout proof and readiness checklist.           | Closeout database tables or auto-close logic.  |
+| Project proof index                | Proof Center                 | Project Workspace document, evidence, and proof review.             | File/document tables or upload behavior.       |
+| Operations / collections reporting | Reports                      | Company-level reporting workspace over source records.              | Analytics warehouse or report-builder copy.    |
+| Payment events                     | Payment Trail                | Invoice/payment evidence sections.                                  | Provider event mapping or webhook code.        |
+| Contract signature events          | Signature Trail              | Contract signature history sections.                                | Signature provider integration code.           |
+| Portal access grants               | Customer Access              | Contractor/customer access copy.                                    | Access-grant implementation names.             |
+| Cost Items Database                | Cost Library                 | Visible navigation and workspace title.                             | Route path `/cost-items-database`.             |
+| Module controls                    | Feature Controls             | Settings/super-admin visible labels.                                | Low-level entitlement policy code.             |
+| Platform defaults                  | Starter Settings             | Super-admin default settings.                                       | Tenant-owned settings.                         |
+| Tenant/org                         | Company / Contractor Account | Customer-safe or contractor-facing copy.                            | Developer docs and database ownership docs.    |
 
 ## Candidate Future Names
 
@@ -100,14 +102,15 @@ implemented yet:
 
 ## Implementation Notes
 
-Phase 1 intentionally implements only the strongest labels in high-impact UI:
-GateKeeper, Next Move, Command Center, Ready Check, Cost Library, Payment Trail,
-Signature Trail, Customer Access, Company Controls, Platform Control Room,
-Starter Settings, and Feature Controls.
+Use named layers where they reduce repeated explanation: ProjectPulse for
+project health, CrewBoard for scheduling visibility, FieldTrail for execution
+history, MessageCenter for project communication history, CloseoutTrail for
+closeout readiness, Proof Center for project proof review, Send Trail for
+document delivery evidence, and Reports for company-level reporting. Use plain
+copy elsewhere when a name would make the UI feel branded for its own sake.
 
-The implementation is copy-only. Internal architecture, routes, schema,
-actions, form payloads, hidden inputs, test ids, and database names remain
-unchanged.
+Product-language work does not rename internal architecture, routes, schema,
+actions, form payloads, hidden inputs, test ids, or database names.
 
 ## Guardrails
 

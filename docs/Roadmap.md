@@ -81,6 +81,15 @@ The operational core is already real on the current branch. Current-state owns t
 - people, vendors, compliance, time, daily logs, field notes, and execution attachments
 - settings and super-admin foundations
 - normalized contractor UI shell, Manager Pages, Quick-Create, and Record Workspace patterns
+- CrewBoard Phase 1/2 on `/schedule`, including job-centered scheduling
+  visibility, date/layout context, source-record handoffs, and advisory
+  schedule warnings
+- Project Workspace operating layers: ProjectPulse, FieldTrail, MessageCenter,
+  CloseoutTrail, and Proof Center over existing canonical records
+- Reports Phase 1 on `/reports` for read-only operations and collections
+  visibility
+- Send Trail Phase 1 on estimate, contract, and invoice source workspaces for
+  existing document delivery proof visibility
 
 This does not mean every surface is production-complete. It means the platform has a connected operating-system foundation rather than an unstarted product.
 
@@ -98,7 +107,7 @@ Next maturity focus:
 
 ## 3. Scheduling And Dispatch Expansion
 
-Current status: Good-enough release on the canonical job/job-assignment foundation.
+Current status: Good-enough release on the canonical job/job-assignment foundation. CrewBoard Phase 1 and Phase 2 now exist on `/schedule`; remaining scheduling work should add depth rather than reframe scheduling as unbuilt.
 
 Implemented good-enough scope:
 
@@ -106,6 +115,9 @@ Implemented good-enough scope:
 - Ready work queue and Scheduled timeline over canonical jobs plus appointment read-model context
 - selected job action panel for schedule/reschedule context and crew assignment
 - project/job handoff query parameters into the schedule action panel where safe
+- date navigation across day, week, and board layouts
+- schedule-note previews and read-only schedule warnings for missing crew,
+  missing end time, and overlapping same-day crew windows
 
 Future depth:
 
@@ -125,6 +137,9 @@ Current status: Foundation.
 
 Future depth:
 
+- document generation, PDF/export controls, stored versions, and retrieval
+  depth for estimates, contracts, invoices, warranties, closeout, and proof
+  packages
 - equipment/resource readiness on top of the implemented canonical equipment asset foundation, before assignment or schedule conflict logic expands further
 - richer materials and inventory workflows
 - purchasing, reservation, issue, return, and job material planning
@@ -149,9 +164,16 @@ read-only payment evidence and reconciliation visibility over the same canonical
 `invoice -> payment -> payment_events` chain, with compact provider references
 where already stored and no new reconciliation execution model.
 
+Reports Phase 1 also exists at `/reports` as a read-only operations and
+collections visibility workspace. It derives project, schedule, crew,
+signature, receivable, payment, field, closeout, and proof attention from
+existing source records only and routes users back to canonical workspaces.
+
 Future depth:
 
-- broader Sales Tax Summary/reporting and analytics
+- reporting depth beyond the first operations/collections lens, including
+  richer report filters, exports, forms, and eventually analytics once source
+  data is mature
 - export-first data portability is now started through `/settings/export`, with small metadata-only export history, validation-only customer/contact CSV import dry run, tenant-scoped saved import review batches, and a read-only batch review shell; future import/write depth should build on editable row decisions, create/link-only first phase, dedicated audit, rollback, duplicate resolution, backups, and explicit approval rather than raw database imports
 - AIA/progress billing UX, exports, and draw-management depth
 - deeper payment reconciliation execution beyond read-only event visibility, retries, refunds, disputes, and provider sync

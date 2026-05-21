@@ -78,6 +78,10 @@ The target IA should leave room for future contractor operating depth without cr
 
 - Field may eventually include inspections, punchlists, richer service/warranty, field checklists, closeout, and mobile-first capture. The first internal service ticket manager now exists at `/service-tickets`; the broader service/warranty architecture is planned in [docs/service-warranty-plan.md](C:/FloorConnector/docs/service-warranty-plan.md).
 - Financials may eventually include purchase orders, bills/expenses, accounts payable, job costing, budget vs actual, retainage release depth, and earned value.
+- Reports currently exists at `/reports` as a read-only operations and
+  collections visibility route. It may remain a cross-project reporting
+  workspace or be grouped with Financials/Operations as the IA matures, but the
+  current route structure has not changed in this checkpoint.
 - People may include subcontractor management, workforce identity, compliance, crew assignment, and time/clocking workflows. The clocking architecture is planned in [docs/clocking-system-plan.md](C:/FloorConnector/docs/clocking-system-plan.md).
 - Documents should become a central record-linked document, submittal, spec-sheet, photo, file, warranty, and closeout area rather than a module-specific file island. The first warranty document foundation now exists at `/warranty-documents/:id` and `/warranty-documents/:id/print`; warranty document/signature planning lives in [docs/warranty-document-system-plan.md](C:/FloorConnector/docs/warranty-document-system-plan.md).
 - Equipment may deserve its own operational area or may live under Field/Resources depending on product design. The registry foundation now exists at `/equipment`; assignment/readiness, maintenance, utilization, and job-costing inputs remain future depth. Equipment must connect to jobs, projects, schedule, people, vendors, documents, maintenance, time, warranty, and job costing; see [docs/equipment-management-plan.md](C:/FloorConnector/docs/equipment-management-plan.md).
@@ -168,8 +172,12 @@ This area should include:
 - project list
 - project detail
 - project workspace sections
-- project status and health
+- project status and health; the implemented ProjectPulse layer now provides
+  the first project health and Next Move summary
 - linked estimates, jobs, invoices, files, and activity
+- field, communication, closeout, and proof visibility; the implemented
+  FieldTrail, MessageCenter, CloseoutTrail, and Proof Center layers should stay
+  project-scoped rather than becoming disconnected top-level modules
 - future takeoff status, generated quantities, linked estimate context, and scope summary
 
 Projects should answer:

@@ -8,6 +8,7 @@ This document defines the canonical business workflows in FloorConnector as they
 It is an operational workflow document, not a technical architecture document.
 
 Cross-references:
+
 - [docs/developer-source-of-truth.md](C:/FloorConnector/docs/developer-source-of-truth.md): primary development entry point and guardrails
 - [docs/current-state.md](C:/FloorConnector/docs/current-state.md): implemented truth
 - [docs/Architecture.md](C:/FloorConnector/docs/Architecture.md): system design
@@ -16,6 +17,7 @@ Cross-references:
 - [docs/site-visit-scope-intake-plan.md](C:/FloorConnector/docs/site-visit-scope-intake-plan.md): Scope Intake planning guardrails between site visit and estimate planning
 
 This workflow document assumes the supporting configuration model now has two layers:
+
 - super admin defines platform defaults and starter records
 - contractor organizations adopt or override within their own tenant-owned settings
 
@@ -29,6 +31,7 @@ This workflow document assumes the supporting configuration model now has two la
 - public acquisition, contractor websites, forms, attribution, portals, communications, and future AI intake should feed the same canonical workflow graph instead of creating marketing, website, portal, or AI silos
 
 In practical terms:
+
 - a lead should not become a second disconnected customer-like record later
 - a website form, public AI chat, landing page conversion, campaign source, review/reputation signal, or gallery/project-proof interaction should not become a disconnected marketing record later
 - an approved estimate should feed downstream contract, job, and invoice workflows instead of being re-entered
@@ -36,6 +39,16 @@ In practical terms:
 - canonical records should stay linked so teams can follow the same job from intake through payment
 - record-level revision snapshots should attach to canonical records instead of cloning estimates, invoices, contracts, or change orders
 - the app should guide users toward the next best action instead of presenting every downstream action as equally primary
+- Project Workspace is now the clearest operating hub in the implemented app:
+  ProjectPulse, FieldTrail, MessageCenter, CloseoutTrail, and Proof Center are
+  visibility layers over the same canonical project chain, not separate
+  subsystems or duplicate business records.
+- CrewBoard is the current scheduling visibility/action surface on `/schedule`;
+  it uses canonical jobs, appointments, assignments, people, vendors, projects,
+  and customers rather than schedule-local records.
+- Reports is the current company-level operations/collections visibility
+  surface on `/reports`; it summarizes source records and routes users back to
+  Project Workspace, CrewBoard, Invoice Workspace, and Contract Workspace.
 - future visualizer/product/finish selections may start before lead intake, but once used operationally they should become canonical selected-system/spec context instead of disposable session-only data
 - a future contractor-facing `Directory` may unify how contact-like records are browsed and managed, but it must remain a view over canonical records rather than a replacement business model
 
@@ -60,6 +73,7 @@ Contractor-owned websites, tenant-owned domains, landing pages, SEO/service/loca
 ## Canonical Records Vs Supporting Workflow Stages
 
 Canonical system records:
+
 - organization
 - membership
 - opportunity
@@ -75,6 +89,7 @@ Canonical system records:
 - incident
 
 Supporting workflow stages:
+
 - future public acquisition through contractor-owned websites, tenant-owned domains, landing pages, SEO/service/location pages, public forms, campaign attribution, and website AI intake
 - contact and qualification work
 - future pre-lead visual/product/finish selection
@@ -84,8 +99,12 @@ Supporting workflow stages:
 - future project-scoped takeoff and scope intelligence
 - future selected system/spec review
 - future shared file/evidence linking
-- future delivery proof and communication tracking
-- future activity timeline review
+- implemented first delivery-proof and communication visibility through Send
+  Trail, MessageCenter, Signature Trail, Payment Trail, and Customer Access
+  context over existing records
+- implemented first project-level activity visibility through FieldTrail,
+  MessageCenter, CloseoutTrail, Proof Center, and ProjectPulse; broader
+  full-record activity timelines remain future depth
 - estimate review and approval
 - contract send / signature readiness
 - deposit or financial readiness checks
@@ -93,10 +112,12 @@ Supporting workflow stages:
 - closeout
 
 The key distinction is:
+
 - canonical records are durable business entities stored in the shared system model
 - supporting workflow stages are operational checkpoints that move canonical records forward
 
 Estimating terminology:
+
 - Measurements are manual inputs such as length x width, direct square footage, direct linear footage, and counts.
 - Takeoff means plan, PDF, or drawing-based measurement.
 - AI Capture is a future photo, app, or AI-derived measurement input method.
@@ -107,6 +128,7 @@ Estimating terminology:
 Boundary rule: Takeoff and measurements produce quantities. Catalog items / cost items define reusable cost, pricing, production, markup, and tax behavior. Future System Template workflows should map quantities to grouped estimate content. Estimates define customer-facing pricing and commercial scope.
 
 Future Templates & Systems administration:
+
 - document templates, System Templates, add-ons/options, and sharing/review settings should eventually live in a dedicated contractor settings/admin area rather than being scattered across estimates, invoices, contracts, and other modules
 - document templates should include estimate, invoice, contract, proposal/SOW, and future work order templates
 - contractors should have defaults, be able to switch templates per estimate/invoice/contract where the workflow supports it, and be able to create or edit local copies
@@ -119,18 +141,21 @@ Future Templates & Systems administration:
 - internal cost, markup, margin, private notes, and production math should stay internal unless intentionally configured as customer-facing language
 
 Implemented good-enough document delivery:
+
 - contractor estimate, contract, and invoice workspaces expose customer-facing `Print / save PDF` actions
 - portal estimate, contract, and invoice review pages expose customer-safe `Print / save PDF` actions
 - these routes render the existing canonical estimate, contract, and invoice data for browser print/save; portal print views use safe contractor organization branding after portal access is scoped; they do not create a second document source of truth, portal-only copies, financial mutations, signature mutations, payment mutations, or stored PDF versioning
 - the existing sent-contract PDF snapshot foundation remains separate workflow evidence for contract send behavior; the print/save views are current renderings of canonical records
 
 Future Visual/Product/Finish Selection:
+
 - a room visualizer or finish selector may start before lead intake
 - supported future finish families include decorative flake, metallic epoxy, decorative quartz, solid color, and future surface systems
 - manufacturer/product metadata should support Torginol-style vendor, product line, product code, product images, spec sheets, and technical notes without creating a vendor-specific commitment
 - selected finish/spec context should become canonical selected-system/spec records later, not fake session-only business truth
 
 Future System Specification / Finish System:
+
 - finish systems are not loose estimate line-item descriptions
 - they represent what is actually sold and installed
 - selected system/spec context should flow into estimate, contract, job, portal, closeout, and warranty context
@@ -138,11 +163,13 @@ Future System Specification / Finish System:
 - later changes should move through revision or change-order style workflows rather than silent edits
 
 Future Shared Files / Evidence:
+
 - product images, room photos, visualizer renders, spec sheets, signed documents, field photos, markups, and closeout evidence should live in a shared file/evidence layer
 - files should be linkable to multiple canonical records such as project, opportunity, estimate, contract, job, invoice, payment, change order, daily log, field note, selected system/spec, and finish product
 - existing execution attachments remain the current implementation, but the future direction is a shared file/evidence layer rather than module-specific attachment silos
 
 Future Communication / Delivery Proof:
+
 - communication history should cover email, SMS, portal, app, and manual logs where supported
 - public website forms, website AI chat, campaign inquiries, reviews/reputation follow-up, and public intake should resolve into canonical communication and opportunity workflows where communication history is needed
 - sending estimates, invoices, contracts, change orders, portal invites, and payment requests should create canonical communication/delivery records
@@ -151,12 +178,28 @@ Future Communication / Delivery Proof:
 - FloorConnector should store immutable delivery events tied back to canonical records
 - open and click tracking are useful signals, not perfect legal certainty
 
+Implemented communication and delivery visibility:
+
+- Project Workspace MessageCenter summarizes existing project communication
+  threads/messages, document delivery events, signature events, payment events,
+  and Customer Access context.
+- Estimate, Contract, and Invoice Workspaces expose existing document delivery
+  evidence as Send Trail.
+- Project Workspace Proof Center references Send Trail, Signature Trail,
+  Payment Trail, Customer Access, field evidence, and source records as a
+  project proof index.
+- These layers are read-only visibility over current records. They do not add
+  provider retry workflow, automated reminders, new message/delivery tables,
+  portal-only copies, AI summaries, or customer-facing field sharing.
+
 Future Activity Timeline:
+
 - project, customer, and record timelines should summarize important canonical events across the lifecycle
 - timeline entries should be readable memory over canonical records, not replacement source-of-truth rows
 - examples include finish selected, estimate sent/viewed/approved, contract sent/signed, invoice sent/paid, payment completed, file uploaded, message received, job scheduled, daily log finalized, and closeout evidence captured
 
 Implemented Revision Timeline:
+
 - `record_revisions` now provides first-pass immutable snapshots for estimates, invoices, contracts, and change orders
 - supported record workspaces show a secondary revision timeline with revision number, current marker, kind, reason, timestamp, actor id when available, and compact snapshot summary
 - revisions are attached to the active canonical record and are not downstream business records
@@ -164,6 +207,7 @@ Implemented Revision Timeline:
 - approved-estimate commercial snapshots, change-order commercial snapshots, contract signature events, payment events, and notification events remain their specialized workflow evidence
 
 Implemented Perspective Views:
+
 - estimates, invoices, and leads support first-pass `My Work` / `Company` perspectives through `?view=my` and `?view=company`
 - company view keeps the existing organization-scoped queue behavior
 - personal view uses only safe existing ownership or assignment cues: estimate/invoice creator, updater, sender where available, and lead appointment assignment through linked people membership
@@ -193,6 +237,7 @@ This workflow preserves the canonical lifecycle and exists to support data porta
 ### Billing Trigger Rule
 
 An invoice may only be created when a valid billing trigger exists:
+
 - contract is signed (deposit allowed)
 - deposit is required by workflow
 - job or work is completed or billable
@@ -205,10 +250,12 @@ Invoices must not be created before contract signature unless explicitly part of
 Existing invoice roles clarify billing behavior only; do not introduce new enums for this.
 
 `deposit`:
+
 - used for readiness and pre-execution billing
 - tied to contract or financial readiness, not execution
 
 `standard`:
+
 - used for executed or billable work
 - tied to job completion or approved scope
 
@@ -225,6 +272,7 @@ Only executed or explicitly billable portions of scope should be invoiced.
 ### Invoice Source Rule
 
 Every invoice must trace back to real scope:
+
 - project (required)
 - and at least one of:
   - job
@@ -240,6 +288,7 @@ Invoices must not be freeform or disconnected from canonical records.
 - payments are the source of truth for money collected
 
 No parallel balance systems should exist on:
+
 - project
 - estimate
 - contract
@@ -251,6 +300,7 @@ All financial reporting must derive from invoices and payments.
 Approved change orders extend the same billing chain.
 
 They may:
+
 - add line items to an existing invoice
 - or be included in a future invoice
 
@@ -259,10 +309,12 @@ They must not create a separate billing system.
 ### Readiness Vs Billing Rule
 
 Operational readiness and billing readiness are related but distinct:
+
 - readiness determines whether work or billing can proceed
 - billing must still follow valid billing triggers
 
 Examples:
+
 - contract signed -> deposit allowed
 - deposit paid -> scheduling allowed
 - job complete -> standard invoice allowed
@@ -272,11 +324,13 @@ Examples:
 Project readiness is a hard server-side gate, not guidance.
 
 Readiness derives from:
+
 - contract status
 - financial readiness, including deposit or financing requirements where configured
 - organization workflow settings
 
 Project readiness is required before:
+
 - job creation
 - scheduling
 - job updates that move work into scheduled or execution states
@@ -285,6 +339,7 @@ Project readiness is required before:
 All enforcement happens at the server boundary through the centralized project readiness gate. Module-specific flows must not bypass or reinterpret readiness independently.
 
 When the existing readiness snapshot is clear after contract signature, contractor-facing detail pages may guide the user into the next operational steps:
+
 - create the canonical project job
 - schedule that job through the shared schedule surface
 
@@ -295,6 +350,7 @@ This is a Sign -> Schedule -> Execute UI handoff only. It must continue to use t
 FloorConnector now stores organization-owned guidance preferences on the existing `organization_workflow_settings` row. These preferences tune how much coaching the contractor app shows; they do not change the canonical lifecycle, tenant isolation, readiness enforcement, financial rules, signature history, portal access, or payment truth.
 
 Implemented guidance modes:
+
 - Guided: default mode with next-best-action and readiness guidance visible.
 - Flexible: guidance remains available but can be made less forceful.
 - Manual: next-best-action prompts can be reduced for teams that want less hand-holding.
@@ -312,6 +368,7 @@ The current app already supports the following live workflows:
 ### Auth And Org Entry
 
 Implemented flow:
+
 - user signs in with Google or email/password
 - first access bootstraps profile, organization, and owner membership when needed
 - public early-access CTAs can send users to `/signup?next=/setup/company`
@@ -338,6 +395,7 @@ Implemented flow:
 - `/super-admin/operations` provides read-only Platform Operations / System Health observability for platform admins. The flow is inspection only: the page loads existing platform health, workflow-error, starter-pack run/attempt, contractor group audit, membership, and assignment-intent signals; shows Platform Health Summary, Recent Operational Activity, Attention Needed, Audit Sources, and Not Yet Monitored / Future Operations; and keeps source-unavailable caveats user-safe. Operational summaries are sanitized and capped before display. The page has no forms, no page-scoped buttons or inputs, no remediation/retry/fix/resolve/archive/delete/provision/assign/entitlement/runtime/sync/backfill controls, and no server action wired from the surface. Future support operations, alerting, runbook, incident, remediation, retry, escalation, and system-health automation workflows remain future design work and are not implied by the current read-only page.
 
 Future Package Lifecycle and Approval Workflow concept:
+
 - Package-definition persistence, read-only catalog visibility, and read-only one-definition detail inspection now exist as platform-owned infrastructure, but package lifecycle mutation is not implemented. This remains a planning boundary for future package review, approval, publishing, versioning controls, assignment, billing, entitlement, and module work.
 - Future package lifecycle states should be `draft`, `internal_review`, `approved`, `published`, `deprecated`, and `archived`.
 - Future package review should validate package dimensions, billing/provider mapping, module availability, usage limits, starter-pack defaults, contractor group targeting, entitlement mapping, and Stripe/provider mapping before approval.
@@ -349,6 +407,7 @@ Future Package Lifecycle and Approval Workflow concept:
 - Future QA gates should include read-model tests, schema/RLS tests, platform-admin authorization tests, Stripe sandbox tests before live billing, entitlement no-op tests, migration/versioning tests, browser QA, and regression checks proving no unintended contractor changes.
 
 Future Contractor Package Assignment Governance concept:
+
 - Contractor package assignment persistence and read-only inspection now exist as a platform-owned schema/read-model foundation. The activation workflow is not implemented. The implemented foundation is an inspection boundary for a future audited link between a company/contractor and an approved/published package definition version.
 - Package assignment is distinct from package definition, billing subscription, entitlement enforcement, module visibility/gating, contractor groups, and starter-pack provisioning.
 - Future assignment lifecycle states should be `draft`, `pending_review`, `approved`, `scheduled`, `active`, `superseded`, `canceled`, and `archived`.
@@ -362,6 +421,7 @@ Future Contractor Package Assignment Governance concept:
 - Future QA/security gates should include schema/RLS tests, platform-admin authorization tests, no-service-role-browser-exposure tests, no unintended billing mutation tests, no unintended entitlement/module runtime mutation tests, Stripe sandbox tests before provider behavior, browser QA, audit evidence verification, and rollback/supersession tests.
 
 Future Package Billing / Provider Mapping Governance concept:
+
 - The first schema/read-model workflow is implemented as `contractor_package_billing_mappings`, `contractor_package_billing_mapping_audit_events`, platform-admin-only read helpers, and a read-only provider mapping/reconciliation section on `/super-admin/packages`. It remains an inspection boundary for future package billing/provider mapping, provider verification, provider reconciliation, and billing approval before any Stripe-backed subscription behavior exists.
 - Package definitions remain product packaging; contractor package assignments remain platform governance; billing provider mapping connects approved commercial terms to provider artifacts; subscription state reflects provider/commercial state; entitlement/module enforcement remains a separate future runtime layer.
 - Future mapping concepts should distinguish package definition, package version, contractor package assignment, billing plan, billing price, provider product, provider price, provider customer, subscription, subscription item, billing status, trial/early-access status, custom/grandfathered commercial contract, and payment-method/setup readiness.
@@ -375,6 +435,7 @@ Future Package Billing / Provider Mapping Governance concept:
 - Future QA/security gates should include schema/RLS tests, platform-admin authorization tests, service-role/server-only tests, Stripe sandbox tests, provider idempotency tests, webhook signature tests, no unintended billing mutation tests, no entitlement/runtime mutation tests, browser QA, audit evidence verification, and reconciliation mismatch tests.
 
 Future Package Entitlement / Module Boundary Governance concept:
+
 - This workflow is not implemented. It is a planning boundary for future entitlements, module availability, module visibility, feature access, usage limits, entitlement overrides, exception handling, and audit before any runtime gate exists.
 - Future concepts should distinguish entitlement, module availability, module visibility, feature access, usage limit, package definition entitlement mapping, contractor package assignment effective entitlements, override, trial/early-access exception, grandfathered/custom contract exception, support override/emergency override, and audit snapshot.
 - Package definitions describe intended commercial packaging. Contractor package assignments link a contractor to a package version. Billing/provider state handles payment/subscription status. Entitlements determine runtime capability access only after a separately implemented model exists. Module visibility is UI exposure and does not replace server-side enforcement.
@@ -387,6 +448,7 @@ Future Package Entitlement / Module Boundary Governance concept:
 - Future QA/security gates should include schema/RLS tests, platform-admin authorization tests, no client service-role exposure, entitlement no-op tests before runtime rollout, module visibility regression tests, package assignment separation tests, billing/provider separation tests, contractor group separation tests, starter-pack separation tests, browser QA, audit evidence verification, and rollback/revoke tests.
 
 Future Package Governance Audit and Evidence Model concept:
+
 - This workflow is not implemented. It is a planning boundary for future audit events, evidence snapshots, approval metadata, safe support review, and package-governance traceability now that the first package-definition schema/read-only catalog foundation exists. There is still no package governance audit write model, UI mutation, billing, Stripe, subscription, entitlement, module, or runtime behavior.
 - Future audit/evidence concepts should distinguish package governance audit event, package definition snapshot, package assignment snapshot, billing/provider mapping snapshot, entitlement/module mapping snapshot, operator reason, confirmation phrase, approval actor, approval timestamp, effective date, before/after snapshot, source system, external provider reference snapshot, reconciliation state, and rollback/deprecation/supersession plan.
 - Future audit event families should include `package_definition_created`, `package_definition_reviewed`, `package_definition_approved`, `package_definition_published`, `package_definition_deprecated`, `package_definition_archived`, `package_assignment_drafted`, `package_assignment_approved`, `package_assignment_scheduled`, `package_assignment_activated`, `package_assignment_superseded`, `package_assignment_canceled`, `provider_mapping_created`, `provider_mapping_verified`, `provider_mapping_deprecated`, `entitlement_mapping_reviewed`, `entitlement_override_created`, `entitlement_override_expired`, and `billing_reconciliation_reviewed`.
@@ -398,6 +460,7 @@ Future Package Governance Audit and Evidence Model concept:
 - This future audit/evidence workflow must not itself create packages, assign packages, mutate billing, call Stripe, create/update/cancel subscriptions, enforce entitlements, gate modules, change contractor permissions, provision starter packs, run automation, run AI behavior, or change runtime behavior.
 
 Future Package Governance Reporting / Export Readiness concept:
+
 - This workflow is not implemented. It is a planning boundary for future package governance reports, export shapes, support bundles, evidence packets, redaction, retention, and export auditability before any report route, UI export button, server action, file generation, schema, package mutation, billing, Stripe, subscription, entitlement, module, or runtime behavior exists.
 - Future report concepts should include package inventory, package definition versions, contractor package assignments, billing/provider mappings, entitlement/module mappings, overrides, package audit trails, reconciliation/attention-needed queues, grandfathered/custom contracts, early-access/trial readiness, and support investigation bundles.
 - Future export shapes should separate CSV summary exports, JSON audit bundles, PDF/operator support packets, internal support bundles, contractor-facing exports as separately scoped future work, and compliance/legal hold exports as separately scoped future work.
@@ -409,6 +472,7 @@ Future Package Governance Reporting / Export Readiness concept:
 - This future reporting/export readiness workflow must not itself create packages, assign packages, mutate billing, call Stripe, create/update/cancel subscriptions, enforce entitlements, gate modules, change contractor permissions, generate files, expose export links, run automation, run AI behavior, or change runtime behavior.
 
 Package Governance Implementation Readiness sequencing:
+
 - This sequencing is planning-only beyond the implemented package definition schema/read-only catalog/detail foundation, the implemented package definition audit evidence schema/read-only timeline foundation, the implemented pure lifecycle readiness/read-only transition inspection panel, the implemented contractor package assignment schema/read-model/detail foundation, the implemented assignment activation readiness inspection panel, and the implemented provider mapping schema/read-only reconciliation inspection foundation. It consolidates package lifecycle/approval, contractor assignment, billing/provider mapping, entitlement/module boundary, audit/evidence, and reporting/export plans before any package mutation, server action, RPC, billing call, Stripe call, subscription write, package assignment write, entitlement enforcement, module gate, runtime behavior, export behavior, contractor permission change, automation, AI behavior, or starter-pack provisioning change exists.
 - The package definition schema/read-model slice, package definition audit-evidence/read-model slice, read-only lifecycle readiness slice, contractor package assignment schema/read-model/detail slices, assignment activation readiness slice, and provider mapping schema/read-only reconciliation slice are implemented. The recommended remaining order is provider mapping detail/assignment-detail integration or entitlement/module mapping read model before runtime enforcement, runtime enforcement last, and reporting/export only after audit evidence and redaction/export boundaries are separately scoped.
 - Risk should be classified before each slice: docs and read-only read models are low risk; schema/RLS/audit/read-model foundations are medium risk; mutation actions are high risk; billing/provider mutation, Stripe subscription operations, runtime entitlement enforcement, module gating, pricing/package enforcement, contractor permission changes, and automated correction workflows are critical risk.
@@ -416,6 +480,7 @@ Package Governance Implementation Readiness sequencing:
 - Every future implementation slice needs the relevant QA/security gates before release: schema/RLS tests, forced RLS and grant checks, platform-admin authorization tests, no client service-role exposure checks, security-definer execute grant checks when RPCs are added, browser QA, no unintended billing/subscription mutation tests, no unintended entitlement/module mutation tests, no unintended contractor permission changes, Stripe sandbox tests before provider mutation, webhook signature verification before trusting provider state, audit snapshot tests, and reporting/export redaction tests where applicable.
 
 Package Definition Persistence Schema / Read-Model:
+
 - This first schema/read-model workflow is implemented as platform package definition and package version persistence plus platform-admin-only read-only catalog output. It does not add lifecycle approval controls, contractor assignment, billing/provider mapping writes, Stripe calls, subscription operations, entitlement enforcement, module gates, reporting/export behavior, contractor permission changes, or runtime behavior.
 - Package definition records represent product/business packaging only: package key, display name, intended audience/segment, status/lifecycle, and high-level package identity. A package definition is not a contractor package assignment, billing subscription, entitlement grant, module permission, contractor group, or starter-pack provisioning action.
 - Package version records preserve version number/label, lifecycle/publication status, commercial summary, intended module visibility, usage limit, entitlement, billing/provider, starter-pack default, contractor group targeting, and published snapshots as safe JSON intent snapshots. Deprecated and archived states preserve history instead of erasing it.
@@ -425,6 +490,7 @@ Package Definition Persistence Schema / Read-Model:
 - Package definition reads/writes in this slice do not change tenant-owned records, starter-pack provisioning records, contractor groups, subscriptions, entitlements, module availability, contractor permissions, reporting/export behavior, automation, AI behavior, or runtime behavior.
 
 Package Definition Audit Evidence Schema / Read-Model:
+
 - This schema/read-model workflow is implemented as one conservative `platform_package_definition_audit_events` table plus platform-admin-only read-only audit timeline output on the package definition detail route. It does not add package definition writes, package version writes, approval/publish controls, contractor assignment, billing/provider mapping writes, Stripe calls, subscription operations, entitlement enforcement, module gates, reporting/export behavior, contractor permission changes, starter-pack provisioning changes, automation, AI behavior, or runtime behavior.
 - Package definition audit events preserve package definition id, optional version id, constrained event type, optional actor, reason, confirmation text, before snapshot, after snapshot, metadata, occurred-at, and created-at evidence. Package-version event types require a version reference.
 - Snapshot and metadata fields must be JSON objects when present and must not store secrets, raw provider errors, stack traces, service-role keys, provider secret keys, sensitive payment method data, or tenant-owned mutable payloads. Deprecation, archive, correction, and supersession should add evidence instead of erasing earlier creation, review, approval, or publication evidence.
@@ -432,6 +498,7 @@ Package Definition Audit Evidence Schema / Read-Model:
 - Schema/security posture: RLS is enabled and forced on the public audit table; broad `public`, `anon`, and `authenticated` grants are revoked; server reads use the platform-admin/server boundary; no browser write path, security-definer RPC, client service-role exposure, package mutation action, or package lifecycle action was added.
 
 Future Package Definition Lifecycle Controls / Approval Readiness concept:
+
 - A pure read-only lifecycle readiness model and detail-page panel are implemented for inspection only. Lifecycle mutation is not implemented. This remains a planning boundary for future package definition/version lifecycle controls before any package mutation action, approval/publish/deprecate/archive control, contractor assignment, billing/provider mapping write, Stripe call, subscription operation, entitlement enforcement, module gate, reporting/export behavior, contractor permission change, starter-pack provisioning change, automation, AI behavior, or runtime behavior exists.
 - Future lifecycle controls should cover create draft, edit draft, submit for internal review, request changes, approve package definition, publish package version, deprecate package version, archive package definition/version, and supersede package version.
 - Future allowed transitions should include `draft -> internal_review`, `internal_review -> draft`, `internal_review -> approved`, `approved -> published`, `published -> deprecated`, `deprecated -> archived`, `published -> superseded` by a newer published version, `draft -> archived`, and `internal_review -> archived`.
@@ -444,6 +511,7 @@ Future Package Definition Lifecycle Controls / Approval Readiness concept:
 - The first lifecycle implementation added only the pure lifecycle/readiness helper, focused tests for allowed and blocked transitions, missing evidence and dependency caveats, and a read-only readiness UI panel. Actual lifecycle mutation server actions, approval/publish/deprecate/archive buttons, package assignments, billing/provider writes, Stripe calls, subscriptions, entitlement/module enforcement, runtime gates, reporting/export, automation, AI behavior, and starter-pack provisioning changes stay deferred.
 
 Contractor Package Assignment Schema / Read-Model:
+
 - This schema/read-model workflow is implemented as `contractor_package_assignments`, `contractor_package_assignment_audit_events`, platform-admin-only read helpers, a read-only assignment catalog section, and a read-only one-assignment detail route. It is still a boundary before any package assignment write, approval/schedule/activate/cancel control, billing/provider mapping write, Stripe call, subscription operation, entitlement enforcement, module gate, reporting/export behavior, contractor permission change, starter-pack provisioning change, automation, AI behavior, or runtime behavior exists.
 - Contractor package assignments link one company/contractor to package definition/version references with assignment status, lifecycle state, effective date, supersession/cancellation/archive context, assignment snapshot, billing impact snapshot, entitlement/module impact snapshot, starter-pack implication snapshot, cancellation/supersession reason, and grandfathered/custom contract marker.
 - The implemented first-slice tables are `contractor_package_assignments` and `contractor_package_assignment_audit_events`. Optional splits such as `contractor_package_assignment_transitions` or `contractor_package_assignment_snapshots` remain deferred unless query volume, retention, or audit/export shape later justifies them.
@@ -456,6 +524,7 @@ Contractor Package Assignment Schema / Read-Model:
 - The first assignment implementation added assignment and assignment-audit migrations, RLS/grant posture, shared types, platform-admin-only read helpers, pure assignment read-model/detail tests, a read-only Super Admin assignment inspection panel, and a read-only assignment detail route only. Package assignment mutation actions, approval/schedule/activate/cancel controls, billing/provider writes, Stripe calls, subscriptions, entitlement/module enforcement, runtime gates, contractor-facing package visibility, reporting/export, automation/AI assignment suggestions, and starter-pack provisioning changes stay deferred.
 
 Contractor Package Assignment Approval / Activation Readiness:
+
 - This workflow is implemented as a pure read-only readiness model and assignment-detail inspection panel. It remains a planning boundary before any package assignment write, approval/schedule/activate/cancel/supersede/archive action, billing/provider mapping write, Stripe call, subscription operation, entitlement enforcement, module gate, reporting/export behavior, contractor permission change, starter-pack provisioning change, automation, AI behavior, or runtime behavior exists.
 - The implemented readiness model includes assignment approval readiness, activation readiness, effective date readiness, billing impact readiness, entitlement/module impact readiness, package version validity, previous assignment status, supersession readiness, cancellation readiness, audit evidence readiness, provider mapping caveats, and support review guidance.
 - Future assignment approval should be platform-admin-only and should capture explicit operator reason, confirmation phrase, approval actor, approval timestamp, company/contractor snapshot, selected package definition/version snapshot, previous assignment snapshot, impact summary, billing impact caveat, entitlement/module impact caveat, starter-pack implication caveat, provider mapping caveat, and an audit event written in the same transaction as approval.
@@ -469,6 +538,7 @@ Contractor Package Assignment Approval / Activation Readiness:
 - The first readiness implementation added a pure assignment readiness helper, tests for allowed/blocked transitions and missing evidence, effective-date and package-version blockers, active assignment conflicts, billing/provider and entitlement/module caveats, and a read-only Super Admin assignment readiness panel only. Actual approval/schedule/activate/cancel/supersede/archive actions, billing/provider writes, Stripe calls, subscriptions, entitlement/module enforcement, runtime gates, contractor-facing package visibility, reporting/export, automation/AI assignment suggestions, and starter-pack provisioning changes stay deferred.
 
 Future Billing / Provider Mapping Schema Readiness for Package Assignments concept:
+
 - This workflow is not implemented. It is a planning boundary for future package-assignment billing/provider mapping schema and read models before any provider call, Stripe call, subscription creation/update/cancel, package assignment write, entitlement enforcement, module gate, reporting/export behavior, contractor permission change, starter-pack provisioning change, automation, AI behavior, or runtime behavior exists.
 - Future mapping concepts should include package assignment billing mapping, billing provider, provider customer/product/price/subscription/subscription-item references, billing state, reconciliation state, sandbox/test-mode marker, trial/early-access state, grandfathered/custom commercial terms, expected provider state, observed provider state, and reconciliation mismatch.
 - Future first-slice tables should likely be `contractor_package_billing_mappings` and `contractor_package_billing_mapping_audit_events`. Optional future tables such as `contractor_package_billing_reconciliation_events` or `contractor_package_billing_provider_snapshots` should stay deferred unless volume, retention, reconciliation, or support/export shape later justifies them.
@@ -481,6 +551,7 @@ Future Billing / Provider Mapping Schema Readiness for Package Assignments conce
 - Future first provider-mapping implementation should add mapping and mapping-audit migrations, RLS/grant posture, generated/shared types if needed, platform-admin-only read helpers, pure reconciliation/read-model tests, and a read-only Super Admin provider readiness panel only. Actual Stripe/provider calls, subscription creation/update/cancel, reconciliation auto-fix, entitlement/module enforcement, runtime gates, contractor-facing billing/package visibility, reporting/export, automation/AI reconciliation behavior, and starter-pack provisioning changes should stay deferred.
 
 Future Billing / Provider Mapping Reconciliation Readiness concept:
+
 - This workflow is not implemented. It is a planning boundary for future expected-vs-observed provider reconciliation before any Stripe/provider call, subscription creation/update/cancel, provider mutation, package assignment write, entitlement enforcement, module gate, reporting/export behavior, contractor permission change, starter-pack provisioning change, automation, AI behavior, or runtime behavior exists.
 - Future reconciliation concepts should include expected provider state, observed provider state, reconciliation status, mismatch category, stale provider state, pending verification, webhook dependency, provider sync attempt, support review required, recovery readiness, rollback readiness, sandbox/test-mode isolation, and reconciliation evidence snapshot.
 - Future reconciliation statuses should be `not_started`, `pending_provider`, `pending_verification`, `verified`, `mismatch_detected`, `support_review_required`, `suspended`, and `archived`.
@@ -493,6 +564,7 @@ Future Billing / Provider Mapping Reconciliation Readiness concept:
 - Future first reconciliation implementation should add reconciliation event and provider snapshot migrations, RLS/grant posture, generated/shared types if needed, platform-admin-only read helpers, pure reconciliation/read-model tests, and a read-only Super Admin reconciliation panel only. Actual Stripe/provider calls, subscription creation/update/cancel, reconciliation auto-fix, entitlement/module enforcement, runtime gates, contractor-facing billing/package visibility, reporting/export, automation/AI reconciliation behavior, and starter-pack provisioning changes should stay deferred.
 
 Future Billing / Provider Operation Evidence and Idempotency Readiness concept:
+
 - This workflow is not implemented. It is a planning boundary for future provider operation evidence, attempt history, idempotency, webhook correlation, retry review, and support readback before any Stripe/provider call, subscription creation/update/cancel, provider mutation, package assignment write, entitlement enforcement, module gate, reporting/export behavior, contractor permission change, starter-pack provisioning change, automation, AI behavior, background job, or runtime behavior exists.
 - Future provider operation concepts should include provider operation request, provider operation attempt, provider operation evidence, provider response evidence, idempotency key, operation correlation id, reconciliation linkage, retry eligibility, retry suppression, safe provider error summary, provider webhook correlation, operator review state, rollback/recovery evidence, and sandbox/production environment isolation.
 - Future provider operation types should include `provider_customer_create`, `provider_subscription_create`, `provider_subscription_update`, `provider_subscription_cancel`, `provider_subscription_suspend`, `provider_subscription_resume`, `provider_price_lookup`, `provider_product_lookup`, `provider_webhook_ingest`, and `provider_reconciliation_check`.
@@ -505,6 +577,7 @@ Future Billing / Provider Operation Evidence and Idempotency Readiness concept:
 - Future first provider-operation evidence implementation should add operation and attempt migrations, RLS/grant posture, generated/shared types if needed, platform-admin/support read helpers, pure read-model/idempotency tests, and a read-only Super Admin provider operation evidence panel only. Actual Stripe/provider calls, subscription creation/update/cancel, automated retries, reconciliation auto-fix, entitlement/module enforcement, runtime gates, contractor-facing billing/package visibility, reporting/export, automation/AI retry behavior, and starter-pack provisioning changes should stay deferred.
 
 Future Billing / Provider Webhook Evidence and Correlation Readiness concept:
+
 - This package-governance workflow is not implemented. It is a planning boundary for future signed provider webhook evidence, replay detection, deduplication, operation linkage, reconciliation linkage, support review, and safe payload summaries before any package-governance Stripe/provider webhook ingestion, subscription creation/update/cancel, provider mutation, package assignment write, entitlement enforcement, module gate, reporting/export behavior, contractor permission change, starter-pack provisioning change, automation, AI behavior, background job, or runtime behavior exists.
 - The existing canonical invoice/payment Stripe webhook foundation is separate from this future package-governance webhook evidence layer; this concept does not change current payment webhook handling or payment-event behavior.
 - Future webhook concepts should include provider webhook event, provider webhook payload evidence, provider webhook signature verification, provider webhook correlation id, provider webhook replay detection, provider webhook deduplication, provider webhook reconciliation linkage, provider webhook operation linkage, provider webhook support review state, provider webhook archive/history retention, and provider webhook environment isolation.
@@ -518,6 +591,7 @@ Future Billing / Provider Webhook Evidence and Correlation Readiness concept:
 - Future first webhook evidence implementation should add webhook event and correlation migrations, RLS/grant posture, generated/shared types if needed, platform-admin/support read helpers, pure webhook evidence/read-model tests, and a read-only Super Admin webhook evidence panel only. Actual Stripe/provider webhook ingestion, subscription creation/update/cancel, webhook-triggered reconciliation auto-fix, entitlement/module enforcement, runtime gates, contractor-facing billing/package visibility, reporting/export, automation/AI webhook handling, and starter-pack provisioning changes should stay deferred.
 
 Future Billing / Provider Support Review and Manual Resolution Readiness concept:
+
 - The first read-only support-review evidence foundation is implemented as `contractor_package_billing_support_reviews`, `contractor_package_billing_support_review_events`, platform-admin-only read helpers, a pure support-review read model, a read-only `/super-admin/packages` support-review readiness section, and a read-only support-review summary on provider mapping detail. It is still a boundary before any support queue execution, manual resolution action, corrective-action execution, Stripe/provider operation, subscription creation/update/cancel, package assignment write, entitlement enforcement, module gate, reporting/export behavior, contractor permission change, starter-pack provisioning change, automation, AI behavior, background job, or runtime behavior exists.
 - Future support-review statuses should be `pending_review`, `awaiting_evidence`, `awaiting_provider_confirmation`, `approved_for_resolution`, `resolution_blocked`, `resolved`, and `archived`.
 - Future resolution categories should include `provider_state_mismatch`, `duplicate_provider_subscription`, `orphaned_provider_subscription`, `stale_provider_mapping`, `invalid_environment_mix`, `unsupported_custom_contract`, `webhook_replay_issue`, `missing_provider_customer`, `missing_provider_subscription`, and `manual_support_override_required`.
@@ -531,6 +605,7 @@ Future Billing / Provider Support Review and Manual Resolution Readiness concept
 - The first support-review implementation added support-review and support-review-event migrations, RLS/grant posture, shared types, platform-admin read helpers, pure support-review/readiness tests, and read-only Super Admin support-review panels only. Actual Stripe/provider corrective actions, subscription creation/update/cancel, reconciliation auto-fix, entitlement/module enforcement, runtime gates, contractor-facing billing/package visibility, reporting/export actions, automation/AI support resolution behavior, starter-pack provisioning changes, and package assignment writes remain deferred.
 
 Future Billing / Provider Support Operations Runbook and Operator QA Readiness concept:
+
 - This package-governance workflow is not implemented. It is a planning boundary for a future support operations runbook, evidence review checklist, provider/reconciliation evidence validation, sandbox-vs-production checklist, escalation handoff, blocked-resolution handling, operator decision logging, approval handoff, rollback/recovery preparation, environment isolation, support QA readiness, and support review audit trail before any support-operations mutation, support queue execution, manual resolution action, Stripe/provider operation, subscription creation/update/cancel, package assignment write, entitlement enforcement, module gate, reporting/export behavior, contractor permission change, starter-pack provisioning change, automation, AI behavior, background job, or runtime behavior exists.
 - Future operator review stages should be `evidence_collected`, `evidence_validated`, `escalation_required`, `escalation_resolved`, `corrective_action_proposed`, `approval_pending`, `approved_for_execution`, `execution_deferred`, and `archived`.
 - Future runbook constraints should prohibit runbook review alone from mutating provider state, package assignments, entitlements/modules/runtime, billing status, subscriptions, contractor permissions, contractor navigation, starter-pack provisioning, reporting/export behavior, automation, AI behavior, or product behavior. Support review alone must not trigger Stripe/provider operations, subscription mutations, reconciliation auto-fix, webhook replay, package assignment activation, or corrective execution.
@@ -543,6 +618,7 @@ Future Billing / Provider Support Operations Runbook and Operator QA Readiness c
 - Future first support-operations implementation should add a pure runbook/readiness helper, support-review QA/readiness tests, and a read-only Super Admin support-operations panel only after the support-review evidence foundation exists. Actual Stripe/provider corrective actions, subscription creation/update/cancel, reconciliation auto-fix, entitlement/module enforcement, runtime gates, contractor-facing billing/package visibility, reporting/export actions, automation/AI support execution behavior, starter-pack provisioning changes, package assignment writes, and contractor permission changes should stay deferred.
 
 Future Billing / Provider Support Operations Release Gate and Production Readiness Checklist concept:
+
 - This package-governance workflow is not implemented. It is a planning boundary for a future support-review evidence release gate, runbook checklist completeness, operator QA signoff, sandbox-to-production promotion checklist, escalation/approval separation, rollback/recovery readiness, security/RLS verification, provider secret/redaction verification, no-secret/no-raw-payload validation, no-mutation/no-auto-fix verification, production readiness signoff, release blockers, release exceptions, and post-release monitoring requirements before any production approval action, corrective execution, Stripe/provider operation, subscription creation/update/cancel, package assignment write, entitlement enforcement, module gate, reporting/export behavior, contractor permission change, starter-pack provisioning change, automation, AI behavior, background job, or runtime behavior exists.
 - Future release-gate statuses should be `not_started`, `checklist_incomplete`, `qa_in_progress`, `blocked`, `ready_for_sandbox`, `sandbox_verified`, `ready_for_production_review`, `production_approved`, `production_deferred`, and `archived`.
 - Future release blockers should include `missing_support_review_evidence`, `missing_runbook_checklist`, `missing_operator_signoff`, `missing_sandbox_validation`, `missing_rollback_plan`, `missing_security_verification`, `missing_rerun_idempotency_proof`, `raw_provider_payload_exposure`, `secret_exposure_risk`, `unresolved_reconciliation_mismatch`, `unresolved_webhook_replay_risk`, `entitlement_runtime_side_effect_risk`, `package_assignment_side_effect_risk`, and `billing_provider_mutation_risk`.
@@ -555,6 +631,7 @@ Future Billing / Provider Support Operations Release Gate and Production Readine
 - Future first release-gate implementation should add a pure readiness helper, release-gate checklist/readiness tests, and a read-only Super Admin release-gate panel only after support-review/runbook evidence foundations exist. Actual release-gate tables, actual production approval actions, Stripe/provider corrective actions, subscription creation/update/cancel, reconciliation auto-fix, entitlement/module enforcement, runtime gates, contractor-facing billing/package visibility, reporting/export actions, automation/AI support execution behavior, background jobs, package assignment writes, starter-pack provisioning changes, and contractor permission changes should stay deferred.
 
 Current canonical records involved:
+
 - profile
 - organization
 - membership
@@ -564,6 +641,7 @@ Current canonical records involved:
 ### Lead / Opportunity Intake
 
 Implemented flow:
+
 - contractor creates an opportunity in `/leads`
 - opportunity can be reviewed and updated
 - opportunity can store a next follow-up timestamp and optional internal follow-up note, and the lead workspace can set, update, or clear that internal follow-up context
@@ -589,6 +667,7 @@ Implemented flow:
 - starting the estimate path creates or links the downstream customer and project records as needed
 
 Current canonical records involved:
+
 - opportunity
 - optional linked customer
 - optional linked project
@@ -600,6 +679,7 @@ Current canonical records involved:
 ### Customer To Project
 
 Implemented flow:
+
 - customer records are managed in the protected app
 - projects are created under canonical customers
 - project detail acts as the current bridge into estimating and downstream work
@@ -620,6 +700,7 @@ Implemented flow:
 - portal appointment display does not include appointment confirmation actions, email-send actions, or communication-message display yet, even when a contractor logs or later sends a customer-visible appointment confirmation internally
 
 Current canonical records involved:
+
 - customer
 - project
 - appointments for customer-visible project appointments
@@ -628,6 +709,7 @@ Current canonical records involved:
 - optional related customer contact
 
 Current customer-account interpretation:
+
 - the customer is the full canonical customer/account record, not a lightweight contact card
 - additional customer contacts sit beneath that account and are managed from the customer account and People for identity, relationship, and portal access administration, but the account remains the commercial and financial source of truth
 - customer-level email and phone stay as account/commercial fallback fields; they should not be the only place a captured customer person lives once a customer/contact intake flow has enough person detail to create or link a primary contact
@@ -637,6 +719,7 @@ Current customer-account interpretation:
 ### Project To Estimate
 
 Implemented flow:
+
 - estimates are created from project context
 - estimate authoring is cost-item-first:
   - new estimate line items are catalog-first; user-facing manual freeform estimate row creation is disabled
@@ -671,6 +754,7 @@ Implemented flow:
 - this catalog-first estimate authoring behavior does not change schema, downstream invoice behavior, contract behavior, SOV behavior, payment behavior, or approved commercial snapshot lineage
 
 Current canonical records involved:
+
 - project
 - customer context derived through project
 - estimate
@@ -679,6 +763,7 @@ Current canonical records involved:
 - catalog system components
 
 Future workflow guidance:
+
 - the intended pre-estimate lead path is `Lead -> Site Visit Appointment -> Scope Intake -> Estimate Plan -> Estimate`
 - a future pre-lead visual/product/finish path may precede opportunity creation, but operational use should attach selected finish/spec context to the canonical chain rather than creating a separate visualizer workflow
 - Scope Intake should remain a reviewed pre-estimate support stage, not a direct intake-to-invoice or intake-to-customer-price workflow
@@ -702,10 +787,12 @@ Future workflow guidance:
 - selected system/spec context should flow into the estimate as reviewed sold-scope context, then into contract, job, portal, closeout, and warranty context without becoming a loose line-item description
 
 Customer-account guardrail for downstream commercial flows:
+
 - estimate send recipient continuity remains on canonical customer/account context with an explicit portal-ready contact selection when existing project access data supports it
 - invoice recipient, contract customer context, payment/billing context, and project ownership should continue to use canonical customer/account context, with People remaining the management home for contact identity and access
 
 Implemented approval rules:
+
 - customer-facing estimate approval happens through the portal on the same canonical estimate record
 - contractor-side Estimate Review can also record a supported manual/offline approval or rejection decision from draft or sent estimates through the shared estimate status-transition action for cases such as paper signature, verbal customer approval, fake email during testing, non-portal customers, or workflow testing before send-mail and portal delivery are complete
 - manual/offline approval requires approver, approval method, approval date/time, and supporting notes/evidence before the status transition is recorded; this evidence is written into the existing estimate customer-event trail instead of a separate approval model
@@ -713,15 +800,18 @@ Implemented approval rules:
 - approval creates an immutable commercial snapshot used for downstream contract, SOV, and invoice lineage
 
 Supporting audit and delivery records involved:
+
 - estimate customer events
 
 Future delivery proof:
+
 - estimate sends should eventually create canonical communication/delivery records with immutable delivery events where provider data supports them
 - opened and clicked events should support follow-up decisions, not serve as perfect legal certainty
 
 ### Approved Estimate To Contract
 
 Implemented flow:
+
 - approved estimates can generate canonical contracts
 - contract generation reads from approved estimate snapshot data only
 - contract Quick-Create opens from `/contracts?compose=1`; if contract generation redirects back with an `error` query value, that blocker is displayed inside the composer near the approved estimate selection
@@ -736,6 +826,7 @@ Implemented flow:
 - after signature completion, project commercial-readiness sync runs; deposit invoice/payment follow-through is required only when organization workflow settings require deposit readiness, and it stays on the canonical invoice/payment chain
 
 Current canonical records involved:
+
 - estimate
 - contract
 - contract signers
@@ -744,6 +835,7 @@ Current canonical records involved:
 - project and customer context carried forward
 
 Future selected-system/spec context:
+
 - contract review should inherit selected finish/system/spec context from approved estimate truth
 - once contract/signature activity begins, selected systems/specs should be locked or snapshotted through the shared `contract_system_snapshots` foundation after a future integration slice
 - changes after that point should be handled through revision or change-order style workflows
@@ -751,12 +843,14 @@ Future selected-system/spec context:
 ### Estimate To Change Order
 
 Implemented flow:
+
 - approved estimates establish the first immutable commercial baseline for downstream billing
 - later scope changes are captured as canonical change orders on the same project and contract chain
 - approved change orders create immutable commercial snapshots of the approved scope adjustment
 - approved change-order snapshots can append into SOV or invoice workflows without mutating the approved estimate snapshot
 
 Current canonical records involved:
+
 - estimate commercial snapshots
 - change order
 - change order commercial snapshots
@@ -765,6 +859,7 @@ Current canonical records involved:
 ### Approved Estimate To Job
 
 Implemented flow:
+
 - approved estimates can create jobs
 - jobs track operational execution states such as `unscheduled`, `scheduled`, `in_progress`, and `completed`
 - job detail provides progression-oriented actions
@@ -773,6 +868,7 @@ Implemented flow:
 - once contract signature and readiness blockers clear, project detail and signed contract detail can show the direct handoff into job creation and project-filtered scheduling on the existing job chain, including a focused scheduling action panel when a single unscheduled job can be resolved
 
 Current canonical records involved:
+
 - project
 - customer
 - optional estimate
@@ -781,6 +877,7 @@ Current canonical records involved:
 ### Completed Job To Invoice
 
 Implemented flow:
+
 - invoices can be created from project, approved estimate snapshot, selected SOV rows, approved change-order snapshot rows, or job context
 - the preferred operational direction is to invoice from completed work where appropriate
 - invoice line items, totals, tax, exemption snapshots, retainage, and balance due are live
@@ -794,6 +891,7 @@ Implemented flow:
 - limited catalog-backed invoice usage exists only as invoice-only adjustments / manual catalog-backed rows, where the catalog item provides starting snapshot values and cannot bypass approved estimate, SOV, or approved change-order billing lineage
 
 Current canonical records involved:
+
 - project
 - customer
 - optional estimate
@@ -806,6 +904,7 @@ Current canonical records involved:
 ### Invoice To Payment Recording
 
 Implemented flow:
+
 - payments are recorded directly against canonical invoices
 - invoice balances update from recorded payments
 - invoice status updates into `partially_paid` and `paid` based on recorded payments
@@ -815,17 +914,20 @@ Implemented flow:
 - contractor-side Invoice Workspace and Project Workspace now surface payment continuity and next-step guidance from the same canonical invoice and payment state
 
 Current canonical records involved:
+
 - invoice
 - payment
 - payment events
 
 Future payment-request delivery proof:
+
 - payment requests should create canonical communication/delivery records with immutable events when sent through provider-backed or manual channels
 - provider statuses such as queued, sent, delivered, opened, clicked, bounced, blocked, dropped, and failed should remain telemetry tied back to the canonical invoice/payment chain
 
 ### Notifications And Communications
 
 Implemented flow:
+
 - workflow activity now writes immutable notification events on the shared canonical chain
 - per-user notifications track in-app read state from those events
 - notification deliveries track channel outcomes such as sent, delivered, opened, clicked, and failed
@@ -836,6 +938,7 @@ Implemented flow:
 - internal work items now provide a small contractor-only action layer for ownership, due date, assignment, completion, and dismissal; dashboard, lead workspace, and appointment workspace UI can list and act on manually created work items, and linked work items can point back to canonical records without replacing notification events, per-user notifications, automation runs, workflow error events, opportunity follow-up fields, or appointment statuses
 
 Current canonical records involved:
+
 - notification events
 - notifications
 - notification deliveries
@@ -844,6 +947,7 @@ Current canonical records involved:
 - work items
 
 Future communication direction:
+
 - communication and delivery proof should extend across estimates, contracts, invoices, change orders, payment requests, portal invites, customer/contractor messages, app interactions, SMS, email, and manual logs
 - delivery attempts/events should be immutable and tied back to canonical records
 - provider delivery data enriches FloorConnector records but should not become the business source of truth
@@ -851,12 +955,14 @@ Future communication direction:
 ### Financials Module Home
 
 Implemented flow:
+
 - `Financials Home` at `/financials` is now the section entry point for cross-project financial work
 - it summarizes the live canonical invoice and payment chain instead of introducing a duplicate dashboard
 - it routes users into the existing `Invoices`, `Payments`, `Progress Billing`, and Accounts Receivable workspaces for the actual record-level work
 - `Accounts Receivable` at `/financials/accounts-receivable` is now a read-only collections workspace built from canonical invoices, payments, and immutable payment events
 
 Current implemented visibility on Financials Home:
+
 - open receivables from canonical invoice balances
 - overdue receivable amount and overdue invoices needing follow-up
 - pending checkout/payment totals
@@ -865,18 +971,21 @@ Current implemented visibility on Financials Home:
 - collection-opportunity links to the canonical Invoice Workspace
 
 Current implemented visibility on Accounts Receivable:
+
 - invoice aging buckets derived from invoice due dates and balances
 - collection queue for open balances with customer/project/estimate/job continuity where linked
 - pending canonical payments and checkout-provider status where stored
 - failed, voided, and checkout-started payment events tied back to invoices
 
 Current implemented record-level reconciliation visibility:
+
 - Invoice Workspace shows a read-only payment evidence timeline from immutable payment events on the canonical invoice/payment chain
 - payment evidence is classified into plain-language settled, pending, failed, voided, informational, and needs-review states without mutating invoice or payment state
 - provider references are displayed only as compact stored identifiers such as gateway provider/status, provider event id, checkout session, payment intent, method summary, or payment reference
 - Payments Manager includes a read-only payment evidence review section and reconciliation attention queue, both linking back to canonical Invoice Workspaces for any follow-through
 
 Defined but not implemented yet:
+
 - `Accounts Payable` is reserved for payable-side workflow such as bills due, outgoing payments, and vendor obligation management
 - collector assignment, collection-note history, retries, refunds, disputes, provider sync execution, and accounting export/sync remain future work
 - these routes and evidence surfaces do not add a new data system, reconciliation table, AR ledger, accounting subsystem, provider-operation workflow, or money-movement action
@@ -884,6 +993,7 @@ Defined but not implemented yet:
 ### Workforce And Field Execution Support
 
 Implemented flow:
+
 - workforce participants now live on shared canonical people records, with vendors modeling external labor companies and compliance records attaching to either subject type
 - auditable time capture now flows through canonical time punch events and derived time cards
 - daily execution now flows through canonical daily logs, field notes, and lightweight execution attachments
@@ -891,6 +1001,7 @@ Implemented flow:
 - Project Workspace and Job Workspace now surface linked labor and field-execution context through those same shared records
 
 Current canonical records involved:
+
 - person
 - vendor
 - compliance record
@@ -900,6 +1011,7 @@ Current canonical records involved:
 - field note
 
 Directory direction note:
+
 - the current `/people` route remains workforce-oriented today
 - a future contractor-facing `Directory` may surface workforce, customer-account, vendor, lead, and related-contact entries together at the view layer
 - that future direction does not merge workforce `people`, canonical customer accounts, vendors, or leads into one table
@@ -925,6 +1037,7 @@ The best current product direction for the contractor revenue workflow is:
 15. Payment and closeout
 
 How this should be interpreted today:
+
 - some of these steps already map cleanly to canonical records in the app
 - some are operational stages that still need stronger UX guidance or status handling around the implemented readiness gate
 - the system should preserve one continuous path rather than forcing users to decide between disconnected modules
@@ -964,6 +1077,7 @@ How this should be interpreted today:
 - Complete: Open work items can be completed or dismissed from the dashboard, lead workspace, appointment workspace, project workspace, estimate workspace, or invoice workspace. Completed/dismissed work items are not reopened in V1.
 
 Boundary:
+
 - Work items do not replace canonical opportunity follow-up fields, appointment statuses, notification events, automation runs, workflow error events, or the main lifecycle.
 - Work items are internal-only and are not exposed to portal/customer users.
 - No automated work-item generation, reminder delivery, provider send, autonomous AI action, or generic workflow engine is implemented.
@@ -971,6 +1085,7 @@ Boundary:
 ### Operational Intelligence / My Work Cue Workflow
 
 Implemented flow:
+
 - Organization cue rules are persisted in `organization_operational_cue_rules`; cue instances are not persisted as business records.
 - Cue response state is persisted in `workflow_cue_states` for deterministic cue identities. Absence of a row means active/visible; V1 exposes user-scoped dismiss and snooze only on contextual record/project cue surfaces.
 - Organization responsibility defaults are persisted in `organization_responsibility_role_defaults`; they map the starter role strategies to active assignable People records, not directly to users and not to copied workflow records.
@@ -992,6 +1107,7 @@ Implemented flow:
 - Company cue visibility remains organization-wide even when cues resolve to a responsible person or linked app user, and unresolved cues remain visible in Company. My Work queue modes do not add permissions or persisted selection. Project-level overrides and record-level overrides are deferred. `sales_owner` and `field_lead` are intentionally deferred.
 
 Current canonical records involved:
+
 - organization operational cue rules
 - organization responsibility role defaults
 - people
@@ -1003,6 +1119,7 @@ Current canonical records involved:
 - job assignments
 
 Boundary:
+
 - Operational cues do not create or update estimates, contracts, invoices, jobs, projects, customers, payments, notifications, work items, automation runs, or communication records. Cue-to-work-item prefill only prepares the existing work-item form for user-confirmed submission. Cue-state controls only write response/visibility state.
 - No `operational_cues` table, persisted cue instance lifecycle, task subsystem, project-level override, record-level override, dashboard cue mutation control, notification delivery, AI behavior, custom expression builder, or standalone task-management subsystem is implemented. Broad resolve remains deferred.
 - Responsible role defaults and My Work queue modes are display/resolution metadata, not assignment state. Operational cues do not assign work to a person or user, create task records, or persist cue lifecycle state as business truth.
@@ -1032,6 +1149,7 @@ Customer/contact/access/review ownership is documented in [docs/enterprise-ux-co
 Record Workspace right rails should stay short and supportive. Primary project/customer/record context may stay visible, while revision history, metadata, extra linked records, manual payment entry, invoice editing, and lower-frequency operational context should be collapsed or linked unless that material is the current page's main job.
 
 With supporting readiness stages between those records:
+
 - future public acquisition
 - future pre-lead visual/product/finish selection
 - qualification
@@ -1050,6 +1168,7 @@ With supporting readiness stages between those records:
 In data-model terms, FloorConnector already uses shared canonical records across modules.
 
 In UX terms, the near-term direction is:
+
 - `Project` should become the operational hub
 - estimates, contracts, jobs, invoices, files, selected systems/specs, delivery proof, communication history, and activity should feel like connected parts of one project
 - standalone module routes should continue to exist as global queues and work surfaces, not as separate mental models
@@ -1058,6 +1177,7 @@ In UX terms, the near-term direction is:
 ### Workflow Tightening Still Needed
 
 Areas where the current implementation is real but still needs workflow tightening:
+
 - stronger next-best-action guidance so users do not have to choose from too many equal-weight downstream actions
 - clearer readiness and blocker messaging between estimate approval, contract progress, job readiness, and invoice readiness
 - more project-centered continuity in navigation and page structure
@@ -1066,6 +1186,7 @@ Areas where the current implementation is real but still needs workflow tighteni
 ## Current Practical Interpretation
 
 Today, the app should be understood this way:
+
 - opportunities start the commercial path before a full project exists
 - customers and projects anchor the operational path
 - customers are canonical customer/account records, not generic contact cards
@@ -1115,6 +1236,7 @@ The Phase 1 demo spine is documented in [docs/golden-workflow-demo-path.md](C:/F
 `dashboard -> lead/opportunity -> customer -> project -> estimate -> contract -> invoice/payment -> job -> schedule -> daily log`
 
 Interpretation rules:
+
 - the demo path uses the canonical lifecycle `opportunity -> customer -> project -> estimate -> contract -> change order -> job -> invoice -> payment`
 - Project Workspace remains the continuity hub and should be reopened between major stages to confirm the current next action and readiness state
 - Estimate Workspace remains the proposal-first UI/workflow reference point
@@ -1128,16 +1250,20 @@ Interpretation rules:
 All records must respect origin context:
 
 ### Project Context
+
 - Created downstream records are automatically linked to the project and derived customer
 
 ### Customer Context
+
 - Customer pre-filled
 - Project must be selected or created
 
 ### Global Context
+
 - Requires explicit selection of both customer and project
 
 This applies to:
+
 - Contracts
 - Estimates
 - Invoices
