@@ -38,6 +38,10 @@ import {
   buildScheduleItems,
   type ScheduleItem
 } from "@/lib/schedule/read-model";
+import {
+  deriveScheduleWarningSummaries,
+  type ScheduleWarningSummary
+} from "@/lib/schedule/warnings";
 import { listScheduleAppointments } from "@/lib/appointments/data";
 import { listScheduleLaborVendors } from "@/lib/vendors/data";
 
@@ -205,6 +209,10 @@ function parseDateKey(value: string) {
 
 function formatAssignmentLabel(count: number) {
   return `${count} assignment${count === 1 ? "" : "s"}`;
+}
+
+function formatWarningCount(count: number) {
+  return `${count} warning${count === 1 ? "" : "s"}`;
 }
 
 function startOfToday() {
@@ -739,6 +747,54 @@ function ScheduleJobStateBadges(input: {
   );
 }
 
+function ScheduleWarningBadges(input: {
+  warnings: ScheduleWarningSummary[];
+  limit?: number;
+}) {
+  const visibleWarnings = input.warnings.slice(0, input.limit ?? 2);
+  const hiddenCount = Math.max(
+    input.warnings.length - visibleWarnings.length,
+    0
+  );
+
+  if (input.warnings.length === 0) {
+    return null;
+  }
+
+  return (
+    <div className="mt-3 flex flex-wrap gap-2">
+      {visibleWarnings.map((warning) => (
+        <span
+          key={warning.id}
+          className="inline-flex items-center rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-amber-800"
+          title={warning.detail}
+        >
+          {warning.label}
+        </span>
+      ))}
+      {hiddenCount > 0 ? (
+        <span className="inline-flex items-center rounded-full border border-[var(--border-warm)] bg-white px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--text-secondary)]">
+          +{hiddenCount}
+        </span>
+      ) : null}
+    </div>
+  );
+}
+
+function ScheduleNotesPreview(input: { notes: string | null }) {
+  const notes = input.notes?.trim();
+
+  if (!notes) {
+    return null;
+  }
+
+  return (
+    <p className="mt-2 line-clamp-2 text-sm leading-6 text-[var(--text-secondary)]">
+      Schedule notes: {notes}
+    </p>
+  );
+}
+
 function ScheduleJobActionLinks(input: {
   actionHref: string;
   actionLabel: string;
@@ -1145,6 +1201,29 @@ export default async function SchedulePage({
       isUpcoming
     };
   });
+  const scheduleWarningSummaries = deriveScheduleWarningSummaries(
+    jobsWithAssignments.map((job) => ({
+      id: job.id,
+      title: getScheduleJobTitle(job),
+      dispatchStatus: job.dispatchStatus,
+      scheduledDate: job.scheduledDate,
+      scheduledStartAt: job.scheduledStartAt,
+      scheduledEndAt: job.scheduledEndAt,
+      crewVendorId: job.crewVendorId,
+      crewVendor: job.crewVendor,
+      assignments: job.assignments.map((assignment) => ({
+        personId: assignment.personId,
+        vendorId: assignment.vendorId,
+        person: assignment.person
+          ? { displayName: assignment.person.displayName }
+          : null,
+        vendor: assignment.vendor ? { name: assignment.vendor.name } : null
+      }))
+    }))
+  );
+  const scheduleWarningsByJobId = new Map(
+    scheduleWarningSummaries.map((summary) => [summary.jobId, summary.warnings])
+  );
   const activeProjectFilter = projectFilterId
     ? (jobsWithAssignments.find((job) => job.projectId === projectFilterId)
         ?.project ??
@@ -1263,6 +1342,9 @@ export default async function SchedulePage({
         crewVendor: selectedJob.crewVendor
       })
     : null;
+  const selectedJobScheduleWarnings = selectedJob
+    ? (scheduleWarningsByJobId.get(selectedJob.id) ?? [])
+    : [];
   const selectedJobNeedsScheduleBeforeCrew =
     selectedAction === "assign" &&
     selectedJob?.dispatchStatus === "unscheduled";
@@ -1319,6 +1401,13 @@ export default async function SchedulePage({
     return matchesProject && matchesView && matchesCrew && matchesQuery;
   });
   const visibleJobsById = new Map(visibleJobs.map((job) => [job.id, job]));
+  const visibleScheduleWarningSummaries = scheduleWarningSummaries.filter(
+    (summary) => visibleJobsById.has(summary.jobId)
+  );
+  const visibleScheduleWarningCount = visibleScheduleWarningSummaries.reduce(
+    (total, summary) => total + summary.warnings.length,
+    0
+  );
   const visibleAppointments = appointments.filter((appointment) => {
     const appointmentDateKey = new Date(appointment.startsAt)
       .toISOString()
@@ -1847,6 +1936,24 @@ export default async function SchedulePage({
       valueClass: "text-rose-800"
     },
     {
+      key: "warnings",
+      label: "Schedule warnings",
+      value: visibleScheduleWarningCount,
+      href: buildScheduleHref({
+        q: query,
+        projectId: projectFilterId ?? undefined,
+        view,
+        crew: crewFilter,
+        layout: scheduleLayout,
+        date: plannerDateKey
+      }),
+      active: false,
+      borderClass: "border-amber-200",
+      bgClass: "bg-amber-50/45",
+      labelClass: "text-amber-800",
+      valueClass: "text-amber-900"
+    },
+    {
       key: "upcoming",
       label: "Upcoming",
       value: upcomingJobs.length + upcomingAppointments.length,
@@ -2002,7 +2109,7 @@ export default async function SchedulePage({
       title="CrewBoard"
       description={`Run daily scheduling for ${organizationContext.organization.displayName}: see what needs a date, what is happening today, where crew is missing, and which job or project to open next.`}
       summary={
-        <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6">
+        <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-7">
           {summaryItems.map((item) => (
             <Link
               key={item.key}
@@ -2250,7 +2357,7 @@ export default async function SchedulePage({
                       href={`/projects/${activeProjectFilter.id}`}
                       className={`inline-flex items-center rounded-[4px] border px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] transition ${scheduleSecondaryActionToneClassName}`}
                     >
-                      Open project
+                      Open Project Workspace
                     </Link>
                   ) : null}
                 </div>
@@ -2425,6 +2532,105 @@ export default async function SchedulePage({
                 </div>
               ))}
             </div>
+          </section>
+
+          <section className={schedulePanelClassName}>
+            <div className={schedulePanelHeaderClassName}>
+              <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                <div className="min-w-0">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
+                    Dispatch checks
+                  </p>
+                  <h2 className="mt-1 text-lg font-semibold tracking-tight text-[var(--text-primary)]">
+                    Schedule warnings
+                  </h2>
+                  <p className="mt-1 text-sm leading-6 text-[var(--text-secondary)]">
+                    These are read-only CrewBoard signals from existing job
+                    timing and crew assignments. They do not block scheduling
+                    unless GateKeeper already does.
+                  </p>
+                </div>
+                <span className="inline-flex items-center rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-amber-800">
+                  {formatWarningCount(visibleScheduleWarningCount)}
+                </span>
+              </div>
+            </div>
+
+            {visibleScheduleWarningSummaries.length > 0 ? (
+              <div className="divide-y divide-[var(--border-warm)]">
+                {visibleScheduleWarningSummaries.slice(0, 6).map((summary) => {
+                  const job = visibleJobsById.get(summary.jobId);
+
+                  if (!job) {
+                    return null;
+                  }
+
+                  const primaryAction = getPrimaryScheduleAction(job);
+
+                  return (
+                    <div key={summary.jobId} className="px-5 py-4 sm:px-6">
+                      <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)_180px] md:items-start">
+                        <div className="min-w-0">
+                          <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--text-secondary)]">
+                            Next Move
+                          </p>
+                          <Link
+                            href={`/jobs/${job.id}`}
+                            className="mt-1 block text-sm font-semibold text-[var(--text-primary)] transition hover:text-[var(--copper)]"
+                          >
+                            {getScheduleJobTitle(job)}
+                          </Link>
+                          <p className="mt-1 text-sm leading-6 text-[var(--text-secondary)]">
+                            {job.customer?.name ?? "Unknown customer"} ·{" "}
+                            {formatDate(job.scheduledDate)}
+                          </p>
+                        </div>
+
+                        <div className="space-y-2">
+                          {summary.warnings.map((warning) => (
+                            <div
+                              key={warning.id}
+                              className="rounded-[4px] border border-amber-200 bg-amber-50 px-3 py-2 text-sm leading-6 text-amber-900"
+                            >
+                              <p className="font-semibold">{warning.label}</p>
+                              <p>{warning.detail}</p>
+                            </div>
+                          ))}
+                        </div>
+
+                        <div className="flex flex-wrap gap-2 md:justify-end">
+                          <Link
+                            href={
+                              buildCurrentScheduleHref({
+                                action: primaryAction.action,
+                                jobId: job.id
+                              }) + "#schedule-action"
+                            }
+                            className={`inline-flex items-center rounded-[4px] border px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] transition ${primaryAction.toneClass}`}
+                          >
+                            {primaryAction.label}
+                          </Link>
+                          <Link
+                            href={`/projects/${job.projectId}`}
+                            className={scheduleCompactLinkClassName}
+                          >
+                            Project Workspace
+                          </Link>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="px-6 py-8 sm:px-8">
+                <AppEmptyState
+                  eyebrow="No schedule warnings"
+                  title="No schedule warnings found."
+                  description="CrewBoard did not find missing crew, missing end times, or overlapping crew windows in the current filtered job set."
+                />
+              </div>
+            )}
           </section>
 
           <section className="grid gap-4 xl:auto-rows-fr xl:grid-cols-2">
@@ -2678,19 +2884,15 @@ export default async function SchedulePage({
                   </p>
                 </div>
 
-                {scheduleLayout === "board" ? (
-                  <p className="max-w-xl text-sm leading-6 text-[var(--text-secondary)]">
-                    This board groups the current filtered job set into one
-                    operational picture without creating a second dispatch,
-                    crew, or calendar model.
-                  </p>
-                ) : (
+                <div className="flex flex-col gap-2 lg:items-end">
                   <div className="flex flex-wrap items-center gap-2">
                     <Link
                       href={plannerPrevHref}
                       className={`inline-flex items-center rounded-[4px] border px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] transition ${scheduleSecondaryActionToneClassName}`}
                     >
-                      Previous
+                      {scheduleLayout === "day"
+                        ? "Previous day"
+                        : "Previous week"}
                     </Link>
                     <Link
                       href={plannerTodayHref}
@@ -2702,10 +2904,17 @@ export default async function SchedulePage({
                       href={plannerNextHref}
                       className={`inline-flex items-center rounded-[4px] border px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] transition ${scheduleSecondaryActionToneClassName}`}
                     >
-                      Next
+                      {scheduleLayout === "day" ? "Next day" : "Next week"}
                     </Link>
                   </div>
-                )}
+                  {scheduleLayout === "board" ? (
+                    <p className="max-w-xl text-sm leading-6 text-[var(--text-secondary)] lg:text-right">
+                      Board mode uses this selected date to preserve handoff
+                      context while grouping the filtered jobs by operational
+                      timing.
+                    </p>
+                  ) : null}
+                </div>
               </div>
             </div>
 
@@ -2746,6 +2955,8 @@ export default async function SchedulePage({
                           const crewState = getCrewState(job);
                           const primaryAction = getBoardPrimaryAction(job);
                           const boardCardState = getBoardCardState(job);
+                          const jobWarnings =
+                            scheduleWarningsByJobId.get(job.id) ?? [];
 
                           return (
                             <div
@@ -2776,6 +2987,8 @@ export default async function SchedulePage({
                               <p className="mt-2 text-sm leading-6 text-[var(--text-secondary)]">
                                 {boardCardState.summary}
                               </p>
+                              <ScheduleNotesPreview notes={job.scheduleNotes} />
+                              <ScheduleWarningBadges warnings={jobWarnings} />
 
                               <ScheduleJobActionLinks
                                 actionHref={
@@ -2793,7 +3006,7 @@ export default async function SchedulePage({
                                 actionLabel={primaryAction.label}
                                 actionToneClass={primaryAction.toneClass}
                                 projectHref={`/projects/${job.projectId}`}
-                                projectLabel="Open project"
+                                projectLabel="Project Workspace"
                                 projectVariant="plain"
                                 size="compact"
                               />
@@ -2886,6 +3099,8 @@ export default async function SchedulePage({
                                 const primaryAction =
                                   getBoardPrimaryAction(job);
                                 const boardCardState = getBoardCardState(job);
+                                const jobWarnings =
+                                  scheduleWarningsByJobId.get(job.id) ?? [];
 
                                 return (
                                   <div
@@ -2924,6 +3139,12 @@ export default async function SchedulePage({
                                     <p className="mt-1 text-xs leading-5 text-[var(--text-secondary)]">
                                       {crewState.detail}
                                     </p>
+                                    <ScheduleNotesPreview
+                                      notes={job.scheduleNotes}
+                                    />
+                                    <ScheduleWarningBadges
+                                      warnings={jobWarnings}
+                                    />
 
                                     <ScheduleJobActionLinks
                                       actionHref={
@@ -2942,7 +3163,7 @@ export default async function SchedulePage({
                                       actionLabel={primaryAction.label}
                                       actionToneClass={primaryAction.toneClass}
                                       projectHref={`/projects/${job.projectId}`}
-                                      projectLabel="Project"
+                                      projectLabel="Project Workspace"
                                       projectVariant="plain"
                                       jobHref={`/jobs/${job.id}`}
                                       jobLabel="Open job"
@@ -3016,6 +3237,8 @@ export default async function SchedulePage({
                                 const primaryAction =
                                   getBoardPrimaryAction(job);
                                 const boardCardState = getBoardCardState(job);
+                                const jobWarnings =
+                                  scheduleWarningsByJobId.get(job.id) ?? [];
 
                                 return (
                                   <div
@@ -3055,6 +3278,12 @@ export default async function SchedulePage({
                                     <p className="mt-1 text-xs leading-5 text-[var(--text-secondary)]">
                                       {crewState.detail}
                                     </p>
+                                    <ScheduleNotesPreview
+                                      notes={job.scheduleNotes}
+                                    />
+                                    <ScheduleWarningBadges
+                                      warnings={jobWarnings}
+                                    />
 
                                     <ScheduleJobActionLinks
                                       actionHref={
@@ -3073,7 +3302,7 @@ export default async function SchedulePage({
                                       actionLabel={primaryAction.label}
                                       actionToneClass={primaryAction.toneClass}
                                       projectHref={`/projects/${job.projectId}`}
-                                      projectLabel="Project"
+                                      projectLabel="Project Workspace"
                                       projectVariant="plain"
                                       size="compact"
                                     />
@@ -3181,6 +3410,8 @@ export default async function SchedulePage({
                             const crewState = getCrewState(job);
                             const primaryAction = getBoardPrimaryAction(job);
                             const boardCardState = getBoardCardState(job);
+                            const jobWarnings =
+                              scheduleWarningsByJobId.get(job.id) ?? [];
 
                             return (
                               <div
@@ -3237,6 +3468,11 @@ export default async function SchedulePage({
                                   </p>
                                 </div>
 
+                                <ScheduleNotesPreview
+                                  notes={job.scheduleNotes}
+                                />
+                                <ScheduleWarningBadges warnings={jobWarnings} />
+
                                 <ScheduleJobActionLinks
                                   actionHref={
                                     buildScheduleHref({
@@ -3253,7 +3489,7 @@ export default async function SchedulePage({
                                   actionLabel={primaryAction.label}
                                   actionToneClass={primaryAction.toneClass}
                                   projectHref={`/projects/${job.projectId}`}
-                                  projectLabel="Open project"
+                                  projectLabel="Project Workspace"
                                   projectVariant="bordered"
                                   jobHref={`/jobs/${job.id}`}
                                   jobLabel="Open job"
@@ -3442,6 +3678,7 @@ export default async function SchedulePage({
                   const crewState = getCrewState(job);
                   const primaryAction = getPrimaryScheduleAction(job);
                   const boardCardState = getBoardCardState(job);
+                  const jobWarnings = scheduleWarningsByJobId.get(job.id) ?? [];
 
                   return (
                     <div key={job.id} className="px-5 py-4 sm:px-6">
@@ -3482,6 +3719,8 @@ export default async function SchedulePage({
                           <p className="mt-2 text-sm leading-6 text-[var(--text-secondary)]">
                             {boardCardState.summary}
                           </p>
+                          <ScheduleNotesPreview notes={job.scheduleNotes} />
+                          <ScheduleWarningBadges warnings={jobWarnings} />
                         </div>
 
                         <div>
@@ -3496,7 +3735,7 @@ export default async function SchedulePage({
                               href={`/projects/${job.projectId}`}
                               className="hover:text-[var(--text-primary)]"
                             >
-                              Open project
+                              Project Workspace
                             </Link>
                           </p>
                         </div>
@@ -3542,7 +3781,7 @@ export default async function SchedulePage({
                           actionLabel={primaryAction.label}
                           actionToneClass={primaryAction.toneClass}
                           projectHref={`/projects/${job.projectId}`}
-                          projectLabel="Open project"
+                          projectLabel="Project Workspace"
                           projectVariant="plain"
                           jobHref={`/jobs/${job.id}`}
                           jobLabel="Open job"
@@ -3634,7 +3873,7 @@ export default async function SchedulePage({
                   href={`/projects/${selectedJob.projectId}`}
                   className={`inline-flex items-center rounded-[4px] border px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] transition ${scheduleSecondaryActionToneClassName}`}
                 >
-                  Open project
+                  Open Project Workspace
                 </Link>
                 <Link
                   href={`/jobs/${selectedJob.id}`}
@@ -3658,6 +3897,28 @@ export default async function SchedulePage({
                   </p>
                 </div>
               ) : null}
+
+              <ScheduleNotesPreview notes={selectedJob.scheduleNotes} />
+
+              {selectedJobScheduleWarnings.length > 0 ? (
+                <div className="rounded-[6px] border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-900">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.16em]">
+                    Schedule warnings
+                  </p>
+                  <ul className="mt-2 space-y-2">
+                    {selectedJobScheduleWarnings.map((warning) => (
+                      <li key={warning.id}>
+                        <span className="font-semibold">{warning.label}:</span>{" "}
+                        {warning.detail}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ) : (
+                <div className="rounded-[6px] border border-[var(--border-warm)] bg-white px-4 py-3 text-sm leading-6 text-[var(--text-secondary)]">
+                  No schedule warnings found for this job.
+                </div>
+              )}
 
               {selectedJobEquipmentReadiness ? (
                 <div className="rounded-[6px] border border-[var(--border-warm)] bg-white px-4 py-3 text-sm leading-6 text-[var(--text-secondary)]">

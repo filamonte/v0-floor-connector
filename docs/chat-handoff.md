@@ -163,6 +163,15 @@ Current work should generally preserve the implemented operational core while ti
 - GateKeeper / Ready Check language explains schedule blockers while preserving the existing server-side readiness checks.
 - This pass did not add schema, migrations, routes, new schedule/dispatch/crew tables, new server actions, auth/RLS changes, tenant-scope changes, payment/signature behavior, estimate/invoice math, portal grants, settings behavior, platform-admin logic, drag/drop, automation, notifications, route optimization, or external calendar sync.
 
+## Latest CrewBoard Phase 2 Dispatch Usability
+
+- [docs/design/crewboard-phase-2-dispatch-usability.md](C:/FloorConnector/docs/design/crewboard-phase-2-dispatch-usability.md) records the second CrewBoard implementation slice on the existing `/schedule` route.
+- CrewBoard now keeps date navigation visible across day, week, and board layouts while preserving URL-backed `date` and `layout` context.
+- CrewBoard job cards now surface schedule-note previews, clearer Project Workspace handoffs, and read-only schedule warnings where existing job timing and crew-assignment data supports them.
+- Schedule warnings currently cover missing crew, missing end time, and overlapping person/vendor/crew-vendor windows on the same scheduled date. They are advisory only and do not create new blocking rules.
+- The existing schedule/unschedule and crew assign/unassign server actions remain the only write paths; GateKeeper / Ready Check enforcement remains unchanged.
+- This pass did not add schema, migrations, routes, new schedule/dispatch/crew/calendar tables, new server actions, auth/RLS changes, tenant-scope changes, payment/signature behavior, estimate/invoice math, portal grants, settings behavior, platform-admin logic, drag/drop, automation, notifications, route optimization, or external calendar sync.
+
 ## Latest Financial / Reporting Expansion Checkpoint
 
 - Financials Home and Accounts Receivable now share a tenant-scoped collections read model over canonical `invoices`, `payments`, and immutable `payment_events`.
