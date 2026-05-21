@@ -13,10 +13,7 @@ import {
   OperationalGuidanceSection,
   type OperationalGuidanceBucket
 } from "@/components/operational-guidance-section";
-import { UniversalCreateMenu } from "@/components/universal-create-menu";
 import {
-  dashboardCommandStatClassName,
-  dashboardCommandSurfaceClassName,
   dashboardGridDividerClassName,
   dashboardMetricCardClassName,
   dashboardPanelActionClassName,
@@ -191,26 +188,6 @@ function filterItems(items: DashboardQueueItem[], query: string) {
   }
 
   return items.filter((item) => item.searchText.toLowerCase().includes(query));
-}
-
-function TopLink({
-  href,
-  label,
-  metric
-}: {
-  href: string;
-  label: string;
-  metric?: string;
-}) {
-  return (
-    <Link
-      href={href}
-      className="inline-flex h-9 items-center gap-2 rounded-md border border-white/10 bg-white/[0.07] px-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-white/75 transition hover:border-[var(--copper)] hover:bg-white/[0.12] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--copper)]"
-    >
-      <span>{label}</span>
-      {metric ? <span className="text-white/60">{metric}</span> : null}
-    </Link>
-  );
 }
 
 function BoardPanel({
@@ -586,7 +563,6 @@ function FinanceTable({
 }
 
 export function ContractorDashboardSurface({
-  header,
   earlyAccess,
   priorityItems,
   metrics,
@@ -602,8 +578,7 @@ export function ContractorDashboardSurface({
   financeWidgets,
   workItemActions,
   onboardingSteps,
-  startHereForceVisible,
-  shortcuts
+  startHereForceVisible
 }: ContractorDashboardSurfaceProps) {
   const [query, setQuery] = useState("");
   const deferredQuery = useDeferredValue(query.trim().toLowerCase());
@@ -679,104 +654,11 @@ export function ContractorDashboardSurface({
     [projectCueWidget, deferredQuery]
   );
 
-  const topLinks = [
-    shortcuts.find((item) => item.key === "projects"),
-    shortcuts.find((item) => item.key === "schedule"),
-    shortcuts.find((item) => item.key === "payments"),
-    shortcuts.find((item) => item.key === "cost-items-database")
-  ].filter(Boolean) as DashboardShortcut[];
-
   return (
     <div className="overflow-x-hidden bg-[var(--cream)]">
-      <section className="border-b border-[var(--border-warm)] bg-[var(--graphite-dark)] px-4 py-4 sm:px-6">
-        <div
-          className={[
-            "space-y-4 px-4 py-4",
-            dashboardCommandSurfaceClassName
-          ].join(" ")}
-        >
-          <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
-            <div className="min-w-0">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--copper-light)]">
-                Contractor dashboard
-              </p>
-              <h1 className="mt-1 text-[24px] font-semibold tracking-tight text-white">
-                {header.organizationName}
-              </h1>
-              <p className="mt-2 max-w-[68ch] text-[13px] leading-5 text-white/70">
-                Command summary for priority decisions, lifecycle movement, and
-                the real work queues behind the contractor operating system.
-              </p>
-            </div>
-
-            <div className="grid gap-2 sm:grid-cols-3">
-              <div className={dashboardCommandStatClassName}>
-                <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/60">
-                  Role
-                </p>
-                <p className="mt-1 text-sm font-semibold text-white">
-                  {header.roleLabel}
-                </p>
-              </div>
-              <div className={dashboardCommandStatClassName}>
-                <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/60">
-                  Active projects
-                </p>
-                <p className="mt-1 text-sm font-semibold text-white">
-                  {header.activeProjectCount}
-                </p>
-              </div>
-              <div className={dashboardCommandStatClassName}>
-                <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/60">
-                  Open receivables
-                </p>
-                <p className="mt-1 text-sm font-semibold text-white">
-                  {header.openReceivablesLabel}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="flex flex-col gap-2 xl:flex-row xl:items-center">
-            <label className="relative min-w-0 flex-1">
-              <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center">
-                <SearchIcon />
-              </span>
-              <input
-                type="search"
-                value={query}
-                onChange={(event) => {
-                  const nextValue = event.currentTarget.value;
-                  startTransition(() => {
-                    setQuery(nextValue);
-                  });
-                }}
-                placeholder="Search dashboard queues by project, customer, estimate, contract, invoice, status, or priority"
-                className="h-10 w-full rounded-md border border-white/10 bg-white pl-9 pr-3 text-sm text-[var(--text-primary)] outline-none placeholder:text-[var(--text-tertiary)] focus:border-[var(--copper)]"
-              />
-            </label>
-
-            <div className="flex flex-wrap gap-1.5">
-              <UniversalCreateMenu
-                idBase="dashboard-universal-create-menu"
-                buttonLabel="Universal create"
-                buttonClassName="inline-flex h-10 items-center rounded-md border border-[var(--copper)] bg-[var(--copper)] px-4 text-[12px] font-semibold uppercase tracking-[0.12em] text-white transition hover:bg-[var(--copper-light)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--copper-light)]"
-                panelClassName="border-[var(--border-warm)]"
-              />
-              {topLinks.map((link) => (
-                <TopLink
-                  key={link.key}
-                  href={link.href}
-                  label={link.label}
-                  metric={link.metric}
-                />
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
       <div className="space-y-4 px-4 py-4 sm:px-6">
+        <h1 className="sr-only">Dashboard</h1>
+
         {earlyAccess ? (
           <section
             className={[
@@ -992,16 +874,35 @@ export function ContractorDashboardSurface({
           aria-labelledby="dashboard-work-queues-title"
           className="space-y-3"
         >
-          <div>
-            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
-              Work queues
-            </p>
-            <h2
-              id="dashboard-work-queues-title"
-              className="mt-1 text-[17px] font-semibold tracking-tight text-[var(--text-primary)]"
-            >
-              Follow up by workflow area
-            </h2>
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+            <div>
+              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
+                Work queues
+              </p>
+              <h2
+                id="dashboard-work-queues-title"
+                className="mt-1 text-[17px] font-semibold tracking-tight text-[var(--text-primary)]"
+              >
+                Follow up by workflow area
+              </h2>
+            </div>
+            <label className="relative w-full max-w-xl">
+              <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center">
+                <SearchIcon />
+              </span>
+              <input
+                type="search"
+                value={query}
+                onChange={(event) => {
+                  const nextValue = event.currentTarget.value;
+                  startTransition(() => {
+                    setQuery(nextValue);
+                  });
+                }}
+                placeholder="Filter dashboard queues"
+                className="h-9 w-full rounded-md border border-[var(--border-warm)] bg-white pl-9 pr-3 text-sm text-[var(--text-primary)] outline-none placeholder:text-[var(--text-tertiary)] focus:border-[var(--copper)]"
+              />
+            </label>
           </div>
 
           <div className="grid gap-3 xl:grid-cols-[minmax(0,1.15fr)_minmax(0,0.9fr)_minmax(0,0.95fr)]">

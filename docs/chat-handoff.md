@@ -141,6 +141,13 @@ Current work should generally preserve the implemented operational core while ti
 - Project, commercial document, field execution, and portal trust bands were softened into supporting summary panels where they sit below an existing page/record identity area.
 - This was a UI structure and visual hierarchy cleanup only. No schema, routes, server actions, auth, RLS, tenant logic, payments, signatures, estimate math, invoice math, job readiness gates, portal grants, settings behavior, platform-admin logic, data loaders, or canonical workflow relationships were intentionally changed.
 
+## Latest Contractor Chrome Collapse / Dashboard Header Cleanup
+
+- [docs/design/stitch/chrome-collapse-dashboard-header-cleanup.md](C:/FloorConnector/docs/design/stitch/chrome-collapse-dashboard-header-cleanup.md) records the sharper contractor-shell cleanup after screenshot review showed the dashboard still had stacked chrome.
+- The large white contractor workspace band was removed from `ProtectedAppTopNav`; project selection, menu access, Quick Create, Attention, and account controls now live in the unified graphite shell.
+- The dashboard command card was removed from `ContractorDashboardSurface`; dashboard content now starts with real operational sections, and queue search is scoped to the Work Queues section.
+- This was a shell/dashboard UI-structure cleanup only. No schema, routes, server actions, auth, RLS, tenant logic, payments, signatures, estimate math, invoice math, job readiness gates, portal grants, settings behavior, platform-admin logic, data loaders, or canonical workflow relationships were intentionally changed.
+
 ## Latest Financial / Reporting Expansion Checkpoint
 
 - Financials Home and Accounts Receivable now share a tenant-scoped collections read model over canonical `invoices`, `payments`, and immutable `payment_events`.

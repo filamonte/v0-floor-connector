@@ -101,3 +101,7 @@ Future work should now shift to targeted QA, bugfixes, screenshots, commit prepa
 Each route should have one dominant page or record identity area after the global app navigation. Command bands should either be that identity area or become supporting summary/action panels inside the page. Avoid stacking global shell chrome, workspace bands, page headers, record command bands, and summary panels as competing headers.
 
 When a page already has an established `DetailPageHeader`, `ContractorWorkspacePage`, portal page header, or settings/admin scope header, lower-level Stitch-informed panels should use compact summary language and lighter visual weight. Preserve the current top-nav-first contractor shell and keep actions, statuses, readiness, signature, payment, and portal context visible without creating a second page crown.
+
+The contractor app must not render a second full-width workspace shell underneath the global header. Project selectors, menu access, Quick Create, Attention, and account controls belong in the unified shell or a compact functional context row. Page command bands must not duplicate shell controls, organization identity, or primary navigation shortcuts.
+
+Dashboard content should not repeat shell navigation or identity controls. The dashboard should start with real operational content such as activation state, priority, lifecycle, metrics, cockpit, and queue sections; dashboard-local search should be scoped to the queues it filters.

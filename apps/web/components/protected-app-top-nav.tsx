@@ -6,7 +6,6 @@ import Link from "next/link";
 
 import type { MembershipRole } from "@floorconnector/types";
 
-import { OrganizationBrandLink } from "@/components/organization-brand-link";
 import { ProtectedAppBreadcrumbs } from "@/components/protected-app-breadcrumbs";
 import { ContractorNotificationsCenter } from "@/components/contractor-notifications-center";
 import {
@@ -94,8 +93,6 @@ export function ProtectedAppTopNav({
   currentRole,
   notifications,
   organizationName,
-  organizationLogoUrl,
-  organizationBrandAccentColor,
   organizationStatus,
   userEmail,
   timestampLabel,
@@ -161,25 +158,16 @@ export function ProtectedAppTopNav({
   }, [accountMenuOpen, menuOpen]);
 
   return (
-    <div
-      ref={shellRef}
-      className="relative border-b border-[var(--border-warm)] bg-white"
-    >
-      <div className="grid items-center gap-3 bg-[var(--graphite)] px-4 py-1.5 text-white xl:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]">
-        <div className="min-w-0 text-[12px] font-medium text-[var(--cream)]">
+    <div ref={shellRef} className="relative bg-[var(--graphite)] text-white">
+      <div className="flex flex-wrap items-center gap-2 border-b border-white/10 px-4 py-2">
+        <div className="min-w-[220px] flex-1 text-[12px] font-medium text-[var(--cream)]">
           <ProtectedAppBreadcrumbs
             organizationName={organizationName}
             variant="dark"
           />
         </div>
 
-        <div className="hidden min-w-0 justify-center xl:flex">
-          <p className="truncate text-[13px] font-semibold tracking-[0.03em] text-white">
-            {organizationName}
-          </p>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-2 xl:justify-end">
+        <div className="flex flex-wrap items-center justify-end gap-2">
           {quickLinks.map((item) => (
             <Link
               key={item.href}
@@ -207,13 +195,6 @@ export function ProtectedAppTopNav({
             <FloorConnectorIcon name="dashboard" className="h-4 w-4" />
           </UtilityIconFrame>
           <UtilityIconFrame
-            href="/dashboard"
-            label="Open dashboard launcher"
-            active={pathname === "/dashboard"}
-          >
-            <FloorConnectorIcon name="dashboard" className="h-4 w-4" />
-          </UtilityIconFrame>
-          <UtilityIconFrame
             href="/settings"
             label="Open settings"
             active={
@@ -225,168 +206,143 @@ export function ProtectedAppTopNav({
         </div>
       </div>
 
-      <div className="flex border-b border-[var(--border-warm)] bg-white 2xl:items-stretch">
-        <div className="flex min-w-0 flex-1 items-center px-5 py-3 2xl:py-0">
-          <OrganizationBrandLink
-            href={homeHref}
-            organizationName={organizationName}
-            logoUrl={organizationLogoUrl}
-            brandAccentColor={organizationBrandAccentColor}
-            navigationLabel="Dashboard home"
-            className="w-full max-w-[360px] 2xl:max-w-[400px]"
-          />
-        </div>
+      <div className="flex flex-wrap items-center gap-2 px-4 py-2">
+        <Link
+          href={projectLauncherHref}
+          aria-current={pathname.startsWith("/projects") ? "page" : undefined}
+          className={[
+            "inline-flex h-10 min-w-[190px] items-center justify-between rounded-[3px] border px-3 text-left text-[var(--cream)] transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--copper)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--graphite)]",
+            pathname.startsWith("/projects")
+              ? "border-[var(--copper)] bg-[var(--copper)]/20 text-white"
+              : "border-white/14 bg-white/8 hover:border-[var(--copper)] hover:bg-white/12 hover:text-white"
+          ].join(" ")}
+        >
+          <span className="min-w-0">
+            <span className="block text-[9px] font-semibold uppercase tracking-[0.16em] text-[var(--copper-light)]">
+              Project
+            </span>
+            <span className="mt-0.5 block truncate text-[12px] font-semibold">
+              {projectLauncherHref === "/projects"
+                ? "Open project queue"
+                : "Recent project"}
+            </span>
+          </span>
+          <Chevron open={false} />
+        </Link>
 
-        <div className="flex shrink-0 flex-col border-l border-[var(--border-warm)] 2xl:min-w-[920px]">
-          <div className="flex flex-wrap items-stretch">
-            <Link
-              href={projectLauncherHref}
-              aria-current={
-                pathname.startsWith("/projects") ? "page" : undefined
-              }
-              className={[
-                "flex min-h-[58px] min-w-[200px] flex-1 items-center justify-between px-4 text-[var(--text-primary)] transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--copper)] 2xl:min-w-[210px] 2xl:flex-none",
-                pathname.startsWith("/projects")
-                  ? "bg-[var(--highlight)]"
-                  : "hover:bg-[var(--highlight)]"
-              ].join(" ")}
+        <button
+          type="button"
+          onClick={() => setMenuOpen((open) => !open)}
+          aria-expanded={menuOpen}
+          aria-controls={menuId}
+          className={[
+            "inline-flex h-10 min-w-[180px] items-center justify-between rounded-[3px] border px-3 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--copper)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--graphite)]",
+            menuOpen
+              ? "border-[var(--copper)] bg-[var(--copper)]/20 text-white"
+              : "border-white/14 bg-white/8 text-[var(--cream)] hover:border-[var(--copper)] hover:bg-white/12 hover:text-white"
+          ].join(" ")}
+        >
+          <span className="min-w-0">
+            <span className="block text-[9px] font-semibold uppercase tracking-[0.16em] text-[var(--copper-light)]">
+              Menu
+            </span>
+            <span className="mt-0.5 block truncate text-[12px] font-semibold">
+              {activeItem?.label ?? "Dashboard"}
+            </span>
+          </span>
+          <Chevron open={menuOpen} />
+        </button>
+
+        <UniversalCreateMenu
+          idBase="top-nav-universal-create-menu"
+          buttonLabel="Quick create"
+          buttonClassName="inline-flex h-10 items-center rounded-[3px] border border-[var(--copper)] bg-[var(--copper)] px-4 py-2 text-[13px] font-semibold text-white transition hover:bg-[var(--copper-light)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--copper-light)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--graphite)]"
+          panelClassName="mt-3"
+        />
+        <ContractorNotificationsCenter notifications={notifications} />
+
+        <div className="relative ml-auto">
+          <button
+            type="button"
+            onClick={() => {
+              setAccountMenuOpen((open) => !open);
+              setMenuOpen(false);
+            }}
+            aria-haspopup="menu"
+            aria-expanded={accountMenuOpen}
+            aria-controls={accountMenuId}
+            className={[
+              "flex h-10 items-center gap-3 rounded-[4px] border px-2 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--copper)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--graphite)]",
+              accountMenuOpen
+                ? "border-[var(--copper)] bg-white/12"
+                : "border-white/14 bg-white/8 hover:border-[var(--copper)] hover:bg-white/12"
+            ].join(" ")}
+          >
+            <span className="min-w-0 text-right">
+              <span className="block max-w-[230px] truncate text-[13px] font-semibold text-white">
+                {userEmail}
+              </span>
+              <span className="mt-0.5 block text-[11px] text-white/55">
+                {timestampLabel}
+              </span>
+            </span>
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[2px] bg-white/12 text-[13px] font-semibold text-white">
+              {organizationStatus.charAt(0).toUpperCase()}
+            </span>
+            <Chevron open={accountMenuOpen} />
+          </button>
+
+          {accountMenuOpen ? (
+            <div
+              id={accountMenuId}
+              className="absolute right-0 top-[calc(100%+0.5rem)] z-40 w-[280px] border border-[var(--border-warm)] bg-white p-2 text-[var(--text-primary)] shadow-[0_24px_70px_-36px_rgba(34,26,20,0.55)]"
             >
-              <div>
-                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--copper)]">
-                  Select a Project
+              <div className="border-b border-[var(--border-warm)] px-3 py-2.5">
+                <p className="truncate text-sm font-semibold text-[var(--text-primary)]">
+                  {userEmail}
                 </p>
-                <p className="mt-1 text-[13px] font-medium">
-                  {projectLauncherHref === "/projects"
-                    ? "Open project queue"
-                    : "Return to recent project"}
+                <p className="mt-1 text-[11px] leading-4 text-[var(--text-secondary)]">
+                  {organizationName} - {organizationStatus}
                 </p>
               </div>
-              <Chevron open={false} />
-            </Link>
 
-            <button
-              type="button"
-              onClick={() => setMenuOpen((open) => !open)}
-              aria-expanded={menuOpen}
-              aria-controls={menuId}
-              className={[
-                "flex min-h-[58px] min-w-[174px] flex-1 items-center justify-between border-l border-[var(--border-warm)] px-4 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--copper)] 2xl:min-w-[184px] 2xl:flex-none",
-                menuOpen
-                  ? "bg-[var(--highlight)] text-[var(--text-primary)]"
-                  : "text-[var(--text-primary)] hover:bg-[var(--highlight)]"
-              ].join(" ")}
-            >
-              <div>
-                <p
-                  className={[
-                    "text-[10px] font-semibold uppercase tracking-[0.18em]",
-                    menuOpen ? "text-[var(--copper)]" : "text-[var(--copper)]"
-                  ].join(" ")}
+              <div className="py-2">
+                <Link
+                  href="/settings/profile"
+                  onClick={() => setAccountMenuOpen(false)}
+                  className="block rounded-[4px] px-3 py-2 text-sm font-medium text-[var(--text-secondary)] transition hover:bg-[var(--highlight)] hover:text-[var(--text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--copper)]"
                 >
-                  {activeSection ? `Menu - ${activeSection.label}` : "Menu"}
-                </p>
-                <p className="mt-1 text-[13px] font-medium">
-                  {activeItem?.label ?? "Dashboard"}
-                </p>
+                  Profile / Account settings
+                </Link>
+                <Link
+                  href="/settings/organization"
+                  onClick={() => setAccountMenuOpen(false)}
+                  className="block rounded-[4px] px-3 py-2 text-sm font-medium text-[var(--text-secondary)] transition hover:bg-[var(--highlight)] hover:text-[var(--text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--copper)]"
+                >
+                  Organization settings
+                </Link>
+                <Link
+                  href="/settings"
+                  onClick={() => setAccountMenuOpen(false)}
+                  className="block rounded-[4px] px-3 py-2 text-sm font-medium text-[var(--text-secondary)] transition hover:bg-[var(--highlight)] hover:text-[var(--text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--copper)]"
+                >
+                  Settings home
+                </Link>
               </div>
-              <Chevron open={menuOpen} />
-            </button>
-          </div>
 
-          <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3 border-t border-[var(--border-warm)] px-4 py-2.5">
-            <div className="flex min-w-0 flex-wrap items-center gap-3">
-              <UniversalCreateMenu
-                idBase="top-nav-universal-create-menu"
-                buttonLabel="Quick create"
-                buttonClassName="inline-flex h-10 items-center rounded-[3px] border border-[var(--copper)] bg-[var(--copper)] px-4 py-2 text-[13px] font-semibold text-white transition hover:bg-[var(--copper-light)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--copper)] focus-visible:ring-offset-2"
-              />
-              <ContractorNotificationsCenter notifications={notifications} />
-            </div>
-
-            <div className="relative border-l border-[var(--border-warm)] pl-3">
-              <button
-                type="button"
-                onClick={() => {
-                  setAccountMenuOpen((open) => !open);
-                  setMenuOpen(false);
-                }}
-                aria-haspopup="menu"
-                aria-expanded={accountMenuOpen}
-                aria-controls={accountMenuId}
-                className={[
-                  "flex items-center gap-3 rounded-[4px] border px-2 py-1.5 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--copper)] focus-visible:ring-offset-2",
-                  accountMenuOpen
-                    ? "border-[var(--copper)] bg-[var(--highlight)]"
-                    : "border-transparent hover:border-[var(--border-warm)] hover:bg-[var(--highlight)]"
-                ].join(" ")}
+              <form
+                action={signOutAction}
+                className="border-t border-[var(--border-warm)] pt-2"
               >
-                <span className="min-w-0 text-right">
-                  <span className="block max-w-[230px] truncate text-[13px] font-semibold text-[var(--text-primary)]">
-                    {userEmail}
-                  </span>
-                  <span className="mt-1 block text-[11px] text-[var(--text-tertiary)]">
-                    {timestampLabel}
-                  </span>
-                </span>
-                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[2px] bg-[var(--graphite)] text-[15px] font-semibold text-white">
-                  {organizationStatus.charAt(0).toUpperCase()}
-                </span>
-                <Chevron open={accountMenuOpen} />
-              </button>
-
-              {accountMenuOpen ? (
-                <div
-                  id={accountMenuId}
-                  className="absolute right-0 top-[calc(100%+0.5rem)] z-40 w-[280px] border border-[var(--border-warm)] bg-white p-2 text-[var(--text-primary)] shadow-[0_24px_70px_-36px_rgba(34,26,20,0.55)]"
+                <button
+                  type="submit"
+                  className="block w-full rounded-[4px] px-3 py-2 text-left text-sm font-semibold text-[var(--copper)] transition hover:bg-[var(--highlight)] hover:text-[var(--copper-light)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--copper)]"
                 >
-                  <div className="border-b border-[var(--border-warm)] px-3 py-2.5">
-                    <p className="truncate text-sm font-semibold text-[var(--text-primary)]">
-                      {userEmail}
-                    </p>
-                    <p className="mt-1 text-[11px] leading-4 text-[var(--text-secondary)]">
-                      {organizationName} - {organizationStatus}
-                    </p>
-                  </div>
-
-                  <div className="py-2">
-                    <Link
-                      href="/settings/profile"
-                      onClick={() => setAccountMenuOpen(false)}
-                      className="block rounded-[4px] px-3 py-2 text-sm font-medium text-[var(--text-secondary)] transition hover:bg-[var(--highlight)] hover:text-[var(--text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--copper)]"
-                    >
-                      Profile / Account settings
-                    </Link>
-                    <Link
-                      href="/settings/organization"
-                      onClick={() => setAccountMenuOpen(false)}
-                      className="block rounded-[4px] px-3 py-2 text-sm font-medium text-[var(--text-secondary)] transition hover:bg-[var(--highlight)] hover:text-[var(--text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--copper)]"
-                    >
-                      Organization settings
-                    </Link>
-                    <Link
-                      href="/settings"
-                      onClick={() => setAccountMenuOpen(false)}
-                      className="block rounded-[4px] px-3 py-2 text-sm font-medium text-[var(--text-secondary)] transition hover:bg-[var(--highlight)] hover:text-[var(--text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--copper)]"
-                    >
-                      Settings home
-                    </Link>
-                  </div>
-
-                  <form
-                    action={signOutAction}
-                    className="border-t border-[var(--border-warm)] pt-2"
-                  >
-                    <button
-                      type="submit"
-                      className="block w-full rounded-[4px] px-3 py-2 text-left text-sm font-semibold text-[var(--copper)] transition hover:bg-[var(--highlight)] hover:text-[var(--copper-light)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--copper)]"
-                    >
-                      Sign out
-                    </button>
-                  </form>
-                </div>
-              ) : null}
+                  Sign out
+                </button>
+              </form>
             </div>
-          </div>
+          ) : null}
         </div>
       </div>
 
