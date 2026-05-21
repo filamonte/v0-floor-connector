@@ -736,7 +736,7 @@ export function ContractorDashboardSurface({
 
         {operationalCockpitBuckets.length > 0 ? (
           <OperationalGuidanceSection
-            title="Operational cockpit"
+            title="Command Center"
             description="The home board groups current work by decision posture: what needs attention, what is ready to move, what is waiting on a customer or payment, and what needs field follow-through."
             buckets={operationalCockpitBuckets}
           />
@@ -823,8 +823,8 @@ export function ContractorDashboardSurface({
             selectedMyWorkQueueMode?.mode === "mine" ? (
               <div className="border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-5 text-amber-950">
                 No active People record is linked to your app user yet. Mine can
-                still include cues resolved directly to your app user, but
-                linking a Person improves responsibility matching.
+                still include Next Move suggestions resolved directly to your
+                app user, but linking a Person improves responsibility matching.
               </div>
             ) : null}
             {myWorkQueueModes?.caveats.unresolvedItemsPresent &&

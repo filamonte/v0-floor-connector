@@ -156,6 +156,7 @@ Read these first for most implementation or documentation tasks:
 - `docs/gatekeeper-schedule-site-assessment-controlled-execution-plan.md` defines the planning-only controlled execution path for future `schedule_site_assessment`, recommending an Opportunities-owned site-assessment state update before appointment/job scheduling.
 - `docs/contractor-foreman-gap-decision-list.md` records owner decisions from the Contractor Foreman baseline comparison.
 - `docs/future-feature-coverage-map.md` is the broad future coverage map so roadmap/current-state do not become feature encyclopedias.
+- `docs/product-language.md` defines the approved user-facing product terms that sit on top of the existing canonical architecture without renaming routes, schema, or internal models.
 
 ### Workflow And System Architecture
 
@@ -170,6 +171,7 @@ Read these first for most implementation or documentation tasks:
 - `docs/design/stitch/phase-2-token-dashboard-audit.md` through `docs/design/stitch/phase-10-visual-qa-sweep-and-consolidation.md` record the bounded Stitch adoption implementation and QA history. Use them as handoff evidence, not as replacements for `docs/current-state.md`.
 - `docs/enterprise-ui-system-audit.md` records the secured-app visual audit and drift watch list.
 - `docs/floorconnector-ui-build-rules.md` contains mandatory UI build rules.
+- `docs/product-language.md` and `docs/product-language-audit.md` govern product naming and terminology. They are UX copy guidance, not schema, route, or domain-model rename instructions.
 
 ### AI Guidance And Planning
 

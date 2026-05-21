@@ -671,7 +671,7 @@ export default async function InvoiceDetailPage({
       id: "customer-project",
       label: "Customer / project",
       state: "complete",
-      description: "Project owns broader readiness"
+      description: "Project owns the broader GateKeeper checks"
     },
     {
       id: "estimate-contract",
@@ -687,7 +687,7 @@ export default async function InvoiceDetailPage({
     },
     {
       id: "signature-readiness",
-      label: "Signature readiness",
+      label: "Signature Ready Check",
       state: readinessSnapshot?.contractStatus
         ? readinessSnapshot.contractStatus === "signed"
           ? "complete"
@@ -695,7 +695,7 @@ export default async function InvoiceDetailPage({
         : "upcoming",
       description: readinessSnapshot?.contractStatus
         ? formatStatusLabel(readinessSnapshot.contractStatus)
-        : "Project readiness source"
+        : "GateKeeper source"
     },
     {
       id: "job-schedule",
@@ -714,7 +714,7 @@ export default async function InvoiceDetailPage({
         : projectJobs.length > 0
           ? `${projectJobs.length} project job${projectJobs.length === 1 ? "" : "s"}`
           : invoice.workflowRole === "deposit"
-            ? "After deposit readiness"
+            ? "After deposit Ready Check"
             : "After billable work"
     },
     {
@@ -918,7 +918,7 @@ export default async function InvoiceDetailPage({
 
             <NeedsAttentionPanel
               cues={invoiceAttentionCues}
-              description="Invoice-specific collection cues derived from this canonical invoice and enabled organization rules. Use Project Workspace for upstream contract, deposit, job, or readiness blockers."
+              description="Invoice-specific Next Move suggestions derived from this invoice and enabled company rules. Use Project Workspace for upstream contract, deposit, job, or GateKeeper blockers."
               getWorkItemAction={getOperationalCueWorkItemBridgeAction}
               getCueStateControls={(cue) => (
                 <CueStateControls
@@ -1402,11 +1402,11 @@ export default async function InvoiceDetailPage({
 
         <div className="grid gap-6 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
           <DetailPanel
-            title={invoiceIsSettled ? "Payment Activity" : "Payment Recording"}
+            title={invoiceIsSettled ? "Payment Trail" : "Payment Recording"}
             description={
               invoiceIsSettled
-                ? "Review canonical payment activity and settled balance without prompting another collection step."
-                : "Record canonical payments here while keeping customer-facing checkout signals and upstream project readiness in view."
+                ? "Review Payment Trail activity and settled balance without prompting another collection step."
+                : "Record payments here while keeping customer-facing checkout signals and upstream GateKeeper context in view."
             }
           >
             <div id="payment-recording" className="space-y-4">
@@ -1417,7 +1417,7 @@ export default async function InvoiceDetailPage({
                 <div className="mt-4 grid gap-3 lg:grid-cols-3">
                   <div className="rounded-2xl border border-[var(--border-warm)] bg-[var(--highlight)] px-4 py-4 text-sm leading-6 text-[var(--text-secondary)]">
                     <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
-                      Readiness
+                      Payment Ready Check
                     </p>
                     <p className="mt-2 font-semibold text-[var(--text-primary)]">
                       {invoiceIsSettled
@@ -1446,7 +1446,7 @@ export default async function InvoiceDetailPage({
                     <p className="mt-2">
                       {latestPaymentEvent
                         ? formatDateTime(latestPaymentEvent.occurredAt)
-                        : "Customer-facing payment events will appear here once request or checkout activity starts."}
+                        : "Customer-facing Payment Trail entries will appear here once request or checkout activity starts."}
                     </p>
                   </div>
                   <div className="rounded-2xl border border-[var(--border-warm)] bg-[var(--highlight)] px-4 py-4 text-sm leading-6 text-[var(--text-secondary)]">
@@ -1467,12 +1467,12 @@ export default async function InvoiceDetailPage({
                 <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                   <div>
                     <p className="text-sm font-medium text-[var(--text-primary)]">
-                      Payment evidence timeline
+                      Payment Trail
                     </p>
                     <p className="mt-1 max-w-[68ch] text-sm leading-6 text-[var(--text-secondary)]">
-                      Read-only payment lifecycle evidence from immutable
-                      payment events. Provider references are shown only as
-                      compact identifiers, never raw provider payloads.
+                      Read-only payment lifecycle evidence from the Payment
+                      Trail. Provider references are shown only as compact
+                      identifiers, never raw provider payloads.
                     </p>
                   </div>
                   <Link
@@ -2095,7 +2095,7 @@ export default async function InvoiceDetailPage({
             <ContextFactsList
               items={[
                 {
-                  label: "Project readiness",
+                  label: "GateKeeper",
                   value: (
                     <span className="capitalize">
                       {formatReadinessLabel(readinessSnapshot?.status ?? null)}
@@ -2115,7 +2115,7 @@ export default async function InvoiceDetailPage({
                   )
                 },
                 {
-                  label: "Online payment readiness",
+                  label: "Online payment Ready Check",
                   value: onlinePaymentGate.canStartCheckout
                     ? "Ready for customer-facing payment flow"
                     : "Not currently ready for customer-facing payment flow"

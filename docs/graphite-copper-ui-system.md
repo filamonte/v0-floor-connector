@@ -407,6 +407,13 @@ Rules:
 
 ## Copy Rules
 
+Product naming and terminology are governed by
+[docs/product-language.md](C:/FloorConnector/docs/product-language.md). Use
+that document for approved names such as GateKeeper, Next Move, Command Center,
+Ready Check, Cost Library, Payment Trail, Signature Trail, Customer Access,
+Company Controls, and Platform Control Room. These are user-facing labels only;
+they do not rename routes, schema, server actions, or internal domain models.
+
 ### Operational Language
 
 Use concrete contractor workflow language. The page should answer what this surface is for and what the user should do next.

@@ -35,7 +35,7 @@ export default async function SuperAdminHomePage() {
       <ScopeLegend
         items={[
           {
-            label: "Platform defaults",
+            label: "Starter Settings",
             description:
               "Global starter values controlled only from super admin."
           },
@@ -59,10 +59,10 @@ export default async function SuperAdminHomePage() {
 
       <div className="grid gap-6 xl:grid-cols-2">
         <SettingsOverviewCard
-          title="Platform defaults"
+          title="Starter Settings"
           description="Global financial and workflow baselines used when new organizations have not set their own contractor-owned settings yet."
           href="/super-admin/platform"
-          ctaLabel="Manage platform defaults"
+          ctaLabel="Manage starter settings"
           tone="neutral"
         >
           <div className="space-y-2 rounded-lg border border-[var(--border-warm)] bg-[var(--highlight)] px-4 py-4 text-sm leading-6 text-[var(--text-secondary)]">
@@ -141,10 +141,10 @@ export default async function SuperAdminHomePage() {
         </SettingsOverviewCard>
 
         <SettingsOverviewCard
-          title="Module controls"
+          title="Feature Controls"
           description="Shared platform feature policies that shape which capability families are available to contractors without becoming entitlement enforcement."
           href="/super-admin/modules"
-          ctaLabel="Manage module controls"
+          ctaLabel="Manage feature controls"
           tone="neutral"
         >
           <div className="rounded-lg border border-[var(--border-warm)] bg-[var(--highlight)] px-4 py-4 text-sm text-[var(--text-secondary)]">

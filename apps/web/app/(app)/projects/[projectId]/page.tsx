@@ -1067,9 +1067,7 @@ function getProjectWorkflowDriverLabel(input: {
   }
 
   if (href.startsWith("/jobs")) {
-    return input.projectJobsCount > 0
-      ? "Existing job chain"
-      : "Project readiness";
+    return input.projectJobsCount > 0 ? "Existing job chain" : "GateKeeper";
   }
 
   if (href.startsWith("/schedule")) {
@@ -1080,7 +1078,7 @@ function getProjectWorkflowDriverLabel(input: {
       : "Schedule workspace";
   }
 
-  return "Project readiness";
+  return "GateKeeper";
 }
 
 function buildLinkedRecordRecencyItems(input: {
@@ -1444,27 +1442,27 @@ function buildReadinessStages(input: {
               },
     !hasContract
       ? {
-          title: "Financial readiness",
+          title: "Ready Check",
           detail:
             "Deposit and financing rules apply after the contract workflow reaches the right stage.",
           state: "upcoming"
         }
       : financialReady
         ? {
-            title: "Financial readiness",
+            title: "Ready Check",
             detail:
-              "Deposit and financing readiness are currently satisfied on the canonical project chain.",
+              "Deposit and financing checks are currently satisfied on the project chain.",
             state: "complete"
           }
         : readinessSnapshot?.status === "waiting_on_deposit"
           ? {
-              title: "Financial readiness",
+              title: "Ready Check",
               detail:
-                "Deposit readiness is the active gate before operations can take over.",
+                "Deposit is the active GateKeeper check before operations can take over.",
               state: "current"
             }
           : {
-              title: "Financial readiness",
+              title: "Ready Check",
               detail:
                 "Financing state is still preventing the project from becoming operationally ready.",
               state: "current"
@@ -2944,7 +2942,7 @@ export default async function ProjectDetailPage({
       eyebrow: "Current stage",
       title: "Where this project stands",
       description:
-        "A compact read of the current workflow posture from the existing readiness and linked-record state.",
+        "A compact read of the current workflow posture from GateKeeper and linked-record state.",
       emptyTitle: "No stage signal is available yet.",
       emptyDescription:
         "Create estimate, contract, job, or invoice records to make the project stage more specific.",
@@ -2956,7 +2954,7 @@ export default async function ProjectDetailPage({
               id: "project-current-stage",
               title: currentReadinessStage.title,
               description: currentReadinessStage.detail,
-              why: `${formatWorkflowModeLabel(guidancePreferences.workflowMode)} mode is reading the existing readiness chain without changing gates.`,
+              why: `${formatWorkflowModeLabel(guidancePreferences.workflowMode)} mode is reading GateKeeper checks without changing gates.`,
               href: `/projects/${project.id}`,
               actionLabel: "Stay in project",
               badge: currentReadinessStage.state
@@ -2969,7 +2967,7 @@ export default async function ProjectDetailPage({
       eyebrow: "Blocker",
       title: "What is holding it back",
       description:
-        "The first visible blocker or clear-state message, without recalculating readiness.",
+        "The first visible blocker or clear-state message, without recalculating GateKeeper.",
       emptyTitle: "No blocker is active.",
       emptyDescription:
         "Readiness, signature, deposit, schedule, billing, and field blockers are currently clear.",
@@ -2981,7 +2979,7 @@ export default async function ProjectDetailPage({
                 id: "project-primary-blocker",
                 title: "Primary blocker",
                 description: workspaceBlockers[0],
-                why: "This comes from the existing project readiness, billing, schedule, progress-billing, punchlist, or field-note context.",
+                why: "This comes from the existing GateKeeper, billing, schedule, progress-billing, punchlist, or field-note context.",
                 href: nextAction.primaryHref ?? `/projects/${project.id}`,
                 actionLabel: nextAction.primaryLabel ?? "Review next step",
                 badge: "Blocker"
@@ -3232,8 +3230,8 @@ export default async function ProjectDetailPage({
             />
 
             <OperationalGuidanceSection
-              title="Project workflow summary"
-              description="Current stage, blocker, next action, and driving record are summarized from existing project readiness and linked canonical records."
+              title="Command Center summary"
+              description="Current stage, blocker, next action, and driving record are summarized from GateKeeper and linked project records."
               buckets={projectOperationalGuidanceBuckets}
             />
 
@@ -3253,7 +3251,7 @@ export default async function ProjectDetailPage({
             {showReadinessGuidancePanel ? (
               <NeedsAttentionPanel
                 cues={projectAttentionCues}
-                description="Linked estimate, contract, invoice, and job cues for this project. These are derived at view time and do not create tasks or mutate workflow state."
+                description="Linked estimate, contract, invoice, and job Next Move suggestions for this project. These are derived at view time and do not create tasks or mutate workflow state."
                 getCueStateControls={(cue) => (
                   <CueStateControls
                     identity={buildOperationalCueIdentity(cue)}
@@ -3643,7 +3641,7 @@ export default async function ProjectDetailPage({
                 <AppEmptyState
                   eyebrow="No jobs"
                   title="Create a job once work is ready"
-                  description="Job and schedule work starts only after the project readiness chain clears. Until then, resolve the upstream estimate, contract, deposit, or financing gate named above."
+                  description="Job and schedule work starts only after GateKeeper clears. Until then, resolve the upstream estimate, contract, deposit, or financing gate named above."
                   actionHref={
                     readinessSnapshot?.isReadyToSchedule
                       ? `/jobs?projectId=${project.id}`
@@ -4252,7 +4250,7 @@ export default async function ProjectDetailPage({
                     "Stored on the canonical project and used only as readiness context."
                 },
                 {
-                  label: "Deposit readiness",
+                  label: "Deposit Ready Check",
                   value: readinessSnapshot?.depositRequired
                     ? readinessSnapshot.depositSatisfied
                       ? "Deposit satisfied"
@@ -4262,10 +4260,10 @@ export default async function ProjectDetailPage({
                     "Deposit behavior continues to use the existing financial chain."
                 },
                 {
-                  label: "Commercial readiness",
+                  label: "Ready Check",
                   value: formatStatusLabel(readinessStatus),
                   detail: readinessSnapshot?.isReadyToSchedule
-                    ? "Commercial gates are clear."
+                    ? "GateKeeper checks are clear."
                     : "Resolve blockers before operational handoff."
                 },
                 {
@@ -4456,7 +4454,7 @@ export default async function ProjectDetailPage({
           <ContextFactsList
             items={[
               {
-                label: "Commercial readiness",
+                label: "Ready Check",
                 value: (
                   <span className="capitalize">
                     {formatStatusLabel(readinessStatus)}
@@ -4479,7 +4477,7 @@ export default async function ProjectDetailPage({
                 )
               },
               {
-                label: "Deposit readiness",
+                label: "Deposit Ready Check",
                 value: readinessSnapshot?.depositRequired
                   ? readinessSnapshot.depositSatisfied
                     ? "Deposit satisfied"
@@ -4603,7 +4601,7 @@ export default async function ProjectDetailPage({
 
         <DetailPanel
           title="Customer Contact Access"
-          description="Project-specific portal visibility for this project. Full contact and account administration stays in People."
+          description="Customer Access visibility for this project. Full contact and account administration stays in People."
         >
           <div className="space-y-4 text-sm leading-6 text-slate-600">
             {projectVisiblePortalGrants.length > 0 ? (
@@ -4907,7 +4905,7 @@ export default async function ProjectDetailPage({
                                   ? ""
                                   : "s"
                               } missing required equipment`
-                            : "Warning-only; project readiness gates are unchanged"}
+                            : "Warning-only; GateKeeper checks are unchanged"}
                         </span>
                       </>
                     ) : projectJobs.length > 0 ? (

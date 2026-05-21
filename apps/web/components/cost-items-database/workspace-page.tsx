@@ -85,16 +85,19 @@ export function CostItemsWorkspacePage({
   const lowStockItems = trackedInventory.filter(
     (item) => Number(item.currentQuantity) <= Number(item.reorderPoint)
   );
-  const missingCostItems = activeItems.filter((item) => Number(item.defaultUnitCost) <= 0);
+  const missingCostItems = activeItems.filter(
+    (item) => Number(item.defaultUnitCost) <= 0
+  );
   const missingPriceItems = activeItems.filter(
-    (item) => item.defaultUnitPrice == null || Number(item.defaultUnitPrice) <= 0
+    (item) =>
+      item.defaultUnitPrice == null || Number(item.defaultUnitPrice) <= 0
   );
 
   return (
     <StandardWorkspaceLayout
       header={{
         eyebrow: "Financials module",
-        title: "Cost Items Database",
+        title: "Cost Library",
         description:
           "Manage reusable cost items, systems, and optional inventory from one shared Financials workspace.",
         actions: (
@@ -104,10 +107,10 @@ export function CostItemsWorkspacePage({
             </p>
             <p className="mt-1">
               {activeItems.length} active items,{" "}
-              {data.inventoryEnabled ? trackedInventory.length : 0} tracked inventory rows,{" "}
-              {data.inventoryEnabled ? lowStockItems.length : 0} low-stock records,{" "}
-              {missingCostItems.length} missing cost values, and {missingPriceItems.length} missing
-              price values.
+              {data.inventoryEnabled ? trackedInventory.length : 0} tracked
+              inventory rows, {data.inventoryEnabled ? lowStockItems.length : 0}{" "}
+              low-stock records, {missingCostItems.length} missing cost values,
+              and {missingPriceItems.length} missing price values.
             </p>
           </div>
         )
@@ -133,11 +136,13 @@ export function CostItemsWorkspacePage({
       }
       commandBar={
         <WorkspaceCommandBar
-          supportSlot="Cost Items Database stays one operational workspace. Configuration defaults remain under Cost Items & Inventory Settings."
+          supportSlot="Cost Library stays one operational workspace. Configuration defaults remain under Cost Items & Inventory Settings."
           actionSlot={
             <>
               {view !== "dashboard" ? (
-                <RowsPerViewControl storageKey={COST_ITEMS_ROWS_PER_VIEW_STORAGE_KEY} />
+                <RowsPerViewControl
+                  storageKey={COST_ITEMS_ROWS_PER_VIEW_STORAGE_KEY}
+                />
               ) : null}
               <Link
                 href="/cost-items-database"
@@ -192,9 +197,13 @@ export function CostItemsWorkspacePage({
             vendors={data.vendors}
             contentBlocks={data.contentBlocks}
             saveItemAction={updateOrganizationCatalogItemAction}
-            saveSystemComponentsAction={updateOrganizationCatalogSystemComponentsAction}
+            saveSystemComponentsAction={
+              updateOrganizationCatalogSystemComponentsAction
+            }
             saveContentBlockAction={upsertEstimateContentBlockAction}
-            deleteCatalogItemFileAction={deleteOrganizationCatalogItemFileAction}
+            deleteCatalogItemFileAction={
+              deleteOrganizationCatalogItemFileAction
+            }
             initialSidebarView="all"
             lockedSidebarView="all"
           />
@@ -211,7 +220,9 @@ export function CostItemsWorkspacePage({
           vendors={data.vendors}
           contentBlocks={data.contentBlocks}
           saveItemAction={updateOrganizationCatalogItemAction}
-          saveSystemComponentsAction={updateOrganizationCatalogSystemComponentsAction}
+          saveSystemComponentsAction={
+            updateOrganizationCatalogSystemComponentsAction
+          }
           saveContentBlockAction={upsertEstimateContentBlockAction}
           deleteCatalogItemFileAction={deleteOrganizationCatalogItemFileAction}
           initialSidebarView={view}

@@ -180,10 +180,10 @@ function buildMyWorkDashboardWidgets(cues: OperationalCue[]) {
       eyebrow: "My Estimates",
       title: "Estimate follow-up",
       description:
-        "Sent estimates that crossed the tenant cue threshold. These are derived from saved estimate records.",
+        "Sent estimates that crossed the company suggestion threshold. These are derived from saved estimate records.",
       href: "/estimates",
       actionLabel: "Open estimates",
-      emptyTitle: "No estimate cues need attention.",
+      emptyTitle: "No estimate Next Move suggestions need attention.",
       emptyDescription:
         "Sent estimates will appear here when they pass the configured follow-up threshold.",
       items: groups.estimates.slice(0, 5).map(mapOperationalCueToDashboardItem)
@@ -193,10 +193,10 @@ function buildMyWorkDashboardWidgets(cues: OperationalCue[]) {
       eyebrow: "My Contracts",
       title: "Signature follow-up",
       description:
-        "Sent or viewed contracts that remain unsigned under the tenant cue rules.",
+        "Sent or viewed contracts that remain unsigned under the company suggestion rules.",
       href: "/contracts",
       actionLabel: "Open contracts",
-      emptyTitle: "No contract cues need attention.",
+      emptyTitle: "No contract Next Move suggestions need attention.",
       emptyDescription:
         "Unsigned sent or viewed contracts will appear here when follow-up is due.",
       items: groups.contracts.slice(0, 5).map(mapOperationalCueToDashboardItem)
@@ -209,7 +209,7 @@ function buildMyWorkDashboardWidgets(cues: OperationalCue[]) {
         "Overdue invoices and unpaid deposit invoices from the shared billing chain.",
       href: "/invoices",
       actionLabel: "Open invoices",
-      emptyTitle: "No invoice cues need attention.",
+      emptyTitle: "No invoice Next Move suggestions need attention.",
       emptyDescription:
         "Overdue balances and unpaid deposits will appear here when configured thresholds are crossed.",
       items: groups.invoices.slice(0, 5).map(mapOperationalCueToDashboardItem)
@@ -222,7 +222,7 @@ function buildMyWorkDashboardWidgets(cues: OperationalCue[]) {
         "Ready unscheduled jobs and scheduled jobs missing crew from saved job records.",
       href: "/jobs",
       actionLabel: "Open jobs",
-      emptyTitle: "No job cues need attention.",
+      emptyTitle: "No job Next Move suggestions need attention.",
       emptyDescription:
         "Ready unscheduled jobs and near-term scheduled jobs missing crew will appear here.",
       items: groups.jobs.slice(0, 5).map(mapOperationalCueToDashboardItem)
@@ -582,10 +582,10 @@ export default async function DashboardPage({
       eyebrow: "Needs attention",
       title: "Act before work stalls",
       description:
-        "Items in this bucket already have evidence from saved records or system cues.",
+        "Items in this bucket already have evidence from saved records or Next Move suggestions.",
       emptyTitle: "No urgent attention items are active.",
       emptyDescription:
-        "When notifications, project cues, overdue invoices, or due lead follow-ups appear, they will land here first.",
+        "When notifications, project Next Move suggestions, overdue invoices, or due lead follow-ups appear, they will land here first.",
       tone: "attention",
       items: [
         ...notifications.visibleItems.slice(0, 2).map((item) => ({
@@ -1228,15 +1228,15 @@ export default async function DashboardPage({
       attentionWidget={attentionWidget}
       projectCueWidget={{
         key: "project-cues",
-        eyebrow: "Project guidance",
-        title: "Suggested project actions",
+        eyebrow: "Next Move",
+        title: "Project suggestions",
         description:
-          "Suggested actions from current project records only. Open the project cue panel or an existing workflow to review before creating anything.",
+          "Suggested actions from current project records only. Open the project Next Move panel or an existing workflow to review before creating anything.",
         href: "/projects",
         actionLabel: "Open projects",
-        emptyTitle: "No project cues need attention right now.",
+        emptyTitle: "No Next Move suggestions need attention right now.",
         emptyDescription:
-          "When readiness, deposit, field, contract, or schedule context needs review, project cues will surface here.",
+          "When GateKeeper, deposit, field, contract, or schedule context needs review, Next Move suggestions will surface here.",
         items: mapProjectCuesToDashboardPreviewItems(projectCues)
       }}
       workItemsWidget={{
@@ -1299,7 +1299,7 @@ export default async function DashboardPage({
             description: "All attention items",
             emptyTitle: "No company attention items right now.",
             emptyDescription:
-              "Company remains the full organization safety net for derived My Work cues.",
+              "Company remains the full organization safety net for derived Next Move suggestions.",
             count: myWorkQueueModes.counts.company,
             widgets: buildMyWorkDashboardWidgets(
               myWorkQueueModes.queues.company.cues
@@ -1449,10 +1449,10 @@ export default async function DashboardPage({
       operationsWidgets={[
         {
           key: "ready-to-schedule-projects",
-          eyebrow: "Ready to schedule",
+          eyebrow: "Schedule Ready",
           title: "Projects ready for job creation",
           description:
-            "These projects cleared commercial readiness but still need a canonical job before schedule timing and crew assignment can happen.",
+            "These projects cleared Ready Check but still need a job before schedule timing and crew assignment can happen.",
           href:
             readyProjectsWithoutJobs.length > 0
               ? `/projects/${readyProjectsWithoutJobs[0].id}`
@@ -1460,7 +1460,7 @@ export default async function DashboardPage({
           actionLabel: "Open project",
           emptyTitle: "No ready projects are waiting for job creation.",
           emptyDescription:
-            "Once contract, deposit, financing, and readiness gates clear, projects without jobs will appear here before they enter Schedule.",
+            "Once contract, deposit, financing, and GateKeeper checks clear, projects without jobs will appear here before they enter Schedule.",
           items: readyProjectsWithoutJobs.map((project) => {
             const readinessSnapshot =
               projectReadinessSnapshots.get(project.id) ?? null;
@@ -1766,7 +1766,7 @@ export default async function DashboardPage({
       shortcuts={[
         {
           key: "cost-items-database",
-          label: "Cost items database",
+          label: "Cost Library",
           description:
             "Open the catalog, systems, and optional inventory workspace that feeds estimates without changing pricing logic.",
           href: "/cost-items-database",

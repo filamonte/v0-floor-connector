@@ -160,7 +160,7 @@ export function CostItemsSettingsContent({
         <SettingsSectionCard
           eyebrow="Module Scope"
           title="How Cost Items and Inventory work"
-          description="Cost Items Database is always available. Inventory turns the same catalog item master into an operational stock workflow without changing estimate or invoice pricing."
+          description="Cost Library is always available. Inventory turns the same catalog item master into an operational stock workflow without changing estimate or invoice pricing."
         >
           <div
             className={`space-y-2 text-sm leading-6 text-[var(--text-secondary)] ${settingsInsetClassName}`}

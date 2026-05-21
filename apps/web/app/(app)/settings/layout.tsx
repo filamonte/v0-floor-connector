@@ -27,9 +27,9 @@ export default async function ContractorSettingsLayout({
 
   return (
     <SettingsSurfaceLayout
-      eyebrow="Settings"
-      title={`${organizationContext.organization.displayName} settings`}
-      description="Review your personal account context and, when permitted, manage the organization-owned configuration layer that powers the contractor workspace."
+      eyebrow="Company Controls"
+      title={`${organizationContext.organization.displayName} controls`}
+      description="Review your account context and, when permitted, manage the company-owned settings that power the contractor workspace."
       navItems={navItems}
       meta={
         <div className="rounded-lg border border-white/10 bg-white/[0.08] px-5 py-5 text-sm text-white/72">

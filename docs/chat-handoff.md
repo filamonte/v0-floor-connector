@@ -51,6 +51,12 @@ Current work should generally preserve the implemented operational core while ti
 - communications, automation, and AI assistance as layers on canonical records
 - GateKeeper planning as a future operational memory and intelligence layer, not as implemented product behavior
 
+## Latest Product Language Phase 1
+
+- [docs/product-language.md](C:/FloorConnector/docs/product-language.md) now defines the controlled user-facing terminology layer for FloorConnector. Phase 1 approved names include GateKeeper, Next Move, Command Center, Ready Check, Cost Library, Payment Trail, Signature Trail, Customer Access, Company Controls, Platform Control Room, Starter Settings, and Feature Controls.
+- [docs/product-language-audit.md](C:/FloorConnector/docs/product-language-audit.md) records the audited UI/docs surfaces, terms changed, terms intentionally left unchanged, and recommended follow-up copy passes.
+- This was a copy and documentation pass only. It did not rename schema, migrations, routes, server actions, payload keys, hidden inputs, test ids, auth/RLS/tenant boundaries, payment/signature/estimate/invoice math, job readiness gates, portal grants, settings behavior, platform-admin logic, or canonical workflow relationships.
+
 ## Latest Stitch Visual Reference Adoption
 
 - Google Stitch Industrial Contrast artifacts have been adopted as visual reference and design-system input in [docs/design/stitch/README.md](C:/FloorConnector/docs/design/stitch/README.md), [docs/design/stitch/industrial-contrast-DESIGN.md](C:/FloorConnector/docs/design/stitch/industrial-contrast-DESIGN.md), and [docs/design/floorconnector-visual-system-evolution.md](C:/FloorConnector/docs/design/floorconnector-visual-system-evolution.md).

@@ -9,18 +9,18 @@ export const contractorSettingsNavItems: readonly SettingsNavItem[] = [
   {
     href: "/settings/profile",
     label: "Profile",
-    description: "Personal account identity and current organization context."
+    description: "Personal account identity and current company context."
   },
   {
     href: "/settings",
     label: "Overview",
-    description: "Review the current organization configuration footprint.",
+    description: "Review the current company control footprint.",
     adminOnly: true
   },
   {
     href: "/settings/organization",
-    label: "Organization",
-    description: "Profile, identity, and tenant-level organization details.",
+    label: "Company Profile",
+    description: "Profile, identity, and company-level organization details.",
     adminOnly: true
   },
   {
@@ -58,14 +58,14 @@ export const contractorSettingsNavItems: readonly SettingsNavItem[] = [
   },
   {
     href: "/settings/workflows",
-    label: "Workflows",
-    description: "Contract generation and commercial readiness defaults.",
+    label: "GateKeeper Defaults",
+    description: "Contract generation and Ready Check defaults.",
     adminOnly: true
   },
   {
     href: "/settings/operational-intelligence",
-    label: "Operational Intelligence",
-    description: "Built-in My Work cue rule thresholds and urgency.",
+    label: "Next Move",
+    description: "Built-in My Work suggestion thresholds and urgency.",
     adminOnly: true
   },
   {
@@ -89,8 +89,8 @@ export const contractorSettingsNavItems: readonly SettingsNavItem[] = [
   },
   {
     href: "/settings/modules",
-    label: "Modules",
-    description: "Organization-level feature overrides within platform policy.",
+    label: "Feature Controls",
+    description: "Company-level feature overrides within platform policy.",
     adminOnly: true
   }
 ] as const;
@@ -103,7 +103,7 @@ export const platformAdminNavItems: readonly SettingsNavItem[] = [
   },
   {
     href: "/super-admin/platform",
-    label: "Platform Defaults",
+    label: "Starter Settings",
     description: "Global financial and workflow baselines inherited by tenants."
   },
   {
@@ -118,7 +118,7 @@ export const platformAdminNavItems: readonly SettingsNavItem[] = [
   },
   {
     href: "/super-admin/modules",
-    label: "Module Controls",
+    label: "Feature Controls",
     description: "Platform feature policy and module availability rules."
   },
   {
@@ -151,7 +151,7 @@ export const platformAdminNavItems: readonly SettingsNavItem[] = [
   },
   {
     href: "/super-admin/admin",
-    label: "Platform Admin",
+    label: "Platform Control Room",
     description: "Platform admins, tenant oversight, and system governance."
   }
 ] as const;

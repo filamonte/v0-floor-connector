@@ -335,7 +335,7 @@ function getContractWorkflowSteps(input: {
       id: "customer-project",
       label: "Customer / project",
       state: input.estimateStatus || contractComplete ? "complete" : "current",
-      description: "Project owns broader readiness"
+      description: "Project owns the broader GateKeeper checks"
     },
     {
       id: "estimate-contract",
@@ -377,7 +377,7 @@ function getContractWorkflowSteps(input: {
           : "upcoming",
       description: hasJobs
         ? `${input.relatedJobs.length} job${input.relatedJobs.length === 1 ? "" : "s"} linked`
-        : "After signed contract readiness"
+        : "After signed contract Ready Check"
     },
     {
       id: "invoice-payment",
@@ -808,7 +808,7 @@ export default async function ContractDetailPage({
                 href={`/projects/${contract.projectId}`}
                 className="inline-flex items-center rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 transition hover:border-slate-300 hover:text-slate-700"
               >
-                Open project readiness hub
+                Open project GateKeeper
               </Link>
               {contract.status === "signed" ? (
                 <Link
@@ -817,7 +817,7 @@ export default async function ContractDetailPage({
                 >
                   {depositHref
                     ? "Create deposit invoice"
-                    : "Open project readiness hub"}
+                    : "Open project GateKeeper"}
                 </Link>
               ) : null}
             </>
@@ -827,7 +827,7 @@ export default async function ContractDetailPage({
         <CommercialDocumentCommandBand
           eyebrow="Commercial document"
           title="Contract workflow summary"
-          description="Review approval, signer routing, signature events, and project readiness before moving the contract toward deposit or schedule handoff."
+          description="Review approval, signer routing, Signature Trail, and GateKeeper context before moving the contract toward deposit or schedule handoff."
           statusLabel={contractDisplayState}
           projectHref={`/projects/${contract.projectId}`}
           items={[
@@ -959,7 +959,7 @@ export default async function ContractDetailPage({
 
           <NeedsAttentionPanel
             cues={contractAttentionCues}
-            description="Contract-specific signature cues derived from this canonical contract and enabled organization rules. Broader project, deposit, job, invoice, or payment blockers stay anchored in Project Workspace."
+            description="Contract-specific Next Move suggestions derived from this contract and enabled company rules. Broader project, deposit, job, invoice, or payment blockers stay anchored in Project Workspace."
             getCueStateControls={(cue) => (
               <CueStateControls
                 identity={buildOperationalCueIdentity(cue)}
@@ -1511,7 +1511,7 @@ export default async function ContractDetailPage({
             />
 
             <DetailPanel
-              title="Recent Signature Events"
+              title="Signature Trail"
               description="Recent signature milestones for verification, kept secondary to the active contract workflow."
             >
               <div className="space-y-3 text-sm leading-6 text-slate-600">
@@ -1536,9 +1536,9 @@ export default async function ContractDetailPage({
                   ))
                 ) : (
                   <p className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-4">
-                    No signature events have been recorded yet. Draft contracts
-                    will stay here until the signature request is sent through
-                    the existing workflow actions.
+                    No Signature Trail entries have been recorded yet. Draft
+                    contracts will stay here until the signature request is sent
+                    through the existing workflow actions.
                   </p>
                 )}
               </div>

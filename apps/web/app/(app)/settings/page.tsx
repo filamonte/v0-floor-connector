@@ -96,7 +96,7 @@ export default async function SettingsPage({
         </div>
         <div className={settingsMetricCardClassName}>
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--copper)]">
-            Workflow readiness
+            Ready Check defaults
           </p>
           <p className="mt-2 text-sm leading-6 text-[var(--text-secondary)]">
             {workflowSettings.approvedEstimateContractTemplateId
@@ -109,7 +109,7 @@ export default async function SettingsPage({
       <div className="grid gap-6 xl:grid-cols-2">
         <SettingsOverviewCard
           title="Organization profile"
-          description="Keep tenant identity, contractor branding, and core organization metadata aligned."
+          description="Keep company identity, contractor branding, and core organization metadata aligned."
           href="/settings/organization"
           ctaLabel="Manage organization"
         >
@@ -285,10 +285,10 @@ export default async function SettingsPage({
         </SettingsOverviewCard>
 
         <SettingsOverviewCard
-          title="Workflow defaults"
-          description="Shape contract generation and deposit-readiness behavior for approved work."
+          title="GateKeeper defaults"
+          description="Shape contract generation and deposit Ready Check behavior for approved work."
           href="/settings/workflows"
-          ctaLabel="Manage workflow defaults"
+          ctaLabel="Manage GateKeeper defaults"
         >
           <div className={`space-y-2 ${settingsInsetPanelClassName}`}>
             <p>
@@ -329,20 +329,20 @@ export default async function SettingsPage({
         </SettingsOverviewCard>
 
         <SettingsOverviewCard
-          title="Operational Intelligence"
-          description="Configure deterministic cues, responsibility defaults, and user-scoped dismiss/snooze behavior without creating task records or custom automation logic."
+          title="Next Move suggestions"
+          description="Configure deterministic suggestions, responsibility defaults, and user-scoped dismiss/snooze behavior without creating task records or custom automation logic."
           href="/settings/operational-intelligence"
-          ctaLabel="Configure My Work cues"
+          ctaLabel="Configure Next Move"
         >
           <div className={`space-y-2 ${settingsInsetPanelClassName}`}>
             <p>
-              Seven organization-owned rule templates control derived cues for
-              estimates, contracts, invoices, and jobs.
+              Seven company-owned rule templates control derived Next Move
+              suggestions for estimates, contracts, invoices, and jobs.
             </p>
             <p>
-              Editable fields are enablement, threshold days, and urgency. Cue
-              results still derive from canonical records; dismiss and snooze
-              only affect user visibility.
+              Editable fields are enablement, threshold days, and urgency.
+              Suggestions still derive from canonical records; dismiss and
+              snooze only affect user visibility.
             </p>
           </div>
         </SettingsOverviewCard>
@@ -367,7 +367,7 @@ export default async function SettingsPage({
         </SettingsOverviewCard>
 
         <SettingsOverviewCard
-          title="Admin and module controls"
+          title="Admin and Feature Controls"
           description="Review members, roles, and feature overrides allowed under the platform policy."
           href="/settings/admin"
           ctaLabel="Open admin controls"

@@ -21,7 +21,7 @@ export default async function SuperAdminLayout({
   return (
     <div className="min-h-screen bg-[linear-gradient(180deg,var(--graphite)_0,var(--graphite)_172px,#eef2f7_172px,#e6ebf2_100%)]">
       <ProtectedSurfaceHeader
-        title="Platform Admin"
+        title="Platform Control Room"
         description="Global defaults, starter records, tenant governance, and modular platform controls."
         user={user}
         headingLevel="h2"
@@ -29,7 +29,7 @@ export default async function SuperAdminLayout({
       <main className="px-5 py-6 sm:px-8 sm:py-8">
         <div className="mx-auto max-w-7xl">
           <SettingsSurfaceLayout
-            eyebrow="Super Admin"
+            eyebrow="Platform Control Room"
             title="Platform configuration"
             description="Manage the global layer that seeds contractor organizations, defines modular platform behavior, and governs cross-tenant defaults without collapsing tenant ownership."
             navItems={platformAdminNavItems}

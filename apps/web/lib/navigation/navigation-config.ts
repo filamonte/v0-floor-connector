@@ -148,7 +148,7 @@ export const navigationSections: readonly NavigationSection[] = [
       },
       {
         key: "cost-items-database",
-        label: "Cost Items Database",
+        label: "Cost Library",
         href: "/cost-items-database",
         description:
           "Manage the shared cost item, system, and inventory workspace.",
@@ -417,13 +417,13 @@ export const navigationSections: readonly NavigationSection[] = [
   },
   {
     id: "settings",
-    label: "Settings",
+    label: "Company Controls",
     description:
       "Configure organization defaults, catalog data, and support surfaces.",
     items: [
       {
         key: "settings",
-        label: "Settings",
+        label: "Company Controls",
         href: "/settings",
         description:
           "Open organization settings and shared system configuration.",
