@@ -41,6 +41,8 @@ The database can stay boring. The product should speak human.
 | Feature Controls      | Module/feature control surfaces.                                     | Settings and super-admin module-control labels.                      | Entitlement enforcement code unless explicitly implemented.              |
 | CrewBoard             | Schedule board and crew-visibility workspace.                        | The protected `/schedule` workspace and navigation label.            | Route renames, new dispatch models, or drag/drop promises.               |
 | FieldTrail            | Project/job field execution history and evidence trail.              | Project Workspace and Job Workspace execution history sections.      | New field-reporting, activity, document, issue, or punchlist models.     |
+| MessageCenter         | Communication timeline and project communication workspace.          | Project Workspace communication history and `/communications`.       | New inbox models, duplicate portal messages, provider sending changes.   |
+| Send Trail            | Document send and delivery history.                                  | Project, estimate, contract, invoice, and warranty delivery review.  | Provider payload fields, webhook code, or fake delivery events.          |
 
 ## Terms To Avoid In User-Facing UI
 
@@ -85,7 +87,6 @@ implemented yet:
 
 - WorkMap: lifecycle / connected record chain visualization.
 - Watchlist: attention items that require review.
-- Send Trail: document send/delivery history.
 - Shared Projects: portal project access.
 - Scope Builder: estimate builder.
 - Version History: record revisions.

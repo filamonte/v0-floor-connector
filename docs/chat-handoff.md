@@ -179,6 +179,12 @@ Current work should generally preserve the implemented operational core while ti
 - Job Workspace now includes a compact job-specific FieldTrail panel so job detail supports the project execution trail without becoming a second execution hub.
 - FieldTrail uses existing `daily_logs`, `field_notes`, `execution_attachments`, `time_cards`, and `jobs`; it does not add schema, migrations, routes, field-reporting tables, activity/event tables, document/file subsystems, customer-facing field visibility, server actions, automation, notifications, daily-log uniqueness changes, field-note validation changes, execution attachment behavior changes, time punch/time-card behavior changes, auth/RLS, payment/signature/estimate/invoice math, portal grants, settings behavior, or platform-admin logic.
 
+## Latest MessageCenter Phase 1 Project Communication Timeline
+
+- [docs/design/messagecenter-phase-1-project-communication-timeline.md](C:/FloorConnector/docs/design/messagecenter-phase-1-project-communication-timeline.md) records the first MessageCenter implementation slice.
+- Project Workspace now includes a read-only MessageCenter section inside the existing Operations Hub. It summarizes project and related-record communication threads/messages, Send Trail delivery events, Signature Trail events, Payment Trail events, Customer Access visibility context, and a Next Move link back into the existing communications or source-record workspace.
+- MessageCenter uses existing `communication_threads`, `communication_messages`, `document_delivery_events`, `contract_signature_events`, `payment_events`, project/customer records, and Customer Access helpers. It does not add schema, migrations, routes, duplicate message/thread/notification/delivery tables, portal-only copies, provider sending behavior, email/SMS changes, webhooks, server actions, automation, AI drafting, auth/RLS, payment/signature/estimate/invoice math, portal grants, settings behavior, or platform-admin logic.
+
 ## Latest Financial / Reporting Expansion Checkpoint
 
 - Financials Home and Accounts Receivable now share a tenant-scoped collections read model over canonical `invoices`, `payments`, and immutable `payment_events`.

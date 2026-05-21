@@ -44,7 +44,6 @@ import { ServiceWarrantyContinuityPanel } from "@/components/service-warranty-co
 import { WorkItemCreateForm } from "@/components/work-items/work-item-create-form";
 import { WorkItemList } from "@/components/work-items/work-item-list";
 import { listContracts } from "@/lib/contracts/data";
-import { listCommunicationThreadsForSubject } from "@/lib/communications/data";
 import { listDailyLogsByProject } from "@/lib/daily-logs/data";
 import { listCustomers } from "@/lib/customers/data";
 import { getProjectEquipmentReadinessSummary } from "@/lib/equipment/data";
@@ -58,6 +57,11 @@ import { listFieldNotes } from "@/lib/field-notes/data";
 import { getGateKeeperSubjectMemory } from "@/lib/gatekeeper/memory";
 import { getInvoiceById, listInvoices } from "@/lib/invoices/data";
 import { listJobAssignmentsByJobIds, listJobs } from "@/lib/jobs/data";
+import { getProjectMessageCenterTrail } from "@/lib/messagecenter/data";
+import {
+  deriveMessageCenterSummary,
+  type MessageCenterTimelineItem
+} from "@/lib/messagecenter/summary";
 import { getOperationalCuesForProject } from "@/lib/operational-cues/data";
 import { requireAuthenticatedUser } from "@/lib/auth/session";
 import {
@@ -347,6 +351,21 @@ function renderStatusBadge(label: string) {
       {label}
     </span>
   );
+}
+
+function getMessageCenterTimelineClassName(
+  tone: MessageCenterTimelineItem["tone"]
+) {
+  switch (tone) {
+    case "positive":
+      return "border-emerald-200 bg-emerald-50 text-emerald-950";
+    case "warning":
+      return "border-amber-200 bg-amber-50 text-amber-950";
+    case "critical":
+      return "border-rose-200 bg-rose-50 text-rose-950";
+    default:
+      return "border-slate-200 bg-white text-slate-700";
+  }
 }
 
 function formatBlockerLabel(
@@ -2155,8 +2174,7 @@ export default async function ProjectDetailPage({
     projectAppointments,
     projectPunchlistItems,
     projectProgressBilling,
-    gateKeeperMemory,
-    communicationThreads
+    gateKeeperMemory
   ] = await Promise.all([
     getProjectById(projectId, `/projects/${projectId}`),
     listCustomers(),
@@ -2173,8 +2191,7 @@ export default async function ProjectDetailPage({
       subjectType: "project",
       subjectId: projectId,
       limit: 6
-    }),
-    listCommunicationThreadsForSubject("project", projectId)
+    })
   ]);
 
   if (!project) {
@@ -2308,6 +2325,37 @@ export default async function ProjectDetailPage({
   const projectInvoices = invoices.filter(
     (invoice) => invoice.projectId === project.id
   );
+  const messageCenterTrail = await getProjectMessageCenterTrail({
+    projectId: project.id,
+    organizationId: project.organizationId,
+    estimateIds: projectEstimates.map((estimate) => estimate.id),
+    contractIds: projectContracts.map((contract) => contract.id),
+    invoiceIds: projectInvoices.map((invoice) => invoice.id)
+  });
+  const messageCenter = deriveMessageCenterSummary({
+    projectId: project.id,
+    threads: messageCenterTrail.threads,
+    messages: messageCenterTrail.messages,
+    deliveryEvents: messageCenterTrail.deliveryEvents,
+    signatureEvents: messageCenterTrail.signatureEvents,
+    paymentEvents: messageCenterTrail.paymentEvents,
+    estimates: projectEstimates.map((estimate) => ({
+      id: estimate.id,
+      label: `Estimate ${estimate.referenceNumber}`,
+      href: `/estimates/${estimate.id}`
+    })),
+    contracts: projectContracts.map((contract) => ({
+      id: contract.id,
+      label: `Contract ${contract.referenceNumber}`,
+      href: `/contracts/${contract.id}`
+    })),
+    invoices: projectInvoices.map((invoice) => ({
+      id: invoice.id,
+      label: `Invoice ${invoice.referenceNumber}`,
+      href: `/invoices/${invoice.id}`
+    })),
+    customerAccessCount: projectVisiblePortalGrants.length
+  });
   const pendingChangeOrder =
     projectChangeOrders.find(
       (changeOrder) =>
@@ -4274,6 +4322,140 @@ export default async function ProjectDetailPage({
                 )}
               </div>
             </section>
+
+            <section
+              id="messagecenter"
+              className="rounded-lg border border-[var(--border-warm)] bg-white p-5 shadow-[0_18px_44px_-38px_rgba(31,41,55,0.42)]"
+            >
+              <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                <div className="max-w-3xl">
+                  <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--muted-foreground)]">
+                    MessageCenter
+                  </p>
+                  <h3 className="mt-2 text-lg font-semibold text-slate-950">
+                    Project communication timeline
+                  </h3>
+                  <p className="mt-2 text-sm leading-6 text-slate-600">
+                    Messages, Send Trail activity, Signature Trail events, and
+                    Payment Trail events stay connected to this project while
+                    replies and deeper review remain in the communications and
+                    record workspaces.
+                  </p>
+                </div>
+                <Link
+                  href={messageCenter.nextMove.href}
+                  className={secondaryActionClassName}
+                >
+                  {messageCenter.nextMove.label}
+                </Link>
+              </div>
+
+              <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-6">
+                {[
+                  {
+                    label: "Threads",
+                    value: messageCenter.threadCount,
+                    detail:
+                      messageCenter.threadCount > 0
+                        ? "Project-linked conversations"
+                        : "No communication history yet"
+                  },
+                  {
+                    label: "Messages",
+                    value: messageCenter.messageCount,
+                    detail: messageCenter.latestActivityAt
+                      ? `Latest ${formatDateTime(messageCenter.latestActivityAt)}`
+                      : "No customer replies found yet"
+                  },
+                  {
+                    label: "Send Trail",
+                    value: messageCenter.sendTrailCount,
+                    detail:
+                      messageCenter.latestSendTrail?.description ??
+                      "No Send Trail activity yet"
+                  },
+                  {
+                    label: "Signature Trail",
+                    value: messageCenter.signatureTrailCount,
+                    detail:
+                      messageCenter.latestSignatureTrail?.description ??
+                      "No signature activity yet"
+                  },
+                  {
+                    label: "Payment Trail",
+                    value: messageCenter.paymentTrailCount,
+                    detail:
+                      messageCenter.latestPaymentTrail?.description ??
+                      "No payment activity yet"
+                  },
+                  {
+                    label: "Next Move",
+                    value:
+                      messageCenter.attentionCount > 0
+                        ? "Needs follow-up"
+                        : messageCenter.latestActivityAt
+                          ? "Review latest"
+                          : "Start thread",
+                    detail: messageCenter.nextMove.detail
+                  }
+                ].map((item) => (
+                  <div
+                    key={item.label}
+                    className="rounded-lg border border-slate-200 bg-slate-50/80 p-4"
+                  >
+                    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+                      {item.label}
+                    </p>
+                    <p className="mt-2 text-lg font-semibold text-slate-950">
+                      {item.value}
+                    </p>
+                    <p className="mt-1 text-xs leading-5 text-slate-600">
+                      {item.detail}
+                    </p>
+                  </div>
+                ))}
+              </div>
+
+              <div className="mt-6 grid gap-4">
+                {messageCenter.timeline.slice(0, 6).length > 0 ? (
+                  messageCenter.timeline.slice(0, 6).map((item) => (
+                    <Link
+                      key={item.id}
+                      href={item.href}
+                      className={[
+                        "rounded-lg border p-4 transition hover:border-[var(--copper)] hover:bg-white",
+                        getMessageCenterTimelineClassName(item.tone)
+                      ].join(" ")}
+                    >
+                      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                        <div className="min-w-0">
+                          <p className="text-xs font-semibold uppercase tracking-[0.16em] opacity-75">
+                            {item.eyebrow}
+                          </p>
+                          <p className="mt-2 text-sm font-semibold">
+                            {item.title}
+                          </p>
+                          <p className="mt-1 text-sm leading-6 opacity-80">
+                            {item.description}
+                          </p>
+                        </div>
+                        <p className="shrink-0 text-xs font-medium uppercase tracking-[0.12em] opacity-70">
+                          {formatDateTime(item.occurredAt)}
+                        </p>
+                      </div>
+                    </Link>
+                  ))
+                ) : (
+                  <AppEmptyState
+                    eyebrow="No communication history yet"
+                    title="No project communication has been captured"
+                    description="Use MessageCenter to keep project communication connected to the job. When messages, document sends, signatures, or payment events exist, they will appear here from real records."
+                    actionHref="/communications?source=project"
+                    actionLabel="Open communications"
+                  />
+                )}
+              </div>
+            </section>
           </div>
         </ExecutionSection>
 
@@ -5191,10 +5373,10 @@ export default async function ProjectDetailPage({
         <RelatedConversationsCard
           source="project"
           description="Project-scoped communication stays on canonical threads and routes back into the shared communications review workspace when follow-through is needed."
-          countLabel="Project threads"
+          countLabel="Project and record threads"
           emptyMessage="No project-scoped communication threads are attached to this canonical project yet."
           actionClassName={getWorkspaceActionLinkClassName("secondary")}
-          threads={communicationThreads}
+          threads={messageCenterTrail.threads}
         />
 
         <GateKeeperSubjectMemoryPanel

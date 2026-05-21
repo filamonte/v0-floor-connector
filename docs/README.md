@@ -54,6 +54,7 @@ Document roles:
 - `docs/design/crewboard-phase-1.md`: implementation note for the first CrewBoard scheduling workspace on the existing `/schedule` route
 - `docs/design/crewboard-phase-2-dispatch-usability.md`: implementation note for CrewBoard dispatch usability, date navigation, schedule warnings, and schedule detail on the existing `/schedule` route
 - `docs/design/fieldtrail-phase-1-project-execution-timeline.md`: implementation note for the first FieldTrail project/job execution timeline over existing daily logs, field notes, execution attachments, time cards, and jobs
+- `docs/design/messagecenter-phase-1-project-communication-timeline.md`: implementation note for the first MessageCenter project communication timeline over existing communication threads/messages, Send Trail, Signature Trail, Payment Trail, and Customer Access context
 - `docs/enterprise-ui-system-audit.md`: secured-app route audit, Phase 1-4 polish history, drift watch list, and authenticated visual QA rules
 - `docs/floorconnector-ui-build-rules.md`: mandatory contractor UI build rules, including the accepted Graphite & Copper visual foundation and shell/workspace guardrails
 - `docs/design-system-comprehensive-prompt.md`: Graphite & Copper visual reference for targeted future UI work
