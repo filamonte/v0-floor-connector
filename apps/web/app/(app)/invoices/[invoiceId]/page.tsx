@@ -1736,6 +1736,8 @@ export default async function InvoiceDetailPage({
             subjectType="invoice"
             subjectId={invoice.id}
             events={deliveryState.events}
+            sourceLabel={`Invoice ${invoice.referenceNumber}`}
+            sourceHref={`/invoices/${invoice.id}`}
             boundaryCopy="Manual entries record evidence only. The Send review/payment link action writes send_requested plus sent or failed provider evidence; provider email delivery does not start checkout, create payments, change invoice status, or mutate payment events."
           />
 

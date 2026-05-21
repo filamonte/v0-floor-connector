@@ -712,3 +712,14 @@ review/payment email, and guarded contract send-for-signature email. The
 closeout audit plus contract implementation preserve approval, payment, and
 signature boundaries while keeping contract send/sign/view/decline/countersign
 truth in the existing contract workflow.
+
+## Send Trail Visibility Checkpoint
+
+[docs/design/sendtrail-phase-1-document-delivery-proof-visibility.md](C:/FloorConnector/docs/design/sendtrail-phase-1-document-delivery-proof-visibility.md)
+records the first read-only UI summary layer over this foundation. It adds a
+pure Send Trail helper and compact source-record delivery proof summaries for
+Estimate, Contract, and Invoice Workspaces.
+
+That visibility slice does not add schema, routes, server actions, provider
+sends, provider callbacks, fake events, portal-only copies, payment/signature
+behavior, estimate/invoice math changes, automation, or AI.

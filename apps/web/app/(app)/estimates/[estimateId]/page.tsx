@@ -1320,6 +1320,8 @@ export default async function EstimateDetailPage({
               subjectType="estimate"
               subjectId={estimate.id}
               events={deliveryState.events}
+              sourceLabel={`Estimate ${estimate.referenceNumber}`}
+              sourceHref={`/estimates/${estimate.id}`}
               boundaryCopy="Manual entries record evidence only. The Send review link action writes send_requested plus sent or failed provider evidence; provider email delivery never approves the estimate, creates contracts or invoices, or mutates payment state."
             />
 

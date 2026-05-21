@@ -58,6 +58,14 @@ Current work should generally preserve the implemented operational core while ti
 - The new `apps/web/lib/reports/operations-summary.ts` helper derives scheduling gaps, missing crew, project attention, field blockers, waiting signatures, open receivables, payment attention, closeout attention, and proof gaps from existing records only.
 - Reports links contractors back to Project Workspace, Schedule, Invoice Workspace, and Contract Workspace. It does not create a new analytics warehouse, reporting table, route, mutation flow, export system, AI summary, automation, fake metric, payment behavior, signature behavior, invoice/estimate math, auth/RLS/tenant behavior, portal grant, settings behavior, or platform-admin logic.
 
+## Latest Send Trail Phase 1
+
+- [docs/design/sendtrail-phase-1-document-delivery-proof-visibility.md](C:/FloorConnector/docs/design/sendtrail-phase-1-document-delivery-proof-visibility.md) records the first Send Trail delivery proof visibility pass.
+- `apps/web/lib/sendtrail/summary.ts` now derives UI-friendly send/delivery proof items, counts, attention state, and a deterministic Next Move from existing document delivery, signature, payment, portal view, and communication evidence shapes.
+- Estimate, Contract, and Invoice Workspaces now present their existing delivery evidence panel as Send Trail with compact summary tiles for send events, viewed/acted evidence, pending/failed attention, and the source-record review move.
+- Project Workspace did not get another panel; existing MessageCenter and Proof Center Send Trail count/latest/source-record links remain the project-level visibility path.
+- This did not add schema, migrations, routes, server actions, provider sends, email/SMS behavior, webhooks, fake events, portal-only copies, payment/signature behavior, estimate/invoice math changes, auth/RLS/tenant changes, portal grants, settings changes, platform-admin logic, automation, or AI.
+
 ## Latest Proof Center Phase 1
 
 - [docs/design/proof-center-phase-1-project-document-evidence-index.md](C:/FloorConnector/docs/design/proof-center-phase-1-project-document-evidence-index.md) records the first Proof Center implementation.

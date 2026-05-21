@@ -706,8 +706,10 @@ Implemented now:
 - `/financials/accounts-receivable` is now a read-only AR workspace over canonical invoices, payments, and immutable payment events, with aging buckets, collection queues, pending checkout visibility, and failed/voided/in-progress payment-event review
 - Invoice Workspace now includes a read-only payment evidence timeline derived from the existing immutable `payment_events` stream, with plain-language settled/pending/failed/voided/review status, compact provider/session references where already stored, and no raw provider payload exposure
 - Payments Manager now includes a read-only reconciliation visibility section over recent immutable payment events, including failed, voided, requested, checkout-started, succeeded, and provider-sync evidence linked back to the canonical Invoice Workspace
+- Estimate, Contract, and Invoice Workspaces now label their document delivery evidence as Send Trail and show compact read-only proof summaries for send events, viewed/acted evidence, pending/failed attention, and the next source-record review move
 - Accounts Receivable does not create a separate AR ledger, accounting subsystem, provider operation, collection-note model, invoice copy, payment copy, or portal-only billing record
 - The payment evidence and reconciliation visibility slice does not create reconciliation records, mutate invoices/payments/payment events, call providers, add retries/refunds/disputes, or alter invoice/payment math
+- Send Trail visibility does not create delivery tables, send actions, provider integrations, webhook behavior, portal-only copies, fake events, AI summaries, automation, or payment/signature/estimate/invoice behavior changes
 - `/financials/accounts-payable` remains a module-home placeholder only
 - the Financials routes use a shared tenant-scoped collections read model over existing canonical records and do not introduce a new finance data model
 - `/reports` now exists as the first internal-beta reporting basics surface

@@ -5,6 +5,7 @@ import type {
 
 import { DetailPanel } from "@/components/detail-panel";
 import { recordDocumentDeliveryEventAction } from "@/lib/document-delivery/actions";
+import { deriveSendTrailSummary } from "@/lib/sendtrail/summary";
 
 type DocumentDeliveryHistoryPanelProps = {
   subjectType: DocumentDeliverySubjectType;
@@ -13,6 +14,8 @@ type DocumentDeliveryHistoryPanelProps = {
   title?: string;
   description?: string;
   boundaryCopy: string;
+  sourceLabel?: string;
+  sourceHref?: string;
 };
 
 function formatLabel(value: string) {
@@ -31,13 +34,87 @@ export function DocumentDeliveryHistoryPanel({
   subjectType,
   subjectId,
   events,
-  title = "Delivery History",
-  description = "Evidence-only delivery trail for this canonical document.",
-  boundaryCopy
+  title = "Send Trail",
+  description = "Document send, delivery, and request proof for this record.",
+  boundaryCopy,
+  sourceLabel,
+  sourceHref
 }: DocumentDeliveryHistoryPanelProps) {
+  const sendTrail = deriveSendTrailSummary({
+    sourceRecords: [
+      {
+        id: subjectId,
+        type: subjectType,
+        label: sourceLabel ?? formatLabel(subjectType),
+        href: sourceHref ?? `/${subjectType.replace("_", "-")}s/${subjectId}`
+      }
+    ],
+    deliveryEvents: events.map((event) => ({
+      id: event.id,
+      subjectType: event.subjectType,
+      subjectId: event.subjectId,
+      eventType: event.eventType,
+      recipientName: event.recipientName,
+      recipientEmail: event.recipientEmail,
+      recipientRole: event.recipientRole,
+      channel: event.channel,
+      provider: event.provider,
+      eventNote: event.eventNote,
+      createdAt: event.createdAt
+    }))
+  });
+
   return (
     <DetailPanel title={title} description={description}>
       <div className="grid gap-6">
+        <div className="grid gap-3 sm:grid-cols-4">
+          {[
+            {
+              label: "Send events",
+              value: sendTrail.counts.total,
+              detail: sendTrail.latestItem
+                ? `Latest ${formatDateTime(sendTrail.latestItem.occurredAt)}`
+                : "No Send Trail events yet"
+            },
+            {
+              label: "Viewed / acted",
+              value: sendTrail.counts.viewed + sendTrail.counts.acted,
+              detail:
+                sendTrail.counts.viewed + sendTrail.counts.acted > 0
+                  ? "Customer activity is recorded"
+                  : "No customer view or action yet"
+            },
+            {
+              label: "Needs review",
+              value: sendTrail.attentionCount,
+              detail:
+                sendTrail.attentionCount > 0
+                  ? "Pending or failed delivery proof"
+                  : "No send attention items"
+            },
+            {
+              label: "Next Move",
+              value: sendTrail.nextMove.label,
+              detail: sendTrail.nextMove.reason
+            }
+          ].map((item) => (
+            <div
+              key={item.label}
+              className="rounded-[8px] border border-[var(--border-warm)] bg-white px-4 py-4"
+            >
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--text-tertiary)]">
+                {item.label}
+              </p>
+              <p className="mt-2 text-lg font-semibold text-[var(--text-primary)]">
+                {item.value}
+              </p>
+              <p className="mt-1 text-xs leading-5 text-[var(--text-secondary)]">
+                {item.detail}
+              </p>
+            </div>
+          ))}
+        </div>
+
         <div className="rounded-[8px] border border-[var(--border-warm)] bg-[var(--highlight)] px-5 py-4 text-sm leading-6 text-[var(--text-secondary)]">
           {boundaryCopy}
         </div>

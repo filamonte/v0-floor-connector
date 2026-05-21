@@ -1384,7 +1384,9 @@ export default async function ContractDetailPage({
               subjectType="contract"
               subjectId={contract.id}
               events={deliveryState.events}
-              description="Manual and provider-backed delivery proof for this canonical contract."
+              description="Manual and provider-backed Send Trail proof for this contract."
+              sourceLabel={`Contract ${contract.referenceNumber}`}
+              sourceHref={`/contracts/${contract.id}`}
               boundaryCopy="This records delivery evidence only. Contract signature status and signer history remain separate. Provider email results do not sign the contract, create signed events, change readiness, or replace contract signature history."
             />
 
