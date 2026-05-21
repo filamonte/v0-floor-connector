@@ -52,6 +52,8 @@ import {
   listEstimates,
   listProjectEstimateAttachments
 } from "@/lib/estimates/data";
+import { listExecutionAttachmentsBySubjects } from "@/lib/execution-attachments/data";
+import { deriveFieldTrailSummary } from "@/lib/fieldtrail/summary";
 import { listFieldNotes } from "@/lib/field-notes/data";
 import { getGateKeeperSubjectMemory } from "@/lib/gatekeeper/memory";
 import { getInvoiceById, listInvoices } from "@/lib/invoices/data";
@@ -294,6 +296,27 @@ function joinMetaParts(parts: Array<string | null | undefined>) {
 
 function formatUpdatedActivity(value: string | null | undefined) {
   return value ? `Updated ${formatDateTime(value)}` : null;
+}
+
+function formatDate(value: string) {
+  return new Date(`${value}T00:00:00`).toLocaleDateString();
+}
+
+function formatDuration(minutes: number) {
+  if (minutes <= 0) {
+    return "No labor time";
+  }
+
+  const hours = Math.floor(minutes / 60);
+  const remainingMinutes = minutes % 60;
+
+  if (hours === 0) {
+    return `${remainingMinutes}m`;
+  }
+
+  return remainingMinutes === 0
+    ? `${hours}h`
+    : `${hours}h ${remainingMinutes}m`;
 }
 
 function formatLocation(parts: Array<string | null | undefined>) {
@@ -2255,6 +2278,27 @@ export default async function ProjectDetailPage({
     ),
     getProjectEquipmentReadinessSummary(project.id, `/projects/${projectId}`)
   ]);
+  const projectExecutionAttachments = await listExecutionAttachmentsBySubjects(
+    [
+      ...projectDailyLogs.map((dailyLog) => ({
+        subjectType: "daily_log" as const,
+        subjectId: dailyLog.id
+      })),
+      ...projectFieldNotes.map((fieldNote) => ({
+        subjectType: "field_note" as const,
+        subjectId: fieldNote.id
+      }))
+    ],
+    `/projects/${projectId}`
+  );
+  const fieldTrail = deriveFieldTrailSummary({
+    projectId: project.id,
+    dailyLogs: projectDailyLogs,
+    fieldNotes: projectFieldNotes,
+    attachments: projectExecutionAttachments,
+    timeCards: projectTimeCards,
+    jobs: projectJobs
+  });
   const completedJob = projectJobs.find(
     (job) => job.dispatchStatus === "completed"
   );
@@ -4053,6 +4097,183 @@ export default async function ProjectDetailPage({
                 </div>
               </section>
             </div>
+
+            <section
+              id="fieldtrail"
+              className="rounded-lg border border-[var(--border-warm)] bg-white p-5 shadow-[0_18px_44px_-38px_rgba(31,41,55,0.42)]"
+            >
+              <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                <div className="max-w-3xl">
+                  <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--muted-foreground)]">
+                    FieldTrail
+                  </p>
+                  <h3 className="mt-2 text-lg font-semibold text-slate-950">
+                    Project execution timeline
+                  </h3>
+                  <p className="mt-2 text-sm leading-6 text-slate-600">
+                    Daily Job Logs, Job Notes, field evidence, and labor time
+                    stay readable here while the detailed work remains in the
+                    daily-log, job, and time workspaces.
+                  </p>
+                </div>
+                <Link
+                  href={fieldTrail.nextMove.href}
+                  className={secondaryActionClassName}
+                >
+                  {fieldTrail.nextMove.label}
+                </Link>
+              </div>
+
+              <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+                {[
+                  {
+                    label: "Daily Job Logs",
+                    value: fieldTrail.dailyLogCount,
+                    detail: fieldTrail.latestDailyLog
+                      ? `Latest ${formatDate(fieldTrail.latestDailyLog.logDate)}`
+                      : "No Daily Job Logs yet"
+                  },
+                  {
+                    label: "Open blockers",
+                    value: fieldTrail.openBlockerCount,
+                    detail:
+                      fieldTrail.openBlockerCount > 0
+                        ? "Job Notes need review"
+                        : "No open blockers"
+                  },
+                  {
+                    label: "Field evidence",
+                    value: fieldTrail.attachmentCount,
+                    detail: `${fieldTrail.photoCount} photo${
+                      fieldTrail.photoCount === 1 ? "" : "s"
+                    } attached`
+                  },
+                  {
+                    label: "Labor",
+                    value: formatDuration(fieldTrail.totalWorkedMinutes),
+                    detail: "From project time cards"
+                  },
+                  {
+                    label: "Next Move",
+                    value:
+                      fieldTrail.openBlockerCount > 0
+                        ? "Review blockers"
+                        : fieldTrail.latestDailyLog
+                          ? "Review latest log"
+                          : "Start execution",
+                    detail: fieldTrail.nextMove.detail
+                  }
+                ].map((item) => (
+                  <div
+                    key={item.label}
+                    className="rounded-lg border border-slate-200 bg-slate-50/80 p-4"
+                  >
+                    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+                      {item.label}
+                    </p>
+                    <p className="mt-2 text-lg font-semibold text-slate-950">
+                      {item.value}
+                    </p>
+                    <p className="mt-1 text-xs leading-5 text-slate-600">
+                      {item.detail}
+                    </p>
+                  </div>
+                ))}
+              </div>
+
+              <div className="mt-6 grid gap-4">
+                {fieldTrail.timeline.slice(0, 4).length > 0 ? (
+                  fieldTrail.timeline.slice(0, 4).map((item) => (
+                    <div
+                      key={item.dailyLog.id}
+                      className="rounded-lg border border-slate-200 bg-white p-4"
+                    >
+                      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                        <div>
+                          <Link
+                            href={`/daily-logs/${item.dailyLog.id}`}
+                            className="text-sm font-semibold text-slate-950 hover:text-brand-700"
+                          >
+                            {item.dailyLog.summary?.trim() ||
+                              formatDate(item.dailyLog.logDate)}
+                          </Link>
+                          <p className="mt-1 text-sm leading-6 text-slate-600">
+                            {joinMetaParts([
+                              formatDate(item.dailyLog.logDate),
+                              item.dailyLog.jobId
+                                ? `Job ${item.dailyLog.jobId.slice(0, 8)}`
+                                : "Project day",
+                              item.dailyLog.weatherSummary
+                            ])}
+                          </p>
+                        </div>
+                        {renderStatusBadge(
+                          formatStatusLabel(item.dailyLog.status)
+                        )}
+                      </div>
+                      <div className="mt-4 grid gap-3 sm:grid-cols-4">
+                        <p className="rounded-lg bg-slate-50 px-3 py-2 text-xs leading-5 text-slate-600">
+                          <span className="font-semibold text-slate-950">
+                            Job Notes:
+                          </span>{" "}
+                          {item.notes.length}
+                        </p>
+                        <p className="rounded-lg bg-slate-50 px-3 py-2 text-xs leading-5 text-slate-600">
+                          <span className="font-semibold text-slate-950">
+                            Blockers:
+                          </span>{" "}
+                          {item.openBlockerCount}
+                        </p>
+                        <p className="rounded-lg bg-slate-50 px-3 py-2 text-xs leading-5 text-slate-600">
+                          <span className="font-semibold text-slate-950">
+                            Evidence:
+                          </span>{" "}
+                          {item.attachmentCount}
+                        </p>
+                        <p className="rounded-lg bg-slate-50 px-3 py-2 text-xs leading-5 text-slate-600">
+                          <span className="font-semibold text-slate-950">
+                            Labor:
+                          </span>{" "}
+                          {formatDuration(item.laborMinutes)}
+                        </p>
+                      </div>
+                      {item.notes.length > 0 ? (
+                        <div className="mt-4 space-y-2">
+                          {item.notes.slice(0, 3).map((note) => (
+                            <div
+                              key={note.id}
+                              className="flex flex-col gap-1 rounded-lg border border-slate-200 bg-slate-50/70 px-3 py-2 text-xs leading-5 text-slate-600 sm:flex-row sm:items-center sm:justify-between"
+                            >
+                              <span>
+                                <span className="font-semibold text-slate-950">
+                                  {formatStatusLabel(note.noteType)}:
+                                </span>{" "}
+                                {note.title}
+                              </span>
+                              <span className="font-semibold text-slate-700">
+                                {formatStatusLabel(note.status)}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      ) : null}
+                    </div>
+                  ))
+                ) : (
+                  <AppEmptyState
+                    eyebrow="No Daily Job Logs yet"
+                    title="No field history has been captured"
+                    description="Use the Daily Job Log to capture work completed, blockers, safety notes, photos, and crew activity once field work begins."
+                    actionHref={
+                      projectJobs[0]
+                        ? `/daily-logs?projectId=${project.id}&jobId=${projectJobs[0].id}`
+                        : `/daily-logs?projectId=${project.id}`
+                    }
+                    actionLabel="Create Daily Job Log"
+                  />
+                )}
+              </div>
+            </section>
           </div>
         </ExecutionSection>
 

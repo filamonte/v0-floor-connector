@@ -172,6 +172,13 @@ Current work should generally preserve the implemented operational core while ti
 - The existing schedule/unschedule and crew assign/unassign server actions remain the only write paths; GateKeeper / Ready Check enforcement remains unchanged.
 - This pass did not add schema, migrations, routes, new schedule/dispatch/crew/calendar tables, new server actions, auth/RLS changes, tenant-scope changes, payment/signature behavior, estimate/invoice math, portal grants, settings behavior, platform-admin logic, drag/drop, automation, notifications, route optimization, or external calendar sync.
 
+## Latest FieldTrail Phase 1 Project Execution Timeline
+
+- [docs/design/fieldtrail-phase-1-project-execution-timeline.md](C:/FloorConnector/docs/design/fieldtrail-phase-1-project-execution-timeline.md) records the first FieldTrail implementation slice.
+- Project Workspace now includes a read-only FieldTrail section inside the existing Operations Hub. It summarizes Daily Job Logs, Job Notes, open blockers/issues, execution attachments/photos, project time-card labor totals, and a Next Move link back into the latest Daily Job Log, current Job Workspace, or CrewBoard.
+- Job Workspace now includes a compact job-specific FieldTrail panel so job detail supports the project execution trail without becoming a second execution hub.
+- FieldTrail uses existing `daily_logs`, `field_notes`, `execution_attachments`, `time_cards`, and `jobs`; it does not add schema, migrations, routes, field-reporting tables, activity/event tables, document/file subsystems, customer-facing field visibility, server actions, automation, notifications, daily-log uniqueness changes, field-note validation changes, execution attachment behavior changes, time punch/time-card behavior changes, auth/RLS, payment/signature/estimate/invoice math, portal grants, settings behavior, or platform-admin logic.
+
 ## Latest Financial / Reporting Expansion Checkpoint
 
 - Financials Home and Accounts Receivable now share a tenant-scoped collections read model over canonical `invoices`, `payments`, and immutable `payment_events`.

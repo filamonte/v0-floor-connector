@@ -25,6 +25,9 @@ import {
 } from "@/components/save-feedback/save-state-form";
 import { ServiceWarrantyContinuityPanel } from "@/components/service-warranty-continuity-panel";
 import { listDailyLogsByProject } from "@/lib/daily-logs/data";
+import { listExecutionAttachmentsBySubjects } from "@/lib/execution-attachments/data";
+import { deriveFieldTrailSummary } from "@/lib/fieldtrail/summary";
+import { listFieldNotes } from "@/lib/field-notes/data";
 import {
   addJobEquipmentRequirementAction,
   assignEquipmentToJobAction,
@@ -445,6 +448,7 @@ export default async function JobDetailPage({
     job.projectId,
     `/jobs/${jobId}`
   );
+  const fieldNotes = await listFieldNotes();
 
   const linkedInvoice =
     invoices.find((invoice) => invoice.jobId === job.id) ?? null;
@@ -454,6 +458,30 @@ export default async function JobDetailPage({
   const jobDailyLogs = projectDailyLogs.filter(
     (dailyLog) => dailyLog.jobId === job.id
   );
+  const jobFieldNotes = fieldNotes.filter(
+    (fieldNote) => fieldNote.jobId === job.id
+  );
+  const jobExecutionAttachments = await listExecutionAttachmentsBySubjects(
+    [
+      ...jobDailyLogs.map((dailyLog) => ({
+        subjectType: "daily_log" as const,
+        subjectId: dailyLog.id
+      })),
+      ...jobFieldNotes.map((fieldNote) => ({
+        subjectType: "field_note" as const,
+        subjectId: fieldNote.id
+      }))
+    ],
+    `/jobs/${jobId}`
+  );
+  const jobFieldTrail = deriveFieldTrailSummary({
+    projectId: job.projectId,
+    dailyLogs: jobDailyLogs,
+    fieldNotes: jobFieldNotes,
+    attachments: jobExecutionAttachments,
+    timeCards: jobTimeCards,
+    jobs: [job]
+  });
   const assignablePeople = people.filter(
     (person) => person.isActive && person.isAssignable
   );
@@ -1311,10 +1339,66 @@ export default async function JobDetailPage({
         ) : null}
 
         <DetailPanel
-          title="Daily Execution Context"
-          description="Daily logs stay connected to the same project/job chain so field context does not drift into a separate execution subsystem."
+          title="FieldTrail"
+          description="Job-specific Daily Job Logs, Job Notes, field evidence, and labor time stay connected to the Project Workspace trail instead of becoming a separate execution hub."
         >
-          <div className="grid gap-4">
+          <div className="space-y-5">
+            <div className="grid gap-3 sm:grid-cols-4">
+              {[
+                {
+                  label: "Daily Job Logs",
+                  value: jobFieldTrail.dailyLogCount,
+                  detail: jobFieldTrail.latestDailyLog
+                    ? formatDate(jobFieldTrail.latestDailyLog.logDate)
+                    : "No linked logs"
+                },
+                {
+                  label: "Open blockers",
+                  value: jobFieldTrail.openBlockerCount,
+                  detail:
+                    jobFieldTrail.openBlockerCount > 0
+                      ? "Job Notes need review"
+                      : "No open blockers"
+                },
+                {
+                  label: "Evidence",
+                  value: jobFieldTrail.attachmentCount,
+                  detail: `${jobFieldTrail.photoCount} photo${
+                    jobFieldTrail.photoCount === 1 ? "" : "s"
+                  } attached`
+                },
+                {
+                  label: "Labor",
+                  value: formatDuration(jobFieldTrail.totalWorkedMinutes),
+                  detail: "From job time cards"
+                }
+              ].map((item) => (
+                <div
+                  key={item.label}
+                  className="rounded-lg border border-slate-200 bg-slate-50/80 p-3"
+                >
+                  <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+                    {item.label}
+                  </p>
+                  <p className="mt-2 text-base font-semibold text-slate-950">
+                    {item.value}
+                  </p>
+                  <p className="mt-1 text-xs leading-5 text-slate-600">
+                    {item.detail}
+                  </p>
+                </div>
+              ))}
+            </div>
+            <div className="rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm leading-6 text-slate-600">
+              <span className="font-semibold text-slate-950">Next Move:</span>{" "}
+              {jobFieldTrail.nextMove.detail}{" "}
+              <Link
+                href={jobFieldTrail.nextMove.href}
+                className="font-semibold text-brand-700"
+              >
+                {jobFieldTrail.nextMove.label}
+              </Link>
+            </div>
             {jobDailyLogs.slice(0, 4).length > 0 ? (
               jobDailyLogs
                 .slice(0, 4)
@@ -1334,11 +1418,11 @@ export default async function JobDetailPage({
                 ))
             ) : (
               <AppEmptyState
-                eyebrow="No daily logs"
+                eyebrow="No Daily Job Logs yet"
                 title="No linked job-day execution records yet"
-                description="Create a daily log from the connected project when this job becomes the dominant field context for a project day. The log will capture field evidence without changing schedule, time-card, invoice, or readiness behavior."
+                description="Create a Daily Job Log from the connected project when this job becomes the dominant field context for a project day. The log will capture field evidence without changing schedule, time-card, invoice, or readiness behavior."
                 actionHref={`/daily-logs?projectId=${job.projectId}&jobId=${job.id}`}
-                actionLabel="Create daily log"
+                actionLabel="Create Daily Job Log"
               />
             )}
           </div>

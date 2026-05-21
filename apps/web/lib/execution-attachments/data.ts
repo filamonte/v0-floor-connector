@@ -40,7 +40,9 @@ const executionAttachmentSelect = `
   updated_at
 `;
 
-function isExecutionAttachmentRow(value: unknown): value is ExecutionAttachmentRow {
+function isExecutionAttachmentRow(
+  value: unknown
+): value is ExecutionAttachmentRow {
   if (!value || typeof value !== "object") {
     return false;
   }
@@ -61,8 +63,12 @@ function isExecutionAttachmentRow(value: unknown): value is ExecutionAttachmentR
   );
 }
 
-function isExecutionAttachmentRowArray(value: unknown): value is ExecutionAttachmentRow[] {
-  return Array.isArray(value) && value.every((row) => isExecutionAttachmentRow(row));
+function isExecutionAttachmentRowArray(
+  value: unknown
+): value is ExecutionAttachmentRow[] {
+  return (
+    Array.isArray(value) && value.every((row) => isExecutionAttachmentRow(row))
+  );
 }
 
 function mapExecutionAttachment(
@@ -89,7 +95,10 @@ async function validateExecutionAttachmentInput(
   input: ExecutionAttachmentInput
 ) {
   if (input.subjectType === "daily_log") {
-    const dailyLog = await getDailyLogById(input.subjectId, `/daily-logs/${input.subjectId}`);
+    const dailyLog = await getDailyLogById(
+      input.subjectId,
+      `/daily-logs/${input.subjectId}`
+    );
 
     if (!dailyLog || dailyLog.organizationId !== organizationId) {
       throw new Error("Daily log not found for this organization.");
@@ -136,7 +145,9 @@ export async function listExecutionAttachmentsBySubject(
   const data: unknown = response.data;
 
   if (response.error) {
-    throw new Error(`Unable to load execution attachments: ${response.error.message}`);
+    throw new Error(
+      `Unable to load execution attachments: ${response.error.message}`
+    );
   }
 
   if (!isExecutionAttachmentRowArray(data)) {
@@ -144,6 +155,62 @@ export async function listExecutionAttachmentsBySubject(
   }
 
   return data.map(mapExecutionAttachment);
+}
+
+export async function listExecutionAttachmentsBySubjects(
+  subjects: Array<{
+    subjectType: ExecutionAttachmentRecord["subjectType"];
+    subjectId: string;
+  }>,
+  next = "/daily-logs"
+): Promise<ExecutionAttachmentListItem[]> {
+  if (subjects.length === 0) {
+    return [];
+  }
+
+  const scope = await requireDailyLogScope(next);
+  const supabase = await getSupabaseServerClient();
+  const dailyLogIds = subjects
+    .filter((subject) => subject.subjectType === "daily_log")
+    .map((subject) => subject.subjectId);
+  const fieldNoteIds = subjects
+    .filter((subject) => subject.subjectType === "field_note")
+    .map((subject) => subject.subjectId);
+  const responses = await Promise.all([
+    dailyLogIds.length > 0
+      ? supabase
+          .from("execution_attachments")
+          .select(executionAttachmentSelect)
+          .eq("company_id", scope.organizationId)
+          .eq("subject_type", "daily_log")
+          .in("subject_id", dailyLogIds)
+          .order("created_at", { ascending: false })
+      : Promise.resolve({ data: [], error: null }),
+    fieldNoteIds.length > 0
+      ? supabase
+          .from("execution_attachments")
+          .select(executionAttachmentSelect)
+          .eq("company_id", scope.organizationId)
+          .eq("subject_type", "field_note")
+          .in("subject_id", fieldNoteIds)
+          .order("created_at", { ascending: false })
+      : Promise.resolve({ data: [], error: null })
+  ]);
+  const error = responses.find((response) => response.error)?.error;
+
+  if (error) {
+    throw new Error(`Unable to load execution attachments: ${error.message}`);
+  }
+
+  const data: unknown[] = responses.flatMap((response) => response.data ?? []);
+
+  if (!isExecutionAttachmentRowArray(data)) {
+    return [];
+  }
+
+  return data
+    .map(mapExecutionAttachment)
+    .sort((left, right) => right.createdAt.localeCompare(left.createdAt));
 }
 
 export async function listExecutionAttachmentsByFieldNotes(
@@ -178,7 +245,9 @@ export async function listExecutionAttachmentsByFieldNotes(
   return data.map(mapExecutionAttachment);
 }
 
-export async function createExecutionAttachment(input: ExecutionAttachmentInput) {
+export async function createExecutionAttachment(
+  input: ExecutionAttachmentInput
+) {
   const scope = await requireDailyLogScope("/daily-logs");
   await validateExecutionAttachmentInput(scope.organizationId, input);
   const supabase = await getSupabaseServerClient();
@@ -200,7 +269,9 @@ export async function createExecutionAttachment(input: ExecutionAttachmentInput)
   const data: unknown = response.data;
 
   if (response.error) {
-    throw new Error(`Unable to create the execution attachment: ${response.error.message}`);
+    throw new Error(
+      `Unable to create the execution attachment: ${response.error.message}`
+    );
   }
 
   if (!isExecutionAttachmentRow(data)) {

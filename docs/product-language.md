@@ -40,6 +40,7 @@ The database can stay boring. The product should speak human.
 | Starter Settings      | Platform-owned defaults inherited or adopted by contractor accounts. | Super-admin platform defaults.                                       | Organization-owned copied settings.                                      |
 | Feature Controls      | Module/feature control surfaces.                                     | Settings and super-admin module-control labels.                      | Entitlement enforcement code unless explicitly implemented.              |
 | CrewBoard             | Schedule board and crew-visibility workspace.                        | The protected `/schedule` workspace and navigation label.            | Route renames, new dispatch models, or drag/drop promises.               |
+| FieldTrail            | Project/job field execution history and evidence trail.              | Project Workspace and Job Workspace execution history sections.      | New field-reporting, activity, document, issue, or punchlist models.     |
 
 ## Terms To Avoid In User-Facing UI
 
@@ -85,7 +86,6 @@ implemented yet:
 - WorkMap: lifecycle / connected record chain visualization.
 - Watchlist: attention items that require review.
 - Send Trail: document send/delivery history.
-- Field Trail: daily logs, notes, photos, and field history.
 - Shared Projects: portal project access.
 - Scope Builder: estimate builder.
 - Version History: record revisions.
