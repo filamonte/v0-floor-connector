@@ -58,6 +58,7 @@ Document roles:
 - `docs/design/projectpulse-phase-1-project-health-summary.md`: implementation note for the first ProjectPulse project health and Next Move summary over existing readiness, scheduling, field, communication, billing, payment, and signature signals
 - `docs/design/project-workspace-os-consolidation-qa.md`: consolidation QA note for Project Workspace copy, hierarchy, browser QA, and Next Move terminology after CrewBoard, FieldTrail, MessageCenter, and ProjectPulse
 - `docs/design/closeouttrail-phase-1-project-closeout-workspace.md`: implementation note for the first CloseoutTrail project closeout readiness and proof section over existing project, job, field, change-order, contract, invoice, payment, warranty/service, and Customer Access signals
+- `docs/design/project-workspace-lifecycle-qa.md`: lifecycle QA note for the Project Workspace operating loop after CrewBoard, FieldTrail, MessageCenter, ProjectPulse, and CloseoutTrail
 - `docs/enterprise-ui-system-audit.md`: secured-app route audit, Phase 1-4 polish history, drift watch list, and authenticated visual QA rules
 - `docs/floorconnector-ui-build-rules.md`: mandatory contractor UI build rules, including the accepted Graphite & Copper visual foundation and shell/workspace guardrails
 - `docs/design-system-comprehensive-prompt.md`: Graphite & Copper visual reference for targeted future UI work

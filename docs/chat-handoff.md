@@ -203,6 +203,12 @@ Current work should generally preserve the implemented operational core while ti
 - Project Workspace now includes a read-only CloseoutTrail section after FieldTrail / MessageCenter and before the Financial Hub. It summarizes jobs, Daily Job Logs, Job Notes, field evidence, change orders, contracts / Signature Trail, invoices / Payment Trail, Customer Access, warranty documents, and service tickets into a closeout checklist, proof counts, and closeout Next Move.
 - CloseoutTrail uses existing project, job, field, change-order, contract, invoice, payment, warranty/service, FieldTrail, MessageCenter, ProjectPulse, and Customer Access data. It does not add schema, migrations, routes, closeout tables, duplicate closeout records, server actions, automation, AI summaries, customer-facing field sharing, auth/RLS, payment/signature/estimate/invoice math, portal grants, settings behavior, or platform-admin logic.
 
+## Latest Project Workspace Lifecycle QA
+
+- [docs/design/project-workspace-lifecycle-qa.md](C:/FloorConnector/docs/design/project-workspace-lifecycle-qa.md) records the post-CloseoutTrail stabilization pass across ProjectPulse, CrewBoard, FieldTrail, MessageCenter, and CloseoutTrail.
+- ProjectPulse remains the top-level Project Workspace Next Move. FieldTrail, MessageCenter, and CloseoutTrail keep section-scoped Field Next Move, Communication Next Move, and Closeout Next Move labels.
+- The pass tightened project-page density by shortening ProjectPulse and CloseoutTrail helper lists, compacting CloseoutTrail proof counts, and making the supporting workflow snapshot explicitly secondary to ProjectPulse. It did not add new product panels, schema, routes, server actions, auth/RLS changes, tenant-boundary changes, payment/signature/estimate/invoice math changes, portal grants, settings behavior, platform-admin behavior, automation, AI, notifications, or fake data.
+
 ## Latest Financial / Reporting Expansion Checkpoint
 
 - Financials Home and Accounts Receivable now share a tenant-scoped collections read model over canonical `invoices`, `payments`, and immutable `payment_events`.

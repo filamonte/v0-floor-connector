@@ -625,7 +625,7 @@ function ProjectPulseSection({ summary }: { summary: ProjectPulseSummary }) {
           </p>
           {leadItems.length > 0 ? (
             <ul className="mt-3 grid gap-2 md:grid-cols-2">
-              {leadItems.slice(0, 4).map((item) => (
+              {leadItems.slice(0, 2).map((item) => (
                 <li
                   key={item}
                   className="rounded-md border border-[var(--border-warm)] bg-[var(--highlight)] px-3 py-2"
@@ -735,8 +735,10 @@ function CloseoutTrailSection({ summary }: { summary: CloseoutTrailSummary }) {
   const proofCounts = [
     { label: "Completed jobs", value: summary.linkedCounts.completedJobs },
     { label: "Open jobs", value: summary.linkedCounts.openJobs },
-    { label: "Daily Job Logs", value: summary.linkedCounts.dailyLogs },
-    { label: "Evidence", value: summary.linkedCounts.evidenceItems },
+    {
+      label: "Field proof",
+      value: `${summary.linkedCounts.dailyLogs} logs / ${summary.linkedCounts.evidenceItems} files`
+    },
     { label: "Open invoices", value: summary.linkedCounts.openInvoices },
     {
       label: "Open balance",
@@ -796,7 +798,7 @@ function CloseoutTrailSection({ summary }: { summary: CloseoutTrailSummary }) {
           </p>
           {leadItems.length > 0 ? (
             <ul className="mt-3 grid gap-2 md:grid-cols-2">
-              {leadItems.slice(0, 4).map((item) => (
+              {leadItems.slice(0, 2).map((item) => (
                 <li
                   key={item}
                   className="rounded-md border border-[var(--border-warm)] bg-[var(--highlight)] px-3 py-2"
@@ -3704,8 +3706,8 @@ export default async function ProjectDetailPage({
             <ProjectPulseSection summary={projectPulse} />
 
             <OperationalGuidanceSection
-              title="Command Center summary"
-              description="Current stage, blocker, next action, and driving record are summarized from GateKeeper and linked project records."
+              title="Workflow snapshot"
+              description="Current stage, blocker, next step, and the driving record stay visible without competing with the ProjectPulse Next Move."
               buckets={projectOperationalGuidanceBuckets}
             />
 
@@ -3725,7 +3727,7 @@ export default async function ProjectDetailPage({
             {showReadinessGuidancePanel ? (
               <NeedsAttentionPanel
                 cues={projectAttentionCues}
-                description="Linked estimate, contract, invoice, and job Next Move suggestions for this project. These are derived at view time and do not create tasks or mutate workflow state."
+                description="Linked estimate, contract, invoice, and job follow-up for this project. Review the suggestions, then open the focused workspace that owns the fix."
                 getCueStateControls={(cue) => (
                   <CueStateControls
                     identity={buildOperationalCueIdentity(cue)}
@@ -4895,7 +4897,7 @@ export default async function ProjectDetailPage({
                     <AppEmptyState
                       eyebrow="No change orders"
                       title="Track scope changes here"
-                      description="When scope or price shifts after contract approval, keep the adjustment on the same project chain with a canonical change order."
+                      description="When scope or price shifts after contract approval, keep the adjustment on the same project chain with a connected change order."
                       actionHref={`/change-orders?projectId=${project.id}&compose=1`}
                       actionLabel="Create change order"
                     />
