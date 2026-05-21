@@ -6,9 +6,16 @@ import { requireAuthenticatedUser } from "@/lib/auth/session";
 import { getActiveOrganizationContext } from "@/lib/organizations/active-context";
 import {
   loadReportingBasics,
+  loadOperationsReportingSummary,
   loadSalesTaxSummary,
   type ReportCount
 } from "@/lib/reports/data";
+import type {
+  OperationsReportingSummary,
+  ReportsListItem,
+  ReportsMetric,
+  ReportsTone
+} from "@/lib/reports/operations-summary";
 
 type ReportsPageProps = {
   searchParams?: Promise<{
@@ -61,6 +68,19 @@ function formatPercent(value: string | number) {
   return `${(Number(value) * 100).toFixed(3).replace(/\.?0+$/, "")}%`;
 }
 
+function toneClassName(tone: ReportsTone) {
+  switch (tone) {
+    case "blocked":
+      return "border-red-200 bg-red-50 text-red-800";
+    case "attention":
+      return "border-amber-200 bg-amber-50 text-amber-800";
+    case "good":
+      return "border-emerald-200 bg-emerald-50 text-emerald-800";
+    default:
+      return "border-[#e5e5e5] bg-[#f8f8f8] text-[#4f4f4f]";
+  }
+}
+
 function dateInputValue(value: string | null) {
   return value ?? "";
 }
@@ -88,11 +108,13 @@ function getCount<TStatus extends string>(
   counts: Array<ReportCount<TStatus>>,
   status: TStatus
 ) {
-  return counts.find((count) => count.status === status) ?? {
-    status,
-    count: 0,
-    amount: 0
-  };
+  return (
+    counts.find((count) => count.status === status) ?? {
+      status,
+      count: 0,
+      amount: 0
+    }
+  );
 }
 
 function StatusSummaryGrid<TStatus extends string>({
@@ -156,6 +178,196 @@ function ReportSection({
   );
 }
 
+function ReportMetricGrid({ metrics }: { metrics: ReportsMetric[] }) {
+  return (
+    <section className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+      {metrics.map((metric) => (
+        <Link
+          key={metric.id}
+          href={metric.href}
+          className="border border-[#e5e5e5] bg-white px-4 py-3 transition hover:bg-[#f8f8f8]"
+        >
+          <div className="flex items-start justify-between gap-3">
+            <p className="text-[11px] uppercase tracking-[0.14em] text-[#666666]">
+              {metric.label}
+            </p>
+            <span
+              className={`rounded-[4px] border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] ${toneClassName(
+                metric.tone
+              )}`}
+            >
+              {metric.tone === "good" ? "Clear" : metric.tone}
+            </span>
+          </div>
+          <p className="mt-2 text-2xl font-semibold tracking-tight text-[#171717]">
+            {metric.value}
+          </p>
+          <p className="mt-1 text-xs leading-5 text-slate-500">
+            {metric.detail}
+          </p>
+        </Link>
+      ))}
+    </section>
+  );
+}
+
+function AttentionList({
+  title,
+  description,
+  items,
+  emptyTitle
+}: {
+  title: string;
+  description: string;
+  items: ReportsListItem[];
+  emptyTitle: string;
+}) {
+  return (
+    <section className="border border-[#d6d6d6] bg-white">
+      <div className="border-b border-[#e5e5e5] px-4 py-3">
+        <h3 className="text-[15px] font-semibold tracking-tight text-[#171717]">
+          {title}
+        </h3>
+        <p className="mt-1 text-xs leading-5 text-slate-500">{description}</p>
+      </div>
+      <div className="divide-y divide-[#e5e5e5]">
+        {items.length > 0 ? (
+          items.map((item) => (
+            <Link
+              key={item.id}
+              href={item.href}
+              className="block px-4 py-3 transition hover:bg-[#f8f8f8]"
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-semibold text-[#171717]">
+                    {item.title}
+                  </p>
+                  <p className="mt-1 truncate text-xs text-slate-500">
+                    {item.subtitle}
+                  </p>
+                </div>
+                <span
+                  className={`shrink-0 rounded-[4px] border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] ${toneClassName(
+                    item.tone
+                  )}`}
+                >
+                  {item.meta}
+                </span>
+              </div>
+            </Link>
+          ))
+        ) : (
+          <div className="px-4 py-5">
+            <p className="text-sm font-semibold text-[#171717]">{emptyTitle}</p>
+            <p className="mt-2 text-sm leading-5 text-slate-500">
+              This list appears when source records show work needing review.
+            </p>
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
+function OperationsReportingWorkspace({
+  summary
+}: {
+  summary: OperationsReportingSummary;
+}) {
+  return (
+    <div className="space-y-5">
+      <ReportSection
+        eyebrow="Operations Snapshot"
+        title="Company-level attention"
+        description="Read-only visibility across projects, CrewBoard, FieldTrail, MessageCenter, billing, and closeout proof."
+      >
+        <div className="space-y-4 p-4">
+          <ReportMetricGrid metrics={summary.metrics} />
+          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+            {[
+              {
+                label: "Today",
+                value: summary.counts.jobsScheduledToday,
+                detail: "scheduled jobs"
+              },
+              {
+                label: "Upcoming",
+                value: summary.counts.upcomingJobs,
+                detail: "future scheduled jobs"
+              },
+              {
+                label: "In progress",
+                value: summary.counts.inProgressJobs,
+                detail: "active jobs"
+              },
+              {
+                label: "Overdue",
+                value: summary.amounts.overdueReceivables,
+                detail: `${summary.counts.overdueInvoices} invoice${
+                  summary.counts.overdueInvoices === 1 ? "" : "s"
+                }`
+              }
+            ].map((item) => (
+              <div
+                key={item.label}
+                className="border border-[#e5e5e5] bg-white px-3 py-2.5"
+              >
+                <p className="text-[11px] uppercase tracking-[0.14em] text-[#666666]">
+                  {item.label}
+                </p>
+                <p className="mt-1 text-lg font-semibold tracking-tight text-[#171717]">
+                  {item.value}
+                </p>
+                <p className="mt-1 text-xs text-slate-500">{item.detail}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </ReportSection>
+
+      <section className="grid gap-4 xl:grid-cols-3">
+        <AttentionList
+          title="Projects needing Next Move"
+          description="Projects where Ready Check attention should be reviewed before handoff."
+          items={summary.lists.projectsNeedingNextMove}
+          emptyTitle="No project Ready Check attention is visible."
+        />
+        <AttentionList
+          title="Jobs needing scheduling or crew"
+          description="CrewBoard work that still needs schedule placement or assignments."
+          items={summary.lists.jobsNeedingSchedulingOrCrew}
+          emptyTitle="No jobs need scheduling or crew review."
+        />
+        <AttentionList
+          title="Invoices needing collection"
+          description="Open receivables linked back to Invoice Workspace."
+          items={summary.lists.invoicesNeedingCollection}
+          emptyTitle="No open receivables need collection."
+        />
+        <AttentionList
+          title="Contracts waiting signature"
+          description="Contracts still in Signature Trail follow-up."
+          items={summary.lists.contractsWaitingSignature}
+          emptyTitle="No contracts are waiting on signature."
+        />
+        <AttentionList
+          title="Field blockers"
+          description="Open blocker or issue Job Notes from FieldTrail."
+          items={summary.lists.fieldBlockers}
+          emptyTitle="No open FieldTrail blockers are visible."
+        />
+        <AttentionList
+          title="Closeout and proof attention"
+          description="Completed work, field proof, and closeout signals that should be reviewed."
+          items={summary.lists.closeoutProofAttention}
+          emptyTitle="No closeout or proof attention is visible."
+        />
+      </section>
+    </div>
+  );
+}
+
 export default async function ReportsPage({ searchParams }: ReportsPageProps) {
   const resolvedSearchParams = (await searchParams) ?? {};
   const user = await requireAuthenticatedUser("/reports");
@@ -164,22 +376,32 @@ export default async function ReportsPage({ searchParams }: ReportsPageProps) {
   if (!organizationContext) {
     return (
       <section className="rounded-3xl border border-amber-200 bg-amber-50 px-8 py-6 text-sm leading-6 text-amber-900">
-        Reports need an active organization before canonical records can be reviewed.
+        Reports need an active organization before canonical records can be
+        reviewed.
       </section>
     );
   }
 
   const defaultRange = buildDefaultRange();
-  const from = normalizeDateParam(resolvedSearchParams.from) ?? defaultRange.from;
+  const from =
+    normalizeDateParam(resolvedSearchParams.from) ?? defaultRange.from;
   const to = normalizeDateParam(resolvedSearchParams.to) ?? defaultRange.to;
-  const [report, taxReport] = await Promise.all([
+  const todayIso = toDateInput(new Date());
+  const [report, taxReport, operationsReport] = await Promise.all([
     loadReportingBasics({ from, to }),
-    loadSalesTaxSummary({ from, to })
+    loadSalesTaxSummary({ from, to }),
+    loadOperationsReportingSummary({
+      organizationId: organizationContext.organization.id,
+      todayIso
+    })
   ]);
 
   const recordedPayments = getCount(report.payments.counts, "recorded");
   const openInvoices = getCount(report.invoices.counts, "open");
-  const partiallyPaidInvoices = getCount(report.invoices.counts, "partially_paid");
+  const partiallyPaidInvoices = getCount(
+    report.invoices.counts,
+    "partially_paid"
+  );
   const estimateValue = report.estimates.counts.reduce(
     (sum, count) => sum + (count.amount ?? 0),
     0
@@ -188,8 +410,8 @@ export default async function ReportsPage({ searchParams }: ReportsPageProps) {
   return (
     <ContractorWorkspacePage
       eyebrow="Reports"
-      title={`Reporting basics for ${organizationContext.organization.displayName}`}
-      description="Read-only internal beta reporting over canonical records. These summaries route back to the operational workspaces instead of creating a separate reporting truth."
+      title={`Reports for ${organizationContext.organization.displayName}`}
+      description="Read-only company visibility over source records. Reports route back to the workspaces where teams schedule, collect, sign, and close out work."
       summary={
         <div className="grid gap-px border border-[#d6d6d6] bg-[#d6d6d6] sm:grid-cols-2">
           <div className="bg-white px-3 py-2.5">
@@ -205,7 +427,7 @@ export default async function ReportsPage({ searchParams }: ReportsPageProps) {
               Data model
             </p>
             <p className="mt-1 text-sm font-semibold text-[#171717]">
-              Canonical records only
+              Source records only
             </p>
           </div>
         </div>
@@ -213,9 +435,9 @@ export default async function ReportsPage({ searchParams }: ReportsPageProps) {
       commandBar={{
         supportSlot: (
           <p>
-            Date range applies to lead, estimate, and payment activity. Invoice aging
-            and project readiness stay as current-state snapshots because they represent
-            open operational pressure.
+            Date range applies to lead, estimate, and payment activity. Invoice
+            aging and project readiness stay as current-state snapshots because
+            they represent open operational pressure.
           </p>
         ),
         searchSlot: (
@@ -255,6 +477,8 @@ export default async function ReportsPage({ searchParams }: ReportsPageProps) {
       }}
     >
       <div className="space-y-5">
+        <OperationsReportingWorkspace summary={operationsReport} />
+
         <section className="grid gap-2 sm:grid-cols-2 xl:grid-cols-6">
           {[
             {
@@ -271,7 +495,9 @@ export default async function ReportsPage({ searchParams }: ReportsPageProps) {
             },
             {
               label: "Open receivables",
-              value: formatMoney((openInvoices.amount ?? 0) + (partiallyPaidInvoices.amount ?? 0)),
+              value: formatMoney(
+                (openInvoices.amount ?? 0) + (partiallyPaidInvoices.amount ?? 0)
+              ),
               detail: "Current invoice balances",
               href: "/invoices?status=open"
             },
@@ -378,7 +604,10 @@ export default async function ReportsPage({ searchParams }: ReportsPageProps) {
           description="Opportunity counts by status from canonical lead records, filtered by updated date."
         >
           <div className="p-4">
-            <StatusSummaryGrid statuses={leadStatuses} counts={report.leadPipeline.counts} />
+            <StatusSummaryGrid
+              statuses={leadStatuses}
+              counts={report.leadPipeline.counts}
+            />
           </div>
           <SimpleLeadTable leads={report.leadPipeline.drilldown} />
         </ReportSection>
@@ -428,7 +657,9 @@ export default async function ReportsPage({ searchParams }: ReportsPageProps) {
                   <span className="font-semibold capitalize text-[#171717]">
                     {labelize(bucket.status)}
                   </span>
-                  <span className="text-right text-slate-600">{bucket.count}</span>
+                  <span className="text-right text-slate-600">
+                    {bucket.count}
+                  </span>
                   <span className="text-right font-semibold text-slate-950">
                     {formatMoney(bucket.amount)}
                   </span>
@@ -460,11 +691,15 @@ export default async function ReportsPage({ searchParams }: ReportsPageProps) {
         >
           <div className="p-4">
             <StatusSummaryGrid
-              statuses={report.projectReadiness.counts.map((count) => count.status)}
+              statuses={report.projectReadiness.counts.map(
+                (count) => count.status
+              )}
               counts={report.projectReadiness.counts}
             />
           </div>
-          <SimpleProjectTable projects={report.projectReadiness.blockedProjects} />
+          <SimpleProjectTable
+            projects={report.projectReadiness.blockedProjects}
+          />
         </ReportSection>
       </div>
     </ContractorWorkspacePage>
@@ -492,14 +727,18 @@ function TaxExceptionList({
               href={`/invoices/${row.invoiceId}`}
               className="block border border-[#e5e5e5] bg-white px-3 py-2 text-sm transition hover:bg-slate-50"
             >
-              <span className="font-semibold text-slate-950">{row.referenceNumber}</span>
+              <span className="font-semibold text-slate-950">
+                {row.referenceNumber}
+              </span>
               <span className="mt-1 block text-xs text-slate-500">
                 {row.customerName} / {formatMoney(row.taxCollectedAmount)} tax
               </span>
             </Link>
           ))
         ) : (
-          <p className="text-sm text-slate-500">No matching invoices in this range.</p>
+          <p className="text-sm text-slate-500">
+            No matching invoices in this range.
+          </p>
         )}
       </div>
     </section>
@@ -548,7 +787,9 @@ function SimpleSalesTaxTable({
 function SimpleLeadTable({
   leads
 }: {
-  leads: Awaited<ReturnType<typeof loadReportingBasics>>["leadPipeline"]["drilldown"];
+  leads: Awaited<
+    ReturnType<typeof loadReportingBasics>
+  >["leadPipeline"]["drilldown"];
 }) {
   return (
     <SimpleTable
@@ -570,7 +811,9 @@ function SimpleLeadTable({
 function SimpleEstimateTable({
   estimates
 }: {
-  estimates: Awaited<ReturnType<typeof loadReportingBasics>>["estimates"]["drilldown"];
+  estimates: Awaited<
+    ReturnType<typeof loadReportingBasics>
+  >["estimates"]["drilldown"];
 }) {
   return (
     <SimpleTable
@@ -592,7 +835,9 @@ function SimpleEstimateTable({
 function SimpleInvoiceTable({
   invoices
 }: {
-  invoices: Awaited<ReturnType<typeof loadReportingBasics>>["invoices"]["openDrilldown"];
+  invoices: Awaited<
+    ReturnType<typeof loadReportingBasics>
+  >["invoices"]["openDrilldown"];
 }) {
   return (
     <SimpleTable
@@ -614,14 +859,18 @@ function SimpleInvoiceTable({
 function SimplePaymentTable({
   payments
 }: {
-  payments: Awaited<ReturnType<typeof loadReportingBasics>>["payments"]["recent"];
+  payments: Awaited<
+    ReturnType<typeof loadReportingBasics>
+  >["payments"]["recent"];
 }) {
   return (
     <SimpleTable
       emptyTitle="No payments in this window."
       headers={["Payment", "Invoice / project", "Status", "Amount"]}
       rows={payments.map((payment) => ({
-        href: payment.invoice?.id ? `/invoices/${payment.invoice.id}` : "/payments",
+        href: payment.invoice?.id
+          ? `/invoices/${payment.invoice.id}`
+          : "/payments",
         cells: [
           formatDate(payment.paymentDate),
           `${payment.invoice?.referenceNumber ?? "No invoice"} / ${payment.project?.name ?? "No project"}`,
@@ -636,7 +885,9 @@ function SimplePaymentTable({
 function SimpleProjectTable({
   projects
 }: {
-  projects: Awaited<ReturnType<typeof loadReportingBasics>>["projectReadiness"]["blockedProjects"];
+  projects: Awaited<
+    ReturnType<typeof loadReportingBasics>
+  >["projectReadiness"]["blockedProjects"];
 }) {
   return (
     <SimpleTable
@@ -672,8 +923,8 @@ function SimpleTable({
       <div className="border-t border-[#e5e5e5] px-4 py-5">
         <p className="text-sm font-semibold text-[#171717]">{emptyTitle}</p>
         <p className="mt-2 text-sm leading-5 text-slate-500">
-          Matching canonical records will appear here as teams move work through the
-          shared lifecycle.
+          Matching canonical records will appear here as teams move work through
+          the shared lifecycle.
         </p>
       </div>
     );
@@ -693,9 +944,15 @@ function SimpleTable({
         </thead>
         <tbody className="divide-y divide-slate-200 bg-white">
           {rows.map((row) => (
-            <tr key={`${row.href}:${row.cells.join(":")}`} className="hover:bg-slate-50/70">
+            <tr
+              key={`${row.href}:${row.cells.join(":")}`}
+              className="hover:bg-slate-50/70"
+            >
               {row.cells.map((cell, index) => (
-                <td key={`${row.href}:${index}`} className="px-4 py-3 text-slate-600">
+                <td
+                  key={`${row.href}:${index}`}
+                  className="px-4 py-3 text-slate-600"
+                >
                   {index === 0 ? (
                     <Link
                       href={row.href}

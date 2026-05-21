@@ -7,6 +7,8 @@ This document defines FloorConnector's canonical reporting and metrics philosoph
 
 For implemented truth, use [docs/current-state.md](C:/FloorConnector/docs/current-state.md). For the future Intelligence Layer, use [docs/intelligence-layer.md](C:/FloorConnector/docs/intelligence-layer.md).
 
+Implemented note: Reporting Phase 1 now exists on `/reports` as a read-only operations and collections visibility workspace over existing source records. It does not change the broader planned reporting doctrine in this document; deeper analytics, exports, profitability, forecasting, benchmarks, and intelligence remain future work unless separately implemented and recorded in `docs/current-state.md`.
+
 Related documents:
 
 - [docs/intelligence-layer.md](C:/FloorConnector/docs/intelligence-layer.md): future operational intelligence strategy

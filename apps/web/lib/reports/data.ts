@@ -10,11 +10,22 @@ import type {
 
 import { requireAuthenticatedUser } from "@/lib/auth/session";
 import { listEstimates } from "@/lib/estimates/data";
+import { listContracts } from "@/lib/contracts/data";
+import { listDailyLogs } from "@/lib/daily-logs/data";
+import { listExecutionAttachmentsBySubjects } from "@/lib/execution-attachments/data";
+import { getFinancialCollectionsReadModel } from "@/lib/financials/collections-read-model";
+import { listFieldNotes } from "@/lib/field-notes/data";
+import {
+  listScheduleJobAssignmentsByJobIds,
+  listScheduleJobs
+} from "@/lib/jobs/data";
 import { listInvoices } from "@/lib/invoices/data";
 import { listOpportunities } from "@/lib/opportunities/data";
 import { getActiveOrganizationContext } from "@/lib/organizations/active-context";
 import { listPayments } from "@/lib/payments/data";
 import { listProjects } from "@/lib/projects/data";
+import { deriveOperationsReportingSummary } from "@/lib/reports/operations-summary";
+import { deriveScheduleWarningSummaries } from "@/lib/schedule/warnings";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 
 export type ReportingDateRange = {
@@ -71,13 +82,14 @@ type InvoiceTaxReportingEntryRow = {
 };
 
 export async function loadReportingBasics(range: ReportingDateRange) {
-  const [opportunities, estimates, invoices, payments, projects] = await Promise.all([
-    listOpportunities(),
-    listEstimates(),
-    listInvoices(),
-    listPayments(),
-    listProjects()
-  ]);
+  const [opportunities, estimates, invoices, payments, projects] =
+    await Promise.all([
+      listOpportunities(),
+      listEstimates(),
+      listInvoices(),
+      listPayments(),
+      listProjects()
+    ]);
 
   const rangedOpportunities = opportunities.filter((opportunity) =>
     isInDateRange(opportunity.updatedAt, range)
@@ -111,7 +123,10 @@ export async function loadReportingBasics(range: ReportingDateRange) {
       projects
     },
     leadPipeline: {
-      counts: countByStatus(rangedOpportunities, (item): OpportunityStatus => item.status),
+      counts: countByStatus(
+        rangedOpportunities,
+        (item): OpportunityStatus => item.status
+      ),
       drilldown: rangedOpportunities.slice(0, 8)
     },
     estimates: {
@@ -126,16 +141,21 @@ export async function loadReportingBasics(range: ReportingDateRange) {
       counts: [
         {
           status: "open",
-          count: openInvoices.filter((invoice) => invoice.status !== "partially_paid")
-            .length,
+          count: openInvoices.filter(
+            (invoice) => invoice.status !== "partially_paid"
+          ).length,
           amount: sumAmounts(
-            openInvoices.filter((invoice) => invoice.status !== "partially_paid"),
+            openInvoices.filter(
+              (invoice) => invoice.status !== "partially_paid"
+            ),
             (invoice) => invoice.balanceDueAmount
           )
         },
         {
           status: "partially_paid",
-          count: invoices.filter((invoice) => invoice.status === "partially_paid").length,
+          count: invoices.filter(
+            (invoice) => invoice.status === "partially_paid"
+          ).length,
           amount: sumAmounts(
             invoices.filter((invoice) => invoice.status === "partially_paid"),
             (invoice) => invoice.balanceDueAmount
@@ -152,7 +172,10 @@ export async function loadReportingBasics(range: ReportingDateRange) {
       ] satisfies Array<ReportCount<"open" | "partially_paid" | "paid">>,
       openDrilldown: openInvoices
         .slice()
-        .sort((left, right) => Number(right.balanceDueAmount) - Number(left.balanceDueAmount))
+        .sort(
+          (left, right) =>
+            Number(right.balanceDueAmount) - Number(left.balanceDueAmount)
+        )
         .slice(0, 8),
       aging: buildInvoiceAging(openInvoices)
     },
@@ -165,7 +188,9 @@ export async function loadReportingBasics(range: ReportingDateRange) {
       recent: rangedPayments
         .slice()
         .sort((left, right) => {
-          const dateComparison = right.paymentDate.localeCompare(left.paymentDate);
+          const dateComparison = right.paymentDate.localeCompare(
+            left.paymentDate
+          );
           return dateComparison === 0
             ? right.createdAt.localeCompare(left.createdAt)
             : dateComparison;
@@ -181,6 +206,142 @@ export async function loadReportingBasics(range: ReportingDateRange) {
       blockedProjects: blockedProjects.slice(0, 10)
     }
   };
+}
+
+export async function loadOperationsReportingSummary(input: {
+  organizationId: string;
+  todayIso: string;
+}) {
+  const [
+    projects,
+    jobs,
+    contracts,
+    invoices,
+    dailyLogs,
+    fieldNotes,
+    collectionsReadModel
+  ] = await Promise.all([
+    listProjects(),
+    listScheduleJobs(),
+    listContracts(),
+    listInvoices(),
+    listDailyLogs(),
+    listFieldNotes(),
+    getFinancialCollectionsReadModel({
+      organizationId: input.organizationId,
+      todayIso: input.todayIso
+    })
+  ]);
+  const jobIds = jobs.map((job) => job.id);
+  const jobAssignments = await listScheduleJobAssignmentsByJobIds(jobIds);
+  const fieldNoteIds = fieldNotes.map((note) => note.id);
+  const attachments = await listExecutionAttachmentsBySubjects([
+    ...dailyLogs.map((dailyLog) => ({
+      subjectType: "daily_log" as const,
+      subjectId: dailyLog.id
+    })),
+    ...fieldNoteIds.map((fieldNoteId) => ({
+      subjectType: "field_note" as const,
+      subjectId: fieldNoteId
+    }))
+  ]);
+  const scheduleWarnings = deriveScheduleWarningSummaries(
+    jobs.map((job) => ({
+      id: job.id,
+      title: job.project?.name ?? "Scheduled job",
+      dispatchStatus: job.dispatchStatus,
+      scheduledDate: job.scheduledDate,
+      scheduledStartAt: job.scheduledStartAt,
+      scheduledEndAt: job.scheduledEndAt,
+      crewVendorId: job.crewVendorId,
+      crewVendor: job.crewVendor,
+      assignments: (jobAssignments.get(job.id) ?? []).map((assignment) => ({
+        personId: assignment.personId,
+        vendorId: assignment.vendorId,
+        person: assignment.person,
+        vendor: assignment.vendor
+      }))
+    }))
+  );
+
+  return deriveOperationsReportingSummary({
+    todayIso: input.todayIso,
+    projects: projects.map((project) => ({
+      id: project.id,
+      name: project.name,
+      status: project.status,
+      commercialReadinessStatus: project.commercialReadinessStatus,
+      customer: project.customer
+    })),
+    jobs: jobs.map((job) => ({
+      id: job.id,
+      projectId: job.projectId,
+      dispatchStatus: job.dispatchStatus,
+      scheduledDate: job.scheduledDate,
+      updatedAt: job.updatedAt,
+      project: job.project,
+      customer: job.customer
+    })),
+    jobAssignments: [...jobAssignments.values()].flat().map((assignment) => ({
+      id: assignment.id,
+      jobId: assignment.jobId,
+      personId: assignment.personId,
+      vendorId: assignment.vendorId
+    })),
+    scheduleWarnings,
+    contracts: contracts.map((contract) => ({
+      id: contract.id,
+      projectId: contract.projectId,
+      referenceNumber: contract.referenceNumber,
+      status: contract.status,
+      updatedAt: contract.updatedAt,
+      project: contract.project,
+      customer: contract.customer
+    })),
+    invoices: invoices.map((invoice) => ({
+      id: invoice.id,
+      projectId: invoice.projectId,
+      referenceNumber: invoice.referenceNumber,
+      status: invoice.status,
+      dueDate: invoice.dueDate,
+      balanceDueAmount: invoice.balanceDueAmount,
+      customer: invoice.customer,
+      project: invoice.project
+    })),
+    dailyLogs: dailyLogs.map((dailyLog) => ({
+      id: dailyLog.id,
+      projectId: dailyLog.projectId,
+      jobId: dailyLog.jobId,
+      logDate: dailyLog.logDate
+    })),
+    fieldNotes: fieldNotes.map((note) => ({
+      id: note.id,
+      projectId: note.projectId,
+      dailyLogId: note.dailyLogId,
+      noteType: note.noteType,
+      status: note.status,
+      title: note.title,
+      updatedAt: note.updatedAt,
+      project: note.project
+    })),
+    attachments: attachments.map((attachment) => ({
+      id: attachment.id,
+      subjectType: attachment.subjectType,
+      subjectId: attachment.subjectId,
+      attachmentType: attachment.attachmentType
+    })),
+    collections: {
+      openReceivableAmount: collectionsReadModel.summary.openReceivableAmount,
+      overdueReceivableAmount:
+        collectionsReadModel.summary.overdueReceivableAmount,
+      openInvoiceCount: collectionsReadModel.summary.openInvoiceCount,
+      overdueInvoiceCount: collectionsReadModel.summary.overdueInvoiceCount,
+      pendingPaymentAmount: collectionsReadModel.summary.pendingPaymentAmount,
+      pendingEventCount: collectionsReadModel.summary.pendingEventCount,
+      failedOrVoidedEventCount:
+        collectionsReadModel.summary.failedOrVoidedEventCount
+    }
+  });
 }
 
 export async function loadSalesTaxSummary(range: ReportingDateRange) {
@@ -242,7 +403,9 @@ export async function loadSalesTaxSummary(range: ReportingDateRange) {
   const taxData: unknown = taxResponse.data;
 
   if (taxResponse.error) {
-    throw new Error(`Unable to load sales tax summary: ${taxResponse.error.message}`);
+    throw new Error(
+      `Unable to load sales tax summary: ${taxResponse.error.message}`
+    );
   }
 
   if (!isInvoiceTaxReportingEntryRowArray(taxData)) {
@@ -261,7 +424,9 @@ export async function loadSalesTaxSummary(range: ReportingDateRange) {
     };
   }
 
-  const invoicesById = new Map(invoices.map((invoice) => [invoice.id, invoice]));
+  const invoicesById = new Map(
+    invoices.map((invoice) => [invoice.id, invoice])
+  );
   const rows = taxData.map((row) => {
     const invoice = invoicesById.get(row.invoice_id);
 
@@ -284,16 +449,22 @@ export async function loadSalesTaxSummary(range: ReportingDateRange) {
       draftInvoices: rows.filter((row) => row.status === "draft").slice(0, 6),
       voidInvoices: rows.filter((row) => row.status === "void").slice(0, 6),
       exemptInvoices: filingRows
-        .filter((row) => row.customerTaxExemptSnapshot || Number(row.exemptSalesAmount) > 0)
+        .filter(
+          (row) =>
+            row.customerTaxExemptSnapshot || Number(row.exemptSalesAmount) > 0
+        )
         .slice(0, 6),
       zeroTaxWithTaxableSales: filingRows
         .filter(
           (row) =>
-            Number(row.taxableSalesAmount) > 0 && Number(row.taxCollectedAmount) === 0
+            Number(row.taxableSalesAmount) > 0 &&
+            Number(row.taxCollectedAmount) === 0
         )
         .slice(0, 6),
       openInvoices: filingRows
-        .filter((row) => row.status === "sent" || row.status === "partially_paid")
+        .filter(
+          (row) => row.status === "sent" || row.status === "partially_paid"
+        )
         .slice(0, 6)
     }
   };
@@ -326,7 +497,10 @@ function countByStatus<TStatus extends string, TItem>(
   return Array.from(counts.values());
 }
 
-function sumAmounts<TItem>(items: TItem[], getAmount: (item: TItem) => string | number) {
+function sumAmounts<TItem>(
+  items: TItem[],
+  getAmount: (item: TItem) => string | number
+) {
   return items.reduce((sum, item) => sum + Number(getAmount(item)), 0);
 }
 
@@ -337,7 +511,8 @@ function buildSalesTaxSummary(rows: SalesTaxSummaryRow[]) {
     taxCollected: sumAmounts(rows, (row) => row.taxCollectedAmount),
     totalSales: sumAmounts(rows, (row) => row.totalAmount),
     invoiceCount: rows.length,
-    exemptInvoiceCount: rows.filter((row) => row.customerTaxExemptSnapshot).length,
+    exemptInvoiceCount: rows.filter((row) => row.customerTaxExemptSnapshot)
+      .length,
     paidInvoiceCount: rows.filter((row) => row.status === "paid").length,
     openInvoiceCount: rows.filter(
       (row) => row.status === "sent" || row.status === "partially_paid"
@@ -365,7 +540,10 @@ function mapSalesTaxSummaryRow(
     reportingPeriodStart: row.reporting_period_start,
     reportingPeriodEnd: row.reporting_period_end,
     status: row.status,
-    paymentContext: getInvoicePaymentContext(row.status, row.balance_due_amount),
+    paymentContext: getInvoicePaymentContext(
+      row.status,
+      row.balance_due_amount
+    ),
     customerTaxExemptSnapshot: row.customer_tax_exempt_snapshot,
     taxBehaviorApplied: row.tax_behavior_applied,
     taxRateApplied: Number(row.tax_rate_applied).toFixed(6),
@@ -419,7 +597,8 @@ function isInvoiceTaxReportingEntryRow(
       typeof row.exempt_sales_amount === "number") &&
     (typeof row.tax_collected_amount === "string" ||
       typeof row.tax_collected_amount === "number") &&
-    (typeof row.total_amount === "string" || typeof row.total_amount === "number") &&
+    (typeof row.total_amount === "string" ||
+      typeof row.total_amount === "number") &&
     (typeof row.balance_due_amount === "string" ||
       typeof row.balance_due_amount === "number") &&
     typeof row.status === "string"
@@ -430,7 +609,8 @@ function isInvoiceTaxReportingEntryRowArray(
   value: unknown
 ): value is InvoiceTaxReportingEntryRow[] {
   return (
-    Array.isArray(value) && value.every((row) => isInvoiceTaxReportingEntryRow(row))
+    Array.isArray(value) &&
+    value.every((row) => isInvoiceTaxReportingEntryRow(row))
   );
 }
 
@@ -456,7 +636,9 @@ function buildInvoiceAging(
   invoices: Awaited<ReturnType<typeof listInvoices>>
 ): Array<ReportCount<"current" | "1_30" | "31_60" | "61_90" | "over_90">> {
   const today = startOfToday();
-  const buckets: Array<ReportCount<"current" | "1_30" | "31_60" | "61_90" | "over_90">> = [
+  const buckets: Array<
+    ReportCount<"current" | "1_30" | "31_60" | "61_90" | "over_90">
+  > = [
     { status: "current", count: 0, amount: 0 },
     { status: "1_30", count: 0, amount: 0 },
     { status: "31_60", count: 0, amount: 0 },
@@ -466,7 +648,10 @@ function buildInvoiceAging(
 
   for (const invoice of invoices) {
     const basisDate = invoice.dueDate ?? invoice.issueDate ?? invoice.createdAt;
-    const daysPastDue = differenceInCalendarDays(today, new Date(`${basisDate.slice(0, 10)}T00:00:00`));
+    const daysPastDue = differenceInCalendarDays(
+      today,
+      new Date(`${basisDate.slice(0, 10)}T00:00:00`)
+    );
     const bucket =
       daysPastDue <= 0
         ? buckets[0]

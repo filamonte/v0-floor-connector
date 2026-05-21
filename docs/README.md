@@ -60,6 +60,7 @@ Document roles:
 - `docs/design/project-workspace-os-consolidation-qa.md`: consolidation QA note for Project Workspace copy, hierarchy, browser QA, and Next Move terminology after CrewBoard, FieldTrail, MessageCenter, and ProjectPulse
 - `docs/design/closeouttrail-phase-1-project-closeout-workspace.md`: implementation note for the first CloseoutTrail project closeout readiness and proof section over existing project, job, field, change-order, contract, invoice, payment, warranty/service, and Customer Access signals
 - `docs/design/proof-center-phase-1-project-document-evidence-index.md`: implementation note for the first Proof Center project document and evidence index over existing commercial, customer-action, billing, field, warranty, service, and Customer Access records
+- `docs/design/reporting-phase-1-operations-collections-visibility.md`: implementation note for the first read-only Reports operations and collections visibility workspace over existing project, job, contract, field, invoice, payment, closeout, and proof signals
 - `docs/design/project-workspace-lifecycle-qa.md`: lifecycle QA note for the Project Workspace operating loop after CrewBoard, FieldTrail, MessageCenter, ProjectPulse, and CloseoutTrail
 - `docs/enterprise-ui-system-audit.md`: secured-app route audit, Phase 1-4 polish history, drift watch list, and authenticated visual QA rules
 - `docs/floorconnector-ui-build-rules.md`: mandatory contractor UI build rules, including the accepted Graphite & Copper visual foundation and shell/workspace guardrails

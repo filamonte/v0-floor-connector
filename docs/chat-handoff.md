@@ -51,6 +51,13 @@ Current work should generally preserve the implemented operational core while ti
 - communications, automation, and AI assistance as layers on canonical records
 - GateKeeper planning as a future operational memory and intelligence layer, not as implemented product behavior
 
+## Latest Reporting Phase 1
+
+- [docs/design/reporting-phase-1-operations-collections-visibility.md](C:/FloorConnector/docs/design/reporting-phase-1-operations-collections-visibility.md) records the first operations and collections reporting implementation.
+- `/reports` now starts with a read-only Reports workspace that rolls existing project, job, job-assignment, schedule-warning, contract, invoice, Daily Job Log, Job Note, execution-attachment, and Financials collections signals into company-level attention cards and short source-record lists.
+- The new `apps/web/lib/reports/operations-summary.ts` helper derives scheduling gaps, missing crew, project attention, field blockers, waiting signatures, open receivables, payment attention, closeout attention, and proof gaps from existing records only.
+- Reports links contractors back to Project Workspace, Schedule, Invoice Workspace, and Contract Workspace. It does not create a new analytics warehouse, reporting table, route, mutation flow, export system, AI summary, automation, fake metric, payment behavior, signature behavior, invoice/estimate math, auth/RLS/tenant behavior, portal grant, settings behavior, or platform-admin logic.
+
 ## Latest Proof Center Phase 1
 
 - [docs/design/proof-center-phase-1-project-document-evidence-index.md](C:/FloorConnector/docs/design/proof-center-phase-1-project-document-evidence-index.md) records the first Proof Center implementation.

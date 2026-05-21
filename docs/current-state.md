@@ -712,13 +712,16 @@ Implemented now:
 - the Financials routes use a shared tenant-scoped collections read model over existing canonical records and do not introduce a new finance data model
 - `/reports` now exists as the first internal-beta reporting basics surface
 - Reports Home is read-only and intentionally narrow:
+  - operations and collections visibility across existing projects, jobs, job assignments, schedule warnings, contracts, invoices, Daily Job Logs, Job Notes, execution attachments, and the Financials collections read model
+  - company-level attention cards for open projects, Ready Check attention, scheduling gaps, missing crew, field blockers, waiting signature, open receivables, payment attention, and closeout attention
+  - short attention lists linking back to source Project, Schedule, Invoice, and Contract surfaces
   - lead pipeline summary by canonical opportunity status
   - estimate summary by canonical estimate status
   - invoice summary and aging from canonical invoice balances and due dates
   - recent payment activity from canonical payment records
   - project readiness blocker visibility from canonical project readiness fields
   - Sales Tax Summary from canonical invoice tax reporting snapshots
-- the route uses server-side tenant-scoped loaders over `opportunities`, `estimates`, `invoices`, `payments`, `projects`, and `invoice_tax_reporting_entries`
+- the route uses server-side tenant-scoped loaders over `opportunities`, `estimates`, `invoices`, `payments`, `projects`, `jobs`, `job_assignments`, `contracts`, `daily_logs`, `field_notes`, `execution_attachments`, the Financials collections read model, and `invoice_tax_reporting_entries`
 - Sales Tax Summary uses invoice issue-date filtering, reports taxable sales, exempt sales, tax collected, invoice count, invoice/payment status context, and customer exemption snapshot visibility, with every row linking back to the canonical invoice
 - `/reports` does not create reporting tables, snapshots, exports, charts, mutations, filing workflows, tax-provider integrations, or a separate analytics model
 - `/settings/export` now provides the first tenant-scoped Data Export surface for organization owners/admins:
