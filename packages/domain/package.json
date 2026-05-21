@@ -1,0 +1,15 @@
+{
+  "name": "@floorconnector/domain",
+  "version": "0.0.0",
+  "private": true,
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "dependencies": {
+    "@floorconnector/types": "workspace:*"
+  },
+  "scripts": {
+    "build": "tsc --project tsconfig.json --noEmit",
+    "lint": "eslint src --ext .ts",
+    "typecheck": "tsc --project tsconfig.json --noEmit"
+  }
+}

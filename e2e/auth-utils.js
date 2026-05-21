@@ -1,0 +1,68 @@
+const { expect } = require("@playwright/test");
+const fsSync = require("node:fs");
+const path = require("node:path");
+
+function loadRootEnv() {
+  const envPath = path.resolve(__dirname, "..", ".env.local");
+
+  if (!fsSync.existsSync(envPath)) {
+    return;
+  }
+
+  const envText = fsSync.readFileSync(envPath, "utf8");
+  for (const line of envText.split(/\r?\n/)) {
+    const match = line.match(/^\s*([^#][^=]+)=(.*)$/);
+
+    if (!match) {
+      continue;
+    }
+
+    const key = match[1].trim();
+    let value = match[2].trim();
+
+    if (
+      (value.startsWith("\"") && value.endsWith("\"")) ||
+      (value.startsWith("'") && value.endsWith("'"))
+    ) {
+      value = value.slice(1, -1);
+    }
+
+    process.env[key] ??= value;
+  }
+}
+
+async function loginWithEmail(page, email, password, options = {}) {
+  const loginPath = options.next
+    ? `/login?next=${encodeURIComponent(options.next)}`
+    : "/login";
+  const expectedPath = options.expectedPath ?? "/dashboard";
+
+  await page.goto(loginPath);
+
+  const emailLoginButton = page.getByRole("button", { name: "Sign in" });
+  const emailLoginForm = page.locator("form").filter({ has: emailLoginButton });
+  const emailInput = emailLoginForm.locator('input[name="email"]');
+  const passwordInput = emailLoginForm.locator('input[name="password"]');
+
+  await expect(emailInput).toBeVisible();
+  await emailInput.fill(email);
+  await passwordInput.fill(password);
+  await emailLoginForm.getByRole("button", { name: "Sign in" }).click();
+
+  await page.waitForURL((url) => url.pathname === expectedPath, {
+    timeout: 180_000,
+    waitUntil: "commit"
+  });
+
+  if (options.verifyContent !== false) {
+    await expect(page.locator("body")).toContainText(
+      /Dashboard|FloorConnector|Platform configuration|Global scope/i,
+      { timeout: 60_000 }
+    );
+  }
+}
+
+module.exports = {
+  loadRootEnv,
+  loginWithEmail
+};

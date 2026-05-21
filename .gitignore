@@ -12,6 +12,9 @@ playwright-report/
 test-results/
 .playwright-tmp/
 tmp-visual-audit-phase*/
+tmp-codex-output/
+tmp-*.png
+turbo.json.old
 
 # env
 .env
@@ -23,6 +26,7 @@ tmp-visual-audit-phase*/
 # logs
 *.log
 pnpm-debug.log*
+.codex-logs/
 
 # system
 .DS_Store
@@ -30,12 +34,29 @@ Thumbs.db
 
 # local leftovers
 Floorconnectorgit/
+.codex-artifacts/
+.tmp-auth-cookies*.txt
+.tmp-signup-cookies*.txt
+plan/Thought*
 
 # Google Drive tmp files
+.tmp.driveupload/
 .tmp.driveuploads/
 .tmp.drivedownloads/
+supabase/.temp/
 
 # Other Repositories
-.agent/skills
+.agents/
+.claude/
+.continue/
+.factory/
+.kode/
+.mcpjam/
+~/
+
+# local tool/editor config
+.vscode/
+.zencoder/
+skills-lock.json
 
 

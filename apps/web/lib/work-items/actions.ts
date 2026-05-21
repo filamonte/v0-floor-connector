@@ -1,0 +1,196 @@
+"use server";
+
+import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
+
+import {
+  completeWorkItem,
+  createWorkItem,
+  dismissWorkItem,
+  updateWorkItem
+} from "./data";
+import {
+  workItemCreateSchema,
+  workItemIdSchema,
+  workItemUpdateSchema
+} from "./schemas";
+
+function getFieldValue(formData: FormData, key: string) {
+  const value = formData.get(key);
+
+  return typeof value === "string" ? value : "";
+}
+
+function buildRedirect(pathname: string, params: Record<string, string | undefined>) {
+  const search = new URLSearchParams();
+
+  for (const [key, value] of Object.entries(params)) {
+    if (value) {
+      search.set(key, value);
+    }
+  }
+
+  const query = search.toString();
+
+  return query ? `${pathname}?${query}` : pathname;
+}
+
+function getReturnTo(formData: FormData) {
+  const returnTo = getFieldValue(formData, "returnTo");
+
+  return returnTo.startsWith("/") ? returnTo : "/dashboard";
+}
+
+function revalidateWorkItemSurfaces(returnTo: string) {
+  revalidatePath("/dashboard");
+  revalidatePath("/leads");
+  revalidatePath("/appointments");
+  revalidatePath("/projects");
+  revalidatePath(returnTo);
+}
+
+function getMetadata(formData: FormData): Record<string, unknown> {
+  const raw = getFieldValue(formData, "metadata");
+
+  if (!raw) {
+    return {};
+  }
+
+  try {
+    const parsed: unknown = JSON.parse(raw);
+
+    return parsed && typeof parsed === "object" && !Array.isArray(parsed)
+      ? (parsed as Record<string, unknown>)
+      : {};
+  } catch {
+    return {};
+  }
+}
+
+export async function createWorkItemAction(formData: FormData) {
+  const returnTo = getReturnTo(formData);
+  const result = workItemCreateSchema.safeParse({
+    title: getFieldValue(formData, "title"),
+    description: getFieldValue(formData, "description"),
+    priority: getFieldValue(formData, "priority") || "normal",
+    kind: getFieldValue(formData, "kind") || "manual",
+    dueAt: getFieldValue(formData, "dueAt"),
+    assignedPersonId: getFieldValue(formData, "assignedPersonId"),
+    sourceType: getFieldValue(formData, "sourceType") || null,
+    sourceId: getFieldValue(formData, "sourceId"),
+    customerId: getFieldValue(formData, "customerId"),
+    projectId: getFieldValue(formData, "projectId"),
+    linkPath: getFieldValue(formData, "linkPath"),
+    visibility: getFieldValue(formData, "visibility") || "internal",
+    dedupeKey: getFieldValue(formData, "dedupeKey"),
+    metadata: getMetadata(formData)
+  });
+
+  if (!result.success) {
+    redirect(
+      buildRedirect(returnTo, {
+        error: result.error.issues[0]?.message ?? "Unable to create work item."
+      })
+    );
+  }
+
+  try {
+    await createWorkItem(result.data);
+    revalidateWorkItemSurfaces(returnTo);
+  } catch (error) {
+    redirect(
+      buildRedirect(returnTo, {
+        error: error instanceof Error ? error.message : "Unable to create work item."
+      })
+    );
+  }
+
+  redirect(buildRedirect(returnTo, { message: "Work item created." }));
+}
+
+export async function updateWorkItemAction(formData: FormData) {
+  const returnTo = getReturnTo(formData);
+  const result = workItemUpdateSchema.safeParse({
+    workItemId: getFieldValue(formData, "workItemId"),
+    title: getFieldValue(formData, "title"),
+    description: getFieldValue(formData, "description"),
+    priority: getFieldValue(formData, "priority") || "normal",
+    kind: getFieldValue(formData, "kind") || "manual",
+    dueAt: getFieldValue(formData, "dueAt"),
+    assignedPersonId: getFieldValue(formData, "assignedPersonId"),
+    customerId: getFieldValue(formData, "customerId"),
+    projectId: getFieldValue(formData, "projectId"),
+    linkPath: getFieldValue(formData, "linkPath"),
+    visibility: getFieldValue(formData, "visibility") || "internal",
+    metadata: getMetadata(formData)
+  });
+
+  if (!result.success) {
+    redirect(
+      buildRedirect(returnTo, {
+        error: result.error.issues[0]?.message ?? "Unable to update work item."
+      })
+    );
+  }
+
+  try {
+    await updateWorkItem(result.data);
+    revalidateWorkItemSurfaces(returnTo);
+  } catch (error) {
+    redirect(
+      buildRedirect(returnTo, {
+        error: error instanceof Error ? error.message : "Unable to update work item."
+      })
+    );
+  }
+
+  redirect(buildRedirect(returnTo, { message: "Work item updated." }));
+}
+
+export async function completeWorkItemAction(formData: FormData) {
+  const returnTo = getReturnTo(formData);
+  const result = workItemIdSchema.safeParse({
+    workItemId: getFieldValue(formData, "workItemId")
+  });
+
+  if (!result.success) {
+    redirect(buildRedirect(returnTo, { error: "Select a valid work item." }));
+  }
+
+  try {
+    await completeWorkItem(result.data.workItemId);
+    revalidateWorkItemSurfaces(returnTo);
+  } catch (error) {
+    redirect(
+      buildRedirect(returnTo, {
+        error: error instanceof Error ? error.message : "Unable to complete work item."
+      })
+    );
+  }
+
+  redirect(buildRedirect(returnTo, { message: "Work item completed." }));
+}
+
+export async function dismissWorkItemAction(formData: FormData) {
+  const returnTo = getReturnTo(formData);
+  const result = workItemIdSchema.safeParse({
+    workItemId: getFieldValue(formData, "workItemId")
+  });
+
+  if (!result.success) {
+    redirect(buildRedirect(returnTo, { error: "Select a valid work item." }));
+  }
+
+  try {
+    await dismissWorkItem(result.data.workItemId);
+    revalidateWorkItemSurfaces(returnTo);
+  } catch (error) {
+    redirect(
+      buildRedirect(returnTo, {
+        error: error instanceof Error ? error.message : "Unable to dismiss work item."
+      })
+    );
+  }
+
+  redirect(buildRedirect(returnTo, { message: "Work item dismissed." }));
+}

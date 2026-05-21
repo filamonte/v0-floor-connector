@@ -1,0 +1,27 @@
+{
+  "name": "@floorconnector/web",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "node ./scripts/run-next.mjs dev",
+    "build": "node ./scripts/run-next.mjs build",
+    "start": "node ./scripts/run-next.mjs start",
+    "lint": "eslint .",
+    "typecheck": "tsc --project tsconfig.typecheck.json --noEmit"
+  },
+  "dependencies": {
+    "@floorconnector/config": "workspace:*",
+    "@floorconnector/db": "workspace:*",
+    "@floorconnector/domain": "workspace:*",
+    "@floorconnector/integrations": "workspace:*",
+    "@floorconnector/types": "workspace:*",
+    "@floorconnector/ui": "workspace:*",
+    "@stripe/react-stripe-js": "^6.3.0",
+    "@stripe/stripe-js": "^9.4.0",
+    "@supabase/ssr": "^0.5.2",
+    "next": "^15.2.4",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "zod": "^3.25.76"
+  }
+}
