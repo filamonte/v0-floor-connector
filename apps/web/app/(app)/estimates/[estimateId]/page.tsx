@@ -655,7 +655,7 @@ export default async function EstimateDetailPage({
 
         <CommercialDocumentCommandBand
           eyebrow="Commercial document"
-          title="Estimate review command"
+          title="Estimate workflow summary"
           description="Review scope, approval state, and project continuity before moving this proposal toward contract or billing handoff."
           statusLabel={`${formatStatusLabel(estimate.status)} estimate`}
           projectHref={`/projects/${estimate.projectId}`}

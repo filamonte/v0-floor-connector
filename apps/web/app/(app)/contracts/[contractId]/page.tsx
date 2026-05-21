@@ -826,7 +826,7 @@ export default async function ContractDetailPage({
 
         <CommercialDocumentCommandBand
           eyebrow="Commercial document"
-          title="Contract review command"
+          title="Contract workflow summary"
           description="Review approval, signer routing, signature events, and project readiness before moving the contract toward deposit or schedule handoff."
           statusLabel={contractDisplayState}
           projectHref={`/projects/${contract.projectId}`}

@@ -191,10 +191,10 @@ const projectWorkspacePanelHeaderClassName =
   "border-b border-[var(--border-warm)] bg-[linear-gradient(135deg,white_0%,var(--highlight)_100%)]";
 
 const projectCommandSurfaceClassName =
-  "rounded-lg border border-[rgba(255,255,255,0.12)] bg-[linear-gradient(135deg,var(--graphite-dark)_0%,var(--graphite)_62%,#2f231c_100%)] text-white shadow-[0_24px_64px_-38px_rgba(31,41,55,0.75)]";
+  "rounded-lg border border-[var(--border-warm)] bg-[var(--highlight)] shadow-[0_14px_36px_-34px_rgba(31,41,55,0.42)]";
 
 const projectCommandInsetClassName =
-  "border border-white/10 bg-white/[0.07] shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]";
+  "border border-[var(--border-warm)] bg-white";
 
 type SectionOverviewProps = {
   eyebrow: string;
@@ -529,18 +529,18 @@ function OperationalCommandCenter({
       aria-labelledby="project-command-center-title"
       className={projectCommandSurfaceClassName}
     >
-      <div className="flex flex-col gap-4 px-4 py-4 lg:flex-row lg:items-start lg:justify-between sm:px-5">
+      <div className="flex flex-col gap-4 px-4 py-3 lg:flex-row lg:items-start lg:justify-between sm:px-5">
         <div className="min-w-0">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--copper-light)]">
-            Project command
+          <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--copper)]">
+            Project summary
           </p>
           <h2
             id="project-command-center-title"
-            className="mt-1 text-xl font-semibold tracking-tight text-white"
+            className="mt-1 text-base font-semibold tracking-tight text-[var(--text-primary)]"
           >
-            Operational command center
+            Operational continuity
           </h2>
-          <p className="mt-2 max-w-[76ch] text-sm leading-6 text-white/70">
+          <p className="mt-2 max-w-[76ch] text-sm leading-6 text-[var(--text-secondary)]">
             {customerName} / {projectLocation}. This project hub reads the
             opportunity, customer/project, estimate/contract, job/schedule, and
             invoice/payment chain in one place.
@@ -548,19 +548,21 @@ function OperationalCommandCenter({
         </div>
         <div
           className={[
-            "px-4 py-3 text-sm leading-6 text-white/70 lg:w-72",
+            "px-4 py-3 text-sm leading-6 text-[var(--text-secondary)] lg:w-72",
             projectCommandInsetClassName
           ].join(" ")}
         >
-          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/60">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-muted)]">
             Readiness
           </p>
-          <p className="mt-1 font-semibold text-white">{readinessLabel}</p>
+          <p className="mt-1 font-semibold text-[var(--text-primary)]">
+            {readinessLabel}
+          </p>
           <p className="mt-1">{readinessDetail}</p>
         </div>
       </div>
 
-      <div className="grid gap-px border-y border-white/10 bg-white/10 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]">
+      <div className="grid gap-px border-y border-[var(--border-warm)] bg-[var(--border-warm)] lg:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]">
         <div className="bg-white px-4 py-4 text-sm leading-6 text-[var(--text-secondary)]">
           <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--copper)]">
             Next move
@@ -596,7 +598,7 @@ function OperationalCommandCenter({
 
         <div
           className={[
-            "border-l border-white/10 px-4 py-4 text-sm leading-6",
+            "border-l border-[var(--border-warm)] px-4 py-4 text-sm leading-6",
             blockerCount > 0
               ? "bg-amber-50 text-amber-950"
               : "bg-emerald-50 text-emerald-950"

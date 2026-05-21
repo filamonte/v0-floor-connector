@@ -95,3 +95,9 @@ Future UI implementation must:
 Phases 1-10 completed the Stitch-informed visual adoption sequence across the major visible product layers: dashboard, Project Workspace, commercial detail pages, manager/global queues, field execution, portal/customer-facing review, settings, and super-admin.
 
 Future work should now shift to targeted QA, bugfixes, screenshots, commit preparation, and route-specific refinements. Do not treat this status as approval for another broad visual expansion wave, and do not treat the Stitch phase docs as a replacement for [docs/current-state.md](C:/FloorConnector/docs/current-state.md).
+
+## I. Header Architecture Rule
+
+Each route should have one dominant page or record identity area after the global app navigation. Command bands should either be that identity area or become supporting summary/action panels inside the page. Avoid stacking global shell chrome, workspace bands, page headers, record command bands, and summary panels as competing headers.
+
+When a page already has an established `DetailPageHeader`, `ContractorWorkspacePage`, portal page header, or settings/admin scope header, lower-level Stitch-informed panels should use compact summary language and lighter visual weight. Preserve the current top-nav-first contractor shell and keep actions, statuses, readiness, signature, payment, and portal context visible without creating a second page crown.

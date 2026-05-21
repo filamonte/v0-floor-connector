@@ -24,6 +24,7 @@ export default async function SuperAdminLayout({
         title="Platform Admin"
         description="Global defaults, starter records, tenant governance, and modular platform controls."
         user={user}
+        headingLevel="h2"
       />
       <main className="px-5 py-6 sm:px-8 sm:py-8">
         <div className="mx-auto max-w-7xl">

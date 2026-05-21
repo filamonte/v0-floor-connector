@@ -32,26 +32,26 @@ export function CommercialDocumentCommandBand({
   return (
     <section
       aria-labelledby="commercial-document-command-title"
-      className="mt-6 overflow-hidden rounded-lg border border-[rgba(255,255,255,0.12)] bg-[linear-gradient(135deg,var(--graphite-dark)_0%,var(--graphite)_62%,#2f231c_100%)] text-white shadow-[0_24px_64px_-38px_rgba(31,41,55,0.75)]"
+      className="mt-4 overflow-hidden rounded-lg border border-[var(--border-warm)] bg-[var(--highlight)] shadow-[0_14px_36px_-34px_rgba(31,41,55,0.42)]"
     >
-      <div className="flex flex-col gap-4 px-4 py-4 lg:flex-row lg:items-start lg:justify-between">
+      <div className="flex flex-col gap-4 px-4 py-3 lg:flex-row lg:items-start lg:justify-between">
         <div className="min-w-0">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[var(--copper-light)]">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[var(--copper)]">
             {eyebrow}
           </p>
           <h2
             id="commercial-document-command-title"
-            className="mt-1 text-xl font-semibold tracking-tight text-white"
+            className="mt-1 text-base font-semibold tracking-tight text-[var(--text-primary)]"
           >
             {title}
           </h2>
-          <div className="mt-2 max-w-[72ch] text-sm leading-6 text-white/70">
+          <div className="mt-2 max-w-[72ch] text-sm leading-6 text-[var(--text-secondary)]">
             {description}
           </div>
         </div>
 
         <div className="flex shrink-0 flex-wrap gap-2">
-          <span className="inline-flex h-9 items-center rounded-[4px] border border-white/10 bg-white/[0.08] px-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-white/80">
+          <span className="inline-flex h-9 items-center rounded-[4px] border border-[var(--border-warm)] bg-white px-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--text-secondary)]">
             {statusLabel}
           </span>
           {projectHref ? (
@@ -65,7 +65,7 @@ export function CommercialDocumentCommandBand({
         </div>
       </div>
 
-      <div className="grid gap-px bg-white/10 md:grid-cols-3">
+      <div className="grid gap-px border-t border-[var(--border-warm)] bg-[var(--border-warm)] md:grid-cols-3">
         {items.map((item) => (
           <div
             key={item.label}

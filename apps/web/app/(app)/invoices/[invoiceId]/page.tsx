@@ -786,7 +786,7 @@ export default async function InvoiceDetailPage({
 
           <CommercialDocumentCommandBand
             eyebrow="Commercial document"
-            title="Invoice review command"
+            title="Invoice payment summary"
             description="Review balance, collection state, payment evidence, and project continuity before recording or requesting payment."
             statusLabel={`${formatStatusLabel(invoice.status)} invoice`}
             projectHref={`/projects/${invoice.projectId}`}

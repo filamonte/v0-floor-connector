@@ -603,7 +603,7 @@ export default async function JobDetailPage({
             />
 
             <FieldExecutionCommandBand
-              title="Job execution command"
+              title="Job execution summary"
               description="Keep the schedule, crew, field evidence, labor state, and billing handoff readable from the same canonical job record."
               statusLabel={`${formatStatusLabel(job.dispatchStatus)} job`}
               projectHref={`/projects/${job.projectId}`}

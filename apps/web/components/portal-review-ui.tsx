@@ -45,27 +45,29 @@ export function PortalTrustStrip({
   }>;
 }) {
   return (
-    <section className="mt-6 rounded-xl border border-[var(--graphite-light)]/20 bg-[linear-gradient(135deg,var(--graphite),#312721)] px-5 py-5 text-white shadow-[0_22px_52px_-34px_rgba(40,32,27,0.7)]">
-      <div className="grid gap-5 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)] lg:items-start">
+    <section className="mt-4 rounded-xl border border-[var(--border-warm)] bg-[var(--highlight)] px-5 py-4 shadow-[0_14px_36px_-34px_rgba(40,32,27,0.32)]">
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)] lg:items-start">
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.26em] text-[var(--copper-light)]">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.26em] text-[var(--copper)]">
             {eyebrow}
           </p>
-          <h2 className="mt-3 text-xl font-semibold tracking-tight text-white">
+          <h2 className="mt-2 text-base font-semibold tracking-tight text-[var(--text-primary)]">
             {title}
           </h2>
-          <p className="mt-2 text-sm leading-6 text-white/72">{description}</p>
+          <p className="mt-2 text-sm leading-6 text-[var(--text-secondary)]">
+            {description}
+          </p>
         </div>
         <dl className="grid gap-3 sm:grid-cols-3">
           {items.map((item) => (
             <div
               key={item.label}
-              className="rounded-lg border border-white/10 bg-white/[0.07] px-3.5 py-3"
+              className="rounded-lg border border-[var(--border-warm)] bg-white px-3.5 py-3"
             >
-              <dt className="text-[10px] font-semibold uppercase tracking-[0.18em] text-white/54">
+              <dt className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--text-muted)]">
                 {item.label}
               </dt>
-              <dd className="mt-2 text-sm font-semibold leading-5 text-white">
+              <dd className="mt-2 text-sm font-semibold leading-5 text-[var(--text-primary)]">
                 {item.value}
               </dd>
             </div>

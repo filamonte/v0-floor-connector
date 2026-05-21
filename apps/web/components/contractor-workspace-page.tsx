@@ -77,9 +77,18 @@ export function ContractorWorkspacePage({
             <div className="xl:max-w-[560px] xl:flex-shrink-0">{summary}</div>
           ) : null}
         </div>
-      </section>
 
-      {commandBar ? <WorkspaceCommandBar {...commandBar} /> : null}
+        {commandBar ? (
+          <div
+            className={[
+              "mt-3 border-t pt-3",
+              darkHeader ? "border-white/12" : "border-[var(--border-warm)]"
+            ].join(" ")}
+          >
+            <WorkspaceCommandBar {...commandBar} embedded />
+          </div>
+        ) : null}
+      </section>
 
       {children}
     </div>

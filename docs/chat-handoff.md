@@ -134,6 +134,13 @@ Current work should generally preserve the implemented operational core while ti
 - This was browser QA only. No app code, schema, migrations, RLS, Supabase logic, route protection, auth behavior, server actions, payment/signature logic, estimate/invoice math, readiness gates, portal grants, settings behavior, platform-admin logic, or canonical workflow relationships changed.
 - Next recommended step: push `main` after the docs-only QA commit.
 
+## Latest Unified Header Architecture Cleanup
+
+- [docs/design/stitch/unified-header-architecture-cleanup.md](C:/FloorConnector/docs/design/stitch/unified-header-architecture-cleanup.md) records the focused cleanup for post-Stitch stacked header/chrome drift.
+- Shared manager command controls now embed inside `ContractorWorkspacePage` instead of rendering as a separate command-card header below the page title.
+- Project, commercial document, field execution, and portal trust bands were softened into supporting summary panels where they sit below an existing page/record identity area.
+- This was a UI structure and visual hierarchy cleanup only. No schema, routes, server actions, auth, RLS, tenant logic, payments, signatures, estimate math, invoice math, job readiness gates, portal grants, settings behavior, platform-admin logic, data loaders, or canonical workflow relationships were intentionally changed.
+
 ## Latest Financial / Reporting Expansion Checkpoint
 
 - Financials Home and Accounts Receivable now share a tenant-scoped collections read model over canonical `invoices`, `payments`, and immutable `payment_events`.

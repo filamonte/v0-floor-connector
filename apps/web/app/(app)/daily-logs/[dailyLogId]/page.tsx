@@ -253,7 +253,7 @@ export default async function DailyLogDetailPage({
             />
 
             <FieldExecutionCommandBand
-              title="Daily execution command"
+              title="Daily execution summary"
               description="Review the project-day record, field observations, attachments, and labor continuity without creating a separate field evidence system."
               statusLabel={`${formatStatusLabel(dailyLog.status)} log`}
               projectHref={`/projects/${dailyLog.projectId}`}
