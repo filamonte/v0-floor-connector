@@ -73,6 +73,12 @@ import {
   type ProjectPulseSummary,
   type ProjectPulseTone
 } from "@/lib/projectpulse/summary";
+import {
+  deriveProofCenterSummary,
+  type ProofCenterItemTone,
+  type ProofCenterSummary,
+  type ProofCenterTone
+} from "@/lib/proofcenter/summary";
 import { getOperationalCuesForProject } from "@/lib/operational-cues/data";
 import { requireAuthenticatedUser } from "@/lib/auth/session";
 import {
@@ -845,6 +851,179 @@ function CloseoutTrailSection({ summary }: { summary: CloseoutTrailSummary }) {
       <div className="border-t border-[var(--border-warm)] px-4 py-3 sm:px-5">
         <div className="grid gap-3 text-xs leading-5 text-[var(--text-secondary)] sm:grid-cols-2 lg:grid-cols-4">
           {proofCounts.map((item) => (
+            <div
+              key={item.label}
+              className="rounded-md border border-[var(--border-warm)] bg-[var(--highlight)] px-3 py-2"
+            >
+              <p className="font-semibold uppercase tracking-[0.14em]">
+                {item.label}
+              </p>
+              <p className="mt-1 text-base font-semibold text-[var(--text-primary)]">
+                {item.value}
+              </p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function getProofCenterToneClassName(tone: ProofCenterTone) {
+  switch (tone) {
+    case "ready":
+      return "border-emerald-200 bg-emerald-50 text-emerald-950";
+    case "attention":
+      return "border-amber-200 bg-amber-50 text-amber-950";
+    case "missing":
+      return "border-rose-200 bg-rose-50 text-rose-950";
+    case "neutral":
+      return "border-[var(--border-warm)] bg-white text-[var(--text-primary)]";
+  }
+}
+
+function getProofCenterItemClassName(tone: ProofCenterItemTone) {
+  switch (tone) {
+    case "ready":
+      return "border-emerald-200 bg-emerald-50 text-emerald-950";
+    case "attention":
+      return "border-amber-200 bg-amber-50 text-amber-950";
+    case "missing":
+      return "border-rose-200 bg-rose-50 text-rose-950";
+    case "neutral":
+      return "border-[var(--border-warm)] bg-white text-[var(--text-secondary)]";
+  }
+}
+
+function getProofCenterStatusLabel(tone: ProofCenterTone) {
+  switch (tone) {
+    case "ready":
+      return "Proof connected";
+    case "attention":
+      return "Needs review";
+    case "missing":
+      return "Proof missing";
+    case "neutral":
+      return "Building proof";
+  }
+}
+
+function ProofCenterSection({ summary }: { summary: ProofCenterSummary }) {
+  const countTiles = [
+    {
+      label: "Commercial",
+      value: `${summary.counts.estimates} estimates / ${summary.counts.contracts} contracts`
+    },
+    {
+      label: "Signed",
+      value: `${summary.counts.signedContracts} contracts`
+    },
+    {
+      label: "Billing",
+      value: `${summary.counts.invoices} invoices / ${summary.counts.paymentTrailItems} events`
+    },
+    {
+      label: "Field proof",
+      value: `${summary.counts.dailyJobLogs} logs / ${summary.counts.evidenceItems} files`
+    },
+    {
+      label: "Customer Access",
+      value: `${summary.counts.customerAccessItems} contacts`
+    }
+  ];
+
+  return (
+    <section id="proofcenter" className={projectWorkspacePanelClassName}>
+      <div
+        className={`${projectWorkspacePanelHeaderClassName} px-4 py-4 sm:px-5`}
+      >
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+          <div className="min-w-0">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--copper)]">
+              Proof Center
+            </p>
+            <h3 className="mt-2 text-lg font-semibold tracking-tight text-[var(--text-primary)]">
+              Project document and evidence index
+            </h3>
+            <p className="mt-2 max-w-[72ch] text-sm leading-6 text-[var(--text-secondary)]">
+              {summary.primaryMessage}
+            </p>
+          </div>
+          <div className="flex flex-col gap-2 sm:flex-row lg:flex-col lg:items-end">
+            <span
+              className={[
+                "inline-flex rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em]",
+                getProofCenterToneClassName(summary.proofTone)
+              ].join(" ")}
+            >
+              {getProofCenterStatusLabel(summary.proofTone)}
+            </span>
+            <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--text-tertiary)]">
+              Proof Next Move
+            </span>
+            <Link
+              href={summary.nextMove.href}
+              className={primaryActionClassName}
+            >
+              {summary.nextMove.label}
+            </Link>
+          </div>
+        </div>
+
+        <div className="mt-4 rounded-lg border border-[var(--border-warm)] bg-white px-4 py-3 text-sm leading-6 text-[var(--text-secondary)]">
+          <p className="font-semibold text-[var(--text-primary)]">
+            {summary.nextMove.reason}
+          </p>
+          {summary.missingProofItems.length > 0 ? (
+            <ul className="mt-3 grid gap-2 md:grid-cols-2">
+              {summary.missingProofItems.slice(0, 2).map((item) => (
+                <li
+                  key={item}
+                  className="rounded-md border border-[var(--border-warm)] bg-[var(--highlight)] px-3 py-2"
+                >
+                  {item}
+                </li>
+              ))}
+            </ul>
+          ) : null}
+        </div>
+      </div>
+
+      <div className="grid gap-px bg-[var(--border-warm)] lg:grid-cols-5">
+        {summary.sections.map((section) => (
+          <article key={section.id} className="bg-white px-4 py-4 sm:px-5">
+            <h4 className="text-sm font-semibold text-[var(--text-primary)]">
+              {section.title}
+            </h4>
+            <div className="mt-3 grid gap-3">
+              {section.items.map((item) => (
+                <Link
+                  key={item.id}
+                  href={item.href}
+                  className={[
+                    "rounded-lg border px-3 py-3 text-sm leading-6 transition hover:border-[var(--copper)] hover:bg-white",
+                    getProofCenterItemClassName(item.tone)
+                  ].join(" ")}
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <p className="font-semibold">{item.label}</p>
+                    <span className="rounded-full border border-current/20 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] opacity-80">
+                      {item.status}
+                    </span>
+                  </div>
+                  <p className="mt-2 text-xs leading-5 opacity-80">
+                    {item.detail}
+                  </p>
+                </Link>
+              ))}
+            </div>
+          </article>
+        ))}
+      </div>
+
+      <div className="border-t border-[var(--border-warm)] px-4 py-3 sm:px-5">
+        <div className="grid gap-3 text-xs leading-5 text-[var(--text-secondary)] sm:grid-cols-2 lg:grid-cols-5">
+          {countTiles.map((item) => (
             <div
               key={item.label}
               className="rounded-md border border-[var(--border-warm)] bg-[var(--highlight)] px-3 py-2"
@@ -2905,6 +3084,61 @@ export default async function ProjectDetailPage({
         ? `/warranty-documents/${projectWarrantyDocuments[0].id}`
         : `/service-tickets?projectId=${project.id}`
   });
+  const proofCenter = deriveProofCenterSummary({
+    projectId: project.id,
+    estimates: projectEstimates.map((estimate) => ({
+      id: estimate.id,
+      status: estimate.status
+    })),
+    contracts: projectContracts.map((contract) => ({
+      id: contract.id,
+      status: contract.status
+    })),
+    invoices: projectInvoices.map((invoice) => ({
+      id: invoice.id,
+      status: invoice.status
+    })),
+    changeOrders: projectChangeOrders.map((changeOrder) => ({
+      id: changeOrder.id,
+      status: changeOrder.status
+    })),
+    jobs: projectJobs.map((job) => ({
+      id: job.id,
+      dispatchStatus: job.dispatchStatus
+    })),
+    fieldTrail,
+    messageCenter,
+    customerAccessCount: projectVisiblePortalGrants.length,
+    warrantyDocumentCount: projectWarrantyDocuments.length,
+    serviceTicketCount: projectServiceTickets.length,
+    closeoutReady: closeoutTrail.closeoutTone === "ready",
+    latestEstimateHref: projectEstimates[0]
+      ? `/estimates/${projectEstimates[0].id}`
+      : buildProjectEstimateCreateHref(
+          project.id,
+          project.customerId,
+          projectOpportunity?.id
+        ),
+    latestContractHref: projectContracts[0]
+      ? `/contracts/${projectContracts[0].id}`
+      : approvedEstimateId
+        ? `/contracts?estimateId=${approvedEstimateId}`
+        : "/contracts",
+    latestInvoiceHref: projectInvoices[0]
+      ? `/invoices/${projectInvoices[0].id}`
+      : `/invoices?projectId=${project.id}`,
+    latestChangeOrderHref: projectChangeOrders[0]
+      ? `/change-orders/${projectChangeOrders[0].id}`
+      : "/change-orders",
+    dailyLogsHref: `/daily-logs?projectId=${project.id}`,
+    fieldTrailHref: "#fieldtrail",
+    messageCenterHref: "#messagecenter",
+    customerAccessHref: `/people?accessCustomerId=${project.customerId}#customer-access`,
+    warrantyServiceHref:
+      projectWarrantyDocuments.length > 0
+        ? `/warranty-documents/${projectWarrantyDocuments[0].id}`
+        : `/service-tickets?projectId=${project.id}`
+  });
   const recentPayments = (paymentFocusInvoice?.payments ?? []).slice(0, 4);
   const currentBillableValue = projectProgressBilling.reduce(
     (sum, workspace) => sum + Number(workspace.currentBillableTotal),
@@ -4844,6 +5078,8 @@ export default async function ProjectDetailPage({
         </ExecutionSection>
 
         <CloseoutTrailSection summary={closeoutTrail} />
+
+        <ProofCenterSection summary={proofCenter} />
 
         <DetailPanel
           title="Financial Hub"

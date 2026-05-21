@@ -51,6 +51,14 @@ Current work should generally preserve the implemented operational core while ti
 - communications, automation, and AI assistance as layers on canonical records
 - GateKeeper planning as a future operational memory and intelligence layer, not as implemented product behavior
 
+## Latest Proof Center Phase 1
+
+- [docs/design/proof-center-phase-1-project-document-evidence-index.md](C:/FloorConnector/docs/design/proof-center-phase-1-project-document-evidence-index.md) records the first Proof Center implementation.
+- Project Workspace now includes a read-only Proof Center below CloseoutTrail and before the Financial Hub. It indexes existing estimates, contracts, change orders, Signature Trail, Send Trail, Customer Access, invoices, Payment Trail, Daily Job Logs, Job Notes, field evidence, warranty documents, and service tickets.
+- The new `apps/web/lib/proofcenter/summary.ts` helper derives proof tone, proof categories, missing proof items, counts, and a deterministic Proof Next Move from existing Project Workspace data only.
+- This did not add schema, migrations, routes, uploads, full document management, provider sends, portal-only proof copies, AI summaries, automation, payment/signature behavior, estimate/invoice math changes, auth/RLS/tenant changes, portal grants, settings changes, or platform-admin logic.
+- Browser QA for protected detail routes should still be treated as conditional while local Supabase Auth rate limits are active; static validation and focused summary tests are the reliable check for this read-only slice until auth is available.
+
 ## Latest Product Language Phase 1
 
 - [docs/product-language.md](C:/FloorConnector/docs/product-language.md) now defines the controlled user-facing terminology layer for FloorConnector. Phase 1 approved names include GateKeeper, Next Move, Command Center, Ready Check, Cost Library, Payment Trail, Signature Trail, Customer Access, Company Controls, Platform Control Room, Starter Settings, and Feature Controls.
