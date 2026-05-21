@@ -31,14 +31,20 @@ export function ScheduleJobForm({
 
   return (
     <div className="space-y-4">
-      <SaveStateForm action={action} pendingLabel="Saving..." className="space-y-5">
+      <SaveStateForm
+        action={action}
+        pendingLabel="Saving..."
+        className="space-y-5"
+      >
         <input type="hidden" name="jobId" value={job.id} />
-        {redirectTo ? <input type="hidden" name="redirectTo" value={redirectTo} /> : null}
+        {redirectTo ? (
+          <input type="hidden" name="redirectTo" value={redirectTo} />
+        ) : null}
 
         <QuickCreateFormShell
           eyebrow="Schedule"
           title="Update schedule"
-          description="Keep timing, day-of-work notes, and dispatch state directly on the canonical job record."
+          description="Keep timing, day-of-work notes, and dispatch state directly on the job."
           footer="This updates the same shared job used by project continuity, time tracking, daily logs, and billing follow-through."
         >
           <div className="grid gap-4">
@@ -63,7 +69,11 @@ export function ScheduleJobForm({
                 <input
                   type="datetime-local"
                   name="scheduledStartAt"
-                  defaultValue={job.scheduledStartAt ? job.scheduledStartAt.slice(0, 16) : ""}
+                  defaultValue={
+                    job.scheduledStartAt
+                      ? job.scheduledStartAt.slice(0, 16)
+                      : ""
+                  }
                   className="w-full rounded-[4px] border border-[#d6d6d6] bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-[#ef7d32]"
                 />
               </label>
@@ -75,7 +85,9 @@ export function ScheduleJobForm({
                 <input
                   type="datetime-local"
                   name="scheduledEndAt"
-                  defaultValue={job.scheduledEndAt ? job.scheduledEndAt.slice(0, 16) : ""}
+                  defaultValue={
+                    job.scheduledEndAt ? job.scheduledEndAt.slice(0, 16) : ""
+                  }
                   className="w-full rounded-[4px] border border-[#d6d6d6] bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-[#ef7d32]"
                 />
               </label>
@@ -106,7 +118,9 @@ export function ScheduleJobForm({
       {canUnschedule ? (
         <form action={unscheduleAction}>
           <input type="hidden" name="jobId" value={job.id} />
-          {redirectTo ? <input type="hidden" name="redirectTo" value={redirectTo} /> : null}
+          {redirectTo ? (
+            <input type="hidden" name="redirectTo" value={redirectTo} />
+          ) : null}
           <button
             type="submit"
             className="inline-flex w-full items-center justify-center rounded-[4px] border border-[#d6d6d6] bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50"

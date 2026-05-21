@@ -4,7 +4,8 @@ export type ScheduleViewKey =
   | "scheduled"
   | "today"
   | "upcoming"
-  | "in_progress";
+  | "in_progress"
+  | "completed";
 export type CrewViewKey = "all" | "assigned" | "unassigned";
 export type ScheduleLayoutKey = "week" | "day" | "board";
 export type ScheduleActionKey = "schedule" | "assign";

@@ -63,17 +63,21 @@ export function ScheduleCrewAssignmentForm({
         <input type="hidden" name="jobId" value={jobId} />
         <input type="hidden" name="projectId" value={projectId} />
         <input type="hidden" name="estimateId" value={estimateId ?? ""} />
-        {redirectTo ? <input type="hidden" name="redirectTo" value={redirectTo} /> : null}
+        {redirectTo ? (
+          <input type="hidden" name="redirectTo" value={redirectTo} />
+        ) : null}
 
         <QuickCreateFormShell
           eyebrow="Crew assignment"
           title="Assign crew"
-          description="Keep assignment on the same canonical job record so schedule, labor, and downstream daily execution stay connected."
+          description="Keep assignment on the same job so schedule, labor, and downstream daily execution stay connected."
           footer="Select either one workforce person or one subcontractor vendor for each assignment."
         >
           <div className="grid gap-4">
             <label className="block">
-              <span className="mb-2 block text-sm font-medium text-slate-800">Crew member</span>
+              <span className="mb-2 block text-sm font-medium text-slate-800">
+                Crew member
+              </span>
               <select
                 name="personId"
                 defaultValue=""
@@ -107,7 +111,9 @@ export function ScheduleCrewAssignmentForm({
             </label>
 
             <label className="block">
-              <span className="mb-2 block text-sm font-medium text-slate-800">Role</span>
+              <span className="mb-2 block text-sm font-medium text-slate-800">
+                Role
+              </span>
               <select
                 name="role"
                 defaultValue="crew"
@@ -156,7 +162,8 @@ export function ScheduleCrewAssignmentForm({
             Current crew
           </p>
           <p className="mt-1 text-sm leading-6 text-slate-500">
-            Review or remove current assignment rows here without leaving the shared schedule surface.
+            Review or remove current assignment rows here without leaving the
+            shared schedule surface.
           </p>
         </div>
 
@@ -178,7 +185,8 @@ export function ScheduleCrewAssignmentForm({
                   </p>
                   {assignment.assignedStartAt || assignment.assignedEndAt ? (
                     <p className="mt-1 text-sm leading-6 text-slate-500">
-                      {formatAssignmentDateTime(assignment.assignedStartAt) ?? "Start not set"}
+                      {formatAssignmentDateTime(assignment.assignedStartAt) ??
+                        "Start not set"}
                       {assignment.assignedEndAt
                         ? ` to ${formatAssignmentDateTime(assignment.assignedEndAt)}`
                         : ""}
@@ -192,9 +200,17 @@ export function ScheduleCrewAssignmentForm({
 
                 <form action={unassignAction}>
                   <input type="hidden" name="jobId" value={jobId} />
-                  <input type="hidden" name="assignmentId" value={assignment.id} />
+                  <input
+                    type="hidden"
+                    name="assignmentId"
+                    value={assignment.id}
+                  />
                   <input type="hidden" name="projectId" value={projectId} />
-                  <input type="hidden" name="estimateId" value={estimateId ?? ""} />
+                  <input
+                    type="hidden"
+                    name="estimateId"
+                    value={estimateId ?? ""}
+                  />
                   {redirectTo ? (
                     <input type="hidden" name="redirectTo" value={redirectTo} />
                   ) : null}
@@ -209,7 +225,8 @@ export function ScheduleCrewAssignmentForm({
             ))
           ) : (
             <div className="px-4 py-4 text-sm leading-6 text-slate-500">
-              No crew assignments are attached yet. Add people or labor-provider vendors here once the schedule commitment is set.
+              No crew assignments are attached yet. Add people or labor-provider
+              vendors here once the schedule commitment is set.
             </div>
           )}
         </div>

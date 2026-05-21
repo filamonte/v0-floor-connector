@@ -52,10 +52,10 @@ export const navigationSections: readonly NavigationSection[] = [
       },
       {
         key: "schedule",
-        label: "Schedule",
+        label: "CrewBoard",
         href: "/schedule",
         description:
-          "Check scheduled work, near-term dates, and production flow.",
+          "Check scheduled work, crew coverage, and production flow.",
         minRole: "member",
         status: "live"
       },

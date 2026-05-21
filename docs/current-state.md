@@ -1490,25 +1490,26 @@ Current invoice design notes:
   - review-first summary of recorded, pending, failed, and open collection activity
   - continuity back into the same canonical invoice, customer, and project chain
   - immutable payment-event visibility without replacing invoice detail as billing truth
-- a first contractor-side schedule Manager Page now exists on top of the canonical job model:
-  - review-first summary of unscheduled, today, in-progress, and upcoming work
+- a first contractor-side CrewBoard scheduling workspace now exists on the existing `/schedule` route on top of the canonical job model:
+  - review-first summary of Needs Scheduling, today, in-progress, Missing Crew, upcoming work, and recently done work
   - explicit schedule-view and crew-filter state normalization on the same `/schedule` surface
   - optional `projectId` URL filtering for project-scoped schedule handoff, applied directly against canonical `jobs.project_id` while still allowing `q` text search to narrow the same result set
   - optional `jobId` plus `action=schedule|assign` URL context for opening the existing schedule action panel on a canonical job, with project-scoped single-job inference for older ready-to-schedule handoffs that arrive without `jobId`
   - optional `projectId` URL filtering on `/jobs`, applied directly against canonical `jobs.project_id` while preserving view, search, and Quick-Create handoff state
   - compact active-filter banner on `/schedule` for project, search, crew, and selected job/action handoff state, with per-filter clear links that preserve the remaining query context
-  - next-actions guidance for jobs that need scheduling, crew assignment, or immediate attention
+  - Next Move guidance for jobs that need scheduling, crew assignment, immediate attention, upcoming review, or completed-job closeout handoff
   - cross-job visibility into crew assignment state using canonical `job_assignments`
   - clearer distinction between unscheduled work, scheduled work, and scheduled jobs that still need crew
-  - calendar-oriented planner depth on the same `/schedule` surface:
+  - CrewBoard planner depth on the same `/schedule` surface:
     - bounded week planner
     - day focus view
-    - board layout grouped into operational timing lanes for unscheduled ready work, today, tomorrow, next-seven-day work, later scheduled work, and in-progress jobs
+    - board layout grouped into operational timing lanes for Needs Scheduling, today, tomorrow, upcoming work, later scheduled work, in-progress jobs, Missing Crew, and Completed / Recently Done
   - scheduled jobs render from the same canonical job scheduling fields without introducing a separate scheduling model
 - inline schedule and crew-assignment action panel that reuses the existing job scheduling and assignment server actions
 - crew assignment can now be reviewed and unassigned directly from the same `/schedule` action panel, without leaving the canonical job and `job_assignments` chain
 - the `/schedule` action panel now blocks crew attachment until the job has a real date commitment and points users back to people, vendors, job, and Project Workspaces when the next prerequisite is elsewhere
 - quick links back into the same canonical job and Project Workspaces instead of a separate dispatch subsystem
+- CrewBoard Phase 1 is documented in [docs/design/crewboard-phase-1.md](C:/FloorConnector/docs/design/crewboard-phase-1.md); drag/drop, route optimization, external calendar sync, automated dispatch, notifications, AI scheduling, and map views remain future work
 
 ### Appointments
 

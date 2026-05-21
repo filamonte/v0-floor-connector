@@ -39,6 +39,7 @@ The database can stay boring. The product should speak human.
 | Platform Control Room | Super-admin/platform control surfaces.                               | Platform admin shell and high-level admin labels.                    | Tenant-level contractor settings.                                        |
 | Starter Settings      | Platform-owned defaults inherited or adopted by contractor accounts. | Super-admin platform defaults.                                       | Organization-owned copied settings.                                      |
 | Feature Controls      | Module/feature control surfaces.                                     | Settings and super-admin module-control labels.                      | Entitlement enforcement code unless explicitly implemented.              |
+| CrewBoard             | Schedule board and crew-visibility workspace.                        | The protected `/schedule` workspace and navigation label.            | Route renames, new dispatch models, or drag/drop promises.               |
 
 ## Terms To Avoid In User-Facing UI
 
@@ -85,7 +86,6 @@ implemented yet:
 - Watchlist: attention items that require review.
 - Send Trail: document send/delivery history.
 - Field Trail: daily logs, notes, photos, and field history.
-- CrewBoard: schedule board / dispatch surface.
 - Shared Projects: portal project access.
 - Scope Builder: estimate builder.
 - Version History: record revisions.

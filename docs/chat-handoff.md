@@ -154,6 +154,15 @@ Current work should generally preserve the implemented operational core while ti
 - The dashboard command card was removed from `ContractorDashboardSurface`; dashboard content now starts with real operational sections, and queue search is scoped to the Work Queues section.
 - This was a shell/dashboard UI-structure cleanup only. No schema, routes, server actions, auth, RLS, tenant logic, payments, signatures, estimate math, invoice math, job readiness gates, portal grants, settings behavior, platform-admin logic, data loaders, or canonical workflow relationships were intentionally changed.
 
+## Latest CrewBoard Phase 1 Scheduling Workspace
+
+- [docs/design/crewboard-phase-1.md](C:/FloorConnector/docs/design/crewboard-phase-1.md) records the first CrewBoard implementation slice on the existing `/schedule` route.
+- `/schedule` now presents as `CrewBoard`, and contractor navigation labels the existing route `CrewBoard` without renaming the path.
+- CrewBoard summarizes Needs Scheduling, scheduled today, in progress, Missing Crew, upcoming work, and recently done work from existing jobs, appointments, job assignments, people, vendors, projects, and customers.
+- The existing schedule/unschedule and crew assign/unassign server actions remain the only write paths; the selected-job action panel is preserved.
+- GateKeeper / Ready Check language explains schedule blockers while preserving the existing server-side readiness checks.
+- This pass did not add schema, migrations, routes, new schedule/dispatch/crew tables, new server actions, auth/RLS changes, tenant-scope changes, payment/signature behavior, estimate/invoice math, portal grants, settings behavior, platform-admin logic, drag/drop, automation, notifications, route optimization, or external calendar sync.
+
 ## Latest Financial / Reporting Expansion Checkpoint
 
 - Financials Home and Accounts Receivable now share a tenant-scoped collections read model over canonical `invoices`, `payments`, and immutable `payment_events`.
