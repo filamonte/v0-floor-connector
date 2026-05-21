@@ -126,6 +126,14 @@ Current work should generally preserve the implemented operational core while ti
 - No additional app-code consolidation was made in Phase 10 because the inspected domain-specific primitives were clear enough to review as-is. Remaining work should be targeted bugfix, manual/browser QA, screenshot evidence, or commit preparation rather than another broad visual expansion.
 - Next recommended pass: `Google Stitch UI Adoption - Commit Preparation and Final Review`.
 
+## Latest Stitch Browser Demo QA
+
+- [docs/design/stitch/browser-demo-qa-2026-05-21.md](C:/FloorConnector/docs/design/stitch/browser-demo-qa-2026-05-21.md) records the browser/demo QA pass for commit `3a949ee5`.
+- Local QA ran against `http://localhost:3001` with contractor, platform-admin, and portal Playwright auth states. The first protected smoke found stale contractor auth and was corrected by refreshing `playwright/.auth/local-user.json` with `pnpm.cmd e2e:auth`.
+- The rerun loaded Dashboard, Projects Manager, Project Workspace, Estimate/Contract/Invoice details, Job Workspace, Daily Log Workspace, Settings, Super Admin, Portal Home, Portal Project Workspace, Portal Contract Review, and Portal Invoice Review without page errors, relevant console errors, login redirects, visible Stitch artifact text, or page-level horizontal overflow at checked desktop/narrow widths.
+- This was browser QA only. No app code, schema, migrations, RLS, Supabase logic, route protection, auth behavior, server actions, payment/signature logic, estimate/invoice math, readiness gates, portal grants, settings behavior, platform-admin logic, or canonical workflow relationships changed.
+- Next recommended step: push `main` after the docs-only QA commit.
+
 ## Latest Financial / Reporting Expansion Checkpoint
 
 - Financials Home and Accounts Receivable now share a tenant-scoped collections read model over canonical `invoices`, `payments`, and immutable `payment_events`.
