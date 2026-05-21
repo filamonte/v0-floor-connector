@@ -59,6 +59,12 @@ Current work should generally preserve the implemented operational core while ti
 - This did not add schema, migrations, routes, uploads, full document management, provider sends, portal-only proof copies, AI summaries, automation, payment/signature behavior, estimate/invoice math changes, auth/RLS/tenant changes, portal grants, settings changes, or platform-admin logic.
 - Browser QA for protected detail routes should still be treated as conditional while local Supabase Auth rate limits are active; static validation and focused summary tests are the reliable check for this read-only slice until auth is available.
 
+## Latest Local Auth QA Recovery
+
+- [docs/local-auth-qa-recovery.md](C:/FloorConnector/docs/local-auth-qa-recovery.md) documents the local protected-route QA recovery path for Supabase Auth rate limits, stale Playwright storage state, base-URL mismatch, and stale fixed fixture IDs.
+- `e2e/project-detail-ui.spec.js` now resolves a project detail route from the authenticated `/projects` index when `FLOORCONNECTOR_E2E_PROJECT_DETAIL_PATH` is not explicitly set, avoiding the old stale hardcoded project fallback.
+- This was a local QA/dev-environment reliability pass only. It did not change production auth behavior, schema, migrations, RLS, tenant logic, app route structure, server actions, payments, signatures, estimate math, invoice math, portal grants, settings, platform-admin logic, or canonical workflow relationships.
+
 ## Latest Product Language Phase 1
 
 - [docs/product-language.md](C:/FloorConnector/docs/product-language.md) now defines the controlled user-facing terminology layer for FloorConnector. Phase 1 approved names include GateKeeper, Next Move, Command Center, Ready Check, Cost Library, Payment Trail, Signature Trail, Customer Access, Company Controls, Platform Control Room, Starter Settings, and Feature Controls.

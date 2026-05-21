@@ -32,6 +32,7 @@ Environment notes:
 Available setup guides:
 
 - `docs/auth-setup.md` for the planned shared auth model, Google-first plus email/password support, redirect URL expectations, and local auth verification routes.
+- `docs/local-auth-qa-recovery.md` for recovering local protected-route browser QA when Supabase Auth rate limits, stale Playwright storage state, or stale fixed fixture IDs block detail-route verification.
 
 Document roles:
 

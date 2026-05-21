@@ -285,6 +285,12 @@ Running protected specs through `pnpm e2e` also runs the setup project first. If
 
 If a protected smoke reaches `/login`, the saved storage state is missing, stale, or rejected for the current app URL. Refresh it with `pnpm e2e:auth` using the same `PLAYWRIGHT_BASE_URL` as the smoke run. Do not count the login page as successful protected QA.
 
+If Supabase Auth returns `AuthApiError: Request rate limit reached`, stop
+retrying auth setup and use [docs/local-auth-qa-recovery.md](C:/FloorConnector/docs/local-auth-qa-recovery.md)
+for the cooldown, base-URL, storage-state, and fixture-selection recovery
+checklist. Repeated login attempts can extend the local QA blocker without
+proving anything about the protected route implementation.
+
 If you already have a saved storage-state file, point Playwright to it:
 
 ```bash
