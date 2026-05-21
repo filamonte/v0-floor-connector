@@ -185,6 +185,12 @@ Current work should generally preserve the implemented operational core while ti
 - Project Workspace now includes a read-only MessageCenter section inside the existing Operations Hub. It summarizes project and related-record communication threads/messages, Send Trail delivery events, Signature Trail events, Payment Trail events, Customer Access visibility context, and a Next Move link back into the existing communications or source-record workspace.
 - MessageCenter uses existing `communication_threads`, `communication_messages`, `document_delivery_events`, `contract_signature_events`, `payment_events`, project/customer records, and Customer Access helpers. It does not add schema, migrations, routes, duplicate message/thread/notification/delivery tables, portal-only copies, provider sending behavior, email/SMS changes, webhooks, server actions, automation, AI drafting, auth/RLS, payment/signature/estimate/invoice math, portal grants, settings behavior, or platform-admin logic.
 
+## Latest ProjectPulse Phase 1 Project Health Summary
+
+- [docs/design/projectpulse-phase-1-project-health-summary.md](C:/FloorConnector/docs/design/projectpulse-phase-1-project-health-summary.md) records the first ProjectPulse implementation slice.
+- Project Workspace now includes a read-only ProjectPulse panel near the top of the workspace. It summarizes Ready Check / GateKeeper, CrewBoard, FieldTrail, MessageCenter, commercial, invoice, payment, and signature signals into a deterministic health tone, compact signal cards, linked counts, and a Next Move link.
+- ProjectPulse uses existing project readiness, jobs, invoices, FieldTrail summary, and MessageCenter summary. It does not add schema, migrations, routes, project-health/status tables, activity/event tables, server actions, automation, AI recommendations, auth/RLS, payment/signature/estimate/invoice math, portal grants, settings behavior, or platform-admin logic.
+
 ## Latest Financial / Reporting Expansion Checkpoint
 
 - Financials Home and Accounts Receivable now share a tenant-scoped collections read model over canonical `invoices`, `payments`, and immutable `payment_events`.

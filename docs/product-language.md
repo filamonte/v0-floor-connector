@@ -25,24 +25,25 @@ The database can stay boring. The product should speak human.
 
 ## Approved Product Terms
 
-| Product term          | Meaning                                                              | Use in UI                                                            | Do not use for                                                           |
-| --------------------- | -------------------------------------------------------------------- | -------------------------------------------------------------------- | ------------------------------------------------------------------------ |
-| GateKeeper            | Readiness and workflow enforcement before work can move forward.     | Project readiness, schedule readiness, blockers, pre-handoff checks. | Renaming database tables, server actions, or readiness helper functions. |
-| Next Move             | Suggested next action or deterministic workflow suggestion.          | Project suggestions, My Work suggestions, attention guidance.        | Autonomous AI, fake automation, or unrelated task records.               |
-| Command Center        | Operating summary for a dashboard or project.                        | Dashboard/project summary areas.                                     | Every ordinary page header.                                              |
-| Ready Check           | A focused readiness check for a workflow step.                       | Commercial, deposit, payment, or scheduling readiness copy.          | Legal/payment state names where precision matters.                       |
-| Cost Library          | Reusable cost items, systems, and optional inventory workspace.      | Navigation and Cost Items Database surfaces.                         | Route paths or database model names.                                     |
-| Payment Trail         | Payment event/history review.                                        | Invoice and payment evidence sections.                               | Payment calculation fields or provider payload names.                    |
-| Signature Trail       | Contract signature event/history review.                             | Contract signature history sections.                                 | Signature actions, signer roles, or provider event enums.                |
-| Customer Access       | Customer-visible project or record access.                           | Portal visibility and access-grant copy.                             | Internal auth, RLS, or invite-token implementation names.                |
-| Company Controls      | Contractor settings/admin surfaces.                                  | Settings shell and visible settings navigation.                      | Route names or internal package names.                                   |
-| Platform Control Room | Super-admin/platform control surfaces.                               | Platform admin shell and high-level admin labels.                    | Tenant-level contractor settings.                                        |
-| Starter Settings      | Platform-owned defaults inherited or adopted by contractor accounts. | Super-admin platform defaults.                                       | Organization-owned copied settings.                                      |
-| Feature Controls      | Module/feature control surfaces.                                     | Settings and super-admin module-control labels.                      | Entitlement enforcement code unless explicitly implemented.              |
-| CrewBoard             | Schedule board and crew-visibility workspace.                        | The protected `/schedule` workspace and navigation label.            | Route renames, new dispatch models, or drag/drop promises.               |
-| FieldTrail            | Project/job field execution history and evidence trail.              | Project Workspace and Job Workspace execution history sections.      | New field-reporting, activity, document, issue, or punchlist models.     |
-| MessageCenter         | Communication timeline and project communication workspace.          | Project Workspace communication history and `/communications`.       | New inbox models, duplicate portal messages, provider sending changes.   |
-| Send Trail            | Document send and delivery history.                                  | Project, estimate, contract, invoice, and warranty delivery review.  | Provider payload fields, webhook code, or fake delivery events.          |
+| Product term          | Meaning                                                              | Use in UI                                                            | Do not use for                                                             |
+| --------------------- | -------------------------------------------------------------------- | -------------------------------------------------------------------- | -------------------------------------------------------------------------- |
+| GateKeeper            | Readiness and workflow enforcement before work can move forward.     | Project readiness, schedule readiness, blockers, pre-handoff checks. | Renaming database tables, server actions, or readiness helper functions.   |
+| Next Move             | Suggested next action or deterministic workflow suggestion.          | Project suggestions, My Work suggestions, attention guidance.        | Autonomous AI, fake automation, or unrelated task records.                 |
+| Command Center        | Operating summary for a dashboard or project.                        | Dashboard/project summary areas.                                     | Every ordinary page header.                                                |
+| Ready Check           | A focused readiness check for a workflow step.                       | Commercial, deposit, payment, or scheduling readiness copy.          | Legal/payment state names where precision matters.                         |
+| Cost Library          | Reusable cost items, systems, and optional inventory workspace.      | Navigation and Cost Items Database surfaces.                         | Route paths or database model names.                                       |
+| Payment Trail         | Payment event/history review.                                        | Invoice and payment evidence sections.                               | Payment calculation fields or provider payload names.                      |
+| Signature Trail       | Contract signature event/history review.                             | Contract signature history sections.                                 | Signature actions, signer roles, or provider event enums.                  |
+| Customer Access       | Customer-visible project or record access.                           | Portal visibility and access-grant copy.                             | Internal auth, RLS, or invite-token implementation names.                  |
+| Company Controls      | Contractor settings/admin surfaces.                                  | Settings shell and visible settings navigation.                      | Route names or internal package names.                                     |
+| Platform Control Room | Super-admin/platform control surfaces.                               | Platform admin shell and high-level admin labels.                    | Tenant-level contractor settings.                                          |
+| Starter Settings      | Platform-owned defaults inherited or adopted by contractor accounts. | Super-admin platform defaults.                                       | Organization-owned copied settings.                                        |
+| Feature Controls      | Module/feature control surfaces.                                     | Settings and super-admin module-control labels.                      | Entitlement enforcement code unless explicitly implemented.                |
+| CrewBoard             | Schedule board and crew-visibility workspace.                        | The protected `/schedule` workspace and navigation label.            | Route renames, new dispatch models, or drag/drop promises.                 |
+| FieldTrail            | Project/job field execution history and evidence trail.              | Project Workspace and Job Workspace execution history sections.      | New field-reporting, activity, document, issue, or punchlist models.       |
+| MessageCenter         | Communication timeline and project communication workspace.          | Project Workspace communication history and `/communications`.       | New inbox models, duplicate portal messages, provider sending changes.     |
+| ProjectPulse          | Project health and Next Move summary from existing project signals.  | Project Workspace health, blocker, and next-action summary sections. | Health score tables, AI recommendations, automation, or new status models. |
+| Send Trail            | Document send and delivery history.                                  | Project, estimate, contract, invoice, and warranty delivery review.  | Provider payload fields, webhook code, or fake delivery events.            |
 
 ## Terms To Avoid In User-Facing UI
 
@@ -66,19 +67,20 @@ architecture names.
 
 ## Terminology Map
 
-| Internal / technical term         | Preferred user-facing term   | Where to use                                                        | Where not to use                              |
-| --------------------------------- | ---------------------------- | ------------------------------------------------------------------- | --------------------------------------------- |
-| Project readiness gate            | GateKeeper                   | Project Workspace, schedule handoff, blocker summaries.             | Database table names, readiness helper names. |
-| Workflow cues / suggested actions | Next Move suggestions        | Dashboard My Work, Project Workspace suggestions, attention panels. | Internal `operational-cues` folders or types. |
-| Operational command center        | Command Center               | Dashboard and project operating summaries.                          | Every manager or detail page.                 |
-| Commercial readiness              | Ready Check                  | Commercial handoff summaries and project facts.                     | Stored enum/status values.                    |
-| Payment events                    | Payment Trail                | Invoice/payment evidence sections.                                  | Provider event mapping or webhook code.       |
-| Contract signature events         | Signature Trail              | Contract signature history sections.                                | Signature provider integration code.          |
-| Portal access grants              | Customer Access              | Contractor/customer access copy.                                    | Access-grant implementation names.            |
-| Cost Items Database               | Cost Library                 | Visible navigation and workspace title.                             | Route path `/cost-items-database`.            |
-| Module controls                   | Feature Controls             | Settings/super-admin visible labels.                                | Low-level entitlement policy code.            |
-| Platform defaults                 | Starter Settings             | Super-admin default settings.                                       | Tenant-owned settings.                        |
-| Tenant/org                        | Company / Contractor Account | Customer-safe or contractor-facing copy.                            | Developer docs and database ownership docs.   |
+| Internal / technical term         | Preferred user-facing term   | Where to use                                                        | Where not to use                               |
+| --------------------------------- | ---------------------------- | ------------------------------------------------------------------- | ---------------------------------------------- |
+| Project readiness gate            | GateKeeper                   | Project Workspace, schedule handoff, blocker summaries.             | Database table names, readiness helper names.  |
+| Workflow cues / suggested actions | Next Move suggestions        | Dashboard My Work, Project Workspace suggestions, attention panels. | Internal `operational-cues` folders or types.  |
+| Operational command center        | Command Center               | Dashboard and project operating summaries.                          | Every manager or detail page.                  |
+| Commercial readiness              | Ready Check                  | Commercial handoff summaries and project facts.                     | Stored enum/status values.                     |
+| Project health summary            | ProjectPulse                 | Project Workspace summary of health, blockers, and Next Move.       | Database status models or health-score tables. |
+| Payment events                    | Payment Trail                | Invoice/payment evidence sections.                                  | Provider event mapping or webhook code.        |
+| Contract signature events         | Signature Trail              | Contract signature history sections.                                | Signature provider integration code.           |
+| Portal access grants              | Customer Access              | Contractor/customer access copy.                                    | Access-grant implementation names.             |
+| Cost Items Database               | Cost Library                 | Visible navigation and workspace title.                             | Route path `/cost-items-database`.             |
+| Module controls                   | Feature Controls             | Settings/super-admin visible labels.                                | Low-level entitlement policy code.             |
+| Platform defaults                 | Starter Settings             | Super-admin default settings.                                       | Tenant-owned settings.                         |
+| Tenant/org                        | Company / Contractor Account | Customer-safe or contractor-facing copy.                            | Developer docs and database ownership docs.    |
 
 ## Candidate Future Names
 

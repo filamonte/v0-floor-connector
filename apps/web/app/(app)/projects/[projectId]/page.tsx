@@ -62,6 +62,11 @@ import {
   deriveMessageCenterSummary,
   type MessageCenterTimelineItem
 } from "@/lib/messagecenter/summary";
+import {
+  deriveProjectPulseSummary,
+  type ProjectPulseSummary,
+  type ProjectPulseTone
+} from "@/lib/projectpulse/summary";
 import { getOperationalCuesForProject } from "@/lib/operational-cues/data";
 import { requireAuthenticatedUser } from "@/lib/auth/session";
 import {
@@ -547,6 +552,142 @@ function getCommandSummaryToneClassName(tone: WorkspaceStateTone = "neutral") {
     case "neutral":
       return "border-[var(--border-warm)] bg-white text-[var(--text-primary)]";
   }
+}
+
+function getProjectPulseToneClassName(tone: ProjectPulseTone) {
+  switch (tone) {
+    case "good":
+      return "border-emerald-200 bg-emerald-50 text-emerald-950";
+    case "attention":
+      return "border-amber-200 bg-amber-50 text-amber-950";
+    case "blocked":
+      return "border-rose-200 bg-rose-50 text-rose-950";
+    case "neutral":
+      return "border-[var(--border-warm)] bg-white text-[var(--text-primary)]";
+  }
+}
+
+function ProjectPulseSection({ summary }: { summary: ProjectPulseSummary }) {
+  const leadItems =
+    summary.blockers.length > 0
+      ? summary.blockers
+      : summary.warnings.length > 0
+        ? summary.warnings
+        : summary.highlights;
+
+  return (
+    <section id="projectpulse" className={projectWorkspacePanelClassName}>
+      <div
+        className={`${projectWorkspacePanelHeaderClassName} px-4 py-4 sm:px-5`}
+      >
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+          <div className="min-w-0">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--copper)]">
+              ProjectPulse
+            </p>
+            <h3 className="mt-2 text-lg font-semibold tracking-tight text-[var(--text-primary)]">
+              Project health and Next Move
+            </h3>
+            <p className="mt-2 max-w-[70ch] text-sm leading-6 text-[var(--text-secondary)]">
+              {summary.primaryMessage}
+            </p>
+          </div>
+          <div className="flex flex-col gap-2 sm:flex-row lg:flex-col lg:items-end">
+            <span
+              className={[
+                "inline-flex rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em]",
+                getProjectPulseToneClassName(summary.healthTone)
+              ].join(" ")}
+            >
+              {summary.stageLabel}
+            </span>
+            <Link
+              href={summary.nextMove.href}
+              className={primaryActionClassName}
+            >
+              {summary.nextMove.label}
+            </Link>
+          </div>
+        </div>
+
+        <div className="mt-4 rounded-lg border border-[var(--border-warm)] bg-white px-4 py-3 text-sm leading-6 text-[var(--text-secondary)]">
+          <p className="font-semibold text-[var(--text-primary)]">
+            {summary.nextMove.reason}
+          </p>
+          {leadItems.length > 0 ? (
+            <ul className="mt-3 grid gap-2 md:grid-cols-2">
+              {leadItems.slice(0, 4).map((item) => (
+                <li
+                  key={item}
+                  className="rounded-md border border-[var(--border-warm)] bg-[var(--highlight)] px-3 py-2"
+                >
+                  {item}
+                </li>
+              ))}
+            </ul>
+          ) : null}
+        </div>
+      </div>
+
+      <div className="grid gap-3 px-4 py-4 sm:px-5 lg:grid-cols-5">
+        {summary.signals.map((signal) => (
+          <Link
+            key={signal.id}
+            href={signal.href}
+            className={[
+              "rounded-lg border px-4 py-3 text-sm leading-6 transition hover:border-[var(--copper)] hover:bg-white",
+              getProjectPulseToneClassName(signal.tone)
+            ].join(" ")}
+          >
+            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] opacity-70">
+              {signal.label}
+            </p>
+            <p className="mt-2 font-semibold">{signal.status}</p>
+            <p className="mt-1 text-xs leading-5 opacity-80">{signal.detail}</p>
+          </Link>
+        ))}
+      </div>
+
+      <div className="border-t border-[var(--border-warm)] px-4 py-3 sm:px-5">
+        <div className="grid gap-3 text-xs leading-5 text-[var(--text-secondary)] sm:grid-cols-2 lg:grid-cols-6">
+          {[
+            { label: "Jobs", value: summary.linkedCounts.jobs },
+            {
+              label: "Open blockers",
+              value: summary.linkedCounts.openBlockers
+            },
+            { label: "Daily Job Logs", value: summary.linkedCounts.dailyLogs },
+            {
+              label: "Communication",
+              value: summary.linkedCounts.communicationItems
+            },
+            {
+              label: "Unpaid invoices",
+              value: summary.linkedCounts.unpaidInvoices
+            },
+            {
+              label: "Signature/Payment",
+              value:
+                summary.linkedCounts.pendingSignatureItems +
+                summary.linkedCounts.paymentAttentionItems
+            }
+          ].map((item) => (
+            <div
+              key={item.label}
+              className="rounded-md border border-[var(--border-warm)] bg-[var(--highlight)] px-3 py-2"
+            >
+              <p className="font-semibold uppercase tracking-[0.14em]">
+                {item.label}
+              </p>
+              <p className="mt-1 text-base font-semibold text-[var(--text-primary)]">
+                {item.value}
+              </p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
 }
 
 function OperationalCommandCenter({
@@ -2523,6 +2664,40 @@ export default async function ProjectDetailPage({
       invoice.status !== "void" &&
       Number(invoice.balanceDueAmount) > 0
   );
+  const projectPulse = deriveProjectPulseSummary({
+    projectId: project.id,
+    readinessSnapshot,
+    readyCheckBlockers: activeBlockers.map((blocker) =>
+      formatBlockerLabel(blocker)
+    ),
+    approvedEstimateId,
+    latestContractId: latestContract?.id ?? null,
+    latestContractStatus: latestContract?.status ?? null,
+    jobs: projectJobs.map((job) => ({
+      id: job.id,
+      dispatchStatus: job.dispatchStatus,
+      scheduledDate: job.scheduledDate
+    })),
+    invoices: projectInvoices.map((invoice) => ({
+      id: invoice.id,
+      status: invoice.status,
+      balanceDueAmount: invoice.balanceDueAmount
+    })),
+    fieldTrail,
+    messageCenter,
+    scheduleHref: buildProjectScheduleHref({
+      projectId: project.id,
+      view:
+        unscheduledJobs.length > 0
+          ? "unscheduled"
+          : activeJobs.length > 0
+            ? "in_progress"
+            : "all",
+      action: unscheduledJobs.length > 0 ? "schedule" : undefined,
+      jobId: unscheduledJobs.length === 1 ? unscheduledJobs[0].id : undefined
+    }),
+    todayIsoDate: new Date().toISOString().slice(0, 10)
+  });
   const recentPayments = (paymentFocusInvoice?.payments ?? []).slice(0, 4);
   const currentBillableValue = projectProgressBilling.reduce(
     (sum, workspace) => sum + Number(workspace.currentBillableTotal),
@@ -3320,6 +3495,8 @@ export default async function ProjectDetailPage({
               }
               summaryItems={commandSummaryItems}
             />
+
+            <ProjectPulseSection summary={projectPulse} />
 
             <OperationalGuidanceSection
               title="Command Center summary"
