@@ -8,10 +8,13 @@ import { NextActionCard } from "@/components/next-action-card";
 import {
   PortalSecondaryLink,
   PortalStatusBadge,
+  PortalTrustStrip,
   portalHeroPanelClassName,
   portalInsetPanelClassName,
   portalReviewCardClassName,
-  portalStatePanelClassName
+  portalStatePanelClassName,
+  portalSummaryItemClassName,
+  portalSummaryLabelClassName
 } from "@/components/portal-review-ui";
 import { WorkspaceSummaryBand } from "@/components/workspace-summary-band";
 import {
@@ -425,6 +428,26 @@ export default async function PortalProjectDetailPage({
             }
           />
 
+          <PortalTrustStrip
+            eyebrow="Live shared project"
+            title="One customer view into this project chain"
+            description="Estimates, contracts, change orders, warranties, and invoices shown here stay connected to the same canonical project record."
+            items={[
+              {
+                label: "Estimate",
+                value: formatStatusLabel(project.latestEstimateStatus)
+              },
+              {
+                label: "Contract",
+                value: formatStatusLabel(project.latestContractStatus)
+              },
+              {
+                label: "Invoice",
+                value: formatStatusLabel(project.latestInvoiceStatus)
+              }
+            ]}
+          />
+
           <div className="mt-10 space-y-5">
             <div className="grid gap-5 xl:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)]">
               <section className={portalStatePanelClassName}>
@@ -494,6 +517,8 @@ export default async function PortalProjectDetailPage({
 
               <WorkspaceSummaryBand
                 className="grid gap-3 sm:grid-cols-2"
+                itemClassName={portalSummaryItemClassName}
+                labelClassName={portalSummaryLabelClassName}
                 items={[
                   {
                     key: "next-action",

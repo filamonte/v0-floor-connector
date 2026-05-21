@@ -29,21 +29,29 @@ export function ContractorWorkspacePage({
   const darkHeader = headerTone === "dark";
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-3">
       <section
         className={[
-          "border px-4 py-2.5 sm:px-5",
+          "overflow-hidden rounded-lg border px-4 py-3 shadow-[0_16px_44px_-38px_rgba(31,41,55,0.48)] sm:px-5",
           darkHeader
-            ? "border-[var(--graphite)] bg-[var(--graphite)] text-white"
-            : "border-[var(--border-warm)] bg-white"
+            ? "border-[var(--graphite)] bg-[linear-gradient(135deg,var(--graphite-dark)_0%,var(--graphite)_78%)] text-white"
+            : "border-[var(--border-warm)] bg-[linear-gradient(135deg,white_0%,var(--highlight)_100%)]"
         ].join(" ")}
       >
+        <div
+          className={[
+            "-mx-4 -mt-3 mb-3 h-1 sm:-mx-5",
+            darkHeader ? "bg-[var(--copper)]" : "bg-[var(--graphite)]"
+          ].join(" ")}
+        />
         <div className="flex flex-col gap-2 xl:flex-row xl:items-end xl:justify-between">
           <div className="min-w-0">
             <p
               className={[
                 "text-[10px] font-semibold uppercase tracking-[0.22em]",
-                darkHeader ? "text-gray-300" : "text-[var(--text-secondary)]"
+                darkHeader
+                  ? "text-[var(--copper-light)]"
+                  : "text-[var(--copper)]"
               ].join(" ")}
             >
               {eyebrow}

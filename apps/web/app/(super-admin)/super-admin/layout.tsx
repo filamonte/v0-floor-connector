@@ -19,7 +19,7 @@ export default async function SuperAdminLayout({
   const user = await requireAuthenticatedUser("/super-admin");
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_top,var(--cream)_0%,#eef2f7_42%,#e6ebf2_100%)]">
+    <div className="min-h-screen bg-[linear-gradient(180deg,var(--graphite)_0,var(--graphite)_172px,#eef2f7_172px,#e6ebf2_100%)]">
       <ProtectedSurfaceHeader
         title="Platform Admin"
         description="Global defaults, starter records, tenant governance, and modular platform controls."
@@ -34,15 +34,16 @@ export default async function SuperAdminLayout({
             navItems={platformAdminNavItems}
             tone="neutral"
             meta={
-              <div className="rounded-[1.75rem] border border-[var(--border-warm)] bg-[var(--highlight)] px-5 py-5 text-sm text-[var(--text-secondary)]">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[var(--text-tertiary)]">
+              <div className="rounded-lg border border-white/10 bg-white/[0.08] px-5 py-5 text-sm text-white/72">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-300">
                   Platform access
                 </p>
-                <p className="mt-3 text-base font-semibold text-[var(--text-primary)]">
+                <p className="mt-3 text-base font-semibold text-white">
                   {scope.email ?? "Platform admin"}
                 </p>
                 <p className="mt-2 leading-6">
-                  Global scope · starter defaults, module policy, and tenant oversight
+                  Global scope · starter defaults, module policy, and tenant
+                  oversight
                 </p>
               </div>
             }

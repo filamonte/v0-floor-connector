@@ -21,14 +21,14 @@ export function SuperAdminTopTabs({ tabs }: SuperAdminTopTabsProps) {
   return (
     <nav
       aria-label="Super admin section navigation"
-      className="overflow-x-auto rounded-lg border border-[var(--border-warm)] bg-white p-2 shadow-[0_14px_34px_-34px_rgba(15,23,42,0.24)]"
+      className="overflow-x-auto rounded-lg border border-[var(--border-warm)] bg-white p-2 shadow-[0_16px_40px_-34px_rgba(34,26,20,0.28)]"
     >
       <div className="flex min-w-max gap-2">
         {tabs.map((tab) => (
           <Link
             key={tab.href}
             href={tab.href}
-            className="group min-w-[156px] rounded-md border border-transparent px-3 py-2 text-left transition hover:border-[var(--border-warm)] hover:bg-[var(--highlight)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--copper)]"
+            className="group min-w-[156px] rounded-md border border-transparent px-3 py-2 text-left transition hover:border-[var(--copper-light)] hover:bg-[var(--highlight)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--copper)]"
           >
             <span className="block text-sm font-semibold text-[var(--text-primary)]">
               {tab.label}
@@ -59,13 +59,17 @@ export function FutureCapabilityPanel({
   return (
     <section
       id={id}
-      className="rounded-lg border border-dashed border-[var(--border-warm)] bg-[var(--highlight)] px-5 py-4"
+      className="rounded-lg border border-dashed border-amber-300 bg-amber-50/80 px-5 py-4"
     >
-      <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[var(--text-tertiary)]">
+      <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-amber-700">
         Future capability
       </p>
-      <h3 className="mt-2 text-sm font-semibold text-[var(--text-primary)]">{title}</h3>
-      <div className="mt-2 text-sm leading-6 text-[var(--text-secondary)]">{children}</div>
+      <h3 className="mt-2 text-sm font-semibold text-[var(--text-primary)]">
+        {title}
+      </h3>
+      <div className="mt-2 text-sm leading-6 text-[var(--text-secondary)]">
+        {children}
+      </div>
     </section>
   );
 }
@@ -83,9 +87,11 @@ export function ScopeLegend({ items }: ScopeLegendProps) {
       {items.map((item) => (
         <div
           key={item.label}
-          className="rounded-lg border border-[var(--border-warm)] bg-[var(--highlight)] px-4 py-3"
+          className="rounded-lg border border-[var(--border-warm)] bg-white px-4 py-3 shadow-[0_14px_34px_-32px_rgba(34,26,20,0.2)]"
         >
-          <p className="text-sm font-semibold text-[var(--text-primary)]">{item.label}</p>
+          <p className="text-sm font-semibold text-[var(--text-primary)]">
+            {item.label}
+          </p>
           <p className="mt-1 text-xs leading-5 text-[var(--text-tertiary)]">
             {item.description}
           </p>
@@ -106,13 +112,19 @@ const sourceLayerLabels: Record<ConfigurationSourceLayer, string> = {
 };
 
 const sourceLayerClasses: Record<ConfigurationSourceLayer, string> = {
-  platform_default: "border-[var(--border-warm)] bg-white text-[var(--text-secondary)]",
+  platform_default:
+    "border-[var(--border-warm)] bg-white text-[var(--text-secondary)]",
   organization_owned: "border-emerald-200 bg-emerald-50 text-emerald-800",
-  user_preference: "border-[var(--copper-light)] bg-[var(--copper)]/10 text-[var(--copper)]",
-  future_organization_override: "border-dashed border-amber-300 bg-amber-50 text-amber-800",
-  future_user_preference: "border-dashed border-[var(--border-warm)] bg-[var(--highlight)] text-[var(--text-secondary)]",
-  record_snapshot: "border-dashed border-[var(--border-warm)] bg-[var(--highlight)] text-[var(--text-secondary)]",
-  fallback: "border-[var(--border-warm)] bg-[var(--highlight)] text-[var(--text-secondary)]"
+  user_preference:
+    "border-[var(--copper-light)] bg-[var(--copper)]/10 text-[var(--copper)]",
+  future_organization_override:
+    "border-dashed border-amber-300 bg-amber-50 text-amber-800",
+  future_user_preference:
+    "border-dashed border-[var(--border-warm)] bg-[var(--highlight)] text-[var(--text-secondary)]",
+  record_snapshot:
+    "border-dashed border-[var(--border-warm)] bg-[var(--highlight)] text-[var(--text-secondary)]",
+  fallback:
+    "border-[var(--border-warm)] bg-[var(--highlight)] text-[var(--text-secondary)]"
 };
 
 type ConfigurationSourceBadgeProps = {
@@ -149,7 +161,8 @@ export function ConfigurationInheritanceTimeline({
     {
       label: "Contractor-owned setting or copy",
       status: hasSelectedOrganization ? "Inspectable" : "Select contractor",
-      description: "Organization settings, adopted templates, and adopted catalog items."
+      description:
+        "Organization settings, adopted templates, and adopted catalog items."
     },
     ...futureLayers.map((layer) => ({
       label: layer.label,
@@ -159,7 +172,7 @@ export function ConfigurationInheritanceTimeline({
   ];
 
   return (
-    <section className="rounded-lg border border-[var(--border-warm)] bg-white p-4">
+    <section className="rounded-lg border border-[var(--border-warm)] bg-white p-4 shadow-[0_18px_48px_-40px_rgba(34,26,20,0.24)]">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[var(--text-tertiary)]">
@@ -204,7 +217,11 @@ type ConfigurationResolutionCardProps = {
   group: ConfigurationResolutionGroup;
 };
 
-function ConfigurationResolutionRow({ item }: { item: ConfigurationResolutionItem }) {
+function ConfigurationResolutionRow({
+  item
+}: {
+  item: ConfigurationResolutionItem;
+}) {
   const ownershipLabel =
     item.sourceLayer === "user_preference"
       ? "User-owned"
@@ -215,14 +232,18 @@ function ConfigurationResolutionRow({ item }: { item: ConfigurationResolutionIte
   return (
     <div className="grid gap-3 border-t border-[var(--border-warm)] px-4 py-4 lg:grid-cols-[minmax(180px,0.8fr)_minmax(220px,1fr)_minmax(180px,0.8fr)]">
       <div>
-        <p className="text-sm font-semibold text-[var(--text-primary)]">{item.label}</p>
+        <p className="text-sm font-semibold text-[var(--text-primary)]">
+          {item.label}
+        </p>
         <p className="mt-1 text-xs text-[var(--text-tertiary)]">{item.key}</p>
       </div>
       <div>
         <p className="text-sm font-medium text-[var(--text-primary)]">
           {item.effectiveValue}
         </p>
-        <p className="mt-1 text-xs leading-5 text-[var(--text-tertiary)]">{item.notes}</p>
+        <p className="mt-1 text-xs leading-5 text-[var(--text-tertiary)]">
+          {item.notes}
+        </p>
       </div>
       <div className="space-y-2">
         <ConfigurationSourceBadge sourceLayer={item.sourceLayer} />
@@ -236,7 +257,9 @@ function ConfigurationResolutionRow({ item }: { item: ConfigurationResolutionIte
           </span>
         </div>
         {item.sourceId ? (
-          <p className="break-all text-xs text-[var(--text-tertiary)]/70">Source: {item.sourceId}</p>
+          <p className="break-all text-xs text-[var(--text-tertiary)]/70">
+            Source: {item.sourceId}
+          </p>
         ) : null}
       </div>
     </div>
@@ -247,7 +270,8 @@ export function ConfigurationResolutionCard({
   group
 }: ConfigurationResolutionCardProps) {
   return (
-    <section className="overflow-hidden rounded-lg border border-[var(--border-warm)] bg-white">
+    <section className="overflow-hidden rounded-lg border border-[var(--border-warm)] bg-white shadow-[0_18px_48px_-40px_rgba(34,26,20,0.24)]">
+      <div className="h-1 bg-[linear-gradient(90deg,var(--graphite),#64748b)]" />
       <div className="px-4 py-4">
         <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[var(--text-tertiary)]">
           {group.key}

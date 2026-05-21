@@ -13,6 +13,10 @@ import {
   primaryActionClassName,
   secondaryActionClassName
 } from "@/components/action-hierarchy";
+import {
+  CommercialDocumentCommandBand,
+  commercialDocumentHeaderShellClassName
+} from "@/components/commercial-document-command-band";
 import { DocumentDeliveryHistoryPanel } from "@/components/document-delivery-history-panel";
 import { OnsiteSignatureModal } from "@/components/contracts/onsite-signature-modal";
 import { ContextFactsList } from "@/components/context-facts-list";
@@ -770,7 +774,12 @@ export default async function ContractDetailPage({
 
   return (
     <div className="mx-auto max-w-6xl space-y-8 print:max-w-none">
-      <div className="rounded-lg border border-[var(--border-warm)] bg-white p-5 shadow-sm sm:p-6 print:hidden">
+      <div
+        className={[
+          commercialDocumentHeaderShellClassName,
+          "print:hidden"
+        ].join(" ")}
+      >
         <DetailPageHeader
           eyebrow="Contract Review"
           title={contract.title}
@@ -813,6 +822,33 @@ export default async function ContractDetailPage({
               ) : null}
             </>
           }
+        />
+
+        <CommercialDocumentCommandBand
+          eyebrow="Commercial document"
+          title="Contract review command"
+          description="Review approval, signer routing, signature events, and project readiness before moving the contract toward deposit or schedule handoff."
+          statusLabel={contractDisplayState}
+          projectHref={`/projects/${contract.projectId}`}
+          items={[
+            {
+              label: "Customer",
+              value: contract.customer?.name ?? "Unknown customer",
+              detail: contract.customer?.companyName ?? contract.customer?.email
+            },
+            {
+              label: "Project",
+              value: contract.project?.name ?? "Unknown project",
+              detail: contract.project
+                ? formatStatusLabel(contract.project.status)
+                : "Project context unavailable"
+            },
+            {
+              label: "Signature",
+              value: getSignatureProgressLabel(signatureSummary),
+              detail: signatureStateMessage
+            }
+          ]}
         />
 
         {resolvedSearchParams.error ? (

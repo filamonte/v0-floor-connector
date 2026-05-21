@@ -8,6 +8,10 @@ import {
   primaryActionClassName,
   secondaryActionClassName
 } from "@/components/action-hierarchy";
+import {
+  CommercialDocumentCommandBand,
+  commercialDocumentHeaderShellClassName
+} from "@/components/commercial-document-command-band";
 import { DetailPageHeader } from "@/components/detail-page-header";
 import { DetailPanel } from "@/components/detail-panel";
 import { DocumentDeliveryHistoryPanel } from "@/components/document-delivery-history-panel";
@@ -635,13 +639,45 @@ export default async function EstimateDetailPage({
 
   return (
     <div className="mx-auto max-w-6xl space-y-6 print:max-w-none">
-      <div className="rounded-lg border border-[var(--border-warm)] bg-white p-5 shadow-sm sm:p-6 print:hidden">
+      <div
+        className={[
+          commercialDocumentHeaderShellClassName,
+          "print:hidden"
+        ].join(" ")}
+      >
         <DetailPageHeader
           eyebrow="Estimate Review"
           title={estimate.title ?? estimate.referenceNumber}
           description={estimateMeaning}
           backHref="/estimates"
           backLabel="Back to estimates"
+        />
+
+        <CommercialDocumentCommandBand
+          eyebrow="Commercial document"
+          title="Estimate review command"
+          description="Review scope, approval state, and project continuity before moving this proposal toward contract or billing handoff."
+          statusLabel={`${formatStatusLabel(estimate.status)} estimate`}
+          projectHref={`/projects/${estimate.projectId}`}
+          items={[
+            {
+              label: "Customer",
+              value: estimate.customer?.name ?? "Unknown customer",
+              detail: estimate.customer?.companyName ?? estimate.customer?.email
+            },
+            {
+              label: "Project",
+              value: estimate.project?.name ?? "Unknown project",
+              detail: estimate.project
+                ? formatStatusLabel(estimate.project.status)
+                : "Project context unavailable"
+            },
+            {
+              label: "Estimate total",
+              value: formatMoney(estimate.totalAmount),
+              detail: `${lineItemCount} line item${lineItemCount === 1 ? "" : "s"} / ${formatMoney(estimate.subtotalAmount)} subtotal`
+            }
+          ]}
         />
 
         {resolvedSearchParams.error ? (

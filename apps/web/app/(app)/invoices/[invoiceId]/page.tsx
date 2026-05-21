@@ -10,6 +10,10 @@ import {
   primaryActionClassName,
   secondaryActionClassName
 } from "@/components/action-hierarchy";
+import {
+  CommercialDocumentCommandBand,
+  commercialDocumentHeaderShellClassName
+} from "@/components/commercial-document-command-band";
 import { DetailPageHeader } from "@/components/detail-page-header";
 import { DetailPanel } from "@/components/detail-panel";
 import { DocumentDeliveryHistoryPanel } from "@/components/document-delivery-history-panel";
@@ -771,13 +775,40 @@ export default async function InvoiceDetailPage({
   return (
     <div className="grid gap-8 xl:grid-cols-[minmax(0,1.08fr)_320px]">
       <section className="space-y-10">
-        <div className="rounded-lg border border-[var(--border-warm)] bg-white p-5 shadow-sm sm:p-6">
+        <div className={commercialDocumentHeaderShellClassName}>
           <DetailPageHeader
             eyebrow="Invoice Review"
             title={invoice.referenceNumber}
             description={invoiceTypeMeaning}
             backHref="/invoices"
             backLabel="Back to invoices"
+          />
+
+          <CommercialDocumentCommandBand
+            eyebrow="Commercial document"
+            title="Invoice review command"
+            description="Review balance, collection state, payment evidence, and project continuity before recording or requesting payment."
+            statusLabel={`${formatStatusLabel(invoice.status)} invoice`}
+            projectHref={`/projects/${invoice.projectId}`}
+            items={[
+              {
+                label: "Customer",
+                value: invoice.customer?.name ?? "Unknown customer",
+                detail: invoice.customer?.companyName ?? invoice.customer?.email
+              },
+              {
+                label: "Project",
+                value: invoice.project?.name ?? "Unknown project",
+                detail: invoice.project
+                  ? formatStatusLabel(invoice.project.status)
+                  : "Project context unavailable"
+              },
+              {
+                label: "Balance due",
+                value: formatMoney(invoice.balanceDueAmount),
+                detail: `${formatMoney(invoice.paidAmount)} paid of ${formatMoney(invoice.totalAmount)} total`
+              }
+            ]}
           />
 
           {resolvedSearchParams.error ? (
@@ -1455,7 +1486,8 @@ export default async function InvoiceDetailPage({
                 {invoice.paymentEvents.length > 0 ? (
                   <div className="mt-4 divide-y divide-[var(--border-warm)] rounded-2xl border border-[var(--border-warm)]">
                     {invoice.paymentEvents.slice(0, 8).map((event) => {
-                      const classification = classifyPaymentEventEvidence(event);
+                      const classification =
+                        classifyPaymentEventEvidence(event);
                       const linkedPayment = event.paymentId
                         ? (paymentById.get(event.paymentId) ?? null)
                         : null;

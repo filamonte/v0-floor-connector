@@ -8,11 +8,14 @@ import { NextActionCard } from "@/components/next-action-card";
 import {
   PortalSecondaryLink,
   PortalStatusBadge,
+  PortalTrustStrip,
   portalActionBoxClassName,
   portalDocumentPanelClassName,
   portalHeroPanelClassName,
   portalInsetPanelClassName,
-  portalStatePanelClassName
+  portalStatePanelClassName,
+  portalSummaryItemClassName,
+  portalSummaryLabelClassName
 } from "@/components/portal-review-ui";
 import { WorkspaceSummaryBand } from "@/components/workspace-summary-band";
 import {
@@ -68,8 +71,7 @@ function getNextAction(status: string, projectId: string) {
 
   return {
     title: "Review the shared agreement",
-    description:
-      "This page shows the contract and current signature state.",
+    description: "This page shows the contract and current signature state.",
     label: "Return to project workspace",
     href: `/portal/projects/${projectId}`
   };
@@ -128,9 +130,15 @@ export default async function PortalContractReviewPage({
     notFound();
   }
 
-  if (contract.currentUserCanSign && contract.currentUserSignerStatus === "pending") {
+  if (
+    contract.currentUserCanSign &&
+    contract.currentUserSignerStatus === "pending"
+  ) {
     try {
-      await recordCustomerViewedContract(contractId, `/portal/contracts/${contractId}`);
+      await recordCustomerViewedContract(
+        contractId,
+        `/portal/contracts/${contractId}`
+      );
       contract = await getPortalContractReviewData(
         contractId,
         `/portal/contracts/${contractId}`
@@ -167,10 +175,15 @@ export default async function PortalContractReviewPage({
             backLabel="Back to project workspace"
             actions={
               <div className="flex flex-wrap items-center gap-3">
-                <PortalSecondaryLink href={`/portal/contracts/${contract.id}/pdf`}>
+                <PortalSecondaryLink
+                  href={`/portal/contracts/${contract.id}/pdf`}
+                >
                   Print / save PDF
                 </PortalSecondaryLink>
-                <PortalStatusBadge status={contract.status} className="px-4 py-2 text-sm">
+                <PortalStatusBadge
+                  status={contract.status}
+                  className="px-4 py-2 text-sm"
+                >
                   {formatStatusLabel(contract.status)}
                 </PortalStatusBadge>
               </div>
@@ -185,9 +198,29 @@ export default async function PortalContractReviewPage({
 
           {resolvedSearchParams.message ? (
             <div className="mt-6 rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-sm leading-6 text-emerald-800">
-            {resolvedSearchParams.message}
-          </div>
-        ) : null}
+              {resolvedSearchParams.message}
+            </div>
+          ) : null}
+
+          <PortalTrustStrip
+            eyebrow="Shared signature record"
+            title="Review and sign the live project contract"
+            description="Customer signature activity stays attached to this contract, its source estimate, and the shared project workspace."
+            items={[
+              {
+                label: "Project",
+                value: contract.project?.name ?? "Shared project"
+              },
+              {
+                label: "Status",
+                value: formatStatusLabel(contract.status)
+              },
+              {
+                label: "Signers",
+                value: `${contract.signatureSummary.signedCustomerSignerCount}/${contract.signatureSummary.customerSignerCount || 0} customers`
+              }
+            ]}
+          />
 
           <div className="mt-10 space-y-5">
             <div className="grid gap-5 xl:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)]">
@@ -197,7 +230,10 @@ export default async function PortalContractReviewPage({
                 </p>
                 <div className="mt-4 space-y-3">
                   <div className="flex flex-wrap items-center gap-3">
-                    <PortalStatusBadge status={contract.status} className="px-3.5 py-1.5 text-sm">
+                    <PortalStatusBadge
+                      status={contract.status}
+                      className="px-3.5 py-1.5 text-sm"
+                    >
                       {formatStatusLabel(contract.status)}
                     </PortalStatusBadge>
                     <span className="inline-flex rounded-full border border-slate-200 bg-white px-3.5 py-1.5 text-sm font-medium text-slate-600">
@@ -208,26 +244,32 @@ export default async function PortalContractReviewPage({
                     {signatureGuidance}
                   </p>
                   <p className="text-sm leading-6 text-slate-600">
-                    Customer signers {contract.signatureSummary.signedCustomerSignerCount}/
-                    {contract.signatureSummary.customerSignerCount || 0} complete
+                    Customer signers{" "}
+                    {contract.signatureSummary.signedCustomerSignerCount}/
+                    {contract.signatureSummary.customerSignerCount || 0}{" "}
+                    complete
                     {" | "}
                     Contractor countersign{" "}
                     {contract.signatureSummary.requiresCountersign
-                      ? contract.signatureSummary.signedContractorSignerCount > 0
+                      ? contract.signatureSummary.signedContractorSignerCount >
+                        0
                         ? "complete"
                         : "still required"
                       : "not required"}
                   </p>
-                  <div className={`${portalInsetPanelClassName} text-sm leading-6 text-slate-600`}>
-                    This contract stays attached to the same project your contractor sees.
+                  <div
+                    className={`${portalInsetPanelClassName} text-sm leading-6 text-slate-600`}
+                  >
+                    This contract stays attached to the same project your
+                    contractor sees.
                   </div>
                 </div>
               </section>
 
               <WorkspaceSummaryBand
                 className="grid gap-3 sm:grid-cols-2"
-                itemClassName="rounded-2xl border border-slate-200/80 bg-slate-50/65 px-4 py-4"
-                labelClassName="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500"
+                itemClassName={portalSummaryItemClassName}
+                labelClassName={portalSummaryLabelClassName}
                 items={[
                   {
                     key: "next-action",
@@ -275,13 +317,17 @@ export default async function PortalContractReviewPage({
             {contract.renderedSubject ? (
               <div className="rounded-2xl border border-slate-200 bg-slate-50/70 px-5 py-4">
                 <p className="text-sm font-medium text-slate-950">Subject</p>
-                <p className="mt-2 text-sm leading-6 text-slate-600">{contract.renderedSubject}</p>
+                <p className="mt-2 text-sm leading-6 text-slate-600">
+                  {contract.renderedSubject}
+                </p>
               </div>
             ) : null}
 
             <article
               className={`${portalDocumentPanelClassName} text-sm leading-7 text-slate-700 [&_a]:text-brand-700 [&_a]:underline [&_blockquote]:border-l-4 [&_blockquote]:border-slate-200 [&_blockquote]:pl-4 [&_h1]:text-2xl [&_h1]:font-semibold [&_h2]:mt-6 [&_h2]:text-xl [&_h2]:font-semibold [&_h3]:mt-5 [&_h3]:text-lg [&_h3]:font-semibold [&_li]:ml-5 [&_ol]:list-decimal [&_p]:my-3 [&_table]:w-full [&_table]:border-collapse [&_td]:border [&_td]:border-slate-200 [&_td]:px-3 [&_td]:py-2 [&_th]:border [&_th]:border-slate-200 [&_th]:bg-slate-100 [&_th]:px-3 [&_th]:py-2 [&_ul]:list-disc`}
-              dangerouslySetInnerHTML={{ __html: sanitizeHtml(contract.renderedContent) }}
+              dangerouslySetInnerHTML={{
+                __html: sanitizeHtml(contract.renderedContent)
+              }}
             />
           </div>
         </DetailPanel>
@@ -307,7 +353,10 @@ export default async function PortalContractReviewPage({
                   </button>
                 </form>
 
-                <form action={customerDeclineContractAction} className="space-y-3">
+                <form
+                  action={customerDeclineContractAction}
+                  className="space-y-3"
+                >
                   <input type="hidden" name="contractId" value={contract.id} />
                   <label className="block space-y-2">
                     <span className="text-sm font-medium text-slate-950">
@@ -353,7 +402,10 @@ export default async function PortalContractReviewPage({
               {
                 label: "Project",
                 value: contract.project ? (
-                  <Link href={`/portal/projects/${contract.project.id}`} className="font-medium text-brand-700">
+                  <Link
+                    href={`/portal/projects/${contract.project.id}`}
+                    className="font-medium text-brand-700"
+                  >
                     {contract.project.name}
                   </Link>
                 ) : (
@@ -362,7 +414,10 @@ export default async function PortalContractReviewPage({
               },
               {
                 label: "Customer",
-                value: contract.customer?.companyName ?? contract.customer?.name ?? "Not provided"
+                value:
+                  contract.customer?.companyName ??
+                  contract.customer?.name ??
+                  "Not provided"
               },
               {
                 label: "Source estimate",
@@ -406,7 +461,9 @@ export default async function PortalContractReviewPage({
                 >
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <div>
-                      <p className="font-medium text-slate-950">{signer.displayName}</p>
+                      <p className="font-medium text-slate-950">
+                        {signer.displayName}
+                      </p>
                       <p className="text-xs uppercase tracking-[0.16em] text-slate-500">
                         {formatSignerRole(signer.signerRole)}
                       </p>
@@ -417,10 +474,18 @@ export default async function PortalContractReviewPage({
                   </div>
                   <div className="mt-2 space-y-1 text-xs leading-5 text-slate-500">
                     <p>{signer.email}</p>
-                    {signer.viewedAt ? <p>Viewed {formatDateTime(signer.viewedAt)}</p> : null}
-                    {signer.signedAt ? <p>Signed {formatDateTime(signer.signedAt)}</p> : null}
-                    {signer.declinedAt ? <p>Declined {formatDateTime(signer.declinedAt)}</p> : null}
-                    {signer.declineReason ? <p>Note: {signer.declineReason}</p> : null}
+                    {signer.viewedAt ? (
+                      <p>Viewed {formatDateTime(signer.viewedAt)}</p>
+                    ) : null}
+                    {signer.signedAt ? (
+                      <p>Signed {formatDateTime(signer.signedAt)}</p>
+                    ) : null}
+                    {signer.declinedAt ? (
+                      <p>Declined {formatDateTime(signer.declinedAt)}</p>
+                    ) : null}
+                    {signer.declineReason ? (
+                      <p>Note: {signer.declineReason}</p>
+                    ) : null}
                   </div>
                 </div>
               ))

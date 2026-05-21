@@ -7,11 +7,14 @@ import { NextActionCard } from "@/components/next-action-card";
 import {
   PortalSecondaryLink,
   PortalStatusBadge,
+  PortalTrustStrip,
   portalHeroPanelClassName,
   portalInsetPanelClassName,
   portalMetricPanelClassName,
   portalReviewCardClassName,
-  portalStatePanelClassName
+  portalStatePanelClassName,
+  portalSummaryItemClassName,
+  portalSummaryLabelClassName
 } from "@/components/portal-review-ui";
 import { WorkspaceSummaryBand } from "@/components/workspace-summary-band";
 import {
@@ -48,7 +51,9 @@ function formatMoney(value: string) {
   });
 }
 
-function getPortalInvoiceProgressSummary(project: Awaited<ReturnType<typeof listPortalAccessibleProjects>>[number]) {
+function getPortalInvoiceProgressSummary(
+  project: Awaited<ReturnType<typeof listPortalAccessibleProjects>>[number]
+) {
   if (!project.latestInvoiceStatus) {
     return "No shared billing record yet";
   }
@@ -169,7 +174,9 @@ function getPortalHomeNextAction(
     };
   }
 
-  const paidInvoiceProject = projects.find((project) => project.latestInvoiceStatus === "paid");
+  const paidInvoiceProject = projects.find(
+    (project) => project.latestInvoiceStatus === "paid"
+  );
 
   if (paidInvoiceProject) {
     return {
@@ -197,7 +204,9 @@ function getPortalHomeNextAction(
     };
   }
 
-  const estimateProject = projects.find((project) => project.latestEstimateStatus);
+  const estimateProject = projects.find(
+    (project) => project.latestEstimateStatus
+  );
 
   if (estimateProject) {
     return {
@@ -220,8 +229,12 @@ export default async function PortalHomePage() {
   const nextAction = getPortalHomeNextAction(projects);
   const primaryProject =
     (nextAction
-      ? projects.find((project) => nextAction.href === `/portal/projects/${project.id}`)
-      : null) ?? projects[0] ?? null;
+      ? projects.find(
+          (project) => nextAction.href === `/portal/projects/${project.id}`
+        )
+      : null) ??
+    projects[0] ??
+    null;
 
   return (
     <div className="grid gap-8 xl:grid-cols-[minmax(0,1.08fr)_320px]">
@@ -234,8 +247,29 @@ export default async function PortalHomePage() {
             Review the work your contractor has shared
           </h1>
           <p className="mt-3 max-w-3xl text-base leading-7 text-slate-600">
-            Start with the project that needs attention most, then move into its shared estimate, contract, or invoice record from there.
+            Start with the project that needs attention most, then move into its
+            shared estimate, contract, or invoice record from there.
           </p>
+
+          <PortalTrustStrip
+            eyebrow="Customer-safe access"
+            title="Your portal shows only records your contractor shared"
+            description="Every review, signature, or payment path returns to a project-scoped record instead of a separate portal-only copy."
+            items={[
+              {
+                label: "Projects",
+                value: projects.length
+              },
+              {
+                label: "Next step",
+                value: nextAction ? "Available" : "Waiting"
+              },
+              {
+                label: "Scope",
+                value: "Project access"
+              }
+            ]}
+          />
 
           <div className="mt-10 space-y-5">
             <div className="grid gap-5 xl:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)]">
@@ -248,7 +282,8 @@ export default async function PortalHomePage() {
                     This portal is organized around shared projects.
                   </p>
                   <p className="text-sm leading-6 text-slate-600">
-                    Each project holds the estimates, contracts, and invoices your contractor has shared with you.
+                    Each project holds the estimates, contracts, and invoices
+                    your contractor has shared with you.
                   </p>
                   {primaryProject ? (
                     <div className={portalInsetPanelClassName}>
@@ -264,7 +299,8 @@ export default async function PortalHomePage() {
                     </div>
                   ) : (
                     <div className={portalInsetPanelClassName}>
-                      Shared projects will appear here once your contractor grants access.
+                      Shared projects will appear here once your contractor
+                      grants access.
                     </div>
                   )}
                 </div>
@@ -272,6 +308,8 @@ export default async function PortalHomePage() {
 
               <WorkspaceSummaryBand
                 className="grid gap-3 sm:grid-cols-2"
+                itemClassName={portalSummaryItemClassName}
+                labelClassName={portalSummaryLabelClassName}
                 items={[
                   {
                     key: "next-action",
@@ -289,7 +327,9 @@ export default async function PortalHomePage() {
                       />
                     ) : (
                       <p className="text-sm leading-6 text-slate-600">
-                        No commercial records are shared yet. When they are published, the right project to review will appear here first.
+                        No commercial records are shared yet. When they are
+                        published, the right project to review will appear here
+                        first.
                       </p>
                     )
                   },
@@ -331,7 +371,8 @@ export default async function PortalHomePage() {
                         {appointment.projectName ?? "Shared project"}
                       </p>
                       <h2 className="mt-2 text-base font-semibold text-slate-950">
-                        {appointment.title || formatStatusLabel(appointment.appointmentType)}
+                        {appointment.title ||
+                          formatStatusLabel(appointment.appointmentType)}
                       </h2>
                       <p className="mt-2 text-sm leading-6 text-slate-600">
                         {appointment.customerNotes?.trim() ||
@@ -344,7 +385,10 @@ export default async function PortalHomePage() {
                   </div>
                   <p className="mt-3 text-sm leading-6 text-slate-500">
                     {formatStatusLabel(appointment.appointmentType)} |{" "}
-                    {formatAppointmentTime(appointment.startsAt, appointment.endsAt)}
+                    {formatAppointmentTime(
+                      appointment.startsAt,
+                      appointment.endsAt
+                    )}
                     {appointment.location ? ` | ${appointment.location}` : ""}
                   </p>
                 </Link>
@@ -384,7 +428,9 @@ export default async function PortalHomePage() {
                         {project.customer?.companyName ??
                           project.customer?.name ??
                           "Customer record"}{" "}
-                        {project.locationSummary ? `| ${project.locationSummary}` : ""}
+                        {project.locationSummary
+                          ? `| ${project.locationSummary}`
+                          : ""}
                       </p>
                     </div>
                     <PortalStatusBadge status={project.status ?? "neutral"}>
@@ -420,7 +466,9 @@ export default async function PortalHomePage() {
                   </div>
 
                   {project.latestInvoiceStatus ? (
-                    <div className={`${portalMetricPanelClassName} mt-4 text-sm leading-6 text-slate-600`}>
+                    <div
+                      className={`${portalMetricPanelClassName} mt-4 text-sm leading-6 text-slate-600`}
+                    >
                       <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
                         What matters now
                       </p>
@@ -429,7 +477,8 @@ export default async function PortalHomePage() {
                       </p>
                       {project.latestInvoicePaymentEventAt ? (
                         <p className="mt-1 text-slate-500">
-                          Latest activity {formatDateTime(project.latestInvoicePaymentEventAt)}
+                          Latest activity{" "}
+                          {formatDateTime(project.latestInvoicePaymentEventAt)}
                         </p>
                       ) : null}
                     </div>
@@ -456,7 +505,8 @@ export default async function PortalHomePage() {
             items={[
               {
                 label: "Access model",
-                value: "You can only see projects explicitly shared with your customer access."
+                value:
+                  "You can only see projects explicitly shared with your customer access."
               },
               {
                 label: "Commercial records",
@@ -483,7 +533,9 @@ export default async function PortalHomePage() {
                   key={project.id}
                   className="rounded-lg border border-[var(--border-warm)] bg-[var(--highlight)] px-4 py-4 text-sm leading-6 text-[var(--text-secondary)]"
                 >
-                  <p className="font-medium text-[var(--text-primary)]">{project.name}</p>
+                  <p className="font-medium text-[var(--text-primary)]">
+                    {project.name}
+                  </p>
                   <p className="mt-1">{formatDateTime(project.updatedAt)}</p>
                   <p className="mt-1 capitalize">
                     Project status: {formatStatusLabel(project.status)}

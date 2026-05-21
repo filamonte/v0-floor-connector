@@ -6,9 +6,13 @@ import { DetailPageHeader } from "@/components/detail-page-header";
 import { DetailPanel } from "@/components/detail-panel";
 import { NextActionCard } from "@/components/next-action-card";
 import {
+  PortalSecondaryLink,
   PortalStatusBadge,
+  PortalTrustStrip,
   portalActionBoxClassName,
-  portalHeroPanelClassName
+  portalHeroPanelClassName,
+  portalSummaryItemClassName,
+  portalSummaryLabelClassName
 } from "@/components/portal-review-ui";
 import { WorkspaceSummaryBand } from "@/components/workspace-summary-band";
 import {
@@ -238,8 +242,30 @@ export default async function PortalEstimateReviewPage({
             </div>
           ) : null}
 
+          <PortalTrustStrip
+            eyebrow="Shared proposal record"
+            title="Review scope and price on the live project chain"
+            description="This estimate remains tied to the same project record your contractor uses for contract, billing, and downstream work."
+            items={[
+              {
+                label: "Project",
+                value: estimate.project?.name ?? "Shared project"
+              },
+              {
+                label: "Status",
+                value: formatStatusLabel(estimate.status)
+              },
+              {
+                label: "Total",
+                value: formatMoney(estimate.totalAmount)
+              }
+            ]}
+          />
+
           <div className="mt-8">
             <WorkspaceSummaryBand
+              itemClassName={portalSummaryItemClassName}
+              labelClassName={portalSummaryLabelClassName}
               items={[
                 {
                   key: "purpose",
@@ -303,12 +329,9 @@ export default async function PortalEstimateReviewPage({
                       title={nextAction.title}
                       description={nextAction.description}
                       primaryAction={
-                        <Link
-                          href={nextAction.href}
-                          className="inline-flex items-center rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:bg-white"
-                        >
+                        <PortalSecondaryLink href={nextAction.href}>
                           {nextAction.label}
-                        </Link>
+                        </PortalSecondaryLink>
                       }
                     />
                   )

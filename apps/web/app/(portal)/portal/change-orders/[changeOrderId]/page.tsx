@@ -8,10 +8,13 @@ import { NextActionCard } from "@/components/next-action-card";
 import {
   PortalSecondaryLink,
   PortalStatusBadge,
+  PortalTrustStrip,
   portalActionBoxClassName,
   portalDocumentPanelClassName,
   portalHeroPanelClassName,
-  portalStatePanelClassName
+  portalStatePanelClassName,
+  portalSummaryItemClassName,
+  portalSummaryLabelClassName
 } from "@/components/portal-review-ui";
 import { WorkspaceSummaryBand } from "@/components/workspace-summary-band";
 import {
@@ -56,8 +59,12 @@ function getNextAction(input: {
       title: "Change order approval is complete",
       description:
         "The shared scope decision is now complete. Return to the project workspace or linked invoice to review the downstream effect.",
-      label: input.invoiceId ? "Review linked invoice" : "Return to project workspace",
-      href: input.invoiceId ? `/portal/invoices/${input.invoiceId}` : `/portal/projects/${input.projectId}`
+      label: input.invoiceId
+        ? "Review linked invoice"
+        : "Return to project workspace",
+      href: input.invoiceId
+        ? `/portal/invoices/${input.invoiceId}`
+        : `/portal/projects/${input.projectId}`
     };
   }
 
@@ -97,7 +104,10 @@ export default async function PortalChangeOrderReviewPage({
 
   if (changeOrder.status === "sent" && !changeOrder.customerViewedAt) {
     try {
-      await recordPortalViewedChangeOrder(changeOrderId, `/portal/change-orders/${changeOrderId}`);
+      await recordPortalViewedChangeOrder(
+        changeOrderId,
+        `/portal/change-orders/${changeOrderId}`
+      );
       changeOrder = await getPortalChangeOrderReviewData(
         changeOrderId,
         `/portal/change-orders/${changeOrderId}`
@@ -128,7 +138,10 @@ export default async function PortalChangeOrderReviewPage({
             backHref={`/portal/projects/${changeOrder.projectId}`}
             backLabel="Back to project workspace"
             actions={
-              <PortalStatusBadge status={changeOrder.status} className="px-4 py-2 text-sm">
+              <PortalStatusBadge
+                status={changeOrder.status}
+                className="px-4 py-2 text-sm"
+              >
                 {formatStatusLabel(changeOrder.status)}
               </PortalStatusBadge>
             }
@@ -146,6 +159,26 @@ export default async function PortalChangeOrderReviewPage({
             </div>
           ) : null}
 
+          <PortalTrustStrip
+            eyebrow="Shared scope decision"
+            title="Approve or reject the live project change order"
+            description="This decision stays connected to the project, contract context, and any linked invoice impact already present."
+            items={[
+              {
+                label: "Project",
+                value: changeOrder.project?.name ?? "Shared project"
+              },
+              {
+                label: "Adjustment",
+                value: formatMoney(changeOrder.priceAdjustment)
+              },
+              {
+                label: "Status",
+                value: formatStatusLabel(changeOrder.status)
+              }
+            ]}
+          />
+
           <div className="mt-10 space-y-5">
             <div className="grid gap-5 xl:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)]">
               <section className={portalStatePanelClassName}>
@@ -157,7 +190,10 @@ export default async function PortalChangeOrderReviewPage({
                     <span className="inline-flex rounded-full border border-slate-200 bg-white px-3.5 py-1.5 text-sm font-medium text-slate-700">
                       {formatMoney(changeOrder.priceAdjustment)}
                     </span>
-                    <PortalStatusBadge status={changeOrder.status} className="px-3.5 py-1.5 text-sm">
+                    <PortalStatusBadge
+                      status={changeOrder.status}
+                      className="px-3.5 py-1.5 text-sm"
+                    >
                       {formatStatusLabel(changeOrder.status)}
                     </PortalStatusBadge>
                   </div>
@@ -176,8 +212,8 @@ export default async function PortalChangeOrderReviewPage({
 
               <WorkspaceSummaryBand
                 className="grid gap-3 sm:grid-cols-2"
-                itemClassName="rounded-2xl border border-slate-200/80 bg-slate-50/65 px-4 py-4"
-                labelClassName="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500"
+                itemClassName={portalSummaryItemClassName}
+                labelClassName={portalSummaryLabelClassName}
                 items={[
                   {
                     key: "next-action",
@@ -201,9 +237,15 @@ export default async function PortalChangeOrderReviewPage({
                     content: (
                       <div className="space-y-1 text-sm text-slate-600">
                         <p>Sent: {formatDateTime(changeOrder.sentAt)}</p>
-                        <p>Viewed: {formatDateTime(changeOrder.customerViewedAt)}</p>
-                        <p>Approved: {formatDateTime(changeOrder.approvedAt)}</p>
-                        <p>Rejected: {formatDateTime(changeOrder.rejectedAt)}</p>
+                        <p>
+                          Viewed: {formatDateTime(changeOrder.customerViewedAt)}
+                        </p>
+                        <p>
+                          Approved: {formatDateTime(changeOrder.approvedAt)}
+                        </p>
+                        <p>
+                          Rejected: {formatDateTime(changeOrder.rejectedAt)}
+                        </p>
                       </div>
                     )
                   }
@@ -220,12 +262,18 @@ export default async function PortalChangeOrderReviewPage({
           <div className="space-y-6">
             {changeOrder.description?.trim() ? (
               <div className="rounded-2xl border border-slate-200 bg-slate-50/70 px-5 py-4">
-                <p className="text-sm font-medium text-slate-950">Commercial summary</p>
-                <p className="mt-2 text-sm leading-6 text-slate-600">{changeOrder.description}</p>
+                <p className="text-sm font-medium text-slate-950">
+                  Commercial summary
+                </p>
+                <p className="mt-2 text-sm leading-6 text-slate-600">
+                  {changeOrder.description}
+                </p>
               </div>
             ) : null}
 
-            <article className={`${portalDocumentPanelClassName} whitespace-pre-wrap text-sm leading-7 text-slate-700`}>
+            <article
+              className={`${portalDocumentPanelClassName} whitespace-pre-wrap text-sm leading-7 text-slate-700`}
+            >
               {changeOrder.scopeChangeNotes?.trim() ||
                 "No additional scope notes were captured on this change order."}
             </article>
@@ -241,8 +289,15 @@ export default async function PortalChangeOrderReviewPage({
           <div className="space-y-4 text-sm leading-6 text-slate-600">
             {changeOrder.status === "sent" ? (
               <div className={portalActionBoxClassName}>
-                <form action={customerApproveChangeOrderAction} className="space-y-3">
-                  <input type="hidden" name="changeOrderId" value={changeOrder.id} />
+                <form
+                  action={customerApproveChangeOrderAction}
+                  className="space-y-3"
+                >
+                  <input
+                    type="hidden"
+                    name="changeOrderId"
+                    value={changeOrder.id}
+                  />
                   <label className="block space-y-2">
                     <span className="text-sm font-medium text-slate-950">
                       Optional approval note
@@ -263,8 +318,15 @@ export default async function PortalChangeOrderReviewPage({
                   </button>
                 </form>
 
-                <form action={customerRejectChangeOrderAction} className="space-y-3">
-                  <input type="hidden" name="changeOrderId" value={changeOrder.id} />
+                <form
+                  action={customerRejectChangeOrderAction}
+                  className="space-y-3"
+                >
+                  <input
+                    type="hidden"
+                    name="changeOrderId"
+                    value={changeOrder.id}
+                  />
                   <label className="block space-y-2">
                     <span className="text-sm font-medium text-slate-950">
                       Optional rejection note
@@ -353,7 +415,8 @@ export default async function PortalChangeOrderReviewPage({
                 label: "Invoice impact",
                 value: changeOrder.appliedInvoiceLineItemId
                   ? "Applied to the linked invoice"
-                  : changeOrder.invoiceId && Number(changeOrder.priceAdjustment) > 0
+                  : changeOrder.invoiceId &&
+                      Number(changeOrder.priceAdjustment) > 0
                     ? "Positive approved changes can update the linked invoice"
                     : "No automatic invoice application"
               },

@@ -18,7 +18,7 @@ export default async function PortalLayout({ children }: PortalLayoutProps) {
   }
 
   return (
-    <div className="min-h-screen bg-[linear-gradient(180deg,var(--cream),rgba(255,255,255,0.98))] print:bg-white">
+    <div className="min-h-screen bg-[linear-gradient(180deg,var(--graphite)_0,var(--graphite)_168px,var(--cream)_168px,rgba(255,255,255,0.98)_460px)] print:bg-white">
       <div className="print:hidden">
         <ProtectedSurfaceHeader
           title="Customer Portal"
@@ -30,16 +30,17 @@ export default async function PortalLayout({ children }: PortalLayoutProps) {
           headingLevel="h2"
         />
       </div>
-      <div className="border-b border-[var(--border-warm)] bg-white/70 backdrop-blur print:hidden">
+      <div className="border-y border-white/10 bg-white/[0.08] text-white backdrop-blur print:hidden">
         <div className="mx-auto flex w-full max-w-6xl flex-wrap items-center gap-3 px-6 py-4 sm:px-10">
           <Link
             href="/portal"
-            className="inline-flex items-center rounded-full border border-[var(--border-warm)] bg-white px-4 py-2 text-sm font-medium text-[var(--text-secondary)] transition hover:border-[var(--graphite-light)] hover:text-[var(--text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--copper)] focus-visible:ring-offset-2"
+            className="inline-flex items-center rounded-full border border-white/15 bg-white px-4 py-2 text-sm font-medium text-[var(--graphite)] transition hover:border-[var(--copper)] hover:text-[var(--copper-dark)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--copper)] focus-visible:ring-offset-2"
           >
             Portal home
           </Link>
-          <p className="text-sm leading-6 text-[var(--text-secondary)]">
-            Your access stays scoped to the projects your contractor has explicitly shared.
+          <p className="text-sm leading-6 text-white/72">
+            Your access stays scoped to the projects your contractor has
+            explicitly shared.
           </p>
         </div>
       </div>

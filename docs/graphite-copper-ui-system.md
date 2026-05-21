@@ -12,6 +12,7 @@ Use it with:
 - [docs/workflows.md](C:/FloorConnector/docs/workflows.md)
 - [docs/enterprise-ui-system-audit.md](C:/FloorConnector/docs/enterprise-ui-system-audit.md)
 - [docs/floorconnector-ui-build-rules.md](C:/FloorConnector/docs/floorconnector-ui-build-rules.md)
+- [docs/design/floorconnector-visual-system-evolution.md](C:/FloorConnector/docs/design/floorconnector-visual-system-evolution.md)
 
 If product capability status matters, trust [docs/current-state.md](C:/FloorConnector/docs/current-state.md). This document governs presentation patterns, not implementation truth.
 
@@ -30,6 +31,8 @@ It prevents:
 - settings, portal, contractor, and super-admin boundaries blurring together
 
 This is a presentation system only. It does not authorize schema changes, RLS changes, auth changes, server-action changes, form-payload changes, financial logic changes, payment/signature/readiness changes, scheduling behavior changes, or new workflows.
+
+The Google Stitch Industrial Contrast adoption docs extend this visual reference as design inspiration only. Stitch artifacts may inform hierarchy, contrast, dashboard composition, and mobile review patterns, but they do not replace FloorConnector's implemented truth, top-nav-first shell, canonical lifecycle, or data-backed route behavior. See [docs/design/stitch/README.md](C:/FloorConnector/docs/design/stitch/README.md) and [docs/design/floorconnector-visual-system-evolution.md](C:/FloorConnector/docs/design/floorconnector-visual-system-evolution.md).
 
 ## Product Posture
 

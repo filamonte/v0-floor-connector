@@ -184,6 +184,18 @@ type LifecycleStepId =
   | "job-schedule"
   | "invoice-payment";
 
+const projectWorkspacePanelClassName =
+  "rounded-lg border border-[var(--border-warm)] bg-white shadow-[0_18px_44px_-38px_rgba(31,41,55,0.42)]";
+
+const projectWorkspacePanelHeaderClassName =
+  "border-b border-[var(--border-warm)] bg-[linear-gradient(135deg,white_0%,var(--highlight)_100%)]";
+
+const projectCommandSurfaceClassName =
+  "rounded-lg border border-[rgba(255,255,255,0.12)] bg-[linear-gradient(135deg,var(--graphite-dark)_0%,var(--graphite)_62%,#2f231c_100%)] text-white shadow-[0_24px_64px_-38px_rgba(31,41,55,0.75)]";
+
+const projectCommandInsetClassName =
+  "border border-white/10 bg-white/[0.07] shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]";
+
 type SectionOverviewProps = {
   eyebrow: string;
   title: string;
@@ -491,7 +503,7 @@ function getCommandSummaryToneClassName(tone: WorkspaceStateTone = "neutral") {
     case "critical":
       return "border-rose-200 bg-rose-50 text-rose-950";
     case "neutral":
-      return "border-slate-200 bg-slate-50 text-slate-900";
+      return "border-[var(--border-warm)] bg-white text-[var(--text-primary)]";
   }
 }
 
@@ -515,38 +527,41 @@ function OperationalCommandCenter({
   return (
     <section
       aria-labelledby="project-command-center-title"
-      className="rounded-lg border border-[var(--border-warm)] bg-white px-4 py-4 sm:px-5"
+      className={projectCommandSurfaceClassName}
     >
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+      <div className="flex flex-col gap-4 px-4 py-4 lg:flex-row lg:items-start lg:justify-between sm:px-5">
         <div className="min-w-0">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--text-secondary)]">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--copper-light)]">
             Project command
           </p>
           <h2
             id="project-command-center-title"
-            className="mt-1 text-lg font-semibold text-[var(--text-primary)]"
+            className="mt-1 text-xl font-semibold tracking-tight text-white"
           >
             Operational command center
           </h2>
-          <p className="mt-2 max-w-[76ch] text-sm leading-6 text-[var(--text-secondary)]">
+          <p className="mt-2 max-w-[76ch] text-sm leading-6 text-white/70">
             {customerName} / {projectLocation}. This project hub reads the
             opportunity, customer/project, estimate/contract, job/schedule, and
             invoice/payment chain in one place.
           </p>
         </div>
-        <div className="rounded-lg border border-[var(--border-warm)] bg-[var(--highlight)] px-4 py-3 text-sm leading-6 text-[var(--text-secondary)] lg:w-72">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
+        <div
+          className={[
+            "px-4 py-3 text-sm leading-6 text-white/70 lg:w-72",
+            projectCommandInsetClassName
+          ].join(" ")}
+        >
+          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/60">
             Readiness
           </p>
-          <p className="mt-1 font-semibold text-[var(--text-primary)]">
-            {readinessLabel}
-          </p>
+          <p className="mt-1 font-semibold text-white">{readinessLabel}</p>
           <p className="mt-1">{readinessDetail}</p>
         </div>
       </div>
 
-      <div className="mt-4 grid gap-3 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]">
-        <div className="rounded-lg border border-[var(--border-warm)] bg-[var(--highlight)] px-4 py-3 text-sm leading-6 text-[var(--text-secondary)]">
+      <div className="grid gap-px border-y border-white/10 bg-white/10 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]">
+        <div className="bg-white px-4 py-4 text-sm leading-6 text-[var(--text-secondary)]">
           <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--copper)]">
             Next move
           </p>
@@ -581,10 +596,10 @@ function OperationalCommandCenter({
 
         <div
           className={[
-            "rounded-lg border px-4 py-3 text-sm leading-6",
+            "border-l border-white/10 px-4 py-4 text-sm leading-6",
             blockerCount > 0
-              ? "border-amber-200 bg-amber-50 text-amber-950"
-              : "border-emerald-200 bg-emerald-50 text-emerald-950"
+              ? "bg-amber-50 text-amber-950"
+              : "bg-emerald-50 text-emerald-950"
           ].join(" ")}
         >
           <p className="text-[11px] font-semibold uppercase tracking-[0.18em]">
@@ -603,12 +618,12 @@ function OperationalCommandCenter({
         </div>
       </div>
 
-      <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-px bg-[var(--border-warm)] md:grid-cols-2 xl:grid-cols-4">
         {summaryItems.map((item) => (
           <div
             key={item.label}
             className={[
-              "rounded-lg border px-4 py-3 text-sm leading-6",
+              "border-0 px-4 py-3 text-sm leading-6",
               getCommandSummaryToneClassName(item.tone)
             ].join(" ")}
           >
@@ -632,9 +647,14 @@ function ProjectConnectedRecordLanes({
   return (
     <section
       aria-labelledby="connected-record-lanes-title"
-      className="rounded-lg border border-[var(--border-warm)] bg-white px-4 py-4 sm:px-5"
+      className={projectWorkspacePanelClassName}
     >
-      <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+      <div
+        className={[
+          "flex flex-col gap-3 px-4 py-4 md:flex-row md:items-start md:justify-between sm:px-5",
+          projectWorkspacePanelHeaderClassName
+        ].join(" ")}
+      >
         <div>
           <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--text-secondary)]">
             Connected records
@@ -655,11 +675,11 @@ function ProjectConnectedRecordLanes({
         </span>
       </div>
 
-      <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+      <div className="grid gap-px bg-[var(--border-warm)] md:grid-cols-2 xl:grid-cols-3">
         {lanes.map((lane) => (
           <article
             key={lane.title}
-            className="flex min-h-[176px] flex-col rounded-lg border border-[var(--border-warm)] bg-[var(--highlight)] px-4 py-3 text-sm leading-6"
+            className="flex min-h-[176px] flex-col bg-white px-4 py-3 text-sm leading-6"
           >
             <div className="flex flex-wrap items-start justify-between gap-2">
               <div className="min-w-0">
@@ -3045,7 +3065,9 @@ export default async function ProjectDetailPage({
   return (
     <div className="grid min-w-0 gap-8 xl:grid-cols-[minmax(0,1.12fr)_320px]">
       <section className="min-w-0 space-y-10">
-        <div className="rounded-lg border border-[var(--border-warm)] bg-white p-5 shadow-sm sm:p-6">
+        <div
+          className={["p-5 sm:p-6", projectWorkspacePanelClassName].join(" ")}
+        >
           <DetailPageHeader
             eyebrow="Project Workspace"
             title={project.name}

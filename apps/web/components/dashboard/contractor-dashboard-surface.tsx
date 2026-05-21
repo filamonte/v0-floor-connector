@@ -14,6 +14,15 @@ import {
   type OperationalGuidanceBucket
 } from "@/components/operational-guidance-section";
 import { UniversalCreateMenu } from "@/components/universal-create-menu";
+import {
+  dashboardCommandStatClassName,
+  dashboardCommandSurfaceClassName,
+  dashboardGridDividerClassName,
+  dashboardMetricCardClassName,
+  dashboardPanelActionClassName,
+  dashboardPanelClassName,
+  dashboardPanelHeaderClassName
+} from "@/components/dashboard/dashboard-surface-primitives";
 
 type QuickCreateAction = (formData: FormData) => void | Promise<void>;
 
@@ -196,12 +205,10 @@ function TopLink({
   return (
     <Link
       href={href}
-      className="inline-flex h-8 items-center gap-2 rounded-md border border-[var(--border-warm)] bg-white px-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--text-secondary)] transition hover:bg-[var(--highlight)]"
+      className="inline-flex h-9 items-center gap-2 rounded-md border border-white/10 bg-white/[0.07] px-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-white/75 transition hover:border-[var(--copper)] hover:bg-white/[0.12] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--copper)]"
     >
       <span>{label}</span>
-      {metric ? (
-        <span className="text-[var(--text-secondary)]">{metric}</span>
-      ) : null}
+      {metric ? <span className="text-white/60">{metric}</span> : null}
     </Link>
   );
 }
@@ -220,8 +227,13 @@ function BoardPanel({
   children: ReactNode;
 }) {
   return (
-    <section className="rounded-lg border border-[var(--border-warm)] bg-white">
-      <div className="flex items-start justify-between gap-3 border-b border-[var(--border-warm)] px-4 py-3">
+    <section className={dashboardPanelClassName}>
+      <div
+        className={[
+          "flex items-start justify-between gap-3 px-4 py-3",
+          dashboardPanelHeaderClassName
+        ].join(" ")}
+      >
         <div className="min-w-0">
           <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
             {eyebrow}
@@ -246,9 +258,14 @@ function PriorityGrid({ metrics }: { metrics: DashboardMetric[] }) {
   return (
     <section
       aria-labelledby="dashboard-key-metrics-title"
-      className="rounded-lg border border-[var(--border-warm)] bg-white"
+      className={dashboardPanelClassName}
     >
-      <div className="flex items-center justify-between gap-3 border-b border-[var(--border-warm)] px-4 py-3">
+      <div
+        className={[
+          "flex items-center justify-between gap-3 px-4 py-3",
+          dashboardPanelHeaderClassName
+        ].join(" ")}
+      >
         <div>
           <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
             Key metrics
@@ -261,17 +278,22 @@ function PriorityGrid({ metrics }: { metrics: DashboardMetric[] }) {
           </h2>
         </div>
       </div>
-      <div className="grid gap-px bg-[var(--border-warm)] md:grid-cols-5">
+      <div
+        className={[dashboardGridDividerClassName, "md:grid-cols-5"].join(" ")}
+      >
         {metrics.map((metric) => (
           <Link
             key={metric.key}
             href={metric.href}
-            className="bg-white px-3 py-2.5 transition hover:bg-[var(--highlight)]"
+            className={dashboardMetricCardClassName}
           >
-            <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--text-secondary)]">
-              {metric.label}
-            </p>
-            <p className="mt-1 text-lg font-semibold tracking-tight text-[var(--text-primary)]">
+            <div className="flex items-start justify-between gap-3">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--text-secondary)]">
+                {metric.label}
+              </p>
+              <span className="mt-0.5 h-1.5 w-1.5 rounded-full bg-[var(--copper)] opacity-75 transition group-hover:opacity-100" />
+            </div>
+            <p className="mt-2 text-xl font-semibold tracking-tight text-[var(--text-primary)]">
               {metric.value}
             </p>
             <p className="mt-1 line-clamp-2 text-[11px] leading-4 text-[var(--text-secondary)]">
@@ -301,9 +323,14 @@ function LifecycleRail({ steps }: { steps: DashboardLifecycleStep[] }) {
   return (
     <section
       aria-labelledby="dashboard-lifecycle-title"
-      className="rounded-lg border border-[var(--border-warm)] bg-white"
+      className={dashboardPanelClassName}
     >
-      <div className="flex flex-col gap-2 border-b border-[var(--border-warm)] px-4 py-3 md:flex-row md:items-end md:justify-between">
+      <div
+        className={[
+          "flex flex-col gap-2 px-4 py-3 md:flex-row md:items-end md:justify-between",
+          dashboardPanelHeaderClassName
+        ].join(" ")}
+      >
         <div>
           <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
             Canonical lifecycle
@@ -320,7 +347,12 @@ function LifecycleRail({ steps }: { steps: DashboardLifecycleStep[] }) {
           daily work stays on the shared record chain.
         </p>
       </div>
-      <div className="grid gap-px bg-[var(--border-warm)] sm:grid-cols-2 lg:grid-cols-5">
+      <div
+        className={[
+          dashboardGridDividerClassName,
+          "sm:grid-cols-2 lg:grid-cols-5"
+        ].join(" ")}
+      >
         {steps.map((step) => (
           <Link
             key={step.key}
@@ -359,10 +391,7 @@ function QueueRows({
       title={widget.title}
       description={widget.description}
       action={
-        <Link
-          href={widget.href}
-          className="inline-flex items-center border border-[var(--border-warm)] bg-[var(--highlight)] px-2.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--text-secondary)] transition hover:bg-white"
-        >
+        <Link href={widget.href} className={dashboardPanelActionClassName}>
           {widget.actionLabel}
         </Link>
       }
@@ -495,10 +524,7 @@ function FinanceTable({
       title={widget.title}
       description={widget.description}
       action={
-        <Link
-          href={widget.href}
-          className="inline-flex items-center border border-[var(--border-warm)] bg-[var(--highlight)] px-2.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--text-secondary)] transition hover:bg-white"
-        >
+        <Link href={widget.href} className={dashboardPanelActionClassName}>
           {widget.actionLabel}
         </Link>
       }
@@ -662,44 +688,49 @@ export function ContractorDashboardSurface({
 
   return (
     <div className="overflow-x-hidden bg-[var(--cream)]">
-      <section className="border-b border-[var(--border-warm)] bg-white px-4 py-3 sm:px-6">
-        <div className="space-y-3">
+      <section className="border-b border-[var(--border-warm)] bg-[var(--graphite-dark)] px-4 py-4 sm:px-6">
+        <div
+          className={[
+            "space-y-4 px-4 py-4",
+            dashboardCommandSurfaceClassName
+          ].join(" ")}
+        >
           <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
             <div className="min-w-0">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--copper-light)]">
                 Contractor dashboard
               </p>
-              <h1 className="mt-1 text-[22px] font-semibold tracking-tight text-[var(--text-primary)]">
+              <h1 className="mt-1 text-[24px] font-semibold tracking-tight text-white">
                 {header.organizationName}
               </h1>
-              <p className="mt-1 text-[13px] leading-5 text-[var(--text-secondary)]">
-                Priority decisions, core metrics, and work queues in one
-                contractor surface.
+              <p className="mt-2 max-w-[68ch] text-[13px] leading-5 text-white/70">
+                Command summary for priority decisions, lifecycle movement, and
+                the real work queues behind the contractor operating system.
               </p>
             </div>
 
-            <div className="grid gap-px border border-[var(--border-warm)] bg-[var(--border-warm)] sm:grid-cols-3">
-              <div className="bg-white px-3 py-2.5">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--text-secondary)]">
+            <div className="grid gap-2 sm:grid-cols-3">
+              <div className={dashboardCommandStatClassName}>
+                <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/60">
                   Role
                 </p>
-                <p className="mt-1 text-sm font-semibold text-[var(--text-primary)]">
+                <p className="mt-1 text-sm font-semibold text-white">
                   {header.roleLabel}
                 </p>
               </div>
-              <div className="bg-white px-3 py-2.5">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--text-secondary)]">
+              <div className={dashboardCommandStatClassName}>
+                <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/60">
                   Active projects
                 </p>
-                <p className="mt-1 text-sm font-semibold text-[var(--text-primary)]">
+                <p className="mt-1 text-sm font-semibold text-white">
                   {header.activeProjectCount}
                 </p>
               </div>
-              <div className="bg-white px-3 py-2.5">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--text-secondary)]">
+              <div className={dashboardCommandStatClassName}>
+                <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/60">
                   Open receivables
                 </p>
-                <p className="mt-1 text-sm font-semibold text-[var(--text-primary)]">
+                <p className="mt-1 text-sm font-semibold text-white">
                   {header.openReceivablesLabel}
                 </p>
               </div>
@@ -721,7 +752,7 @@ export function ContractorDashboardSurface({
                   });
                 }}
                 placeholder="Search dashboard queues by project, customer, estimate, contract, invoice, status, or priority"
-                className="h-10 w-full border border-[var(--border-warm)] bg-white pl-9 pr-3 text-sm text-[var(--text-primary)] outline-none placeholder:text-[var(--text-tertiary)] focus:border-[var(--copper)]"
+                className="h-10 w-full rounded-md border border-white/10 bg-white pl-9 pr-3 text-sm text-[var(--text-primary)] outline-none placeholder:text-[var(--text-tertiary)] focus:border-[var(--copper)]"
               />
             </label>
 
@@ -729,7 +760,7 @@ export function ContractorDashboardSurface({
               <UniversalCreateMenu
                 idBase="dashboard-universal-create-menu"
                 buttonLabel="Universal create"
-                buttonClassName="inline-flex h-10 items-center border border-[var(--copper)] bg-[var(--copper)] px-4 text-[12px] font-semibold uppercase tracking-[0.12em] text-white transition hover:bg-[var(--copper-light)]"
+                buttonClassName="inline-flex h-10 items-center rounded-md border border-[var(--copper)] bg-[var(--copper)] px-4 text-[12px] font-semibold uppercase tracking-[0.12em] text-white transition hover:bg-[var(--copper-light)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--copper-light)]"
                 panelClassName="border-[var(--border-warm)]"
               />
               {topLinks.map((link) => (
@@ -816,7 +847,10 @@ export function ContractorDashboardSurface({
 
         <PriorityStrip items={priorityItems} />
 
-        <LifecycleRail steps={lifecycleSteps} />
+        <div className="grid gap-4 2xl:grid-cols-[minmax(0,1.05fr)_minmax(360px,0.95fr)]">
+          <LifecycleRail steps={lifecycleSteps} />
+          <PriorityGrid metrics={metrics} />
+        </div>
 
         {operationalCockpitBuckets.length > 0 ? (
           <OperationalGuidanceSection
@@ -825,8 +859,6 @@ export function ContractorDashboardSurface({
             buckets={operationalCockpitBuckets}
           />
         ) : null}
-
-        <PriorityGrid metrics={metrics} />
 
         {filteredProjectCueWidget ? (
           <QueueRows

@@ -7,6 +7,10 @@ import { DailyLogForm } from "@/components/daily-log-form";
 import { DetailPageHeader } from "@/components/detail-page-header";
 import { DetailPanel } from "@/components/detail-panel";
 import { ExecutionAttachmentForm } from "@/components/execution-attachment-form";
+import {
+  FieldExecutionCommandBand,
+  fieldExecutionHeaderShellClassName
+} from "@/components/field-execution-command-band";
 import { FieldNoteForm } from "@/components/field-note-form";
 import { LinkedRecordCard } from "@/components/linked-record-card";
 import { NextActionCard } from "@/components/next-action-card";
@@ -210,117 +214,162 @@ export default async function DailyLogDetailPage({
   return (
     <div className="grid gap-8 xl:grid-cols-[minmax(0,1.08fr)_320px]">
       <section className="space-y-8">
-        <div className="rounded-[2rem] border border-slate-200 bg-white/92 p-8 shadow-[0_24px_80px_-40px_rgba(15,23,42,0.35)] backdrop-blur sm:p-10">
-          <DetailPageHeader
-            eyebrow="Daily Execution Workspace"
-            title={
-              dailyLog.summary?.trim() ||
-              `${formatDate(dailyLog.logDate)} field log`
-            }
-            description="Use this page as the canonical project-day execution workspace for field narrative, blockers, structured field notes, attachments, and connected labor continuity on the same project/job chain."
-            backHref="/daily-logs"
-            backLabel="Back to daily logs"
-            actions={
-              <div className="flex flex-wrap gap-3">
-                <Link
-                  href={`/projects/${dailyLog.projectId}`}
-                  className="inline-flex items-center rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:bg-white"
-                >
-                  Open Project Workspace
-                </Link>
-                {dailyLog.jobId ? (
+        <div className={fieldExecutionHeaderShellClassName}>
+          <div className="p-5 sm:p-6">
+            <DetailPageHeader
+              eyebrow="Daily Execution Workspace"
+              title={
+                dailyLog.summary?.trim() ||
+                `${formatDate(dailyLog.logDate)} field log`
+              }
+              description="Use this page as the canonical project-day execution workspace for field narrative, blockers, structured field notes, attachments, and connected labor continuity on the same project/job chain."
+              backHref="/daily-logs"
+              backLabel="Back to daily logs"
+              actions={
+                <div className="flex flex-wrap gap-3">
                   <Link
-                    href={`/jobs/${dailyLog.jobId}`}
+                    href={`/projects/${dailyLog.projectId}`}
                     className="inline-flex items-center rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:bg-white"
                   >
-                    Open linked job
+                    Open Project Workspace
                   </Link>
-                ) : null}
-                <span
-                  className={`inline-flex rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] ${getDailyLogStatusClasses(
-                    dailyLog.status
-                  )}`}
-                >
-                  {formatStatusLabel(dailyLog.status)}
-                </span>
-              </div>
-            }
-          />
+                  {dailyLog.jobId ? (
+                    <Link
+                      href={`/jobs/${dailyLog.jobId}`}
+                      className="inline-flex items-center rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:bg-white"
+                    >
+                      Open linked job
+                    </Link>
+                  ) : null}
+                  <span
+                    className={`inline-flex rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] ${getDailyLogStatusClasses(
+                      dailyLog.status
+                    )}`}
+                  >
+                    {formatStatusLabel(dailyLog.status)}
+                  </span>
+                </div>
+              }
+            />
 
-          {resolvedSearchParams.error ? (
-            <div className="mt-6 rounded-2xl border border-rose-200 bg-rose-50 px-5 py-4 text-sm leading-6 text-rose-800">
-              {resolvedSearchParams.error}
-            </div>
-          ) : null}
-
-          {resolvedSearchParams.message ? (
-            <div className="mt-6 rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-sm leading-6 text-emerald-800">
-              {resolvedSearchParams.message}
-            </div>
-          ) : null}
-
-          <div className="mt-8">
-            <WorkspaceSummaryBand
+            <FieldExecutionCommandBand
+              title="Daily execution command"
+              description="Review the project-day record, field observations, attachments, and labor continuity without creating a separate field evidence system."
+              statusLabel={`${formatStatusLabel(dailyLog.status)} log`}
+              projectHref={`/projects/${dailyLog.projectId}`}
+              jobHref={dailyLog.jobId ? `/jobs/${dailyLog.jobId}` : undefined}
               items={[
                 {
-                  key: "purpose",
-                  label: "What this page is for",
-                  content: (
-                    <p className="text-sm leading-6 text-slate-600">
-                      Review the project-day record first, then use field notes,
-                      attachments, and labor continuity to explain what happened
-                      in the job/schedule stage.
-                    </p>
-                  )
+                  label: "Project day",
+                  value: formatDate(dailyLog.logDate),
+                  detail: dailyLog.project?.name ?? "Project-linked record"
                 },
                 {
-                  key: "weather",
-                  label: "Weather snapshot",
-                  content: (
-                    <>
-                      <p className="text-sm font-semibold text-slate-950">
-                        {dailyLog.weatherSummary ?? "No weather summary"}
-                      </p>
-                      <p className="mt-2 text-sm text-slate-600">
-                        {dailyLog.temperatureLowF !== null ||
-                        dailyLog.temperatureHighF !== null
-                          ? `${dailyLog.temperatureLowF ?? "?"}F to ${dailyLog.temperatureHighF ?? "?"}F`
-                          : (dailyLog.weatherConditions ??
-                            "No weather details entered")}
-                      </p>
-                    </>
-                  )
+                  label: "Field notes",
+                  value: `${fieldNotes.length} note${
+                    fieldNotes.length === 1 ? "" : "s"
+                  }`,
+                  detail: `${dailyLogAttachments.length + fieldNoteAttachments.length} attachment${
+                    dailyLogAttachments.length + fieldNoteAttachments.length ===
+                    1
+                      ? ""
+                      : "s"
+                  } linked`
                 },
                 {
-                  key: "labor",
-                  label: "Labor continuity",
-                  content: (
-                    <>
-                      <p className="text-sm font-semibold text-slate-950">
-                        {laborSummary?.peopleOnSiteCount ?? 0} people on site
-                      </p>
-                      <p className="mt-2 text-sm text-slate-600">
-                        {laborSummary
-                          ? `${laborSummary.totalHoursWorked.toFixed(1)} total hours from ${laborSummary.totalTimeCardCount} time card${laborSummary.totalTimeCardCount === 1 ? "" : "s"}`
-                          : "No time-card continuity is connected to this project day yet; use Time when labor attribution is missing."}
-                      </p>
-                    </>
-                  )
+                  label: "Labor",
+                  value: `${laborSummary?.peopleOnSiteCount ?? 0} people on site`,
+                  detail: laborSummary
+                    ? `${laborSummary.totalHoursWorked.toFixed(1)} total hours`
+                    : "No time-card continuity yet"
                 },
                 {
-                  key: "next-action",
-                  label: "Next best action",
-                  content: (
-                    <NextActionCard
-                      eyebrow="Execution guidance"
-                      title={nextAction.title}
-                      description={nextAction.description}
-                      className="space-y-3 text-sm leading-6 text-slate-600"
-                    />
-                  )
+                  label: "Linked job",
+                  value: dailyLog.jobId
+                    ? `Job ${dailyLog.jobId.slice(0, 8)}`
+                    : "Project-day log",
+                  detail: dailyLog.jobId
+                    ? "Job execution context is linked"
+                    : "No dominant job attached"
                 }
               ]}
             />
+
+            {resolvedSearchParams.error ? (
+              <div className="mt-6 rounded-2xl border border-rose-200 bg-rose-50 px-5 py-4 text-sm leading-6 text-rose-800">
+                {resolvedSearchParams.error}
+              </div>
+            ) : null}
+
+            {resolvedSearchParams.message ? (
+              <div className="mt-6 rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-sm leading-6 text-emerald-800">
+                {resolvedSearchParams.message}
+              </div>
+            ) : null}
+
+            <div className="mt-8">
+              <WorkspaceSummaryBand
+                items={[
+                  {
+                    key: "purpose",
+                    label: "What this page is for",
+                    content: (
+                      <p className="text-sm leading-6 text-slate-600">
+                        Review the project-day record first, then use field
+                        notes, attachments, and labor continuity to explain what
+                        happened in the job/schedule stage.
+                      </p>
+                    )
+                  },
+                  {
+                    key: "weather",
+                    label: "Weather snapshot",
+                    content: (
+                      <>
+                        <p className="text-sm font-semibold text-slate-950">
+                          {dailyLog.weatherSummary ?? "No weather summary"}
+                        </p>
+                        <p className="mt-2 text-sm text-slate-600">
+                          {dailyLog.temperatureLowF !== null ||
+                          dailyLog.temperatureHighF !== null
+                            ? `${dailyLog.temperatureLowF ?? "?"}F to ${dailyLog.temperatureHighF ?? "?"}F`
+                            : (dailyLog.weatherConditions ??
+                              "No weather details entered")}
+                        </p>
+                      </>
+                    )
+                  },
+                  {
+                    key: "labor",
+                    label: "Labor continuity",
+                    content: (
+                      <>
+                        <p className="text-sm font-semibold text-slate-950">
+                          {laborSummary?.peopleOnSiteCount ?? 0} people on site
+                        </p>
+                        <p className="mt-2 text-sm text-slate-600">
+                          {laborSummary
+                            ? `${laborSummary.totalHoursWorked.toFixed(1)} total hours from ${laborSummary.totalTimeCardCount} time card${laborSummary.totalTimeCardCount === 1 ? "" : "s"}`
+                            : "No time-card continuity is connected to this project day yet; use Time when labor attribution is missing."}
+                        </p>
+                      </>
+                    )
+                  },
+                  {
+                    key: "next-action",
+                    label: "Next best action",
+                    content: (
+                      <NextActionCard
+                        eyebrow="Execution guidance"
+                        title={nextAction.title}
+                        description={nextAction.description}
+                        className="space-y-3 text-sm leading-6 text-slate-600"
+                      />
+                    )
+                  }
+                ]}
+              />
+            </div>
           </div>
         </div>
 

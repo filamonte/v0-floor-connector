@@ -32,16 +32,18 @@ export default async function ContractorSettingsLayout({
       description="Review your personal account context and, when permitted, manage the organization-owned configuration layer that powers the contractor workspace."
       navItems={navItems}
       meta={
-        <div className="rounded-[1.75rem] border border-slate-200 bg-slate-50/90 px-5 py-5 text-sm text-slate-600">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500">
+        <div className="rounded-lg border border-white/10 bg-white/[0.08] px-5 py-5 text-sm text-white/72">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[var(--copper-light)]">
             Current context
           </p>
-          <p className="mt-3 text-base font-semibold text-slate-950">
+          <p className="mt-3 text-base font-semibold text-white">
             {organizationContext.organization.legalName}
           </p>
           <p className="mt-2 leading-6">
             {organizationContext.membership.role} access · slug{" "}
-            <code>{organizationContext.organization.slug}</code>
+            <code className="text-white">
+              {organizationContext.organization.slug}
+            </code>
           </p>
         </div>
       }

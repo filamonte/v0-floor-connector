@@ -9,10 +9,13 @@ import { NextActionCard } from "@/components/next-action-card";
 import {
   PortalSecondaryLink,
   PortalStatusBadge,
+  PortalTrustStrip,
   portalActionBoxClassName,
   portalHeroPanelClassName,
   portalInsetPanelClassName,
-  portalStatePanelClassName
+  portalStatePanelClassName,
+  portalSummaryItemClassName,
+  portalSummaryLabelClassName
 } from "@/components/portal-review-ui";
 import { WorkspaceSummaryBand } from "@/components/workspace-summary-band";
 import { requestPortalInvoicePaymentAction } from "@/lib/invoices/actions";
@@ -329,6 +332,26 @@ export default async function PortalInvoiceReviewPage({
             </div>
           ) : null}
 
+          <PortalTrustStrip
+            eyebrow="Shared billing record"
+            title="Review payment state on the live project invoice"
+            description="Checkout and payment activity stays connected to this invoice, the project workspace, and the contractor-owned billing record."
+            items={[
+              {
+                label: "Project",
+                value: invoice.project?.name ?? "Shared project"
+              },
+              {
+                label: "Balance due",
+                value: formatMoney(invoice.balanceDueAmount)
+              },
+              {
+                label: "Status",
+                value: formatStatusLabel(invoice.status)
+              }
+            ]}
+          />
+
           <div className="mt-10 space-y-5">
             <div className="grid gap-5 xl:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)]">
               <section className={portalStatePanelClassName}>
@@ -382,8 +405,8 @@ export default async function PortalInvoiceReviewPage({
 
               <WorkspaceSummaryBand
                 className="grid gap-3 sm:grid-cols-2"
-                itemClassName="rounded-2xl border border-slate-200/80 bg-slate-50/65 px-4 py-4"
-                labelClassName="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500"
+                itemClassName={portalSummaryItemClassName}
+                labelClassName={portalSummaryLabelClassName}
                 items={[
                   {
                     key: "next-action",

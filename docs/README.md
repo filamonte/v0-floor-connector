@@ -47,6 +47,10 @@ Document roles:
 - `docs/platform-philosophy.md`: stable product/engineering philosophy
 - `docs/ui-system.md`: current contractor UI guardrails
 - `docs/graphite-copper-ui-system.md`: implementation reference for the current Graphite / Copper enterprise UI system across contractor, portal, super-admin, and settings surfaces
+- `docs/design/stitch/README.md`: Google Stitch artifact boundary and adoption rules; design reference only, not implemented status
+- `docs/design/stitch/industrial-contrast-DESIGN.md`: curated Stitch Industrial Contrast / Graphite + Copper design summary; design reference only, not implemented status
+- `docs/design/floorconnector-visual-system-evolution.md`: bridge between Stitch inspiration and FloorConnector's canonical UI/workflow guardrails; design guidance only, not implemented status
+- `docs/design/stitch/phase-2-token-dashboard-audit.md` through `docs/design/stitch/phase-10-visual-qa-sweep-and-consolidation.md`: Stitch adoption phase logs and QA evidence; implementation history/reference only, not product capability truth
 - `docs/enterprise-ui-system-audit.md`: secured-app route audit, Phase 1-4 polish history, drift watch list, and authenticated visual QA rules
 - `docs/floorconnector-ui-build-rules.md`: mandatory contractor UI build rules, including the accepted Graphite & Copper visual foundation and shell/workspace guardrails
 - `docs/design-system-comprehensive-prompt.md`: Graphite & Copper visual reference for targeted future UI work
@@ -162,6 +166,8 @@ Read these first for most implementation or documentation tasks:
 ### Design System And UX
 
 - `docs/graphite-copper-ui-system.md` is the current protected-app, portal, super-admin, and settings UI implementation reference.
+- `docs/design/stitch/README.md`, `docs/design/stitch/industrial-contrast-DESIGN.md`, and `docs/design/floorconnector-visual-system-evolution.md` document the Stitch Industrial Contrast adoption boundary and future visual-system direction. They are design guidance/reference docs, not implemented status docs.
+- `docs/design/stitch/phase-2-token-dashboard-audit.md` through `docs/design/stitch/phase-10-visual-qa-sweep-and-consolidation.md` record the bounded Stitch adoption implementation and QA history. Use them as handoff evidence, not as replacements for `docs/current-state.md`.
 - `docs/enterprise-ui-system-audit.md` records the secured-app visual audit and drift watch list.
 - `docs/floorconnector-ui-build-rules.md` contains mandatory UI build rules.
 

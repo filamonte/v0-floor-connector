@@ -51,6 +51,81 @@ Current work should generally preserve the implemented operational core while ti
 - communications, automation, and AI assistance as layers on canonical records
 - GateKeeper planning as a future operational memory and intelligence layer, not as implemented product behavior
 
+## Latest Stitch Visual Reference Adoption
+
+- Google Stitch Industrial Contrast artifacts have been adopted as visual reference and design-system input in [docs/design/stitch/README.md](C:/FloorConnector/docs/design/stitch/README.md), [docs/design/stitch/industrial-contrast-DESIGN.md](C:/FloorConnector/docs/design/stitch/industrial-contrast-DESIGN.md), and [docs/design/floorconnector-visual-system-evolution.md](C:/FloorConnector/docs/design/floorconnector-visual-system-evolution.md).
+- FloorConnector remains Graphite / Copper oriented, with [docs/current-state.md](C:/FloorConnector/docs/current-state.md) as implemented truth and [docs/graphite-copper-ui-system.md](C:/FloorConnector/docs/graphite-copper-ui-system.md) as the current implementation reference.
+- Future implementation should preserve the top-nav-first contractor shell, Manager Page rhythm, Project Workspace as the workflow/readiness hub, and the canonical lifecycle: `opportunity -> customer -> project -> estimate -> contract -> change order -> job -> invoice -> payment`.
+- Stitch screens, HTML, demo data, and sample names must not be copied blindly into app routes or treated as implemented capability.
+- Next recommended pass: design-token/shared-primitive audit, then dashboard refresh using real canonical data.
+
+## Latest Stitch Phase 2 Token / Dashboard Audit
+
+- [docs/design/stitch/phase-2-token-dashboard-audit.md](C:/FloorConnector/docs/design/stitch/phase-2-token-dashboard-audit.md) now records the design-token, shared-primitive, contractor shell, dashboard structure, and read-model audit before any larger dashboard refresh.
+- A small dashboard-scoped primitive class file now lives at `apps/web/components/dashboard/dashboard-surface-primitives.ts`; `ContractorDashboardSurface` and `PriorityStrip` use it for panel shell, panel header, section action, and grid divider treatment.
+- This was a visual-primitive polish only. It did not change dashboard loaders, server actions, links, forms, hidden inputs, auth, routes, schema, RLS, tenant scoping, payments, signatures, estimates, invoices, jobs, schedule behavior, portal grants, or canonical workflow relationships.
+- Next recommended pass: `Google Stitch UI Adoption - Phase 3 Dashboard Visual Refresh`.
+
+## Latest Stitch Phase 3 Dashboard Visual Refresh
+
+- [docs/design/stitch/phase-3-dashboard-refresh.md](C:/FloorConnector/docs/design/stitch/phase-3-dashboard-refresh.md) records the first bounded Stitch-informed dashboard implementation pass.
+- `/dashboard` now has a Graphite command-summary header, dashboard-local command/stat/metric primitive classes, clearer priority-strip status treatment, and a grouped lifecycle-plus-metrics operational summary while preserving the existing top-nav-first shell.
+- This was a dashboard composition and hierarchy pass only. It did not change dashboard loaders, server actions, links, forms, hidden inputs, auth, routes, schema, RLS, tenant scoping, payments, signatures, estimate math, invoice math, workflow gates, portal grants, or canonical workflow relationships.
+- Next recommended pass: `Google Stitch UI Adoption - Phase 4 Project Workspace Visual Maturity`.
+
+## Latest Stitch Phase 4 Project Workspace Visual Maturity
+
+- [docs/design/stitch/phase-4-project-workspace-visual-maturity.md](C:/FloorConnector/docs/design/stitch/phase-4-project-workspace-visual-maturity.md) records the bounded Stitch-informed Project Workspace visual maturity pass.
+- Project detail now uses a project-local Graphite command surface for the existing Operational Command Center, clearer next-move/readiness/attention hierarchy, a tighter connected-record lane grid, and shared local panel shell/header constants while preserving Project Workspace as the operational hub.
+- This was a project composition and hierarchy pass only. It did not change project loaders, readiness calculations, workflow gates, server actions, links, forms, hidden inputs, auth, routes, schema, RLS, tenant scoping, payments, signatures, estimate math, invoice math, job readiness gates, portal grants, or canonical workflow relationships.
+- Next recommended pass: `Google Stitch UI Adoption - Phase 5 Estimate Contract Invoice Detail Visual Maturity`.
+
+## Latest Stitch Phase 5 Commercial Detail Visual Maturity
+
+- [docs/design/stitch/phase-5-commercial-detail-visual-maturity.md](C:/FloorConnector/docs/design/stitch/phase-5-commercial-detail-visual-maturity.md) records the bounded Stitch-informed estimate/contract/invoice detail maturity pass.
+- Estimate, Contract, and Invoice detail pages now share a `CommercialDocumentCommandBand` under their existing detail headers, with Graphite/Copper document-command treatment, current customer/project/status facts, document-specific summary facts, and a clear Project Workspace handoff.
+- This was a commercial detail composition and hierarchy pass only. It did not change data loaders, server actions, estimate status transitions, stale-version protections, contract approval/send/signature/countersign/void behavior, invoice edit/payment/checkout/payment-event behavior, invoice tax/discount/retainage/total/balance/payment calculations, auth, routes, schema, RLS, tenant scoping, job readiness gates, portal grants, or canonical workflow relationships.
+- Next recommended pass: `Google Stitch UI Adoption - Phase 6 Manager Pages and Global Queue Visual Alignment`.
+
+## Latest Stitch Phase 6 Manager Pages and Global Queue Visual Alignment
+
+- [docs/design/stitch/phase-6-manager-pages-global-queue-visual-alignment.md](C:/FloorConnector/docs/design/stitch/phase-6-manager-pages-global-queue-visual-alignment.md) records the bounded Stitch-informed manager/list/queue alignment pass.
+- Shared manager primitives now carry more of the Graphite/Copper rhythm: `ContractorWorkspacePage` command headers, `WorkspaceCommandBar`, `ManagerDashboardCard`, and `QuickCreateFormShell` were visually aligned so global manager/list pages and quick-create entries feel closer to the refreshed dashboard, Project Workspace, and commercial detail pages.
+- This was a shared visual-composition pass only. It did not change manager data loaders, filters, forms, quick-create actions, route destinations, server actions, auth, routes, schema, RLS, tenant scoping, payments, signatures, estimate math, invoice math, job readiness gates, portal grants, or canonical workflow relationships.
+- Next recommended pass: `Google Stitch UI Adoption - Phase 7 Field Schedule and Execution Visual Alignment`.
+
+## Latest Stitch Phase 7 Field Schedule and Execution Visual Alignment
+
+- [docs/design/stitch/phase-7-field-schedule-execution-visual-alignment.md](C:/FloorConnector/docs/design/stitch/phase-7-field-schedule-execution-visual-alignment.md) records the bounded Stitch-informed field/schedule/execution alignment pass.
+- Job Workspace and Daily Log Workspace now share a Graphite/Copper `FieldExecutionCommandBand` that summarizes execution status, project/job handoff, schedule, crew, field evidence, labor continuity, attachments, and billing handoff from existing canonical data.
+- This was a field execution composition pass only. It did not change schedule/job/daily-log/time data loaders, server actions, job scheduling, crew assignment, project readiness gates, job readiness gates, daily-log uniqueness, field-note validation, execution attachments, punch events, derived time cards, auth, routes, schema, RLS, tenant scoping, payments, signatures, estimate math, invoice math, portal grants, or canonical workflow relationships.
+- Next recommended pass: `Google Stitch UI Adoption - Phase 8 Portal and Customer-Facing Visual Alignment`.
+
+## Latest Stitch Phase 8 Portal and Customer-Facing Visual Alignment
+
+- [docs/design/stitch/phase-8-portal-customer-facing-visual-alignment.md](C:/FloorConnector/docs/design/stitch/phase-8-portal-customer-facing-visual-alignment.md) records the bounded Stitch-informed customer portal alignment pass.
+- Portal Home, Portal Project Workspace, and portal estimate/contract/invoice/change-order review pages now share a customer-safe `PortalTrustStrip` and shared portal summary card classes that reinforce live project-scoped access, signature/payment/review state, and return paths to canonical project records.
+- The portal layout now carries a softened Graphite structural backdrop and customer-safe nav band while preserving the existing portal route structure, access model, and review/action pages.
+- This was a portal composition and hierarchy pass only. It did not change portal loaders, portal grants, invite token handling, project-scope enforcement, contract signature/decline/countersign behavior, invoice checkout/payment-event behavior, change-order approval/rejection behavior, estimate or invoice calculations, auth, routes, schema, RLS, tenant scoping, server actions, payments, signatures, or canonical workflow relationships.
+- Next recommended pass: `Google Stitch UI Adoption - Phase 9 Settings Super Admin and Platform Control Visual Alignment`.
+
+## Latest Stitch Phase 9 Settings Super Admin and Platform Control Visual Alignment
+
+- [docs/design/stitch/phase-9-settings-super-admin-platform-control-visual-alignment.md](C:/FloorConnector/docs/design/stitch/phase-9-settings-super-admin-platform-control-visual-alignment.md) records the bounded Stitch-informed settings, super-admin, and platform-control alignment pass.
+- Shared admin/settings primitives now carry the Graphite/Copper control-surface rhythm: `SettingsSurfaceLayout`, `SettingsSectionCard`, `SettingsOverviewCard`, `FeaturePolicyCard`, and selected `super-admin-console` primitives were visually aligned for scope clarity, inherited/default state readability, and calmer configuration panels.
+- Contractor Settings overview now uses shared admin metric/inset treatments instead of older hardcoded warm panels, while preserving organization-owned settings language and links to the existing settings routes.
+- Super Admin keeps the neutral platform-control tone and route boundaries, with stronger platform-command shell treatment and updated shared tabs, legends, future capability panels, and configuration cards.
+- This was an admin visual-composition pass only. It did not change settings loaders, super-admin loaders, server actions, role checks, platform-admin checks, module entitlement behavior, feature overrides, template adoption/edit/archive/default behavior, catalog adoption/edit/archive/default behavior, financial defaults, workflow defaults, auth, routes, schema, RLS, tenant scoping, or canonical workflow relationships.
+- Next recommended pass: `Google Stitch UI Adoption - Phase 10 Visual QA Sweep and Consolidation`.
+
+## Latest Stitch Phase 10 Visual QA Sweep And Consolidation
+
+- [docs/design/stitch/phase-10-visual-qa-sweep-and-consolidation.md](C:/FloorConnector/docs/design/stitch/phase-10-visual-qa-sweep-and-consolidation.md) records the final QA, consistency, and consolidation sweep for the Stitch / Graphite-Copper adoption sequence.
+- Phase 1-10 is now complete as a visual adoption arc across Dashboard, Project Workspace, commercial details, manager/global queues, field execution, portal/customer-facing review, settings, and super-admin surfaces.
+- The QA sweep found no intended schema, data-loader, workflow, route, auth, RLS, tenant, payment, signature, estimate math, invoice math, job readiness, portal grant, settings, or platform-admin behavior changes from the Phase 10 cleanup itself.
+- No additional app-code consolidation was made in Phase 10 because the inspected domain-specific primitives were clear enough to review as-is. Remaining work should be targeted bugfix, manual/browser QA, screenshot evidence, or commit preparation rather than another broad visual expansion.
+- Next recommended pass: `Google Stitch UI Adoption - Commit Preparation and Final Review`.
+
 ## Latest Financial / Reporting Expansion Checkpoint
 
 - Financials Home and Accounts Receivable now share a tenant-scoped collections read model over canonical `invoices`, `payments`, and immutable `payment_events`.

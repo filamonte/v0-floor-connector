@@ -23,37 +23,35 @@ export function SettingsSectionCard({
     <section
       id={id}
       className={[
-        "border bg-white p-6 sm:p-8",
-        neutral
-          ? "rounded-lg border-[var(--border-warm)] shadow-[0_18px_44px_-38px_rgba(34,26,20,0.28)]"
-          : "border-[var(--border-warm)] shadow-[0_24px_80px_-46px_rgba(57,43,30,0.24)]"
+        "overflow-hidden rounded-lg border bg-white shadow-[0_22px_60px_-44px_rgba(34,26,20,0.32)]",
+        neutral ? "border-slate-200" : "border-[var(--border-warm)]"
       ].join(" ")}
     >
-      <p
+      <div
         className={[
-          "text-[11px] font-semibold uppercase tracking-[0.24em]",
-          neutral ? "text-[var(--text-secondary)]" : "text-[var(--copper)]"
+          "h-1",
+          neutral
+            ? "bg-[linear-gradient(90deg,var(--graphite),#64748b)]"
+            : "bg-[linear-gradient(90deg,var(--graphite),var(--copper))]"
         ].join(" ")}
-      >
-        {eyebrow}
-      </p>
-      <h2
-        className={[
-          "mt-4 text-2xl font-semibold tracking-tight sm:text-3xl",
-          neutral ? "text-[var(--text-primary)]" : "text-[var(--text-primary)]"
-        ].join(" ")}
-      >
-        {title}
-      </h2>
-      <p
-        className={[
-          "mt-4 max-w-3xl text-sm leading-7",
-          neutral ? "text-[var(--text-secondary)]" : "text-[var(--text-secondary)]"
-        ].join(" ")}
-      >
-        {description}
-      </p>
-      <div className="mt-8">{children}</div>
+      />
+      <div className="p-6 sm:p-8">
+        <p
+          className={[
+            "text-[11px] font-semibold uppercase tracking-[0.24em]",
+            neutral ? "text-[var(--text-tertiary)]" : "text-[var(--copper)]"
+          ].join(" ")}
+        >
+          {eyebrow}
+        </p>
+        <h2 className="mt-4 text-2xl font-semibold tracking-tight text-[var(--text-primary)] sm:text-3xl">
+          {title}
+        </h2>
+        <p className="mt-4 max-w-3xl text-sm leading-7 text-[var(--text-secondary)]">
+          {description}
+        </p>
+        <div className="mt-8">{children}</div>
+      </div>
     </section>
   );
 }

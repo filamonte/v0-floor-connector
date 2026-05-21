@@ -23,40 +23,36 @@ export function SettingsOverviewCard({
   return (
     <section
       className={[
-        "border bg-white p-5",
-        neutral
-          ? "rounded-lg border-[var(--border-warm)] shadow-[0_14px_34px_-32px_rgba(15,23,42,0.24)]"
-          : "border-[var(--border-warm)] shadow-[0_18px_48px_-44px_rgba(57,43,30,0.2)]"
+        "group overflow-hidden rounded-lg border bg-white shadow-[0_18px_48px_-40px_rgba(34,26,20,0.28)]",
+        neutral ? "border-slate-200" : "border-[var(--border-warm)]"
       ].join(" ")}
     >
-      <h2
+      <div
         className={[
-          "text-xl font-semibold tracking-tight",
-          neutral ? "text-[var(--text-primary)]" : "text-[var(--text-primary)]"
+          "h-1",
+          neutral ? "bg-[var(--graphite)]" : "bg-[var(--copper)]"
         ].join(" ")}
-      >
-        {title}
-      </h2>
-      <p
-        className={[
-          "mt-3 text-sm leading-6",
-          neutral ? "text-[var(--text-secondary)]" : "text-[var(--text-secondary)]"
-        ].join(" ")}
-      >
-        {description}
-      </p>
-      {children ? <div className="mt-5">{children}</div> : null}
-      <Link
-        href={href}
-        className={[
-          "mt-6 inline-flex px-4 py-2 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--copper)] focus-visible:ring-offset-2",
-          neutral
-            ? "rounded-md border border-[var(--border-warm)] bg-white text-[var(--text-secondary)] hover:border-[var(--graphite-light)] hover:bg-[var(--highlight)] hover:text-[var(--text-primary)]"
-            : "border border-[var(--border-warm)] bg-[var(--cream)] text-[var(--text-secondary)] hover:border-[var(--copper)] hover:bg-white hover:text-[var(--text-primary)]"
-        ].join(" ")}
-      >
-        {ctaLabel}
-      </Link>
+      />
+      <div className="p-5">
+        <h2 className="text-xl font-semibold tracking-tight text-[var(--text-primary)]">
+          {title}
+        </h2>
+        <p className="mt-3 text-sm leading-6 text-[var(--text-secondary)]">
+          {description}
+        </p>
+        {children ? <div className="mt-5">{children}</div> : null}
+        <Link
+          href={href}
+          className={[
+            "mt-6 inline-flex rounded-md px-4 py-2 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--copper)] focus-visible:ring-offset-2",
+            neutral
+              ? "border border-[var(--border-warm)] bg-white text-[var(--text-secondary)] hover:border-[var(--graphite-light)] hover:bg-[var(--highlight)] hover:text-[var(--text-primary)]"
+              : "border border-[var(--copper-light)] bg-[var(--copper)] text-white hover:border-[var(--copper)] hover:bg-[var(--copper-dark)]"
+          ].join(" ")}
+        >
+          {ctaLabel}
+        </Link>
+      </div>
     </section>
   );
 }

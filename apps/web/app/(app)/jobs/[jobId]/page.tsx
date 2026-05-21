@@ -11,6 +11,10 @@ import {
 import { ContextFactsList } from "@/components/context-facts-list";
 import { DetailPageHeader } from "@/components/detail-page-header";
 import { DetailPanel } from "@/components/detail-panel";
+import {
+  FieldExecutionCommandBand,
+  fieldExecutionHeaderShellClassName
+} from "@/components/field-execution-command-band";
 import { JobEquipmentPanel } from "@/components/job-equipment-panel";
 import { LinkedRecordCard } from "@/components/linked-record-card";
 import { NeedsAttentionPanel } from "@/components/operational-cues/needs-attention-panel";
@@ -570,145 +574,199 @@ export default async function JobDetailPage({
   return (
     <div className="grid gap-8 xl:grid-cols-[minmax(0,1.08fr)_320px]">
       <section className="space-y-8">
-        <div className="rounded-lg border border-[var(--border-warm)] bg-white p-5 shadow-sm sm:p-6">
-          <DetailPageHeader
-            eyebrow="Job Workspace"
-            title={job.project?.name ?? "Job record"}
-            description="Use this page to run the job/schedule stage day-to-day: confirm dispatch state, schedule timing, crew readiness, field evidence, and invoice/payment handoff on the same canonical project chain."
-            backHref="/jobs"
-            backLabel="Back to jobs"
-            actions={
-              <>
-                {job.serviceTicket ? (
-                  <Link
-                    href={`/service-tickets/${job.serviceTicket.id}`}
-                    className="inline-flex items-center rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:bg-white"
-                  >
-                    Open service ticket
-                  </Link>
-                ) : null}
-                <Link
-                  href={`/projects/${job.projectId}`}
-                  className="inline-flex items-center rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:bg-white"
-                >
-                  Open project hub
-                </Link>
-              </>
-            }
-          />
-
-          {resolvedSearchParams.error ? (
-            <div className="mt-6 rounded-2xl border border-rose-200 bg-rose-50 px-5 py-4 text-sm leading-6 text-rose-800">
-              {resolvedSearchParams.error}
-            </div>
-          ) : null}
-
-          {resolvedSearchParams.message ? (
-            <div className="mt-6 rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-sm leading-6 text-emerald-800">
-              {resolvedSearchParams.message}
-            </div>
-          ) : null}
-
-          <div className="mt-8 space-y-4">
-            <ActionBar
-              title={nextActionTitle}
-              description={nextActionDescription}
-              statusLabel={formatStatusLabel(job.dispatchStatus)}
-              statusTone={getActionBarStatusTone(job.dispatchStatus)}
-              nextActionLabel={
-                operationalBlockers.length > 0
-                  ? `${operationalBlockers.length} operational follow-up${operationalBlockers.length === 1 ? "" : "s"}`
-                  : "Operational record current"
-              }
-              primaryAction={
-                primaryAction
-                  ? renderPrimaryAction(
-                      primaryAction,
-                      job,
-                      primaryActionClassName
-                    )
-                  : null
-              }
-              secondaryActions={
+        <div className={fieldExecutionHeaderShellClassName}>
+          <div className="p-5 sm:p-6">
+            <DetailPageHeader
+              eyebrow="Job Workspace"
+              title={job.project?.name ?? "Job record"}
+              description="Use this page to run the job/schedule stage day-to-day: confirm dispatch state, schedule timing, crew readiness, field evidence, and invoice/payment handoff on the same canonical project chain."
+              backHref="/jobs"
+              backLabel="Back to jobs"
+              actions={
                 <>
-                  <a
-                    href="#schedule-and-crew"
-                    className={secondaryActionClassName}
-                  >
-                    Update Schedule
-                  </a>
-                  <Link
-                    href={getSchedulePanelHref(job)}
-                    className={secondaryActionClassName}
-                  >
-                    Open Schedule
-                  </Link>
+                  {job.serviceTicket ? (
+                    <Link
+                      href={`/service-tickets/${job.serviceTicket.id}`}
+                      className="inline-flex items-center rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:bg-white"
+                    >
+                      Open service ticket
+                    </Link>
+                  ) : null}
                   <Link
                     href={`/projects/${job.projectId}`}
-                    className={secondaryActionClassName}
+                    className="inline-flex items-center rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:bg-white"
                   >
-                    View Project
+                    Open project hub
                   </Link>
-                  <ActionOverflowMenu>
+                </>
+              }
+            />
+
+            <FieldExecutionCommandBand
+              title="Job execution command"
+              description="Keep the schedule, crew, field evidence, labor state, and billing handoff readable from the same canonical job record."
+              statusLabel={`${formatStatusLabel(job.dispatchStatus)} job`}
+              projectHref={`/projects/${job.projectId}`}
+              items={[
+                {
+                  label: "Schedule",
+                  value: formatScheduledDate(job.scheduledDate),
+                  detail: job.scheduledStartAt
+                    ? `${formatScheduleDateTime(job.scheduledStartAt)}${
+                        job.scheduledEndAt
+                          ? ` to ${formatScheduleDateTime(job.scheduledEndAt)}`
+                          : ""
+                      }`
+                    : "No committed time window"
+                },
+                {
+                  label: "Crew",
+                  value: `${jobAssignments.length} assignment${
+                    jobAssignments.length === 1 ? "" : "s"
+                  }`,
+                  detail: job.crewVendor?.name ?? "No crew vendor assigned"
+                },
+                {
+                  label: "Field evidence",
+                  value: `${jobDailyLogs.length} daily log${
+                    jobDailyLogs.length === 1 ? "" : "s"
+                  }`,
+                  detail: `${jobTimeCards.length} time card${
+                    jobTimeCards.length === 1 ? "" : "s"
+                  } and ${jobPunchlistItems.length} punchlist item${
+                    jobPunchlistItems.length === 1 ? "" : "s"
+                  }`
+                },
+                {
+                  label: "Billing handoff",
+                  value: linkedInvoice
+                    ? linkedInvoice.referenceNumber
+                    : "No linked invoice",
+                  detail: linkedInvoice
+                    ? `Balance due ${formatCurrency(
+                        linkedInvoice.balanceDueAmount
+                      )}`
+                    : "Billing follows completed execution"
+                }
+              ]}
+            />
+
+            {resolvedSearchParams.error ? (
+              <div className="mt-6 rounded-2xl border border-rose-200 bg-rose-50 px-5 py-4 text-sm leading-6 text-rose-800">
+                {resolvedSearchParams.error}
+              </div>
+            ) : null}
+
+            {resolvedSearchParams.message ? (
+              <div className="mt-6 rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-sm leading-6 text-emerald-800">
+                {resolvedSearchParams.message}
+              </div>
+            ) : null}
+
+            <div className="mt-8 space-y-4">
+              <ActionBar
+                title={nextActionTitle}
+                description={nextActionDescription}
+                statusLabel={formatStatusLabel(job.dispatchStatus)}
+                statusTone={getActionBarStatusTone(job.dispatchStatus)}
+                nextActionLabel={
+                  operationalBlockers.length > 0
+                    ? `${operationalBlockers.length} operational follow-up${operationalBlockers.length === 1 ? "" : "s"}`
+                    : "Operational record current"
+                }
+                primaryAction={
+                  primaryAction
+                    ? renderPrimaryAction(
+                        primaryAction,
+                        job,
+                        primaryActionClassName
+                      )
+                    : null
+                }
+                secondaryActions={
+                  <>
                     <a
                       href="#schedule-and-crew"
-                      className={overflowActionClassName}
+                      className={secondaryActionClassName}
                     >
-                      Assign Crew
+                      Update Schedule
                     </a>
-                    {canUnschedule ? (
+                    <Link
+                      href={getSchedulePanelHref(job)}
+                      className={secondaryActionClassName}
+                    >
+                      Open Schedule
+                    </Link>
+                    <Link
+                      href={`/projects/${job.projectId}`}
+                      className={secondaryActionClassName}
+                    >
+                      View Project
+                    </Link>
+                    <ActionOverflowMenu>
                       <a
                         href="#schedule-and-crew"
                         className={overflowActionClassName}
                       >
-                        Unschedule
+                        Assign Crew
                       </a>
-                    ) : null}
-                    {job.estimateId ? (
-                      <Link
-                        href={`/estimates/${job.estimateId}`}
-                        className={overflowActionClassName}
-                      >
-                        View Estimate
-                      </Link>
-                    ) : null}
-                    {linkedInvoice ? (
-                      <Link
-                        href={`/invoices/${linkedInvoice.id}`}
-                        className={overflowActionClassName}
-                      >
-                        View Invoice
-                      </Link>
-                    ) : null}
-                  </ActionOverflowMenu>
-                </>
-              }
-              meta={
-                <>
-                  {job.customer?.name ?? "Unknown customer"} ·{" "}
-                  {job.project?.name ?? "Unknown project"}
-                </>
-              }
-            />
+                      {canUnschedule ? (
+                        <a
+                          href="#schedule-and-crew"
+                          className={overflowActionClassName}
+                        >
+                          Unschedule
+                        </a>
+                      ) : null}
+                      {job.estimateId ? (
+                        <Link
+                          href={`/estimates/${job.estimateId}`}
+                          className={overflowActionClassName}
+                        >
+                          View Estimate
+                        </Link>
+                      ) : null}
+                      {linkedInvoice ? (
+                        <Link
+                          href={`/invoices/${linkedInvoice.id}`}
+                          className={overflowActionClassName}
+                        >
+                          View Invoice
+                        </Link>
+                      ) : null}
+                    </ActionOverflowMenu>
+                  </>
+                }
+                meta={
+                  <>
+                    {job.customer?.name ?? "Unknown customer"} ·{" "}
+                    {job.project?.name ?? "Unknown project"}
+                  </>
+                }
+              />
 
-            <WorkflowBar title="Job execution workflow" steps={workflowSteps} />
+              <WorkflowBar
+                title="Job execution workflow"
+                steps={workflowSteps}
+              />
 
-            <ProjectStateSummary
-              title="Job execution state"
-              items={jobStateItems}
-            />
+              <ProjectStateSummary
+                title="Job execution state"
+                items={jobStateItems}
+              />
 
-            <NeedsAttentionPanel
-              cues={jobAttentionCues}
-              description="Job-specific scheduling and crew cues derived from this canonical job and enabled organization rules. Upstream contract, deposit, financing, or project-readiness blockers stay anchored in Project Workspace."
-              getCueStateControls={(cue) => (
-                <CueStateControls
-                  identity={buildOperationalCueIdentity(cue)}
-                  support={getCueStateActionSupport(cue)}
-                  returnTo={`/jobs/${job.id}`}
-                />
-              )}
-            />
+              <NeedsAttentionPanel
+                cues={jobAttentionCues}
+                description="Job-specific scheduling and crew cues derived from this canonical job and enabled organization rules. Upstream contract, deposit, financing, or project-readiness blockers stay anchored in Project Workspace."
+                getCueStateControls={(cue) => (
+                  <CueStateControls
+                    identity={buildOperationalCueIdentity(cue)}
+                    support={getCueStateActionSupport(cue)}
+                    returnTo={`/jobs/${job.id}`}
+                  />
+                )}
+              />
+            </div>
           </div>
         </div>
 
