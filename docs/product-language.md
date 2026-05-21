@@ -43,6 +43,7 @@ The database can stay boring. The product should speak human.
 | FieldTrail            | Project/job field execution history and evidence trail.              | Project Workspace and Job Workspace execution history sections.      | New field-reporting, activity, document, issue, or punchlist models.       |
 | MessageCenter         | Communication timeline and project communication workspace.          | Project Workspace communication history and `/communications`.       | New inbox models, duplicate portal messages, provider sending changes.     |
 | ProjectPulse          | Project health and Next Move summary from existing project signals.  | Project Workspace health, blocker, and next-action summary sections. | Health score tables, AI recommendations, automation, or new status models. |
+| CloseoutTrail         | Project closeout readiness and proof summary from existing records.  | Project Workspace closeout checklist and closeout Next Move.         | New closeout tables, auto-close behavior, or customer package generation.  |
 | Send Trail            | Document send and delivery history.                                  | Project, estimate, contract, invoice, and warranty delivery review.  | Provider payload fields, webhook code, or fake delivery events.            |
 
 ## Terms To Avoid In User-Facing UI
@@ -74,6 +75,7 @@ architecture names.
 | Operational command center        | Command Center               | Dashboard and project operating summaries.                          | Every manager or detail page.                  |
 | Commercial readiness              | Ready Check                  | Commercial handoff summaries and project facts.                     | Stored enum/status values.                     |
 | Project health summary            | ProjectPulse                 | Project Workspace summary of health, blockers, and Next Move.       | Database status models or health-score tables. |
+| Project closeout readiness        | CloseoutTrail                | Project Workspace closeout proof and readiness checklist.           | Closeout database tables or auto-close logic.  |
 | Payment events                    | Payment Trail                | Invoice/payment evidence sections.                                  | Provider event mapping or webhook code.        |
 | Contract signature events         | Signature Trail              | Contract signature history sections.                                | Signature provider integration code.           |
 | Portal access grants              | Customer Access              | Contractor/customer access copy.                                    | Access-grant implementation names.             |
@@ -92,7 +94,7 @@ implemented yet:
 - Shared Projects: portal project access.
 - Scope Builder: estimate builder.
 - Version History: record revisions.
-- Closeout Trail: final invoice/payment/warranty/closeout record.
+- Handoff Package: future customer-facing closeout package generation.
 
 ## Implementation Notes
 

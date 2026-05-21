@@ -44,6 +44,12 @@ import { ServiceWarrantyContinuityPanel } from "@/components/service-warranty-co
 import { WorkItemCreateForm } from "@/components/work-items/work-item-create-form";
 import { WorkItemList } from "@/components/work-items/work-item-list";
 import { listContracts } from "@/lib/contracts/data";
+import {
+  deriveCloseoutTrailSummary,
+  type CloseoutTrailChecklistState,
+  type CloseoutTrailSummary,
+  type CloseoutTrailTone
+} from "@/lib/closeouttrail/summary";
 import { listDailyLogsByProject } from "@/lib/daily-logs/data";
 import { listCustomers } from "@/lib/customers/data";
 import { getProjectEquipmentReadinessSummary } from "@/lib/equipment/data";
@@ -675,6 +681,168 @@ function ProjectPulseSection({ summary }: { summary: ProjectPulseSummary }) {
                 summary.linkedCounts.paymentAttentionItems
             }
           ].map((item) => (
+            <div
+              key={item.label}
+              className="rounded-md border border-[var(--border-warm)] bg-[var(--highlight)] px-3 py-2"
+            >
+              <p className="font-semibold uppercase tracking-[0.14em]">
+                {item.label}
+              </p>
+              <p className="mt-1 text-base font-semibold text-[var(--text-primary)]">
+                {item.value}
+              </p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function getCloseoutTrailToneClassName(tone: CloseoutTrailTone) {
+  switch (tone) {
+    case "ready":
+      return "border-emerald-200 bg-emerald-50 text-emerald-950";
+    case "attention":
+      return "border-amber-200 bg-amber-50 text-amber-950";
+    case "blocked":
+      return "border-rose-200 bg-rose-50 text-rose-950";
+    case "neutral":
+      return "border-[var(--border-warm)] bg-white text-[var(--text-primary)]";
+  }
+}
+
+function getCloseoutChecklistStateClassName(
+  state: CloseoutTrailChecklistState
+) {
+  switch (state) {
+    case "complete":
+      return "border-emerald-200 bg-emerald-50 text-emerald-950";
+    case "attention":
+      return "border-amber-200 bg-amber-50 text-amber-950";
+    case "blocked":
+      return "border-rose-200 bg-rose-50 text-rose-950";
+    case "not_applicable":
+      return "border-slate-200 bg-slate-50 text-slate-700";
+    case "unknown":
+      return "border-[var(--border-warm)] bg-white text-[var(--text-secondary)]";
+  }
+}
+
+function CloseoutTrailSection({ summary }: { summary: CloseoutTrailSummary }) {
+  const leadItems =
+    summary.blockers.length > 0 ? summary.blockers : summary.highlights;
+  const proofCounts = [
+    { label: "Completed jobs", value: summary.linkedCounts.completedJobs },
+    { label: "Open jobs", value: summary.linkedCounts.openJobs },
+    { label: "Daily Job Logs", value: summary.linkedCounts.dailyLogs },
+    { label: "Evidence", value: summary.linkedCounts.evidenceItems },
+    { label: "Open invoices", value: summary.linkedCounts.openInvoices },
+    {
+      label: "Open balance",
+      value: formatMoney(summary.linkedCounts.unpaidBalance)
+    },
+    {
+      label: "Change orders",
+      value: summary.linkedCounts.unresolvedChangeOrders
+    },
+    {
+      label: "Warranty/service",
+      value: summary.linkedCounts.warrantyOrServiceItems
+    }
+  ];
+
+  return (
+    <section id="closeouttrail" className={projectWorkspacePanelClassName}>
+      <div
+        className={`${projectWorkspacePanelHeaderClassName} px-4 py-4 sm:px-5`}
+      >
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+          <div className="min-w-0">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--copper)]">
+              CloseoutTrail
+            </p>
+            <h3 className="mt-2 text-lg font-semibold tracking-tight text-[var(--text-primary)]">
+              Closeout readiness and proof
+            </h3>
+            <p className="mt-2 max-w-[70ch] text-sm leading-6 text-[var(--text-secondary)]">
+              {summary.primaryMessage}
+            </p>
+          </div>
+          <div className="flex flex-col gap-2 sm:flex-row lg:flex-col lg:items-end">
+            <span
+              className={[
+                "inline-flex rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em]",
+                getCloseoutTrailToneClassName(summary.closeoutTone)
+              ].join(" ")}
+            >
+              {summary.closeoutStatusLabel}
+            </span>
+            <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--text-tertiary)]">
+              Closeout Next Move
+            </span>
+            <Link
+              href={summary.nextMove.href}
+              className={primaryActionClassName}
+            >
+              {summary.nextMove.label}
+            </Link>
+          </div>
+        </div>
+
+        <div className="mt-4 rounded-lg border border-[var(--border-warm)] bg-white px-4 py-3 text-sm leading-6 text-[var(--text-secondary)]">
+          <p className="font-semibold text-[var(--text-primary)]">
+            {summary.nextMove.reason}
+          </p>
+          {leadItems.length > 0 ? (
+            <ul className="mt-3 grid gap-2 md:grid-cols-2">
+              {leadItems.slice(0, 4).map((item) => (
+                <li
+                  key={item}
+                  className="rounded-md border border-[var(--border-warm)] bg-[var(--highlight)] px-3 py-2"
+                >
+                  {item}
+                </li>
+              ))}
+            </ul>
+          ) : null}
+        </div>
+      </div>
+
+      <div className="grid gap-3 px-4 py-4 sm:px-5 lg:grid-cols-3">
+        {summary.checklistItems.map((item) => {
+          const body = (
+            <>
+              <div className="flex items-start justify-between gap-3">
+                <p className="text-sm font-semibold">{item.label}</p>
+                <span className="rounded-full border border-current/20 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] opacity-80">
+                  {formatStatusLabel(item.state)}
+                </span>
+              </div>
+              <p className="mt-2 text-xs leading-5 opacity-80">{item.detail}</p>
+            </>
+          );
+          const className = [
+            "rounded-lg border px-4 py-3 text-sm leading-6 transition",
+            item.href ? "hover:border-[var(--copper)] hover:bg-white" : "",
+            getCloseoutChecklistStateClassName(item.state)
+          ].join(" ");
+
+          return item.href ? (
+            <Link key={item.id} href={item.href} className={className}>
+              {body}
+            </Link>
+          ) : (
+            <div key={item.id} className={className}>
+              {body}
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="border-t border-[var(--border-warm)] px-4 py-3 sm:px-5">
+        <div className="grid gap-3 text-xs leading-5 text-[var(--text-secondary)] sm:grid-cols-2 lg:grid-cols-4">
+          {proofCounts.map((item) => (
             <div
               key={item.label}
               className="rounded-md border border-[var(--border-warm)] bg-[var(--highlight)] px-3 py-2"
@@ -2667,6 +2835,17 @@ export default async function ProjectDetailPage({
       invoice.status !== "void" &&
       Number(invoice.balanceDueAmount) > 0
   );
+  const projectScheduleHref = buildProjectScheduleHref({
+    projectId: project.id,
+    view:
+      unscheduledJobs.length > 0
+        ? "unscheduled"
+        : activeJobs.length > 0
+          ? "in_progress"
+          : "all",
+    action: unscheduledJobs.length > 0 ? "schedule" : undefined,
+    jobId: unscheduledJobs.length === 1 ? unscheduledJobs[0].id : undefined
+  });
   const projectPulse = deriveProjectPulseSummary({
     projectId: project.id,
     readinessSnapshot,
@@ -2688,18 +2867,41 @@ export default async function ProjectDetailPage({
     })),
     fieldTrail,
     messageCenter,
-    scheduleHref: buildProjectScheduleHref({
-      projectId: project.id,
-      view:
-        unscheduledJobs.length > 0
-          ? "unscheduled"
-          : activeJobs.length > 0
-            ? "in_progress"
-            : "all",
-      action: unscheduledJobs.length > 0 ? "schedule" : undefined,
-      jobId: unscheduledJobs.length === 1 ? unscheduledJobs[0].id : undefined
-    }),
+    scheduleHref: projectScheduleHref,
     todayIsoDate: new Date().toISOString().slice(0, 10)
+  });
+  const closeoutTrail = deriveCloseoutTrailSummary({
+    projectId: project.id,
+    jobs: projectJobs.map((job) => ({
+      id: job.id,
+      dispatchStatus: job.dispatchStatus
+    })),
+    contracts: projectContracts.map((contract) => ({
+      id: contract.id,
+      status: contract.status
+    })),
+    invoices: projectInvoices.map((invoice) => ({
+      id: invoice.id,
+      status: invoice.status,
+      balanceDueAmount: invoice.balanceDueAmount
+    })),
+    changeOrders: projectChangeOrders.map((changeOrder) => ({
+      id: changeOrder.id,
+      status: changeOrder.status
+    })),
+    fieldTrail,
+    messageCenter,
+    customerAccessCount: projectVisiblePortalGrants.length,
+    warrantyOrServiceItemCount:
+      projectWarrantyDocuments.length + projectServiceTickets.length,
+    scheduleHref: projectScheduleHref,
+    dailyLogsHref: `/daily-logs?projectId=${project.id}`,
+    fieldTrailHref: "#fieldtrail",
+    messageCenterHref: "#messagecenter",
+    serviceWarrantyHref:
+      projectWarrantyDocuments.length > 0
+        ? `/warranty-documents/${projectWarrantyDocuments[0].id}`
+        : `/service-tickets?projectId=${project.id}`
   });
   const recentPayments = (paymentFocusInvoice?.payments ?? []).slice(0, 4);
   const currentBillableValue = projectProgressBilling.reduce(
@@ -4638,6 +4840,8 @@ export default async function ProjectDetailPage({
             </section>
           </div>
         </ExecutionSection>
+
+        <CloseoutTrailSection summary={closeoutTrail} />
 
         <DetailPanel
           title="Financial Hub"

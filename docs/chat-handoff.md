@@ -197,6 +197,12 @@ Current work should generally preserve the implemented operational core while ti
 - ProjectPulse now owns the top-level project Next Move label, while FieldTrail and MessageCenter use section-specific Field Next Move and Communication Next Move copy.
 - The pass was copy/layout coherence only. It did not add product layers, schema, migrations, routes, server actions, auth/RLS changes, tenant-boundary changes, payment/signature/estimate/invoice math changes, portal grants, settings behavior, platform-admin behavior, automation, AI, notifications, or fake data.
 
+## Latest CloseoutTrail Phase 1 Project Closeout Workspace
+
+- [docs/design/closeouttrail-phase-1-project-closeout-workspace.md](C:/FloorConnector/docs/design/closeouttrail-phase-1-project-closeout-workspace.md) records the first CloseoutTrail implementation slice.
+- Project Workspace now includes a read-only CloseoutTrail section after FieldTrail / MessageCenter and before the Financial Hub. It summarizes jobs, Daily Job Logs, Job Notes, field evidence, change orders, contracts / Signature Trail, invoices / Payment Trail, Customer Access, warranty documents, and service tickets into a closeout checklist, proof counts, and closeout Next Move.
+- CloseoutTrail uses existing project, job, field, change-order, contract, invoice, payment, warranty/service, FieldTrail, MessageCenter, ProjectPulse, and Customer Access data. It does not add schema, migrations, routes, closeout tables, duplicate closeout records, server actions, automation, AI summaries, customer-facing field sharing, auth/RLS, payment/signature/estimate/invoice math, portal grants, settings behavior, or platform-admin logic.
+
 ## Latest Financial / Reporting Expansion Checkpoint
 
 - Financials Home and Accounts Receivable now share a tenant-scoped collections read model over canonical `invoices`, `payments`, and immutable `payment_events`.
