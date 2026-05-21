@@ -191,6 +191,12 @@ Current work should generally preserve the implemented operational core while ti
 - Project Workspace now includes a read-only ProjectPulse panel near the top of the workspace. It summarizes Ready Check / GateKeeper, CrewBoard, FieldTrail, MessageCenter, commercial, invoice, payment, and signature signals into a deterministic health tone, compact signal cards, linked counts, and a Next Move link.
 - ProjectPulse uses existing project readiness, jobs, invoices, FieldTrail summary, and MessageCenter summary. It does not add schema, migrations, routes, project-health/status tables, activity/event tables, server actions, automation, AI recommendations, auth/RLS, payment/signature/estimate/invoice math, portal grants, settings behavior, or platform-admin logic.
 
+## Latest Project Workspace OS Consolidation QA
+
+- [docs/design/project-workspace-os-consolidation-qa.md](C:/FloorConnector/docs/design/project-workspace-os-consolidation-qa.md) records the post-ProjectPulse consolidation and browser QA pass.
+- ProjectPulse now owns the top-level project Next Move label, while FieldTrail and MessageCenter use section-specific Field Next Move and Communication Next Move copy.
+- The pass was copy/layout coherence only. It did not add product layers, schema, migrations, routes, server actions, auth/RLS changes, tenant-boundary changes, payment/signature/estimate/invoice math changes, portal grants, settings behavior, platform-admin behavior, automation, AI, notifications, or fake data.
+
 ## Latest Financial / Reporting Expansion Checkpoint
 
 - Financials Home and Accounts Receivable now share a tenant-scoped collections read model over canonical `invoices`, `payments`, and immutable `payment_events`.

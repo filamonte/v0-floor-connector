@@ -586,7 +586,7 @@ function ProjectPulseSection({ summary }: { summary: ProjectPulseSummary }) {
               ProjectPulse
             </p>
             <h3 className="mt-2 text-lg font-semibold tracking-tight text-[var(--text-primary)]">
-              Project health and Next Move
+              Project health summary
             </h3>
             <p className="mt-2 max-w-[70ch] text-sm leading-6 text-[var(--text-secondary)]">
               {summary.primaryMessage}
@@ -600,6 +600,9 @@ function ProjectPulseSection({ summary }: { summary: ProjectPulseSummary }) {
               ].join(" ")}
             >
               {summary.stageLabel}
+            </span>
+            <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--text-tertiary)]">
+              Next Move
             </span>
             <Link
               href={summary.nextMove.href}
@@ -748,7 +751,7 @@ function OperationalCommandCenter({
       <div className="grid gap-px border-y border-[var(--border-warm)] bg-[var(--border-warm)] lg:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]">
         <div className="bg-white px-4 py-4 text-sm leading-6 text-[var(--text-secondary)]">
           <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--copper)]">
-            Next move
+            Workflow step
           </p>
           <p className="mt-1 text-base font-semibold text-[var(--text-primary)]">
             {nextAction.title}
@@ -4345,7 +4348,7 @@ export default async function ProjectDetailPage({
                   href={fieldTrail.nextMove.href}
                   className={secondaryActionClassName}
                 >
-                  {fieldTrail.nextMove.label}
+                  Field Next Move
                 </Link>
               </div>
 
@@ -4379,7 +4382,7 @@ export default async function ProjectDetailPage({
                     detail: "From project time cards"
                   },
                   {
-                    label: "Next Move",
+                    label: "Field Next Move",
                     value:
                       fieldTrail.openBlockerCount > 0
                         ? "Review blockers"
@@ -4523,7 +4526,7 @@ export default async function ProjectDetailPage({
                   href={messageCenter.nextMove.href}
                   className={secondaryActionClassName}
                 >
-                  {messageCenter.nextMove.label}
+                  Communication Next Move
                 </Link>
               </div>
 
@@ -4566,7 +4569,7 @@ export default async function ProjectDetailPage({
                       "No payment activity yet"
                   },
                   {
-                    label: "Next Move",
+                    label: "Communication Next Move",
                     value:
                       messageCenter.attentionCount > 0
                         ? "Needs follow-up"

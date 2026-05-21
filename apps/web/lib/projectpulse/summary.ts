@@ -354,10 +354,10 @@ export function deriveProjectPulseSummary(
     healthTone === "blocked"
       ? "GateKeeper is holding movement until the Ready Check is clear."
       : healthTone === "attention"
-        ? "ProjectPulse found a few project signals that need review."
+        ? "A few project signals need review."
         : healthTone === "good"
           ? "The current project signals look healthy from existing records."
-          : "ProjectPulse is waiting on more connected project activity.";
+          : "Waiting on more connected project activity.";
 
   return {
     stageLabel,
