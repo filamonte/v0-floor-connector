@@ -69,6 +69,7 @@ Document roles:
   HTML/print route before stored PDFs, portal downloads, or server PDF
   generation
 - `docs/design/document-engine-phase-2a-closeout-package-print-route.md`: implementation note for the contractor-side Project Closeout Package print/save route generated from current project source records
+- `docs/design/document-engine-qa-checkpoint.md`: focused QA checkpoint for Document Engine print/export routes, Project Closeout Package coverage, source-record boundaries, and validation evidence
 - `docs/operating-core-validation-checklist.md`: focused validation inventory for recent operating-core summary helpers, routes, and browser QA caveats
 - `docs/design/project-workspace-lifecycle-qa.md`: lifecycle QA note for the Project Workspace operating loop after CrewBoard, FieldTrail, MessageCenter, ProjectPulse, and CloseoutTrail
 - `docs/enterprise-ui-system-audit.md`: secured-app route audit, Phase 1-4 polish history, drift watch list, and authenticated visual QA rules
@@ -187,6 +188,9 @@ Read these first for most implementation or documentation tasks:
 - `docs/design/document-engine-phase-2a-closeout-package-print-route.md` records
   the implemented contractor-side closeout package print route and its
   export-vs-delivery-proof boundary.
+- `docs/design/document-engine-qa-checkpoint.md` records the focused
+  post-Phase 2A print/export QA evidence and remaining portal/browser
+  limitations.
 
 ### Workflow And System Architecture
 
@@ -209,6 +213,9 @@ Read these first for most implementation or documentation tasks:
   generation.
 - `docs/design/document-engine-phase-2a-closeout-package-print-route.md`
   captures the implemented contractor-only closeout package print route.
+- `docs/design/document-engine-qa-checkpoint.md` captures the focused
+  Document Engine print route QA checkpoint after Phase 1, Phase 2A, and
+  Project Workspace browser QA maintenance.
 
 ### AI Guidance And Planning
 

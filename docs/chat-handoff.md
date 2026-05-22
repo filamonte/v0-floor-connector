@@ -31,12 +31,12 @@ opportunities/leads, customers, projects, estimates, contracts, change orders,
 jobs, invoices, payments, portal foundations, workforce/time/field foundations,
 settings, super admin, and normalized contractor UI patterns.
 
-Latest remote-verified implementation commit:
+Latest remote-verified implementation/test commit:
 
-`09c6fbc2 feat: add Document Engine export foundations`
+`9fb9297d test: update project workspace browser QA`
 
 `git push origin main` returned `Everything up-to-date` before the Document
-Engine Phase 2 planning pass.
+Engine QA checkpoint pass.
 
 ## Latest Operating Core
 
@@ -69,6 +69,11 @@ Recent completed layers:
 - Document Engine Phase 2A implements the contractor-only Project Closeout
   Package print/save route at `/projects/:id/closeout-package/pdf`, generated
   from current project source records and summary helpers.
+- Project Workspace browser QA now follows current product language and verifies
+  the closeout package print route from a valid project detail link.
+- [docs/design/document-engine-qa-checkpoint.md](C:/FloorConnector/docs/design/document-engine-qa-checkpoint.md)
+  records the focused print/export QA evidence after Document Engine Phase 1,
+  Phase 2A, and the browser QA maintenance pass.
 
 These layers are read-only summaries, source-record handoffs, copy/hierarchy
 improvements, or existing-action presentation around canonical records. They did
@@ -104,7 +109,6 @@ before assuming a protected-route browser failure is product behavior.
 Use [docs/design/document-engine-phase-2-plan.md](C:/FloorConnector/docs/design/document-engine-phase-2-plan.md)
 as the current Document Engine sequencing artifact.
 
-Recommended next build: either Phase 2B portal-safe closeout package planning
-or a small print QA/polish pass after authenticated project detail QA is stable.
-Do not add stored PDFs, storage, provider send, or portal download behavior until
-the visibility/versioning policy is explicit.
+Recommended next build: Phase 2B portal-safe closeout package planning or
+mobile field execution depth. Do not add stored PDFs, storage, provider send, or
+portal download behavior until the visibility/versioning policy is explicit.
