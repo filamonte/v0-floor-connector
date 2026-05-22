@@ -100,7 +100,10 @@ implemented yet:
 - Shared Projects: portal project access.
 - Scope Builder: estimate builder.
 - Version History: record revisions.
-- Handoff Package: future customer-facing closeout package generation.
+- Closeout Package: future generated project closeout handoff artifact from
+  source records.
+- Handoff Package: broader future customer-facing handoff package language if a
+  closeout-specific label is too narrow.
 
 ## Implementation Notes
 

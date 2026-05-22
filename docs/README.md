@@ -64,6 +64,10 @@ Document roles:
 - `docs/design/sendtrail-phase-1-document-delivery-proof-visibility.md`: implementation note for the first Send Trail document delivery proof visibility pass over existing document delivery, signature, payment, portal view, and communication evidence
 - `docs/design/operating-core-checkpoint.md`: post Trail Systems checkpoint for current-state, roadmap, workflow, language, validation, and next-build recommendation after the operating-core expansion
 - `docs/design/document-engine-phase-1-pdf-export-foundations.md`: implementation note for the first shared Document Engine print/save PDF foundation over existing estimate, contract, and invoice source records
+- `docs/design/document-engine-phase-2-plan.md`: planning note for the next
+  Document Engine path, recommending a contractor-side Project Closeout Package
+  HTML/print route before stored PDFs, portal downloads, or server PDF
+  generation
 - `docs/operating-core-validation-checklist.md`: focused validation inventory for recent operating-core summary helpers, routes, and browser QA caveats
 - `docs/design/project-workspace-lifecycle-qa.md`: lifecycle QA note for the Project Workspace operating loop after CrewBoard, FieldTrail, MessageCenter, ProjectPulse, and CloseoutTrail
 - `docs/enterprise-ui-system-audit.md`: secured-app route audit, Phase 1-4 polish history, drift watch list, and authenticated visual QA rules
@@ -176,6 +180,9 @@ Read these first for most implementation or documentation tasks:
   audit and next-build recommendation.
 - `docs/design/document-engine-phase-1-pdf-export-foundations.md` records the
   first shared Document Engine print/export foundation.
+- `docs/design/document-engine-phase-2-plan.md` records the recommended next
+  Document Engine sequence: Project Closeout Package print route first, portal
+  downloads second, persisted artifact/version policy later.
 
 ### Workflow And System Architecture
 
@@ -193,6 +200,9 @@ Read these first for most implementation or documentation tasks:
 - `docs/product-language.md` and `docs/product-language-audit.md` govern product naming and terminology. They are UX copy guidance, not schema, route, or domain-model rename instructions.
 - `docs/design/operating-core-checkpoint.md` and `docs/operating-core-validation-checklist.md` capture the current operating-core audit, validation inventory, and recommended next build direction after CrewBoard, FieldTrail, MessageCenter, ProjectPulse, CloseoutTrail, Proof Center, Reports, and Send Trail.
 - `docs/design/document-engine-phase-1-pdf-export-foundations.md` captures the current print/save PDF boundary for source-record document exports.
+- `docs/design/document-engine-phase-2-plan.md` captures the planning boundary
+  for closeout packages, portal downloads, storage, versioning, and future PDF
+  generation.
 
 ### AI Guidance And Planning
 

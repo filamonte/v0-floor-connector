@@ -31,12 +31,12 @@ opportunities/leads, customers, projects, estimates, contracts, change orders,
 jobs, invoices, payments, portal foundations, workforce/time/field foundations,
 settings, super admin, and normalized contractor UI patterns.
 
-Latest remote-verified commit before this checkpoint:
+Latest remote-verified implementation commit:
 
-`5630ba6b feat: add Send Trail delivery proof visibility`
+`09c6fbc2 feat: add Document Engine export foundations`
 
-`git push origin main` returned `Everything up-to-date` during the operating
-core checkpoint.
+`git push origin main` returned `Everything up-to-date` before the Document
+Engine Phase 2 planning pass.
 
 ## Latest Operating Core
 
@@ -62,6 +62,10 @@ Recent completed layers:
 - Document Engine Phase 1 centralizes existing estimate, contract, and invoice
   print/save PDF route helpers and clarifies that browser print/save exports are
   generated artifacts, not delivery proof or a separate document source.
+- Document Engine Phase 2 planning recommends a contractor-side Project
+  Closeout Package HTML/print route first, with portal downloads, stored
+  artifacts, and server-generated PDFs deferred until visibility and versioning
+  policy are explicit.
 
 These layers are read-only summaries, source-record handoffs, copy/hierarchy
 improvements, or existing-action presentation around canonical records. They did
@@ -77,8 +81,8 @@ Do not describe these as implemented unless `docs/current-state.md` changes:
 - drag/drop scheduling or automated dispatch
 - external calendar sync or route optimization
 - AI summaries, AI recommendations, or autonomous actions
-- full document management, stored document/version lifecycle, or generated
-  closeout packages
+- full document management, stored document/version lifecycle, generated
+  closeout packages, or portal closeout downloads
 - provider retry lifecycle or automated reminders
 - standalone Proof Center route
 - customer-facing field sharing
@@ -94,10 +98,10 @@ before assuming a protected-route browser failure is product behavior.
 
 ## Next Recommended Direction
 
-Pause feature expansion after the Trail Systems run and use
-[docs/design/operating-core-checkpoint.md](C:/FloorConnector/docs/design/operating-core-checkpoint.md)
-as the current recalibration artifact.
+Use [docs/design/document-engine-phase-2-plan.md](C:/FloorConnector/docs/design/document-engine-phase-2-plan.md)
+as the current Document Engine sequencing artifact.
 
-Recommended next build: document generation / PDF / export depth. It strengthens
-Proof Center, Send Trail, CloseoutTrail, estimates, contracts, invoices, and
-portal review without creating another disconnected app surface.
+Recommended next build: Document Engine Phase 2A, a contractor-side Project
+Closeout Package HTML/print route generated from current project source records.
+Keep it browser print/save only; do not add stored PDFs, storage, provider send,
+or portal download behavior yet.
