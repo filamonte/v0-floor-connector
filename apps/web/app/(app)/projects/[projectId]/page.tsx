@@ -3957,6 +3957,15 @@ export default async function ProjectDetailPage({
               warrantyDocuments={projectWarrantyDocuments}
               serviceJobs={projectJobs.filter((job) => job.serviceTicketId)}
               serviceTicketHref={`/service-tickets?projectId=${project.id}`}
+              closeoutPackageHref={`/projects/${project.id}/closeout-package/pdf`}
+              proofContextCount={
+                proofCenter.counts.evidenceItems +
+                proofCenter.counts.dailyJobLogs +
+                proofCenter.counts.jobNotes +
+                proofCenter.counts.warrantyDocuments +
+                proofCenter.counts.serviceTickets
+              }
+              closeoutReady={closeoutTrail.closeoutTone === "ready"}
             />
 
             {showReadinessGuidancePanel ? (

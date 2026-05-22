@@ -22,6 +22,7 @@ import {
   listTimeCardsByServiceTicket,
   listTimePunchEventsByServiceTicket
 } from "@/lib/time/data";
+import { deriveServiceCenterSummary } from "@/lib/servicecenter/summary";
 import { createWarrantyDocumentFromServiceTicketAction } from "@/lib/warranty-documents/actions";
 import {
   listWarrantyDocumentsByServiceTicket,
@@ -92,6 +93,18 @@ export default async function ServiceTicketDetailPage({
     serviceJobs.find((job) => job.dispatchStatus !== "completed")?.id ??
     serviceJobs[0]?.id ??
     ticket.jobId;
+  const serviceCenter = deriveServiceCenterSummary({
+    tickets: [ticket],
+    warrantyDocuments,
+    serviceJobs,
+    serviceCenterHref: `/service-tickets/${ticket.id}`,
+    closeoutPackageHref: ticket.projectId
+      ? `/projects/${ticket.projectId}/closeout-package/pdf`
+      : null,
+    proofContextCount:
+      warrantyDocuments.length + serviceJobs.length + serviceTimeCards.length,
+    closeoutReady: Boolean(ticket.projectId)
+  });
 
   return (
     <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
@@ -164,6 +177,31 @@ export default async function ServiceTicketDetailPage({
             </div>
           </div>
         </div>
+
+        <DetailPanel
+          title="Service Next Move"
+          description="Follow-up stays tied to this ticket, project, job, proof, and warranty context."
+        >
+          <div className="rounded-[4px] border border-[#e3d6c7] bg-[#fffaf4] px-5 py-4">
+            <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+              <div>
+                <p className="text-sm font-semibold text-[#2b2118]">
+                  {serviceCenter.nextMove.reason}
+                </p>
+                <p className="mt-2 text-sm leading-6 text-[#665446]">
+                  {serviceCenter.coverageLabel}.{" "}
+                  {serviceCenter.evidenceContextLabel}.
+                </p>
+              </div>
+              <Link
+                href={serviceCenter.nextMove.href}
+                className="inline-flex shrink-0 items-center justify-center rounded-[4px] border border-[#171717] bg-[#171717] px-4 py-2.5 text-sm font-medium text-white transition hover:bg-[#2a2a2a]"
+              >
+                {serviceCenter.nextMove.label}
+              </Link>
+            </div>
+          </div>
+        </DetailPanel>
 
         <DetailPanel
           title="Service / Warranty Details"
@@ -473,7 +511,7 @@ export default async function ServiceTicketDetailPage({
 
         <DetailPanel
           title="Warranty Documents"
-          description="Generate warranty output from the canonical ticket and warranty template system. Send/sign is still planned later."
+          description="Generate warranty output from the ticket and warranty template system. Signature requests, customer review, delivery history, and print/save stay on the warranty document workspace."
         >
           <div className="space-y-4">
             <form
@@ -537,13 +575,11 @@ export default async function ServiceTicketDetailPage({
           description="These belong here later, but are intentionally not implemented in this MVP."
         >
           <ul className="space-y-3 text-sm leading-6 text-slate-600">
-            <li>
-              Warranty sends, customer review, signatures, and delivery proof
-            </li>
             <li>Portal customer service requests and customer-safe status</li>
             <li>Dispatch-grade service visit workflow and auto-rescheduling</li>
             <li>Billing automation and manufacturer claims</li>
             <li>Equipment/material usage automation</li>
+            <li>Recurring maintenance contracts and SLA escalation</li>
           </ul>
         </DetailPanel>
       </aside>

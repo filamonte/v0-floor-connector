@@ -61,6 +61,10 @@ Recent completed layers:
   summary.
 - Proof Center Phase 1 on Project Workspace for project document/evidence/proof
   indexing.
+- Warranty Service Phase 1 adds a shared Service Center summary/Next Move layer
+  across existing service tickets, warranty documents, service jobs, project
+  proof context, and closeout handoff without adding service records, portal
+  service requests, claim automation, or provider behavior.
 - Reports Phase 1 on `/reports` for read-only operations and collections
   visibility.
 - Send Trail Phase 1 on estimate, contract, and invoice source workspaces for

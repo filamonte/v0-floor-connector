@@ -214,6 +214,12 @@ Implemented behavior:
 - Service Ticket detail can create an unscheduled service job from ticket
   context, list linked service jobs, link to the existing Schedule action panel,
   and prefill `/time` against the linked service job and ticket
+- Service Center summary helpers now derive deterministic service/warranty Next
+  Moves from existing tickets, warranty documents, service jobs, Proof Center
+  context, and CloseoutTrail handoff state. Project Workspace,
+  `/service-tickets`, and `/service-tickets/:id` show this as read-only
+  continuity guidance without adding service records or changing ticket,
+  warranty, job, portal, billing, or provider behavior.
 - focused migration assertion tests for the canonical table, relationship/RLS
   guardrails, and excluded deferred systems
 

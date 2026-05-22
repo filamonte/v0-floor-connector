@@ -6,6 +6,7 @@ import { ServiceTicketForm } from "@/components/service-ticket-form";
 import { WorkspaceComposerSheet } from "@/components/workspace-composer-sheet";
 import { requireAuthenticatedUser } from "@/lib/auth/session";
 import { getActiveOrganizationContext } from "@/lib/organizations/active-context";
+import { deriveServiceCenterSummary } from "@/lib/servicecenter/summary";
 import { createServiceTicketAction } from "@/lib/service-tickets/actions";
 import {
   getServiceTicketManagerReadModel,
@@ -97,6 +98,12 @@ export default async function ServiceTicketsPage({
     { key: "urgent", label: "High priority", count: readModel.counts.urgent },
     { key: "closed", label: "Resolved", count: readModel.counts.closed }
   ] as const;
+  const serviceCenter = deriveServiceCenterSummary({
+    tickets: readModel.tickets,
+    warrantyDocuments: [],
+    serviceJobs: [],
+    serviceCenterHref: buildServiceTicketHref({ q: query, view })
+  });
 
   return (
     <ContractorWorkspacePage
@@ -124,7 +131,7 @@ export default async function ServiceTicketsPage({
         supportSlot: (
           <p>
             Service tickets stay attached to customer, project, and job context.
-            Portal requests, warranty PDFs, billing, time clocking, and
+            Portal service requests, stored warranty packets, billing, and
             equipment usage are planned later.
           </p>
         ),
@@ -226,6 +233,31 @@ export default async function ServiceTicketsPage({
               {resolvedSearchParams.message}
             </div>
           ) : null}
+
+          <section className="rounded-[4px] border border-[#e5e5e5] bg-[#fffaf4] px-5 py-4">
+            <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+              <div>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#7c6b5d]">
+                  Service Center Next Move
+                </p>
+                <h2 className="mt-2 text-base font-semibold text-[#171717]">
+                  {serviceCenter.nextMove.reason}
+                </h2>
+                <p className="mt-2 text-sm leading-6 text-[#665446]">
+                  {serviceCenter.openTicketCount} open ticket
+                  {serviceCenter.openTicketCount === 1 ? "" : "s"} /{" "}
+                  {serviceCenter.closedTicketCount} resolved or closed /{" "}
+                  {serviceCenter.coverageLabel}.
+                </p>
+              </div>
+              <Link
+                href={serviceCenter.nextMove.href}
+                className="inline-flex shrink-0 items-center justify-center rounded-[4px] border border-[#171717] bg-[#171717] px-4 py-2.5 text-sm font-medium text-white transition hover:bg-[#2a2a2a]"
+              >
+                {serviceCenter.nextMove.label}
+              </Link>
+            </div>
+          </section>
 
           <div className="space-y-3">
             {readModel.tickets.length > 0 ? (

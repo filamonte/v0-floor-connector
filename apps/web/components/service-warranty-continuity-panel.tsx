@@ -4,6 +4,7 @@ import { AppEmptyState } from "@/components/app-empty-state";
 import { DetailPanel } from "@/components/detail-panel";
 import { LinkedRecordCard } from "@/components/linked-record-card";
 import type { JobListItem } from "@/lib/jobs/data";
+import { deriveServiceCenterSummary } from "@/lib/servicecenter/summary";
 import type { ServiceTicketListItem } from "@/lib/service-tickets/data";
 import type { WarrantyDocumentContinuityItem } from "@/lib/warranty-documents/data";
 
@@ -14,6 +15,9 @@ type ServiceWarrantyContinuityPanelProps = {
   warrantyDocuments: WarrantyDocumentContinuityItem[];
   serviceJobs?: JobListItem[];
   serviceTicketHref?: string;
+  closeoutPackageHref?: string | null;
+  proofContextCount?: number;
+  closeoutReady?: boolean;
 };
 
 function formatStatusLabel(value: string) {
@@ -81,8 +85,20 @@ export function ServiceWarrantyContinuityPanel({
   tickets,
   warrantyDocuments,
   serviceJobs = [],
-  serviceTicketHref = "/service-tickets"
+  serviceTicketHref = "/service-tickets",
+  closeoutPackageHref = null,
+  proofContextCount = 0,
+  closeoutReady = false
 }: ServiceWarrantyContinuityPanelProps) {
+  const serviceCenter = deriveServiceCenterSummary({
+    tickets,
+    warrantyDocuments,
+    serviceJobs,
+    serviceCenterHref: serviceTicketHref,
+    closeoutPackageHref,
+    proofContextCount,
+    closeoutReady
+  });
   const openTickets = tickets.filter(
     (ticket) =>
       ticket.status !== "resolved" &&
@@ -103,13 +119,36 @@ export function ServiceWarrantyContinuityPanel({
   return (
     <DetailPanel title={title} description={description}>
       <div className="space-y-5">
+        <div className="rounded-lg border border-[var(--border-warm)] bg-[#fffaf4] px-4 py-4 sm:px-5">
+          <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+            <div className="min-w-0">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
+                Service Next Move
+              </p>
+              <p className="mt-2 text-base font-semibold text-[var(--text-primary)]">
+                {serviceCenter.nextMove.reason}
+              </p>
+              <p className="mt-2 text-sm leading-6 text-[var(--text-secondary)]">
+                {serviceCenter.coverageLabel}.{" "}
+                {serviceCenter.evidenceContextLabel}.
+              </p>
+            </div>
+            <Link
+              href={serviceCenter.nextMove.href}
+              className="inline-flex shrink-0 items-center justify-center rounded-[4px] border border-[#171717] bg-[#171717] px-4 py-2.5 text-sm font-medium text-white transition hover:bg-[#2a2a2a]"
+            >
+              {serviceCenter.nextMove.label}
+            </Link>
+          </div>
+        </div>
+
         <div className="grid gap-3 sm:grid-cols-4">
           <div className="rounded-lg border border-[var(--border-warm)] bg-[var(--highlight)] px-4 py-3">
             <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
               Open tickets
             </p>
             <p className="mt-2 text-2xl font-semibold text-[var(--text-primary)]">
-              {openTickets.length}
+              {serviceCenter.openTicketCount}
             </p>
           </div>
           <div className="rounded-lg border border-[var(--border-warm)] bg-[var(--highlight)] px-4 py-3">
@@ -117,7 +156,7 @@ export function ServiceWarrantyContinuityPanel({
               Warranty docs
             </p>
             <p className="mt-2 text-2xl font-semibold text-[var(--text-primary)]">
-              {warrantyDocuments.length}
+              {serviceCenter.warrantyDocumentCount}
             </p>
           </div>
           <div className="rounded-lg border border-[var(--border-warm)] bg-[var(--highlight)] px-4 py-3">
@@ -125,7 +164,7 @@ export function ServiceWarrantyContinuityPanel({
               Service jobs
             </p>
             <p className="mt-2 text-2xl font-semibold text-[var(--text-primary)]">
-              {serviceJobs.length}
+              {serviceCenter.serviceJobCount}
             </p>
           </div>
           <div className="rounded-lg border border-[var(--border-warm)] bg-[var(--highlight)] px-4 py-3">
@@ -133,14 +172,23 @@ export function ServiceWarrantyContinuityPanel({
               Requested
             </p>
             <p className="mt-2 text-2xl font-semibold text-[var(--text-primary)]">
-              {warrantyDocuments.reduce(
-                (total, document) =>
-                  total + document.signatureSummary.requestedSignerCount,
-                0
-              )}
+              {serviceCenter.requestedSignatureCount}
             </p>
           </div>
         </div>
+
+        {serviceCenter.warnings.length > 0 ? (
+          <div className="grid gap-2 md:grid-cols-2">
+            {serviceCenter.warnings.slice(0, 4).map((warning) => (
+              <p
+                key={warning}
+                className="rounded-[4px] border border-amber-200 bg-amber-50 px-3 py-2 text-sm leading-6 text-amber-900"
+              >
+                {warning}
+              </p>
+            ))}
+          </div>
+        ) : null}
 
         {!hasRecords ? (
           <AppEmptyState
