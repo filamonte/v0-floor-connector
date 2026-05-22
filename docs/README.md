@@ -56,6 +56,7 @@ Document roles:
 - `docs/design/crewboard-phase-2-dispatch-usability.md`: implementation note for CrewBoard dispatch usability, date navigation, schedule warnings, and schedule detail on the existing `/schedule` route
 - `docs/design/fieldtrail-phase-1-project-execution-timeline.md`: implementation note for the first FieldTrail project/job execution timeline over existing daily logs, field notes, execution attachments, time cards, and jobs
 - `docs/design/mobile-field-phase-1-fast-daily-job-log-capture.md`: implementation note for the first mobile-focused Daily Job Log capture slice over existing Daily Logs, Job Notes, jobs, CrewBoard, and FieldTrail
+- `docs/design/mobile-field-phase-1-qa-checkpoint.md`: focused QA checkpoint for Mobile Field Phase 1 Daily Job Log capture, route checks, helper tests, and preserved field behavior
 - `docs/design/messagecenter-phase-1-project-communication-timeline.md`: implementation note for the first MessageCenter project communication timeline over existing communication threads/messages, Send Trail, Signature Trail, Payment Trail, and Customer Access context
 - `docs/design/projectpulse-phase-1-project-health-summary.md`: implementation note for the first ProjectPulse project health and Next Move summary over existing readiness, scheduling, field, communication, billing, payment, and signature signals
 - `docs/design/project-workspace-os-consolidation-qa.md`: consolidation QA note for Project Workspace copy, hierarchy, browser QA, and Next Move terminology after CrewBoard, FieldTrail, MessageCenter, and ProjectPulse
@@ -217,6 +218,9 @@ Read these first for most implementation or documentation tasks:
 - `docs/design/document-engine-qa-checkpoint.md` captures the focused
   Document Engine print route QA checkpoint after Phase 1, Phase 2A, and
   Project Workspace browser QA maintenance.
+- `docs/design/mobile-field-phase-1-qa-checkpoint.md` captures the focused
+  Mobile Field Phase 1 QA checkpoint for Daily Job Log capture, helper tests,
+  browser route evidence, and skipped protected detail checks.
 
 ### AI Guidance And Planning
 

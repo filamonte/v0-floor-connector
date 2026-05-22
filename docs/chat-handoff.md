@@ -50,6 +50,9 @@ Recent completed layers:
 - Mobile Field Phase 1 improves Daily Job Log capture for phone-sized field
   work using existing Daily Logs, Job Notes, Job Workspace, CrewBoard, and
   FieldTrail fast paths.
+- [docs/design/mobile-field-phase-1-qa-checkpoint.md](C:/FloorConnector/docs/design/mobile-field-phase-1-qa-checkpoint.md)
+  records the focused Mobile Field QA evidence, including Daily Logs and
+  CrewBoard mobile route checks plus skipped protected detail route discovery.
 - MessageCenter Phase 1 on Project Workspace for project communication,
   Send Trail, Signature Trail, Payment Trail, and Customer Access context.
 - ProjectPulse Phase 1 on Project Workspace for deterministic project health
