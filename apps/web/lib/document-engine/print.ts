@@ -69,6 +69,14 @@ export function buildDocumentBackHref(input: {
   return `${prefix}/${plural}/${input.subjectId}`;
 }
 
+export function buildProjectCloseoutPackagePrintHref(projectId: string) {
+  return `/projects/${projectId}/closeout-package/pdf`;
+}
+
+export function getProjectCloseoutPackageBackHref(projectId: string) {
+  return `/projects/${projectId}`;
+}
+
 export function getDocumentEngineExportNotice(
   subjectType: DocumentEngineSubjectType
 ) {
@@ -83,4 +91,12 @@ export function getDocumentEngineFooterNote(
   const label = getDocumentEngineSubjectLabel(subjectType);
 
   return `This PDF/print view is a customer-facing rendering of the shared FloorConnector ${label}. It is not delivery proof and does not create a separate document record.`;
+}
+
+export function getProjectCloseoutPackageExportNotice() {
+  return "This package is generated from current FloorConnector records. Printing or saving it does not send it, create delivery proof, or change project, payment, signature, or closeout status.";
+}
+
+export function getProjectCloseoutPackageFooterNote() {
+  return "This closeout package is a printable project summary generated from current FloorConnector records. It is not a stored PDF artifact, delivery proof, or a separate project closeout record.";
 }

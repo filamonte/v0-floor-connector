@@ -5,8 +5,11 @@ import {
   buildDocumentBackHref,
   buildDocumentEngineBrand,
   buildDocumentPrintHref,
+  buildProjectCloseoutPackagePrintHref,
   getDocumentEngineExportNotice,
-  getDocumentEngineFooterNote
+  getDocumentEngineFooterNote,
+  getProjectCloseoutPackageExportNotice,
+  getProjectCloseoutPackageFooterNote
 } from "./print";
 
 void test("builds contractor and portal print links without route branching in pages", () => {
@@ -64,4 +67,17 @@ void test("export copy keeps print separate from delivery and workflow state", (
     getDocumentEngineFooterNote("estimate"),
     /does not create a separate document record/i
   );
+});
+
+void test("builds project closeout package print links and preserves export boundary", () => {
+  assert.equal(
+    buildProjectCloseoutPackagePrintHref("project_123"),
+    "/projects/project_123/closeout-package/pdf"
+  );
+  assert.match(getProjectCloseoutPackageExportNotice(), /does not send/i);
+  assert.match(
+    getProjectCloseoutPackageExportNotice(),
+    /create delivery proof/i
+  );
+  assert.match(getProjectCloseoutPackageFooterNote(), /not a stored PDF/i);
 });

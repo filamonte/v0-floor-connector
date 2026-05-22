@@ -210,6 +210,11 @@ Current gaps:
   each document type
 - no stored generated-PDF/version policy beyond current browser print/save
 
+Document Engine Phase 2A adds a contractor-only Project Closeout Package
+print/save route at `/projects/:id/closeout-package/pdf`. That route may display
+existing Send Trail evidence, but opening, printing, or saving the package does
+not create `document_delivery_events` and is not delivery proof.
+
 The important risk is duplicated event trails. A delivery-proof layer should
 coordinate with existing events rather than become the fifth source of truth for
 the same customer action.

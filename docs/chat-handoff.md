@@ -66,6 +66,9 @@ Recent completed layers:
   Closeout Package HTML/print route first, with portal downloads, stored
   artifacts, and server-generated PDFs deferred until visibility and versioning
   policy are explicit.
+- Document Engine Phase 2A implements the contractor-only Project Closeout
+  Package print/save route at `/projects/:id/closeout-package/pdf`, generated
+  from current project source records and summary helpers.
 
 These layers are read-only summaries, source-record handoffs, copy/hierarchy
 improvements, or existing-action presentation around canonical records. They did
@@ -81,7 +84,7 @@ Do not describe these as implemented unless `docs/current-state.md` changes:
 - drag/drop scheduling or automated dispatch
 - external calendar sync or route optimization
 - AI summaries, AI recommendations, or autonomous actions
-- full document management, stored document/version lifecycle, generated
+- full document management, stored document/version lifecycle, stored generated
   closeout packages, or portal closeout downloads
 - provider retry lifecycle or automated reminders
 - standalone Proof Center route
@@ -101,7 +104,7 @@ before assuming a protected-route browser failure is product behavior.
 Use [docs/design/document-engine-phase-2-plan.md](C:/FloorConnector/docs/design/document-engine-phase-2-plan.md)
 as the current Document Engine sequencing artifact.
 
-Recommended next build: Document Engine Phase 2A, a contractor-side Project
-Closeout Package HTML/print route generated from current project source records.
-Keep it browser print/save only; do not add stored PDFs, storage, provider send,
-or portal download behavior yet.
+Recommended next build: either Phase 2B portal-safe closeout package planning
+or a small print QA/polish pass after authenticated project detail QA is stable.
+Do not add stored PDFs, storage, provider send, or portal download behavior until
+the visibility/versioning policy is explicit.

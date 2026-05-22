@@ -68,6 +68,7 @@ Document roles:
   Document Engine path, recommending a contractor-side Project Closeout Package
   HTML/print route before stored PDFs, portal downloads, or server PDF
   generation
+- `docs/design/document-engine-phase-2a-closeout-package-print-route.md`: implementation note for the contractor-side Project Closeout Package print/save route generated from current project source records
 - `docs/operating-core-validation-checklist.md`: focused validation inventory for recent operating-core summary helpers, routes, and browser QA caveats
 - `docs/design/project-workspace-lifecycle-qa.md`: lifecycle QA note for the Project Workspace operating loop after CrewBoard, FieldTrail, MessageCenter, ProjectPulse, and CloseoutTrail
 - `docs/enterprise-ui-system-audit.md`: secured-app route audit, Phase 1-4 polish history, drift watch list, and authenticated visual QA rules
@@ -183,6 +184,9 @@ Read these first for most implementation or documentation tasks:
 - `docs/design/document-engine-phase-2-plan.md` records the recommended next
   Document Engine sequence: Project Closeout Package print route first, portal
   downloads second, persisted artifact/version policy later.
+- `docs/design/document-engine-phase-2a-closeout-package-print-route.md` records
+  the implemented contractor-side closeout package print route and its
+  export-vs-delivery-proof boundary.
 
 ### Workflow And System Architecture
 
@@ -203,6 +207,8 @@ Read these first for most implementation or documentation tasks:
 - `docs/design/document-engine-phase-2-plan.md` captures the planning boundary
   for closeout packages, portal downloads, storage, versioning, and future PDF
   generation.
+- `docs/design/document-engine-phase-2a-closeout-package-print-route.md`
+  captures the implemented contractor-only closeout package print route.
 
 ### AI Guidance And Planning
 

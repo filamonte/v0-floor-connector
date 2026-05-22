@@ -68,6 +68,7 @@ import {
   deriveMessageCenterSummary,
   type MessageCenterTimelineItem
 } from "@/lib/messagecenter/summary";
+import { buildProjectCloseoutPackagePrintHref } from "@/lib/document-engine/print";
 import {
   deriveProjectPulseSummary,
   type ProjectPulseSummary,
@@ -5078,6 +5079,15 @@ export default async function ProjectDetailPage({
         </ExecutionSection>
 
         <CloseoutTrailSection summary={closeoutTrail} />
+
+        <div className="flex justify-end">
+          <Link
+            href={buildProjectCloseoutPackagePrintHref(project.id)}
+            className={secondaryActionClassName}
+          >
+            Print Closeout Package
+          </Link>
+        </div>
 
         <ProofCenterSection summary={proofCenter} />
 
