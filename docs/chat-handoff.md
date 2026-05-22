@@ -33,10 +33,10 @@ settings, super admin, and normalized contractor UI patterns.
 
 Latest remote-verified implementation/test commit:
 
-`9fb9297d test: update project workspace browser QA`
+`e07bcb3a feat: improve warranty and service workspace`
 
-`git push origin main` returned `Everything up-to-date` before the Document
-Engine QA checkpoint pass.
+`git push origin main` pushed Warranty Service Phase 1 from local `main` to
+`origin/main` before the Service Center QA and Portal Maturity Phase 1 pass.
 
 ## Latest Operating Core
 
@@ -65,6 +65,13 @@ Recent completed layers:
   across existing service tickets, warranty documents, service jobs, project
   proof context, and closeout handoff without adding service records, portal
   service requests, claim automation, or provider behavior.
+- Service Center QA checkpoint and Portal Maturity Phase 1 added docs for the
+  warranty/service QA review and customer portal maturity audit. The portal
+  Project Workspace now uses a pure Customer Next Step helper over existing
+  portal records to route customers toward a sent estimate, in-motion contract,
+  sent change order, open invoice, or no-action status without changing portal
+  access, auth, RLS, tenant logic, server actions, payments, signatures, or
+  math.
 - Reports Phase 1 on `/reports` for read-only operations and collections
   visibility.
 - Send Trail Phase 1 on estimate, contract, and invoice source workspaces for

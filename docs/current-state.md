@@ -89,6 +89,13 @@ These high-value route notes exist to prevent target-vs-current drift:
 - A generic document signature foundation now exists through tenant-scoped `document_signers` and immutable `document_signature_events`, initially constrained to `warranty_document` subjects only. Warranty Document detail has internal signer management and request-signature audit events. Portal warranty review/signing now uses project-scoped portal access, requires project-linked issued/sent/viewed/signed warranty documents, requires the authenticated portal user's email to match a customer signer row for sign/decline actions, appends immutable generic signature events, updates signer status/timestamps, and marks the warranty document `signed` only when all active customer signers are signed. It does not migrate contracts, send email, add countersign workflow, use provider e-sign, expose service tickets to the portal, or mutate invoices/payments/jobs/service tickets.
 - Project Workspace, Customer Workspace, and Job Workspace now include compact read-only Service & Warranty continuity panels. These panels show bounded linked service tickets, warranty documents, warranty date ranges, signer/request counts, signed counts, latest signature event summaries, and links to the canonical service ticket, warranty document, and print/save surfaces. They do not edit service tickets, send/sign warranty documents, mutate jobs, mutate billing, create dashboard-owned state, or expose portal behavior.
 - Dashboard Operational Cockpit now includes bounded read-only service/warranty signals: high-priority open tickets, stale open tickets, tickets missing linked service jobs, unscheduled/upcoming/in-progress linked service jobs, and warranty documents needing internal signer/request attention. These items route to Service Ticket, Warranty Document, Job, Schedule, and Project Workspaces only; they do not create dashboard-owned persistence, mutate service tickets/jobs/signatures/time/billing, send email, expose portal links, or add signing behavior.
+- Portal Project Workspace now has a read-only Customer Next Step helper that
+  derives one customer-facing action from already-loaded portal project records:
+  sent estimates, in-motion contracts, sent change orders, open invoices, or no
+  action needed. This improves customer guidance only; it does not change portal
+  loaders, route structure, grants, project-scope enforcement, auth/RLS, tenant
+  logic, service-ticket visibility, payment/checkout behavior, signature
+  behavior, estimate math, invoice math, or server actions.
 - package/billing governance lives under `/super-admin/packages`, including read-only detail routes for package definitions, assignments, provider mappings, and support reviews.
 
 ## Current Architecture

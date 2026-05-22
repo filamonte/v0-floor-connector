@@ -17,6 +17,7 @@ import {
   portalSummaryLabelClassName
 } from "@/components/portal-review-ui";
 import { WorkspaceSummaryBand } from "@/components/workspace-summary-band";
+import { derivePortalCustomerNextStep } from "@/lib/portal/next-step";
 import {
   getPortalProjectDetailSummary,
   listPortalProjectAppointments,
@@ -68,154 +69,6 @@ function formatAppointmentTime(startAt: string, endAt: string | null) {
 
 function formatLocation(parts: Array<string | null | undefined>) {
   return parts.filter(Boolean).join(", ") || "Not provided";
-}
-
-function getProjectNextAction(input: {
-  projectName: string;
-  visibleInvoiceCount: number;
-  latestInvoiceReferenceNumber: string | null;
-  latestInvoiceStatus: string | null;
-  latestInvoiceWorkflowRole: string | null;
-  latestInvoiceBalanceDueAmount: string | null;
-  latestInvoicePaymentEventType: string | null;
-  visibleContractCount: number;
-  latestContractStatus: string | null;
-  visibleEstimateCount: number;
-  latestEstimateStatus: string | null;
-}) {
-  if (
-    input.visibleInvoiceCount > 0 &&
-    input.latestInvoicePaymentEventType === "checkout_started"
-  ) {
-    return {
-      title: `Payment is in progress for ${input.projectName}`,
-      description:
-        "Checkout has already started, so billing is still the clearest record to review on this project."
-    };
-  }
-
-  if (
-    input.visibleInvoiceCount > 0 &&
-    input.latestInvoicePaymentEventType === "payment_requested"
-  ) {
-    return {
-      title: `Payment has been requested for ${input.projectName}`,
-      description:
-        "The invoice is already in an active payment-request state, so stay with the billing records below for the current shared update."
-    };
-  }
-
-  if (
-    input.visibleInvoiceCount > 0 &&
-    input.latestInvoicePaymentEventType === "payment_succeeded"
-  ) {
-    return {
-      title:
-        input.latestInvoiceStatus === "partially_paid"
-          ? `Review the remaining balance for ${input.projectName}`
-          : `Billing is current for ${input.projectName}`,
-      description:
-        input.latestInvoiceStatus === "partially_paid"
-          ? input.latestInvoiceWorkflowRole === "deposit"
-            ? `A real deposit payment has already landed, but ${formatMoney(
-                input.latestInvoiceBalanceDueAmount ?? "0"
-              )} still remains before the shared commercial step is clear.`
-            : `A payment has already landed on ${input.latestInvoiceReferenceNumber ?? "the invoice"}, but ${formatMoney(
-                input.latestInvoiceBalanceDueAmount ?? "0"
-              )} still remains due.`
-          : "A payment completed, so billing is no longer the active blocker on this project."
-    };
-  }
-
-  if (
-    input.visibleInvoiceCount > 0 &&
-    input.latestInvoicePaymentEventType === "payment_failed"
-  ) {
-    return {
-      title: `Review the billing follow-up for ${input.projectName}`,
-      description:
-        "A recent customer payment attempt failed, so the invoice remains the clearest shared record to review before assuming billing is complete."
-    };
-  }
-
-  if (
-    input.visibleInvoiceCount > 0 &&
-    input.latestInvoicePaymentEventType === "payment_voided"
-  ) {
-    return {
-      title: `Billing has reopened for ${input.projectName}`,
-      description:
-        "The latest payment was voided, so the invoice has returned to an open balance on this project."
-    };
-  }
-
-  if (
-    input.visibleInvoiceCount > 0 &&
-    input.latestInvoiceStatus === "partially_paid"
-  ) {
-    return {
-      title: `Review the remaining balance for ${input.projectName}`,
-      description:
-        input.latestInvoiceWorkflowRole === "deposit"
-          ? `A deposit payment has already been recorded, but ${formatMoney(
-              input.latestInvoiceBalanceDueAmount ?? "0"
-            )} still remains before the shared commercial chain is clear.`
-          : `A payment has already been recorded on ${input.latestInvoiceReferenceNumber ?? "the invoice"}, but ${formatMoney(
-              input.latestInvoiceBalanceDueAmount ?? "0"
-            )} still remains due.`
-    };
-  }
-
-  if (
-    input.visibleInvoiceCount > 0 &&
-    input.latestInvoiceStatus &&
-    !["paid", "void"].includes(input.latestInvoiceStatus)
-  ) {
-    return {
-      title: `Review the invoice shared for ${input.projectName}`,
-      description:
-        "Billing is the clearest current record on this project, so start there below."
-    };
-  }
-
-  if (
-    input.visibleContractCount > 0 &&
-    input.latestContractStatus &&
-    !["signed", "void"].includes(input.latestContractStatus)
-  ) {
-    return {
-      title: `Review the contract shared for ${input.projectName}`,
-      description:
-        "The contract is still in motion, so it is the most useful shared record to review on this project right now."
-    };
-  }
-
-  if (
-    input.visibleContractCount > 0 &&
-    input.latestContractStatus === "signed"
-  ) {
-    return {
-      title: `Contract signing is complete for ${input.projectName}`,
-      description:
-        input.visibleInvoiceCount > 0
-          ? "The contract is fully signed. Review the invoice records below for the next billing step."
-          : "The shared contract is fully signed. Billing or downstream project continuity will appear here as the next shared step."
-    };
-  }
-
-  if (input.visibleEstimateCount > 0) {
-    return {
-      title: `Review the proposal for ${input.projectName}`,
-      description:
-        "Estimate information is already shared on this project, making the proposal details the best place to start."
-    };
-  }
-
-  return {
-    title: "Project access is active",
-    description:
-      "This project has been shared with you, but no estimate, contract, or invoice has been published to the portal yet."
-  };
 }
 
 function getPortalContractSummary(contract: {
@@ -394,18 +247,13 @@ export default async function PortalProjectDetailPage({
     notFound();
   }
 
-  const nextAction = getProjectNextAction({
+  const nextAction = derivePortalCustomerNextStep({
+    projectId: project.id,
     projectName: project.name,
-    visibleInvoiceCount: project.visibleInvoiceCount,
-    latestInvoiceReferenceNumber: project.latestInvoiceReferenceNumber,
-    latestInvoiceStatus: project.latestInvoiceStatus,
-    latestInvoiceWorkflowRole: project.latestInvoiceWorkflowRole,
-    latestInvoiceBalanceDueAmount: project.latestInvoiceBalanceDueAmount,
-    latestInvoicePaymentEventType: project.latestInvoicePaymentEventType,
-    visibleContractCount: project.visibleContractCount,
-    latestContractStatus: project.latestContractStatus,
-    visibleEstimateCount: project.visibleEstimateCount,
-    latestEstimateStatus: project.latestEstimateStatus
+    estimates,
+    contracts,
+    changeOrders,
+    invoices
   });
 
   return (
@@ -431,7 +279,7 @@ export default async function PortalProjectDetailPage({
           <PortalTrustStrip
             eyebrow="Live shared project"
             title="One customer view into this project chain"
-            description="Estimates, contracts, change orders, warranties, and invoices shown here stay connected to the same canonical project record."
+            description="You are viewing the project records shared with you. Signing, approving, or paying updates the contractor's project record."
             items={[
               {
                 label: "Estimate",
@@ -472,7 +320,7 @@ export default async function PortalProjectDetailPage({
                     ) : null}
                   </div>
                   <p className="text-lg font-semibold tracking-tight text-slate-950">
-                    {nextAction.title}
+                    {nextAction.label}
                   </p>
                   <p className="text-sm leading-6 text-slate-600">
                     {nextAction.description}
@@ -526,8 +374,13 @@ export default async function PortalProjectDetailPage({
                     content: (
                       <NextActionCard
                         eyebrow="Project guidance"
-                        title={nextAction.title}
+                        title={nextAction.label}
                         description={nextAction.description}
+                        primaryAction={
+                          <PortalSecondaryLink href={nextAction.href}>
+                            {nextAction.label}
+                          </PortalSecondaryLink>
+                        }
                       />
                     )
                   },
