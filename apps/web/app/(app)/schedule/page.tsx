@@ -11,6 +11,7 @@ import { ManagerDashboardCard } from "@/components/manager-dashboard-card";
 import { ScheduleCrewAssignmentForm } from "@/components/schedule-crew-assignment-form";
 import { ScheduleJobForm } from "@/components/schedule-job-form";
 import { WorkspaceComposerSheet } from "@/components/workspace-composer-sheet";
+import { buildDailyLogCaptureHref } from "@/lib/daily-logs/links";
 import { getJobEquipmentReadinessSummary } from "@/lib/equipment/data";
 import { requireAuthenticatedUser } from "@/lib/auth/session";
 import {
@@ -805,6 +806,7 @@ function ScheduleJobActionLinks(input: {
   jobHref?: string;
   jobLabel?: string;
   jobVariant?: "plain" | "bordered";
+  dailyLogHref?: string;
   size?: "compact" | "default";
   justifyEnd?: boolean;
 }) {
@@ -846,6 +848,11 @@ function ScheduleJobActionLinks(input: {
       {input.jobHref && input.jobLabel ? (
         <Link href={input.jobHref} className={jobClassName}>
           {input.jobLabel}
+        </Link>
+      ) : null}
+      {input.dailyLogHref ? (
+        <Link href={input.dailyLogHref} className={jobClassName}>
+          Daily Job Log
         </Link>
       ) : null}
     </div>
@@ -3786,6 +3793,11 @@ export default async function SchedulePage({
                           jobHref={`/jobs/${job.id}`}
                           jobLabel="Open job"
                           jobVariant="bordered"
+                          dailyLogHref={buildDailyLogCaptureHref({
+                            projectId: job.projectId,
+                            jobId: job.id,
+                            logDate: job.scheduledDate
+                          })}
                           size="default"
                           justifyEnd
                         />
@@ -3880,6 +3892,16 @@ export default async function SchedulePage({
                   className={`inline-flex items-center rounded-[4px] border px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] transition ${scheduleSecondaryActionToneClassName}`}
                 >
                   Open job
+                </Link>
+                <Link
+                  href={buildDailyLogCaptureHref({
+                    projectId: selectedJob.projectId,
+                    jobId: selectedJob.id,
+                    logDate: selectedJob.scheduledDate
+                  })}
+                  className={`inline-flex items-center rounded-[4px] border px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] transition ${scheduleSecondaryActionToneClassName}`}
+                >
+                  Start Daily Job Log
                 </Link>
               </div>
               {selectedJobCrewState ? (

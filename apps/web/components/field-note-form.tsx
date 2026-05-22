@@ -63,7 +63,9 @@ export function FieldNoteForm({
       <input type="hidden" name="dailyLogId" value={dailyLogId} />
       <input type="hidden" name="projectId" value={projectId} />
       <input type="hidden" name="visibility" value="internal" />
-      {fieldNote ? <input type="hidden" name="fieldNoteId" value={fieldNote.id} /> : null}
+      {fieldNote ? (
+        <input type="hidden" name="fieldNoteId" value={fieldNote.id} />
+      ) : null}
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <label className="block">
@@ -131,7 +133,9 @@ export function FieldNoteForm({
             {people.map((person) => (
               <option key={person.id} value={person.id}>
                 {person.displayName} |{" "}
-                {person.personType === "subcontractor_worker" ? "Subcontractor" : "Employee"}
+                {person.personType === "subcontractor_worker"
+                  ? "Subcontractor"
+                  : "Employee"}
               </option>
             ))}
           </select>
@@ -187,10 +191,11 @@ export function FieldNoteForm({
           submitLabel={submitLabel}
           pendingLabel={pendingLabel}
           variant={fieldNote ? "secondary" : "primary"}
-          className="sm:min-w-[180px]"
+          className="w-full sm:w-auto sm:min-w-[180px]"
         />
         <p className="text-sm leading-6 text-slate-500">
-          Notes stay inside the daily-log workflow and use shared `note_type` and `status` instead of separate execution subsystems.
+          Job Notes stay inside the Daily Job Log and use the shared note type
+          and status fields instead of separate execution subsystems.
         </p>
       </div>
     </SaveStateForm>

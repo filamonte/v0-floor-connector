@@ -9,6 +9,7 @@ import { WorkspaceComposerSheet } from "@/components/workspace-composer-sheet";
 import { requireAuthenticatedUser } from "@/lib/auth/session";
 import { quickCreateDailyLogAction } from "@/lib/daily-logs/actions";
 import { listDailyLogs } from "@/lib/daily-logs/data";
+import { isDailyLogDateKey } from "@/lib/daily-logs/links";
 import { listJobs } from "@/lib/jobs/data";
 import { getActiveOrganizationContext } from "@/lib/organizations/active-context";
 import { listProjects } from "@/lib/projects/data";
@@ -22,6 +23,7 @@ type DailyLogsPageProps = {
     status?: "all" | "draft" | "finalized" | "blocked";
     projectId?: string;
     jobId?: string;
+    logDate?: string;
   }>;
 };
 
@@ -160,6 +162,9 @@ export default async function DailyLogsPage({
     : undefined;
   const defaultJobId = jobs.some((job) => job.id === resolvedSearchParams.jobId)
     ? resolvedSearchParams.jobId
+    : undefined;
+  const defaultLogDate = isDailyLogDateKey(resolvedSearchParams.logDate)
+    ? resolvedSearchParams.logDate
     : undefined;
 
   return (
@@ -455,6 +460,7 @@ export default async function DailyLogsPage({
             jobs={jobOptions}
             defaultProjectId={defaultProjectId}
             defaultJobId={defaultJobId}
+            defaultLogDate={defaultLogDate}
           />
         </WorkspaceComposerSheet>
       </div>

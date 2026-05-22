@@ -25,6 +25,11 @@ import {
 } from "@/components/save-feedback/save-state-form";
 import { ServiceWarrantyContinuityPanel } from "@/components/service-warranty-continuity-panel";
 import { listDailyLogsByProject } from "@/lib/daily-logs/data";
+import {
+  buildDailyLogCaptureHref,
+  findDailyLogForJobDate,
+  getDailyLogDateKey
+} from "@/lib/daily-logs/links";
 import { listExecutionAttachmentsBySubjects } from "@/lib/execution-attachments/data";
 import { deriveFieldTrailSummary } from "@/lib/fieldtrail/summary";
 import { listFieldNotes } from "@/lib/field-notes/data";
@@ -458,6 +463,21 @@ export default async function JobDetailPage({
   const jobDailyLogs = projectDailyLogs.filter(
     (dailyLog) => dailyLog.jobId === job.id
   );
+  const todayLogDate = getDailyLogDateKey();
+  const todayDailyLog = findDailyLogForJobDate(projectDailyLogs, {
+    jobId: job.id,
+    logDate: todayLogDate
+  });
+  const dailyLogFastPathHref = todayDailyLog
+    ? `/daily-logs/${todayDailyLog.id}`
+    : buildDailyLogCaptureHref({
+        projectId: job.projectId,
+        jobId: job.id,
+        logDate: todayLogDate
+      });
+  const dailyLogFastPathLabel = todayDailyLog
+    ? "Open today's Daily Job Log"
+    : "Start today's Daily Job Log";
   const jobFieldNotes = fieldNotes.filter(
     (fieldNote) => fieldNote.jobId === job.id
   );
@@ -1390,14 +1410,26 @@ export default async function JobDetailPage({
               ))}
             </div>
             <div className="rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm leading-6 text-slate-600">
-              <span className="font-semibold text-slate-950">Next Move:</span>{" "}
-              {jobFieldTrail.nextMove.detail}{" "}
-              <Link
-                href={jobFieldTrail.nextMove.href}
-                className="font-semibold text-brand-700"
-              >
-                {jobFieldTrail.nextMove.label}
-              </Link>
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <p>
+                  <span className="font-semibold text-slate-950">
+                    Next Move:
+                  </span>{" "}
+                  {jobFieldTrail.nextMove.detail}{" "}
+                  <Link
+                    href={jobFieldTrail.nextMove.href}
+                    className="font-semibold text-brand-700"
+                  >
+                    {jobFieldTrail.nextMove.label}
+                  </Link>
+                </p>
+                <Link
+                  href={dailyLogFastPathHref}
+                  className="inline-flex min-h-11 items-center justify-center rounded-[4px] border border-[#171717] bg-[#171717] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#2a2a2a]"
+                >
+                  {dailyLogFastPathLabel}
+                </Link>
+              </div>
             </div>
             {jobDailyLogs.slice(0, 4).length > 0 ? (
               jobDailyLogs
@@ -1421,8 +1453,12 @@ export default async function JobDetailPage({
                 eyebrow="No Daily Job Logs yet"
                 title="No linked job-day execution records yet"
                 description="Create a Daily Job Log from the connected project when this job becomes the dominant field context for a project day. The log will capture field evidence without changing schedule, time-card, invoice, or readiness behavior."
-                actionHref={`/daily-logs?projectId=${job.projectId}&jobId=${job.id}`}
-                actionLabel="Create Daily Job Log"
+                actionHref={buildDailyLogCaptureHref({
+                  projectId: job.projectId,
+                  jobId: job.id,
+                  logDate: todayLogDate
+                })}
+                actionLabel="Start Daily Job Log"
               />
             )}
           </div>

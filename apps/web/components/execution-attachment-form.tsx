@@ -94,10 +94,11 @@ export function ExecutionAttachmentForm({
           submitLabel={submitLabel}
           pendingLabel={pendingLabel}
           variant="secondary"
-          className="sm:min-w-[180px]"
+          className="w-full sm:w-auto sm:min-w-[180px]"
         />
         <p className="text-sm leading-6 text-slate-500">
-          Attachments stay on the daily log or field note itself instead of branching into a separate execution-file subsystem.
+          Evidence stays on the Daily Job Log or Job Note itself instead of
+          branching into a separate field-file subsystem.
         </p>
       </div>
     </SaveStateForm>

@@ -8,6 +8,8 @@ import type {
   TimeCardStatus
 } from "@floorconnector/types";
 
+import { buildDailyLogCaptureHref } from "../daily-logs/links";
+
 export type FieldTrailDailyLog = {
   id: string;
   jobId: string | null;
@@ -118,6 +120,7 @@ function getLatestJob(jobs: FieldTrailJob[]) {
 }
 
 function buildNextMove(input: {
+  projectId: string;
   latestDailyLog: FieldTrailDailyLog | null;
   latestJob: FieldTrailJob | null;
   openBlockerCount: number;
@@ -142,10 +145,14 @@ function buildNextMove(input: {
 
   if (input.latestJob) {
     return {
-      label: "Open job",
-      href: `/jobs/${input.latestJob.id}`,
+      label: "Start Daily Job Log",
+      href: buildDailyLogCaptureHref({
+        projectId: input.projectId,
+        jobId: input.latestJob.id,
+        logDate: input.latestJob.scheduledDate
+      }),
       detail:
-        "No Daily Job Logs exist yet, so start from the current job context."
+        "No Daily Job Logs exist yet, so start a field log from the current job context."
     };
   }
 
@@ -250,6 +257,7 @@ export function deriveFieldTrailSummary(input: {
     ),
     timeline,
     nextMove: buildNextMove({
+      projectId: input.projectId,
       latestDailyLog,
       latestJob,
       openBlockerCount

@@ -160,6 +160,9 @@ void test("fieldtrail summary falls back to job then CrewBoard when no logs exis
     jobs: []
   });
 
-  assert.equal(withJob.nextMove.href, "/jobs/job-1");
+  assert.equal(
+    withJob.nextMove.href,
+    "/daily-logs?compose=1&projectId=project-1&jobId=job-1&logDate=2026-05-21#daily-log-create"
+  );
   assert.equal(withoutJob.nextMove.href, "/schedule");
 });

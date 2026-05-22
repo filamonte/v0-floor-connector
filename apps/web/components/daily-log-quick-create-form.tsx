@@ -24,6 +24,7 @@ type DailyLogQuickCreateFormProps = {
   jobs: JobOption[];
   defaultProjectId?: string;
   defaultJobId?: string;
+  defaultLogDate?: string;
 };
 
 function getDefaultLogDate() {
@@ -35,12 +36,14 @@ export function DailyLogQuickCreateForm({
   projects,
   jobs,
   defaultProjectId,
-  defaultJobId
+  defaultJobId,
+  defaultLogDate
 }: DailyLogQuickCreateFormProps) {
   const [projectId, setProjectId] = useState(defaultProjectId ?? "");
 
   const filteredJobs = useMemo(
-    () => (projectId ? jobs.filter((job) => job.projectId === projectId) : jobs),
+    () =>
+      projectId ? jobs.filter((job) => job.projectId === projectId) : jobs,
     [jobs, projectId]
   );
 
@@ -48,13 +51,15 @@ export function DailyLogQuickCreateForm({
     <form action={action} className="space-y-5">
       <QuickCreateFormShell
         eyebrow="Quick create"
-        title="Create daily log"
-        description="Capture the minimum project-day context here, create the canonical daily log, and then finish execution notes in the full daily-log workspace."
-        footer="This creates a real daily log and takes you straight into the full project-day workspace."
+        title="Start Daily Job Log"
+        description="Pick the project, job, and day first. The full Daily Job Log opens next for completed work, next work, blockers, safety notes, Job Notes, and evidence."
+        footer="This opens a real Daily Job Log on the existing project/job chain. It does not create a separate mobile field record."
       >
         <div className="grid gap-4">
           <label className="block">
-            <span className="mb-2 block text-sm font-medium text-slate-800">Project</span>
+            <span className="mb-2 block text-sm font-medium text-slate-800">
+              Project
+            </span>
             <select
               name="projectId"
               required
@@ -73,14 +78,14 @@ export function DailyLogQuickCreateForm({
 
           <label className="block">
             <span className="mb-2 block text-sm font-medium text-slate-800">
-              Dominant job
+              Job
             </span>
             <select
               name="jobId"
               defaultValue={defaultJobId ?? ""}
               className="w-full rounded-[4px] border border-[#d6d6d6] bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-[#ef7d32]"
             >
-              <option value="">Project-level day</option>
+              <option value="">Project-level log</option>
               {filteredJobs.map((job) => (
                 <option key={job.id} value={job.id}>
                   {job.label} | {job.dispatchStatus.replaceAll("_", " ")}
@@ -90,18 +95,21 @@ export function DailyLogQuickCreateForm({
           </label>
 
           <AuthField
-            label="Log date"
+            label="Day"
             name="logDate"
             type="date"
-            defaultValue={getDefaultLogDate()}
+            defaultValue={defaultLogDate ?? getDefaultLogDate()}
             required
           />
         </div>
       </QuickCreateFormShell>
 
       <div className="flex flex-col gap-3 pt-1">
-        <AuthSubmitButton pendingLabel="Creating daily log..." className="w-full">
-          <span>Create daily log</span>
+        <AuthSubmitButton
+          pendingLabel="Creating daily log..."
+          className="w-full"
+        >
+          <span>Start Daily Job Log</span>
         </AuthSubmitButton>
       </div>
     </form>

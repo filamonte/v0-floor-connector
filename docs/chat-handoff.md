@@ -47,6 +47,9 @@ Recent completed layers:
 - FieldTrail Phase 1 on Project Workspace and Job Workspace for execution
   history over Daily Job Logs, Job Notes, execution attachments, time cards,
   and jobs.
+- Mobile Field Phase 1 improves Daily Job Log capture for phone-sized field
+  work using existing Daily Logs, Job Notes, Job Workspace, CrewBoard, and
+  FieldTrail fast paths.
 - MessageCenter Phase 1 on Project Workspace for project communication,
   Send Trail, Signature Trail, Payment Trail, and Customer Access context.
 - ProjectPulse Phase 1 on Project Workspace for deterministic project health
@@ -94,6 +97,8 @@ Do not describe these as implemented unless `docs/current-state.md` changes:
 - provider retry lifecycle or automated reminders
 - standalone Proof Center route
 - customer-facing field sharing
+- native app, offline field mode, GPS/geofencing, or mobile-specific duplicate
+  field records
 - full analytics/report builder
 - live SaaS billing launch or entitlement enforcement
 
