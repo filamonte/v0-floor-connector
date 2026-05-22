@@ -38,6 +38,7 @@ import { listCommunicationThreadsForSubject } from "@/lib/communications/data";
 import { quickCreateContractFromEstimateAction } from "@/lib/contracts/actions";
 import { listContracts } from "@/lib/contracts/data";
 import { getDocumentDeliveryState } from "@/lib/document-delivery/data";
+import { buildDocumentPrintHref } from "@/lib/document-engine/print";
 import {
   openOrCreateScheduleOfValuesAction,
   rebuildApprovedEstimateSnapshotAction,
@@ -721,10 +722,13 @@ export default async function EstimateDetailPage({
             secondaryActions={
               <>
                 <Link
-                  href={`/estimates/${estimate.id}/pdf`}
+                  href={buildDocumentPrintHref({
+                    subjectType: "estimate",
+                    subjectId: estimate.id
+                  })}
                   className={secondaryActionClassName}
                 >
-                  Print / save PDF
+                  Print / Save PDF
                 </Link>
                 <Link
                   href={`/estimates/${estimate.id}/edit`}

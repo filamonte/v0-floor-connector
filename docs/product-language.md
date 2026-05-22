@@ -46,6 +46,7 @@ The database can stay boring. The product should speak human.
 | CloseoutTrail         | Project closeout readiness and proof summary from existing records.  | Project Workspace closeout checklist and closeout Next Move.         | New closeout tables, auto-close behavior, or customer package generation.    |
 | Proof Center          | Project document, evidence, and proof index from existing records.   | Project Workspace proof categories and Proof Next Move.              | Full document management, new upload models, or generated closeout packages. |
 | Send Trail            | Document send and delivery history.                                  | Project, estimate, contract, invoice, and warranty delivery review.  | Provider payload fields, webhook code, or fake delivery events.              |
+| Document Engine       | Shared document print/export generation from source records.         | Estimate, contract, invoice, warranty, and future proof exports.     | Delivery proof, stored document truth, provider sends, or document storage.  |
 | Reports               | Read-only company operations and collections visibility.             | `/reports` workspace and source-record reporting summaries.          | Analytics warehouse, report-builder promises, fake metrics, or exports.      |
 
 ## Terms To Avoid In User-Facing UI
@@ -79,6 +80,7 @@ architecture names.
 | Project health summary             | ProjectPulse                 | Project Workspace summary of health, blockers, and Next Move.       | Database status models or health-score tables. |
 | Project closeout readiness         | CloseoutTrail                | Project Workspace closeout proof and readiness checklist.           | Closeout database tables or auto-close logic.  |
 | Project proof index                | Proof Center                 | Project Workspace document, evidence, and proof review.             | File/document tables or upload behavior.       |
+| Print/PDF/export generation        | Document Engine              | Source-record print/save document routes.                           | Delivery evidence or file-storage workflows.   |
 | Operations / collections reporting | Reports                      | Company-level reporting workspace over source records.              | Analytics warehouse or report-builder copy.    |
 | Payment events                     | Payment Trail                | Invoice/payment evidence sections.                                  | Provider event mapping or webhook code.        |
 | Contract signature events          | Signature Trail              | Contract signature history sections.                                | Signature provider integration code.           |
@@ -106,8 +108,9 @@ Use named layers where they reduce repeated explanation: ProjectPulse for
 project health, CrewBoard for scheduling visibility, FieldTrail for execution
 history, MessageCenter for project communication history, CloseoutTrail for
 closeout readiness, Proof Center for project proof review, Send Trail for
-document delivery evidence, and Reports for company-level reporting. Use plain
-copy elsewhere when a name would make the UI feel branded for its own sake.
+document delivery evidence, Document Engine for source-record print/export
+generation, and Reports for company-level reporting. Use plain copy elsewhere
+when a name would make the UI feel branded for its own sake.
 
 Product-language work does not rename internal architecture, routes, schema,
 actions, form payloads, hidden inputs, test ids, or database names.

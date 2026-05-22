@@ -10,6 +10,11 @@ import {
   formatDocumentMoney,
   formatDocumentStatus
 } from "@/components/customer-document-print-view";
+import {
+  buildDocumentBackHref,
+  getDocumentEngineExportNotice,
+  getDocumentEngineFooterNote
+} from "@/lib/document-engine/print";
 import { getIncludedEstimateScopeItems } from "@/lib/estimates/workspace";
 import { getPortalEstimateReviewData } from "@/lib/portal/data";
 
@@ -40,8 +45,14 @@ export default async function PortalEstimatePdfPage({
       title={estimate.title ?? `Estimate ${estimate.referenceNumber}`}
       subtitle={`Estimate #${estimate.referenceNumber}`}
       statusLabel={formatDocumentStatus(estimate.status)}
-      backHref={`/portal/estimates/${estimate.id}`}
+      backHref={buildDocumentBackHref({
+        subjectType: "estimate",
+        subjectId: estimate.id,
+        audience: "portal"
+      })}
       backLabel="Back to estimate"
+      exportNotice={getDocumentEngineExportNotice("estimate")}
+      footerNote={getDocumentEngineFooterNote("estimate")}
       facts={[
         {
           label: "Customer",

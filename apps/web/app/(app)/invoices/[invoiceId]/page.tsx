@@ -38,6 +38,7 @@ import { listCatalogItems } from "@/lib/catalogs/data";
 import { listInvoiceChangeOrders } from "@/lib/change-orders/data";
 import { listCommunicationThreadsForSubject } from "@/lib/communications/data";
 import { getDocumentDeliveryState } from "@/lib/document-delivery/data";
+import { buildDocumentPrintHref } from "@/lib/document-engine/print";
 import {
   recordInvoicePaymentAction,
   sendInvoiceReviewEmailAction,
@@ -852,10 +853,13 @@ export default async function InvoiceDetailPage({
               secondaryActions={
                 <>
                   <Link
-                    href={`/invoices/${invoice.id}/pdf`}
+                    href={buildDocumentPrintHref({
+                      subjectType: "invoice",
+                      subjectId: invoice.id
+                    })}
                     className={secondaryActionClassName}
                   >
-                    Print / save PDF
+                    Print / Save PDF
                   </Link>
                   <a
                     href="#invoice-editing"

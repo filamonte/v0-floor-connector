@@ -556,6 +556,16 @@ Future direction:
 
 PDF files should be evidence, not detached document truth.
 
+Document Engine Phase 1 keeps print/save separate from delivery proof:
+
+- estimate, contract, and invoice `/pdf` routes are browser print/save HTML
+  views over current source records
+- using those routes does not create `document_delivery_events`
+- printing or saving a PDF is not provider delivery, customer viewing,
+  signature activity, payment activity, or approval activity
+- the route footer and export notice should keep this distinction visible to
+  contractors and portal customers
+
 ## Template/Send Merge-Data Concerns
 
 Send workflows should resolve merge data server-side.

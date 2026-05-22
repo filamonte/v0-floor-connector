@@ -18,6 +18,7 @@ import {
   portalSummaryLabelClassName
 } from "@/components/portal-review-ui";
 import { WorkspaceSummaryBand } from "@/components/workspace-summary-band";
+import { buildDocumentPrintHref } from "@/lib/document-engine/print";
 import {
   customerDeclineContractAction,
   customerSignContractAction
@@ -176,9 +177,13 @@ export default async function PortalContractReviewPage({
             actions={
               <div className="flex flex-wrap items-center gap-3">
                 <PortalSecondaryLink
-                  href={`/portal/contracts/${contract.id}/pdf`}
+                  href={buildDocumentPrintHref({
+                    subjectType: "contract",
+                    subjectId: contract.id,
+                    audience: "portal"
+                  })}
                 >
-                  Print / save PDF
+                  Print / Save PDF
                 </PortalSecondaryLink>
                 <PortalStatusBadge
                   status={contract.status}

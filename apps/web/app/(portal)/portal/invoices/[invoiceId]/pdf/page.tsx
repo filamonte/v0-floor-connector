@@ -10,6 +10,11 @@ import {
   formatDocumentMoney,
   formatDocumentStatus
 } from "@/components/customer-document-print-view";
+import {
+  buildDocumentBackHref,
+  getDocumentEngineExportNotice,
+  getDocumentEngineFooterNote
+} from "@/lib/document-engine/print";
 import { getPortalInvoiceReviewData } from "@/lib/portal/data";
 
 type PortalInvoicePdfPageProps = {
@@ -41,8 +46,13 @@ export default async function PortalInvoicePdfPage({
       title={`Invoice ${invoice.referenceNumber}`}
       subtitle={`${invoice.workflowRole.replaceAll("_", " ")} invoice`}
       statusLabel={formatDocumentStatus(invoice.status)}
-      backHref={`/portal/invoices/${invoice.id}`}
+      backHref={buildDocumentBackHref({
+        subjectType: "invoice",
+        subjectId: invoice.id,
+        audience: "portal"
+      })}
       backLabel="Back to invoice"
+      exportNotice={getDocumentEngineExportNotice("invoice")}
       facts={[
         {
           label: "Customer",
@@ -57,7 +67,7 @@ export default async function PortalInvoicePdfPage({
           value: formatDocumentMoney(invoice.balanceDueAmount)
         }
       ]}
-      footerNote="This PDF/print view is a customer-facing rendering of the shared invoice. Payment still happens through the portal invoice page."
+      footerNote={`${getDocumentEngineFooterNote("invoice")} Payment still happens through the portal invoice page.`}
     >
       <CustomerDocumentSection title="Invoice items">
         <CustomerDocumentLineItemsTable lineItems={invoice.lineItems} />

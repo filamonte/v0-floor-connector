@@ -8,10 +8,15 @@ import {
   CustomerDocumentTotals,
   formatDocumentDate,
   formatDocumentMoney,
-  formatDocumentStatus,
-  type DocumentBrand
+  formatDocumentStatus
 } from "@/components/customer-document-print-view";
 import { requireAuthenticatedUser } from "@/lib/auth/session";
+import {
+  buildDocumentBackHref,
+  buildDocumentEngineBrand,
+  getDocumentEngineExportNotice,
+  getDocumentEngineFooterNote
+} from "@/lib/document-engine/print";
 import { getInvoiceById } from "@/lib/invoices/data";
 import { getActiveOrganizationContext } from "@/lib/organizations/active-context";
 
@@ -20,19 +25,6 @@ type InvoicePdfPageProps = {
     invoiceId: string;
   }>;
 };
-
-function buildDocumentBrand(
-  organizationContext: Awaited<ReturnType<typeof getActiveOrganizationContext>>
-): DocumentBrand {
-  return {
-    name: organizationContext?.organization.displayName ?? "FloorConnector",
-    logoUrl: organizationContext?.organization.logoUrl,
-    phone: organizationContext?.organization.phone,
-    email: organizationContext?.organization.email,
-    websiteUrl: organizationContext?.organization.websiteUrl,
-    accentColor: organizationContext?.organization.brandAccentColor
-  };
-}
 
 export default async function InvoicePdfPage({ params }: InvoicePdfPageProps) {
   const { invoiceId } = await params;
@@ -52,12 +44,17 @@ export default async function InvoicePdfPage({ params }: InvoicePdfPageProps) {
 
   return (
     <CustomerDocumentPrintView
-      brand={buildDocumentBrand(organizationContext)}
+      brand={buildDocumentEngineBrand(organizationContext)}
       title={`Invoice ${invoice.referenceNumber}`}
       subtitle={`${invoice.workflowRole.replaceAll("_", " ")} invoice`}
       statusLabel={formatDocumentStatus(invoice.status)}
-      backHref={`/invoices/${invoice.id}`}
+      backHref={buildDocumentBackHref({
+        subjectType: "invoice",
+        subjectId: invoice.id
+      })}
       backLabel="Back to invoice"
+      exportNotice={getDocumentEngineExportNotice("invoice")}
+      footerNote={`${getDocumentEngineFooterNote("invoice")} Payment state remains controlled by the invoice payment workflow.`}
       facts={[
         {
           label: "Customer",
@@ -72,7 +69,6 @@ export default async function InvoicePdfPage({ params }: InvoicePdfPageProps) {
           value: formatDocumentMoney(invoice.balanceDueAmount)
         }
       ]}
-      footerNote="This PDF/print view is a customer-facing rendering of the shared FloorConnector invoice. Payment state remains controlled by the invoice payment workflow."
     >
       <CustomerDocumentSection title="Invoice items">
         <CustomerDocumentLineItemsTable lineItems={invoice.lineItems} />

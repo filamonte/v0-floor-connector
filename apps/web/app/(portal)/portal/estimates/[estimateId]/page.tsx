@@ -15,6 +15,7 @@ import {
   portalSummaryLabelClassName
 } from "@/components/portal-review-ui";
 import { WorkspaceSummaryBand } from "@/components/workspace-summary-band";
+import { buildDocumentPrintHref } from "@/lib/document-engine/print";
 import {
   customerAddEstimateCommentAction,
   customerApproveEstimateAction,
@@ -215,10 +216,14 @@ export default async function PortalEstimateReviewPage({
             actions={
               <div className="flex flex-wrap items-center gap-3">
                 <Link
-                  href={`/portal/estimates/${estimate.id}/pdf`}
+                  href={buildDocumentPrintHref({
+                    subjectType: "estimate",
+                    subjectId: estimate.id,
+                    audience: "portal"
+                  })}
                   className="inline-flex items-center justify-center rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-brand-300 hover:text-brand-700"
                 >
-                  Print / save PDF
+                  Print / Save PDF
                 </Link>
                 <PortalStatusBadge
                   status={estimate.status}

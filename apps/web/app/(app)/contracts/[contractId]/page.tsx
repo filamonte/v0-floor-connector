@@ -41,6 +41,7 @@ import {
   getContractSignatureActionOptions
 } from "@/lib/contracts/data";
 import { getDocumentDeliveryState } from "@/lib/document-delivery/data";
+import { buildDocumentPrintHref } from "@/lib/document-engine/print";
 import { listInvoices } from "@/lib/invoices/data";
 import { listJobAssignmentsByJobIds, listJobs } from "@/lib/jobs/data";
 import { getActiveOrganizationContext } from "@/lib/organizations/active-context";
@@ -894,10 +895,13 @@ export default async function ContractDetailPage({
             secondaryActions={
               <>
                 <Link
-                  href={`/contracts/${contract.id}/pdf`}
+                  href={buildDocumentPrintHref({
+                    subjectType: "contract",
+                    subjectId: contract.id
+                  })}
                   className={secondaryActionClassName}
                 >
-                  Print / save PDF
+                  Print / Save PDF
                 </Link>
                 {contract.isEditable ? (
                   <Link

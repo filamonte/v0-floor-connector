@@ -59,6 +59,9 @@ Recent completed layers:
   visibility.
 - Send Trail Phase 1 on estimate, contract, and invoice source workspaces for
   existing document delivery proof visibility.
+- Document Engine Phase 1 centralizes existing estimate, contract, and invoice
+  print/save PDF route helpers and clarifies that browser print/save exports are
+  generated artifacts, not delivery proof or a separate document source.
 
 These layers are read-only summaries, source-record handoffs, copy/hierarchy
 improvements, or existing-action presentation around canonical records. They did

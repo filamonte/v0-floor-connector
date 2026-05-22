@@ -10,10 +10,15 @@ import {
   formatDocumentAddress,
   formatDocumentDate,
   formatDocumentMoney,
-  formatDocumentStatus,
-  type DocumentBrand
+  formatDocumentStatus
 } from "@/components/customer-document-print-view";
 import { requireAuthenticatedUser } from "@/lib/auth/session";
+import {
+  buildDocumentBackHref,
+  buildDocumentEngineBrand,
+  getDocumentEngineExportNotice,
+  getDocumentEngineFooterNote
+} from "@/lib/document-engine/print";
 import { getEstimateById } from "@/lib/estimates/data";
 import { getIncludedEstimateScopeItems } from "@/lib/estimates/workspace";
 import { getActiveOrganizationContext } from "@/lib/organizations/active-context";
@@ -23,19 +28,6 @@ type EstimatePdfPageProps = {
     estimateId: string;
   }>;
 };
-
-function buildDocumentBrand(
-  organizationContext: Awaited<ReturnType<typeof getActiveOrganizationContext>>
-): DocumentBrand {
-  return {
-    name: organizationContext?.organization.displayName ?? "FloorConnector",
-    logoUrl: organizationContext?.organization.logoUrl,
-    phone: organizationContext?.organization.phone,
-    email: organizationContext?.organization.email,
-    websiteUrl: organizationContext?.organization.websiteUrl,
-    accentColor: organizationContext?.organization.brandAccentColor
-  };
-}
 
 export default async function EstimatePdfPage({
   params
@@ -75,12 +67,17 @@ export default async function EstimatePdfPage({
 
   return (
     <CustomerDocumentPrintView
-      brand={buildDocumentBrand(organizationContext)}
+      brand={buildDocumentEngineBrand(organizationContext)}
       title={estimate.title ?? `Estimate ${estimate.referenceNumber}`}
       subtitle={`Estimate #${estimate.referenceNumber}`}
       statusLabel={formatDocumentStatus(estimate.status)}
-      backHref={`/estimates/${estimate.id}`}
+      backHref={buildDocumentBackHref({
+        subjectType: "estimate",
+        subjectId: estimate.id
+      })}
       backLabel="Back to estimate"
+      exportNotice={getDocumentEngineExportNotice("estimate")}
+      footerNote={getDocumentEngineFooterNote("estimate")}
       facts={[
         {
           label: "Customer",

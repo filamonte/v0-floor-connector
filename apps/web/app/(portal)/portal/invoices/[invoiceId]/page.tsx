@@ -18,6 +18,7 @@ import {
   portalSummaryLabelClassName
 } from "@/components/portal-review-ui";
 import { WorkspaceSummaryBand } from "@/components/workspace-summary-band";
+import { buildDocumentPrintHref } from "@/lib/document-engine/print";
 import { requestPortalInvoicePaymentAction } from "@/lib/invoices/actions";
 import { getOrganizationProductionActionLockState } from "@/lib/organizations/activation-guard";
 import { getPortalInvoiceReviewData } from "@/lib/portal/data";
@@ -300,9 +301,13 @@ export default async function PortalInvoiceReviewPage({
             actions={
               <div className="flex flex-wrap items-center gap-3">
                 <PortalSecondaryLink
-                  href={`/portal/invoices/${invoice.id}/pdf`}
+                  href={buildDocumentPrintHref({
+                    subjectType: "invoice",
+                    subjectId: invoice.id,
+                    audience: "portal"
+                  })}
                 >
-                  Print / save PDF
+                  Print / Save PDF
                 </PortalSecondaryLink>
                 <PortalStatusBadge
                   status={invoice.status}

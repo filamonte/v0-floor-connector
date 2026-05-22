@@ -7,6 +7,11 @@ import {
   formatDocumentDate,
   formatDocumentStatus
 } from "@/components/customer-document-print-view";
+import {
+  buildDocumentBackHref,
+  getDocumentEngineExportNotice,
+  getDocumentEngineFooterNote
+} from "@/lib/document-engine/print";
 import { getPortalContractReviewData } from "@/lib/portal/data";
 
 type PortalContractPdfPageProps = {
@@ -19,7 +24,9 @@ function formatSignerRole(role: string) {
   return role === "contractor" ? "Contractor countersigner" : "Customer signer";
 }
 
-export default async function PortalContractPdfPage({ params }: PortalContractPdfPageProps) {
+export default async function PortalContractPdfPage({
+  params
+}: PortalContractPdfPageProps) {
   const { contractId } = await params;
   const contract = await getPortalContractReviewData(
     contractId,
@@ -36,17 +43,31 @@ export default async function PortalContractPdfPage({ params }: PortalContractPd
       title={contract.title}
       subtitle="Shared contract"
       statusLabel={formatDocumentStatus(contract.status)}
-      backHref={`/portal/contracts/${contract.id}`}
+      backHref={buildDocumentBackHref({
+        subjectType: "contract",
+        subjectId: contract.id,
+        audience: "portal"
+      })}
       backLabel="Back to contract"
       facts={[
-        { label: "Customer", value: contract.customer?.name ?? "Unknown customer" },
-        { label: "Project", value: contract.project?.name ?? "Unknown project" },
-        { label: "Estimate", value: contract.estimate?.referenceNumber ?? "Not linked" },
+        {
+          label: "Customer",
+          value: contract.customer?.name ?? "Unknown customer"
+        },
+        {
+          label: "Project",
+          value: contract.project?.name ?? "Unknown project"
+        },
+        {
+          label: "Estimate",
+          value: contract.estimate?.referenceNumber ?? "Not linked"
+        },
         { label: "Sent", value: formatDocumentDate(contract.sentAt) },
         { label: "Signed", value: formatDocumentDate(contract.signedAt) },
         { label: "Status", value: formatDocumentStatus(contract.status) }
       ]}
-      footerNote="This PDF/print view is a customer-facing rendering of the shared contract. Signing still happens through the portal contract page."
+      exportNotice={getDocumentEngineExportNotice("contract")}
+      footerNote={`${getDocumentEngineFooterNote("contract")} Signing still happens through the portal contract page.`}
     >
       <CustomerDocumentSection title="Agreement">
         <CustomerDocumentHtml html={contract.renderedContent} />
@@ -66,7 +87,10 @@ export default async function PortalContractPdfPage({ params }: PortalContractPd
               </thead>
               <tbody>
                 {contract.signers.map((signer) => (
-                  <tr key={signer.id} className="border-b border-[var(--border-warm)] align-top">
+                  <tr
+                    key={signer.id}
+                    className="border-b border-[var(--border-warm)] align-top"
+                  >
                     <td className="py-3 pr-3 font-medium text-[var(--text-primary)]">
                       {signer.displayName}
                     </td>
@@ -85,7 +109,9 @@ export default async function PortalContractPdfPage({ params }: PortalContractPd
             </table>
           </div>
         ) : (
-          <p className="text-sm text-[var(--text-secondary)]">No signer routing is listed.</p>
+          <p className="text-sm text-[var(--text-secondary)]">
+            No signer routing is listed.
+          </p>
         )}
       </CustomerDocumentSection>
     </CustomerDocumentPrintView>

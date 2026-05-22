@@ -40,7 +40,9 @@ export function formatDocumentDate(value: string | null | undefined) {
     return "Not set";
   }
 
-  return new Date(value.includes("T") ? value : `${value}T00:00:00`).toLocaleDateString();
+  return new Date(
+    value.includes("T") ? value : `${value}T00:00:00`
+  ).toLocaleDateString();
 }
 
 export function formatDocumentStatus(status: string) {
@@ -64,7 +66,8 @@ export function CustomerDocumentPrintView({
   backLabel,
   facts,
   children,
-  footerNote
+  footerNote,
+  exportNotice
 }: {
   brand: DocumentBrand;
   title: string;
@@ -75,6 +78,7 @@ export function CustomerDocumentPrintView({
   facts: DocumentFact[];
   children: ReactNode;
   footerNote?: string;
+  exportNotice?: string;
 }) {
   const accentColor = brand.accentColor ?? "#ef7d32";
   const contactParts = [brand.phone, brand.email, brand.websiteUrl].filter(
@@ -122,7 +126,10 @@ export function CustomerDocumentPrintView({
                 </p>
               )}
               {brand.logoUrl ? (
-                <span data-testid="customer-document-brand-name" className="sr-only">
+                <span
+                  data-testid="customer-document-brand-name"
+                  className="sr-only"
+                >
                   {brand.name}
                 </span>
               ) : null}
@@ -133,7 +140,9 @@ export function CustomerDocumentPrintView({
                 <h1 className="mt-2 text-3xl font-semibold leading-tight tracking-normal text-[var(--text-primary)]">
                   {title}
                 </h1>
-                <p className="mt-2 text-sm leading-6 text-[var(--text-secondary)]">{subtitle}</p>
+                <p className="mt-2 text-sm leading-6 text-[var(--text-secondary)]">
+                  {subtitle}
+                </p>
               </div>
             </div>
 
@@ -170,10 +179,17 @@ export function CustomerDocumentPrintView({
           ))}
         </section>
 
+        {exportNotice ? (
+          <aside className="border-b border-[var(--border-warm)] bg-white px-6 py-4 text-xs leading-5 text-[var(--text-secondary)] sm:px-8 print:break-inside-avoid">
+            {exportNotice}
+          </aside>
+        ) : null}
+
         <div className="space-y-8 px-6 py-7 sm:px-8">{children}</div>
 
         <footer className="break-inside-avoid border-t border-[var(--border-warm)] px-6 py-5 text-xs leading-5 text-[var(--text-muted)] sm:px-8 print:break-inside-avoid">
-          {footerNote ?? "This PDF/print view is a customer-facing rendering of the shared FloorConnector record."}
+          {footerNote ??
+            "This PDF/print view is a customer-facing rendering of the shared FloorConnector record."}
         </footer>
       </article>
     </main>
@@ -197,9 +213,21 @@ export function CustomerDocumentSection({
   );
 }
 
-export function CustomerDocumentHtml({ html }: { html: string | null | undefined }) {
-  if (!html || html.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim().length === 0) {
-    return <p className="text-sm text-[var(--text-secondary)]">Not provided.</p>;
+export function CustomerDocumentHtml({
+  html
+}: {
+  html: string | null | undefined;
+}) {
+  if (
+    !html ||
+    html
+      .replace(/<[^>]+>/g, " ")
+      .replace(/\s+/g, " ")
+      .trim().length === 0
+  ) {
+    return (
+      <p className="text-sm text-[var(--text-secondary)]">Not provided.</p>
+    );
   }
 
   return (
@@ -216,7 +244,11 @@ export function CustomerDocumentLineItemsTable({
   lineItems: CustomerDocumentLineItem[];
 }) {
   if (lineItems.length === 0) {
-    return <p className="text-sm text-[var(--text-secondary)]">No line items are listed.</p>;
+    return (
+      <p className="text-sm text-[var(--text-secondary)]">
+        No line items are listed.
+      </p>
+    );
   }
 
   return (
@@ -232,11 +264,18 @@ export function CustomerDocumentLineItemsTable({
         </thead>
         <tbody>
           {lineItems.map((item) => (
-            <tr key={item.id} className="border-b border-[var(--border-warm)] align-top">
+            <tr
+              key={item.id}
+              className="border-b border-[var(--border-warm)] align-top"
+            >
               <td className="py-3 pr-3">
-                <p className="font-medium text-[var(--text-primary)]">{item.name}</p>
+                <p className="font-medium text-[var(--text-primary)]">
+                  {item.name}
+                </p>
                 {item.description ? (
-                  <p className="mt-1 text-xs text-[var(--text-secondary)]">{item.description}</p>
+                  <p className="mt-1 text-xs text-[var(--text-secondary)]">
+                    {item.description}
+                  </p>
                 ) : null}
               </td>
               <td className="px-3 py-3 text-[var(--text-secondary)]">
@@ -269,7 +308,9 @@ export function CustomerDocumentTotals({
         <div
           key={row.label}
           className={`flex items-center justify-between gap-5 ${
-            row.isTotal ? "border-t border-[var(--border-warm)] pt-3 text-base font-semibold" : ""
+            row.isTotal
+              ? "border-t border-[var(--border-warm)] pt-3 text-base font-semibold"
+              : ""
           }`}
         >
           <dt>{row.isTotal ? totalLabel : row.label}</dt>

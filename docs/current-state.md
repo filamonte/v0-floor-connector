@@ -2342,6 +2342,12 @@ Implemented UI behavior now:
   viewed/acted evidence, pending/failed attention, and source-record review
   moves without changing provider sends, signatures, payments, estimate math,
   invoice math, portal grants, or document storage behavior.
+- Document Engine Phase 1 now centralizes the existing estimate, contract, and
+  invoice print/save PDF route helpers and copy. Contractor and portal
+  estimate/contract/invoice print routes remain browser print/save HTML views
+  over current source records; they now make explicit that printing or saving
+  does not send the document, create delivery proof, create a separate document
+  record, or change approval, signature, payment, or delivery state.
 - `/schedule` now presents as CrewBoard on the existing route. CrewBoard uses
   canonical jobs, appointments, job assignments, people, vendors, projects, and
   customers for scheduling visibility, URL-backed date/layout context,
