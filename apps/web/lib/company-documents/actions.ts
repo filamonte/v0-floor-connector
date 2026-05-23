@@ -41,6 +41,13 @@ function revalidateCompanyDocuments() {
   revalidatePath("/settings/company-documents");
 }
 
+const saveCompanyDocumentErrorMessage =
+  "Unable to save company document. Check the fields and try again.";
+const archiveCompanyDocumentErrorMessage =
+  "Unable to archive company document. Try again or ask an owner, admin, or manager for access.";
+const restoreCompanyDocumentErrorMessage =
+  "Unable to restore company document. Try again or ask an owner, admin, or manager for access.";
+
 export async function saveCompanyDocumentAction(formData: FormData) {
   const result = companyDocumentUpsertInputSchema.safeParse({
     documentId: getFieldValue(formData, "documentId"),
@@ -69,14 +76,11 @@ export async function saveCompanyDocumentAction(formData: FormData) {
 
   try {
     document = await upsertCompanyDocument(result.data);
-  } catch (error) {
+  } catch {
     redirect(
       buildRedirect("/settings/company-documents", {
         documentId: result.data.documentId ?? undefined,
-        error:
-          error instanceof Error
-            ? error.message
-            : "Unable to save company document."
+        error: saveCompanyDocumentErrorMessage
       })
     );
   }
@@ -110,14 +114,11 @@ export async function archiveCompanyDocumentAction(formData: FormData) {
 
   try {
     document = await archiveCompanyDocument(result.data.documentId);
-  } catch (error) {
+  } catch {
     redirect(
       buildRedirect("/settings/company-documents", {
         documentId: result.data.documentId,
-        error:
-          error instanceof Error
-            ? error.message
-            : "Unable to archive company document."
+        error: archiveCompanyDocumentErrorMessage
       })
     );
   }
@@ -151,14 +152,11 @@ export async function unarchiveCompanyDocumentAction(formData: FormData) {
 
   try {
     document = await unarchiveCompanyDocument(result.data.documentId);
-  } catch (error) {
+  } catch {
     redirect(
       buildRedirect("/settings/company-documents", {
         documentId: result.data.documentId,
-        error:
-          error instanceof Error
-            ? error.message
-            : "Unable to restore company document."
+        error: restoreCompanyDocumentErrorMessage
       })
     );
   }

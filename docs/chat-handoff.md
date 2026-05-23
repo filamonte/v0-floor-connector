@@ -53,6 +53,11 @@ Current operating-core surfaces include:
 - Company Documents Phase 1B under `/settings/company-documents`, backed by the
   tenant-owned `company_documents` table, with contractor-side read and
   browser print/save routes for company administration documents.
+- Company Documents Phase 1 QA checkpoint is documented in
+  [docs/design/company-documents-phase-1-qa-checkpoint.md](C:/FloorConnector/docs/design/company-documents-phase-1-qa-checkpoint.md).
+  Static QA confirmed the Phase 1A/1B schema, RLS, scoped helpers, routes, and
+  Document Engine print boundary; authenticated browser QA still needs a
+  known-good local contractor session.
 - Global search hardening for tenant-scoped canonical records.
 
 These layers are summaries, source-record handoffs, copy/hierarchy

@@ -48,6 +48,10 @@ Run focused tests when touching the matching helper or route:
   `pnpm.cmd --filter @floorconnector/web exec tsx --test lib/financials/accounting-export.test.ts`
 - Document Engine print helpers:
   `pnpm.cmd --filter @floorconnector/web exec tsx --test lib/document-engine/print.test.ts`
+- Company Documents validation/types:
+  `pnpm.cmd --filter @floorconnector/web exec tsx --test lib/company-documents/types.test.ts`
+- Company Documents migration/RLS shape:
+  `pnpm.cmd --filter @floorconnector/web exec tsx --test lib/company-documents/company-documents-migration.test.ts`
 - Schedule read model:
   `pnpm.cmd --filter @floorconnector/web exec tsx --test lib/schedule/read-model.test.ts`
 - Global Search helpers:
@@ -74,6 +78,10 @@ When browser QA is available, manually check:
   `/invoices/[invoiceId]` for Send Trail summary and delivery evidence.
 - `/projects/[projectId]/closeout-package/pdf` for the contractor-side
   closeout package print/save route.
+- `/settings/company-documents`, `/settings/company-documents/[documentId]`,
+  and `/settings/company-documents/[documentId]/pdf` for Company Documents
+  library, detail, and contractor-only browser print/save behavior when a safe
+  local/dev company document exists.
 
 Use [docs/demo/operating-core-demo-path.md](C:/FloorConnector/docs/demo/operating-core-demo-path.md)
 as the current route-by-route demo and readiness walkthrough.

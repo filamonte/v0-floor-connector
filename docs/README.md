@@ -175,6 +175,8 @@ Document and closeout:
   implemented Company Documents Phase 1A schema and settings library checkpoint
 - [docs/design/company-documents-phase-1b-view-print.md](C:/FloorConnector/docs/design/company-documents-phase-1b-view-print.md):
   implemented Company Documents Phase 1B contractor read and print/save view
+- [docs/design/company-documents-phase-1-qa-checkpoint.md](C:/FloorConnector/docs/design/company-documents-phase-1-qa-checkpoint.md):
+  focused QA checkpoint for Company Documents Phase 1A and Phase 1B
 
 Demo and staging:
 
