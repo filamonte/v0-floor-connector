@@ -13,43 +13,43 @@ operating-core visibility layers. It is not a release gate by itself.
 Run focused tests when touching the matching helper or route:
 
 - Schedule warnings:
-  `pnpm.cmd --filter @floorconnector/web exec tsx --test apps/web/lib/schedule/warnings.test.ts`
+  `pnpm.cmd --filter @floorconnector/web exec tsx --test lib/schedule/warnings.test.ts`
 - Daily Log links:
-  `pnpm.cmd --filter @floorconnector/web exec tsx --test apps/web/lib/daily-logs/links.test.ts`
+  `pnpm.cmd --filter @floorconnector/web exec tsx --test lib/daily-logs/links.test.ts`
 - FieldTrail summary:
-  `pnpm.cmd --filter @floorconnector/web exec tsx --test apps/web/lib/fieldtrail/summary.test.ts`
+  `pnpm.cmd --filter @floorconnector/web exec tsx --test lib/fieldtrail/summary.test.ts`
 - MessageCenter summary:
-  `pnpm.cmd --filter @floorconnector/web exec tsx --test apps/web/lib/messagecenter/summary.test.ts`
+  `pnpm.cmd --filter @floorconnector/web exec tsx --test lib/messagecenter/summary.test.ts`
 - ProjectPulse summary:
-  `pnpm.cmd --filter @floorconnector/web exec tsx --test apps/web/lib/projectpulse/summary.test.ts`
+  `pnpm.cmd --filter @floorconnector/web exec tsx --test lib/projectpulse/summary.test.ts`
 - CloseoutTrail summary:
-  `pnpm.cmd --filter @floorconnector/web exec tsx --test apps/web/lib/closeouttrail/summary.test.ts`
+  `pnpm.cmd --filter @floorconnector/web exec tsx --test lib/closeouttrail/summary.test.ts`
 - Proof Center summary:
-  `pnpm.cmd --filter @floorconnector/web exec tsx --test apps/web/lib/proofcenter/summary.test.ts`
+  `pnpm.cmd --filter @floorconnector/web exec tsx --test lib/proofcenter/summary.test.ts`
 - Send Trail summary:
-  `pnpm.cmd --filter @floorconnector/web exec tsx --test apps/web/lib/sendtrail/summary.test.ts`
+  `pnpm.cmd --filter @floorconnector/web exec tsx --test lib/sendtrail/summary.test.ts`
 - Service Center summary:
-  `pnpm.cmd --filter @floorconnector/web exec tsx --test apps/web/lib/servicecenter/summary.test.ts`
+  `pnpm.cmd --filter @floorconnector/web exec tsx --test lib/servicecenter/summary.test.ts`
 - Portal Customer Next Step:
-  `pnpm.cmd --filter @floorconnector/web exec tsx --test apps/web/lib/portal/next-step.test.ts`
+  `pnpm.cmd --filter @floorconnector/web exec tsx --test lib/portal/next-step.test.ts`
 - Portal Project Status Window:
-  `pnpm.cmd --filter @floorconnector/web exec tsx --test apps/web/lib/portal/project-status-window.test.ts`
+  `pnpm.cmd --filter @floorconnector/web exec tsx --test lib/portal/project-status-window.test.ts`
 - Portal Project Timeline:
-  `pnpm.cmd --filter @floorconnector/web exec tsx --test apps/web/lib/portal/project-timeline.test.ts`
+  `pnpm.cmd --filter @floorconnector/web exec tsx --test lib/portal/project-timeline.test.ts`
 - Portal Shared Documents:
-  `pnpm.cmd --filter @floorconnector/web exec tsx --test apps/web/lib/portal/shared-documents.test.ts`
+  `pnpm.cmd --filter @floorconnector/web exec tsx --test lib/portal/shared-documents.test.ts`
 - Reports operations summary:
-  `pnpm.cmd --filter @floorconnector/web exec tsx --test apps/web/lib/reports/operations-summary.test.ts`
+  `pnpm.cmd --filter @floorconnector/web exec tsx --test lib/reports/operations-summary.test.ts`
 - Financial Control collections summary:
-  `pnpm.cmd --filter @floorconnector/web exec tsx --test apps/web/lib/financials/collections-summary.test.ts`
+  `pnpm.cmd --filter @floorconnector/web exec tsx --test lib/financials/collections-summary.test.ts`
 - Accounting Readiness:
-  `pnpm.cmd --filter @floorconnector/web exec tsx --test apps/web/lib/financials/accounting-readiness.test.ts`
+  `pnpm.cmd --filter @floorconnector/web exec tsx --test lib/financials/accounting-readiness.test.ts`
 - Accounting Export:
-  `pnpm.cmd --filter @floorconnector/web exec tsx --test apps/web/lib/financials/accounting-export.test.ts`
+  `pnpm.cmd --filter @floorconnector/web exec tsx --test lib/financials/accounting-export.test.ts`
 - Document Engine print helpers:
-  `pnpm.cmd --filter @floorconnector/web exec tsx --test apps/web/lib/document-engine/print.test.ts`
+  `pnpm.cmd --filter @floorconnector/web exec tsx --test lib/document-engine/print.test.ts`
 - Schedule read model:
-  `pnpm.cmd --filter @floorconnector/web exec tsx --test apps/web/lib/schedule/read-model.test.ts`
+  `pnpm.cmd --filter @floorconnector/web exec tsx --test lib/schedule/read-model.test.ts`
 - Global Search helpers:
   `pnpm.cmd --filter @floorconnector/web exec tsx --test lib/global-search/search-helpers.test.ts`
 

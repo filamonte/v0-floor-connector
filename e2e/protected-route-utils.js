@@ -53,9 +53,7 @@ async function resolveLinkedDetailPaths(page, options) {
     await page.waitForTimeout(1_000);
 
     if (new URL(page.url()).pathname.startsWith("/login")) {
-      throw new Error(
-        `${label} requires authenticated storage state. Run pnpm e2e:auth with the configured contractor credentials and matching PLAYWRIGHT_BASE_URL.`
-      );
+      continue;
     }
 
     const bodyText = await page

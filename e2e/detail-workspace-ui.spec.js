@@ -219,11 +219,12 @@ test("project and estimate detail render decision-first primitives", async ({
 });
 
 test("core detail workspaces stay within mobile viewport", async ({ page }) => {
-  await page.setViewportSize({ width: 390, height: 844 });
   const projectPath = await resolveProjectDetailPath(page);
   const estimatePath = await resolveDetailPath(page, "estimate");
   const contractPath = await resolveDetailPath(page, "contracts");
   const invoicePath = await resolveDetailPath(page, "invoices");
+
+  await page.setViewportSize({ width: 390, height: 844 });
 
   await expectAuthenticatedDetail(page, projectPath);
   await expectNoHorizontalPageOverflow(page, "Project detail mobile layout");

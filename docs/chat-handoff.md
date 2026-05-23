@@ -215,6 +215,17 @@ Recent completed layers:
   avoids date pattern matching, and has focused pure helper coverage. The pass
   preserved shell-level tenant scoping, existing categories, and existing result
   route links.
+- Operating Core Demo Smoke records the route-discovery demo-readiness pass in
+  [docs/design/operating-core-demo-smoke-checkpoint.md](C:/FloorConnector/docs/design/operating-core-demo-smoke-checkpoint.md).
+  The pass pushed the Global Search hardening commit to `origin/main`, checked
+  contractor and portal operating-core routes with saved auth and discovered
+  links, verified global search status-like terms, fixed the mobile viewport
+  Playwright test so route discovery happens before the phone-sized assertions,
+  made protected route discovery continue past login-redirected candidate
+  detail links after an authenticated index page has loaded, and updated
+  validation checklist commands to use package-relative helper test paths.
+  Local platform-admin browser verification remains blocked until the saved
+  platform-admin auth state reaches `/super-admin` instead of `/login`.
 
 These layers are read-only summaries, source-record handoffs, copy/hierarchy
 improvements, or existing-action presentation around canonical records. They did
