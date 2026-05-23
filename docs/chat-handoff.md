@@ -58,6 +58,12 @@ Current operating-core surfaces include:
   Static QA confirmed the Phase 1A/1B schema, RLS, scoped helpers, routes, and
   Document Engine print boundary; authenticated browser QA still needs a
   known-good local contractor session.
+- Company Documents Phase 1C Starter Documents planning is documented in
+  [docs/design/company-documents-phase-1c-starter-documents-plan.md](C:/FloorConnector/docs/design/company-documents-phase-1c-starter-documents-plan.md).
+  The recommended next slice is code-defined Starter Documents plus contractor
+  adoption into tenant-owned draft Company Documents, with later persisted
+  platform starter management only after provenance/version governance is
+  approved.
 - Global search hardening for tenant-scoped canonical records.
 
 These layers are summaries, source-record handoffs, copy/hierarchy
@@ -129,9 +135,12 @@ Good next moves:
 
 - Review the dry-run seed planner output with owner-approved staging
   identifiers before designing any future write-capable seed mode.
-- Plan the next Company Documents slice only after Phase 1A is verified in the
-  target environment: likely Starter Documents, versioning, storage,
-  print/save, or acknowledgements as separate approvals.
+- If continuing Company Documents, use the Phase 1C-A Starter Document Adoption
+  prompt from
+  [docs/design/company-documents-phase-1c-starter-documents-plan.md](C:/FloorConnector/docs/design/company-documents-phase-1c-starter-documents-plan.md).
+  Keep adoption contractor-owned and separate from AI drafting, legal advice,
+  e-sign, acknowledgements, portal sharing, storage, delivery proof, and
+  platform-admin management.
 - Run a real-record operating-core demo rehearsal using
   [docs/demo/operating-core-demo-path.md](C:/FloorConnector/docs/demo/operating-core-demo-path.md)
   and record blockers honestly.

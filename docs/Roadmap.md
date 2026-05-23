@@ -140,12 +140,11 @@ Future depth:
 - document generation, PDF/export controls, stored versions, and retrieval
   depth for estimates, contracts, invoices, warranties, closeout, and proof
   packages
-- Company Documents / Document Library now has a Phase 1A schema and Company
-  Controls settings surface for contractor administration docs such as
-  agreements, handbooks, SOPs, safety plans, onboarding, policies, and training
-  documents. Future depth should add Starter Documents, versioning, storage,
-  print/save, or acknowledgements as separate approved slices and must not
-  overload current estimate/contract/invoice/warranty template categories.
+- Company Documents / Document Library now has Phase 1A schema/settings, Phase
+  1B contractor detail and browser print/save, and a Phase 1C Starter Documents
+  adoption plan. Future depth should add Starter Documents, versioning, storage,
+  or acknowledgements as separate approved slices and must not overload current
+  estimate/contract/invoice/warranty template categories.
 - equipment/resource readiness on top of the implemented canonical equipment asset foundation, before assignment or schedule conflict logic expands further
 - richer materials and inventory workflows
 - purchasing, reservation, issue, return, and job material planning

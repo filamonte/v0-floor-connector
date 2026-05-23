@@ -177,6 +177,8 @@ Document and closeout:
   implemented Company Documents Phase 1B contractor read and print/save view
 - [docs/design/company-documents-phase-1-qa-checkpoint.md](C:/FloorConnector/docs/design/company-documents-phase-1-qa-checkpoint.md):
   focused QA checkpoint for Company Documents Phase 1A and Phase 1B
+- [docs/design/company-documents-phase-1c-starter-documents-plan.md](C:/FloorConnector/docs/design/company-documents-phase-1c-starter-documents-plan.md):
+  planning-only Company Documents Starter Documents adoption model
 
 Demo and staging:
 
