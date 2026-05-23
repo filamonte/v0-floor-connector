@@ -18,6 +18,7 @@ import {
 } from "@/components/portal-review-ui";
 import { WorkspaceSummaryBand } from "@/components/workspace-summary-band";
 import { derivePortalProjectStatusWindow } from "@/lib/portal/project-status-window";
+import { derivePortalProjectTimeline } from "@/lib/portal/project-timeline";
 import {
   getPortalProjectDetailSummary,
   listPortalProjectAppointments,
@@ -57,6 +58,10 @@ function formatDateTime(value: string) {
   return new Date(value).toLocaleString();
 }
 
+function formatTimelineDate(value: string | null | undefined) {
+  return value ? formatDateTime(value) : "Current";
+}
+
 function formatAppointmentTime(startAt: string, endAt: string | null) {
   const start = new Date(startAt).toLocaleString();
 
@@ -69,6 +74,19 @@ function formatAppointmentTime(startAt: string, endAt: string | null) {
 
 function formatLocation(parts: Array<string | null | undefined>) {
   return parts.filter(Boolean).join(", ") || "Not provided";
+}
+
+function getTimelineAccentClassName(tone: string) {
+  switch (tone) {
+    case "attention":
+      return "border-l-amber-400 bg-amber-50/45";
+    case "complete":
+      return "border-l-emerald-400 bg-emerald-50/35";
+    case "warning":
+      return "border-l-rose-400 bg-rose-50/35";
+    default:
+      return "border-l-slate-300 bg-white";
+  }
 }
 
 function getPortalContractSummary(contract: {
@@ -255,6 +273,21 @@ export default async function PortalProjectDetailPage({
     contracts,
     changeOrders,
     invoices
+  });
+  const timeline = derivePortalProjectTimeline({
+    project: {
+      id: project.id,
+      name: project.name,
+      status: project.status,
+      createdAt: project.createdAt,
+      updatedAt: project.updatedAt
+    },
+    estimates,
+    contracts,
+    changeOrders,
+    invoices,
+    appointments,
+    warrantyDocuments
   });
 
   return (
@@ -452,6 +485,67 @@ export default async function PortalProjectDetailPage({
               eyebrow="Shared with you"
               title="No documents or payments are shared yet"
               description={statusWindow.emptyStateMessage}
+            />
+          )}
+        </DetailPanel>
+
+        <DetailPanel
+          title="Project Timeline"
+          description="Recent shared project moments and customer-facing actions from records available in this portal."
+        >
+          {timeline.timelineItems.length > 0 ? (
+            <div className="space-y-3">
+              {timeline.timelineItems.map((item) => (
+                <div
+                  key={item.key}
+                  className={[
+                    portalReviewCardClassName,
+                    "border-l-4",
+                    getTimelineAccentClassName(item.tone)
+                  ].join(" ")}
+                >
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+                          {formatTimelineDate(item.occurredAt)}
+                        </p>
+                        {item.customerActionRequired ? (
+                          <PortalStatusBadge status="attention">
+                            Waiting on you
+                          </PortalStatusBadge>
+                        ) : null}
+                      </div>
+                      <h2 className="mt-2 text-base font-semibold text-slate-950">
+                        {item.label}
+                      </h2>
+                      <p className="mt-2 text-sm leading-6 text-slate-600">
+                        {item.description}
+                      </p>
+                    </div>
+                    <PortalStatusBadge status={item.tone}>
+                      {item.tone === "attention"
+                        ? "Ready for review"
+                        : item.tone}
+                    </PortalStatusBadge>
+                  </div>
+                  {item.href ? (
+                    <div className="mt-4">
+                      <PortalSecondaryLink href={item.href}>
+                        {item.customerActionRequired
+                          ? "Review record"
+                          : "Open record"}
+                      </PortalSecondaryLink>
+                    </div>
+                  ) : null}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <AppEmptyState
+              eyebrow="What happened"
+              title="No timeline activity yet"
+              description={timeline.emptyStateMessage}
             />
           )}
         </DetailPanel>

@@ -88,6 +88,18 @@ Recent completed layers:
   auth/RLS, tenant logic, payment/signature behavior, estimate math, invoice
   math, AI, automation, notifications, FieldTrail exposure, Proof Center
   exposure, service requests, or closeout package downloads.
+- Portal Maturity Phase 3 adds a read-only Project Timeline to the portal
+  Project Workspace. The new helper derives customer-safe timeline items from
+  existing project summary, shared estimates, contracts, invoices, change
+  orders, customer-visible appointments, and portal-visible warranty documents.
+  The timeline marks customer-facing actions as `Waiting on you` and links only
+  to existing portal review routes. This remains customer-safe visibility and
+  does not add portal-only records, loader permission widening, route changes,
+  schema, migrations, server actions, portal grant behavior, auth/RLS, tenant
+  logic, payment/signature behavior, estimate math, invoice math, AI,
+  automation, notifications, FieldTrail exposure, Proof Center exposure,
+  internal communication details, service requests, provider delivery timeline
+  details, or closeout package downloads.
 - Reports Phase 1 on `/reports` for read-only operations and collections
   visibility.
 - Send Trail Phase 1 on estimate, contract, and invoice source workspaces for

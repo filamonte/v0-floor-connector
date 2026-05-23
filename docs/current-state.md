@@ -106,6 +106,16 @@ matters now` line from existing list fields only. This does not add portal
   portal grants, auth/RLS, tenant logic, service requests, FieldTrail/Proof
   Center exposure, AI, automation, notifications, payment/signature behavior, or
   estimate/invoice math changes.
+- Portal Maturity Phase 3 adds a read-only Project Timeline to the portal
+  Project Workspace. It derives customer-safe timeline items from the project
+  summary, shared estimates, contracts, invoices, change orders,
+  customer-visible appointments, and portal-visible warranty documents already
+  loaded by the route. Timeline items link to existing portal review routes and
+  mark customer-facing actions as `Waiting on you`. This does not add portal
+  models, loader permissions, route changes, schema, migrations, server actions,
+  portal grants, auth/RLS, tenant logic, service requests, FieldTrail/Proof
+  Center exposure, internal communication details, AI, automation,
+  notifications, payment/signature behavior, or estimate/invoice math changes.
 - package/billing governance lives under `/super-admin/packages`, including read-only detail routes for package definitions, assignments, provider mappings, and support reviews.
 
 ## Current Architecture
