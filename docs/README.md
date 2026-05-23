@@ -173,6 +173,8 @@ Document and closeout:
   future Company Documents schema/migration readiness
 - [docs/design/company-documents-phase-1a-schema-settings-library.md](C:/FloorConnector/docs/design/company-documents-phase-1a-schema-settings-library.md):
   implemented Company Documents Phase 1A schema and settings library checkpoint
+- [docs/design/company-documents-phase-1b-view-print.md](C:/FloorConnector/docs/design/company-documents-phase-1b-view-print.md):
+  implemented Company Documents Phase 1B contractor read and print/save view
 
 Demo and staging:
 

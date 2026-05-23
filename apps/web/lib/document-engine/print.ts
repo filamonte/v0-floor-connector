@@ -77,6 +77,14 @@ export function getProjectCloseoutPackageBackHref(projectId: string) {
   return `/projects/${projectId}`;
 }
 
+export function buildCompanyDocumentPrintHref(documentId: string) {
+  return `/settings/company-documents/${documentId}/pdf`;
+}
+
+export function buildCompanyDocumentBackHref(documentId: string) {
+  return `/settings/company-documents/${documentId}`;
+}
+
 export function getDocumentEngineExportNotice(
   subjectType: DocumentEngineSubjectType
 ) {
@@ -99,4 +107,12 @@ export function getProjectCloseoutPackageExportNotice() {
 
 export function getProjectCloseoutPackageFooterNote() {
   return "This closeout package is a printable project summary generated from current FloorConnector records. It is not a stored PDF artifact, delivery proof, or a separate project closeout record.";
+}
+
+export function getCompanyDocumentExportNotice() {
+  return "Printing or saving this document does not send it, sign it, create delivery proof, or change document status.";
+}
+
+export function getCompanyDocumentFooterNote() {
+  return "Company Documents stores your company's document content. It does not provide legal advice. This print view is not a stored PDF, public link, provider send, signature packet, acknowledgement, or delivery proof.";
 }

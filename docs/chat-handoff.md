@@ -50,8 +50,9 @@ Current operating-core surfaces include:
   contractor-side project closeout package route.
 - Service Center and warranty document foundations tied to customer, project,
   job, proof, and warranty context.
-- Company Documents Phase 1A under `/settings/company-documents`, backed by the
-  tenant-owned `company_documents` table for company administration documents.
+- Company Documents Phase 1B under `/settings/company-documents`, backed by the
+  tenant-owned `company_documents` table, with contractor-side read and
+  browser print/save routes for company administration documents.
 - Global search hardening for tenant-scoped canonical records.
 
 These layers are summaries, source-record handoffs, copy/hierarchy
@@ -96,10 +97,11 @@ Recent staging/demo work is docs-first and no-write:
 - Do not weaken auth, RLS, tenant checks, portal grants, payment/signature
   state, estimate math, invoice math, readiness gates, settings, or
   platform-admin boundaries for QA or demo convenience.
-- Company Documents is a settings library only right now; do not add AI
-  drafting, legal advice, e-sign, portal/employee distribution, public links,
-  provider sends, file upload/storage, Starter Documents, or Document Engine
-  output without a separate approved slice.
+- Company Documents is a settings library with contractor-side read and
+  browser print/save only; do not add AI drafting, legal advice, e-sign,
+  portal/employee distribution, public links, provider sends,
+  file upload/storage, Starter Documents, generated files, or delivery proof
+  without a separate approved slice.
 - Staging/demo data work must stay owner-approved, tenant-scoped, dry-run-first,
   provider-dark, and invite-token safe.
 - Customer portal copy should be simpler and customer-safe; do not expose

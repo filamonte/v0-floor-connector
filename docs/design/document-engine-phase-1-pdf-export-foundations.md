@@ -78,6 +78,8 @@ Implemented in Phase 1:
 - contractor estimate print/save route: `/estimates/[estimateId]/pdf`
 - contractor contract print/save route: `/contracts/[contractId]/pdf`
 - contractor invoice print/save route: `/invoices/[invoiceId]/pdf`
+- contractor Company Documents print/save route:
+  `/settings/company-documents/[documentId]/pdf`
 - portal estimate print/save route: `/portal/estimates/[estimateId]/pdf`
 - portal contract print/save route: `/portal/contracts/[contractId]/pdf`
 - portal invoice print/save route: `/portal/invoices/[invoiceId]/pdf`
@@ -94,6 +96,8 @@ href helper.
   approval status
 - print route footers now clarify that the view is not delivery proof and does
   not create a separate document record
+- Company Documents print/save includes non-legal and no-status-change notices
+  and does not send, sign, share, store, or create delivery proof
 
 ## Behavior Preserved
 

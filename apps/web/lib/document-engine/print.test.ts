@@ -2,10 +2,14 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 
 import {
+  buildCompanyDocumentBackHref,
+  buildCompanyDocumentPrintHref,
   buildDocumentBackHref,
   buildDocumentEngineBrand,
   buildDocumentPrintHref,
   buildProjectCloseoutPackagePrintHref,
+  getCompanyDocumentExportNotice,
+  getCompanyDocumentFooterNote,
   getDocumentEngineExportNotice,
   getDocumentEngineFooterNote,
   getProjectCloseoutPackageExportNotice,
@@ -80,4 +84,22 @@ void test("builds project closeout package print links and preserves export boun
     /create delivery proof/i
   );
   assert.match(getProjectCloseoutPackageFooterNote(), /not a stored PDF/i);
+});
+
+void test("builds company document print links without mutation semantics", () => {
+  assert.equal(
+    buildCompanyDocumentPrintHref("document_123"),
+    "/settings/company-documents/document_123/pdf"
+  );
+  assert.equal(
+    buildCompanyDocumentBackHref("document_123"),
+    "/settings/company-documents/document_123"
+  );
+  assert.match(getCompanyDocumentExportNotice(), /does not send/i);
+  assert.match(getCompanyDocumentExportNotice(), /change document status/i);
+  assert.match(
+    getCompanyDocumentFooterNote(),
+    /does not provide legal advice/i
+  );
+  assert.match(getCompanyDocumentFooterNote(), /not a stored PDF/i);
 });

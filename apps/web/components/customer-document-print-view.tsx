@@ -66,6 +66,8 @@ export function CustomerDocumentPrintView({
   backLabel,
   facts,
   children,
+  documentLabel,
+  ariaLabel,
   footerNote,
   exportNotice
 }: {
@@ -77,6 +79,8 @@ export function CustomerDocumentPrintView({
   backLabel: string;
   facts: DocumentFact[];
   children: ReactNode;
+  documentLabel?: string;
+  ariaLabel?: string;
   footerNote?: string;
   exportNotice?: string;
 }) {
@@ -87,7 +91,7 @@ export function CustomerDocumentPrintView({
 
   return (
     <main
-      aria-label="Customer document"
+      aria-label={ariaLabel ?? "Customer document"}
       className="mx-auto max-w-4xl bg-white px-5 py-6 text-[var(--text-primary)] sm:px-8 lg:px-10 print:max-w-none print:bg-white print:px-0 print:py-0"
     >
       <div className="mb-5 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-[var(--border-warm)] bg-[var(--paper)] px-4 py-3 print:hidden">
@@ -135,7 +139,7 @@ export function CustomerDocumentPrintView({
               ) : null}
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--text-muted)]">
-                  Customer document
+                  {documentLabel ?? "Customer document"}
                 </p>
                 <h1 className="mt-2 text-3xl font-semibold leading-tight tracking-normal text-[var(--text-primary)]">
                   {title}

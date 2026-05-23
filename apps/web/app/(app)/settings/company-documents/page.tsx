@@ -20,6 +20,7 @@ import {
   companyDocumentStatuses,
   type CompanyDocument
 } from "@/lib/company-documents/types";
+import { buildCompanyDocumentPrintHref } from "@/lib/document-engine/print";
 
 type PageProps = {
   searchParams?: Promise<{
@@ -358,6 +359,18 @@ export default async function CompanyDocumentsSettingsPage({
                           </p>
                         </div>
                         <div className="flex flex-wrap gap-2">
+                          <Link
+                            href={`/settings/company-documents/${document.id}`}
+                            className={secondaryButtonClassName}
+                          >
+                            View
+                          </Link>
+                          <Link
+                            href={buildCompanyDocumentPrintHref(document.id)}
+                            className={secondaryButtonClassName}
+                          >
+                            Print / Save PDF
+                          </Link>
                           <Link
                             href={`/settings/company-documents?documentId=${document.id}`}
                             className={secondaryButtonClassName}
