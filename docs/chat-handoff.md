@@ -160,6 +160,13 @@ Recent completed layers:
   overload those models or add schema casually; the recommended next slice is an
   explicit `company_documents` model and `/settings/company-documents` surface
   after category/status/access rules are approved.
+- Company Documents Schema Readiness confirms the future build should start
+  with an explicit `company_documents` table, contractor-only RLS, and a
+  `/settings/company-documents` Company Controls surface. The audit keeps
+  `document_templates`, `warranty_documents`, `execution_attachments`,
+  `compliance_records`, portal access, Document Engine, Proof Center, Send
+  Trail, Service Center, and storage boundaries separate until explicit later
+  associations are approved.
 - Operating Core Demo Readiness adds
   [docs/demo/operating-core-demo-path.md](C:/FloorConnector/docs/demo/operating-core-demo-path.md)
   as the current route-by-route demo script for Command Center, Reports,
@@ -225,8 +232,8 @@ before assuming a protected-route browser failure is product behavior.
 
 Use [docs/demo/operating-core-demo-path.md](C:/FloorConnector/docs/demo/operating-core-demo-path.md)
 for the current route-based operating-core walkthrough, and
-[docs/design/business-documents-phase-1-company-library-plan.md](C:/FloorConnector/docs/design/business-documents-phase-1-company-library-plan.md)
-for the next safe Company Documents planning boundary.
+[docs/design/company-documents-schema-readiness-audit.md](C:/FloorConnector/docs/design/company-documents-schema-readiness-audit.md)
+for the future Company Documents schema and Phase 1A implementation boundary.
 
 Recommended next build: one guarded non-finance slice after the demo path is
 rehearsed against real records. Good candidates are Company Document Library

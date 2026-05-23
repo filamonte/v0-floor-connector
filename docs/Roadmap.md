@@ -143,7 +143,9 @@ Future depth:
 - Company Documents / Document Library depth for contractor administration
   docs such as agreements, handbooks, SOPs, safety plans, onboarding, policies,
   and training documents after the model is explicitly designed; this should not
-  overload current estimate/contract/invoice/warranty template categories
+  overload current estimate/contract/invoice/warranty template categories. The
+  future schema direction is documented in
+  [docs/design/company-documents-schema-readiness-audit.md](C:/FloorConnector/docs/design/company-documents-schema-readiness-audit.md).
 - equipment/resource readiness on top of the implemented canonical equipment asset foundation, before assignment or schedule conflict logic expands further
 - richer materials and inventory workflows
 - purchasing, reservation, issue, return, and job material planning
