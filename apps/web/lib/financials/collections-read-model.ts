@@ -10,6 +10,10 @@ import {
   type FinancialCollectionsEventType,
   type FinancialCollectionsSummary
 } from "./collections-core";
+import {
+  buildFinancialControlSummary,
+  type FinancialControlSummary
+} from "./collections-summary";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 
 export type FinancialCollectionsInvoice = {
@@ -109,6 +113,7 @@ export type FinancialCollectionsEvent = {
 
 export type FinancialCollectionsReadModel = {
   summary: FinancialCollectionsSummary;
+  financialControl: FinancialControlSummary;
   overdueInvoices: FinancialCollectionsInvoice[];
   collectionOpportunities: FinancialCollectionsInvoice[];
   partiallyPaidInvoices: FinancialCollectionsInvoice[];
@@ -310,7 +315,10 @@ function money(value: string | number) {
   return Number(value).toFixed(2);
 }
 
-function mapInvoice(row: InvoiceRow, todayIso: string): FinancialCollectionsInvoice {
+function mapInvoice(
+  row: InvoiceRow,
+  todayIso: string
+): FinancialCollectionsInvoice {
   const invoiceInput = {
     id: row.id,
     referenceNumber: row.reference_number,
@@ -562,9 +570,18 @@ export const getFinancialCollectionsReadModel = cache(
         events,
         todayIso: input.todayIso
       }),
+      financialControl: buildFinancialControlSummary({
+        invoices,
+        payments,
+        paymentEvents: events,
+        todayIso: input.todayIso
+      }),
       overdueInvoices: sortOpenInvoices(overdueInvoices).slice(0, 8),
       collectionOpportunities: sortOpenInvoices(openInvoices).slice(0, 12),
-      partiallyPaidInvoices: sortOpenInvoices(partiallyPaidInvoices).slice(0, 8),
+      partiallyPaidInvoices: sortOpenInvoices(partiallyPaidInvoices).slice(
+        0,
+        8
+      ),
       pendingPayments: payments
         .filter((payment) => payment.status === "pending")
         .slice(0, 8),
@@ -576,4 +593,3 @@ export const getFinancialCollectionsReadModel = cache(
     };
   }
 );
-

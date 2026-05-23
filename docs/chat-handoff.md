@@ -119,6 +119,18 @@ Recent completed layers:
   `Your next step` / `Project to review` language and documented that a portal
   home shared-document count remains deferred until the home loader is
   explicitly allowed to expose safe per-project counts.
+- Financial Control Phase 1 improves `/financials` and
+  `/financials/accounts-receivable` with a pure collections/payment-attention
+  helper over existing invoices, payments, payment events, customers, and
+  projects. The Financials Home now shows open receivables, overdue amount,
+  pending payment count, payment attention, project collection attention,
+  invoice attention, and a deterministic owner Next Move. AR now shows
+  invoice-level Next Move labels, project links, project collection attention,
+  and Payment Trail attention. This remains read-only visibility/navigation and
+  does not change payment processing, Stripe/webhook behavior, invoice math,
+  payment finalization, accounting sync, provider sends, schema, migrations,
+  routes, server actions, auth/RLS, tenant logic, portal grants, settings, or
+  platform-admin behavior.
 - Reports Phase 1 on `/reports` for read-only operations and collections
   visibility.
 - Send Trail Phase 1 on estimate, contract, and invoice source workspaces for
@@ -172,9 +184,11 @@ before assuming a protected-route browser failure is product behavior.
 
 ## Next Recommended Direction
 
-Use [docs/design/document-engine-phase-2-plan.md](C:/FloorConnector/docs/design/document-engine-phase-2-plan.md)
-as the current Document Engine sequencing artifact.
+Use [docs/design/financial-control-phase-1-collections-payment-attention.md](C:/FloorConnector/docs/design/financial-control-phase-1-collections-payment-attention.md)
+as the current Financial Control checkpoint.
 
-Recommended next build: Phase 2B portal-safe closeout package planning or
-mobile field execution depth. Do not add stored PDFs, storage, provider send, or
-portal download behavior until the visibility/versioning policy is explicit.
+Recommended next build: a similarly guarded financial follow-up, such as
+read-only aging/export planning or collections reminder planning. Do not add
+retry automation, provider posting, accounting sync, payment plans, reminders,
+stored billing packets, or customer billing center settings until their
+approval, provider, and data-boundary policies are explicit.

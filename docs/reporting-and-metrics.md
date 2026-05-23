@@ -7,7 +7,7 @@ This document defines FloorConnector's canonical reporting and metrics philosoph
 
 For implemented truth, use [docs/current-state.md](C:/FloorConnector/docs/current-state.md). For the future Intelligence Layer, use [docs/intelligence-layer.md](C:/FloorConnector/docs/intelligence-layer.md).
 
-Implemented note: Reporting Phase 1 now exists on `/reports` as a read-only operations and collections visibility workspace over existing source records. It does not change the broader planned reporting doctrine in this document; deeper analytics, exports, profitability, forecasting, benchmarks, and intelligence remain future work unless separately implemented and recorded in `docs/current-state.md`.
+Implemented note: Reporting Phase 1 now exists on `/reports` as a read-only operations and collections visibility workspace over existing source records. Financial Control Phase 1 now deepens `/financials` and `/financials/accounts-receivable` with read-only collections/payment attention and Next Move routing over existing invoices, payments, and payment events. These do not change the broader planned reporting doctrine in this document; deeper analytics, exports, profitability, forecasting, benchmarks, accounting sync, reconciliation posting, and intelligence remain future work unless separately implemented and recorded in `docs/current-state.md`.
 
 Related documents:
 
@@ -77,6 +77,11 @@ Operational reports should route back to Project Workspace, Manager Pages, Recor
 ## Financial Reporting
 
 Financial reporting must derive from canonical invoices, invoice line items, payments, payment events, approved estimate snapshots, change-order snapshots, schedule-of-values lineage, and relevant financial settings.
+
+Implemented Financial Control is currently a read-only collections and payment
+attention layer. It routes owners to invoice, project, AR, and Payment Trail
+surfaces; it does not post reconciliation, change payment behavior, or create a
+ledger.
 
 Future financial reporting may include:
 

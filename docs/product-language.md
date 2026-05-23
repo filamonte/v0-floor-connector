@@ -50,6 +50,7 @@ The database can stay boring. The product should speak human.
 | Send Trail            | Document send and delivery history.                                                               | Project, estimate, contract, invoice, and warranty delivery review.                                                                              | Provider payload fields, webhook code, or fake delivery events.                                                       |
 | Document Engine       | Shared document print/export generation from source records.                                      | Estimate, contract, invoice, warranty, and future proof exports.                                                                                 | Delivery proof, stored document truth, provider sends, or document storage.                                           |
 | Reports               | Read-only company operations and collections visibility.                                          | `/reports` workspace and source-record reporting summaries.                                                                                      | Analytics warehouse, report-builder promises, fake metrics, or exports.                                               |
+| Financial Control     | Owner/manager financial visibility for open receivables, collections, and payment attention.      | `/financials`, Accounts Receivable, invoice/payment attention summaries, and Next Move routing.                                                  | Ledger posting, provider reconciliation, accounting sync, payment processing, or invoice/payment math.                |
 | Service Center        | Warranty/service follow-up workspace tied to customer, project, job, proof, and warranty context. | `/service-tickets`, Project Workspace service/warranty summaries, and service ticket detail.                                                     | Detached helpdesk, portal-only service copies, automated claim decisions, or separate service records.                |
 | Warranty Handoff      | Warranty coverage/document handoff from completed project or service context.                     | Service Center, Project Workspace, and warranty document copy.                                                                                   | Warranty provider integrations, legal determinations, or stored PDF packets.                                          |
 
@@ -87,6 +88,7 @@ architecture names.
 | Project proof index                | Proof Center                 | Project Workspace document, evidence, and proof review.             | File/document tables or upload behavior.       |
 | Print/PDF/export generation        | Document Engine              | Source-record print/save document routes.                           | Delivery evidence or file-storage workflows.   |
 | Operations / collections reporting | Reports                      | Company-level reporting workspace over source records.              | Analytics warehouse or report-builder copy.    |
+| Collections visibility             | Financial Control            | `/financials`, AR, and payment attention summaries.                 | Accounting ledgers, provider posting, or sync. |
 | Service/warranty follow-up         | Service Center               | Warranty/service ticket queues and connected project/job history.   | Detached helpdesk or separate service module.  |
 | Warranty coverage handoff          | Warranty Handoff             | Project/service warranty document and coverage context.             | Provider claim adjudication or legal advice.   |
 | Payment events                     | Payment Trail                | Invoice/payment evidence sections.                                  | Provider event mapping or webhook code.        |
@@ -122,6 +124,9 @@ document delivery evidence, Document Engine for source-record print/export
 generation, Reports for company-level reporting, and Service Center where
 warranty/service follow-up needs a durable workspace name. Use plain copy
 elsewhere when a name would make the UI feel branded for its own sake.
+Financial Control is appropriate for contractor-side owner/manager collections
+visibility; keep payment actions and provider/accounting details in plain,
+precise language.
 
 Product-language work does not rename internal architecture, routes, schema,
 actions, form payloads, hidden inputs, test ids, or database names.

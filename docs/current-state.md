@@ -763,10 +763,12 @@ Implemented now:
 - `/financials` is now the implemented Financials Home route
 - Financials Home is intentionally summary-first and routing-first:
   - open receivables and overdue receivable amount
-  - pending payment totals and posted collections
-  - overdue invoices, pending checkout activity, and payment-event attention
+  - pending payment count and payment attention count
+  - deterministic Financial Control Next Move
+  - overdue invoices, pending checkout activity, project collection attention,
+    and Payment Trail attention
   - collection-opportunity links into canonical Invoice Workspaces
-- `/financials/accounts-receivable` is now a read-only AR workspace over canonical invoices, payments, and immutable payment events, with aging buckets, collection queues, pending checkout visibility, and failed/voided/in-progress payment-event review
+- `/financials/accounts-receivable` is now a read-only AR workspace over canonical invoices, payments, and immutable payment events, with aging buckets, collection queues, invoice-level Next Move labels, project links, pending checkout visibility, and failed/voided/in-progress Payment Trail review
 - Invoice Workspace now includes a read-only payment evidence timeline derived from the existing immutable `payment_events` stream, with plain-language settled/pending/failed/voided/review status, compact provider/session references where already stored, and no raw provider payload exposure
 - Payments Manager now includes a read-only reconciliation visibility section over recent immutable payment events, including failed, voided, requested, checkout-started, succeeded, and provider-sync evidence linked back to the canonical Invoice Workspace
 - Estimate, Contract, and Invoice Workspaces now label their document delivery evidence as Send Trail and show compact read-only proof summaries for send events, viewed/acted evidence, pending/failed attention, and the next source-record review move
@@ -1734,6 +1736,7 @@ Implemented:
 - append-only change-order commercial snapshots that can extend SOV and invoice billing without mutating prior approved scope
 - project and invoice continuity links back into the same progress-billing workspace so approved scope, billing review, and invoice continuity stay connected
 - Financials Home at `/financials` now serves as the section control panel for cross-project billing, collections, pending-payment, and payment-event visibility without replacing the invoice, payment, or progress-billing managers
+- Financial Control Phase 1 adds a pure collections/payment-attention helper for open receivables, overdue invoices, pending payment count, failed/payment-request attention, project collection attention, invoice attention, and deterministic owner Next Move routing from existing invoices, payments, and payment events
 - Accounts Receivable at `/financials/accounts-receivable` is now a real read-only collections workspace over canonical invoice balances, payments, and immutable payment events; Accounts Payable remains a placeholder only
 - Invoice Workspace and Payments Manager now deepen read-only reconciliation visibility over the same immutable payment-event stream without adding a reconciliation table, provider sync execution, or new payment state
 

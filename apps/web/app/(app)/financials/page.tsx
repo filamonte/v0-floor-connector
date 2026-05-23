@@ -24,23 +24,6 @@ function formatStatusLabel(value: string) {
   return value.replaceAll("_", " ");
 }
 
-function formatEventLabel(value: string) {
-  switch (value) {
-    case "payment_requested":
-      return "Payment requested";
-    case "checkout_started":
-      return "Checkout started";
-    case "payment_failed":
-      return "Failed";
-    case "payment_voided":
-      return "Voided";
-    case "provider_sync":
-      return "Provider sync";
-    default:
-      return formatStatusLabel(value);
-  }
-}
-
 export default async function FinancialsHomePage() {
   const user = await requireAuthenticatedUser("/financials");
   const organizationContext = await getActiveOrganizationContext(user.id);
@@ -48,8 +31,8 @@ export default async function FinancialsHomePage() {
   if (!organizationContext) {
     return (
       <section className="rounded-3xl border border-amber-200 bg-amber-50 px-8 py-6 text-sm leading-6 text-amber-900">
-        Financial workflows need an active organization before balances and payment
-        activity can be reviewed.
+        Financial workflows need an active organization before balances and
+        payment activity can be reviewed.
       </section>
     );
   }
@@ -59,12 +42,13 @@ export default async function FinancialsHomePage() {
     organizationId: organizationContext.organization.id,
     todayIso
   });
+  const financialControl = readModel.financialControl;
 
   return (
     <ContractorWorkspacePage
       eyebrow="Financials"
-      title={`Financial control panel for ${organizationContext.organization.displayName}`}
-      description="Scan cross-project billing pressure, collections opportunities, pending payment activity, and provider event attention without creating a second finance system."
+      title={`Financial Control for ${organizationContext.organization.displayName}`}
+      description="Scan open money, overdue invoices, pending payment activity, and collection next moves across active work."
       summary={
         <div className="grid gap-px border border-[#d6d6d6] bg-[#d6d6d6] sm:grid-cols-2 xl:grid-cols-4">
           <div className="bg-white px-3 py-2.5">
@@ -72,7 +56,7 @@ export default async function FinancialsHomePage() {
               Open receivables
             </p>
             <p className="mt-1 text-lg font-semibold tracking-tight text-[#171717]">
-              {formatMoney(readModel.summary.openReceivableAmount)}
+              {formatMoney(financialControl.openReceivablesAmount)}
             </p>
           </div>
           <div className="bg-white px-3 py-2.5">
@@ -80,7 +64,7 @@ export default async function FinancialsHomePage() {
               Overdue amount
             </p>
             <p className="mt-1 text-lg font-semibold tracking-tight text-[#171717]">
-              {formatMoney(readModel.summary.overdueReceivableAmount)}
+              {formatMoney(financialControl.overdueAmount)}
             </p>
           </div>
           <div className="bg-white px-3 py-2.5">
@@ -88,15 +72,16 @@ export default async function FinancialsHomePage() {
               Pending payments
             </p>
             <p className="mt-1 text-lg font-semibold tracking-tight text-[#171717]">
-              {formatMoney(readModel.summary.pendingPaymentAmount)}
+              {financialControl.pendingPaymentCount}
             </p>
           </div>
           <div className="bg-white px-3 py-2.5">
             <p className="text-[11px] uppercase tracking-[0.14em] text-[#666666]">
-              Posted collections
+              Payment attention
             </p>
             <p className="mt-1 text-lg font-semibold tracking-tight text-[#171717]">
-              {formatMoney(readModel.summary.recordedPaymentAmount)}
+              {financialControl.failedPaymentCount +
+                financialControl.paymentRequestedCount}
             </p>
           </div>
         </div>
@@ -104,9 +89,8 @@ export default async function FinancialsHomePage() {
       commandBar={{
         supportSlot: (
           <p>
-            Financials Home is a read-only control panel over canonical invoices,
-            payments, and payment events. Record-level work still happens in
-            Invoices, Payments, and Progress Billing.
+            Financial Control is a read-only owner view. Record-level work still
+            happens in Invoices, Payments, and Progress Billing.
           </p>
         ),
         actionSlot: (
@@ -128,18 +112,42 @@ export default async function FinancialsHomePage() {
       }}
     >
       <div className="space-y-4">
+        <section className="border border-[#d6d6d6] bg-white px-4 py-4 sm:px-5">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#666666]">
+                Next Move
+              </p>
+              <h2 className="mt-1 text-xl font-semibold tracking-tight text-[#171717]">
+                {financialControl.nextMove.label}
+              </h2>
+              <p className="mt-1 max-w-[72ch] text-sm leading-6 text-slate-500">
+                {financialControl.nextMove.reason}
+              </p>
+            </div>
+            <Link
+              href={financialControl.nextMove.href}
+              className="inline-flex shrink-0 items-center justify-center rounded-[4px] border border-[#171717] bg-[#171717] px-4 py-2.5 text-sm font-medium text-white transition hover:bg-[#2a2a2a]"
+            >
+              Open next move
+            </Link>
+          </div>
+        </section>
+
         <section className="grid gap-4 xl:auto-rows-fr xl:grid-cols-3">
           <ManagerDashboardCard
             eyebrow="Collections"
             title="Overdue invoices"
-            description="Past-due canonical invoices with balance still owed."
+            description="Past-due invoices with balance still owed."
             actionHref="/financials/accounts-receivable"
             actionLabel="Review AR"
             items={readModel.overdueInvoices.slice(0, 5).map((invoice) => ({
               href: `/invoices/${invoice.id}`,
               title: invoice.referenceNumber,
               subtitle: `${invoice.customer?.name ?? "Unknown customer"} - ${invoice.project?.name ?? "No project"}`,
-              meta: invoice.dueDate ? `Due ${formatDate(invoice.dueDate)}` : "No due date",
+              meta: invoice.dueDate
+                ? `Due ${formatDate(invoice.dueDate)}`
+                : "No due date",
               badge: formatStatusLabel(invoice.status),
               trailing: formatMoney(invoice.balanceDueAmount)
             }))}
@@ -150,7 +158,7 @@ export default async function FinancialsHomePage() {
           <ManagerDashboardCard
             eyebrow="Payment activity"
             title="Pending checkout"
-            description="Canonical pending payments and checkout activity that still need provider or customer outcome review."
+            description="Pending payments and checkout activity that still need a customer or payment outcome."
             actionHref="/payments?status=pending"
             actionLabel="Open pending"
             items={readModel.pendingPayments.slice(0, 5).map((payment) => ({
@@ -162,27 +170,68 @@ export default async function FinancialsHomePage() {
               trailing: formatMoney(payment.amount)
             }))}
             emptyTitle="No pending checkout activity."
-            emptyDescription="Pending canonical payments will appear here without creating a separate checkout ledger."
+            emptyDescription="Pending payments will appear here when follow-through is needed."
           />
 
           <ManagerDashboardCard
-            eyebrow="Reconciliation"
+            eyebrow="Payment attention"
             title="Payment events needing review"
-            description="Failed, voided, or in-progress provider events tied back to invoices."
+            description="Failed, voided, or in-progress payment activity tied back to invoices."
             actionHref="/payments"
             actionLabel="Open payments"
-            items={readModel.attentionEvents.slice(0, 5).map((event) => ({
-              href: `/invoices/${event.invoiceId}`,
-              title: event.invoice?.referenceNumber ?? "Payment event",
-              subtitle: `${event.customer?.name ?? "Unknown customer"} - ${event.project?.name ?? "No project"}`,
-              meta: event.gatewayProvider ?? event.payment?.gatewayProvider ?? "Payment event",
-              badge: formatEventLabel(event.eventType),
-              trailing: event.invoice
-                ? formatMoney(event.invoice.balanceDueAmount)
-                : null
-            }))}
-            emptyTitle="No failed, voided, or in-progress events need review."
-            emptyDescription="Provider-backed exceptions will appear here from immutable payment events."
+            items={financialControl.paymentEventsNeedingReview
+              .slice(0, 5)
+              .map((event) => ({
+                href: event.href,
+                title: event.invoiceReference,
+                subtitle: `${event.customerName} - ${event.projectName}`,
+                meta: event.nextMoveLabel,
+                badge: event.label,
+                trailing: event.reason
+              }))}
+            emptyTitle="No payment events need review."
+            emptyDescription="Payment Trail attention will appear here when follow-through is needed."
+          />
+        </section>
+
+        <section className="grid gap-4 xl:grid-cols-2">
+          <ManagerDashboardCard
+            eyebrow="Project collections"
+            title="Project collection attention"
+            description="Projects carrying open invoice or payment follow-through."
+            actionHref="/financials/accounts-receivable"
+            actionLabel="Review AR"
+            items={financialControl.projectCollectionAttention
+              .slice(0, 5)
+              .map((project) => ({
+                href: project.href,
+                title: project.projectName,
+                subtitle: project.customerName,
+                meta: project.reason,
+                badge: project.nextMoveLabel,
+                trailing: formatMoney(project.openBalanceAmount)
+              }))}
+            emptyTitle="No project collection attention."
+            emptyDescription="Projects with open invoice pressure will appear here."
+          />
+          <ManagerDashboardCard
+            eyebrow="Receivables"
+            title="Invoices needing attention"
+            description="Open invoices ordered by payment urgency, due date, and balance."
+            actionHref="/financials/accounts-receivable"
+            actionLabel="Open AR"
+            items={financialControl.invoicesNeedingAttention
+              .slice(0, 5)
+              .map((invoice) => ({
+                href: invoice.href,
+                title: invoice.referenceNumber,
+                subtitle: `${invoice.customerName} - ${invoice.projectName}`,
+                meta: invoice.reason,
+                badge: invoice.nextMoveLabel,
+                trailing: formatMoney(invoice.balanceDueAmount)
+              }))}
+            emptyTitle="No invoices need attention."
+            emptyDescription="Open balances and follow-up items will appear here."
           />
         </section>
 
@@ -197,8 +246,8 @@ export default async function FinancialsHomePage() {
                   Collection opportunities
                 </h3>
                 <p className="mt-1 text-xs leading-5 text-slate-500">
-                  Highest-priority open balances with customer, project, estimate, and
-                  job context where those canonical links exist.
+                  Highest-priority open balances with customer, project,
+                  estimate, and job context where those links exist.
                 </p>
               </div>
               <Link
@@ -241,7 +290,9 @@ export default async function FinancialsHomePage() {
                       </p>
                     </div>
                     <p className="text-sm text-slate-600 md:text-right">
-                      {invoice.dueDate ? formatDate(invoice.dueDate) : "No due date"}
+                      {invoice.dueDate
+                        ? formatDate(invoice.dueDate)
+                        : "No due date"}
                     </p>
                     <p className="text-sm font-semibold text-slate-900 md:text-right">
                       {formatMoney(invoice.balanceDueAmount)}
@@ -254,8 +305,8 @@ export default async function FinancialsHomePage() {
                     No open receivables are waiting right now.
                   </p>
                   <p className="mt-2 text-sm leading-5 text-slate-500">
-                    Outstanding invoice balances will appear here as billing moves
-                    through send and payment collection.
+                    Outstanding invoice balances will appear here as billing
+                    moves through send and payment collection.
                   </p>
                 </div>
               )}
@@ -271,8 +322,8 @@ export default async function FinancialsHomePage() {
                 Aging and invoice roles
               </h3>
               <p className="mt-1 text-xs leading-5 text-slate-500">
-                Derived at read time from invoices and payments. No separate AR
-                ledger, accounting subsystem, or provider sync is introduced.
+                Derived from existing invoices and payments. This view does not
+                create accounting entries, payment records, or external sync.
               </p>
             </div>
 
