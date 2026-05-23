@@ -69,6 +69,7 @@ Document roles:
 - `docs/design/portal-maturity-phase-2-project-status-window.md`: implementation note for the customer-safe portal Project Status Window, shared-record summary, helper tests, and preserved portal boundaries
 - `docs/design/portal-maturity-phase-3-project-timeline.md`: implementation note for the customer-safe portal Project Timeline, timeline helper tests, and preserved portal boundaries
 - `docs/design/portal-maturity-phase-4-shared-documents.md`: implementation note for the customer-safe portal Shared Documents section, print/save boundaries, helper tests, and preserved portal boundaries
+- `docs/design/portal-maturity-phase-4-qa-customer-window.md`: focused QA checkpoint for the portal Customer Project Window consolidation, copy cleanup, browser caveats, and preserved customer-safe boundaries
 - `docs/design/reporting-phase-1-operations-collections-visibility.md`: implementation note for the first read-only Reports operations and collections visibility workspace over existing project, job, contract, field, invoice, payment, closeout, and proof signals
 - `docs/design/sendtrail-phase-1-document-delivery-proof-visibility.md`: implementation note for the first Send Trail document delivery proof visibility pass over existing document delivery, signature, payment, portal view, and communication evidence
 - `docs/design/operating-core-checkpoint.md`: post Trail Systems checkpoint for current-state, roadmap, workflow, language, validation, and next-build recommendation after the operating-core expansion

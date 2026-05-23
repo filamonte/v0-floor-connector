@@ -112,6 +112,13 @@ Recent completed layers:
   invoice math, AI, automation, notifications, FieldTrail exposure, Proof
   Center exposure, service requests, provider delivery timeline details, or
   closeout package downloads.
+- The Portal Maturity Phase 4 QA checkpoint confirms the portal Project
+  Workspace now reads as a coherent Customer Project Window: Customer Next Step
+  first, then Project Status, Project Timeline, Shared Documents, and existing
+  shared commercial records. The pass only aligned small portal-home labels to
+  `Your next step` / `Project to review` language and documented that a portal
+  home shared-document count remains deferred until the home loader is
+  explicitly allowed to expose safe per-project counts.
 - Reports Phase 1 on `/reports` for read-only operations and collections
   visibility.
 - Send Trail Phase 1 on estimate, contract, and invoice source workspaces for

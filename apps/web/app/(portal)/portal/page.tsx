@@ -320,7 +320,7 @@ export default async function PortalHomePage() {
                   {primaryProject ? (
                     <div className={portalInsetPanelClassName}>
                       <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
-                        Project needing attention
+                        Project to review
                       </p>
                       <p className="mt-2 text-sm font-semibold text-slate-950">
                         {primaryProject.name}
@@ -345,7 +345,7 @@ export default async function PortalHomePage() {
                 items={[
                   {
                     key: "next-action",
-                    label: "What to do next",
+                    label: "Your next step",
                     content: nextAction ? (
                       <NextActionCard
                         eyebrow="Portal guidance"
@@ -501,7 +501,7 @@ export default async function PortalHomePage() {
                     className={`${portalMetricPanelClassName} mt-4 text-sm leading-6 text-slate-600`}
                   >
                     <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
-                      What matters now
+                      Your next step
                     </p>
                     <p className="mt-2 font-medium text-slate-950">
                       {getPortalProjectHomeAttention(project)}
