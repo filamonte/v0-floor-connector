@@ -20,17 +20,27 @@ export function AccountingExportActions({
   );
 
   async function copyCsv() {
-    if (disabled || !canUseClipboard) {
+    if (disabled) {
+      setMessage("No accounting rows are available to copy.");
+      return;
+    }
+
+    if (!canUseClipboard) {
       setMessage("Copy is not available in this browser.");
       return;
     }
 
-    await navigator.clipboard.writeText(csvContent);
-    setMessage("CSV rows copied.");
+    try {
+      await navigator.clipboard.writeText(csvContent);
+      setMessage("CSV rows copied.");
+    } catch {
+      setMessage("Copy failed. Use Download CSV instead.");
+    }
   }
 
   function downloadCsv() {
     if (disabled) {
+      setMessage("No accounting rows are available to download.");
       return;
     }
 
@@ -52,6 +62,7 @@ export function AccountingExportActions({
     <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
       <button
         type="button"
+        aria-label="Copy accounting readiness CSV rows"
         onClick={() => {
           void copyCsv();
         }}
@@ -62,6 +73,7 @@ export function AccountingExportActions({
       </button>
       <button
         type="button"
+        aria-label="Download accounting readiness CSV file"
         onClick={downloadCsv}
         disabled={disabled}
         className="inline-flex items-center justify-center rounded-[4px] border border-[#171717] bg-[#171717] px-3 py-2 text-sm font-medium text-white transition hover:bg-[#2a2a2a] disabled:cursor-not-allowed disabled:opacity-50"
@@ -69,7 +81,9 @@ export function AccountingExportActions({
         Download CSV
       </button>
       {message ? (
-        <span className="text-sm leading-5 text-slate-500">{message}</span>
+        <span role="status" className="text-sm leading-5 text-slate-500">
+          {message}
+        </span>
       ) : null}
     </div>
   );

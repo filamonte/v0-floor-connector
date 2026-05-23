@@ -6,7 +6,9 @@ import { ContractorWorkspacePage } from "@/components/contractor-workspace-page"
 import { requireAuthenticatedUser } from "@/lib/auth/session";
 import {
   accountingExportColumns,
-  buildAccountingExportCsv
+  buildAccountingExportCsv,
+  buildAccountingExportFilename,
+  buildAccountingExportMetadata
 } from "@/lib/financials/accounting-export";
 import { getAccountingReadinessReadModel } from "@/lib/financials/accounting-readiness-read-model";
 import { getActiveOrganizationContext } from "@/lib/organizations/active-context";
@@ -71,7 +73,10 @@ export default async function AccountingReadinessPage() {
     invoices: readiness.invoiceRows,
     payments: readiness.paymentRows
   });
-  const exportFilename = `floorconnector-accounting-readiness-${todayIso}.csv`;
+  const accountingExportMetadata = buildAccountingExportMetadata({
+    invoiceCount: readiness.invoiceRows.length
+  });
+  const exportFilename = buildAccountingExportFilename(todayIso);
 
   return (
     <ContractorWorkspacePage
@@ -212,7 +217,7 @@ export default async function AccountingReadinessPage() {
               <p className="mt-1 text-sm leading-6 text-slate-500">
                 Export-ready columns over existing invoice and payment
                 snapshots. Open a source invoice to inspect or correct the
-                canonical record.
+                source record.
               </p>
             </div>
 
@@ -367,16 +372,19 @@ export default async function AccountingReadinessPage() {
                   Copy or download CSV
                 </h3>
                 <p className="mt-1 text-sm leading-6 text-slate-500">
-                  Export prep uses the rows already loaded on this page. It does
-                  not sync accounting software, store a file, or change invoice
-                  and payment status.
+                  {accountingExportMetadata.notice}
+                </p>
+                <p className="mt-2 text-sm leading-6 text-slate-500">
+                  Includes {accountingExportMetadata.rowCount} invoice{" "}
+                  {accountingExportMetadata.rowCount === 1 ? "row" : "rows"}{" "}
+                  across {accountingExportMetadata.columnCount} export columns.
                 </p>
               </div>
               <div className="border-b border-[#e5e5e5] px-5 py-4">
                 <AccountingExportActions
                   csvContent={accountingExportCsv}
                   filename={exportFilename}
-                  disabled={readiness.invoiceRows.length === 0}
+                  disabled={!accountingExportMetadata.hasRows}
                 />
               </div>
               <div className="grid grid-cols-1 gap-px bg-[#e5e5e5] sm:grid-cols-2">

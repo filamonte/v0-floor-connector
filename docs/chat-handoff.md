@@ -148,6 +148,11 @@ Recent completed layers:
   review output only: no new route, server action, stored file, export audit
   event, provider integration, accounting sync, ledger, invoice/payment copy, or
   source financial mutation.
+- Accounting Export Prep QA hardens the CSV experience with pure filename and
+  export metadata helpers, row/column count copy, accessible Copy CSV and
+  Download CSV labels, disabled-state feedback, and explicit review-only export
+  notice text. Protected browser QA remains blocked until local contractor auth
+  state is refreshed.
 - Reports Phase 1 on `/reports` for read-only operations and collections
   visibility.
 - Send Trail Phase 1 on estimate, contract, and invoice source workspaces for

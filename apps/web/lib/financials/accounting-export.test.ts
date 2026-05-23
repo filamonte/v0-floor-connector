@@ -4,6 +4,8 @@ import test from "node:test";
 import {
   accountingExportColumns,
   buildAccountingExportCsv,
+  buildAccountingExportFilename,
+  buildAccountingExportMetadata,
   buildAccountingExportRows
 } from "./accounting-export";
 import type {
@@ -81,6 +83,27 @@ void test("exports stable accounting column order", () => {
     "Due date"
   ]);
   assert.equal(accountingExportColumns.at(-1), "Project link");
+});
+
+void test("builds stable date-stamped export filename", () => {
+  assert.equal(
+    buildAccountingExportFilename("2026-05-23"),
+    "floorconnector-accounting-readiness-2026-05-23.csv"
+  );
+});
+
+void test("builds row count metadata without mutating export rows", () => {
+  assert.deepEqual(buildAccountingExportMetadata({ invoiceCount: 2 }), {
+    rowCount: 2,
+    columnCount: accountingExportColumns.length,
+    hasRows: true,
+    notice:
+      "This export is for accounting review only. It does not sync to accounting software or change invoice/payment status."
+  });
+  assert.equal(
+    buildAccountingExportMetadata({ invoiceCount: 0 }).hasRows,
+    false
+  );
 });
 
 void test("maps export rows from existing accounting readiness fields", () => {

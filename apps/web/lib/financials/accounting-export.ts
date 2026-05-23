@@ -28,6 +28,33 @@ export type AccountingExportRow = {
   values: string[];
 };
 
+export type AccountingExportMetadata = {
+  rowCount: number;
+  columnCount: number;
+  hasRows: boolean;
+  notice: string;
+};
+
+export function buildAccountingExportFilename(dateIso: string) {
+  const safeDate = /^\d{4}-\d{2}-\d{2}$/.test(dateIso)
+    ? dateIso
+    : dateIso.slice(0, 10);
+
+  return `floorconnector-accounting-readiness-${safeDate}.csv`;
+}
+
+export function buildAccountingExportMetadata(input: {
+  invoiceCount: number;
+}): AccountingExportMetadata {
+  return {
+    rowCount: input.invoiceCount,
+    columnCount: accountingExportColumns.length,
+    hasRows: input.invoiceCount > 0,
+    notice:
+      "This export is for accounting review only. It does not sync to accounting software or change invoice/payment status."
+  };
+}
+
 function csvEscape(value: string | number | null | undefined) {
   const stringValue = String(value ?? "");
 
