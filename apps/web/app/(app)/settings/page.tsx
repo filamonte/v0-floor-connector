@@ -13,6 +13,7 @@ import { listCatalogItems } from "@/lib/catalogs/data";
 import { getSelectedSystemsAdminData } from "@/lib/selected-systems/data";
 import { getSystemLayersAdminData } from "@/lib/system-layers/data";
 import { listDocumentTemplates } from "@/lib/templates/data";
+import { listCompanyDocuments } from "@/lib/company-documents/data";
 
 type SettingsPageProps = {
   searchParams?: Promise<{
@@ -48,7 +49,8 @@ export default async function SettingsPage({
     members,
     featureOverrides,
     systemLayersData,
-    selectedSystemsData
+    selectedSystemsData,
+    companyDocuments
   ] = await Promise.all([
     listDocumentTemplates(),
     listCatalogItems(),
@@ -57,7 +59,8 @@ export default async function SettingsPage({
     listOrganizationMembers(scope.organizationId),
     listOrganizationFeatureOverrides(scope.organizationId),
     getSystemLayersAdminData("/settings"),
-    getSelectedSystemsAdminData("/settings")
+    getSelectedSystemsAdminData("/settings"),
+    listCompanyDocuments("/settings")
   ]);
   const systemCount = catalogItems.filter(
     (item) => item.itemType === "system"
@@ -148,6 +151,32 @@ export default async function SettingsPage({
                 );
               }
             )}
+          </div>
+        </SettingsOverviewCard>
+
+        <SettingsOverviewCard
+          title="Company Documents"
+          description="Store business documents, SOPs, policies, and agreements in a contractor-owned Document Library."
+          href="/settings/company-documents"
+          ctaLabel="Manage documents"
+        >
+          <div className="grid gap-3 sm:grid-cols-3">
+            {(["draft", "active", "archived"] as const).map((status) => {
+              const count = companyDocuments.filter(
+                (document) => document.status === status
+              ).length;
+
+              return (
+                <div key={status} className={settingsMiniStatClassName}>
+                  <p className="font-medium capitalize text-[var(--text-primary)]">
+                    {status}
+                  </p>
+                  <p className="mt-1">
+                    {count} document{count === 1 ? "" : "s"}
+                  </p>
+                </div>
+              );
+            })}
           </div>
         </SettingsOverviewCard>
 

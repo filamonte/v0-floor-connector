@@ -53,8 +53,8 @@ The database can stay boring. The product should speak human.
 | Proof Center           | Project document, evidence, and proof index from existing records.                                                                | Project Workspace proof categories and Proof Next Move.                                                                                          | Full document management, new upload models, or generated closeout packages.                                          |
 | Send Trail             | Document send and delivery history.                                                                                               | Project, estimate, contract, invoice, and warranty delivery review.                                                                              | Provider payload fields, webhook code, or fake delivery events.                                                       |
 | Document Engine        | Shared document print/export generation from source records.                                                                      | Estimate, contract, invoice, warranty, and future proof exports.                                                                                 | Delivery proof, stored document truth, provider sends, or document storage.                                           |
-| Company Documents      | Contractor business administration documents such as policies, agreements, SOPs, onboarding, and training docs.                   | Future Company Controls and Document Library surfaces for internal company administration.                                                       | Estimate/contract/invoice/warranty workflow templates, legal advice, e-sign, public links, or portal exposure.        |
-| Document Library       | Organized place to manage company documents once a persisted company-document model exists.                                       | Future Company Documents workspace and settings/admin navigation.                                                                                | Stored file truth, provider sending, AI generation, or replacing Document Engine.                                     |
+| Company Documents      | Contractor business administration documents such as policies, agreements, SOPs, onboarding, and training docs.                   | Company Controls Document Library for internal company administration.                                                                           | Estimate/contract/invoice/warranty workflow templates, legal advice, e-sign, public links, or portal exposure.        |
+| Document Library       | Organized place to manage persisted company documents.                                                                            | Company Documents workspace and settings/admin navigation.                                                                                       | Stored file truth, provider sending, AI generation, or replacing Document Engine.                                     |
 | Starter Documents      | Platform-provided examples/templates that contractors may adopt into company-owned copies.                                        | Future Company Documents onboarding once adoption and local-copy behavior are implemented.                                                       | Live-mutating contractor documents, legal advice, or generated contractor-specific policies.                          |
 | Reports                | Read-only company operations and collections visibility.                                                                          | `/reports` workspace and source-record reporting summaries.                                                                                      | Analytics warehouse, report-builder promises, fake metrics, or exports.                                               |
 | Financial Control      | Owner/manager financial visibility for open receivables, collections, and payment attention.                                      | `/financials`, Accounts Receivable, invoice/payment attention summaries, and Next Move routing.                                                  | Ledger posting, provider reconciliation, accounting sync, payment processing, or invoice/payment math.                |
@@ -85,36 +85,36 @@ architecture names.
 
 ## Terminology Map
 
-| Internal / technical term          | Preferred user-facing term   | Where to use                                                          | Where not to use                               |
-| ---------------------------------- | ---------------------------- | --------------------------------------------------------------------- | ---------------------------------------------- |
-| Project readiness gate             | GateKeeper                   | Project Workspace, schedule handoff, blocker summaries.               | Database table names, readiness helper names.  |
-| Workflow cues / suggested actions  | Next Move suggestions        | Dashboard My Work, Project Workspace suggestions, attention panels.   | Internal `operational-cues` folders or types.  |
-| Portal customer action             | Customer Next Step           | Customer portal project guidance.                                     | Internal ProjectPulse or contractor blockers.  |
-| Portal project page                | Portal Customer Window       | Portal project workspace framing.                                     | Contractor-only project workspace copy.        |
-| Customer-facing project status     | Project Status Window        | Portal project status and shared-record summaries.                    | Contractor-only readiness or health copy.      |
-| Customer-facing project timeline   | Project Timeline             | Portal project timeline rows.                                         | Internal activity, field, or provider history. |
-| Customer-facing document list      | Shared Documents             | Portal shared estimate/contract/invoice/change-order records.         | Stored files or full document management.      |
-| Operational command center         | Command Center               | Dashboard and project operating summaries.                            | Every manager or detail page.                  |
-| Commercial readiness               | Ready Check                  | Commercial handoff summaries and project facts.                       | Stored enum/status values.                     |
-| Project health summary             | ProjectPulse                 | Project Workspace summary of health, blockers, and Next Move.         | Database status models or health-score tables. |
-| Project closeout readiness         | CloseoutTrail                | Project Workspace closeout proof and readiness checklist.             | Closeout database tables or auto-close logic.  |
-| Project proof index                | Proof Center                 | Project Workspace document, evidence, and proof review.               | File/document tables or upload behavior.       |
-| Print/PDF/export generation        | Document Engine              | Source-record print/save document routes.                             | Delivery evidence or file-storage workflows.   |
-| Business administration documents  | Company Documents            | Future company policy, agreement, SOP, onboarding, and training docs. | Commercial document templates or legal advice. |
-| Company document workspace         | Document Library             | Future organized company document management surface.                 | Provider sending, storage truth, or AI output. |
-| Operations / collections reporting | Reports                      | Company-level reporting workspace over source records.                | Analytics warehouse or report-builder copy.    |
-| Collections visibility             | Financial Control            | `/financials`, AR, and payment attention summaries.                   | Accounting ledgers, provider posting, or sync. |
-| Accounting export prep             | Accounting Readiness         | Read-only accounting review and reconciliation-prep rows.             | Vendor sync, journal entries, or ledger copy.  |
-| CSV review output                  | Accounting Export Prep       | Copy/download CSV review affordances.                                 | Accounting sync or stored export workflow.     |
-| Service/warranty follow-up         | Service Center               | Warranty/service ticket queues and connected project/job history.     | Detached helpdesk or separate service module.  |
-| Warranty coverage handoff          | Warranty Handoff             | Project/service warranty document and coverage context.               | Provider claim adjudication or legal advice.   |
-| Payment events                     | Payment Trail                | Invoice/payment evidence sections.                                    | Provider event mapping or webhook code.        |
-| Contract signature events          | Signature Trail              | Contract signature history sections.                                  | Signature provider integration code.           |
-| Portal access grants               | Customer Access              | Contractor/customer access copy.                                      | Access-grant implementation names.             |
-| Cost Items Database                | Cost Library                 | Visible navigation and workspace title.                               | Route path `/cost-items-database`.             |
-| Module controls                    | Feature Controls             | Settings/super-admin visible labels.                                  | Low-level entitlement policy code.             |
-| Platform defaults                  | Starter Settings             | Super-admin default settings.                                         | Tenant-owned settings.                         |
-| Tenant/org                         | Company / Contractor Account | Customer-safe or contractor-facing copy.                              | Developer docs and database ownership docs.    |
+| Internal / technical term          | Preferred user-facing term   | Where to use                                                        | Where not to use                               |
+| ---------------------------------- | ---------------------------- | ------------------------------------------------------------------- | ---------------------------------------------- |
+| Project readiness gate             | GateKeeper                   | Project Workspace, schedule handoff, blocker summaries.             | Database table names, readiness helper names.  |
+| Workflow cues / suggested actions  | Next Move suggestions        | Dashboard My Work, Project Workspace suggestions, attention panels. | Internal `operational-cues` folders or types.  |
+| Portal customer action             | Customer Next Step           | Customer portal project guidance.                                   | Internal ProjectPulse or contractor blockers.  |
+| Portal project page                | Portal Customer Window       | Portal project workspace framing.                                   | Contractor-only project workspace copy.        |
+| Customer-facing project status     | Project Status Window        | Portal project status and shared-record summaries.                  | Contractor-only readiness or health copy.      |
+| Customer-facing project timeline   | Project Timeline             | Portal project timeline rows.                                       | Internal activity, field, or provider history. |
+| Customer-facing document list      | Shared Documents             | Portal shared estimate/contract/invoice/change-order records.       | Stored files or full document management.      |
+| Operational command center         | Command Center               | Dashboard and project operating summaries.                          | Every manager or detail page.                  |
+| Commercial readiness               | Ready Check                  | Commercial handoff summaries and project facts.                     | Stored enum/status values.                     |
+| Project health summary             | ProjectPulse                 | Project Workspace summary of health, blockers, and Next Move.       | Database status models or health-score tables. |
+| Project closeout readiness         | CloseoutTrail                | Project Workspace closeout proof and readiness checklist.           | Closeout database tables or auto-close logic.  |
+| Project proof index                | Proof Center                 | Project Workspace document, evidence, and proof review.             | File/document tables or upload behavior.       |
+| Print/PDF/export generation        | Document Engine              | Source-record print/save document routes.                           | Delivery evidence or file-storage workflows.   |
+| Business administration documents  | Company Documents            | Company policy, agreement, SOP, onboarding, and training docs.      | Commercial document templates or legal advice. |
+| Company document workspace         | Document Library             | Organized company document management surface.                      | Provider sending, storage truth, or AI output. |
+| Operations / collections reporting | Reports                      | Company-level reporting workspace over source records.              | Analytics warehouse or report-builder copy.    |
+| Collections visibility             | Financial Control            | `/financials`, AR, and payment attention summaries.                 | Accounting ledgers, provider posting, or sync. |
+| Accounting export prep             | Accounting Readiness         | Read-only accounting review and reconciliation-prep rows.           | Vendor sync, journal entries, or ledger copy.  |
+| CSV review output                  | Accounting Export Prep       | Copy/download CSV review affordances.                               | Accounting sync or stored export workflow.     |
+| Service/warranty follow-up         | Service Center               | Warranty/service ticket queues and connected project/job history.   | Detached helpdesk or separate service module.  |
+| Warranty coverage handoff          | Warranty Handoff             | Project/service warranty document and coverage context.             | Provider claim adjudication or legal advice.   |
+| Payment events                     | Payment Trail                | Invoice/payment evidence sections.                                  | Provider event mapping or webhook code.        |
+| Contract signature events          | Signature Trail              | Contract signature history sections.                                | Signature provider integration code.           |
+| Portal access grants               | Customer Access              | Contractor/customer access copy.                                    | Access-grant implementation names.             |
+| Cost Items Database                | Cost Library                 | Visible navigation and workspace title.                             | Route path `/cost-items-database`.             |
+| Module controls                    | Feature Controls             | Settings/super-admin visible labels.                                | Low-level entitlement policy code.             |
+| Platform defaults                  | Starter Settings             | Super-admin default settings.                                       | Tenant-owned settings.                         |
+| Tenant/org                         | Company / Contractor Account | Customer-safe or contractor-facing copy.                            | Developer docs and database ownership docs.    |
 
 ## Candidate Future Names
 
@@ -144,8 +144,8 @@ company-level reporting, Financial Control for collections visibility,
 Accounting Readiness and Accounting Export Prep for review-only financial
 handoff prep, and Service Center where warranty/service follow-up needs a
 durable workspace name. Company Documents and Document Library are approved for
-future contractor administration document surfaces, but they should not be used
-to relabel estimate, contract, invoice, or warranty workflow templates. Use
+contractor administration document surfaces, but they should not be used to
+relabel estimate, contract, invoice, or warranty workflow templates. Use
 plain copy elsewhere when a name would make the UI feel branded for its own
 sake.
 Financial Control is appropriate for contractor-side owner/manager collections

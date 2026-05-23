@@ -31,6 +31,12 @@ export const contractorSettingsNavItems: readonly SettingsNavItem[] = [
     adminOnly: true
   },
   {
+    href: "/settings/company-documents",
+    label: "Company Documents",
+    description: "Business documents, SOPs, policies, and agreements.",
+    adminOnly: true
+  },
+  {
     href: "/settings/catalogs",
     label: "Catalog Items",
     description:

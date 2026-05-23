@@ -171,6 +171,8 @@ Document and closeout:
   and
   [docs/design/company-documents-migration-readiness-audit.md](C:/FloorConnector/docs/design/company-documents-migration-readiness-audit.md):
   future Company Documents schema/migration readiness
+- [docs/design/company-documents-phase-1a-schema-settings-library.md](C:/FloorConnector/docs/design/company-documents-phase-1a-schema-settings-library.md):
+  implemented Company Documents Phase 1A schema and settings library checkpoint
 
 Demo and staging:
 
