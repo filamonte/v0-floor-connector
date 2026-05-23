@@ -84,6 +84,9 @@ High-signal operating-core docs:
 
 - [docs/design/operating-core-checkpoint.md](C:/FloorConnector/docs/design/operating-core-checkpoint.md):
   post-expansion checkpoint and next-build recommendation
+- [docs/design/next-build-priority-checkpoint.md](C:/FloorConnector/docs/design/next-build-priority-checkpoint.md):
+  current next-build priority ranking after operating-core, staging, and Company
+  Documents work
 - [docs/operating-core-validation-checklist.md](C:/FloorConnector/docs/operating-core-validation-checklist.md):
   focused helper and route validation inventory
 - [docs/design/crewboard-phase-1.md](C:/FloorConnector/docs/design/crewboard-phase-1.md)

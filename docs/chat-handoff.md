@@ -64,6 +64,12 @@ Current operating-core surfaces include:
   adoption into tenant-owned draft Company Documents, with later persisted
   platform starter management only after provenance/version governance is
   approved.
+- Next-build priority checkpoint is documented in
+  [docs/design/next-build-priority-checkpoint.md](C:/FloorConnector/docs/design/next-build-priority-checkpoint.md).
+  Recommended order is Company Documents Phase 1C-A Starter Document Adoption,
+  Staging Demo Seed Phase 2 owner-approved write-mode design, then Mobile Field
+  Phase 2 quick Job Notes/evidence capture. If an external demo is the immediate
+  goal, swap the first two.
 - Global search hardening for tenant-scoped canonical records.
 
 These layers are summaries, source-record handoffs, copy/hierarchy
@@ -141,6 +147,10 @@ Good next moves:
   Keep adoption contractor-owned and separate from AI drafting, legal advice,
   e-sign, acknowledgements, portal sharing, storage, delivery proof, and
   platform-admin management.
+- If choosing the next pillar, use
+  [docs/design/next-build-priority-checkpoint.md](C:/FloorConnector/docs/design/next-build-priority-checkpoint.md)
+  to decide between product momentum, demo/staging credibility, and mobile field
+  stickiness.
 - Run a real-record operating-core demo rehearsal using
   [docs/demo/operating-core-demo-path.md](C:/FloorConnector/docs/demo/operating-core-demo-path.md)
   and record blockers honestly.
