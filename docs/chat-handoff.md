@@ -167,6 +167,12 @@ Recent completed layers:
   `compliance_records`, portal access, Document Engine, Proof Center, Send
   Trail, Service Center, and storage boundaries separate until explicit later
   associations are approved.
+- Company Documents Migration Readiness confirms the future migration should
+  follow the repo's timestamped SQL pattern, use text check constraints for
+  early taxonomy flexibility, force RLS, allow active members to view, gate
+  create/update to owner/admin/manager, omit delete and portal policies in
+  Phase 1A, and defer storage, starter adoption, version tables,
+  acknowledgements, e-sign, provider sends, and AI drafting.
 - Operating Core Demo Readiness adds
   [docs/demo/operating-core-demo-path.md](C:/FloorConnector/docs/demo/operating-core-demo-path.md)
   as the current route-by-route demo script for Command Center, Reports,
@@ -233,7 +239,10 @@ before assuming a protected-route browser failure is product behavior.
 Use [docs/demo/operating-core-demo-path.md](C:/FloorConnector/docs/demo/operating-core-demo-path.md)
 for the current route-based operating-core walkthrough, and
 [docs/design/company-documents-schema-readiness-audit.md](C:/FloorConnector/docs/design/company-documents-schema-readiness-audit.md)
-for the future Company Documents schema and Phase 1A implementation boundary.
+and
+[docs/design/company-documents-migration-readiness-audit.md](C:/FloorConnector/docs/design/company-documents-migration-readiness-audit.md)
+for the future Company Documents schema/migration and Phase 1A implementation
+boundary.
 
 Recommended next build: one guarded non-finance slice after the demo path is
 rehearsed against real records. Good candidates are Company Document Library
