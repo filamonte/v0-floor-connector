@@ -234,6 +234,14 @@ Recent completed layers:
   core layers, names what can be demoed today, and clearly separates later
   drag/drop dispatch, accounting sync, stored PDFs, customer service requests,
   customer-facing field evidence, AI, and integrations.
+- Public Demo Readiness QA records the follow-up public/auth/setup handoff
+  check in
+  [docs/design/public-demo-readiness-qa.md](C:/FloorConnector/docs/design/public-demo-readiness-qa.md).
+  The pass verified the marketing refresh was already on `origin/main`, checked
+  homepage/auth/setup route alignment, removed broken `/terms` and `/privacy`
+  signup links, replaced "free" login copy with early-access language, and
+  reduced visible setup terminology drift without changing routes, auth,
+  setup, billing, or product behavior.
 
 These layers are read-only summaries, source-record handoffs, copy/hierarchy
 improvements, or existing-action presentation around canonical records. They did

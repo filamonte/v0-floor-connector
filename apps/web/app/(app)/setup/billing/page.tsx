@@ -77,7 +77,7 @@ export default async function BillingSetupPage({ searchParams }: PageProps) {
           ) : null}
           {resolvedSearchParams.billing_checkout === "cancelled" ? (
             <div className="mt-4 rounded-xl border border-[#d8d1c9] bg-[#fbfaf8] p-4 text-sm leading-6 text-[#625a52]">
-              Subscription checkout was cancelled. No tenant activation,
+              Subscription checkout was cancelled. No workspace activation,
               invoice/payment state, or portal payment state changed.
             </div>
           ) : null}

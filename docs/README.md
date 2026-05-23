@@ -93,6 +93,7 @@ Document roles:
 - `docs/design/global-search-hardening.md`: QA and hardening note for shell-level global search, enum/status-safe predicates, searchable categories, preserved links, focused helper tests, and follow-up candidates
 - `docs/design/operating-core-demo-smoke-checkpoint.md`: demo-readiness smoke checkpoint for route-discovery browser QA, global search status-like terms, protected Playwright cleanup, and preserved operating-core boundaries
 - `docs/design/marketing-demo-refresh-phase-1.md`: public homepage refresh note for the operating-core marketing story, implemented claims, avoided claims, and preserved behavior boundaries
+- `docs/design/public-demo-readiness-qa.md`: public/demo-readiness QA checkpoint for homepage claims, auth/setup handoff copy, CTA links, protected setup-route expectations, and preserved behavior boundaries
 - `docs/operating-core-validation-checklist.md`: focused validation inventory for recent operating-core summary helpers, routes, and browser QA caveats
 - `docs/design/project-workspace-lifecycle-qa.md`: lifecycle QA note for the Project Workspace operating loop after CrewBoard, FieldTrail, MessageCenter, ProjectPulse, and CloseoutTrail
 - `docs/enterprise-ui-system-audit.md`: secured-app route audit, Phase 1-4 polish history, drift watch list, and authenticated visual QA rules
