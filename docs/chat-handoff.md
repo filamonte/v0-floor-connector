@@ -50,9 +50,15 @@ Current operating-core surfaces include:
   contractor-side project closeout package route.
 - Service Center and warranty document foundations tied to customer, project,
   job, proof, and warranty context.
-- Company Documents Phase 1B under `/settings/company-documents`, backed by the
+- Company Documents Phase 1C-A under `/settings/company-documents`, backed by the
   tenant-owned `company_documents` table, with contractor-side read and
-  browser print/save routes for company administration documents.
+  browser print/save routes for company administration documents. A small
+  code-defined Starter Documents catalog now lets owner/admin/manager users
+  preview and adopt starter examples into editable draft Company Documents;
+  view-only members can preview only. Adoption creates a new draft copy from
+  server-owned starter content and does not add schema, platform-admin starter
+  management, live coupling, distribution, AI, legal advice, e-sign, storage,
+  provider sending, public links, or delivery proof.
 - Company Documents Phase 1 QA checkpoint is documented in
   [docs/design/company-documents-phase-1-qa-checkpoint.md](C:/FloorConnector/docs/design/company-documents-phase-1-qa-checkpoint.md).
   Static QA confirmed the Phase 1A/1B schema, RLS, scoped helpers, routes, and
@@ -60,10 +66,10 @@ Current operating-core surfaces include:
   known-good local contractor session.
 - Company Documents Phase 1C Starter Documents planning is documented in
   [docs/design/company-documents-phase-1c-starter-documents-plan.md](C:/FloorConnector/docs/design/company-documents-phase-1c-starter-documents-plan.md).
-  The recommended next slice is code-defined Starter Documents plus contractor
-  adoption into tenant-owned draft Company Documents, with later persisted
-  platform starter management only after provenance/version governance is
-  approved.
+  The implemented Phase 1C-A starter adoption checkpoint is documented in
+  [docs/design/company-documents-phase-1c-a-starter-adoption.md](C:/FloorConnector/docs/design/company-documents-phase-1c-a-starter-adoption.md).
+  Later persisted platform starter management should wait until
+  provenance/version governance is approved.
 - Next-build priority checkpoint is documented in
   [docs/design/next-build-priority-checkpoint.md](C:/FloorConnector/docs/design/next-build-priority-checkpoint.md).
   Recommended order is Company Documents Phase 1C-A Starter Document Adoption,
@@ -114,11 +120,12 @@ Recent staging/demo work is docs-first and no-write:
 - Do not weaken auth, RLS, tenant checks, portal grants, payment/signature
   state, estimate math, invoice math, readiness gates, settings, or
   platform-admin boundaries for QA or demo convenience.
-- Company Documents is a settings library with contractor-side read and
-  browser print/save only; do not add AI drafting, legal advice, e-sign,
+- Company Documents is a settings library with contractor-side read,
+  browser print/save, and code-defined Starter Documents adoption only; do not
+  add AI drafting, legal advice, e-sign,
   portal/employee distribution, public links, provider sends,
-  file upload/storage, Starter Documents, generated files, or delivery proof
-  without a separate approved slice.
+  file upload/storage, persisted platform starter management, generated files,
+  or delivery proof without a separate approved slice.
 - Staging/demo data work must stay owner-approved, tenant-scoped, dry-run-first,
   provider-dark, and invite-token safe.
 - Customer portal copy should be simpler and customer-safe; do not expose

@@ -3,6 +3,7 @@ import Link from "next/link";
 import { SettingsFeedback } from "@/components/settings-feedback";
 import { SettingsSectionCard } from "@/components/settings-section-card";
 import {
+  adoptCompanyDocumentStarterAction,
   archiveCompanyDocumentAction,
   saveCompanyDocumentAction,
   unarchiveCompanyDocumentAction
@@ -20,6 +21,10 @@ import {
   companyDocumentStatuses,
   type CompanyDocument
 } from "@/lib/company-documents/types";
+import {
+  listCompanyDocumentStarters,
+  starterDocumentsDisclaimer
+} from "@/lib/company-documents/starter-documents";
 import { buildCompanyDocumentPrintHref } from "@/lib/document-engine/print";
 
 type PageProps = {
@@ -213,6 +218,83 @@ function DocumentForm({ document }: { document: CompanyDocument | null }) {
   );
 }
 
+function StarterDocumentsSection({ canManage }: { canManage: boolean }) {
+  const starters = listCompanyDocumentStarters();
+
+  return (
+    <div className={panelClassName}>
+      <div className="flex flex-col gap-3 border-b border-[var(--border-warm)] pb-5 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <p className={labelClassName}>Starter Documents</p>
+          <h2 className="mt-2 text-lg font-semibold text-[var(--text-primary)]">
+            Adopt a starter into your Document Library
+          </h2>
+          <p className="mt-2 text-sm leading-6 text-[var(--text-secondary)]">
+            Preview safe starter examples, then create a new draft copy your
+            team can edit later.
+          </p>
+        </div>
+        <span className="inline-flex rounded-full border border-[var(--border-warm)] bg-[var(--highlight)] px-3 py-1 text-xs font-medium text-[var(--text-secondary)]">
+          Creates a new draft copy
+        </span>
+      </div>
+
+      <p className="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-900">
+        {starterDocumentsDisclaimer}
+      </p>
+
+      <div className="mt-5 grid gap-3 lg:grid-cols-2">
+        {starters.map((starter) => (
+          <article
+            key={starter.id}
+            className="rounded-lg border border-[var(--border-warm)] bg-[var(--highlight)] p-4"
+          >
+            <div className="flex h-full flex-col gap-4">
+              <div>
+                <h3 className="font-semibold text-[var(--text-primary)]">
+                  {starter.title}
+                </h3>
+                <p className="mt-1 text-sm text-[var(--text-secondary)]">
+                  {companyDocumentCategoryLabels[starter.category]} ·{" "}
+                  {companyDocumentAudienceLabels[starter.audience]}
+                </p>
+                <p className="mt-3 text-sm leading-6 text-[var(--text-secondary)]">
+                  {starter.description}
+                </p>
+              </div>
+
+              <details className="rounded-md border border-[var(--border-warm)] bg-white px-3 py-2">
+                <summary className="cursor-pointer text-sm font-medium text-[var(--text-primary)]">
+                  Preview starter
+                </summary>
+                <div className="mt-3 max-h-64 overflow-auto whitespace-pre-wrap border-t border-[var(--border-warm)] pt-3 text-sm leading-6 text-[var(--text-secondary)]">
+                  {starter.body}
+                </div>
+              </details>
+
+              <div className="mt-auto">
+                {canManage ? (
+                  <form action={adoptCompanyDocumentStarterAction}>
+                    <input type="hidden" name="starterId" value={starter.id} />
+                    <button type="submit" className={buttonClassName}>
+                      Adopt starter
+                    </button>
+                  </form>
+                ) : (
+                  <p className="rounded-md border border-[var(--border-warm)] bg-white px-3 py-2 text-sm text-[var(--text-secondary)]">
+                    Preview only. Ask an owner, admin, or manager to adopt a
+                    starter.
+                  </p>
+                )}
+              </div>
+            </div>
+          </article>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default async function CompanyDocumentsSettingsPage({
   searchParams
 }: PageProps) {
@@ -259,6 +341,8 @@ export default async function CompanyDocumentsSettingsPage({
       >
         <div className="grid gap-6 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
           <div className="space-y-5">
+            <StarterDocumentsSection canManage={access.canManage} />
+
             <div className={panelClassName}>
               <div className="grid gap-3 sm:grid-cols-3">
                 <div className="rounded-lg border border-[var(--border-warm)] bg-[var(--highlight)] px-4 py-3">
@@ -371,42 +455,44 @@ export default async function CompanyDocumentsSettingsPage({
                           >
                             Print / Save PDF
                           </Link>
-                          <Link
-                            href={`/settings/company-documents?documentId=${document.id}`}
-                            className={secondaryButtonClassName}
-                          >
-                            Edit
-                          </Link>
                           {access.canManage ? (
-                            document.status === "archived" ? (
-                              <form action={unarchiveCompanyDocumentAction}>
-                                <input
-                                  type="hidden"
-                                  name="documentId"
-                                  value={document.id}
-                                />
-                                <button
-                                  type="submit"
-                                  className={secondaryButtonClassName}
-                                >
-                                  Restore
-                                </button>
-                              </form>
-                            ) : (
-                              <form action={archiveCompanyDocumentAction}>
-                                <input
-                                  type="hidden"
-                                  name="documentId"
-                                  value={document.id}
-                                />
-                                <button
-                                  type="submit"
-                                  className={secondaryButtonClassName}
-                                >
-                                  Archive
-                                </button>
-                              </form>
-                            )
+                            <>
+                              <Link
+                                href={`/settings/company-documents?documentId=${document.id}`}
+                                className={secondaryButtonClassName}
+                              >
+                                Edit
+                              </Link>
+                              {document.status === "archived" ? (
+                                <form action={unarchiveCompanyDocumentAction}>
+                                  <input
+                                    type="hidden"
+                                    name="documentId"
+                                    value={document.id}
+                                  />
+                                  <button
+                                    type="submit"
+                                    className={secondaryButtonClassName}
+                                  >
+                                    Restore
+                                  </button>
+                                </form>
+                              ) : (
+                                <form action={archiveCompanyDocumentAction}>
+                                  <input
+                                    type="hidden"
+                                    name="documentId"
+                                    value={document.id}
+                                  />
+                                  <button
+                                    type="submit"
+                                    className={secondaryButtonClassName}
+                                  >
+                                    Archive
+                                  </button>
+                                </form>
+                              )}
+                            </>
                           ) : null}
                         </div>
                       </div>

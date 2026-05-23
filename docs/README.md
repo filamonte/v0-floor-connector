@@ -182,6 +182,8 @@ Document and closeout:
   focused QA checkpoint for Company Documents Phase 1A and Phase 1B
 - [docs/design/company-documents-phase-1c-starter-documents-plan.md](C:/FloorConnector/docs/design/company-documents-phase-1c-starter-documents-plan.md):
   planning-only Company Documents Starter Documents adoption model
+- [docs/design/company-documents-phase-1c-a-starter-adoption.md](C:/FloorConnector/docs/design/company-documents-phase-1c-a-starter-adoption.md):
+  implemented code-defined Starter Documents preview and draft-copy adoption
 
 Demo and staging:
 

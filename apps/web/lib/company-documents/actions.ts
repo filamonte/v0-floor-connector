@@ -5,9 +5,14 @@ import { redirect } from "next/navigation";
 
 import {
   archiveCompanyDocument,
+  createCompanyDocumentFromStarter,
   unarchiveCompanyDocument,
   upsertCompanyDocument
 } from "./data";
+import {
+  buildCompanyDocumentStarterDraft,
+  getCompanyDocumentStarter
+} from "./starter-documents";
 import {
   companyDocumentActionInputSchema,
   companyDocumentUpsertInputSchema
@@ -47,6 +52,8 @@ const archiveCompanyDocumentErrorMessage =
   "Unable to archive company document. Try again or ask an owner, admin, or manager for access.";
 const restoreCompanyDocumentErrorMessage =
   "Unable to restore company document. Try again or ask an owner, admin, or manager for access.";
+const adoptCompanyDocumentStarterErrorMessage =
+  "Unable to adopt starter document. Try again or ask an owner, admin, or manager for access.";
 
 export async function saveCompanyDocumentAction(formData: FormData) {
   const result = companyDocumentUpsertInputSchema.safeParse({
@@ -167,6 +174,42 @@ export async function unarchiveCompanyDocumentAction(formData: FormData) {
     buildRedirect("/settings/company-documents", {
       documentId: document.id,
       message: `${document.title} was restored to draft.`
+    })
+  );
+}
+
+export async function adoptCompanyDocumentStarterAction(formData: FormData) {
+  const starterId = getFieldValue(formData, "starterId");
+  const starter = getCompanyDocumentStarter(starterId);
+
+  if (!starter) {
+    redirect(
+      buildRedirect("/settings/company-documents", {
+        error: "Select a valid Starter Document."
+      })
+    );
+  }
+
+  let document;
+
+  try {
+    document = await createCompanyDocumentFromStarter(
+      buildCompanyDocumentStarterDraft(starter)
+    );
+  } catch {
+    redirect(
+      buildRedirect("/settings/company-documents", {
+        error: adoptCompanyDocumentStarterErrorMessage
+      })
+    );
+  }
+
+  revalidateCompanyDocuments();
+
+  redirect(
+    buildRedirect("/settings/company-documents", {
+      documentId: document.id,
+      message: `${document.title} was added as a draft copy.`
     })
   );
 }

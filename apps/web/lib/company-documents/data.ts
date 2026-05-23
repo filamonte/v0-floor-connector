@@ -15,6 +15,7 @@ import type {
   CompanyDocumentStatus,
   CompanyDocumentUpsertInput
 } from "./types";
+import type { CompanyDocumentStarterDraft } from "./starter-documents";
 
 type CompanyDocumentScope = {
   userId: string;
@@ -233,6 +234,46 @@ export async function upsertCompanyDocument(input: CompanyDocumentUpsertInput) {
 
   if (!isCompanyDocumentRow(data)) {
     throw new Error("Unexpected company document response after save.");
+  }
+
+  return mapCompanyDocument(data);
+}
+
+export async function createCompanyDocumentFromStarter(
+  input: CompanyDocumentStarterDraft
+) {
+  const scope = await getCompanyDocumentScope("/settings/company-documents");
+  assertCanManage(scope);
+  const supabase = await getSupabaseServerClient();
+  const response = await supabase
+    .from("company_documents")
+    .insert({
+      company_id: scope.organizationId,
+      title: input.title,
+      category: input.category,
+      document_kind: input.documentKind,
+      status: "draft",
+      audience: input.audience,
+      description: input.description,
+      body: input.body,
+      effective_date: null,
+      expires_at: null,
+      archived_at: null,
+      created_by: scope.userId,
+      updated_by: scope.userId
+    })
+    .select(companyDocumentSelect)
+    .single();
+  const data: unknown = response.data;
+
+  if (response.error) {
+    throw new Error(
+      `Unable to adopt starter document: ${response.error.message}`
+    );
+  }
+
+  if (!isCompanyDocumentRow(data)) {
+    throw new Error("Unexpected company document response after adoption.");
   }
 
   return mapCompanyDocument(data);
