@@ -226,6 +226,14 @@ Recent completed layers:
   validation checklist commands to use package-relative helper test paths.
   Local platform-admin browser verification remains blocked until the saved
   platform-admin auth state reaches `/super-admin` instead of `/login`.
+- Marketing Demo Refresh Phase 1 records the public homepage operating-core
+  story refresh in
+  [docs/design/marketing-demo-refresh-phase-1.md](C:/FloorConnector/docs/design/marketing-demo-refresh-phase-1.md).
+  The homepage now explains FloorConnector as connected operating software for
+  specialty surface contractors, centers the Project Workspace and operating
+  core layers, names what can be demoed today, and clearly separates later
+  drag/drop dispatch, accounting sync, stored PDFs, customer service requests,
+  customer-facing field evidence, AI, and integrations.
 
 These layers are read-only summaries, source-record handoffs, copy/hierarchy
 improvements, or existing-action presentation around canonical records. They did

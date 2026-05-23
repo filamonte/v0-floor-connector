@@ -1,18 +1,18 @@
 import Link from "next/link";
+import type { ReactNode } from "react";
 import {
   ArrowRight,
   BadgeCheck,
-  Bot,
   Boxes,
   Building2,
   Check,
   CircleDollarSign,
-  ClipboardList,
-  FileSignature,
+  FileText,
   Flag,
-  Lightbulb,
-  MessageSquarePlus,
+  LayoutDashboard,
+  MessageSquareText,
   Route,
+  Search,
   ShieldCheck,
   Sparkles,
   UsersRound,
@@ -24,142 +24,113 @@ import { EarlyAccessRequestForm } from "@/components/early-access-request-form";
 const signupHref = "/signup?next=%2Fsetup%2Fcompany";
 const loginHref = "/login";
 
-const workflow = [
-  "Opportunity",
+const lifecycleSteps = [
+  "Lead / opportunity",
   "Customer",
   "Project",
   "Estimate",
   "Contract",
-  "Change Order",
+  "Change order",
   "Job",
   "Invoice",
-  "Payment"
+  "Payment",
+  "Closeout"
 ] as const;
 
-const contractorPain = [
-  "Leads live in one place while estimates live in another.",
-  "Contracts become PDFs that do not carry operational state forward.",
-  "Schedules move on a board while invoices drift away from approved scope.",
-  "Field notes, photos, and customer updates get buried in text threads.",
-  "Owners end up carrying the whole business handoff in their head."
-] as const;
-
-const builtToday = [
+const operatingCore = [
   {
-    title: "Sales and project intake",
-    Icon: ClipboardList,
-    items: [
-      "Opportunities, customers, and projects on the same tenant-scoped foundation",
-      "Project-centered workspaces with workflow context and readiness signals",
-      "Shared contractor app and customer portal surfaces"
-    ]
+    title: "Project Workspace",
+    label: "Operating hub",
+    Icon: LayoutDashboard,
+    description:
+      "A project-centered view of health, Next Move, commercial records, scheduling, field history, proof, closeout, and customer access."
   },
   {
-    title: "Commercial workflow",
-    Icon: FileSignature,
-    items: [
-      "Estimates, approvals, contracts, and signature workflow foundation",
-      "Change orders extend the same approved-scope chain",
-      "Customer review happens through shared portal records"
-    ]
+    title: "CrewBoard",
+    label: "Scheduling visibility",
+    Icon: Route,
+    description:
+      "A schedule workspace for ready work, scheduled jobs, date context, crew visibility, and advisory warnings without promising automated dispatch."
   },
   {
-    title: "Execution and field foundations",
+    title: "FieldTrail",
+    label: "Execution history",
     Icon: Wrench,
-    items: [
-      "Jobs, scheduling foundation, daily logs, field notes, and time tracking",
-      "People, vendors, compliance, equipment, and service/warranty foundations",
-      "Execution readiness stays tied back to project context"
-    ]
+    description:
+      "Daily logs, field notes, attachments, labor context, and job history stay connected to the project that produced the work."
   },
   {
-    title: "Billing and control",
+    title: "MessageCenter",
+    label: "Communication timeline",
+    Icon: MessageSquareText,
+    description:
+      "Project communication context sits beside Send Trail, Signature Trail, Payment Trail, and customer access evidence."
+  },
+  {
+    title: "Proof Center",
+    label: "Evidence index",
+    Icon: ShieldCheck,
+    description:
+      "Estimates, contracts, invoices, field evidence, delivery history, warranty/service context, and closeout proof are easier to find from the project."
+  },
+  {
+    title: "Customer Portal",
+    label: "Customer window",
+    Icon: UsersRound,
+    description:
+      "Customers see their next step, project status, timeline, shared documents, and safe review actions through the same shared workflow."
+  },
+  {
+    title: "Financial Control",
+    label: "Collections visibility",
     Icon: CircleDollarSign,
-    items: [
-      "Invoices and payments extend canonical project and customer records",
-      "Portal payment foundations update the same billing chain",
-      "Settings and super-admin foundations support controlled rollout"
-    ]
+    description:
+      "Open receivables, overdue invoices, payment attention, and accounting review prep are visible without claiming accounting sync."
+  },
+  {
+    title: "Document Engine",
+    label: "Print / export",
+    Icon: FileText,
+    description:
+      "Estimate, contract, invoice, warranty, and closeout package print views render current records for browser print/save."
   }
 ] as const;
 
-const roadmapLayers = [
-  {
-    label: "Built foundation",
-    title: "Connected operating backbone",
-    items: [
-      "Multi-tenant contractor app",
-      "Customer portal foundation",
-      "Core sales-to-payment chain",
-      "Field and workforce foundations"
-    ]
-  },
-  {
-    label: "Next layer",
-    title: "Operational depth",
-    items: [
-      "Deeper scheduling and dispatch",
-      "Communications and notifications",
-      "Operational reporting",
-      "Richer customer portal workflows"
-    ]
-  },
-  {
-    label: "Future direction",
-    title: "Platform intelligence",
-    items: [
-      "Workflow automation",
-      "Mobile and field app direction",
-      "Integrations",
-      "Business documents and source libraries"
-    ]
-  }
+const contractorOutcomes = [
+  "See what needs attention before it turns into a missed handoff.",
+  "Know what is ready to schedule and what is still blocked.",
+  "Follow what happened in the field without digging through scattered notes.",
+  "Review what was sent, signed, paid, and still collectible.",
+  "Close out work with proof, documents, service context, and customer visibility."
 ] as const;
 
-const packagePlans = [
-  {
-    name: "Starter",
-    audience: "For smaller contractors who need the connected backbone.",
-    items: [
-      "Leads, customers, projects, estimates, contracts, and invoices",
-      "Basic portal access and core workflow continuity",
-      "Lean setup without forcing advanced operating layers too early"
-    ]
-  },
-  {
-    name: "Professional",
-    audience: "For active teams that need stronger day-to-day operations.",
-    items: [
-      "Scheduling foundation, jobs, work orders, and field logs",
-      "People, vendors, time tracking, and change order continuity",
-      "Stronger project readiness and operational handoffs"
-    ]
-  },
-  {
-    name: "Growth",
-    audience: "For contractors scaling office, sales, field, and finance.",
-    items: [
-      "Deeper reporting, communications, and workflow automation direction",
-      "Advanced portal experience and richer document/template tooling",
-      "Integrations as the platform matures"
-    ]
-  },
-  {
-    name: "Platform / Enterprise",
-    audience: "For larger organizations and advanced operators.",
-    items: [
-      "Advanced permissions, multi-role teams, and custom configuration",
-      "Deeper analytics, priority rollout support, and advanced integrations",
-      "Future AI and automation packages or add-ons"
-    ]
-  }
+const availableNow = [
+  "Command Center / dashboard",
+  "Project Workspace operating hub",
+  "Project health and Next Move",
+  "CrewBoard scheduling workspace",
+  "FieldTrail execution history",
+  "MessageCenter communication timeline",
+  "CloseoutTrail and Proof Center",
+  "Send Trail delivery proof visibility",
+  "Document Engine print/export and closeout package",
+  "Portal Customer Window",
+  "Service Center visibility",
+  "Reports and Financial Control",
+  "Accounting Readiness and CSV export prep",
+  "Mobile Daily Job Log capture",
+  "Shell-level global search"
 ] as const;
 
-const aiDirection = [
-  "Suggested next actions and workflow intelligence",
-  "Guided intake assistance and operational summaries",
-  "Document generation assistance and reporting insights",
-  "Future call review, call intelligence, and automation recommendations"
+const laterDirection = [
+  "Drag/drop dispatch and deeper crew calendar controls",
+  "QuickBooks/Xero or other accounting sync",
+  "Stored document library and persisted generated PDFs",
+  "Customer-submitted service requests",
+  "Customer-facing field evidence sharing",
+  "AI-assisted summaries, drafting, and automation",
+  "External provider and calendar integrations",
+  "Offline/native mobile app depth"
 ] as const;
 
 const specialtyTrades = [
@@ -178,7 +149,7 @@ function MarketingButton({
   size = "default"
 }: {
   href: string;
-  children: React.ReactNode;
+  children: ReactNode;
   variant?: "primary" | "secondary" | "dark";
   size?: "default" | "large";
 }) {
@@ -217,7 +188,7 @@ function SectionIntro({
 }: {
   eyebrow: string;
   title: string;
-  children?: React.ReactNode;
+  children?: ReactNode;
   inverted?: boolean;
 }) {
   return (
@@ -258,14 +229,14 @@ export function MarketingInvestorPage() {
       <div className="border-b border-white/10 bg-[var(--graphite)] px-4 py-2.5 text-center text-sm text-white">
         <span className="inline-flex flex-wrap items-center justify-center gap-2">
           <span className="rounded-full bg-[var(--copper)] px-2.5 py-1 text-xs font-semibold">
-            Early access
+            Demo ready
           </span>
-          The backbone is live. The next focus is operational depth.
+          The operating core now has a route-based walkthrough.
           <Link
             href={signupHref}
             className="inline-flex items-center gap-1 font-semibold text-[var(--copper-light)] hover:text-white"
           >
-            Request a spot
+            Request early access
             <ArrowRight className="h-4 w-4" aria-hidden="true" />
           </Link>
         </span>
@@ -286,17 +257,14 @@ export function MarketingInvestorPage() {
             <a href="#platform" className="hover:text-[var(--text-primary)]">
               Platform
             </a>
-            <a href="#built" className="hover:text-[var(--text-primary)]">
-              Built today
+            <a href="#core" className="hover:text-[var(--text-primary)]">
+              Operating core
             </a>
-            <a href="#packages" className="hover:text-[var(--text-primary)]">
-              Packages
+            <a href="#demo" className="hover:text-[var(--text-primary)]">
+              Demo
             </a>
-            <a
-              href="#roadmap-input"
-              className="hover:text-[var(--text-primary)]"
-            >
-              Roadmap input
+            <a href="#later" className="hover:text-[var(--text-primary)]">
+              Later
             </a>
           </nav>
 
@@ -313,31 +281,28 @@ export function MarketingInvestorPage() {
       </header>
 
       <section className="px-5 py-16 sm:px-8 lg:py-24">
-        <div className="mx-auto grid max-w-7xl gap-12 lg:grid-cols-[1.05fr_0.95fr] lg:items-center">
+        <div className="mx-auto grid max-w-7xl gap-12 lg:grid-cols-[1.02fr_0.98fr] lg:items-center">
           <div>
             <p className="inline-flex items-center gap-2 rounded-lg border border-[var(--border-warm)] bg-white px-3 py-2 text-xs font-semibold uppercase tracking-normal text-[var(--copper)] shadow-sm">
               <Building2 className="h-4 w-4" aria-hidden="true" />
-              Specialty contractor operating system
+              Specialty surface contractor software
             </p>
             <h1 className="mt-7 max-w-4xl text-balance text-5xl font-semibold leading-[1.04] tracking-normal text-[var(--text-primary)] sm:text-6xl lg:text-7xl">
-              The operating system for specialty flooring contractors.
+              One connected operating system for specialty flooring contractors.
             </h1>
             <p className="mt-6 max-w-2xl text-pretty text-lg leading-relaxed text-[var(--text-secondary)] sm:text-xl">
-              FloorConnector connects the path from opportunity to estimate,
-              contract, job, invoice, and payment so epoxy, polishing, and
-              resinous flooring teams can run from one shared source of truth.
+              FloorConnector connects leads, projects, estimates, contracts,
+              jobs, invoices, payments, field evidence, closeout, and the
+              customer portal so the whole job keeps moving from the same shared
+              workflow.
             </p>
             <div className="mt-9 flex flex-col gap-3 sm:flex-row">
               <MarketingButton href={signupHref} size="large">
-                Start early access
+                Request early access
                 <ArrowRight className="h-5 w-5" aria-hidden="true" />
               </MarketingButton>
-              <MarketingButton
-                href="#platform"
-                variant="secondary"
-                size="large"
-              >
-                Explore the platform
+              <MarketingButton href="#demo" variant="secondary" size="large">
+                See what demos today
               </MarketingButton>
             </div>
           </div>
@@ -347,16 +312,16 @@ export function MarketingInvestorPage() {
               <div className="flex items-center justify-between gap-4 border-b border-white/10 pb-4">
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-normal text-[var(--copper-light)]">
-                    Shared record chain
+                    Connected job flow
                   </p>
                   <p className="mt-1 text-sm text-white/60">
-                    One job, carried forward
+                    One project, carried forward
                   </p>
                 </div>
                 <ShieldCheck className="h-6 w-6 text-[var(--copper-light)]" />
               </div>
               <div className="mt-5 grid gap-2">
-                {workflow.map((step, index) => (
+                {lifecycleSteps.map((step, index) => (
                   <div
                     key={step}
                     className="flex items-center gap-3 rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2.5"
@@ -365,15 +330,11 @@ export function MarketingInvestorPage() {
                       {index + 1}
                     </span>
                     <span className="text-sm font-semibold">{step}</span>
-                    {index < workflow.length - 1 ? (
-                      <span className="ml-auto text-xs text-white/35">
-                        flows forward
-                      </span>
-                    ) : (
-                      <span className="ml-auto text-xs text-white/35">
-                        collected
-                      </span>
-                    )}
+                    <span className="ml-auto text-xs text-white/35">
+                      {index < lifecycleSteps.length - 1
+                        ? "flows forward"
+                        : "handoff ready"}
+                    </span>
                   </div>
                 ))}
               </div>
@@ -386,16 +347,16 @@ export function MarketingInvestorPage() {
         <div className="mx-auto grid max-w-7xl gap-6 lg:grid-cols-3">
           {[
             [
-              "What it is today",
-              "A real multi-tenant contractor app and portal foundation."
+              "What it replaces",
+              "A patchwork of CRM, spreadsheets, PDFs, scheduling notes, field reports, and payment follow-up."
             ],
             [
-              "Where it is going",
-              "A project-centered command center with deeper operations."
+              "What it centers",
+              "The Project Workspace as the operating hub for sales, field, finance, customer review, and closeout."
             ],
             [
-              "Why it matters",
-              "No portal-only copies, disconnected billing, or duplicate job truth."
+              "What stays honest",
+              "Current demo-ready features are separated from future dispatch, AI, accounting, and document depth."
             ]
           ].map(([title, description]) => (
             <div key={title} className="flex gap-4">
@@ -414,38 +375,6 @@ export function MarketingInvestorPage() {
         </div>
       </section>
 
-      <section className="px-5 py-20 sm:px-8 lg:py-28">
-        <div className="mx-auto max-w-7xl">
-          <SectionIntro
-            eyebrow="The contractor pain"
-            title="Specialty flooring work breaks when the handoff breaks."
-          >
-            <p>
-              Prep-heavy surface contractors need clean continuity between
-              sales, scope, customer approval, scheduling, field work, billing,
-              and collection. The usual software stack splits that work apart.
-            </p>
-          </SectionIntro>
-
-          <div className="mt-12 grid gap-4 lg:grid-cols-5">
-            {contractorPain.map((item) => (
-              <div
-                key={item}
-                className="rounded-lg border border-[var(--border-warm)] bg-white p-5 shadow-sm"
-              >
-                <Flag
-                  className="mb-4 h-5 w-5 text-[var(--copper)]"
-                  aria-hidden="true"
-                />
-                <p className="text-sm leading-relaxed text-[var(--text-secondary)]">
-                  {item}
-                </p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
       <section
         id="platform"
         className="bg-[var(--graphite)] px-5 py-20 sm:px-8 lg:py-28"
@@ -453,30 +382,31 @@ export function MarketingInvestorPage() {
         <div className="mx-auto max-w-7xl">
           <div className="grid gap-12 lg:grid-cols-[0.85fr_1.15fr] lg:items-center">
             <SectionIntro
-              eyebrow="The FloorConnector answer"
-              title="One shared operational chain from first opportunity to collected payment."
+              eyebrow="The FloorConnector story"
+              title="The contractor creates the work once. Every handoff moves that same job forward."
               inverted
             >
               <p>
-                The contractor creates the record once. The customer acts on the
-                same record through the portal. Signatures, payments, jobs, and
-                field context update the same chain.
+                The office, field, finance team, and customer portal all work
+                from connected records. Customer actions update the shared
+                workflow, and the contractor continues from the latest project
+                state instead of reconciling copies.
               </p>
             </SectionIntro>
 
             <div className="grid gap-3 sm:grid-cols-3">
               {[
                 [
-                  "No retyping",
-                  "Scope moves forward instead of being recreated."
+                  "No duplicate re-entry",
+                  "Scope, signatures, billing, and field context stay connected."
                 ],
                 [
-                  "No portal copies",
-                  "Customer review extends canonical records."
+                  "No portal-only copies",
+                  "Customer review extends the same project workflow."
                 ],
                 [
-                  "No side billing",
-                  "Invoices and payments stay linked to approved work."
+                  "No disconnected closeout",
+                  "Proof, documents, service context, and collections stay visible."
                 ]
               ].map(([title, description]) => (
                 <div
@@ -498,41 +428,37 @@ export function MarketingInvestorPage() {
         </div>
       </section>
 
-      <section id="built" className="px-5 py-20 sm:px-8 lg:py-28">
+      <section id="core" className="px-5 py-20 sm:px-8 lg:py-28">
         <div className="mx-auto max-w-7xl">
           <SectionIntro
-            eyebrow="Built today"
-            title="A credible current product foundation, not a slide-only concept."
+            eyebrow="Operating core"
+            title="The demo now has real connected surfaces to show."
           >
             <p>
-              These are current foundations from the implemented product. They
-              are intentionally described as foundations where deeper workflow
-              maturity is still ahead.
+              The operating core is no longer just a generic project list. It
+              can show how a specialty contractor moves from commercial work to
+              scheduling, field execution, proof, customer visibility,
+              collections, and accounting review prep.
             </p>
           </SectionIntro>
 
-          <div className="mt-12 grid gap-6 lg:grid-cols-4">
-            {builtToday.map((group) => (
+          <div className="mt-12 grid gap-6 md:grid-cols-2 xl:grid-cols-4">
+            {operatingCore.map((feature) => (
               <article
-                key={group.title}
+                key={feature.title}
                 className="rounded-lg border border-[var(--border-warm)] bg-white p-6 shadow-sm"
               >
-                <group.Icon
+                <feature.Icon
                   className="h-7 w-7 text-[var(--copper)]"
                   aria-hidden="true"
                 />
-                <h3 className="mt-5 text-lg font-semibold">{group.title}</h3>
-                <ul className="mt-4 space-y-3 text-sm leading-relaxed text-[var(--text-secondary)]">
-                  {group.items.map((item) => (
-                    <li key={item} className="flex gap-2">
-                      <Check
-                        className="mt-1 h-4 w-4 shrink-0 text-[var(--copper)]"
-                        aria-hidden="true"
-                      />
-                      <span>{item}</span>
-                    </li>
-                  ))}
-                </ul>
+                <p className="mt-5 text-xs font-semibold uppercase tracking-normal text-[var(--copper)]">
+                  {feature.label}
+                </p>
+                <h3 className="mt-2 text-lg font-semibold">{feature.title}</h3>
+                <p className="mt-3 text-sm leading-relaxed text-[var(--text-secondary)]">
+                  {feature.description}
+                </p>
               </article>
             ))}
           </div>
@@ -540,124 +466,59 @@ export function MarketingInvestorPage() {
       </section>
 
       <section className="border-y border-[var(--border-warm)] bg-white px-5 py-20 sm:px-8 lg:py-28">
-        <div className="mx-auto max-w-7xl">
-          <SectionIntro
-            eyebrow="Where we are going"
-            title="More operational depth, clearly labeled by maturity."
-          >
-            <p>
-              FloorConnector is moving toward a stronger project command center,
-              scheduling and dispatch depth, communications, reporting,
-              automation, integrations, and mobile field direction over the same
-              canonical records.
-            </p>
-          </SectionIntro>
-
-          <div className="mt-12 grid gap-6 lg:grid-cols-3">
-            {roadmapLayers.map((layer) => (
-              <article
-                key={layer.label}
-                className="rounded-lg border border-[var(--border-warm)] bg-[var(--cream)] p-6"
-              >
-                <p className="text-xs font-semibold uppercase tracking-normal text-[var(--copper)]">
-                  {layer.label}
-                </p>
-                <h3 className="mt-3 text-xl font-semibold">{layer.title}</h3>
-                <ul className="mt-5 space-y-3 text-sm text-[var(--text-secondary)]">
-                  {layer.items.map((item) => (
-                    <li key={item} className="flex gap-2">
-                      <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-[var(--copper)]" />
-                      <span>{item}</span>
-                    </li>
-                  ))}
-                </ul>
-              </article>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section id="packages" className="px-5 py-20 sm:px-8 lg:py-28">
-        <div className="mx-auto max-w-7xl">
-          <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-            <SectionIntro
-              eyebrow="Planned package direction"
-              title="Packages by contractor need, not one bloated plan."
-            >
-              <p>
-                Packages are being shaped around company size, workflow depth,
-                and automation needs. Exact pricing is not finalized here.
-              </p>
-            </SectionIntro>
-            <p className="max-w-sm rounded-lg border border-[var(--border-warm)] bg-white p-4 text-sm leading-relaxed text-[var(--text-secondary)]">
-              Package structure may evolve during early access as contractor
-              feedback clarifies what belongs in core plans, higher tiers, and
-              add-ons.
-            </p>
-          </div>
-
-          <div className="mt-12 grid gap-6 lg:grid-cols-4">
-            {packagePlans.map((plan) => (
-              <article
-                key={plan.name}
-                className="rounded-lg border border-[var(--border-warm)] bg-white p-6 shadow-sm"
-              >
-                <p className="text-xs font-semibold uppercase tracking-normal text-[var(--copper)]">
-                  Planned package
-                </p>
-                <h3 className="mt-3 text-2xl font-semibold">{plan.name}</h3>
-                <p className="mt-3 text-sm leading-relaxed text-[var(--text-secondary)]">
-                  {plan.audience}
-                </p>
-                <ul className="mt-6 space-y-3 text-sm leading-relaxed text-[var(--text-secondary)]">
-                  {plan.items.map((item) => (
-                    <li key={item} className="flex gap-2">
-                      <Check
-                        className="mt-1 h-4 w-4 shrink-0 text-[var(--copper)]"
-                        aria-hidden="true"
-                      />
-                      <span>{item}</span>
-                    </li>
-                  ))}
-                </ul>
-              </article>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section className="bg-[var(--graphite)] px-5 py-20 text-white sm:px-8 lg:py-28">
         <div className="mx-auto grid max-w-7xl gap-12 lg:grid-cols-[0.9fr_1.1fr] lg:items-start">
           <SectionIntro
-            eyebrow="AI and automation direction"
-            title="AI should assist contractor judgment, not replace it."
-            inverted
+            eyebrow="What contractors see"
+            title="The day-to-day view is about attention, readiness, field history, and money."
           >
             <p>
-              Advanced AI and automation capabilities are planned for
-              higher-tier packages and add-ons so smaller contractors can keep
-              the system lean while growing teams can unlock deeper assistance.
+              FloorConnector should make the next operating move easier to see:
+              what is waiting, what is ready, what happened, what was shared,
+              and what still needs to be collected.
             </p>
           </SectionIntro>
 
-          <div className="rounded-lg border border-white/10 bg-white/[0.04] p-6">
-            <div className="flex items-center gap-3">
-              <Bot className="h-7 w-7 text-[var(--copper-light)]" />
-              <div>
-                <p className="font-semibold">Future premium capability</p>
-                <p className="text-sm text-white/55">
-                  Planned direction, not autonomous business operation.
+          <div className="grid gap-4">
+            {contractorOutcomes.map((item) => (
+              <div
+                key={item}
+                className="flex gap-4 rounded-lg border border-[var(--border-warm)] bg-[var(--cream)] p-5"
+              >
+                <Flag
+                  className="mt-1 h-5 w-5 shrink-0 text-[var(--copper)]"
+                  aria-hidden="true"
+                />
+                <p className="text-sm leading-relaxed text-[var(--text-secondary)]">
+                  {item}
                 </p>
               </div>
-            </div>
-            <div className="mt-6 grid gap-3 sm:grid-cols-2">
-              {aiDirection.map((item) => (
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section id="demo" className="px-5 py-20 sm:px-8 lg:py-28">
+        <div className="mx-auto max-w-7xl">
+          <div className="grid gap-10 lg:grid-cols-[0.85fr_1.15fr] lg:items-start">
+            <SectionIntro
+              eyebrow="Available to demo today"
+              title="A route-based walkthrough of the operating core."
+            >
+              <p>
+                Demo the current product as a connected contractor operating
+                system. Use real records, start from index routes, and keep
+                future depth labeled as future depth.
+              </p>
+            </SectionIntro>
+
+            <div className="grid gap-3 sm:grid-cols-2">
+              {availableNow.map((item) => (
                 <div
                   key={item}
-                  className="rounded-lg border border-white/10 bg-white/[0.04] p-4 text-sm text-white/70"
+                  className="flex items-center gap-3 rounded-lg border border-[var(--border-warm)] bg-white px-4 py-3 text-sm font-semibold shadow-sm"
                 >
-                  <Sparkles
-                    className="mb-3 h-4 w-4 text-[var(--copper-light)]"
+                  <Check
+                    className="h-4 w-4 shrink-0 text-[var(--copper)]"
                     aria-hidden="true"
                   />
                   {item}
@@ -665,19 +526,55 @@ export function MarketingInvestorPage() {
               ))}
             </div>
           </div>
+
+          <div className="mt-12 grid gap-5 lg:grid-cols-4">
+            {[
+              [
+                "Start with the Command Center",
+                "Show priorities, ready work, field follow-up, waiting customer/payment/signature items, and source-record links."
+              ],
+              [
+                "Open the Project Workspace",
+                "Show ProjectPulse, FieldTrail, MessageCenter, CloseoutTrail, Proof Center, Send Trail, and customer access context."
+              ],
+              [
+                "Walk the customer side",
+                "Show the portal Customer Window: next step, project status, timeline, shared documents, and print/save links."
+              ],
+              [
+                "Close on money and proof",
+                "Show Financial Control, Accounting Readiness, CSV export prep, and closeout package print/save."
+              ]
+            ].map(([title, description]) => (
+              <div
+                key={title}
+                className="rounded-lg bg-[var(--graphite)] p-6 text-white"
+              >
+                <Route
+                  className="mb-4 h-5 w-5 text-[var(--copper-light)]"
+                  aria-hidden="true"
+                />
+                <p className="font-semibold">{title}</p>
+                <p className="mt-2 text-sm leading-relaxed text-white/60">
+                  {description}
+                </p>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 
-      <section className="px-5 py-20 sm:px-8 lg:py-28">
+      <section className="border-y border-[var(--border-warm)] bg-white px-5 py-20 sm:px-8 lg:py-28">
         <div className="mx-auto grid max-w-7xl gap-12 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
           <SectionIntro
             eyebrow="Specialty contractor focus"
-            title="Built for the way surface contractors actually sell, prep, install, bill, and follow up."
+            title="Built for epoxy, polishing, resinous flooring, and prep-heavy surface work."
           >
             <p>
-              FloorConnector is aimed at epoxy, polishing, resinous flooring,
-              decorative systems, and prep-heavy specialty surface work where
-              scope clarity and operational handoffs matter.
+              These teams need handoffs that respect scope, site conditions,
+              field proof, customer approvals, billing, service history, and
+              closeout evidence. A generic CRM does not carry enough of that
+              work.
             </p>
           </SectionIntro>
 
@@ -685,7 +582,7 @@ export function MarketingInvestorPage() {
             {specialtyTrades.map((trade) => (
               <div
                 key={trade}
-                className="flex items-center gap-3 rounded-lg border border-[var(--border-warm)] bg-white px-4 py-3 text-sm font-semibold shadow-sm"
+                className="flex items-center gap-3 rounded-lg border border-[var(--border-warm)] bg-[var(--cream)] px-4 py-3 text-sm font-semibold"
               >
                 <Boxes
                   className="h-4 w-4 shrink-0 text-[var(--copper)]"
@@ -698,125 +595,113 @@ export function MarketingInvestorPage() {
         </div>
       </section>
 
-      <section className="border-y border-[var(--border-warm)] bg-white px-5 py-20 sm:px-8 lg:py-28">
+      <section id="later" className="px-5 py-20 sm:px-8 lg:py-28">
         <div className="mx-auto max-w-7xl">
-          <SectionIntro
-            eyebrow="Why connected records matter"
-            title="The customer, office, field, and finance team keep moving from updated truth."
-          >
-            <p>
-              The anti-silo advantage is simple: no portal-only copies, no
-              disconnected billing records, and no retyping the same job five
-              times as it moves through the business.
-            </p>
-          </SectionIntro>
+          <div className="grid gap-10 lg:grid-cols-[0.82fr_1.18fr] lg:items-start">
+            <SectionIntro
+              eyebrow="Coming later"
+              title="The roadmap is clear, but the homepage should not overpromise it."
+            >
+              <p>
+                The current demo is about the operating core. These deeper
+                capabilities remain planned direction or later product depth
+                until dedicated implementation work lands.
+              </p>
+            </SectionIntro>
 
-          <div className="mt-12 grid gap-5 lg:grid-cols-4">
-            {[
-              ["Create once", "The contractor starts from a canonical record."],
-              [
-                "Customer acts",
-                "Portal review, signature, and payment extend that record."
-              ],
-              [
-                "System updates",
-                "Status, balance, and readiness stay on the shared chain."
-              ],
-              [
-                "Team continues",
-                "Office and field work from the current project truth."
-              ]
-            ].map(([title, description]) => (
-              <div key={title} className="rounded-lg bg-[var(--cream)] p-6">
-                <Route
-                  className="mb-4 h-5 w-5 text-[var(--copper)]"
-                  aria-hidden="true"
-                />
-                <p className="font-semibold">{title}</p>
-                <p className="mt-2 text-sm leading-relaxed text-[var(--text-secondary)]">
-                  {description}
-                </p>
-              </div>
-            ))}
+            <div className="grid gap-3 sm:grid-cols-2">
+              {laterDirection.map((item) => (
+                <div
+                  key={item}
+                  className="rounded-lg border border-[var(--border-warm)] bg-white p-4 text-sm leading-relaxed text-[var(--text-secondary)] shadow-sm"
+                >
+                  <Sparkles
+                    className="mb-3 h-4 w-4 text-[var(--copper)]"
+                    aria-hidden="true"
+                  />
+                  <span className="font-semibold text-[var(--text-primary)]">
+                    Later:
+                  </span>{" "}
+                  {item}
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </section>
 
-      <section id="roadmap-input" className="px-5 py-20 sm:px-8 lg:py-28">
+      <section
+        id="roadmap-input"
+        className="bg-[var(--graphite)] px-5 py-20 text-white sm:px-8 lg:py-28"
+      >
         <div className="mx-auto grid max-w-7xl gap-8 lg:grid-cols-[1fr_0.85fr] lg:items-center">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-normal text-[var(--copper)]">
-              Roadmap input
+            <p className="text-xs font-semibold uppercase tracking-normal text-[var(--copper-light)]">
+              Contractor-led buildout
             </p>
             <h2 className="mt-4 text-balance text-3xl font-semibold tracking-normal sm:text-5xl">
-              Help shape the contractor operating system.
+              Help shape the next operating layer.
             </h2>
-            <p className="mt-5 max-w-3xl text-lg leading-relaxed text-[var(--text-secondary)]">
-              Early users can suggest features, request workflows they need, and
-              help prioritize what gets built next. FloorConnector is being
-              shaped by real contractor operations, not generic software
-              assumptions.
+            <p className="mt-5 max-w-3xl text-lg leading-relaxed text-white/70">
+              Early users can point us toward the workflows that matter most:
+              scheduling depth, company documents, service and warranty depth,
+              reporting, integrations, field workflows, and the demo data needed
+              to prove the story.
             </p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <MarketingButton href={signupHref}>
-                Suggest a feature
-                <MessageSquarePlus className="h-4 w-4" aria-hidden="true" />
-              </MarketingButton>
               <MarketingButton href={signupHref} variant="secondary">
-                Tell us what your workflow needs
+                Suggest a workflow
+              </MarketingButton>
+              <MarketingButton href={signupHref} variant="dark">
+                Request access
+                <ArrowRight className="h-4 w-4" aria-hidden="true" />
               </MarketingButton>
             </div>
           </div>
 
-          <div className="rounded-lg border border-[var(--border-warm)] bg-white p-6 shadow-sm">
-            <Lightbulb className="h-7 w-7 text-[var(--copper)]" />
+          <div className="rounded-lg border border-white/10 bg-white/[0.04] p-6">
+            <Search className="h-7 w-7 text-[var(--copper-light)]" />
             <p className="mt-5 text-xl font-semibold">
-              Founder-led, contractor-led buildout
+              Global search now belongs in the demo.
             </p>
-            <p className="mt-3 text-sm leading-relaxed text-[var(--text-secondary)]">
-              The current backbone is live. The next focus is operational depth:
-              scheduling, communications, reporting, automation, portal
-              maturity, integrations, and field workflows that reinforce the
-              same record chain.
+            <p className="mt-3 text-sm leading-relaxed text-white/60">
+              Search can safely find current company records across the
+              operating core, including status-like terms such as scheduled,
+              sent, paid, and in progress.
             </p>
           </div>
         </div>
       </section>
 
-      <section id="early-access" className="px-5 pb-20 sm:px-8 lg:pb-28">
-        <div className="mx-auto max-w-7xl overflow-hidden rounded-lg bg-[var(--graphite)] text-white shadow-[0_32px_90px_-52px_rgba(31,41,55,0.65)]">
+      <section id="early-access" className="px-5 py-20 sm:px-8 lg:py-28">
+        <div className="mx-auto max-w-7xl overflow-hidden rounded-lg bg-white shadow-[0_32px_90px_-52px_rgba(31,41,55,0.42)]">
           <div className="grid gap-10 p-7 sm:p-10 lg:grid-cols-[0.9fr_1.1fr] lg:p-14">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-normal text-[var(--copper-light)]">
+              <p className="text-xs font-semibold uppercase tracking-normal text-[var(--copper)]">
                 Early access
               </p>
               <h2 className="mt-4 text-balance text-3xl font-semibold tracking-normal sm:text-5xl">
-                Help shape the contractor operating system built for specialty
-                flooring.
+                Bring your operating workflow into the product conversation.
               </h2>
-              <p className="mt-5 text-lg leading-relaxed text-white/70">
-                FloorConnector is in active buildout. The backbone is live, and
-                early access helps sharpen the operational layers contractors
-                need most.
+              <p className="mt-5 text-lg leading-relaxed text-[var(--text-secondary)]">
+                FloorConnector is in active buildout. The operating core is
+                ready to demo, and early access helps decide which contractor
+                workflows deserve the next serious layer.
               </p>
               <div className="mt-8">
-                <MarketingButton
-                  href={signupHref}
-                  variant="secondary"
-                  size="large"
-                >
+                <MarketingButton href={signupHref} size="large">
                   Request early access
                   <ArrowRight className="h-5 w-5" aria-hidden="true" />
                 </MarketingButton>
               </div>
             </div>
 
-            <div className="rounded-lg border border-white/10 bg-white/[0.04] p-6 sm:p-8">
+            <div className="rounded-lg border border-[var(--border-warm)] bg-[var(--cream)] p-6 sm:p-8">
               <div className="flex items-center gap-3">
-                <UsersRound className="h-6 w-6 text-[var(--copper-light)]" />
+                <UsersRound className="h-6 w-6 text-[var(--copper)]" />
                 <div>
                   <p className="text-lg font-semibold">Request Early Access</p>
-                  <p className="text-sm text-white/55">
+                  <p className="text-sm text-[var(--text-secondary)]">
                     Prefer an operator review first? Send a short request.
                   </p>
                 </div>
@@ -840,8 +725,8 @@ export function MarketingInvestorPage() {
             </span>
           </div>
           <p className="text-center text-sm text-[var(--text-tertiary)]">
-            Specialty contractor operating system. Early-access package
-            direction, no published pricing yet.
+            Connected operating software for specialty surface contractors.
+            Early-access package direction, no published pricing yet.
           </p>
           <div className="flex items-center gap-6 text-sm text-[var(--text-secondary)]">
             <Link
