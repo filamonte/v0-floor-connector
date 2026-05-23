@@ -221,6 +221,38 @@ function getPortalHomeNextAction(
   return null;
 }
 
+function getPortalProjectHomeAttention(
+  project: Awaited<ReturnType<typeof listPortalAccessibleProjects>>[number]
+) {
+  if (
+    project.latestInvoiceStatus &&
+    !["paid", "void"].includes(project.latestInvoiceStatus)
+  ) {
+    return getPortalInvoiceProgressSummary(project);
+  }
+
+  if (
+    project.latestContractStatus &&
+    !["signed", "void"].includes(project.latestContractStatus)
+  ) {
+    return "Contract review or signature may still be in progress";
+  }
+
+  if (project.latestEstimateStatus === "sent") {
+    return "Estimate is ready for review";
+  }
+
+  if (
+    project.latestInvoiceStatus === "paid" ||
+    project.latestContractStatus === "signed" ||
+    project.latestEstimateStatus === "approved"
+  ) {
+    return "No action needed right now";
+  }
+
+  return "Open the project to see what has been shared";
+}
+
 export default async function PortalHomePage() {
   const [projects, upcomingAppointments] = await Promise.all([
     listPortalAccessibleProjects("/portal"),
@@ -465,24 +497,22 @@ export default async function PortalHomePage() {
                     </div>
                   </div>
 
-                  {project.latestInvoiceStatus ? (
-                    <div
-                      className={`${portalMetricPanelClassName} mt-4 text-sm leading-6 text-slate-600`}
-                    >
-                      <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
-                        What matters now
+                  <div
+                    className={`${portalMetricPanelClassName} mt-4 text-sm leading-6 text-slate-600`}
+                  >
+                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+                      What matters now
+                    </p>
+                    <p className="mt-2 font-medium text-slate-950">
+                      {getPortalProjectHomeAttention(project)}
+                    </p>
+                    {project.latestInvoicePaymentEventAt ? (
+                      <p className="mt-1 text-slate-500">
+                        Latest activity{" "}
+                        {formatDateTime(project.latestInvoicePaymentEventAt)}
                       </p>
-                      <p className="mt-2 font-medium text-slate-950">
-                        {getPortalInvoiceProgressSummary(project)}
-                      </p>
-                      {project.latestInvoicePaymentEventAt ? (
-                        <p className="mt-1 text-slate-500">
-                          Latest activity{" "}
-                          {formatDateTime(project.latestInvoicePaymentEventAt)}
-                        </p>
-                      ) : null}
-                    </div>
-                  ) : null}
+                    ) : null}
+                  </div>
                 </Link>
               ))}
             </div>

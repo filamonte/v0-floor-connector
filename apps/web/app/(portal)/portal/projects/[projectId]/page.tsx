@@ -17,7 +17,7 @@ import {
   portalSummaryLabelClassName
 } from "@/components/portal-review-ui";
 import { WorkspaceSummaryBand } from "@/components/workspace-summary-band";
-import { derivePortalCustomerNextStep } from "@/lib/portal/next-step";
+import { derivePortalProjectStatusWindow } from "@/lib/portal/project-status-window";
 import {
   getPortalProjectDetailSummary,
   listPortalProjectAppointments,
@@ -247,9 +247,10 @@ export default async function PortalProjectDetailPage({
     notFound();
   }
 
-  const nextAction = derivePortalCustomerNextStep({
+  const statusWindow = derivePortalProjectStatusWindow({
     projectId: project.id,
     projectName: project.name,
+    projectStatus: project.status,
     estimates,
     contracts,
     changeOrders,
@@ -310,24 +311,22 @@ export default async function PortalProjectDetailPage({
                     >
                       {formatStatusLabel(project.status)}
                     </PortalStatusBadge>
-                    {project.latestInvoiceStatus ? (
-                      <PortalStatusBadge
-                        status={project.latestInvoiceStatus}
-                        className="px-3.5 py-1.5 text-sm"
-                      >
-                        {formatStatusLabel(project.latestInvoiceStatus)}
-                      </PortalStatusBadge>
-                    ) : null}
+                    <PortalStatusBadge
+                      status={statusWindow.statusTone}
+                      className="px-3.5 py-1.5 text-sm"
+                    >
+                      {statusWindow.statusLabel}
+                    </PortalStatusBadge>
                   </div>
                   <p className="text-lg font-semibold tracking-tight text-slate-950">
-                    {nextAction.label}
+                    {statusWindow.customerNextStep.label}
                   </p>
                   <p className="text-sm leading-6 text-slate-600">
-                    {nextAction.description}
+                    {statusWindow.primaryMessage}
                   </p>
                   <div className={portalInsetPanelClassName}>
                     <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
-                      Shared steps
+                      Documents and payments
                     </p>
                     <div className="mt-2 space-y-1 text-sm leading-6 text-slate-600">
                       <p>
@@ -374,11 +373,13 @@ export default async function PortalProjectDetailPage({
                     content: (
                       <NextActionCard
                         eyebrow="Project guidance"
-                        title={nextAction.label}
-                        description={nextAction.description}
+                        title={statusWindow.customerNextStep.label}
+                        description={statusWindow.customerNextStep.description}
                         primaryAction={
-                          <PortalSecondaryLink href={nextAction.href}>
-                            {nextAction.label}
+                          <PortalSecondaryLink
+                            href={statusWindow.customerNextStep.href}
+                          >
+                            {statusWindow.customerNextStep.label}
                           </PortalSecondaryLink>
                         }
                       />
@@ -389,9 +390,13 @@ export default async function PortalProjectDetailPage({
                     label: "Shared records",
                     content: (
                       <div className="space-y-1 text-sm text-slate-600">
-                        <p>{project.visibleEstimateCount} estimate record(s)</p>
-                        <p>{project.visibleContractCount} contract record(s)</p>
-                        <p>{project.visibleInvoiceCount} invoice record(s)</p>
+                        <p>
+                          {statusWindow.sharedRecords.length} total record(s)
+                        </p>
+                        <p>
+                          {statusWindow.attentionItems.length} needing attention
+                        </p>
+                        <p>{statusWindow.completedItems.length} complete</p>
                       </div>
                     )
                   }
@@ -400,6 +405,56 @@ export default async function PortalProjectDetailPage({
             </div>
           </div>
         </div>
+
+        <DetailPanel
+          title="Project Status"
+          description="A customer-safe summary of the records and actions shared for this project."
+        >
+          {statusWindow.sharedRecords.length > 0 ? (
+            <div className="grid gap-4">
+              {statusWindow.sharedRecords.map((record) => (
+                <div
+                  key={`${record.type}-${record.id}`}
+                  className={portalReviewCardClassName}
+                >
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                    <div className="min-w-0">
+                      <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+                        {record.typeLabel}
+                      </p>
+                      <h2 className="mt-2 text-base font-semibold text-slate-950">
+                        {record.title}
+                      </h2>
+                      <p className="mt-2 text-sm leading-6 text-slate-600">
+                        {record.helperText}
+                      </p>
+                    </div>
+                    <PortalStatusBadge status={record.tone}>
+                      {record.statusLabel}
+                    </PortalStatusBadge>
+                  </div>
+                  <div className="mt-4">
+                    <PortalSecondaryLink href={record.href}>
+                      {record.type === "invoice"
+                        ? "Review or pay invoice"
+                        : record.type === "contract"
+                          ? "Review contract"
+                          : record.type === "change_order"
+                            ? "Review change order"
+                            : "Review estimate"}
+                    </PortalSecondaryLink>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <AppEmptyState
+              eyebrow="Shared with you"
+              title="No documents or payments are shared yet"
+              description={statusWindow.emptyStateMessage}
+            />
+          )}
+        </DetailPanel>
 
         <DetailPanel
           title="Appointments"

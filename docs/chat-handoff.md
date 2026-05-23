@@ -31,13 +31,13 @@ opportunities/leads, customers, projects, estimates, contracts, change orders,
 jobs, invoices, payments, portal foundations, workforce/time/field foundations,
 settings, super admin, and normalized contractor UI patterns.
 
-Latest remote-verified implementation/test commit:
+Latest remote-verified implementation/test commit before Portal Maturity Phase 2:
 
-`5f793fa0 feat: add portal customer next step`
+`599d3878 chore: checkpoint Portal Customer Next Step QA`
 
-`git push origin main` pushed the Portal Customer Next Step implementation from
-local `main` to `origin/main`. The branch then showed `main...origin/main`
-before the Portal Customer Next Step QA checkpoint pass.
+`git push origin main` pushed the Portal Customer Next Step QA checkpoint from
+local `main` to `origin/main`, and the branch then showed `main...origin/main`
+before the Portal Maturity Phase 2 implementation pass.
 
 ## Latest Operating Core
 
@@ -77,6 +77,17 @@ Recent completed layers:
   records the focused Portal Customer Next Step QA evidence, including helper
   priority tests, nearby portal visibility tests, saved-session browser checks,
   and the preserved portal access/loader boundary.
+- Portal Maturity Phase 2 adds a read-only Project Status Window to the portal
+  Project Workspace. The new helper derives project status, shared-record rows,
+  attention items, completed items, and no-action-needed states from existing
+  portal project estimates, contracts, invoices, change orders, and the
+  Customer Next Step helper. Portal home now shows a simple `What matters now`
+  line per project using existing list fields only. This remains customer-safe
+  visibility and does not add portal-only records, loader permission widening,
+  route changes, schema, migrations, server actions, portal grant behavior,
+  auth/RLS, tenant logic, payment/signature behavior, estimate math, invoice
+  math, AI, automation, notifications, FieldTrail exposure, Proof Center
+  exposure, service requests, or closeout package downloads.
 - Reports Phase 1 on `/reports` for read-only operations and collections
   visibility.
 - Send Trail Phase 1 on estimate, contract, and invoice source workspaces for

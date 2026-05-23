@@ -96,6 +96,16 @@ These high-value route notes exist to prevent target-vs-current drift:
   loaders, route structure, grants, project-scope enforcement, auth/RLS, tenant
   logic, service-ticket visibility, payment/checkout behavior, signature
   behavior, estimate math, invoice math, or server actions.
+- Portal Maturity Phase 2 adds a read-only Project Status Window to the portal
+  Project Workspace. It derives customer-safe project status, shared-record
+  rows, attention items, completed items, and no-action-needed states from the
+  existing portal project estimates, contracts, invoices, change orders, and
+  Customer Next Step helper. Portal home now shows a simple per-project `What
+matters now` line from existing list fields only. This does not add portal
+  models, loader permissions, route changes, schema, migrations, server actions,
+  portal grants, auth/RLS, tenant logic, service requests, FieldTrail/Proof
+  Center exposure, AI, automation, notifications, payment/signature behavior, or
+  estimate/invoice math changes.
 - package/billing governance lives under `/super-admin/packages`, including read-only detail routes for package definitions, assignments, provider mappings, and support reviews.
 
 ## Current Architecture
