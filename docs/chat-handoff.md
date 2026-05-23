@@ -33,10 +33,11 @@ settings, super admin, and normalized contractor UI patterns.
 
 Latest remote-verified implementation/test commit:
 
-`e07bcb3a feat: improve warranty and service workspace`
+`5f793fa0 feat: add portal customer next step`
 
-`git push origin main` pushed Warranty Service Phase 1 from local `main` to
-`origin/main` before the Service Center QA and Portal Maturity Phase 1 pass.
+`git push origin main` pushed the Portal Customer Next Step implementation from
+local `main` to `origin/main`. The branch then showed `main...origin/main`
+before the Portal Customer Next Step QA checkpoint pass.
 
 ## Latest Operating Core
 
@@ -72,6 +73,10 @@ Recent completed layers:
   sent change order, open invoice, or no-action status without changing portal
   access, auth, RLS, tenant logic, server actions, payments, signatures, or
   math.
+- [docs/design/portal-customer-next-step-qa-checkpoint.md](C:/FloorConnector/docs/design/portal-customer-next-step-qa-checkpoint.md)
+  records the focused Portal Customer Next Step QA evidence, including helper
+  priority tests, nearby portal visibility tests, saved-session browser checks,
+  and the preserved portal access/loader boundary.
 - Reports Phase 1 on `/reports` for read-only operations and collections
   visibility.
 - Send Trail Phase 1 on estimate, contract, and invoice source workspaces for
