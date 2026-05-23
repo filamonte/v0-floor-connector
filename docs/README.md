@@ -94,6 +94,7 @@ Document roles:
 - `docs/design/operating-core-demo-smoke-checkpoint.md`: demo-readiness smoke checkpoint for route-discovery browser QA, global search status-like terms, protected Playwright cleanup, and preserved operating-core boundaries
 - `docs/design/marketing-demo-refresh-phase-1.md`: public homepage refresh note for the operating-core marketing story, implemented claims, avoided claims, and preserved behavior boundaries
 - `docs/design/public-demo-readiness-qa.md`: public/demo-readiness QA checkpoint for homepage claims, auth/setup handoff copy, CTA links, protected setup-route expectations, and preserved behavior boundaries
+- `docs/staging-deployment-readiness-audit.md`: deployment-readiness audit for staging/demo command inventory, env variable checklist, Supabase/auth/provider risks, operating-core demo checklist, and owner actions before a controlled external demo
 - `docs/operating-core-validation-checklist.md`: focused validation inventory for recent operating-core summary helpers, routes, and browser QA caveats
 - `docs/design/project-workspace-lifecycle-qa.md`: lifecycle QA note for the Project Workspace operating loop after CrewBoard, FieldTrail, MessageCenter, ProjectPulse, and CloseoutTrail
 - `docs/enterprise-ui-system-audit.md`: secured-app route audit, Phase 1-4 polish history, drift watch list, and authenticated visual QA rules
@@ -123,6 +124,7 @@ Document roles:
 - `docs/current-state.md`: source of truth for implemented status
 - `docs/workflows.md`: canonical business workflows and near-term workflow direction
 - `docs/staging-demo-readiness.md`: staging/demo readiness runbook for env ownership, provider setup checklists, demo modes, and go/no-go gates
+- `docs/staging-deployment-readiness-audit.md`: latest docs-only audit for moving the local operating-core build toward controlled staging/demo readiness without deploying or changing env/provider/schema behavior
 - `docs/site-visit-scope-intake-plan.md`: planning guardrails for the lead site visit Scope Intake stage between appointment capture and estimate planning
 - `docs/vision.md`: long-term product direction and platform thesis
 - `docs/gatekeeper-system-vision.md`: target GateKeeper operational intelligence and communications doctrine; planning only, not implemented status

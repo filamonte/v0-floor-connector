@@ -242,6 +242,15 @@ Recent completed layers:
   signup links, replaced "free" login copy with early-access language, and
   reduced visible setup terminology drift without changing routes, auth,
   setup, billing, or product behavior.
+- Staging Deployment Readiness Audit records the controlled staging/demo
+  readiness pass in
+  [docs/staging-deployment-readiness-audit.md](C:/FloorConnector/docs/staging-deployment-readiness-audit.md).
+  The pass verified the public-demo readiness commit was pushed to
+  `origin/main`, inventoried build/validation commands, env var names,
+  Supabase migration readiness, auth/demo prerequisites, public/demo routes,
+  operating-core demo surfaces, staging risks, and owner actions. It did not
+  deploy, change env vars, apply migrations, call providers, create resources,
+  or change app behavior.
 
 These layers are read-only summaries, source-record handoffs, copy/hierarchy
 improvements, or existing-action presentation around canonical records. They did
