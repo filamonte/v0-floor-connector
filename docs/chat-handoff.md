@@ -160,6 +160,16 @@ Recent completed layers:
   overload those models or add schema casually; the recommended next slice is an
   explicit `company_documents` model and `/settings/company-documents` surface
   after category/status/access rules are approved.
+- Operating Core Demo Readiness adds
+  [docs/demo/operating-core-demo-path.md](C:/FloorConnector/docs/demo/operating-core-demo-path.md)
+  as the current route-by-route demo script for Command Center, Reports,
+  Project Workspace, CrewBoard, FieldTrail, MessageCenter, CloseoutTrail, Proof
+  Center, Send Trail, Document Engine, Portal Customer Window, Service Center,
+  Financial Control, Accounting Readiness, Accounting Export Prep, and Mobile
+  Daily Job Log capture. It is a docs/QA asset only and uses real
+  database-backed records; it does not add features, routes, schema, fake data,
+  provider behavior, AI, automation, payment/signature changes, portal access
+  changes, accounting sync, or workflow rule changes.
 - Reports Phase 1 on `/reports` for read-only operations and collections
   visibility.
 - Send Trail Phase 1 on estimate, contract, and invoice source workspaces for
@@ -213,11 +223,15 @@ before assuming a protected-route browser failure is product behavior.
 
 ## Next Recommended Direction
 
-Use [docs/design/accounting-readiness-phase-1-export-reconciliation-prep.md](C:/FloorConnector/docs/design/accounting-readiness-phase-1-export-reconciliation-prep.md)
-as the current Accounting Readiness checkpoint.
+Use [docs/demo/operating-core-demo-path.md](C:/FloorConnector/docs/demo/operating-core-demo-path.md)
+for the current route-based operating-core walkthrough, and
+[docs/design/business-documents-phase-1-company-library-plan.md](C:/FloorConnector/docs/design/business-documents-phase-1-company-library-plan.md)
+for the next safe Company Documents planning boundary.
 
-Recommended next build: a similarly guarded accounting or financial follow-up,
-such as CSV export policy, accounting mapping docs, or read-only filters. Do not
-add retry automation, provider posting, accounting sync, payment plans,
-reminders, stored billing packets, or customer billing center settings until
-their approval, provider, and data-boundary policies are explicit.
+Recommended next build: one guarded non-finance slice after the demo path is
+rehearsed against real records. Good candidates are Company Document Library
+model approval, demo data readiness through approved fixture tooling, or a
+small project/workflow polish item found during the walkthrough. Do not add
+accounting sync, provider posting, AI automation, reminders, stored billing
+packets, or customer billing center settings until their approval, provider,
+and data-boundary policies are explicit.

@@ -14,6 +14,8 @@ Run focused tests when touching the matching helper or route:
 
 - Schedule warnings:
   `pnpm.cmd --filter @floorconnector/web exec tsx --test apps/web/lib/schedule/warnings.test.ts`
+- Daily Log links:
+  `pnpm.cmd --filter @floorconnector/web exec tsx --test apps/web/lib/daily-logs/links.test.ts`
 - FieldTrail summary:
   `pnpm.cmd --filter @floorconnector/web exec tsx --test apps/web/lib/fieldtrail/summary.test.ts`
 - MessageCenter summary:
@@ -26,8 +28,26 @@ Run focused tests when touching the matching helper or route:
   `pnpm.cmd --filter @floorconnector/web exec tsx --test apps/web/lib/proofcenter/summary.test.ts`
 - Send Trail summary:
   `pnpm.cmd --filter @floorconnector/web exec tsx --test apps/web/lib/sendtrail/summary.test.ts`
+- Service Center summary:
+  `pnpm.cmd --filter @floorconnector/web exec tsx --test apps/web/lib/servicecenter/summary.test.ts`
+- Portal Customer Next Step:
+  `pnpm.cmd --filter @floorconnector/web exec tsx --test apps/web/lib/portal/next-step.test.ts`
+- Portal Project Status Window:
+  `pnpm.cmd --filter @floorconnector/web exec tsx --test apps/web/lib/portal/project-status-window.test.ts`
+- Portal Project Timeline:
+  `pnpm.cmd --filter @floorconnector/web exec tsx --test apps/web/lib/portal/project-timeline.test.ts`
+- Portal Shared Documents:
+  `pnpm.cmd --filter @floorconnector/web exec tsx --test apps/web/lib/portal/shared-documents.test.ts`
 - Reports operations summary:
   `pnpm.cmd --filter @floorconnector/web exec tsx --test apps/web/lib/reports/operations-summary.test.ts`
+- Financial Control collections summary:
+  `pnpm.cmd --filter @floorconnector/web exec tsx --test apps/web/lib/financials/collections-summary.test.ts`
+- Accounting Readiness:
+  `pnpm.cmd --filter @floorconnector/web exec tsx --test apps/web/lib/financials/accounting-readiness.test.ts`
+- Accounting Export:
+  `pnpm.cmd --filter @floorconnector/web exec tsx --test apps/web/lib/financials/accounting-export.test.ts`
+- Document Engine print helpers:
+  `pnpm.cmd --filter @floorconnector/web exec tsx --test apps/web/lib/document-engine/print.test.ts`
 - Schedule read model:
   `pnpm.cmd --filter @floorconnector/web exec tsx --test apps/web/lib/schedule/read-model.test.ts`
 
@@ -41,8 +61,20 @@ When browser QA is available, manually check:
   advisory schedule warnings.
 - `/reports` for operations snapshot, attention lists, source-record links, and
   existing sales tax / pipeline / payment summaries.
+- `/financials`, `/financials/accounts-receivable`, and
+  `/financials/accounting-readiness` for Financial Control, collections
+  attention, Accounting Readiness, and CSV export-prep copy/download affordances.
+- `/service-tickets` for Service Center summary and warranty/service continuity.
+- `/portal` and `/portal/projects/[projectId]` with portal auth for the
+  Customer Window: next step, Project Status, Project Timeline, Shared
+  Documents, and existing portal print/save links where visible.
 - `/estimates/[estimateId]`, `/contracts/[contractId]`, and
   `/invoices/[invoiceId]` for Send Trail summary and delivery evidence.
+- `/projects/[projectId]/closeout-package/pdf` for the contractor-side
+  closeout package print/save route.
+
+Use [docs/demo/operating-core-demo-path.md](C:/FloorConnector/docs/demo/operating-core-demo-path.md)
+as the current route-by-route demo and readiness walkthrough.
 
 ## Browser QA Caveats
 

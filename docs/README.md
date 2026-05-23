@@ -77,6 +77,7 @@ Document roles:
 - `docs/design/accounting-export-prep-phase-1.md`: implementation note for in-browser Accounting Readiness Copy CSV / Download CSV export prep over already loaded accounting review rows
 - `docs/design/accounting-export-prep-phase-1-qa-checkpoint.md`: focused QA checkpoint and CSV UX hardening note for Accounting Export Prep copy/download behavior, row-count metadata, and preserved financial boundaries
 - `docs/design/business-documents-phase-1-company-library-plan.md`: plan-only implementation decision for a future Company Document Library, documenting why current estimate/invoice/contract/warranty template models should not be overloaded
+- `docs/demo/operating-core-demo-path.md`: route-based operating-core demo and readiness walkthrough over real database-backed records after the recent project, portal, service, financial, accounting, print/export, and field-execution expansion
 - `docs/design/sendtrail-phase-1-document-delivery-proof-visibility.md`: implementation note for the first Send Trail document delivery proof visibility pass over existing document delivery, signature, payment, portal view, and communication evidence
 - `docs/design/operating-core-checkpoint.md`: post Trail Systems checkpoint for current-state, roadmap, workflow, language, validation, and next-build recommendation after the operating-core expansion
 - `docs/design/document-engine-phase-1-pdf-export-foundations.md`: implementation note for the first shared Document Engine print/save PDF foundation over existing estimate, contract, and invoice source records
@@ -223,6 +224,9 @@ Read these first for most implementation or documentation tasks:
 - `docs/floorconnector-ui-build-rules.md` contains mandatory UI build rules.
 - `docs/product-language.md` and `docs/product-language-audit.md` govern product naming and terminology. They are UX copy guidance, not schema, route, or domain-model rename instructions.
 - `docs/design/operating-core-checkpoint.md` and `docs/operating-core-validation-checklist.md` capture the current operating-core audit, validation inventory, and recommended next build direction after CrewBoard, FieldTrail, MessageCenter, ProjectPulse, CloseoutTrail, Proof Center, Reports, and Send Trail.
+- `docs/demo/operating-core-demo-path.md` captures the current practical demo
+  route through the expanded operating core and the claims to avoid during
+  contractor/advisor/prospect walkthroughs.
 - `docs/design/document-engine-phase-1-pdf-export-foundations.md` captures the current print/save PDF boundary for source-record document exports.
 - `docs/design/document-engine-phase-2-plan.md` captures the planning boundary
   for closeout packages, portal downloads, storage, versioning, and future PDF
