@@ -116,6 +116,17 @@ matters now` line from existing list fields only. This does not add portal
   portal grants, auth/RLS, tenant logic, service requests, FieldTrail/Proof
   Center exposure, internal communication details, AI, automation,
   notifications, payment/signature behavior, or estimate/invoice math changes.
+- Portal Maturity Phase 4 adds a read-only Shared Documents section to the
+  portal Project Workspace. It derives customer-safe document rows from the
+  existing shared estimates, contracts, invoices, and change orders already
+  loaded by the route, and links to existing portal review pages. It adds
+  `Print / Save PDF` links only for existing portal estimate, contract, and
+  invoice print routes. This does not add portal models, loader permissions,
+  route changes, schema, migrations, server actions, portal grants, auth/RLS,
+  tenant logic, storage, stored PDFs, provider sending, Send Trail events,
+  payment/signature behavior, estimate math, invoice math, AI, automation,
+  notifications, FieldTrail exposure, Proof Center exposure, service requests,
+  or closeout package downloads.
 - package/billing governance lives under `/super-admin/packages`, including read-only detail routes for package definitions, assignments, provider mappings, and support reviews.
 
 ## Current Architecture

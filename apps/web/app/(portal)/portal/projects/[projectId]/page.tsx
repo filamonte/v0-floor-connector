@@ -19,6 +19,7 @@ import {
 import { WorkspaceSummaryBand } from "@/components/workspace-summary-band";
 import { derivePortalProjectStatusWindow } from "@/lib/portal/project-status-window";
 import { derivePortalProjectTimeline } from "@/lib/portal/project-timeline";
+import { derivePortalSharedDocuments } from "@/lib/portal/shared-documents";
 import {
   getPortalProjectDetailSummary,
   listPortalProjectAppointments,
@@ -87,6 +88,26 @@ function getTimelineAccentClassName(tone: string) {
     default:
       return "border-l-slate-300 bg-white";
   }
+}
+
+function getSharedDocumentStateLabel(input: {
+  customerActionRequired?: boolean;
+  completed?: boolean;
+  tone: string;
+}) {
+  if (input.customerActionRequired) {
+    return "Needs your attention";
+  }
+
+  if (input.completed) {
+    return "Completed";
+  }
+
+  if (input.tone === "warning") {
+    return "Review status";
+  }
+
+  return "Shared with you";
 }
 
 function getPortalContractSummary(contract: {
@@ -288,6 +309,12 @@ export default async function PortalProjectDetailPage({
     invoices,
     appointments,
     warrantyDocuments
+  });
+  const sharedDocuments = derivePortalSharedDocuments({
+    estimates,
+    contracts,
+    invoices,
+    changeOrders
   });
 
   return (
@@ -546,6 +573,64 @@ export default async function PortalProjectDetailPage({
               eyebrow="What happened"
               title="No timeline activity yet"
               description={timeline.emptyStateMessage}
+            />
+          )}
+        </DetailPanel>
+
+        <DetailPanel
+          title="Shared documents"
+          description="Open the project records shared with you, or print and save the documents that already support it."
+        >
+          {sharedDocuments.documents.length > 0 ? (
+            <div className="grid gap-4">
+              {sharedDocuments.documents.map((document) => (
+                <div key={document.key} className={portalReviewCardClassName}>
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+                          {document.label}
+                        </p>
+                        {document.customerActionRequired ? (
+                          <PortalStatusBadge status="attention">
+                            Needs your attention
+                          </PortalStatusBadge>
+                        ) : null}
+                      </div>
+                      <h2 className="mt-2 text-base font-semibold text-slate-950">
+                        {document.reference}
+                      </h2>
+                      <p className="mt-2 text-sm leading-6 text-slate-600">
+                        {document.helperText}
+                      </p>
+                    </div>
+                    <div className="flex shrink-0 flex-col items-start gap-2 sm:items-end">
+                      <PortalStatusBadge status={document.tone}>
+                        {getSharedDocumentStateLabel(document)}
+                      </PortalStatusBadge>
+                      <p className="text-xs capitalize text-slate-500">
+                        {document.statusLabel}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="mt-4 flex flex-wrap gap-3">
+                    <PortalSecondaryLink href={document.primaryHref}>
+                      {document.actionLabel}
+                    </PortalSecondaryLink>
+                    {document.printHref ? (
+                      <PortalSecondaryLink href={document.printHref}>
+                        Print / Save PDF
+                      </PortalSecondaryLink>
+                    ) : null}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <AppEmptyState
+              eyebrow="Shared documents"
+              title="No documents shared yet"
+              description={sharedDocuments.emptyStateMessage}
             />
           )}
         </DetailPanel>

@@ -100,6 +100,18 @@ Recent completed layers:
   automation, notifications, FieldTrail exposure, Proof Center exposure,
   internal communication details, service requests, provider delivery timeline
   details, or closeout package downloads.
+- Portal Maturity Phase 4 adds a read-only Shared Documents section to the
+  portal Project Workspace. The new helper derives customer-safe document rows
+  from existing shared estimates, contracts, invoices, and change orders, links
+  to existing portal review routes, and adds `Print / Save PDF` links only for
+  existing portal estimate, contract, and invoice print routes. This remains
+  customer-safe visibility and does not add portal-only records, loader
+  permission widening, route changes, schema, migrations, server actions,
+  portal grant behavior, auth/RLS, tenant logic, storage, stored PDFs, provider
+  sending, Send Trail events, payment/signature behavior, estimate math,
+  invoice math, AI, automation, notifications, FieldTrail exposure, Proof
+  Center exposure, service requests, provider delivery timeline details, or
+  closeout package downloads.
 - Reports Phase 1 on `/reports` for read-only operations and collections
   visibility.
 - Send Trail Phase 1 on estimate, contract, and invoice source workspaces for
