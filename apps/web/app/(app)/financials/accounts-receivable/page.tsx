@@ -120,6 +120,12 @@ export default async function AccountsReceivablePage() {
               Back to Financials Home
             </Link>
             <Link
+              href="/financials/accounting-readiness"
+              className="inline-flex items-center rounded-[4px] border border-[#d6d6d6] bg-white px-3 py-2 text-sm font-medium text-[#334155] transition hover:bg-slate-50"
+            >
+              Accounting readiness
+            </Link>
+            <Link
               href="/invoices?status=open"
               className="inline-flex items-center rounded-[4px] border border-[#171717] bg-[#171717] px-3 py-2 text-sm font-medium text-white transition hover:bg-[#2a2a2a]"
             >

@@ -142,6 +142,12 @@ Recent completed layers:
   schema, migrations, server actions, invoice/payment math changes, payment
   finalization changes, auth/RLS changes, tenant logic changes, portal grants,
   settings, or platform-admin behavior.
+- Accounting Export Prep Phase 1 adds in-browser Copy CSV / Download CSV
+  affordances to `/financials/accounting-readiness` using the already loaded
+  Accounting Readiness invoice/payment rows. The export is spreadsheet-ready
+  review output only: no new route, server action, stored file, export audit
+  event, provider integration, accounting sync, ledger, invoice/payment copy, or
+  source financial mutation.
 - Reports Phase 1 on `/reports` for read-only operations and collections
   visibility.
 - Send Trail Phase 1 on estimate, contract, and invoice source workspaces for

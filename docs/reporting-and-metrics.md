@@ -7,7 +7,7 @@ This document defines FloorConnector's canonical reporting and metrics philosoph
 
 For implemented truth, use [docs/current-state.md](C:/FloorConnector/docs/current-state.md). For the future Intelligence Layer, use [docs/intelligence-layer.md](C:/FloorConnector/docs/intelligence-layer.md).
 
-Implemented note: Reporting Phase 1 now exists on `/reports` as a read-only operations and collections visibility workspace over existing source records. Financial Control Phase 1 now deepens `/financials` and `/financials/accounts-receivable` with read-only collections/payment attention and Next Move routing over existing invoices, payments, and payment events. Accounting Readiness Phase 1 now adds `/financials/accounting-readiness` as read-only export and reconciliation prep over existing invoices, payments, payment events, customers, projects, invoice tax reporting entries, and retainage snapshots. These do not change the broader planned reporting doctrine in this document; deeper analytics, file exports, profitability, forecasting, benchmarks, accounting sync, reconciliation posting, and intelligence remain future work unless separately implemented and recorded in `docs/current-state.md`.
+Implemented note: Reporting Phase 1 now exists on `/reports` as a read-only operations and collections visibility workspace over existing source records. Financial Control Phase 1 now deepens `/financials` and `/financials/accounts-receivable` with read-only collections/payment attention and Next Move routing over existing invoices, payments, and payment events. Accounting Readiness Phase 1 now adds `/financials/accounting-readiness` as read-only export and reconciliation prep over existing invoices, payments, payment events, customers, projects, invoice tax reporting entries, and retainage snapshots. Accounting Export Prep Phase 1 adds in-browser Copy CSV / Download CSV review output from the already loaded Accounting Readiness rows. These do not change the broader planned reporting doctrine in this document; deeper analytics, report-wide file exports, profitability, forecasting, benchmarks, accounting sync, reconciliation posting, and intelligence remain future work unless separately implemented and recorded in `docs/current-state.md`.
 
 Related documents:
 
@@ -82,6 +82,11 @@ Implemented Financial Control is currently a read-only collections and payment
 attention layer. It routes owners to invoice, project, AR, and Payment Trail
 surfaces; it does not post reconciliation, change payment behavior, or create a
 ledger.
+
+Implemented Accounting Export Prep is currently limited to in-browser CSV copy
+and download output from already loaded Accounting Readiness rows. It does not
+store files, create export audit events, add provider sync, post accounting
+entries, or change invoice/payment records.
 
 Future financial reporting may include:
 

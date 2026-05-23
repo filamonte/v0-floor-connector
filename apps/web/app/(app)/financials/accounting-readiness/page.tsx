@@ -1,8 +1,13 @@
 import Link from "next/link";
 
+import { AccountingExportActions } from "@/components/accounting-export-actions";
 import { AppEmptyState } from "@/components/app-empty-state";
 import { ContractorWorkspacePage } from "@/components/contractor-workspace-page";
 import { requireAuthenticatedUser } from "@/lib/auth/session";
+import {
+  accountingExportColumns,
+  buildAccountingExportCsv
+} from "@/lib/financials/accounting-export";
 import { getAccountingReadinessReadModel } from "@/lib/financials/accounting-readiness-read-model";
 import { getActiveOrganizationContext } from "@/lib/organizations/active-context";
 
@@ -62,6 +67,11 @@ export default async function AccountingReadinessPage() {
     organizationId: organizationContext.organization.id,
     todayIso
   });
+  const accountingExportCsv = buildAccountingExportCsv({
+    invoices: readiness.invoiceRows,
+    payments: readiness.paymentRows
+  });
+  const exportFilename = `floorconnector-accounting-readiness-${todayIso}.csv`;
 
   return (
     <ContractorWorkspacePage
@@ -354,15 +364,23 @@ export default async function AccountingReadinessPage() {
                   Export-ready columns
                 </p>
                 <h3 className="mt-2 text-xl font-semibold tracking-tight text-[#171717]">
-                  Column map
+                  Copy or download CSV
                 </h3>
                 <p className="mt-1 text-sm leading-6 text-slate-500">
-                  Phase 1 exposes consistent review columns. File generation
-                  stays a follow-up.
+                  Export prep uses the rows already loaded on this page. It does
+                  not sync accounting software, store a file, or change invoice
+                  and payment status.
                 </p>
               </div>
+              <div className="border-b border-[#e5e5e5] px-5 py-4">
+                <AccountingExportActions
+                  csvContent={accountingExportCsv}
+                  filename={exportFilename}
+                  disabled={readiness.invoiceRows.length === 0}
+                />
+              </div>
               <div className="grid grid-cols-1 gap-px bg-[#e5e5e5] sm:grid-cols-2">
-                {readiness.exportColumns.map((column) => (
+                {accountingExportColumns.map((column) => (
                   <div key={column} className="bg-white px-4 py-2 text-sm">
                     {column}
                   </div>
