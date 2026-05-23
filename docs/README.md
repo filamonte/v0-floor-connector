@@ -81,6 +81,7 @@ Document roles:
 - `docs/design/company-documents-migration-readiness-audit.md`: docs-only Supabase migration/RLS readiness audit for future `company_documents`, including migration pattern inventory, access decisions, risks, and an implementation prompt
 - `docs/demo/operating-core-demo-path.md`: route-based operating-core demo and readiness walkthrough over real database-backed records after the recent project, portal, service, financial, accounting, print/export, and field-execution expansion
 - `docs/demo/staging-demo-data-plan.md`: safe staging/demo data readiness plan defining the canonical demo dataset, existing local fixture coverage, gaps, recommended hybrid owner/manual plus future seed strategy, and the local-only `pnpm demo:data:inventory` dry-run command
+- `docs/demo/staging-demo-seed-script-spec.md`: dry-run specification for the future owner-approved staging demo seed script, including required explicit inputs, safety checks, idempotency, record order, provider/portal boundaries, route discovery validation, and the next dry-run implementation prompt
 - `docs/design/sendtrail-phase-1-document-delivery-proof-visibility.md`: implementation note for the first Send Trail document delivery proof visibility pass over existing document delivery, signature, payment, portal view, and communication evidence
 - `docs/design/operating-core-checkpoint.md`: post Trail Systems checkpoint for current-state, roadmap, workflow, language, validation, and next-build recommendation after the operating-core expansion
 - `docs/design/document-engine-phase-1-pdf-export-foundations.md`: implementation note for the first shared Document Engine print/save PDF foundation over existing estimate, contract, and invoice source records
@@ -98,6 +99,7 @@ Document roles:
 - `docs/staging-deployment-readiness-audit.md`: deployment-readiness audit for staging/demo command inventory, env variable checklist, Supabase/auth/provider risks, operating-core demo checklist, and owner actions before a controlled external demo
 - `docs/staging-owner-runbook.md`: owner-facing staging runbook for Vercel ownership, env names, Supabase Auth callbacks, migration/RLS checks, provider posture, demo data, hold points, and `pnpm staging:preflight`
 - `docs/demo/staging-demo-data-plan.md`: demo-data readiness plan for the minimum coherent operating-core dataset and future tenant-scoped staging seed-script boundary
+- `docs/demo/staging-demo-seed-script-spec.md`: documentation-only blueprint for the future staging demo seed script; no data writes or script implementation are included
 - `docs/operating-core-validation-checklist.md`: focused validation inventory for recent operating-core summary helpers, routes, and browser QA caveats
 - `docs/design/project-workspace-lifecycle-qa.md`: lifecycle QA note for the Project Workspace operating loop after CrewBoard, FieldTrail, MessageCenter, ProjectPulse, and CloseoutTrail
 - `docs/enterprise-ui-system-audit.md`: secured-app route audit, Phase 1-4 polish history, drift watch list, and authenticated visual QA rules

@@ -319,7 +319,19 @@ The script prints the required demo record checklist, fixture/script path
 availability, repository counts, and an owner-action reminder. It does not read
 `.env.local`, connect to Supabase, call providers, or write files/data.
 
-## 11. What Was Intentionally Not Changed
+## 11. Seed Script Specification
+
+The future seed script design is specified in
+[docs/demo/staging-demo-seed-script-spec.md](C:/FloorConnector/docs/demo/staging-demo-seed-script-spec.md).
+That spec is documentation only. It defines required inputs, dry-run behavior,
+safety checks, idempotency, record order, provider/portal boundaries, route
+validation, and the next implementation prompt for a future dry-run script.
+
+It does not authorize staging writes, remote Supabase commands, migrations,
+provider actions, payment/signature mutation, portal invite-token exposure, or
+auth/RLS/tenant/settings/platform-admin changes.
+
+## 12. What Was Intentionally Not Changed
 
 - app behavior
 - schema

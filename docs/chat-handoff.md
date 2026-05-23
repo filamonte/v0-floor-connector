@@ -271,6 +271,16 @@ Recent completed layers:
   checklist and fixture-path availability only; it does not read `.env.local`,
   connect to Supabase, call providers, mutate remote data, print secrets, or
   create fake production records.
+- Staging Demo Seed Script Spec adds
+  [docs/demo/staging-demo-seed-script-spec.md](C:/FloorConnector/docs/demo/staging-demo-seed-script-spec.md)
+  as the future implementation blueprint for `scripts/seed-staging-demo-data.mjs`.
+  It specifies required explicit IDs/emails, production/provider safety checks,
+  dry-run-default behavior, idempotency, canonical record creation order,
+  provider and portal no-token rules, route discovery validation, and the next
+  dry-run-only implementation prompt. It is documentation/specification only:
+  no seed script, package script, schema, migration, remote data, provider,
+  payment, signature, auth/RLS, tenant, portal, settings, or platform-admin
+  behavior changed.
 
 These layers are read-only summaries, source-record handoffs, copy/hierarchy
 improvements, or existing-action presentation around canonical records. They did

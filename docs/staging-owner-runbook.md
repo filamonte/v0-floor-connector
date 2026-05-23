@@ -57,6 +57,13 @@ minimum coherent canonical dataset, the existing local fixture patterns, and
 the required no-provider/no-secret/no-token safety boundaries for any future
 seed script.
 
+The dry-run design for that future seed script now lives in
+[docs/demo/staging-demo-seed-script-spec.md](C:/FloorConnector/docs/demo/staging-demo-seed-script-spec.md).
+Seed scripting remains future and owner-approved. The spec does not authorize
+remote data writes, Supabase writes, migrations, provider actions, real
+payments, signature mutation, portal invite-token exposure, or auth/RLS/tenant
+logic changes.
+
 Codex should not create these resources or mutate these settings unless the
 owner explicitly authorizes a specific action in a later task.
 
