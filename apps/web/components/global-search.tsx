@@ -267,12 +267,12 @@ export function GlobalSearch({
                       Global search
                     </p>
                     <h2 className="mt-2 text-lg font-semibold text-[var(--text-primary)]">
-                      Find canonical records from one shared entry point
+                      Find company records from one shared entry point
                     </h2>
                     <p className="mt-2 text-sm leading-6 text-[var(--text-secondary)]">
-                      Search across opportunities, customers, projects,
-                      appointments, estimates, contracts, invoices, jobs,
-                      payments, workforce people, and vendors.
+                      Search across leads, customers, projects, appointments,
+                      estimates, contracts, invoices, jobs, payments, workforce
+                      people, and vendors.
                     </p>
                   </div>
                   <div className="flex flex-wrap gap-2">

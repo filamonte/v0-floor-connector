@@ -50,6 +50,8 @@ Run focused tests when touching the matching helper or route:
   `pnpm.cmd --filter @floorconnector/web exec tsx --test apps/web/lib/document-engine/print.test.ts`
 - Schedule read model:
   `pnpm.cmd --filter @floorconnector/web exec tsx --test apps/web/lib/schedule/read-model.test.ts`
+- Global Search helpers:
+  `pnpm.cmd --filter @floorconnector/web exec tsx --test lib/global-search/search-helpers.test.ts`
 
 ## Manual Route Checks
 

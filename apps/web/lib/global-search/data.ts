@@ -3,6 +3,14 @@ import "server-only";
 import { requireAuthenticatedUser } from "@/lib/auth/session";
 import { getActiveOrganizationContext } from "@/lib/organizations/active-context";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
+import {
+  buildDateEqualityPredicates,
+  buildEnumEqualityPredicates,
+  buildIlikePredicates,
+  buildSearchText,
+  labelize,
+  normalizeText
+} from "@/lib/global-search/search-helpers";
 
 export type GlobalSearchGroupKey =
   | "opportunity"
@@ -213,36 +221,61 @@ const perGroupLimit = 5;
 const perEntityCandidateLimit = 50;
 const relatedCandidateLimit = 50;
 
-function normalizeText(value: string | null | undefined) {
-  return value?.trim().toLowerCase() ?? "";
-}
-
-function buildSearchText(...parts: Array<string | null | undefined>) {
-  return parts.filter(Boolean).join(" ");
-}
-
-function escapeLikePattern(value: string) {
-  return value
-    .replaceAll("\\", "\\\\")
-    .replaceAll("%", "\\%")
-    .replaceAll("_", "\\_");
-}
-
-function getSearchVariants(query: string) {
-  const underscoredQuery = query.replace(/\s+/g, "_");
-
-  return Array.from(new Set([query, underscoredQuery]))
-    .map((value) => value.trim())
-    .filter(Boolean);
-}
-
-function buildIlikePredicates(columns: string[], query: string) {
-  return getSearchVariants(query).flatMap((variant) => {
-    const escapedQuery = escapeLikePattern(variant);
-
-    return columns.map((column) => `${column}.ilike.%${escapedQuery}%`);
-  });
-}
+const opportunityStatuses = [
+  "new",
+  "contacted",
+  "qualified",
+  "site_assessment_scheduled",
+  "site_assessment_complete",
+  "estimating",
+  "proposal_sent",
+  "won",
+  "lost",
+  "converted"
+] as const;
+const projectStatuses = [
+  "lead",
+  "estimating",
+  "approved",
+  "scheduled",
+  "in_progress",
+  "completed"
+] as const;
+const appointmentTypes = [
+  "site_visit",
+  "customer_meeting",
+  "estimate_appointment",
+  "follow_up",
+  "internal"
+] as const;
+const appointmentStatuses = [
+  "scheduled",
+  "completed",
+  "canceled",
+  "no_show"
+] as const;
+const estimateStatuses = ["draft", "sent", "approved", "rejected"] as const;
+const contractStatuses = ["draft", "sent", "viewed", "signed", "void"] as const;
+const invoiceStatuses = [
+  "draft",
+  "sent",
+  "partially_paid",
+  "paid",
+  "void"
+] as const;
+const jobStatuses = [
+  "unscheduled",
+  "scheduled",
+  "in_progress",
+  "completed"
+] as const;
+const punchlistStatuses = [
+  "open",
+  "in_progress",
+  "resolved",
+  "closed"
+] as const;
+const vendorTypes = ["subcontractor", "supplier", "other"] as const;
 
 function buildInPredicate(column: string, values: string[]) {
   return values.length > 0 ? [`${column}.in.(${values.join(",")})`] : [];
@@ -288,6 +321,17 @@ async function findRelatedIdsForSearch(input: {
     : [];
 }
 
+async function safeFindRelatedIdsForSearch(
+  input: Parameters<typeof findRelatedIdsForSearch>[0]
+) {
+  try {
+    return await findRelatedIdsForSearch(input);
+  } catch (error) {
+    console.warn(error);
+    return [];
+  }
+}
+
 function firstRelated<T>(value: T | T[] | null | undefined): T | null {
   if (Array.isArray(value)) {
     return value[0] ?? null;
@@ -318,10 +362,6 @@ function formatDate(value: string | null | undefined) {
     day: "numeric",
     year: "numeric"
   }).format(new Date(value));
-}
-
-function labelize(value: string) {
-  return value.replaceAll("_", " ");
 }
 
 function scoreMatch({
@@ -407,7 +447,7 @@ export async function searchGlobalRecords(rawQuery: string) {
     matchingPersonIds,
     matchingEstimateIds
   ] = await Promise.all([
-    findRelatedIdsForSearch({
+    safeFindRelatedIdsForSearch({
       table: "customers",
       organizationId,
       query,
@@ -420,13 +460,13 @@ export async function searchGlobalRecords(rawQuery: string) {
         "state_region"
       ]
     }),
-    findRelatedIdsForSearch({
+    safeFindRelatedIdsForSearch({
       table: "projects",
       organizationId,
       query,
-      columns: ["name", "status"]
+      columns: ["name"]
     }),
-    findRelatedIdsForSearch({
+    safeFindRelatedIdsForSearch({
       table: "opportunities",
       organizationId,
       query,
@@ -435,17 +475,16 @@ export async function searchGlobalRecords(rawQuery: string) {
         "prospect_name",
         "prospect_company_name",
         "email",
-        "phone",
-        "status"
+        "phone"
       ]
     }),
-    findRelatedIdsForSearch({
+    safeFindRelatedIdsForSearch({
       table: "vendors",
       organizationId,
       query,
-      columns: ["name", "vendor_type", "primary_contact_name", "email", "phone"]
+      columns: ["name", "primary_contact_name", "email", "phone"]
     }),
-    findRelatedIdsForSearch({
+    safeFindRelatedIdsForSearch({
       table: "people",
       organizationId,
       query,
@@ -459,26 +498,20 @@ export async function searchGlobalRecords(rawQuery: string) {
         "trade"
       ]
     }),
-    findRelatedIdsForSearch({
+    safeFindRelatedIdsForSearch({
       table: "estimates",
       organizationId,
       query,
-      columns: ["reference_number", "status"]
+      columns: ["reference_number"]
     })
   ]);
 
   const opportunityPredicates = [
     ...buildIlikePredicates(
-      [
-        "title",
-        "prospect_name",
-        "prospect_company_name",
-        "email",
-        "phone",
-        "status"
-      ],
+      ["title", "prospect_name", "prospect_company_name", "email", "phone"],
       query
     ),
+    ...buildEnumEqualityPredicates("status", opportunityStatuses, query),
     ...buildInPredicate("customer_id", matchingCustomerIds),
     ...buildInPredicate("project_id", matchingProjectIds)
   ];
@@ -487,44 +520,51 @@ export async function searchGlobalRecords(rawQuery: string) {
     query
   );
   const projectPredicates = [
-    ...buildIlikePredicates(["name", "status"], query),
+    ...buildIlikePredicates(["name"], query),
+    ...buildEnumEqualityPredicates("status", projectStatuses, query),
     ...buildInPredicate("customer_id", matchingCustomerIds)
   ];
   const appointmentPredicates = [
-    ...buildIlikePredicates(
-      ["title", "appointment_type", "location", "status"],
-      query
-    ),
+    ...buildIlikePredicates(["title", "location"], query),
+    ...buildEnumEqualityPredicates("appointment_type", appointmentTypes, query),
+    ...buildEnumEqualityPredicates("status", appointmentStatuses, query),
     ...buildInPredicate("opportunity_id", matchingOpportunityIds),
     ...buildInPredicate("customer_id", matchingCustomerIds),
     ...buildInPredicate("project_id", matchingProjectIds),
     ...buildInPredicate("assigned_person_id", matchingPersonIds)
   ];
   const estimatePredicates = [
-    ...buildIlikePredicates(["reference_number", "status"], query),
+    ...buildIlikePredicates(["reference_number"], query),
+    ...buildEnumEqualityPredicates("status", estimateStatuses, query),
     ...buildInPredicate("customer_id", matchingCustomerIds),
     ...buildInPredicate("project_id", matchingProjectIds)
   ];
   const contractPredicates = [
-    ...buildIlikePredicates(["title", "status"], query),
+    ...buildIlikePredicates(["title"], query),
+    ...buildEnumEqualityPredicates("status", contractStatuses, query),
     ...buildInPredicate("customer_id", matchingCustomerIds),
     ...buildInPredicate("project_id", matchingProjectIds),
     ...buildInPredicate("estimate_id", matchingEstimateIds)
   ];
   const invoicePredicates = [
-    ...buildIlikePredicates(["reference_number", "status", "due_date"], query),
+    ...buildIlikePredicates(["reference_number"], query),
+    ...buildEnumEqualityPredicates("status", invoiceStatuses, query),
+    ...buildDateEqualityPredicates("due_date", query),
     ...buildInPredicate("customer_id", matchingCustomerIds),
     ...buildInPredicate("project_id", matchingProjectIds),
     ...buildInPredicate("estimate_id", matchingEstimateIds)
   ];
   const jobPredicates = [
-    ...buildIlikePredicates(["dispatch_status", "scheduled_date"], query),
+    ...buildEnumEqualityPredicates("dispatch_status", jobStatuses, query),
+    ...buildDateEqualityPredicates("scheduled_date", query),
     ...buildInPredicate("customer_id", matchingCustomerIds),
     ...buildInPredicate("project_id", matchingProjectIds),
     ...buildInPredicate("estimate_id", matchingEstimateIds)
   ];
   const punchlistPredicates = [
-    ...buildIlikePredicates(["title", "details", "status", "due_date"], query),
+    ...buildIlikePredicates(["title", "details"], query),
+    ...buildEnumEqualityPredicates("status", punchlistStatuses, query),
+    ...buildDateEqualityPredicates("due_date", query),
     ...buildInPredicate("project_id", matchingProjectIds),
     ...buildInPredicate("assignee_person_id", matchingPersonIds)
   ];
@@ -545,9 +585,9 @@ export async function searchGlobalRecords(rawQuery: string) {
     ...buildInPredicate("vendor_id", matchingVendorIds)
   ];
   const vendorPredicates = buildIlikePredicates(
-    ["name", "vendor_type", "primary_contact_name", "email", "phone"],
+    ["name", "primary_contact_name", "email", "phone"],
     query
-  );
+  ).concat(buildEnumEqualityPredicates("vendor_type", vendorTypes, query));
 
   const [
     opportunitiesResponse,
@@ -709,7 +749,7 @@ export async function searchGlobalRecords(rawQuery: string) {
   ];
   const failedResponse = responses.find((response) => response.error);
 
-  if (failedResponse?.error) {
+  if (failedResponse?.error && responses.every((response) => response.error)) {
     throw new Error(
       `Unable to search contractor records: ${failedResponse.error.message}`
     );

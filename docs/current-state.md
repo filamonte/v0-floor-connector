@@ -638,6 +638,8 @@ Current shell behavior:
   - rendered in the shared contractor shell footer instead of the top header
 - tenant-safe search across canonical opportunities, customers, projects, appointments, estimates, contracts, invoices, jobs, punchlist items, payments, people, and vendors
   - grouped result sets that route straight into the existing Record Workspaces or linked Invoice Workspace for payment activity
+  - status-like search terms are handled without pattern matching enum/status
+    columns, and exact date terms use equality rather than `ilike`
 - a first real contractor-side notifications layer now exists in the shared shell and dashboard:
   - derived from canonical jobs, invoices, contracts, appointments, punchlists, progress billing, estimate customer activity, and communication activity
   - backed by stored `notification_events`, per-user `notifications`, and channel-aware `notification_deliveries`

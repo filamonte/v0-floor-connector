@@ -208,6 +208,13 @@ Recent completed layers:
   authenticated index-page discovery, a duplicate React key warning in manager
   dashboard cards was fixed, and broader protected browser QA remains blocked
   until Supabase Auth rate limits cool down.
+- Global Search Hardening records the follow-up QA pass in
+  [docs/design/global-search-hardening.md](C:/FloorConnector/docs/design/global-search-hardening.md).
+  Global search now keeps text `.ilike()` predicates on text fields only,
+  handles status-like fields through equality predicates against known values,
+  avoids date pattern matching, and has focused pure helper coverage. The pass
+  preserved shell-level tenant scoping, existing categories, and existing result
+  route links.
 
 These layers are read-only summaries, source-record handoffs, copy/hierarchy
 improvements, or existing-action presentation around canonical records. They did
