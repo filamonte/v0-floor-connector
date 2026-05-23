@@ -4,7 +4,8 @@ Status: Active
 Doc Type: Operational
 
 This is a compact handoff for future Codex sessions. It is not a competing
-source of truth.
+source of truth. Use it to orient quickly, then verify implementation truth in
+`docs/current-state.md`.
 
 ## Required First Reads
 
@@ -16,317 +17,109 @@ Read these before implementation or documentation work:
 - [docs/system-overview.md](C:/FloorConnector/docs/system-overview.md)
 - [docs/Roadmap.md](C:/FloorConnector/docs/Roadmap.md)
 - [docs/product-language.md](C:/FloorConnector/docs/product-language.md)
-- [docs/graphite-copper-ui-system.md](C:/FloorConnector/docs/graphite-copper-ui-system.md)
+- [docs/README.md](C:/FloorConnector/docs/README.md)
 - [docs/local-auth-qa-recovery.md](C:/FloorConnector/docs/local-auth-qa-recovery.md)
 
-## Current Branch Reality
+## Current Operating Core Snapshot
 
 FloorConnector is a production-first SaaS operating system for specialty
-flooring contractors. It is built around one connected workflow:
+flooring contractors. The canonical lifecycle remains:
 
 `opportunity -> customer -> project -> estimate -> contract -> change order -> job -> invoice -> payment`
 
-The current branch has a real operating foundation: auth, tenancy,
-opportunities/leads, customers, projects, estimates, contracts, change orders,
-jobs, invoices, payments, portal foundations, workforce/time/field foundations,
-settings, super admin, and normalized contractor UI patterns.
+The current branch has real Supabase-backed auth, tenancy, opportunities,
+customers, projects, estimates, contracts, change orders, jobs, invoices,
+payments, portal access, workforce/time/field foundations, settings,
+super-admin foundations, and normalized contractor UI patterns.
 
-Latest remote-verified implementation/test commit before Portal Maturity Phase 2:
+Current operating-core surfaces include:
 
-`599d3878 chore: checkpoint Portal Customer Next Step QA`
+- Command Center dashboard with source-record attention groups and deterministic
+  next moves.
+- Project Workspace as the main continuity hub with ProjectPulse, FieldTrail,
+  MessageCenter, CloseoutTrail, Proof Center, Send Trail context,
+  service/warranty continuity, customer access, and closeout package handoff.
+- CrewBoard on `/schedule` over canonical jobs, appointments, job assignments,
+  people, vendors, projects, and customers.
+- Portal Customer Window with Customer Next Step, Project Status Window,
+  Project Timeline, Shared Documents, and existing portal review/print routes.
+- Reports, Financial Control, Accounting Readiness, and Accounting Export Prep
+  as read-only review/export-prep surfaces over source financial and
+  operational records.
+- Document Engine print/save routes for source-record exports, including the
+  contractor-side project closeout package route.
+- Service Center and warranty document foundations tied to customer, project,
+  job, proof, and warranty context.
+- Global search hardening for tenant-scoped canonical records.
 
-`git push origin main` pushed the Portal Customer Next Step QA checkpoint from
-local `main` to `origin/main`, and the branch then showed `main...origin/main`
-before the Portal Maturity Phase 2 implementation pass.
+These layers are summaries, source-record handoffs, copy/hierarchy
+improvements, or existing-action presentation around canonical records. They do
+not create duplicate models or change core workflow behavior.
 
-## Latest Operating Core
+## Staging And Demo Status
 
-Recent completed layers:
+Recent staging/demo work is docs-first and no-write:
 
-- CrewBoard Phase 1/2 on `/schedule` for job-centered scheduling visibility,
-  date/layout context, selected-job handoff, and advisory schedule warnings.
-- FieldTrail Phase 1 on Project Workspace and Job Workspace for execution
-  history over Daily Job Logs, Job Notes, execution attachments, time cards,
-  and jobs.
-- Mobile Field Phase 1 improves Daily Job Log capture for phone-sized field
-  work using existing Daily Logs, Job Notes, Job Workspace, CrewBoard, and
-  FieldTrail fast paths.
-- [docs/design/mobile-field-phase-1-qa-checkpoint.md](C:/FloorConnector/docs/design/mobile-field-phase-1-qa-checkpoint.md)
-  records the focused Mobile Field QA evidence, including Daily Logs and
-  CrewBoard mobile route checks plus skipped protected detail route discovery.
-- MessageCenter Phase 1 on Project Workspace for project communication,
-  Send Trail, Signature Trail, Payment Trail, and Customer Access context.
-- ProjectPulse Phase 1 on Project Workspace for deterministic project health
-  and Next Move summary.
-- CloseoutTrail Phase 1 on Project Workspace for closeout readiness and proof
-  summary.
-- Proof Center Phase 1 on Project Workspace for project document/evidence/proof
-  indexing.
-- Warranty Service Phase 1 adds a shared Service Center summary/Next Move layer
-  across existing service tickets, warranty documents, service jobs, project
-  proof context, and closeout handoff without adding service records, portal
-  service requests, claim automation, or provider behavior.
-- Service Center QA checkpoint and Portal Maturity Phase 1 added docs for the
-  warranty/service QA review and customer portal maturity audit. The portal
-  Project Workspace now uses a pure Customer Next Step helper over existing
-  portal records to route customers toward a sent estimate, in-motion contract,
-  sent change order, open invoice, or no-action status without changing portal
-  access, auth, RLS, tenant logic, server actions, payments, signatures, or
-  math.
-- [docs/design/portal-customer-next-step-qa-checkpoint.md](C:/FloorConnector/docs/design/portal-customer-next-step-qa-checkpoint.md)
-  records the focused Portal Customer Next Step QA evidence, including helper
-  priority tests, nearby portal visibility tests, saved-session browser checks,
-  and the preserved portal access/loader boundary.
-- Portal Maturity Phase 2 adds a read-only Project Status Window to the portal
-  Project Workspace. The new helper derives project status, shared-record rows,
-  attention items, completed items, and no-action-needed states from existing
-  portal project estimates, contracts, invoices, change orders, and the
-  Customer Next Step helper. Portal home now shows a simple `What matters now`
-  line per project using existing list fields only. This remains customer-safe
-  visibility and does not add portal-only records, loader permission widening,
-  route changes, schema, migrations, server actions, portal grant behavior,
-  auth/RLS, tenant logic, payment/signature behavior, estimate math, invoice
-  math, AI, automation, notifications, FieldTrail exposure, Proof Center
-  exposure, service requests, or closeout package downloads.
-- Portal Maturity Phase 3 adds a read-only Project Timeline to the portal
-  Project Workspace. The new helper derives customer-safe timeline items from
-  existing project summary, shared estimates, contracts, invoices, change
-  orders, customer-visible appointments, and portal-visible warranty documents.
-  The timeline marks customer-facing actions as `Waiting on you` and links only
-  to existing portal review routes. This remains customer-safe visibility and
-  does not add portal-only records, loader permission widening, route changes,
-  schema, migrations, server actions, portal grant behavior, auth/RLS, tenant
-  logic, payment/signature behavior, estimate math, invoice math, AI,
-  automation, notifications, FieldTrail exposure, Proof Center exposure,
-  internal communication details, service requests, provider delivery timeline
-  details, or closeout package downloads.
-- Portal Maturity Phase 4 adds a read-only Shared Documents section to the
-  portal Project Workspace. The new helper derives customer-safe document rows
-  from existing shared estimates, contracts, invoices, and change orders, links
-  to existing portal review routes, and adds `Print / Save PDF` links only for
-  existing portal estimate, contract, and invoice print routes. This remains
-  customer-safe visibility and does not add portal-only records, loader
-  permission widening, route changes, schema, migrations, server actions,
-  portal grant behavior, auth/RLS, tenant logic, storage, stored PDFs, provider
-  sending, Send Trail events, payment/signature behavior, estimate math,
-  invoice math, AI, automation, notifications, FieldTrail exposure, Proof
-  Center exposure, service requests, provider delivery timeline details, or
-  closeout package downloads.
-- The Portal Maturity Phase 4 QA checkpoint confirms the portal Project
-  Workspace now reads as a coherent Customer Project Window: Customer Next Step
-  first, then Project Status, Project Timeline, Shared Documents, and existing
-  shared commercial records. The pass only aligned small portal-home labels to
-  `Your next step` / `Project to review` language and documented that a portal
-  home shared-document count remains deferred until the home loader is
-  explicitly allowed to expose safe per-project counts.
-- Financial Control Phase 1 improves `/financials` and
-  `/financials/accounts-receivable` with a pure collections/payment-attention
-  helper over existing invoices, payments, payment events, customers, and
-  projects. The Financials Home now shows open receivables, overdue amount,
-  pending payment count, payment attention, project collection attention,
-  invoice attention, and a deterministic owner Next Move. AR now shows
-  invoice-level Next Move labels, project links, project collection attention,
-  and Payment Trail attention. This remains read-only visibility/navigation and
-  does not change payment processing, Stripe/webhook behavior, invoice math,
-  payment finalization, accounting sync, provider sends, schema, migrations,
-  routes, server actions, auth/RLS, tenant logic, portal grants, settings, or
-  platform-admin behavior.
-- Accounting Readiness Phase 1 adds `/financials/accounting-readiness` as a
-  read-only export and reconciliation prep surface over existing invoices,
-  payments, payment events, customers, projects, invoice tax reporting entries,
-  and invoice retainage snapshots. The page surfaces accounting review rows,
-  payment review rows, reconciliation attention, tax/retainage snapshot totals,
-  and export-ready column mapping, with links back to source Invoice, Customer,
-  Project, Financials, AR, and Reports surfaces. It does not add QuickBooks/Xero
-  sync, ledgers, journal entries, export files, provider reconciliation posting,
-  schema, migrations, server actions, invoice/payment math changes, payment
-  finalization changes, auth/RLS changes, tenant logic changes, portal grants,
-  settings, or platform-admin behavior.
-- Accounting Export Prep Phase 1 adds in-browser Copy CSV / Download CSV
-  affordances to `/financials/accounting-readiness` using the already loaded
-  Accounting Readiness invoice/payment rows. The export is spreadsheet-ready
-  review output only: no new route, server action, stored file, export audit
-  event, provider integration, accounting sync, ledger, invoice/payment copy, or
-  source financial mutation.
-- Accounting Export Prep QA hardens the CSV experience with pure filename and
-  export metadata helpers, row/column count copy, accessible Copy CSV and
-  Download CSV labels, disabled-state feedback, and explicit review-only export
-  notice text. Protected browser QA remains blocked until local contractor auth
-  state is refreshed.
-- Business Documents Phase 1 was evaluated as a plan-only Company Document
-  Library foundation. Current `document_templates` support estimate, invoice,
-  contract, and warranty templates only, while `warranty_documents` are tied to
-  project/customer/job/service-ticket context. The safe decision is not to
-  overload those models or add schema casually; the recommended next slice is an
-  explicit `company_documents` model and `/settings/company-documents` surface
-  after category/status/access rules are approved.
-- Company Documents Schema Readiness confirms the future build should start
-  with an explicit `company_documents` table, contractor-only RLS, and a
-  `/settings/company-documents` Company Controls surface. The audit keeps
-  `document_templates`, `warranty_documents`, `execution_attachments`,
-  `compliance_records`, portal access, Document Engine, Proof Center, Send
-  Trail, Service Center, and storage boundaries separate until explicit later
-  associations are approved.
-- Company Documents Migration Readiness confirms the future migration should
-  follow the repo's timestamped SQL pattern, use text check constraints for
-  early taxonomy flexibility, force RLS, allow active members to view, gate
-  create/update to owner/admin/manager, omit delete and portal policies in
-  Phase 1A, and defer storage, starter adoption, version tables,
-  acknowledgements, e-sign, provider sends, and AI drafting.
-- Operating Core Demo Readiness adds
-  [docs/demo/operating-core-demo-path.md](C:/FloorConnector/docs/demo/operating-core-demo-path.md)
-  as the current route-by-route demo script for Command Center, Reports,
-  Project Workspace, CrewBoard, FieldTrail, MessageCenter, CloseoutTrail, Proof
-  Center, Send Trail, Document Engine, Portal Customer Window, Service Center,
-  Financial Control, Accounting Readiness, Accounting Export Prep, and Mobile
-  Daily Job Log capture. It is a docs/QA asset only and uses real
-  database-backed records; it does not add features, routes, schema, fake data,
-  provider behavior, AI, automation, payment/signature changes, portal access
-  changes, accounting sync, or workflow rule changes.
-- Reports Phase 1 on `/reports` for read-only operations and collections
-  visibility.
-- Send Trail Phase 1 on estimate, contract, and invoice source workspaces for
-  existing document delivery proof visibility.
-- Document Engine Phase 1 centralizes existing estimate, contract, and invoice
-  print/save PDF route helpers and clarifies that browser print/save exports are
-  generated artifacts, not delivery proof or a separate document source.
-- Document Engine Phase 2 planning recommends a contractor-side Project
-  Closeout Package HTML/print route first, with portal downloads, stored
-  artifacts, and server-generated PDFs deferred until visibility and versioning
-  policy are explicit.
-- Document Engine Phase 2A implements the contractor-only Project Closeout
-  Package print/save route at `/projects/:id/closeout-package/pdf`, generated
-  from current project source records and summary helpers.
-- Project Workspace browser QA now follows current product language and verifies
-  the closeout package print route from a valid project detail link.
-- [docs/design/document-engine-qa-checkpoint.md](C:/FloorConnector/docs/design/document-engine-qa-checkpoint.md)
-  records the focused print/export QA evidence after Document Engine Phase 1,
-  Phase 2A, and the browser QA maintenance pass.
-- [docs/design/operating-core-runtime-qa-checkpoint.md](C:/FloorConnector/docs/design/operating-core-runtime-qa-checkpoint.md)
-  records the operating-core runtime QA pass: local `main` push completed,
-  focused helper tests passed, stale protected E2E fixed IDs were replaced with
-  authenticated index-page discovery, a duplicate React key warning in manager
-  dashboard cards was fixed, and broader protected browser QA remains blocked
-  until Supabase Auth rate limits cool down.
-- Global Search Hardening records the follow-up QA pass in
-  [docs/design/global-search-hardening.md](C:/FloorConnector/docs/design/global-search-hardening.md).
-  Global search now keeps text `.ilike()` predicates on text fields only,
-  handles status-like fields through equality predicates against known values,
-  avoids date pattern matching, and has focused pure helper coverage. The pass
-  preserved shell-level tenant scoping, existing categories, and existing result
-  route links.
-- Operating Core Demo Smoke records the route-discovery demo-readiness pass in
-  [docs/design/operating-core-demo-smoke-checkpoint.md](C:/FloorConnector/docs/design/operating-core-demo-smoke-checkpoint.md).
-  The pass pushed the Global Search hardening commit to `origin/main`, checked
-  contractor and portal operating-core routes with saved auth and discovered
-  links, verified global search status-like terms, fixed the mobile viewport
-  Playwright test so route discovery happens before the phone-sized assertions,
-  made protected route discovery continue past login-redirected candidate
-  detail links after an authenticated index page has loaded, and updated
-  validation checklist commands to use package-relative helper test paths.
-  Local platform-admin browser verification remains blocked until the saved
-  platform-admin auth state reaches `/super-admin` instead of `/login`.
-- Marketing Demo Refresh Phase 1 records the public homepage operating-core
-  story refresh in
-  [docs/design/marketing-demo-refresh-phase-1.md](C:/FloorConnector/docs/design/marketing-demo-refresh-phase-1.md).
-  The homepage now explains FloorConnector as connected operating software for
-  specialty surface contractors, centers the Project Workspace and operating
-  core layers, names what can be demoed today, and clearly separates later
-  drag/drop dispatch, accounting sync, stored PDFs, customer service requests,
-  customer-facing field evidence, AI, and integrations.
-- Public Demo Readiness QA records the follow-up public/auth/setup handoff
-  check in
-  [docs/design/public-demo-readiness-qa.md](C:/FloorConnector/docs/design/public-demo-readiness-qa.md).
-  The pass verified the marketing refresh was already on `origin/main`, checked
-  homepage/auth/setup route alignment, removed broken `/terms` and `/privacy`
-  signup links, replaced "free" login copy with early-access language, and
-  reduced visible setup terminology drift without changing routes, auth,
-  setup, billing, or product behavior.
-- Staging Deployment Readiness Audit records the controlled staging/demo
-  readiness pass in
-  [docs/staging-deployment-readiness-audit.md](C:/FloorConnector/docs/staging-deployment-readiness-audit.md).
-  The pass verified the public-demo readiness commit was pushed to
-  `origin/main`, inventoried build/validation commands, env var names,
-  Supabase migration readiness, auth/demo prerequisites, public/demo routes,
-  operating-core demo surfaces, staging risks, and owner actions. It did not
-  deploy, change env vars, apply migrations, call providers, create resources,
-  or change app behavior.
-- Staging Preflight Phase 1 adds the local-only
-  `pnpm staging:preflight` command through
-  [scripts/staging-preflight.mjs](C:/FloorConnector/scripts/staging-preflight.mjs)
-  and the owner-facing
-  [docs/staging-owner-runbook.md](C:/FloorConnector/docs/staging-owner-runbook.md).
-  The command checks local repo structure, package scripts, Node/pnpm
-  availability, required docs/files, and `.env.example` variable names only; it
-  does not read `.env.local`, deploy, call Vercel/Supabase/providers, run
-  browser QA, mutate remote state, or print secrets. Optional `--run-checks`
-  runs the web typecheck and lint only.
-- Staging Demo Data Readiness adds
-  [docs/demo/staging-demo-data-plan.md](C:/FloorConnector/docs/demo/staging-demo-data-plan.md)
-  plus the local-only `pnpm demo:data:inventory` command through
-  [scripts/demo-data-inventory.mjs](C:/FloorConnector/scripts/demo-data-inventory.mjs).
-  The plan defines the ideal canonical demo dataset and recommends a hybrid
-  strategy: manual owner-controlled auth/org setup plus a future explicitly
-  approved tenant-scoped seed script. The dry-run inventory script prints
-  checklist and fixture-path availability only; it does not read `.env.local`,
-  connect to Supabase, call providers, mutate remote data, print secrets, or
-  create fake production records.
-- Staging Demo Seed Script Spec adds
-  [docs/demo/staging-demo-seed-script-spec.md](C:/FloorConnector/docs/demo/staging-demo-seed-script-spec.md)
-  as the future implementation blueprint for `scripts/seed-staging-demo-data.mjs`.
-  It specifies required explicit IDs/emails, production/provider safety checks,
-  dry-run-default behavior, idempotency, canonical record creation order,
-  provider and portal no-token rules, route discovery validation, and the next
-  dry-run-only implementation prompt. It is documentation/specification only:
-  no seed script, package script, schema, migration, remote data, provider,
-  payment, signature, auth/RLS, tenant, portal, settings, or platform-admin
-  behavior changed.
+- [docs/demo/operating-core-demo-path.md](C:/FloorConnector/docs/demo/operating-core-demo-path.md)
+  is the current route-based demo path over real database-backed records.
+- [docs/staging-deployment-readiness-audit.md](C:/FloorConnector/docs/staging-deployment-readiness-audit.md)
+  inventories staging build commands, env names, Supabase/auth/provider risks,
+  operating-core demo checks, and owner actions.
+- [docs/staging-owner-runbook.md](C:/FloorConnector/docs/staging-owner-runbook.md)
+  is the owner-controlled staging setup checklist.
+- `pnpm staging:preflight` is local-only and checks repo structure, scripts,
+  key docs/files, Node/pnpm, and `.env.example` variable names. It does not read
+  `.env.local`, deploy, call providers, call Supabase, or mutate remote state.
+- [docs/demo/staging-demo-data-plan.md](C:/FloorConnector/docs/demo/staging-demo-data-plan.md)
+  defines the ideal canonical demo dataset and recommends owner-controlled
+  auth/org setup plus a future dry-run-first seed script.
+- [docs/demo/staging-demo-seed-script-spec.md](C:/FloorConnector/docs/demo/staging-demo-seed-script-spec.md)
+  specifies the future dry-run seed script. It is documentation only: no seed
+  script, package script, schema, migration, remote data, provider, payment,
+  signature, auth/RLS, tenant, portal, settings, or platform-admin behavior was
+  added.
 
-These layers are read-only summaries, source-record handoffs, copy/hierarchy
-improvements, or existing-action presentation around canonical records. They did
-not add schema, migrations, routes, data models, provider integrations, AI,
-automation, notifications, payment/signature behavior, estimate math, invoice
-math, job readiness gates, portal grants, auth/RLS, tenant logic, settings, or
-platform-admin behavior.
+## Guardrails
 
-## What Is Not Built
+- `docs/current-state.md` owns implemented truth.
+- `docs/Roadmap.md`, `docs/vision.md`, `docs/target-ia.md`, and feature plans
+  are direction unless current-state and code confirm implementation.
+- Do not add fake dashboards, demo-only protected data, local-only persistence,
+  portal-only copies, duplicate jobs/projects, or module-local record models.
+- Do not weaken auth, RLS, tenant checks, portal grants, payment/signature
+  state, estimate math, invoice math, readiness gates, settings, or
+  platform-admin boundaries for QA or demo convenience.
+- Staging/demo data work must stay owner-approved, tenant-scoped, dry-run-first,
+  provider-dark, and invite-token safe.
+- Customer portal copy should be simpler and customer-safe; do not expose
+  contractor-only FieldTrail, Proof Center, internal blockers, provider
+  details, or internal Job Notes as portal capability.
 
-Do not describe these as implemented unless `docs/current-state.md` changes:
-
-- drag/drop scheduling or automated dispatch
-- external calendar sync or route optimization
-- AI summaries, AI recommendations, or autonomous actions
-- full document management, stored document/version lifecycle, stored generated
-  closeout packages, or portal closeout downloads
-- provider retry lifecycle or automated reminders
-- standalone Proof Center route
-- customer-facing field sharing
-- native app, offline field mode, GPS/geofencing, or mobile-specific duplicate
-  field records
-- full analytics/report builder
-- live SaaS billing launch or entitlement enforcement
-
-## QA Caveat
+## QA Caveats
 
 Protected-route browser QA can be blocked by local Supabase Auth rate limits,
 stale Playwright storage state, base-URL mismatch, or stale fixed fixture IDs.
 Use [docs/local-auth-qa-recovery.md](C:/FloorConnector/docs/local-auth-qa-recovery.md)
-before assuming a protected-route browser failure is product behavior.
+before treating a protected-route redirect or fixture miss as product failure.
 
-## Next Recommended Direction
+For current operating-core focused tests and route checks, use
+[docs/operating-core-validation-checklist.md](C:/FloorConnector/docs/operating-core-validation-checklist.md).
 
-Use [docs/demo/operating-core-demo-path.md](C:/FloorConnector/docs/demo/operating-core-demo-path.md)
-for the current route-based operating-core walkthrough, and
-[docs/design/company-documents-schema-readiness-audit.md](C:/FloorConnector/docs/design/company-documents-schema-readiness-audit.md)
-and
-[docs/design/company-documents-migration-readiness-audit.md](C:/FloorConnector/docs/design/company-documents-migration-readiness-audit.md)
-for the future Company Documents schema/migration and Phase 1A implementation
-boundary.
+## Recommended Next Build Options
 
-Recommended next build: one guarded non-finance slice after the demo path is
-rehearsed against real records. Good candidates are Company Document Library
-model approval, demo data readiness through approved fixture tooling, or a
-small project/workflow polish item found during the walkthrough. Do not add
-accounting sync, provider posting, AI automation, reminders, stored billing
-packets, or customer billing center settings until their approval, provider,
-and data-boundary policies are explicit.
+Good next moves:
+
+- Implement the dry-run-only staging demo seed planner from
+  [docs/demo/staging-demo-seed-script-spec.md](C:/FloorConnector/docs/demo/staging-demo-seed-script-spec.md),
+  with no write mode.
+- Approve and build the first Company Documents Phase 1A model/surface from the
+  schema and migration readiness audits.
+- Run a real-record operating-core demo rehearsal using
+  [docs/demo/operating-core-demo-path.md](C:/FloorConnector/docs/demo/operating-core-demo-path.md)
+  and record blockers honestly.
+- Pick one guarded non-finance product polish item found during the demo
+  walkthrough.
+
+Avoid broad accounting sync, provider posting, AI automation, reminders, stored
+billing packets, customer billing-center settings, or live staging/provider
+actions until the relevant approval and boundary docs are explicit.

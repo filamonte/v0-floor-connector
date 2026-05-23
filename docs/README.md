@@ -3,7 +3,7 @@
 Status: Active
 Doc Type: Governance
 
-Product, engineering, and rollout documentation lives here.
+Product, engineering, rollout, and archive documentation lives here.
 
 Canonical repository notes:
 
@@ -12,279 +12,287 @@ Canonical repository notes:
 - local workspace root: `C:\FloorConnector`
 - local web app env source of truth: `C:\FloorConnector\.env.local`
 
-Current foundation priorities to document as the repo grows:
+## Start Here
 
-- Google-first authentication with email/password fallback
-- package ownership and shared boundaries
-- Supabase migration and RLS workflow
-- environment setup and operational checks
-- modular contractor settings and super-admin boundaries
-- platform defaults versus organization-owned copies and overrides
-- future Templates & Systems administration for document templates, System Templates, add-ons/options, and sharing/review controls
-- future UI, directory/contact, tax, Estimate Editor, workflow-guidance, and project-address alignment before broader demo/investor polish
+Use these first for most implementation or documentation tasks:
 
-Environment notes:
+- [docs/developer-source-of-truth.md](C:/FloorConnector/docs/developer-source-of-truth.md):
+  primary development guardrails
+- [docs/current-state.md](C:/FloorConnector/docs/current-state.md):
+  implemented truth on the current branch
+- [docs/workflows.md](C:/FloorConnector/docs/workflows.md): canonical and
+  near-term workflow behavior
+- [docs/system-overview.md](C:/FloorConnector/docs/system-overview.md):
+  product and engineering synthesis
+- [docs/chat-handoff.md](C:/FloorConnector/docs/chat-handoff.md): compact
+  current-session handoff
+- [docs/local-auth-qa-recovery.md](C:/FloorConnector/docs/local-auth-qa-recovery.md):
+  protected-route browser QA recovery
 
-- Local `.env.local` files should use valid localhost URLs including `http://`.
-- Vercel environment variables should use the live production domains including `https://`.
-- Moving from local to live should be an environment-variable change, not a code change.
+## Implemented Truth And Guardrails
 
-Available setup guides:
+- [docs/current-state.md](C:/FloorConnector/docs/current-state.md): source of
+  truth for implemented status
+- [docs/platform-maturity.md](C:/FloorConnector/docs/platform-maturity.md):
+  concise platform maturity framing
+- [docs/module-status.md](C:/FloorConnector/docs/module-status.md): concise
+  module status table
+- [docs/known-gaps.md](C:/FloorConnector/docs/known-gaps.md): important depth
+  gaps around the implemented core
+- [docs/architecture-principles.md](C:/FloorConnector/docs/architecture-principles.md):
+  stable architecture principles
+- [docs/canonical-lifecycle.md](C:/FloorConnector/docs/canonical-lifecycle.md):
+  canonical record chain and lineage rules
+- [docs/financial-architecture.md](C:/FloorConnector/docs/financial-architecture.md):
+  financial record and event guardrails
+- [docs/portal-architecture.md](C:/FloorConnector/docs/portal-architecture.md):
+  portal shared-record guardrails
+- [docs/security-threat-model.md](C:/FloorConnector/docs/security-threat-model.md):
+  tenant isolation, auth, provider, export/import, and service-role threat model
 
-- `docs/auth-setup.md` for the planned shared auth model, Google-first plus email/password support, redirect URL expectations, and local auth verification routes.
-- `docs/local-auth-qa-recovery.md` for recovering local protected-route browser QA when Supabase Auth rate limits, stale Playwright storage state, or stale fixed fixture IDs block detail-route verification.
+## Product And Workflow Direction
 
-Document roles:
+- [docs/vision.md](C:/FloorConnector/docs/vision.md): long-term product thesis
+- [docs/Roadmap.md](C:/FloorConnector/docs/Roadmap.md): sequencing guidance,
+  not implementation truth
+- [docs/target-ia.md](C:/FloorConnector/docs/target-ia.md): target contractor
+  app IA, not current route reality
+- [docs/future-platform-expansion.md](C:/FloorConnector/docs/future-platform-expansion.md):
+  future platform expansion direction
+- [docs/platform-build-registry.md](C:/FloorConnector/docs/platform-build-registry.md):
+  strategic build-priority registry
+- [docs/platform-maturity-model.md](C:/FloorConnector/docs/platform-maturity-model.md):
+  build-stage discipline
+- [docs/product-language.md](C:/FloorConnector/docs/product-language.md):
+  approved user-facing product terms
+- [docs/product-language-audit.md](C:/FloorConnector/docs/product-language-audit.md):
+  terminology audit history
+- [docs/floorconnector-full-capability-audit.md](C:/FloorConnector/docs/floorconnector-full-capability-audit.md):
+  repo-truth capability audit
+- [docs/future-feature-coverage-map.md](C:/FloorConnector/docs/future-feature-coverage-map.md):
+  broad future coverage map
+- [docs/contractor-foreman-gap-decision-list.md](C:/FloorConnector/docs/contractor-foreman-gap-decision-list.md):
+  owner feature coverage decisions
 
-- `docs/developer-source-of-truth.md`: primary entry point for day-to-day development guardrails
-- `docs/documentation-standards.md`: doc layers, metadata, status vocabulary, ADR/diagram rules, and update expectations
-- `docs/documentation-governance.md`: documentation system rules, archival policy, and doc update expectations
-- `docs/documentation-audit.md`: latest documentation bloat, overlap, active-doc, split, and archive-readiness audit
-- `docs/platform-maturity.md`: concise platform maturity framing
-- `docs/module-status.md`: concise module status table
-- `docs/known-gaps.md`: important depth gaps around the implemented core
-- `docs/architecture-principles.md`: stable platform architecture principles
-- `docs/canonical-lifecycle.md`: canonical record chain and lineage rules
-- `docs/platform-philosophy.md`: stable product/engineering philosophy
-- `docs/ui-system.md`: current contractor UI guardrails
-- `docs/graphite-copper-ui-system.md`: implementation reference for the current Graphite / Copper enterprise UI system across contractor, portal, super-admin, and settings surfaces
-- `docs/design/stitch/README.md`: Google Stitch artifact boundary and adoption rules; design reference only, not implemented status
-- `docs/design/stitch/industrial-contrast-DESIGN.md`: curated Stitch Industrial Contrast / Graphite + Copper design summary; design reference only, not implemented status
-- `docs/design/floorconnector-visual-system-evolution.md`: bridge between Stitch inspiration and FloorConnector's canonical UI/workflow guardrails; design guidance only, not implemented status
-- `docs/design/stitch/phase-2-token-dashboard-audit.md` through `docs/design/stitch/phase-10-visual-qa-sweep-and-consolidation.md`: Stitch adoption phase logs and QA evidence; implementation history/reference only, not product capability truth
-- `docs/design/crewboard-phase-1.md`: implementation note for the first CrewBoard scheduling workspace on the existing `/schedule` route
-- `docs/design/crewboard-phase-2-dispatch-usability.md`: implementation note for CrewBoard dispatch usability, date navigation, schedule warnings, and schedule detail on the existing `/schedule` route
-- `docs/design/fieldtrail-phase-1-project-execution-timeline.md`: implementation note for the first FieldTrail project/job execution timeline over existing daily logs, field notes, execution attachments, time cards, and jobs
-- `docs/design/mobile-field-phase-1-fast-daily-job-log-capture.md`: implementation note for the first mobile-focused Daily Job Log capture slice over existing Daily Logs, Job Notes, jobs, CrewBoard, and FieldTrail
-- `docs/design/mobile-field-phase-1-qa-checkpoint.md`: focused QA checkpoint for Mobile Field Phase 1 Daily Job Log capture, route checks, helper tests, and preserved field behavior
-- `docs/design/messagecenter-phase-1-project-communication-timeline.md`: implementation note for the first MessageCenter project communication timeline over existing communication threads/messages, Send Trail, Signature Trail, Payment Trail, and Customer Access context
-- `docs/design/projectpulse-phase-1-project-health-summary.md`: implementation note for the first ProjectPulse project health and Next Move summary over existing readiness, scheduling, field, communication, billing, payment, and signature signals
-- `docs/design/project-workspace-os-consolidation-qa.md`: consolidation QA note for Project Workspace copy, hierarchy, browser QA, and Next Move terminology after CrewBoard, FieldTrail, MessageCenter, and ProjectPulse
-- `docs/design/closeouttrail-phase-1-project-closeout-workspace.md`: implementation note for the first CloseoutTrail project closeout readiness and proof section over existing project, job, field, change-order, contract, invoice, payment, warranty/service, and Customer Access signals
-- `docs/design/proof-center-phase-1-project-document-evidence-index.md`: implementation note for the first Proof Center project document and evidence index over existing commercial, customer-action, billing, field, warranty, service, and Customer Access records
-- `docs/design/warranty-service-phase-1-workspace-depth.md`: implementation note for the first Service Center summary and Warranty/Service workspace-depth pass over existing service tickets, warranty documents, project proof, closeout, and service-job records
-- `docs/design/warranty-service-phase-1-qa-checkpoint.md`: focused QA checkpoint for Warranty Service Phase 1 Service Center continuity, browser-QA caveats, preserved behavior, and follow-up candidates
-- `docs/design/portal-maturity-phase-1-customer-project-window.md`: portal maturity audit and implementation note for the read-only customer Project Workspace Customer Next Step helper
-- `docs/design/portal-customer-next-step-qa-checkpoint.md`: focused QA checkpoint for Portal Customer Next Step priority, customer-safe visibility, browser routes, and preserved portal boundaries
-- `docs/design/portal-maturity-phase-2-project-status-window.md`: implementation note for the customer-safe portal Project Status Window, shared-record summary, helper tests, and preserved portal boundaries
-- `docs/design/portal-maturity-phase-3-project-timeline.md`: implementation note for the customer-safe portal Project Timeline, timeline helper tests, and preserved portal boundaries
-- `docs/design/portal-maturity-phase-4-shared-documents.md`: implementation note for the customer-safe portal Shared Documents section, print/save boundaries, helper tests, and preserved portal boundaries
-- `docs/design/portal-maturity-phase-4-qa-customer-window.md`: focused QA checkpoint for the portal Customer Project Window consolidation, copy cleanup, browser caveats, and preserved customer-safe boundaries
-- `docs/design/reporting-phase-1-operations-collections-visibility.md`: implementation note for the first read-only Reports operations and collections visibility workspace over existing project, job, contract, field, invoice, payment, closeout, and proof signals
-- `docs/design/financial-control-phase-1-collections-payment-attention.md`: implementation note for Financial Control collections/payment attention on `/financials` and `/financials/accounts-receivable` over existing invoices, payments, payment events, projects, and customers
-- `docs/design/financial-control-phase-1-qa-checkpoint.md`: focused QA checkpoint for Financial Control collections/payment attention, protected-route browser caveats, and preserved read-only financial boundaries
-- `docs/design/accounting-readiness-phase-1-export-reconciliation-prep.md`: implementation note for Accounting Readiness export and reconciliation prep on `/financials/accounting-readiness` over existing invoices, payments, payment events, customers, projects, tax snapshots, and retainage snapshots
-- `docs/design/accounting-export-prep-phase-1.md`: implementation note for in-browser Accounting Readiness Copy CSV / Download CSV export prep over already loaded accounting review rows
-- `docs/design/accounting-export-prep-phase-1-qa-checkpoint.md`: focused QA checkpoint and CSV UX hardening note for Accounting Export Prep copy/download behavior, row-count metadata, and preserved financial boundaries
-- `docs/design/business-documents-phase-1-company-library-plan.md`: plan-only implementation decision for a future Company Document Library, documenting why current estimate/invoice/contract/warranty template models should not be overloaded
-- `docs/design/company-documents-schema-readiness-audit.md`: docs-only schema readiness audit for future `company_documents`, RLS, settings route, starter documents, storage boundaries, and Phase 1A implementation prompt
-- `docs/design/company-documents-migration-readiness-audit.md`: docs-only Supabase migration/RLS readiness audit for future `company_documents`, including migration pattern inventory, access decisions, risks, and an implementation prompt
-- `docs/demo/operating-core-demo-path.md`: route-based operating-core demo and readiness walkthrough over real database-backed records after the recent project, portal, service, financial, accounting, print/export, and field-execution expansion
-- `docs/demo/staging-demo-data-plan.md`: safe staging/demo data readiness plan defining the canonical demo dataset, existing local fixture coverage, gaps, recommended hybrid owner/manual plus future seed strategy, and the local-only `pnpm demo:data:inventory` dry-run command
-- `docs/demo/staging-demo-seed-script-spec.md`: dry-run specification for the future owner-approved staging demo seed script, including required explicit inputs, safety checks, idempotency, record order, provider/portal boundaries, route discovery validation, and the next dry-run implementation prompt
-- `docs/design/sendtrail-phase-1-document-delivery-proof-visibility.md`: implementation note for the first Send Trail document delivery proof visibility pass over existing document delivery, signature, payment, portal view, and communication evidence
-- `docs/design/operating-core-checkpoint.md`: post Trail Systems checkpoint for current-state, roadmap, workflow, language, validation, and next-build recommendation after the operating-core expansion
-- `docs/design/document-engine-phase-1-pdf-export-foundations.md`: implementation note for the first shared Document Engine print/save PDF foundation over existing estimate, contract, and invoice source records
-- `docs/design/document-engine-phase-2-plan.md`: planning note for the next
-  Document Engine path, recommending a contractor-side Project Closeout Package
-  HTML/print route before stored PDFs, portal downloads, or server PDF
-  generation
-- `docs/design/document-engine-phase-2a-closeout-package-print-route.md`: implementation note for the contractor-side Project Closeout Package print/save route generated from current project source records
-- `docs/design/document-engine-qa-checkpoint.md`: focused QA checkpoint for Document Engine print/export routes, Project Closeout Package coverage, source-record boundaries, and validation evidence
-- `docs/design/operating-core-runtime-qa-checkpoint.md`: runtime QA checkpoint for the operating core, focused helper validation, stale protected E2E fixture cleanup, duplicate-key warning fix, and local auth/browser limitations
-- `docs/design/global-search-hardening.md`: QA and hardening note for shell-level global search, enum/status-safe predicates, searchable categories, preserved links, focused helper tests, and follow-up candidates
-- `docs/design/operating-core-demo-smoke-checkpoint.md`: demo-readiness smoke checkpoint for route-discovery browser QA, global search status-like terms, protected Playwright cleanup, and preserved operating-core boundaries
-- `docs/design/marketing-demo-refresh-phase-1.md`: public homepage refresh note for the operating-core marketing story, implemented claims, avoided claims, and preserved behavior boundaries
-- `docs/design/public-demo-readiness-qa.md`: public/demo-readiness QA checkpoint for homepage claims, auth/setup handoff copy, CTA links, protected setup-route expectations, and preserved behavior boundaries
-- `docs/staging-deployment-readiness-audit.md`: deployment-readiness audit for staging/demo command inventory, env variable checklist, Supabase/auth/provider risks, operating-core demo checklist, and owner actions before a controlled external demo
-- `docs/staging-owner-runbook.md`: owner-facing staging runbook for Vercel ownership, env names, Supabase Auth callbacks, migration/RLS checks, provider posture, demo data, hold points, and `pnpm staging:preflight`
-- `docs/demo/staging-demo-data-plan.md`: demo-data readiness plan for the minimum coherent operating-core dataset and future tenant-scoped staging seed-script boundary
-- `docs/demo/staging-demo-seed-script-spec.md`: documentation-only blueprint for the future staging demo seed script; no data writes or script implementation are included
-- `docs/operating-core-validation-checklist.md`: focused validation inventory for recent operating-core summary helpers, routes, and browser QA caveats
-- `docs/design/project-workspace-lifecycle-qa.md`: lifecycle QA note for the Project Workspace operating loop after CrewBoard, FieldTrail, MessageCenter, ProjectPulse, and CloseoutTrail
-- `docs/enterprise-ui-system-audit.md`: secured-app route audit, Phase 1-4 polish history, drift watch list, and authenticated visual QA rules
-- `docs/floorconnector-ui-build-rules.md`: mandatory contractor UI build rules, including the accepted Graphite & Copper visual foundation and shell/workspace guardrails
-- `docs/design-system-comprehensive-prompt.md`: Graphite & Copper visual reference for targeted future UI work
-- `docs/design-system-implementation-status.md`, `docs/graphite-copper-implementation.md`, and `docs/quick-reference-graphite-copper.md`: post-v0 visual-system status and quick token references
-- `docs/financial-architecture.md`: financial record/event guardrails
-- `docs/portal-architecture.md`: portal shared-record guardrails
-- `docs/Architecture.md`: target system design
-- `docs/Roadmap.md`: platform maturity roadmap
-- `docs/platform-build-registry.md`: strategic build-priority registry for major planned platform systems
-- `docs/platform-maturity-model.md`: build-stage discipline from foundation through autonomous maturity
-- `docs/future-platform-expansion.md`: future platform expansion direction
-- `docs/communications-layer.md`: future workflow-connected communication philosophy
-- `docs/reporting-and-metrics.md`: canonical reporting and metrics philosophy
-- `docs/automation-layer.md`: future deterministic workflow automation philosophy
-- `docs/intelligence-layer.md`: future Contractor Intelligence, Network Intelligence, and Predictive/AI Intelligence strategy
-- `docs/contractor-collaboration-network.md`: future trusted contractor
-  collaboration network and approved partner/project-scoped access planning
-- `docs/contractor-foreman-gap-decision-list.md`: owner feature coverage decisions from the Contractor Foreman baseline comparison
-- `docs/future-feature-coverage-map.md`: broad future feature coverage map by operating area
-- `docs/field-operations-architecture-map.md`: planning map for clocking, equipment, service/warranty, documents, daily logs, jobs, schedule, people, vendors, dashboard guidance, and future job costing
-- `docs/clocking-system-plan.md`: planning for the real clocking/time-card workflow before GPS, payroll export, or job costing
-- `docs/equipment-maintenance-utilization-plan.md`: planning for equipment maintenance, utilization, rental-return, and costing inputs after the registry and assignment/readiness foundations
-- `docs/service-warranty-plan.md`: planning for service/warranty tickets as post-installation project/job continuity
-- `docs/warranty-document-system-plan.md`: planning for seeded/custom warranty templates, PDF generation, send/review/signature, and canonical attachment
-- `docs/current-state.md`: source of truth for implemented status
-- `docs/workflows.md`: canonical business workflows and near-term workflow direction
-- `docs/staging-demo-readiness.md`: staging/demo readiness runbook for env ownership, provider setup checklists, demo modes, and go/no-go gates
-- `docs/staging-deployment-readiness-audit.md`: latest docs-only audit for moving the local operating-core build toward controlled staging/demo readiness without deploying or changing env/provider/schema behavior
-- `docs/staging-owner-runbook.md`: latest owner action checklist and local preflight usage before any staging deploy or external setup
-- `docs/site-visit-scope-intake-plan.md`: planning guardrails for the lead site visit Scope Intake stage between appointment capture and estimate planning
-- `docs/vision.md`: long-term product direction and platform thesis
-- `docs/gatekeeper-system-vision.md`: target GateKeeper operational intelligence and communications doctrine; planning only, not implemented status
-- `docs/gatekeeper-source-adapters.md`: provider-neutral GateKeeper source adapter boundary for future manual, phone, voice, transcription, chat, SMS/email, portal, internal-note, and support/onboarding sources
-- `docs/gatekeeper-controlled-action-bridge.md`: planning boundary for future review-approved GateKeeper suggestions becoming explicit, audited canonical actions
-- `docs/gatekeeper-controlled-execution-readiness-audit.md`: audit of whether GateKeeper is ready for first controlled execution, recommending `create_opportunity` as the first candidate only after missing safety layers are planned
-- `docs/gatekeeper-create-opportunity-controlled-execution-plan.md`: detailed non-mutating plan for the future `create_opportunity` controlled execution bridge, including draft mapping, duplicate checks, audit/linkage, and canonical owner boundaries
-- `docs/gatekeeper-create-opportunity-execution-implementation-plan.md`: refreshed implementation-ready plan for the first future real `create_opportunity` execution service using the actual ledger/request path and Opportunities-owned creation boundary
-- `docs/gatekeeper-phase-1-demo-script.md`: QA/demo runbook for the implemented GateKeeper Phase 1 path from manual/demo source through controlled `create_opportunity` execution and result linkage
-- `docs/ai-assisted-operating-system.md`: target AI-assisted operating system strategy across contractor and FloorConnector-facing AI
-- `docs/ai-contractor-workflows.md`: target contractor-side AI copilot, drafting, summaries, scheduling suggestions, and approval queues
-- `docs/communications-and-ai-intake.md`: target unified communications, website AI chat/intake, AI receptionist, voice, missed-call, consent, and human handoff direction
-- `docs/calendar-and-scheduling-intelligence.md`: target calendar, schedule, resource, external calendar sync, and AI scheduling direction
-- `docs/ai-marketing-and-onboarding.md`: target FloorConnector-facing marketing, sales, onboarding, setup, support, activation, and import AI direction
-- `docs/target-ia.md`: target contractor app navigation and workspace structure
-- `docs/workflow-spec.md`: primary contractor workflow definition
-- `docs/workflow-state-machine.md`: stages, blockers, and transition guidance
-- `docs/system-inventory.md`: implemented/foundation/planned system inventory, including current template/catalog foundations and planned Templates & Systems administration
-- `docs/security-threat-model.md`: security threat model for tenant isolation, auth, portal access, provider webhooks, exports/imports, and service-role boundaries
-- `docs/starter-pack-provisioning-plan.md`: planning-only safety spec for future starter-pack provisioning approval, audit, conflict handling, idempotency, and void strategy
-- `docs/starter-pack-provisioning-execution-readiness.md`: readiness review for starter-pack provisioning execution field mappings, lineage, transaction/RPC feasibility, and void-readiness foundations
-- `docs/starter-pack-provisioning-review.md`: consolidated architecture/operator readiness review for the implemented starter-pack provisioning lifecycle before any real void action
-- `docs/contractor-groups-plan.md`: planning/read-model guardrails for platform-owned contractor groups, assignment audit/history, and future non-enforcing segmentation use
-- `docs/ui-data-model-alignment-backlog.md`: planning backlog for contractor UI consistency, module-page patterns, directory/contact direction, Estimate Editor polish, tax model alignment, workflow guidance, project address display, and later configurable module/dashboard views
-- `docs/estimate-builder-build-plan.md`: long-lived Estimate Builder master blueprint
-- `docs/estimate-builder-v1-scope.md`: constrained Estimate Builder V1 execution scope
-- `docs/estimate-builder-system-generation-spec.md`: planning spec for future system-based estimate generation
-- `docs/figma-redesign-brief.md`: exploratory workflow-first design brief for future Figma work
-- `docs/archive/README.md`: archive index for historical planning/reference docs
-- `docs/adr/README.md`: architecture decision record index
-- `docs/diagrams/README.md`: Mermaid architecture and workflow diagrams
-- `docs/ai/README.md`: AI-assisted development and documentation interpretation rules
-- `docs/opportunity-model.md`: archived pointer to the historical opportunity planning doc
-- `docs/opportunity-implementation-plan.md`: archived pointer to the historical opportunity rollout plan
+## Operating Core Feature Docs
 
-## Documentation Layers
+Current operating-core implementation notes and QA checkpoints live mostly in
+[docs/design/](C:/FloorConnector/docs/design). Use them as implementation
+history and focused evidence, not as replacements for `current-state.md`.
 
-### Codex First Reads
+High-signal operating-core docs:
 
-Read these first for most implementation or documentation tasks:
+- [docs/design/operating-core-checkpoint.md](C:/FloorConnector/docs/design/operating-core-checkpoint.md):
+  post-expansion checkpoint and next-build recommendation
+- [docs/operating-core-validation-checklist.md](C:/FloorConnector/docs/operating-core-validation-checklist.md):
+  focused helper and route validation inventory
+- [docs/design/crewboard-phase-1.md](C:/FloorConnector/docs/design/crewboard-phase-1.md)
+  and
+  [docs/design/crewboard-phase-2-dispatch-usability.md](C:/FloorConnector/docs/design/crewboard-phase-2-dispatch-usability.md):
+  CrewBoard on `/schedule`
+- [docs/design/fieldtrail-phase-1-project-execution-timeline.md](C:/FloorConnector/docs/design/fieldtrail-phase-1-project-execution-timeline.md):
+  FieldTrail over existing field records
+- [docs/design/mobile-field-phase-1-fast-daily-job-log-capture.md](C:/FloorConnector/docs/design/mobile-field-phase-1-fast-daily-job-log-capture.md)
+  and
+  [docs/design/mobile-field-phase-1-qa-checkpoint.md](C:/FloorConnector/docs/design/mobile-field-phase-1-qa-checkpoint.md):
+  mobile Daily Job Log capture
+- [docs/design/messagecenter-phase-1-project-communication-timeline.md](C:/FloorConnector/docs/design/messagecenter-phase-1-project-communication-timeline.md):
+  MessageCenter over communication and proof records
+- [docs/design/projectpulse-phase-1-project-health-summary.md](C:/FloorConnector/docs/design/projectpulse-phase-1-project-health-summary.md):
+  ProjectPulse health and Next Move summary
+- [docs/design/closeouttrail-phase-1-project-closeout-workspace.md](C:/FloorConnector/docs/design/closeouttrail-phase-1-project-closeout-workspace.md):
+  CloseoutTrail
+- [docs/design/proof-center-phase-1-project-document-evidence-index.md](C:/FloorConnector/docs/design/proof-center-phase-1-project-document-evidence-index.md):
+  Proof Center
+- [docs/design/warranty-service-phase-1-workspace-depth.md](C:/FloorConnector/docs/design/warranty-service-phase-1-workspace-depth.md)
+  and
+  [docs/design/warranty-service-phase-1-qa-checkpoint.md](C:/FloorConnector/docs/design/warranty-service-phase-1-qa-checkpoint.md):
+  Service Center and warranty/service continuity
+- [docs/design/global-search-hardening.md](C:/FloorConnector/docs/design/global-search-hardening.md):
+  shell-level global search hardening
 
-- `docs/developer-source-of-truth.md`
-- `docs/current-state.md`
-- `docs/workflows.md`
-- `docs/system-overview.md`
-- `docs/chat-handoff.md`
+## Portal And Customer Docs
 
-### Current Implementation Truth
+- [docs/portal-architecture.md](C:/FloorConnector/docs/portal-architecture.md):
+  portal shared-record architecture
+- [docs/design/portal-maturity-phase-1-customer-project-window.md](C:/FloorConnector/docs/design/portal-maturity-phase-1-customer-project-window.md):
+  Customer Next Step
+- [docs/design/portal-maturity-phase-2-project-status-window.md](C:/FloorConnector/docs/design/portal-maturity-phase-2-project-status-window.md):
+  Project Status Window
+- [docs/design/portal-maturity-phase-3-project-timeline.md](C:/FloorConnector/docs/design/portal-maturity-phase-3-project-timeline.md):
+  Project Timeline
+- [docs/design/portal-maturity-phase-4-shared-documents.md](C:/FloorConnector/docs/design/portal-maturity-phase-4-shared-documents.md):
+  Shared Documents
+- [docs/design/portal-maturity-phase-4-qa-customer-window.md](C:/FloorConnector/docs/design/portal-maturity-phase-4-qa-customer-window.md):
+  customer window QA checkpoint
+- [docs/design/portal-customer-next-step-qa-checkpoint.md](C:/FloorConnector/docs/design/portal-customer-next-step-qa-checkpoint.md):
+  Customer Next Step QA
 
-- `docs/current-state.md` owns implemented truth.
-- `docs/module-status.md`, `docs/platform-maturity.md`, `docs/known-gaps.md`, and `docs/floorconnector-full-capability-audit.md` provide concise status, maturity, gap, and audit views.
+## Financial And Reporting Docs
 
-### Product Direction And Feature Coverage
+- [docs/financial-architecture.md](C:/FloorConnector/docs/financial-architecture.md):
+  financial record/event guardrails
+- [docs/design/reporting-phase-1-operations-collections-visibility.md](C:/FloorConnector/docs/design/reporting-phase-1-operations-collections-visibility.md):
+  Reports Phase 1
+- [docs/design/financial-control-phase-1-collections-payment-attention.md](C:/FloorConnector/docs/design/financial-control-phase-1-collections-payment-attention.md)
+  and
+  [docs/design/financial-control-phase-1-qa-checkpoint.md](C:/FloorConnector/docs/design/financial-control-phase-1-qa-checkpoint.md):
+  Financial Control
+- [docs/design/accounting-readiness-phase-1-export-reconciliation-prep.md](C:/FloorConnector/docs/design/accounting-readiness-phase-1-export-reconciliation-prep.md):
+  Accounting Readiness
+- [docs/design/accounting-export-prep-phase-1.md](C:/FloorConnector/docs/design/accounting-export-prep-phase-1.md)
+  and
+  [docs/design/accounting-export-prep-phase-1-qa-checkpoint.md](C:/FloorConnector/docs/design/accounting-export-prep-phase-1-qa-checkpoint.md):
+  Accounting Export Prep
+- [docs/stripe-saas-billing-runbook.md](C:/FloorConnector/docs/stripe-saas-billing-runbook.md):
+  test-mode SaaS billing runbook
+- [docs/saas-billing-live-launch-plan.md](C:/FloorConnector/docs/saas-billing-live-launch-plan.md):
+  live SaaS billing planning boundary
 
-- `docs/vision.md` describes long-term product philosophy.
-- `docs/Roadmap.md` describes sequencing guidance without dates.
-- `docs/platform-build-registry.md` tracks major planned systems, priorities, dependencies, maturity, and strategic rationale.
-- `docs/platform-maturity-model.md` defines stage discipline so foundation systems are not treated as ready for intelligence, predictive AI, or autonomous behavior too early.
-- `docs/target-ia.md` describes target contractor app IA and must not be read as route reality.
-- `docs/future-platform-expansion.md` describes platform expansion direction.
-- `docs/communications-layer.md` defines communication as workflow-connected, project-connected, and canonical-record-connected.
-- `docs/reporting-and-metrics.md` defines canonical reporting and metrics as the foundation for dashboards, intelligence, benchmarking, and prediction.
-- `docs/automation-layer.md` defines deterministic, readiness-aware, approval-governed automation as an extension of the canonical workflow chain.
-- `docs/intelligence-layer.md` defines the future canonical-first Intelligence Layer, including tenant-scoped analytics, opt-in network benchmarking, and later predictive/AI intelligence.
-- `docs/contractor-collaboration-network.md` defines future trusted
-  contractor collaboration, approved partner relationships, and
-  project/job-scoped access planning without duplicate jobs/projects or public
-  marketplace behavior.
-- `docs/gatekeeper-system-vision.md` describes GateKeeper as the future operational memory, communications, AI guidance, and continuity layer over canonical records.
-- `docs/gatekeeper-source-adapters.md` defines the future provider-neutral ingestion boundary for GateKeeper source events before any vendor-specific adapter is implemented.
-- `docs/gatekeeper-controlled-action-bridge.md` defines the future safety boundary between reviewable suggestions and explicit canonical workflow execution.
-- `docs/gatekeeper-controlled-execution-readiness-audit.md` audits the first controlled execution candidate and records the missing safety layer before any real GateKeeper execution is built.
-- `docs/gatekeeper-create-opportunity-controlled-execution-plan.md` defines the future `create_opportunity` execution contract and keeps the first real bridge owned by the canonical Opportunities workflow.
-- `docs/gatekeeper-create-opportunity-execution-implementation-plan.md` refreshes the first real `create_opportunity` execution implementation plan after the ledger-backed draft, preflight, duplicate preview, and `execution_requested` state were implemented.
-- `docs/gatekeeper-phase-1-demo-script.md` documents the repeatable QA/demo path for the implemented GateKeeper Phase 1 create-opportunity loop.
-- `docs/gatekeeper-schedule-site-assessment-controlled-execution-plan.md` defines the planning-only controlled execution path for future `schedule_site_assessment`, recommending an Opportunities-owned site-assessment state update before appointment/job scheduling.
-- `docs/contractor-foreman-gap-decision-list.md` records owner decisions from the Contractor Foreman baseline comparison.
-- `docs/future-feature-coverage-map.md` is the broad future coverage map so roadmap/current-state do not become feature encyclopedias.
-- `docs/product-language.md` defines the approved user-facing product terms that sit on top of the existing canonical architecture without renaming routes, schema, or internal models.
-- `docs/design/operating-core-checkpoint.md` records the latest post-expansion
-  audit and next-build recommendation.
-- `docs/design/document-engine-phase-1-pdf-export-foundations.md` records the
-  first shared Document Engine print/export foundation.
-- `docs/design/document-engine-phase-2-plan.md` records the recommended next
-  Document Engine sequence: Project Closeout Package print route first, portal
-  downloads second, persisted artifact/version policy later.
-- `docs/design/document-engine-phase-2a-closeout-package-print-route.md` records
-  the implemented contractor-side closeout package print route and its
-  export-vs-delivery-proof boundary.
-- `docs/design/document-engine-qa-checkpoint.md` records the focused
-  post-Phase 2A print/export QA evidence and remaining portal/browser
-  limitations.
+## Document, Staging, And Demo Docs
 
-### Workflow And System Architecture
+Document and closeout:
 
-- `docs/workflows.md` defines current and near-term workflow rules.
-- `docs/system-overview.md` is a synthesis for product/engineering alignment.
-- `docs/Architecture.md`, `docs/architecture-principles.md`, `docs/canonical-lifecycle.md`, `docs/financial-architecture.md`, and `docs/portal-architecture.md` define architecture and record-ownership guardrails.
+- [docs/design/sendtrail-phase-1-document-delivery-proof-visibility.md](C:/FloorConnector/docs/design/sendtrail-phase-1-document-delivery-proof-visibility.md):
+  Send Trail
+- [docs/document-delivery-proof-architecture.md](C:/FloorConnector/docs/document-delivery-proof-architecture.md):
+  delivery proof architecture
+- [docs/design/document-engine-phase-1-pdf-export-foundations.md](C:/FloorConnector/docs/design/document-engine-phase-1-pdf-export-foundations.md):
+  Document Engine Phase 1
+- [docs/design/document-engine-phase-2-plan.md](C:/FloorConnector/docs/design/document-engine-phase-2-plan.md):
+  closeout package planning
+- [docs/design/document-engine-phase-2a-closeout-package-print-route.md](C:/FloorConnector/docs/design/document-engine-phase-2a-closeout-package-print-route.md):
+  contractor closeout package print route
+- [docs/design/document-engine-qa-checkpoint.md](C:/FloorConnector/docs/design/document-engine-qa-checkpoint.md):
+  Document Engine QA
+- [docs/design/business-documents-phase-1-company-library-plan.md](C:/FloorConnector/docs/design/business-documents-phase-1-company-library-plan.md):
+  Company Document Library planning
+- [docs/design/company-documents-schema-readiness-audit.md](C:/FloorConnector/docs/design/company-documents-schema-readiness-audit.md)
+  and
+  [docs/design/company-documents-migration-readiness-audit.md](C:/FloorConnector/docs/design/company-documents-migration-readiness-audit.md):
+  future Company Documents schema/migration readiness
 
-### Design System And UX
+Demo and staging:
 
-- `docs/graphite-copper-ui-system.md` is the current protected-app, portal, super-admin, and settings UI implementation reference.
-- `docs/design/stitch/README.md`, `docs/design/stitch/industrial-contrast-DESIGN.md`, and `docs/design/floorconnector-visual-system-evolution.md` document the Stitch Industrial Contrast adoption boundary and future visual-system direction. They are design guidance/reference docs, not implemented status docs.
-- `docs/design/stitch/phase-2-token-dashboard-audit.md` through `docs/design/stitch/phase-10-visual-qa-sweep-and-consolidation.md` record the bounded Stitch adoption implementation and QA history. Use them as handoff evidence, not as replacements for `docs/current-state.md`.
-- `docs/enterprise-ui-system-audit.md` records the secured-app visual audit and drift watch list.
-- `docs/floorconnector-ui-build-rules.md` contains mandatory UI build rules.
-- `docs/product-language.md` and `docs/product-language-audit.md` govern product naming and terminology. They are UX copy guidance, not schema, route, or domain-model rename instructions.
-- `docs/design/operating-core-checkpoint.md` and `docs/operating-core-validation-checklist.md` capture the current operating-core audit, validation inventory, and recommended next build direction after CrewBoard, FieldTrail, MessageCenter, ProjectPulse, CloseoutTrail, Proof Center, Reports, and Send Trail.
-- `docs/demo/operating-core-demo-path.md` captures the current practical demo
-  route through the expanded operating core and the claims to avoid during
-  contractor/advisor/prospect walkthroughs.
-- `docs/design/document-engine-phase-1-pdf-export-foundations.md` captures the current print/save PDF boundary for source-record document exports.
-- `docs/design/document-engine-phase-2-plan.md` captures the planning boundary
-  for closeout packages, portal downloads, storage, versioning, and future PDF
-  generation.
-- `docs/design/document-engine-phase-2a-closeout-package-print-route.md`
-  captures the implemented contractor-only closeout package print route.
-- `docs/design/document-engine-qa-checkpoint.md` captures the focused
-  Document Engine print route QA checkpoint after Phase 1, Phase 2A, and
-  Project Workspace browser QA maintenance.
-- `docs/design/mobile-field-phase-1-qa-checkpoint.md` captures the focused
-  Mobile Field Phase 1 QA checkpoint for Daily Job Log capture, helper tests,
-  browser route evidence, and skipped protected detail checks.
+- [docs/demo/operating-core-demo-path.md](C:/FloorConnector/docs/demo/operating-core-demo-path.md):
+  route-based operating-core demo path over real records
+- [docs/staging-deployment-readiness-audit.md](C:/FloorConnector/docs/staging-deployment-readiness-audit.md):
+  staging deployment readiness audit
+- [docs/staging-owner-runbook.md](C:/FloorConnector/docs/staging-owner-runbook.md):
+  owner-controlled staging runbook
+- [docs/staging-demo-readiness.md](C:/FloorConnector/docs/staging-demo-readiness.md):
+  earlier staging/demo readiness runbook
+- [docs/demo/staging-demo-data-plan.md](C:/FloorConnector/docs/demo/staging-demo-data-plan.md):
+  canonical demo dataset plan and local-only inventory command
+- [docs/demo/staging-demo-seed-script-spec.md](C:/FloorConnector/docs/demo/staging-demo-seed-script-spec.md):
+  dry-run specification for the future owner-approved seed script
 
-### AI Guidance And Planning
+## Validation And QA
 
-- `docs/ai/README.md` and `docs/ai/*.md` define AI-readable boundaries.
-- `docs/gatekeeper-system-vision.md` is the first-class doctrine document for future GateKeeper communications, operational memory, workflow reinforcement, human approval queues, and multi-agent direction.
-- `docs/gatekeeper-source-adapters.md` is the planning contract for future GateKeeper source ingestion and adapter anti-drift rules.
-- `docs/gatekeeper-controlled-action-bridge.md` is the planning contract for future non-autonomous, audited suggestion execution handoffs.
-- `docs/gatekeeper-controlled-execution-readiness-audit.md` is the current audit checkpoint for deciding whether `create_opportunity` can become the first controlled execution bridge after more safety planning.
-- `docs/gatekeeper-create-opportunity-controlled-execution-plan.md` is the current non-mutating plan for the first future controlled execution candidate.
-- `docs/gatekeeper-create-opportunity-execution-implementation-plan.md` is the current implementation-ready plan for the first future real `create_opportunity` controlled execution slice.
-- `docs/gatekeeper-phase-1-demo-script.md` is the current QA/demo script for proving the Phase 1 controlled `create_opportunity` path end to end.
-- `docs/gatekeeper-schedule-site-assessment-controlled-execution-plan.md` is the current planning note for the next controlled action candidate; it is documentation-only and does not add scheduling execution.
-- `docs/ai-guided-system-plan.md` captures deterministic guidance to future AI boundaries.
-- Future AI docs are planning/reference only unless `current-state.md` says otherwise.
+- [docs/operating-core-validation-checklist.md](C:/FloorConnector/docs/operating-core-validation-checklist.md):
+  focused operating-core tests and browser caveats
+- [docs/local-auth-qa-recovery.md](C:/FloorConnector/docs/local-auth-qa-recovery.md):
+  local auth state recovery
+- [docs/e2e-browser-qa.md](C:/FloorConnector/docs/e2e-browser-qa.md):
+  browser QA setup and caveats
+- [docs/internal-qa-workflow-checklist.md](C:/FloorConnector/docs/internal-qa-workflow-checklist.md):
+  internal QA workflow checklist
+- [docs/design/operating-core-runtime-qa-checkpoint.md](C:/FloorConnector/docs/design/operating-core-runtime-qa-checkpoint.md):
+  operating-core runtime QA checkpoint
+- [docs/design/operating-core-demo-smoke-checkpoint.md](C:/FloorConnector/docs/design/operating-core-demo-smoke-checkpoint.md):
+  route-discovery demo smoke checkpoint
+- [docs/design/public-demo-readiness-qa.md](C:/FloorConnector/docs/design/public-demo-readiness-qa.md):
+  public/demo readiness QA
 
-### Governance And Archive
+## Design System And UX
 
-- `docs/documentation-standards.md` defines metadata, status vocabulary, and update triggers.
-- `docs/documentation-governance.md` defines archival policy and documentation maintenance rules.
-- `docs/documentation-audit.md` records the latest doc cleanup findings and recommended compaction/archive moves.
-- `docs/archive/README.md` indexes preserved historical, superseded, and exploratory docs.
-- `docs/adr/` stores architecture decisions.
-- `docs/diagrams/` stores Mermaid architecture/workflow diagrams.
+- [docs/graphite-copper-ui-system.md](C:/FloorConnector/docs/graphite-copper-ui-system.md):
+  current Graphite/Copper implementation reference
+- [docs/floorconnector-ui-build-rules.md](C:/FloorConnector/docs/floorconnector-ui-build-rules.md):
+  mandatory contractor UI build rules
+- [docs/ui-system.md](C:/FloorConnector/docs/ui-system.md): contractor UI
+  guardrails
+- [docs/ui-patterns.md](C:/FloorConnector/docs/ui-patterns.md): implemented
+  decision-first UI patterns
+- [docs/enterprise-ui-system-audit.md](C:/FloorConnector/docs/enterprise-ui-system-audit.md):
+  secured-app route audit and drift watch
+- [docs/enterprise-ux-consolidation.md](C:/FloorConnector/docs/enterprise-ux-consolidation.md):
+  customer/contact/access/review ownership map
+- [docs/design/stitch/README.md](C:/FloorConnector/docs/design/stitch/README.md):
+  Google Stitch artifact boundary and adoption rules
+
+## AI, Communications, Automation, And Integrations
+
+These are planning/reference docs unless `current-state.md` says a slice is
+implemented:
+
+- [docs/communications-layer.md](C:/FloorConnector/docs/communications-layer.md)
+- [docs/reporting-and-metrics.md](C:/FloorConnector/docs/reporting-and-metrics.md)
+- [docs/automation-layer.md](C:/FloorConnector/docs/automation-layer.md)
+- [docs/intelligence-layer.md](C:/FloorConnector/docs/intelligence-layer.md)
+- [docs/gatekeeper-system-vision.md](C:/FloorConnector/docs/gatekeeper-system-vision.md)
+- [docs/gatekeeper-source-adapters.md](C:/FloorConnector/docs/gatekeeper-source-adapters.md)
+- [docs/gatekeeper-controlled-action-bridge.md](C:/FloorConnector/docs/gatekeeper-controlled-action-bridge.md)
+- [docs/gatekeeper-controlled-execution-readiness-audit.md](C:/FloorConnector/docs/gatekeeper-controlled-execution-readiness-audit.md)
+- [docs/gatekeeper-create-opportunity-controlled-execution-plan.md](C:/FloorConnector/docs/gatekeeper-create-opportunity-controlled-execution-plan.md)
+- [docs/gatekeeper-create-opportunity-execution-implementation-plan.md](C:/FloorConnector/docs/gatekeeper-create-opportunity-execution-implementation-plan.md)
+- [docs/gatekeeper-phase-1-demo-script.md](C:/FloorConnector/docs/gatekeeper-phase-1-demo-script.md)
+- [docs/gatekeeper-schedule-site-assessment-controlled-execution-plan.md](C:/FloorConnector/docs/gatekeeper-schedule-site-assessment-controlled-execution-plan.md)
+- [docs/ai-assisted-operating-system.md](C:/FloorConnector/docs/ai-assisted-operating-system.md)
+- [docs/ai-contractor-workflows.md](C:/FloorConnector/docs/ai-contractor-workflows.md)
+- [docs/communications-and-ai-intake.md](C:/FloorConnector/docs/communications-and-ai-intake.md)
+- [docs/calendar-and-scheduling-intelligence.md](C:/FloorConnector/docs/calendar-and-scheduling-intelligence.md)
+- [docs/ai-marketing-and-onboarding.md](C:/FloorConnector/docs/ai-marketing-and-onboarding.md)
+
+## Feature Planning Reference
+
+These docs are useful for future scoped work, but they are not implemented truth
+unless `current-state.md` confirms the capability:
+
+- [docs/import-export-readiness.md](C:/FloorConnector/docs/import-export-readiness.md)
+- [docs/site-visit-scope-intake-plan.md](C:/FloorConnector/docs/site-visit-scope-intake-plan.md)
+- [docs/estimate-builder-build-plan.md](C:/FloorConnector/docs/estimate-builder-build-plan.md)
+- [docs/estimate-builder-v1-scope.md](C:/FloorConnector/docs/estimate-builder-v1-scope.md)
+- [docs/estimate-builder-system-generation-spec.md](C:/FloorConnector/docs/estimate-builder-system-generation-spec.md)
+- [docs/inventory-cost-architecture.md](C:/FloorConnector/docs/inventory-cost-architecture.md)
+- [docs/equipment-management-plan.md](C:/FloorConnector/docs/equipment-management-plan.md)
+- [docs/equipment-maintenance-utilization-plan.md](C:/FloorConnector/docs/equipment-maintenance-utilization-plan.md)
+- [docs/clocking-system-plan.md](C:/FloorConnector/docs/clocking-system-plan.md)
+- [docs/service-warranty-plan.md](C:/FloorConnector/docs/service-warranty-plan.md)
+- [docs/warranty-document-system-plan.md](C:/FloorConnector/docs/warranty-document-system-plan.md)
+- [docs/field-operations-architecture-map.md](C:/FloorConnector/docs/field-operations-architecture-map.md)
+- [docs/contractor-collaboration-network.md](C:/FloorConnector/docs/contractor-collaboration-network.md)
+- [docs/starter-pack-provisioning-plan.md](C:/FloorConnector/docs/starter-pack-provisioning-plan.md)
+- [docs/starter-pack-provisioning-execution-readiness.md](C:/FloorConnector/docs/starter-pack-provisioning-execution-readiness.md)
+- [docs/starter-pack-provisioning-review.md](C:/FloorConnector/docs/starter-pack-provisioning-review.md)
+
+## Governance And Archive
+
+- [docs/documentation-governance.md](C:/FloorConnector/docs/documentation-governance.md):
+  documentation maintenance and archival rules
+- [docs/documentation-standards.md](C:/FloorConnector/docs/documentation-standards.md):
+  metadata, status vocabulary, ADR/diagram rules, and update expectations
+- [docs/documentation-audit.md](C:/FloorConnector/docs/documentation-audit.md):
+  previous documentation bloat and archive-readiness audit
+- [docs/design/documentation-governance-cleanup.md](C:/FloorConnector/docs/design/documentation-governance-cleanup.md):
+  latest operating-core/staging docs cleanup checkpoint
+- [docs/archive/README.md](C:/FloorConnector/docs/archive/README.md):
+  archive index
+- [docs/adr/README.md](C:/FloorConnector/docs/adr/README.md): architecture
+  decision records
+- [docs/diagrams/README.md](C:/FloorConnector/docs/diagrams/README.md):
+  Mermaid architecture and workflow diagrams
+- [docs/ai/README.md](C:/FloorConnector/docs/ai/README.md):
+  AI-assisted development and documentation interpretation rules
 
 Current documentation focus:
 
 - keep `developer-source-of-truth.md` as the primary development entry point
 - keep implemented truth in `current-state.md`
 - keep workflow guidance in `workflows.md`
-- keep long-term product direction out of current-state and inside `vision.md`, `Roadmap.md`, `target-ia.md`, `future-platform-expansion.md`, `contractor-foreman-gap-decision-list.md`, and `future-feature-coverage-map.md`
-- keep platform-level defaults and contractor-level administration documented as separate concerns
-- move antiquated planning docs into `docs/archive/` instead of deleting them
-- use `docs/documentation-governance.md` as the rulebook for future doc cleanup and archival decisions
-- treat target/feature coverage docs as direction only, not current implementation proof
+- keep long-term direction in `vision.md`, `Roadmap.md`, `target-ia.md`, and
+  future-coverage docs
+- keep `chat-handoff.md` compact
+- keep staging/demo docs grouped under `docs/demo/` plus the owner runbooks
+- move clearly superseded planning docs into `docs/archive/` instead of
+  deleting them
