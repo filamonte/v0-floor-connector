@@ -50,6 +50,13 @@ The owner must configure:
 - contractor, platform-admin, and portal demo users
 - real canonical demo data and portal grants
 
+Use
+[docs/demo/staging-demo-data-plan.md](C:/FloorConnector/docs/demo/staging-demo-data-plan.md)
+before creating or approving any staging demo records. The plan defines the
+minimum coherent canonical dataset, the existing local fixture patterns, and
+the required no-provider/no-secret/no-token safety boundaries for any future
+seed script.
+
 Codex should not create these resources or mutate these settings unless the
 owner explicitly authorizes a specific action in a later task.
 
@@ -227,6 +234,9 @@ database commands from this runbook without a separate explicit owner approval.
 
 ## 9. Demo Data / Auth State Checklist
 
+- Read
+  [docs/demo/staging-demo-data-plan.md](C:/FloorConnector/docs/demo/staging-demo-data-plan.md)
+  before creating staging demo data.
 - Use one approved staging contractor organization.
 - Use one contractor owner/admin test account with completed setup.
 - Use one platform-admin account with explicit `platform_user_roles` access.

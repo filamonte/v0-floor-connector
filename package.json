@@ -22,6 +22,7 @@
     "e2e:super-admin": "playwright test --project=chromium-super-admin-access",
     "e2e:headed": "playwright test --headed",
     "lint": "turbo run lint",
+    "demo:data:inventory": "node scripts/demo-data-inventory.mjs",
     "platform-admin": "node scripts/platform-admin.mjs",
     "staging:preflight": "node scripts/staging-preflight.mjs",
     "typecheck": "turbo run typecheck",

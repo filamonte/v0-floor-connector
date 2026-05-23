@@ -261,6 +261,16 @@ Recent completed layers:
   does not read `.env.local`, deploy, call Vercel/Supabase/providers, run
   browser QA, mutate remote state, or print secrets. Optional `--run-checks`
   runs the web typecheck and lint only.
+- Staging Demo Data Readiness adds
+  [docs/demo/staging-demo-data-plan.md](C:/FloorConnector/docs/demo/staging-demo-data-plan.md)
+  plus the local-only `pnpm demo:data:inventory` command through
+  [scripts/demo-data-inventory.mjs](C:/FloorConnector/scripts/demo-data-inventory.mjs).
+  The plan defines the ideal canonical demo dataset and recommends a hybrid
+  strategy: manual owner-controlled auth/org setup plus a future explicitly
+  approved tenant-scoped seed script. The dry-run inventory script prints
+  checklist and fixture-path availability only; it does not read `.env.local`,
+  connect to Supabase, call providers, mutate remote data, print secrets, or
+  create fake production records.
 
 These layers are read-only summaries, source-record handoffs, copy/hierarchy
 improvements, or existing-action presentation around canonical records. They did

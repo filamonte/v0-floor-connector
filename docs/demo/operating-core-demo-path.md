@@ -194,6 +194,12 @@ If the environment lacks a coherent project/customer/job/commercial/portal
 record set, the next task is demo data readiness through approved local/test
 fixture tooling, not fake route content or placeholder dashboards.
 
+Use [docs/demo/staging-demo-data-plan.md](C:/FloorConnector/docs/demo/staging-demo-data-plan.md)
+to define the canonical demo dataset before staging or external walkthroughs.
+That plan keeps demo data tenant-scoped, owner-approved, and separate from
+provider actions, schema changes, fake production records, or stale hardcoded
+IDs.
+
 ## Follow-Up Demo Polish Candidates
 
 - Add a single authenticated smoke script that walks only index routes and
