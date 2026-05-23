@@ -37,6 +37,7 @@ pnpm dev
 pnpm lint
 pnpm typecheck
 pnpm build
+pnpm staging:preflight
 supabase db push
 pnpm platform-admin grant platform@floorconnector.com
 ```
@@ -68,6 +69,14 @@ pnpm e2e:super-admin
 `FLOORCONNECTOR_EARLY_ACCESS_INTAKE_COMPANY_ID` is required in production for the public `Request Early Access` form. Set it to the existing canonical `companies.id` value for the FloorConnector-owned company that should receive public early-access intake leads. If it is missing in production, public request submission fails gracefully instead of writing to an arbitrary tenant.
 
 Stripe billing readiness still requires valid test-mode `STRIPE_SECRET_KEY` and `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` values before claiming `/setup/billing` card collection has been verified. The current early-access flow does not create subscriptions or automatic charges.
+
+Staging readiness starts with the local-only preflight command:
+
+```bash
+pnpm staging:preflight
+```
+
+That command checks local repo structure, package scripts, Node/pnpm availability, key docs/files, and `.env.example` variable names only. It does not read `.env.local`, deploy, call Vercel or Supabase, call providers, run browser QA, mutate remote state, or print secrets. Use [docs/staging-owner-runbook.md](C:/FloorConnector/docs/staging-owner-runbook.md) before any owner-approved staging setup.
 
 ## Documentation Map
 

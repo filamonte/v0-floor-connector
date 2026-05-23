@@ -439,6 +439,14 @@ access traffic. Keep dev QA tools disabled for clean demos.
 
 ## 12. Recommended Next Codex Prompt
 
+The follow-up local preflight foundation now lives in:
+
+- `scripts/staging-preflight.mjs`
+- `docs/staging-owner-runbook.md`
+- package script `pnpm staging:preflight`
+
+Use those before any owner-approved staging deploy or external setup action.
+
 ```text
 Chat: Controlled Staging Setup Checklist Verification - FloorConnector
 

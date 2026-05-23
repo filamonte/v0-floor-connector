@@ -251,6 +251,16 @@ Recent completed layers:
   operating-core demo surfaces, staging risks, and owner actions. It did not
   deploy, change env vars, apply migrations, call providers, create resources,
   or change app behavior.
+- Staging Preflight Phase 1 adds the local-only
+  `pnpm staging:preflight` command through
+  [scripts/staging-preflight.mjs](C:/FloorConnector/scripts/staging-preflight.mjs)
+  and the owner-facing
+  [docs/staging-owner-runbook.md](C:/FloorConnector/docs/staging-owner-runbook.md).
+  The command checks local repo structure, package scripts, Node/pnpm
+  availability, required docs/files, and `.env.example` variable names only; it
+  does not read `.env.local`, deploy, call Vercel/Supabase/providers, run
+  browser QA, mutate remote state, or print secrets. Optional `--run-checks`
+  runs the web typecheck and lint only.
 
 These layers are read-only summaries, source-record handoffs, copy/hierarchy
 improvements, or existing-action presentation around canonical records. They did

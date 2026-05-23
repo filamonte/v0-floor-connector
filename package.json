@@ -23,6 +23,7 @@
     "e2e:headed": "playwright test --headed",
     "lint": "turbo run lint",
     "platform-admin": "node scripts/platform-admin.mjs",
+    "staging:preflight": "node scripts/staging-preflight.mjs",
     "typecheck": "turbo run typecheck",
     "format": "prettier --check .",
     "format:write": "prettier --write ."
