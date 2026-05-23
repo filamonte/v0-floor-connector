@@ -153,6 +153,13 @@ Recent completed layers:
   Download CSV labels, disabled-state feedback, and explicit review-only export
   notice text. Protected browser QA remains blocked until local contractor auth
   state is refreshed.
+- Business Documents Phase 1 was evaluated as a plan-only Company Document
+  Library foundation. Current `document_templates` support estimate, invoice,
+  contract, and warranty templates only, while `warranty_documents` are tied to
+  project/customer/job/service-ticket context. The safe decision is not to
+  overload those models or add schema casually; the recommended next slice is an
+  explicit `company_documents` model and `/settings/company-documents` surface
+  after category/status/access rules are approved.
 - Reports Phase 1 on `/reports` for read-only operations and collections
   visibility.
 - Send Trail Phase 1 on estimate, contract, and invoice source workspaces for
