@@ -27,6 +27,7 @@ import { ServiceWarrantyContinuityPanel } from "@/components/service-warranty-co
 import { listDailyLogsByProject } from "@/lib/daily-logs/data";
 import {
   buildDailyLogCaptureHref,
+  buildDailyLogSectionHref,
   findDailyLogForJobDate,
   getDailyLogDateKey
 } from "@/lib/daily-logs/links";
@@ -478,6 +479,12 @@ export default async function JobDetailPage({
   const dailyLogFastPathLabel = todayDailyLog
     ? "Open today's Daily Job Log"
     : "Start today's Daily Job Log";
+  const jobNoteFastPathHref = todayDailyLog
+    ? buildDailyLogSectionHref(todayDailyLog.id, "job-notes")
+    : dailyLogFastPathHref;
+  const fieldEvidenceFastPathHref = todayDailyLog
+    ? buildDailyLogSectionHref(todayDailyLog.id, "field-evidence")
+    : dailyLogFastPathHref;
   const jobFieldNotes = fieldNotes.filter(
     (fieldNote) => fieldNote.jobId === job.id
   );
@@ -627,7 +634,7 @@ export default async function JobDetailPage({
             <DetailPageHeader
               eyebrow="Job Workspace"
               title={job.project?.name ?? "Job record"}
-              description="Use this page to run the job/schedule stage day-to-day: confirm dispatch state, schedule timing, crew readiness, field evidence, and invoice/payment handoff on the same canonical project chain."
+              description="Use this page to run the job/schedule stage day-to-day: confirm dispatch state, schedule timing, crew readiness, field evidence, and invoice/payment handoff on the same project chain."
               backHref="/jobs"
               backLabel="Back to jobs"
               actions={
@@ -652,7 +659,7 @@ export default async function JobDetailPage({
 
             <FieldExecutionCommandBand
               title="Job execution summary"
-              description="Keep the schedule, crew, field evidence, labor state, and billing handoff readable from the same canonical job record."
+              description="Keep the schedule, crew, field evidence, labor state, and billing handoff readable from the same job record."
               statusLabel={`${formatStatusLabel(job.dispatchStatus)} job`}
               projectHref={`/projects/${job.projectId}`}
               items={[
@@ -805,7 +812,7 @@ export default async function JobDetailPage({
 
               <NeedsAttentionPanel
                 cues={jobAttentionCues}
-                description="Job-specific scheduling and crew cues derived from this canonical job and enabled organization rules. Upstream contract, deposit, financing, or project-readiness blockers stay anchored in Project Workspace."
+                description="Job-specific scheduling and crew cues derived from this job and enabled organization rules. Upstream contract, deposit, financing, or project-readiness blockers stay anchored in Project Workspace."
                 getCueStateControls={(cue) => (
                   <CueStateControls
                     identity={buildOperationalCueIdentity(cue)}
@@ -1080,7 +1087,7 @@ export default async function JobDetailPage({
                   <div className="mt-4 rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-4 text-sm leading-6 text-slate-500">
                     No assignable crew members or labor-provider vendors are
                     available yet. Add workforce or labor-provider records in
-                    People or Vendors before assigning this canonical job.
+                    People or Vendors before assigning this job.
                   </div>
                 )}
               </div>
@@ -1239,7 +1246,7 @@ export default async function JobDetailPage({
 
           <DetailPanel
             title="Labor and Time"
-            description="Labor context supports the job/schedule stage through canonical time cards and punch state instead of a separate field-labor model."
+            description="Labor context supports the job/schedule stage through existing time cards and punch state instead of a separate field-labor model."
           >
             <div className="grid gap-4 md:grid-cols-2">
               <div className="rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-4 text-sm leading-6 text-slate-600">
@@ -1344,7 +1351,7 @@ export default async function JobDetailPage({
         {job.serviceTicket ? (
           <DetailPanel
             title="Service Job Context"
-            description="This job is a follow-up service/warranty visit created from a canonical service ticket. Scheduling, crew, equipment, daily logs, and time stay on this job while ticket decisions stay on the service ticket."
+            description="This job is a follow-up service/warranty visit created from a service ticket. Scheduling, crew, equipment, daily logs, and time stay on this job while ticket decisions stay on the service ticket."
           >
             <LinkedRecordCard
               href={`/service-tickets/${job.serviceTicket.id}`}
@@ -1363,6 +1370,45 @@ export default async function JobDetailPage({
           description="Job-specific Daily Job Logs, Job Notes, field evidence, and labor time stay connected to the Project Workspace trail instead of becoming a separate execution hub."
         >
           <div className="space-y-5">
+            <div className="rounded-[6px] border border-slate-200 bg-slate-50/80 px-4 py-4">
+              <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                <div>
+                  <p className="text-sm font-semibold text-slate-950">
+                    Quick field capture
+                  </p>
+                  <p className="mt-1 text-sm leading-6 text-slate-600">
+                    Job Notes and field evidence start from the Daily Job Log so
+                    the project-day record stays the owner.
+                  </p>
+                </div>
+                <div className="grid gap-2 sm:grid-cols-2 lg:flex lg:flex-wrap lg:justify-end">
+                  <Link
+                    href={jobNoteFastPathHref}
+                    className="inline-flex min-h-11 items-center justify-center rounded-[4px] border border-[#171717] bg-[#171717] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#2a2a2a]"
+                  >
+                    Add Job Note
+                  </Link>
+                  <Link
+                    href={jobNoteFastPathHref}
+                    className="inline-flex min-h-11 items-center justify-center rounded-[4px] border border-amber-200 bg-amber-50 px-4 py-2.5 text-sm font-semibold text-amber-900 transition hover:bg-amber-100"
+                  >
+                    Add blocker
+                  </Link>
+                  <Link
+                    href={dailyLogFastPathHref}
+                    className="inline-flex min-h-11 items-center justify-center rounded-[4px] border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+                  >
+                    {dailyLogFastPathLabel}
+                  </Link>
+                  <Link
+                    href={fieldEvidenceFastPathHref}
+                    className="inline-flex min-h-11 items-center justify-center rounded-[4px] border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+                  >
+                    Add field evidence
+                  </Link>
+                </div>
+              </div>
+            </div>
             <div className="grid gap-3 sm:grid-cols-4">
               {[
                 {

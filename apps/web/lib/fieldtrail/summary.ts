@@ -8,7 +8,10 @@ import type {
   TimeCardStatus
 } from "@floorconnector/types";
 
-import { buildDailyLogCaptureHref } from "../daily-logs/links";
+import {
+  buildDailyLogCaptureHref,
+  buildDailyLogSectionHref
+} from "../daily-logs/links";
 
 export type FieldTrailDailyLog = {
   id: string;
@@ -124,14 +127,24 @@ function buildNextMove(input: {
   latestDailyLog: FieldTrailDailyLog | null;
   latestJob: FieldTrailJob | null;
   openBlockerCount: number;
+  attachmentCount: number;
 }): FieldTrailNextMove {
   if (input.openBlockerCount > 0 && input.latestDailyLog) {
     return {
-      label: "Open latest Daily Job Log",
-      href: `/daily-logs/${input.latestDailyLog.id}`,
+      label: "Review Job Notes",
+      href: buildDailyLogSectionHref(input.latestDailyLog.id, "job-notes"),
       detail: `${input.openBlockerCount} open blocker or issue note${
         input.openBlockerCount === 1 ? "" : "s"
-      } need attention.`
+      } need attention in the Daily Job Log.`
+    };
+  }
+
+  if (input.latestDailyLog && input.attachmentCount === 0) {
+    return {
+      label: "Add field evidence",
+      href: buildDailyLogSectionHref(input.latestDailyLog.id, "field-evidence"),
+      detail:
+        "Daily Job Logs exist, but no field evidence is attached yet. Add evidence to the latest Daily Job Log."
     };
   }
 
@@ -260,7 +273,8 @@ export function deriveFieldTrailSummary(input: {
       projectId: input.projectId,
       latestDailyLog,
       latestJob,
-      openBlockerCount
+      openBlockerCount,
+      attachmentCount: input.attachments.length
     })
   };
 }

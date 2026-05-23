@@ -241,8 +241,8 @@ export function DailyLogForm({
             Weather snapshot
           </p>
           <p className="text-sm leading-6 text-slate-600">
-            Keep the weather lightweight and tied to the canonical project-day
-            record. This is a snapshot, not a separate weather workflow.
+            Keep the weather lightweight and tied to the Daily Job Log. This is
+            a snapshot, not a separate weather workflow.
           </p>
         </div>
 

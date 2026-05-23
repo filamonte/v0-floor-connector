@@ -42,7 +42,7 @@ export function ExecutionAttachmentForm({
       <div className="grid gap-4 md:grid-cols-3">
         <label className="block">
           <span className="mb-2 block text-sm font-medium text-slate-800">
-            Attachment type
+            Evidence type
           </span>
           <select
             name="attachmentType"
@@ -73,7 +73,7 @@ export function ExecutionAttachmentForm({
         label="Storage / file reference"
         name="storagePath"
         placeholder="execution-attachments/project-day/progress-photo-01.jpg or https://..."
-        hint="Use a lightweight storage path or file reference. This pass does not build full file management."
+        hint="Use the existing storage path or file reference. This does not upload a new file."
         required
       />
 
@@ -98,7 +98,7 @@ export function ExecutionAttachmentForm({
         />
         <p className="text-sm leading-6 text-slate-500">
           Evidence stays on the Daily Job Log or Job Note itself instead of
-          branching into a separate field-file subsystem.
+          branching into a separate field evidence system.
         </p>
       </div>
     </SaveStateForm>

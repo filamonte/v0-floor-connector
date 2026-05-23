@@ -107,7 +107,7 @@ const jobs: FieldTrailJob[] = [
   }
 ];
 
-void test("fieldtrail summary selects the latest daily log and open blocker next move", () => {
+void test("fieldtrail summary routes open blockers to the Job Notes section", () => {
   const summary = deriveFieldTrailSummary({
     projectId: "project-1",
     dailyLogs,
@@ -119,7 +119,8 @@ void test("fieldtrail summary selects the latest daily log and open blocker next
 
   assert.equal(summary.latestDailyLog?.id, "log-new");
   assert.equal(summary.openBlockerCount, 1);
-  assert.equal(summary.nextMove.href, "/daily-logs/log-new");
+  assert.equal(summary.nextMove.label, "Review Job Notes");
+  assert.equal(summary.nextMove.href, "/daily-logs/log-new#job-notes");
   assert.match(summary.nextMove.detail, /open blocker/);
 });
 
@@ -140,6 +141,23 @@ void test("fieldtrail timeline groups notes, attachments, and labor by daily log
   assert.equal(latest.photoCount, 1);
   assert.equal(latest.timeCardCount, 2);
   assert.equal(latest.laborMinutes, 360);
+});
+
+void test("fieldtrail summary routes missing field evidence to the evidence section", () => {
+  const summary = deriveFieldTrailSummary({
+    projectId: "project-1",
+    dailyLogs,
+    fieldNotes: fieldNotes.map((fieldNote) => ({
+      ...fieldNote,
+      status: "resolved"
+    })),
+    attachments: [],
+    timeCards,
+    jobs
+  });
+
+  assert.equal(summary.nextMove.label, "Add field evidence");
+  assert.equal(summary.nextMove.href, "/daily-logs/log-new#field-evidence");
 });
 
 void test("fieldtrail summary falls back to job then CrewBoard when no logs exist", () => {

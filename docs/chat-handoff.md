@@ -83,6 +83,13 @@ Current operating-core surfaces include:
   Staging Demo Seed Phase 2 owner-approved write-mode design, then Mobile Field
   Phase 2 quick Job Notes/evidence capture. If an external demo is the immediate
   goal, swap the first two.
+- Mobile Field Phase 2 is implemented in
+  [docs/design/mobile-field-phase-2-quick-job-notes-evidence.md](C:/FloorConnector/docs/design/mobile-field-phase-2-quick-job-notes-evidence.md).
+  It adds Job Workspace quick actions for Job Notes, blockers, Daily Job Log
+  open/start, and field evidence; Daily Job Log section anchors for Job Notes
+  and Field Evidence; and FieldTrail Next Move routing to those anchors. It
+  reuses Daily Job Logs, Job Notes, execution attachments, jobs, projects, and
+  time context only.
 - Global search hardening for tenant-scoped canonical records.
 
 These layers are summaries, source-record handoffs, copy/hierarchy
@@ -135,6 +142,8 @@ Recent staging/demo work is docs-first and no-write:
   or delivery proof without a separate approved slice.
 - Staging/demo data work must stay owner-approved, tenant-scoped, dry-run-first,
   provider-dark, and invite-token safe.
+- Mobile field work must keep Job Notes and field evidence under Daily Job Logs
+  until a separate shared evidence/storage plan is approved.
 - Customer portal copy should be simpler and customer-safe; do not expose
   contractor-only FieldTrail, Proof Center, internal blockers, provider
   details, or internal Job Notes as portal capability.

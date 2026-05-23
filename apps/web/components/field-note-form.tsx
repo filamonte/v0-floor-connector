@@ -4,6 +4,10 @@ import {
   SaveStateForm,
   SaveStateSubmitButton
 } from "@/components/save-feedback/save-state-form";
+import {
+  getFieldNoteTypeHelper,
+  getFieldNoteTypeLabel
+} from "@/lib/field-notes/labels";
 
 type JobOption = {
   id: string;
@@ -35,6 +39,16 @@ type FieldNoteFormProps = {
   fieldNote?: FieldNote | null;
   defaultJobId?: string | null;
 };
+
+const jobNoteTypes = [
+  "general",
+  "blocker",
+  "issue",
+  "punch_list",
+  "labor",
+  "material",
+  "equipment"
+] as const;
 
 function getValue(value: string | null | undefined) {
   return value ?? "";
@@ -70,21 +84,22 @@ export function FieldNoteForm({
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <label className="block">
           <span className="mb-2 block text-sm font-medium text-slate-800">
-            Note type
+            Job Note type
           </span>
           <select
             name="noteType"
             defaultValue={fieldNote?.noteType ?? "general"}
-            className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-brand-700 focus:ring-4 focus:ring-brand-100"
+            className="w-full rounded-[4px] border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-brand-700 focus:ring-4 focus:ring-brand-100"
           >
-            <option value="general">General</option>
-            <option value="labor">Labor</option>
-            <option value="material">Material</option>
-            <option value="equipment">Equipment</option>
-            <option value="blocker">Blocker</option>
-            <option value="issue">Issue</option>
-            <option value="punch_list">Punch list</option>
+            {jobNoteTypes.map((noteType) => (
+              <option key={noteType} value={noteType}>
+                {getFieldNoteTypeLabel(noteType)}
+              </option>
+            ))}
           </select>
+          <span className="mt-2 block text-xs leading-5 text-slate-500">
+            {getFieldNoteTypeHelper(fieldNote?.noteType ?? "general")}
+          </span>
         </label>
 
         <label className="block">
@@ -94,7 +109,7 @@ export function FieldNoteForm({
           <select
             name="status"
             defaultValue={fieldNote?.status ?? "open"}
-            className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-brand-700 focus:ring-4 focus:ring-brand-100"
+            className="w-full rounded-[4px] border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-brand-700 focus:ring-4 focus:ring-brand-100"
           >
             <option value="open">Open</option>
             <option value="noted">Noted</option>
@@ -109,7 +124,7 @@ export function FieldNoteForm({
           <select
             name="jobId"
             defaultValue={fieldNote?.jobId ?? defaultJobId ?? ""}
-            className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-brand-700 focus:ring-4 focus:ring-brand-100"
+            className="w-full rounded-[4px] border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-brand-700 focus:ring-4 focus:ring-brand-100"
           >
             <option value="">Project-level note</option>
             {jobs.map((job) => (
@@ -122,12 +137,12 @@ export function FieldNoteForm({
 
         <label className="block">
           <span className="mb-2 block text-sm font-medium text-slate-800">
-            Workforce person
+            Person
           </span>
           <select
             name="personId"
             defaultValue={fieldNote?.personId ?? ""}
-            className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-brand-700 focus:ring-4 focus:ring-brand-100"
+            className="w-full rounded-[4px] border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-brand-700 focus:ring-4 focus:ring-brand-100"
           >
             <option value="">No person linkage</option>
             {people.map((person) => (
@@ -150,21 +165,21 @@ export function FieldNoteForm({
           name="title"
           defaultValue={fieldNote?.title ?? ""}
           required
-          className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-brand-700 focus:ring-4 focus:ring-brand-100"
-          placeholder="Short execution observation"
+          className="w-full rounded-[4px] border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-brand-700 focus:ring-4 focus:ring-brand-100"
+          placeholder="Short Job Note title"
         />
       </label>
 
       <label className="block">
         <span className="mb-2 block text-sm font-medium text-slate-800">
-          Details
+          Job Note details
         </span>
         <textarea
           name="body"
           defaultValue={getValue(fieldNote?.body)}
           rows={4}
-          className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-brand-700 focus:ring-4 focus:ring-brand-100"
-          placeholder="Capture the execution detail, blocker, issue, or punch-list-ready note."
+          className="w-full rounded-[4px] border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-brand-700 focus:ring-4 focus:ring-brand-100"
+          placeholder="Capture the job detail, blocker, issue, or closeout-ready note."
         />
       </label>
 
@@ -175,7 +190,7 @@ export function FieldNoteForm({
         <select
           name="timeCardId"
           defaultValue={fieldNote?.timeCardId ?? ""}
-          className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-brand-700 focus:ring-4 focus:ring-brand-100"
+          className="w-full rounded-[4px] border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-brand-700 focus:ring-4 focus:ring-brand-100"
         >
           <option value="">No time-card linkage</option>
           {timeCards.map((timeCard) => (

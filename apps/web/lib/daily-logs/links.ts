@@ -29,6 +29,15 @@ export function buildDailyLogCaptureHref(input: {
   return `/daily-logs?${searchParams.toString()}#daily-log-create`;
 }
 
+export type DailyLogSectionAnchor = "job-notes" | "field-evidence";
+
+export function buildDailyLogSectionHref(
+  dailyLogId: string,
+  section: DailyLogSectionAnchor
+) {
+  return `/daily-logs/${dailyLogId}#${section}`;
+}
+
 export function findDailyLogForJobDate<
   TDailyLog extends {
     id: string;

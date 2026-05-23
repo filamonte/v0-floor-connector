@@ -51,6 +51,7 @@ import {
   type CloseoutTrailTone
 } from "@/lib/closeouttrail/summary";
 import { listDailyLogsByProject } from "@/lib/daily-logs/data";
+import { buildDailyLogCaptureHref } from "@/lib/daily-logs/links";
 import { listCustomers } from "@/lib/customers/data";
 import { getProjectEquipmentReadinessSummary } from "@/lib/equipment/data";
 import {
@@ -60,6 +61,7 @@ import {
 import { listExecutionAttachmentsBySubjects } from "@/lib/execution-attachments/data";
 import { deriveFieldTrailSummary } from "@/lib/fieldtrail/summary";
 import { listFieldNotes } from "@/lib/field-notes/data";
+import { getFieldNoteTypeLabel } from "@/lib/field-notes/labels";
 import { getGateKeeperSubjectMemory } from "@/lib/gatekeeper/memory";
 import { getInvoiceById, listInvoices } from "@/lib/invoices/data";
 import { listJobAssignmentsByJobIds, listJobs } from "@/lib/jobs/data";
@@ -4766,8 +4768,10 @@ export default async function ProjectDetailPage({
                       eyebrow="No daily logs"
                       title="Capture the first project day"
                       description="Daily execution records stay connected to the same project and job chain once field work begins."
-                      actionHref={`/daily-logs?projectId=${project.id}`}
-                      actionLabel="Create daily log"
+                      actionHref={buildDailyLogCaptureHref({
+                        projectId: project.id
+                      })}
+                      actionLabel="Start Daily Job Log"
                     />
                   )}
                 </div>
@@ -4922,7 +4926,7 @@ export default async function ProjectDetailPage({
                             >
                               <span>
                                 <span className="font-semibold text-slate-950">
-                                  {formatStatusLabel(note.noteType)}:
+                                  {getFieldNoteTypeLabel(note.noteType)}:
                                 </span>{" "}
                                 {note.title}
                               </span>
@@ -4942,10 +4946,14 @@ export default async function ProjectDetailPage({
                     description="Use the Daily Job Log to capture work completed, blockers, safety notes, photos, and crew activity once field work begins."
                     actionHref={
                       projectJobs[0]
-                        ? `/daily-logs?projectId=${project.id}&jobId=${projectJobs[0].id}`
-                        : `/daily-logs?projectId=${project.id}`
+                        ? buildDailyLogCaptureHref({
+                            projectId: project.id,
+                            jobId: projectJobs[0].id,
+                            logDate: projectJobs[0].scheduledDate
+                          })
+                        : buildDailyLogCaptureHref({ projectId: project.id })
                     }
-                    actionLabel="Create Daily Job Log"
+                    actionLabel="Start Daily Job Log"
                   />
                 )}
               </div>

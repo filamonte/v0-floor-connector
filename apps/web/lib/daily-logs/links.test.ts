@@ -3,6 +3,7 @@ import test from "node:test";
 
 import {
   buildDailyLogCaptureHref,
+  buildDailyLogSectionHref,
   findDailyLogForJobDate,
   getDailyLogDateKey,
   isDailyLogDateKey
@@ -34,6 +35,17 @@ void test("buildDailyLogCaptureHref opens the existing quick-create sheet with c
       logDate: "not-a-date"
     }),
     "/daily-logs?compose=1&projectId=project-1#daily-log-create"
+  );
+});
+
+void test("buildDailyLogSectionHref points to specific Daily Job Log capture areas", () => {
+  assert.equal(
+    buildDailyLogSectionHref("log-1", "job-notes"),
+    "/daily-logs/log-1#job-notes"
+  );
+  assert.equal(
+    buildDailyLogSectionHref("log-1", "field-evidence"),
+    "/daily-logs/log-1#field-evidence"
   );
 });
 

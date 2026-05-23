@@ -25,11 +25,13 @@ import {
   getDailyLogById,
   getDailyLogLaborSummary
 } from "@/lib/daily-logs/data";
+import { buildDailyLogSectionHref } from "@/lib/daily-logs/links";
 import {
   listExecutionAttachmentsByFieldNotes,
   listExecutionAttachmentsBySubject
 } from "@/lib/execution-attachments/data";
 import { listFieldNotesByDailyLog } from "@/lib/field-notes/data";
+import { getFieldNoteTypeLabel } from "@/lib/field-notes/labels";
 import { listJobs } from "@/lib/jobs/data";
 import { listPeople } from "@/lib/people/data";
 import { listProjects } from "@/lib/projects/data";
@@ -68,7 +70,7 @@ function formatStatusLabel(value: string) {
 }
 
 function formatNoteTypeLabel(value: string) {
-  return value === "punch_list" ? "Punch list" : value.replaceAll("_", " ");
+  return getFieldNoteTypeLabel(value);
 }
 
 function formatDuration(minutes: number) {
@@ -182,7 +184,7 @@ export default async function DailyLogDetailPage({
       ? {
           title: "Finish the execution record",
           description:
-            "This daily log is still in draft, so the next practical step is tightening the narrative, blockers, and field notes before treating the day as complete."
+            "This Daily Job Log is still in draft, so the next practical step is tightening the narrative, blockers, and Job Notes before treating the day as complete."
         }
       : {
           title: "Use this as the project-day reference",
@@ -222,7 +224,7 @@ export default async function DailyLogDetailPage({
                 dailyLog.summary?.trim() ||
                 `${formatDate(dailyLog.logDate)} field log`
               }
-              description="Use this page as the canonical project-day execution workspace for field narrative, blockers, structured field notes, attachments, and connected labor continuity on the same project/job chain."
+              description="Use this page as the project-day execution workspace for field narrative, blockers, Job Notes, field evidence, and connected labor continuity on the same project/job chain."
               backHref="/daily-logs"
               backLabel="Back to daily logs"
               actions={
@@ -254,7 +256,7 @@ export default async function DailyLogDetailPage({
 
             <FieldExecutionCommandBand
               title="Daily execution summary"
-              description="Review the project-day record, field observations, attachments, and labor continuity without creating a separate field evidence system."
+              description="Review the project-day record, Job Notes, field evidence, and labor continuity without creating a separate field system."
               statusLabel={`${formatStatusLabel(dailyLog.status)} log`}
               projectHref={`/projects/${dailyLog.projectId}`}
               jobHref={dailyLog.jobId ? `/jobs/${dailyLog.jobId}` : undefined}
@@ -265,11 +267,11 @@ export default async function DailyLogDetailPage({
                   detail: dailyLog.project?.name ?? "Project-linked record"
                 },
                 {
-                  label: "Field notes",
+                  label: "Job Notes",
                   value: `${fieldNotes.length} note${
                     fieldNotes.length === 1 ? "" : "s"
                   }`,
-                  detail: `${dailyLogAttachments.length + fieldNoteAttachments.length} attachment${
+                  detail: `${dailyLogAttachments.length + fieldNoteAttachments.length} evidence item${
                     dailyLogAttachments.length + fieldNoteAttachments.length ===
                     1
                       ? ""
@@ -315,9 +317,9 @@ export default async function DailyLogDetailPage({
                     label: "What this page is for",
                     content: (
                       <p className="text-sm leading-6 text-slate-600">
-                        Review the project-day record first, then use field
-                        notes, attachments, and labor continuity to explain what
-                        happened in the job/schedule stage.
+                        Review the project-day record first, then use field Job
+                        Notes, field evidence, and labor continuity to explain
+                        what happened in the job/schedule stage.
                       </p>
                     )
                   },
@@ -369,6 +371,27 @@ export default async function DailyLogDetailPage({
                   }
                 ]}
               />
+            </div>
+
+            <div className="mt-6 grid gap-3 sm:grid-cols-3">
+              <Link
+                href={buildDailyLogSectionHref(dailyLog.id, "job-notes")}
+                className="inline-flex min-h-12 items-center justify-center rounded-[4px] border border-[#171717] bg-[#171717] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#2a2a2a]"
+              >
+                Add Job Note
+              </Link>
+              <Link
+                href={buildDailyLogSectionHref(dailyLog.id, "job-notes")}
+                className="inline-flex min-h-12 items-center justify-center rounded-[4px] border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-900 transition hover:bg-amber-100"
+              >
+                Add blocker
+              </Link>
+              <Link
+                href={buildDailyLogSectionHref(dailyLog.id, "field-evidence")}
+                className="inline-flex min-h-12 items-center justify-center rounded-[4px] border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+              >
+                Add field evidence
+              </Link>
             </div>
           </div>
         </div>
@@ -431,7 +454,7 @@ export default async function DailyLogDetailPage({
 
           <DetailPanel
             title="Labor and Time Continuity"
-            description="Daily logs reuse canonical time cards for job/schedule labor visibility instead of persisting a second labor-entry model."
+            description="Daily logs reuse existing time cards for job/schedule labor visibility instead of persisting a second labor-entry model."
           >
             <div className="grid gap-4">
               {laborSummary?.entries.length ? (
@@ -459,7 +482,7 @@ export default async function DailyLogDetailPage({
                 <AppEmptyState
                   eyebrow="No labor continuity yet"
                   title="No time cards are connected to this project day"
-                  description="Time continuity will appear here automatically when canonical time cards exist for the same project and log date. Use Time when crew labor exists but is not attributed yet."
+                  description="Time continuity will appear here automatically when time cards exist for the same project and log date. Use Time when crew labor exists but is not attributed yet."
                 />
               )}
 
@@ -486,26 +509,25 @@ export default async function DailyLogDetailPage({
         </div>
 
         <DetailPanel
-          title="Field Notes"
-          description="Execution observations stay inside the daily-log workflow and project/job chain. Use shared note types and statuses instead of separate issue, blocker, or punch-list pages."
+          title="Job Notes"
+          description="Quick job notes, blockers, issues, and closeout-ready observations stay inside the Daily Job Log and project/job chain."
         >
-          <div className="space-y-8">
-            <section className="rounded-[1.75rem] border border-slate-200 bg-slate-50/70 p-5 sm:p-6">
+          <div id="job-notes" className="scroll-mt-24 space-y-8">
+            <section className="rounded-[6px] border border-slate-200 bg-slate-50/70 p-5 sm:p-6">
               <div className="flex flex-col gap-2">
                 <p className="text-base font-semibold text-slate-950">
-                  Add field note
+                  Add Job Note
                 </p>
                 <p className="text-sm leading-6 text-slate-600">
-                  Capture a structured execution observation and optionally
-                  connect it to a job, workforce person, or canonical time card
-                  so field evidence stays connected.
+                  Capture a Job Note, blocker, issue, or field observation and
+                  optionally connect it to a job, person, or time card.
                 </p>
               </div>
               <div className="mt-5">
                 <FieldNoteForm
                   action={createFieldNoteAction}
-                  submitLabel="Create field note"
-                  pendingLabel="Creating field note..."
+                  submitLabel="Save Job Note"
+                  pendingLabel="Saving Job Note..."
                   dailyLogId={dailyLog.id}
                   projectId={dailyLog.projectId}
                   jobs={projectJobs}
@@ -561,8 +583,8 @@ export default async function DailyLogDetailPage({
                           <div className="mt-5">
                             <FieldNoteForm
                               action={updateFieldNoteAction}
-                              submitLabel="Save note"
-                              pendingLabel="Saving note..."
+                              submitLabel="Save Job Note"
+                              pendingLabel="Saving Job Note..."
                               dailyLogId={dailyLog.id}
                               projectId={dailyLog.projectId}
                               jobs={projectJobs}
@@ -574,7 +596,7 @@ export default async function DailyLogDetailPage({
                           </div>
                           <div className="mt-6 rounded-2xl border border-slate-200 bg-slate-50/70 px-4 py-4">
                             <p className="text-sm font-medium text-slate-950">
-                              Attachments
+                              Field evidence
                             </p>
                             <div className="mt-4 grid gap-3">
                               {(
@@ -628,7 +650,7 @@ export default async function DailyLogDetailPage({
                               ) : (
                                 <p className="text-sm leading-6 text-slate-500">
                                   No attachment references are linked to this
-                                  field note yet. Add photos or files here when
+                                  Job Note yet. Add photos or files here when
                                   the observation needs field evidence.
                                 </p>
                               )}
@@ -636,8 +658,8 @@ export default async function DailyLogDetailPage({
                             <div className="mt-5">
                               <ExecutionAttachmentForm
                                 action={createExecutionAttachmentAction}
-                                submitLabel="Add attachment"
-                                pendingLabel="Adding attachment..."
+                                submitLabel="Add evidence"
+                                pendingLabel="Adding evidence..."
                                 dailyLogId={dailyLog.id}
                                 projectId={dailyLog.projectId}
                                 jobId={fieldNote.jobId ?? dailyLog.jobId}
@@ -654,19 +676,19 @@ export default async function DailyLogDetailPage({
               })
             ) : (
               <AppEmptyState
-                eyebrow="No field notes yet"
-                title="Capture the first execution observation"
-                description="Blockers, issues, labor notes, and punch-list-ready observations all stay on this shared field-note model under the canonical daily log."
+                eyebrow="No Job Notes yet"
+                title="Capture the first Job Note"
+                description="Blockers, issues, labor notes, and closeout-ready observations all stay under this Daily Job Log."
               />
             )}
           </div>
         </DetailPanel>
 
         <DetailPanel
-          title="Execution Attachments"
-          description="Daily-log attachment context stays lightweight and subject-scoped. Photos and files hang directly off the daily log or a field note on the same project/job chain, not a separate document subsystem."
+          title="Field Evidence"
+          description="Field evidence stays lightweight and subject-scoped. Photos and files hang directly off the Daily Job Log or a Job Note on the same project/job chain."
         >
-          <div className="space-y-6">
+          <div id="field-evidence" className="scroll-mt-24 space-y-6">
             <div className="grid gap-4">
               {dailyLogAttachments.length > 0 ? (
                 dailyLogAttachments.map((attachment) => (
@@ -710,22 +732,22 @@ export default async function DailyLogDetailPage({
                 ))
               ) : (
                 <AppEmptyState
-                  eyebrow="No daily-log attachments yet"
-                  title="Add the first execution photo or file reference"
-                  description="Attachment references can capture progress photos, delivery files, or other execution evidence without turning this slice into a full file-management system or separate document model."
+                  eyebrow="No field evidence yet"
+                  title="Add the first field evidence reference"
+                  description="Evidence references can capture progress photos, delivery files, or other job context without turning this slice into a full file-management system."
                 />
               )}
             </div>
 
-            <section className="rounded-[1.75rem] border border-slate-200 bg-white px-5 py-5">
+            <section className="rounded-[6px] border border-slate-200 bg-white px-5 py-5">
               <p className="text-sm font-medium text-slate-950">
-                Add attachment to the daily log
+                Add evidence to the Daily Job Log
               </p>
               <div className="mt-5">
                 <ExecutionAttachmentForm
                   action={createExecutionAttachmentAction}
-                  submitLabel="Add attachment"
-                  pendingLabel="Adding attachment..."
+                  submitLabel="Add evidence"
+                  pendingLabel="Adding evidence..."
                   dailyLogId={dailyLog.id}
                   projectId={dailyLog.projectId}
                   jobId={dailyLog.jobId}
@@ -739,12 +761,12 @@ export default async function DailyLogDetailPage({
 
         <DetailPanel
           title="Edit Daily Log"
-          description="Keep the canonical project-day record editable here while schedule, time-card, readiness, and invoice rules stay owned by their existing workflows."
+          description="Keep the project-day record editable here while schedule, time-card, readiness, and invoice rules stay owned by their existing workflows."
         >
           <DailyLogForm
             action={updateDailyLogAction}
-            submitLabel="Save daily log"
-            pendingLabel="Saving daily log..."
+            submitLabel="Save Daily Job Log"
+            pendingLabel="Saving Daily Job Log..."
             projects={projectOptions}
             jobs={jobOptions}
             dailyLog={dailyLog}
@@ -798,11 +820,11 @@ export default async function DailyLogDetailPage({
                 )
               },
               {
-                label: "Field notes",
+                label: "Job Notes",
                 value: `${fieldNotes.length} note${fieldNotes.length === 1 ? "" : "s"}`
               },
               {
-                label: "Attachments",
+                label: "Field evidence",
                 value: `${dailyLogAttachments.length + fieldNoteAttachments.length} total`
               },
               {
