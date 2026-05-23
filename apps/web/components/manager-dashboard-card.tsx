@@ -58,9 +58,9 @@ export function ManagerDashboardCard({
 
       <div className="flex-1 divide-y divide-[var(--border-warm)]">
         {items.length > 0 ? (
-          items.map((item) => (
+          items.map((item, index) => (
             <Link
-              key={`${item.href}:${item.title}`}
+              key={`${item.href}:${item.title}:${index}`}
               href={item.href}
               className="group flex min-w-0 flex-col gap-2 px-3 py-3 transition hover:bg-[var(--highlight)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--copper)] focus-visible:ring-inset sm:flex-row sm:items-start sm:justify-between sm:gap-3"
             >

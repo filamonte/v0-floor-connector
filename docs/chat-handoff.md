@@ -202,6 +202,12 @@ Recent completed layers:
 - [docs/design/document-engine-qa-checkpoint.md](C:/FloorConnector/docs/design/document-engine-qa-checkpoint.md)
   records the focused print/export QA evidence after Document Engine Phase 1,
   Phase 2A, and the browser QA maintenance pass.
+- [docs/design/operating-core-runtime-qa-checkpoint.md](C:/FloorConnector/docs/design/operating-core-runtime-qa-checkpoint.md)
+  records the operating-core runtime QA pass: local `main` push completed,
+  focused helper tests passed, stale protected E2E fixed IDs were replaced with
+  authenticated index-page discovery, a duplicate React key warning in manager
+  dashboard cards was fixed, and broader protected browser QA remains blocked
+  until Supabase Auth rate limits cool down.
 
 These layers are read-only summaries, source-record handoffs, copy/hierarchy
 improvements, or existing-action presentation around canonical records. They did

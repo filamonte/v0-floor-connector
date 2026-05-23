@@ -1,28 +1,43 @@
 const { test, expect } = require("@playwright/test");
+const { resolveFirstLinkedDetailPath } = require("./protected-route-utils");
 
 const protectedDocuments = [
   {
     label: "estimate",
-    path:
-      process.env.FLOORCONNECTOR_E2E_ESTIMATE_DETAIL_PATH ??
-      "/estimates/a58c10b5-9b3b-4c1a-a03b-44e3cdaa1c5e"
+    configuredPath: process.env.FLOORCONNECTOR_E2E_ESTIMATE_DETAIL_PATH,
+    listPath: "/estimates",
+    hrefPrefix: "/estimates/"
   },
   {
     label: "contract",
-    path:
-      process.env.FLOORCONNECTOR_E2E_CONTRACT_DETAIL_PATH ??
-      "/contracts/a0ce5ce7-a305-48f8-bda3-d6e8e5a171c8"
+    configuredPath: process.env.FLOORCONNECTOR_E2E_CONTRACT_DETAIL_PATH,
+    listPath: "/contracts",
+    hrefPrefix: "/contracts/"
   },
   {
     label: "invoice",
-    path:
-      process.env.FLOORCONNECTOR_E2E_INVOICE_DETAIL_PATH ??
-      "/invoices/7598e4ef-f875-4543-93fb-d2d846896ed7"
+    configuredPath: process.env.FLOORCONNECTOR_E2E_INVOICE_DETAIL_PATH,
+    listPath: "/invoices",
+    hrefPrefix: "/invoices/"
   }
 ];
 
+async function resolveProtectedDocumentPath(page, document) {
+  if (document.configuredPath) {
+    return document.configuredPath;
+  }
+
+  return resolveFirstLinkedDetailPath(page, {
+    listPath: document.listPath,
+    hrefPrefix: document.hrefPrefix,
+    label: `${document.label} document smoke`
+  });
+}
+
 async function expectAuthenticatedDocument(page, path) {
-  const response = await page.goto(`${path}/pdf`, { waitUntil: "domcontentloaded" });
+  const response = await page.goto(`${path}/pdf`, {
+    waitUntil: "domcontentloaded"
+  });
 
   if (new URL(page.url()).pathname.startsWith("/login")) {
     throw new Error(
@@ -30,25 +45,41 @@ async function expectAuthenticatedDocument(page, path) {
     );
   }
 
-    expect(response?.status(), `${path}/pdf should load successfully`).toBeLessThan(400);
+  expect(
+    response?.status(),
+    `${path}/pdf should load successfully`
+  ).toBeLessThan(400);
 }
 
 for (const document of protectedDocuments) {
   test(`protected ${document.label} document route renders a printable PDF view`, async ({
     page
   }) => {
-    await expectAuthenticatedDocument(page, document.path);
+    const documentPath = await resolveProtectedDocumentPath(page, document);
 
-    await expect(page.getByRole("main", { name: /customer document/i })).toBeVisible();
-    await expect(page.getByRole("button", { name: /print|save pdf/i })).toBeVisible();
+    await expectAuthenticatedDocument(page, documentPath);
+
+    await expect(
+      page.getByRole("main", { name: /customer document/i })
+    ).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: /print|save pdf/i })
+    ).toBeVisible();
     await expect(page.locator("body")).toContainText(/Customer document/i);
-    await expect(page.locator("body")).not.toContainText(/Workflow Actions|Record a payment|Internal work/i);
+    await expect(page.locator("body")).not.toContainText(
+      /Workflow Actions|Record a payment|Internal work/i
+    );
   });
 }
 
-test("record detail pages expose customer-facing document actions", async ({ page }) => {
+test("record detail pages expose customer-facing document actions", async ({
+  page
+}) => {
   for (const document of protectedDocuments) {
-    const response = await page.goto(document.path, { waitUntil: "domcontentloaded" });
+    const documentPath = await resolveProtectedDocumentPath(page, document);
+    const response = await page.goto(documentPath, {
+      waitUntil: "domcontentloaded"
+    });
 
     if (new URL(page.url()).pathname.startsWith("/login")) {
       throw new Error(
@@ -56,7 +87,12 @@ test("record detail pages expose customer-facing document actions", async ({ pag
       );
     }
 
-    expect(response?.status(), `${document.path} should load successfully`).toBeLessThan(400);
-    await expect(page.getByRole("link", { name: /print|save pdf/i })).toBeVisible();
+    expect(
+      response?.status(),
+      `${documentPath} should load successfully`
+    ).toBeLessThan(400);
+    await expect(
+      page.getByRole("link", { name: /print|save pdf/i })
+    ).toBeVisible();
   }
 });

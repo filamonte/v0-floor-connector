@@ -89,6 +89,7 @@ Document roles:
   generation
 - `docs/design/document-engine-phase-2a-closeout-package-print-route.md`: implementation note for the contractor-side Project Closeout Package print/save route generated from current project source records
 - `docs/design/document-engine-qa-checkpoint.md`: focused QA checkpoint for Document Engine print/export routes, Project Closeout Package coverage, source-record boundaries, and validation evidence
+- `docs/design/operating-core-runtime-qa-checkpoint.md`: runtime QA checkpoint for the operating core, focused helper validation, stale protected E2E fixture cleanup, duplicate-key warning fix, and local auth/browser limitations
 - `docs/operating-core-validation-checklist.md`: focused validation inventory for recent operating-core summary helpers, routes, and browser QA caveats
 - `docs/design/project-workspace-lifecycle-qa.md`: lifecycle QA note for the Project Workspace operating loop after CrewBoard, FieldTrail, MessageCenter, ProjectPulse, and CloseoutTrail
 - `docs/enterprise-ui-system-audit.md`: secured-app route audit, Phase 1-4 polish history, drift watch list, and authenticated visual QA rules

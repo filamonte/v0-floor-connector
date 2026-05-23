@@ -11,7 +11,17 @@ async function requireAuthenticatedPage(page, route, label) {
 }
 
 async function resolveFirstLinkedDetailPath(page, options) {
+  const [detailPath] = await resolveLinkedDetailPaths(page, {
+    ...options,
+    limit: 1
+  });
+
+  return detailPath;
+}
+
+async function resolveLinkedDetailPaths(page, options) {
   const { listPath, hrefPrefix, label } = options;
+  const limit = options.limit ?? 3;
 
   await requireAuthenticatedPage(page, listPath, label);
 
@@ -32,6 +42,8 @@ async function resolveFirstLinkedDetailPath(page, options) {
       hrefs.push(href);
     }
   }
+
+  const validHrefs = [];
 
   for (const href of hrefs) {
     await page.goto(href, { waitUntil: "domcontentloaded", timeout: 90_000 });
@@ -56,8 +68,16 @@ async function resolveFirstLinkedDetailPath(page, options) {
         bodyText
       )
     ) {
-      return href;
+      validHrefs.push(href);
+
+      if (validHrefs.length >= limit) {
+        return validHrefs;
+      }
     }
+  }
+
+  if (validHrefs.length > 0) {
+    return validHrefs;
   }
 
   test.skip(
@@ -87,5 +107,6 @@ async function resolveProjectDetailPath(page) {
 module.exports = {
   requireAuthenticatedPage,
   resolveFirstLinkedDetailPath,
+  resolveLinkedDetailPaths,
   resolveProjectDetailPath
 };
