@@ -323,9 +323,21 @@ availability, repository counts, and an owner-action reminder. It does not read
 
 The future seed script design is specified in
 [docs/demo/staging-demo-seed-script-spec.md](C:/FloorConnector/docs/demo/staging-demo-seed-script-spec.md).
-That spec is documentation only. It defines required inputs, dry-run behavior,
-safety checks, idempotency, record order, provider/portal boundaries, route
-validation, and the next implementation prompt for a future dry-run script.
+Phase 1 of that script is implemented as a strict no-write dry-run planner:
+
+```bash
+pnpm demo:data:seed:dry-run -- --organization-id <uuid> --owner-user-id <uuid> --owner-email <owner@example.test> --portal-customer-email <customer@example.test> --environment staging
+```
+
+The command validates explicit identifiers and prints the planned dataset,
+idempotency notes, provider safety rules, portal safety rules, and future route
+validation checklist. It does not read `.env.local`, import Supabase clients,
+connect to databases, write data, call providers, create auth users, generate
+portal invite tokens, or create payment/signature/email events.
+
+The spec defines required inputs, dry-run behavior, safety checks, idempotency,
+record order, provider/portal boundaries, route validation, and the future
+write-capable implementation boundary if the owner approves it later.
 
 It does not authorize staging writes, remote Supabase commands, migrations,
 provider actions, payment/signature mutation, portal invite-token exposure, or

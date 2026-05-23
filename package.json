@@ -23,6 +23,7 @@
     "e2e:headed": "playwright test --headed",
     "lint": "turbo run lint",
     "demo:data:inventory": "node scripts/demo-data-inventory.mjs",
+    "demo:data:seed:dry-run": "node scripts/seed-staging-demo-data.mjs --dry-run",
     "platform-admin": "node scripts/platform-admin.mjs",
     "staging:preflight": "node scripts/staging-preflight.mjs",
     "typecheck": "turbo run typecheck",

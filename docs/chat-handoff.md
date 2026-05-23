@@ -76,10 +76,15 @@ Recent staging/demo work is docs-first and no-write:
   defines the ideal canonical demo dataset and recommends owner-controlled
   auth/org setup plus a future dry-run-first seed script.
 - [docs/demo/staging-demo-seed-script-spec.md](C:/FloorConnector/docs/demo/staging-demo-seed-script-spec.md)
-  specifies the future dry-run seed script. It is documentation only: no seed
-  script, package script, schema, migration, remote data, provider, payment,
-  signature, auth/RLS, tenant, portal, settings, or platform-admin behavior was
-  added.
+  specifies the seed script safety boundary.
+- `pnpm demo:data:seed:dry-run -- --organization-id <uuid> --owner-user-id
+<uuid> --owner-email <owner@example.test> --portal-customer-email
+<customer@example.test> --environment staging` runs the Phase 1 dry-run-only
+  planner. It validates explicit inputs and prints planned dataset groups,
+  idempotency notes, provider safety, portal safety, and future route checks.
+  It does not import Supabase clients, read `.env.local`, write data, call
+  providers, create auth users, create payment/signature/email events, or print
+  portal invite tokens.
 
 ## Guardrails
 
@@ -115,9 +120,8 @@ For current operating-core focused tests and route checks, use
 
 Good next moves:
 
-- Implement the dry-run-only staging demo seed planner from
-  [docs/demo/staging-demo-seed-script-spec.md](C:/FloorConnector/docs/demo/staging-demo-seed-script-spec.md),
-  with no write mode.
+- Review the dry-run seed planner output with owner-approved staging
+  identifiers before designing any future write-capable seed mode.
 - Plan the next Company Documents slice only after Phase 1A is verified in the
   target environment: likely Starter Documents, versioning, storage,
   print/save, or acknowledgements as separate approvals.

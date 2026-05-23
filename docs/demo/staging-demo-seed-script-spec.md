@@ -1,15 +1,24 @@
 # Staging Demo Seed Script Spec
 
-Status: Planned
+Status: Active / Phase 1 Dry Run Implemented
 Doc Type: Demo / Specification
 
 ## 1. Purpose
 
 This spec defines the future `scripts/seed-staging-demo-data.mjs` design for a
-staging/demo dataset. It is a dry-run implementation specification only. It does
-not implement a seed script, write remote data, run Supabase writes, apply
-migrations, create schema, create seed records, call providers, create payment
-or signature events, send email, expose invite tokens, or change app behavior.
+staging/demo dataset. Phase 1 now implements a strict dry-run-only local
+planner and package command:
+
+```bash
+pnpm demo:data:seed:dry-run -- --organization-id <uuid> --owner-user-id <uuid> --owner-email <owner@example.test> --portal-customer-email <customer@example.test> --environment staging
+```
+
+The implemented Phase 1 script validates required inputs and prints the planned
+canonical demo dataset. It does not write remote data, run Supabase writes,
+apply migrations, create schema, create seed records, call providers, create
+payment or signature events, send email, expose invite tokens, read
+`.env.local`, import Supabase clients, connect to databases, or change app
+behavior.
 
 The future script should make one coherent owner-approved demo company story
 visible across the existing operating core:

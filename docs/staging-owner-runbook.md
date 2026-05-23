@@ -57,12 +57,19 @@ minimum coherent canonical dataset, the existing local fixture patterns, and
 the required no-provider/no-secret/no-token safety boundaries for any future
 seed script.
 
-The dry-run design for that future seed script now lives in
+The dry-run design for that seed script now lives in
 [docs/demo/staging-demo-seed-script-spec.md](C:/FloorConnector/docs/demo/staging-demo-seed-script-spec.md).
-Seed scripting remains future and owner-approved. The spec does not authorize
-remote data writes, Supabase writes, migrations, provider actions, real
-payments, signature mutation, portal invite-token exposure, or auth/RLS/tenant
-logic changes.
+Phase 1 is implemented as a local no-write planner:
+
+```bash
+pnpm demo:data:seed:dry-run -- --organization-id <uuid> --owner-user-id <uuid> --owner-email <owner@example.test> --portal-customer-email <customer@example.test> --environment staging
+```
+
+That command validates explicit inputs and prints the future canonical dataset
+plan. It does not read `.env.local`, connect to Supabase, write data, call
+providers, create auth users, create payment/signature/email events, or print
+portal invite tokens. Any future write-capable seed mode remains owner-approved
+and out of scope until a separate implementation prompt.
 
 Codex should not create these resources or mutate these settings unless the
 owner explicitly authorizes a specific action in a later task.
