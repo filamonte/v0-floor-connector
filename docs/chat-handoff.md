@@ -59,6 +59,13 @@ Current operating-core surfaces include:
   server-owned starter content and does not add schema, platform-admin starter
   management, live coupling, distribution, AI, legal advice, e-sign, storage,
   provider sending, public links, or delivery proof.
+- Company Documents Starter Adoption QA is documented in
+  [docs/design/company-documents-starter-adoption-qa-checkpoint.md](C:/FloorConnector/docs/design/company-documents-starter-adoption-qa-checkpoint.md).
+  The checkpoint confirmed code-defined starter safety, server-owned adoption
+  data, existing owner/admin/manager manage scope, visible disclaimer copy, and
+  protected-route browser visibility with saved local contractor auth. Adoption
+  submit was intentionally not exercised to avoid creating a real draft row in
+  the configured development data source.
 - Company Documents Phase 1 QA checkpoint is documented in
   [docs/design/company-documents-phase-1-qa-checkpoint.md](C:/FloorConnector/docs/design/company-documents-phase-1-qa-checkpoint.md).
   Static QA confirmed the Phase 1A/1B schema, RLS, scoped helpers, routes, and

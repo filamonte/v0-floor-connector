@@ -50,6 +50,8 @@ Run focused tests when touching the matching helper or route:
   `pnpm.cmd --filter @floorconnector/web exec tsx --test lib/document-engine/print.test.ts`
 - Company Documents validation/types:
   `pnpm.cmd --filter @floorconnector/web exec tsx --test lib/company-documents/types.test.ts`
+- Company Documents Starter Documents:
+  `pnpm.cmd --filter @floorconnector/web exec tsx --test lib/company-documents/starter-documents.test.ts`
 - Company Documents migration/RLS shape:
   `pnpm.cmd --filter @floorconnector/web exec tsx --test lib/company-documents/company-documents-migration.test.ts`
 - Schedule read model:
