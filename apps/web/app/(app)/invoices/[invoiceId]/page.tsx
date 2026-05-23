@@ -899,6 +899,12 @@ export default async function InvoiceDetailPage({
                         Progress Billing
                       </Link>
                     ) : null}
+                    <Link
+                      href="/financials/accounting-readiness"
+                      className={overflowActionClassName}
+                    >
+                      Accounting Readiness
+                    </Link>
                   </ActionOverflowMenu>
                 </>
               }

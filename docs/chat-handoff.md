@@ -131,6 +131,17 @@ Recent completed layers:
   payment finalization, accounting sync, provider sends, schema, migrations,
   routes, server actions, auth/RLS, tenant logic, portal grants, settings, or
   platform-admin behavior.
+- Accounting Readiness Phase 1 adds `/financials/accounting-readiness` as a
+  read-only export and reconciliation prep surface over existing invoices,
+  payments, payment events, customers, projects, invoice tax reporting entries,
+  and invoice retainage snapshots. The page surfaces accounting review rows,
+  payment review rows, reconciliation attention, tax/retainage snapshot totals,
+  and export-ready column mapping, with links back to source Invoice, Customer,
+  Project, Financials, AR, and Reports surfaces. It does not add QuickBooks/Xero
+  sync, ledgers, journal entries, export files, provider reconciliation posting,
+  schema, migrations, server actions, invoice/payment math changes, payment
+  finalization changes, auth/RLS changes, tenant logic changes, portal grants,
+  settings, or platform-admin behavior.
 - Reports Phase 1 on `/reports` for read-only operations and collections
   visibility.
 - Send Trail Phase 1 on estimate, contract, and invoice source workspaces for
@@ -184,11 +195,11 @@ before assuming a protected-route browser failure is product behavior.
 
 ## Next Recommended Direction
 
-Use [docs/design/financial-control-phase-1-collections-payment-attention.md](C:/FloorConnector/docs/design/financial-control-phase-1-collections-payment-attention.md)
-as the current Financial Control checkpoint.
+Use [docs/design/accounting-readiness-phase-1-export-reconciliation-prep.md](C:/FloorConnector/docs/design/accounting-readiness-phase-1-export-reconciliation-prep.md)
+as the current Accounting Readiness checkpoint.
 
-Recommended next build: a similarly guarded financial follow-up, such as
-read-only aging/export planning or collections reminder planning. Do not add
-retry automation, provider posting, accounting sync, payment plans, reminders,
-stored billing packets, or customer billing center settings until their
-approval, provider, and data-boundary policies are explicit.
+Recommended next build: a similarly guarded accounting or financial follow-up,
+such as CSV export policy, accounting mapping docs, or read-only filters. Do not
+add retry automation, provider posting, accounting sync, payment plans,
+reminders, stored billing packets, or customer billing center settings until
+their approval, provider, and data-boundary policies are explicit.

@@ -102,6 +102,12 @@ export default async function FinancialsHomePage() {
               Open AR
             </Link>
             <Link
+              href="/financials/accounting-readiness"
+              className="inline-flex items-center rounded-[4px] border border-[#d6d6d6] bg-white px-3 py-2 text-sm font-medium text-[#334155] transition hover:bg-slate-50"
+            >
+              Accounting readiness
+            </Link>
+            <Link
               href="/payments"
               className="inline-flex items-center rounded-[4px] border border-[#d6d6d6] bg-white px-3 py-2 text-sm font-medium text-[#334155] transition hover:bg-slate-50"
             >
@@ -232,6 +238,35 @@ export default async function FinancialsHomePage() {
               }))}
             emptyTitle="No invoices need attention."
             emptyDescription="Open balances and follow-up items will appear here."
+          />
+          <ManagerDashboardCard
+            eyebrow="Accounting Readiness"
+            title="Export and reconciliation prep"
+            description="Invoice, payment, tax, retainage, customer, and project context for accounting review."
+            actionHref="/financials/accounting-readiness"
+            actionLabel="Review prep"
+            items={[
+              {
+                href: "/financials/accounting-readiness",
+                title: "Accounting review workspace",
+                subtitle:
+                  "Read-only invoice and payment rows with export-ready columns.",
+                meta: "Review for accounting",
+                badge: "Export prep",
+                trailing: "Open"
+              },
+              {
+                href: "/financials/accounting-readiness",
+                title: "Tax and retainage snapshots",
+                subtitle:
+                  "Existing invoice snapshots surfaced without recalculating financial truth.",
+                meta: "Source records",
+                badge: "Read-only",
+                trailing: "Open"
+              }
+            ]}
+            emptyTitle="Accounting readiness is available."
+            emptyDescription="Open the workspace to review invoice and payment export prep."
           />
         </section>
 

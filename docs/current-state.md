@@ -769,10 +769,12 @@ Implemented now:
     and Payment Trail attention
   - collection-opportunity links into canonical Invoice Workspaces
 - `/financials/accounts-receivable` is now a read-only AR workspace over canonical invoices, payments, and immutable payment events, with aging buckets, collection queues, invoice-level Next Move labels, project links, pending checkout visibility, and failed/voided/in-progress Payment Trail review
+- `/financials/accounting-readiness` is now a read-only Accounting Readiness workspace over canonical invoices, payments, payment events, customers, projects, invoice tax reporting entries, and invoice retainage snapshots, with accounting review rows, payment review rows, reconciliation attention, tax/retainage snapshot totals, and export-ready column mapping
 - Invoice Workspace now includes a read-only payment evidence timeline derived from the existing immutable `payment_events` stream, with plain-language settled/pending/failed/voided/review status, compact provider/session references where already stored, and no raw provider payload exposure
 - Payments Manager now includes a read-only reconciliation visibility section over recent immutable payment events, including failed, voided, requested, checkout-started, succeeded, and provider-sync evidence linked back to the canonical Invoice Workspace
 - Estimate, Contract, and Invoice Workspaces now label their document delivery evidence as Send Trail and show compact read-only proof summaries for send events, viewed/acted evidence, pending/failed attention, and the next source-record review move
 - Accounts Receivable does not create a separate AR ledger, accounting subsystem, provider operation, collection-note model, invoice copy, payment copy, or portal-only billing record
+- Accounting Readiness does not create a ledger, accounting tables, provider sync, export storage, journal entries, reconciliation postings, invoice copies, payment copies, or accounting-provider records
 - The payment evidence and reconciliation visibility slice does not create reconciliation records, mutate invoices/payments/payment events, call providers, add retries/refunds/disputes, or alter invoice/payment math
 - Send Trail visibility does not create delivery tables, send actions, provider integrations, webhook behavior, portal-only copies, fake events, AI summaries, automation, or payment/signature/estimate/invoice behavior changes
 - `/financials/accounts-payable` remains a module-home placeholder only
