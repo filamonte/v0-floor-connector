@@ -154,11 +154,18 @@ file` actions without exposing raw storage paths. This remains contractor-only
   remains a follow-up after auth cooldown.
 - Supabase field evidence storage readiness is documented in
   [docs/design/supabase-field-evidence-storage-verification.md](C:/FloorConnector/docs/design/supabase-field-evidence-storage-verification.md).
-  The read-only pass pushed `d3dc06e6`, confirmed local private `documents`
-  bucket and `execution_attachments` boundaries, and found one visible Supabase
-  organization, `FloorConnectoor` (`cvkfudwshnfsftnnwrro`), but zero visible
-  projects. Remote bucket, policy, migration, and storage schema state remain
-  unverified until the owner resolves Supabase project visibility.
+  The May 24, 2026 connector rerun pushed `d91b4827`, found
+  `FloorConnectorPro`, and identified one unambiguous project candidate:
+  `FloorConnector` (`jcnoraopbwdhshcmplgb`, `ACTIVE_HEALTHY`). Read-only
+  connector metadata confirmed the remote migration list includes
+  `execution_attachments_foundation` and
+  `documents_bucket_and_storage_policies`, `public.execution_attachments`
+  exists with RLS enabled, and the `storage` schema exposes `storage.objects`,
+  `storage.buckets`, and `storage.migrations`. No SQL, bucket rows, object
+  rows, signed URLs, app behavior, auth/RLS, storage policies, migrations, or
+  data were changed. Live bucket privacy/policy SQL would still require a
+  separately approved read-only SQL inspection if the owner wants stronger
+  proof before archive/delete implementation.
 - CrewBoard Phase 3 drag/drop dispatch planning is documented in
   [docs/design/crewboard-phase-3-drag-drop-dispatch-spec.md](C:/FloorConnector/docs/design/crewboard-phase-3-drag-drop-dispatch-spec.md).
   The recommended path is confirmation-first: add pure move helpers and
@@ -276,8 +283,10 @@ Recent staging/demo work is docs-first and no-write:
   (`cvkfudwshnfsftnnwrro`, free plan), but returned zero visible projects. No
   staging project candidate was identified, and no project details, migrations,
   tables, SQL, auth settings, RLS, data, providers, or app behavior were
-  touched. The next staging action is owner/account access resolution so the
-  intended Supabase project is visible before Phase 2A validation.
+  touched. A later remote-only CLI check confirmed local Supabase CLI
+  authentication and visibility for `FloorConnector`
+  (`jcnoraopbwdhshcmplgb`) under `FloorConnectorPro`; the later connector
+  rerun also sees that same project under `FloorConnectorPro`.
 
 ## Guardrails
 
@@ -327,19 +336,20 @@ For current operating-core focused tests and route checks, use
 
 Good next moves:
 
-- If staging/demo is next, have the owner resolve Supabase project visibility
-  first. The current connector discovery sees `FloorConnectoor` but no
-  projects, so there is no confirmed staging Supabase target yet. After the
-  intended project is visible, have the owner run
+- If staging/demo is next, use the connector-visible remote project ref
+  `jcnoraopbwdhshcmplgb` for `FloorConnector` under `FloorConnectorPro` as the
+  currently confirmed target. Before any writes, have the owner run
   `pnpm demo:data:seed:validate-target` against that target and review warnings
   before considering any write-mode prompt. Keep write mode deferred until
   read-only target validation is clean and owner approval is explicit.
 - If continuing Mobile Field, checkpoint Phase 3D-A browser behavior with real
   uploaded field evidence when saved contractor auth and local data are
-  available, and resolve Supabase project visibility before planning
-  archive/delete or portal-adjacent field evidence behavior. Keep thumbnails,
-  archive/delete, portal/customer sharing, and closeout package file embedding
-  as separate approved slices.
+  available. Archive/delete can move to planning now that connector metadata
+  confirms the project, relevant migrations, and storage schema visibility, but
+  implementation should wait for explicit retention/audit decisions and, if the
+  owner wants stronger proof, a separately approved read-only bucket/policy SQL
+  inspection. Keep thumbnails, portal/customer sharing, and closeout package
+  file embedding as separate approved slices.
 - If continuing Company Documents, use the Phase 1C-A Starter Document Adoption
   prompt from
   [docs/design/company-documents-phase-1c-starter-documents-plan.md](C:/FloorConnector/docs/design/company-documents-phase-1c-starter-documents-plan.md).

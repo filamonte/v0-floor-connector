@@ -318,8 +318,8 @@ access traffic. Keep dev QA tools disabled for clean demos.
 
 ## 6. Supabase Readiness Notes
 
-- `supabase/migrations` contains 123 local migration files. The latest files
-  inspected end at `20260520130000_document_delivery_events_contracts.sql`.
+- `supabase/migrations` contains 124 local migration files. The latest file is
+  `20260523140000_company_documents_foundation.sql`.
 - This audit did not apply migrations or call a remote Supabase project.
 - May 24, 2026 read-only Supabase connector discovery is documented in
   [docs/design/supabase-staging-target-discovery.md](C:/FloorConnector/docs/design/supabase-staging-target-discovery.md).
@@ -327,9 +327,14 @@ access traffic. Keep dev QA tools disabled for clean demos.
   (`cvkfudwshnfsftnnwrro`, free plan), and zero visible projects. No staging
   project candidate was identified, so no project details, migrations, tables,
   SQL, auth settings, RLS, or data were queried or changed.
-- Supabase project visibility is currently a staging blocker. The owner must
-  confirm the correct Supabase account/organization or make the intended
-  staging project visible before Phase 2A read-only target validation can run.
+- A later May 24, 2026 connector rerun for field evidence storage readiness
+  found `FloorConnectorPro` and one active project, `FloorConnector`
+  (`jcnoraopbwdhshcmplgb`). Read-only metadata confirmed the relevant field
+  evidence migrations, `public.execution_attachments`, and storage schema table
+  visibility. Project visibility is no longer the active blocker, but remote
+  migration alignment, RLS/security review, and any direct bucket/policy SQL
+  inspection remain owner-approved read-only actions before broad staging
+  confidence is claimed.
 - Remote migration alignment is an owner action. Before staging, run an
   intentional remote check such as `supabase migration list` and a non-mutating
   dry run where appropriate.
@@ -407,23 +412,23 @@ access traffic. Keep dev QA tools disabled for clean demos.
 
 ## 10. Risk Register
 
-| Risk                                       | Impact                                                  | Mitigation / owner action                                                                    |
-| ------------------------------------------ | ------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
-| Vercel project/account mismatch            | No reliable staging URL.                                | Owner confirms the correct Vercel account/team before linking or deploying.                  |
-| Supabase project not visible to connector  | No validated staging database target.                   | Owner confirms the correct Supabase organization/account or grants connector visibility.     |
-| Missing staging env vars                   | Build or runtime failures.                              | Configure names from `.env.example` and `packages/config`; do not paste values into docs.    |
-| Supabase Auth callback mismatch            | Login/signup loops or stale sessions.                   | Add staging site URL and redirect URLs in Supabase dashboard.                                |
-| Supabase migrations not applied remotely   | Routes may load against missing tables/functions.       | Run remote migration alignment check with owner credentials.                                 |
-| RLS/security posture not reviewed remotely | Possible tenant-boundary or access surprises.           | Run Supabase security/RLS advisor with owner credentials after staging DB is selected.       |
-| Stripe sandbox/live mismatch               | Accidental live billing or blocked billing QA.          | Use test-mode keys for staging unless live mode is explicitly approved.                      |
-| Provider email sends accidentally enabled  | Unwanted emails to real contacts.                       | Keep Postmark constrained or disabled until sender/recipient plan is approved.               |
-| SignWell/provider assumptions              | Demo may imply unavailable e-sign behavior.             | Keep e-sign provider lanes explicit and test-mode only.                                      |
-| Portal invite/auth mismatch                | Portal route cannot show shared records.                | Verify portal auth user, grants, and shared project access before demo.                      |
-| Demo data unavailable                      | Operating-core path cannot be shown end to end.         | Prepare one approved local/staging fixture set through sanctioned tooling.                   |
-| Platform-admin role missing                | `/super-admin` smoke fails.                             | Grant role with `pnpm platform-admin grant` only against the intended environment.           |
-| Browser QA stale auth                      | Protected routes redirect to `/login`.                  | Refresh storage state with matching `PLAYWRIGHT_BASE_URL`.                                   |
-| Early-access intake company missing        | Public request flow fails or has nowhere safe to write. | Set `FLOORCONNECTOR_EARLY_ACCESS_INTAKE_COMPANY_ID` to the owner-approved canonical company. |
-| Roadmap/current-state confusion            | Demo overpromises future features.                      | Treat `docs/current-state.md` and this audit as the current truth boundary.                  |
+| Risk                                       | Impact                                                                                           | Mitigation / owner action                                                                             |
+| ------------------------------------------ | ------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------- |
+| Vercel project/account mismatch            | No reliable staging URL.                                                                         | Owner confirms the correct Vercel account/team before linking or deploying.                           |
+| Supabase remote posture not fully reviewed | Staging database target is visible, but migration/RLS/storage policy posture may still surprise. | Owner runs approved read-only migration alignment, RLS/security, and any needed bucket/policy checks. |
+| Missing staging env vars                   | Build or runtime failures.                                                                       | Configure names from `.env.example` and `packages/config`; do not paste values into docs.             |
+| Supabase Auth callback mismatch            | Login/signup loops or stale sessions.                                                            | Add staging site URL and redirect URLs in Supabase dashboard.                                         |
+| Supabase migrations not applied remotely   | Routes may load against missing tables/functions.                                                | Run remote migration alignment check with owner credentials.                                          |
+| RLS/security posture not reviewed remotely | Possible tenant-boundary or access surprises.                                                    | Run Supabase security/RLS advisor with owner credentials after staging DB is selected.                |
+| Stripe sandbox/live mismatch               | Accidental live billing or blocked billing QA.                                                   | Use test-mode keys for staging unless live mode is explicitly approved.                               |
+| Provider email sends accidentally enabled  | Unwanted emails to real contacts.                                                                | Keep Postmark constrained or disabled until sender/recipient plan is approved.                        |
+| SignWell/provider assumptions              | Demo may imply unavailable e-sign behavior.                                                      | Keep e-sign provider lanes explicit and test-mode only.                                               |
+| Portal invite/auth mismatch                | Portal route cannot show shared records.                                                         | Verify portal auth user, grants, and shared project access before demo.                               |
+| Demo data unavailable                      | Operating-core path cannot be shown end to end.                                                  | Prepare one approved local/staging fixture set through sanctioned tooling.                            |
+| Platform-admin role missing                | `/super-admin` smoke fails.                                                                      | Grant role with `pnpm platform-admin grant` only against the intended environment.                    |
+| Browser QA stale auth                      | Protected routes redirect to `/login`.                                                           | Refresh storage state with matching `PLAYWRIGHT_BASE_URL`.                                            |
+| Early-access intake company missing        | Public request flow fails or has nowhere safe to write.                                          | Set `FLOORCONNECTOR_EARLY_ACCESS_INTAKE_COMPANY_ID` to the owner-approved canonical company.          |
+| Roadmap/current-state confusion            | Demo overpromises future features.                                                               | Treat `docs/current-state.md` and this audit as the current truth boundary.                           |
 
 ## 11. Owner Actions Before Staging / Demo
 
@@ -433,8 +438,8 @@ access traffic. Keep dev QA tools disabled for clean demos.
    internal-only or shareable.
 3. Configure Vercel env names from `.env.example` and `packages/config`, using
    staging/test provider values.
-4. Confirm the intended Supabase staging project is visible to the
-   owner-approved account/connector session.
+4. Confirm the intended Supabase staging project remains the connector-visible
+   `FloorConnector` project (`jcnoraopbwdhshcmplgb`) under `FloorConnectorPro`.
 5. Configure Supabase Auth site URL and redirect URLs for the staging origin.
 6. Verify remote migration alignment and run RLS/security checks with owner
    Supabase credentials.

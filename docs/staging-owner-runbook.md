@@ -109,15 +109,30 @@ Read-only Supabase connector discovery is recorded in
 On May 24, 2026, the connector could see one organization,
 `FloorConnectoor` (`cvkfudwshnfsftnnwrro`), but returned no visible projects.
 No staging target was identified, and no project details, migrations, or tables
-were queried. The owner must resolve Supabase project visibility before Phase 2A
-target validation can be run against a real staging project.
+were queried.
+
+Remote-only CLI visibility was later checked from the local workspace without
+starting local Supabase or mutating remote state. `.env.local` pointed
+`NEXT_PUBLIC_SUPABASE_URL` at remote project ref `jcnoraopbwdhshcmplgb`, and
+`supabase projects list` showed `FloorConnector` (`jcnoraopbwdhshcmplgb`) under
+`FloorConnectorPro`. The app code still consumes
+`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, and server-only
+`SUPABASE_SERVICE_ROLE_KEY`; `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY` may
+be present locally but is not the app's consumed public key name today.
+
+A later connector rerun also sees `FloorConnector` (`jcnoraopbwdhshcmplgb`)
+under `FloorConnectorPro`, so project visibility is resolved for read-only
+metadata checks.
 
 Field evidence storage readiness depends on the same project visibility. The
 read-only verification in
 [docs/design/supabase-field-evidence-storage-verification.md](C:/FloorConnector/docs/design/supabase-field-evidence-storage-verification.md)
-confirmed the local private `documents` bucket and `execution_attachments`
-boundaries, but remote bucket, policy, migration, and storage schema state could
-not be checked because the connector still returned zero visible projects.
+now confirms connector visibility for `FloorConnector`
+(`jcnoraopbwdhshcmplgb`) under `FloorConnectorPro`, the relevant remote
+migrations, `public.execution_attachments`, and storage schema table visibility.
+That is enough to unblock archive/delete planning. It still does not directly
+inspect the live `documents` bucket row or storage policy SQL because that would
+require a separately approved read-only SQL inspection.
 
 ## 4. Vercel Project / Account Checklist
 
@@ -154,6 +169,8 @@ Names only. Do not paste secret values into docs, chats, tickets, or screenshots
 
 - `NEXT_PUBLIC_SUPABASE_URL`
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+- `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY` may exist in local env as an
+  alternate publishable key name, but current app config does not consume it.
 - `SUPABASE_SERVICE_ROLE_KEY`
 - `DATABASE_URL`
 - `DIRECT_URL`
@@ -267,12 +284,14 @@ Before staging demo:
 
 - Confirm the selected Supabase project is staging, not production.
 - Confirm the selected Supabase project is visible through the owner-approved
-  account or connector session. The May 24, 2026 connector discovery found no
-  visible projects, so project visibility is currently a staging hold point.
-- Confirm the selected Supabase project is visible before relying on remote
-  field evidence storage readiness; the local source is aligned, but remote
-  `documents` bucket, policy, and migration state are not connector-verified
-  while project listing returns zero projects.
+  account, CLI, or connector session. The Supabase connector currently sees
+  `FloorConnector` (`jcnoraopbwdhshcmplgb`) under `FloorConnectorPro`.
+- For field evidence storage readiness, connector metadata confirms the
+  selected project, relevant migrations, `public.execution_attachments`, and
+  storage schema table visibility. Run a separately approved read-only
+  bucket/policy SQL inspection only if the owner wants direct proof of the live
+  `documents` bucket row and storage policy definitions before implementing
+  archive/delete behavior.
 - Review pending local migrations before applying anything remotely.
 - Run remote migration alignment checks only with owner approval.
 - Run RLS/security advisor checks with owner credentials or approved tooling.

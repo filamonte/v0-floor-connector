@@ -60,6 +60,7 @@ e0538cd1 docs: plan field evidence preview flow
 - `docs/design/mobile-field-phase-3d-a-qa-checkpoint.md`
 - `docs/staging-owner-runbook.md`
 - `docs/staging-deployment-readiness-audit.md`
+- `docs/local-auth-qa-recovery.md`
 
 ## 4. Local Code Inspected
 
@@ -92,7 +93,126 @@ Because no project was visible, this pass did not inspect remote tables,
 remote migrations, storage schema metadata, storage objects, bucket rows, logs,
 advisors, branches, edge functions, or project settings.
 
-## 6. Storage Verification Result
+Follow-up remote-only CLI verification later confirmed local CLI visibility for
+the app env target without starting local Supabase or mutating remote state:
+
+```text
+NEXT_PUBLIC_SUPABASE_URL ref: jcnoraopbwdhshcmplgb
+supabase projects list: FloorConnector (jcnoraopbwdhshcmplgb)
+CLI org: FloorConnectorPro
+Supabase connector projects: []
+```
+
+This resolves CLI project visibility for the env target, but it does not verify
+remote bucket, policy, migration, storage schema, table data, auth settings, or
+RLS posture.
+
+## 6. May 24, 2026 Connector Rerun
+
+Status: **connector-visible project verified; remote storage readiness now
+strong enough for archive/delete planning design, not implementation**.
+
+Required repo alignment was completed before the rerun:
+
+```text
+## main...origin/main [ahead 1]
+d91b4827 docs: verify field evidence storage readiness
+```
+
+The ahead commit was pushed:
+
+```text
+To https://github.com/filamonte/v0-floor-connector.git
+   d3dc06e6..d91b4827  main -> main
+```
+
+Post-push status was aligned with `origin/main`, with only local documentation
+edits present for this rerun:
+
+```text
+## main...origin/main
+ M docs/chat-handoff.md
+ M docs/design/supabase-field-evidence-storage-verification.md
+ M docs/staging-owner-runbook.md
+```
+
+Read-only Supabase connector discovery found one organization:
+
+```text
+FloorConnectorPro (vercel_icfg_bPg9w8wtRL2GkQoymZwJdDIk)
+```
+
+It found one project, which is an unambiguous FloorConnector match:
+
+```text
+FloorConnector
+ref: jcnoraopbwdhshcmplgb
+organization: FloorConnectorPro
+region: us-east-1
+status: ACTIVE_HEALTHY
+database: PostgreSQL 17.6.1.104
+created_at: 2026-04-08T19:39:13.039191Z
+```
+
+The selected project matches the project ref previously observed from the local
+app env target and local Supabase CLI visibility check.
+
+Read-only migration listing for `jcnoraopbwdhshcmplgb` confirmed the remote
+project includes the two field-evidence-critical migrations:
+
+```text
+20260417200000 execution_attachments_foundation
+20260423201000 documents_bucket_and_storage_policies
+```
+
+The visible remote migration list also reaches the current local latest
+migration:
+
+```text
+20260523140000 company_documents_foundation
+```
+
+No obvious migration drift was found from the visible migration list for field
+evidence storage readiness.
+
+Read-only public table listing confirmed:
+
+```text
+public.execution_attachments
+rls_enabled: true
+rows: 0
+```
+
+Read-only storage schema table listing confirmed storage metadata visibility:
+
+```text
+storage.objects
+storage.buckets
+storage.migrations
+storage.s3_multipart_uploads
+storage.s3_multipart_uploads_parts
+storage.buckets_analytics
+storage.buckets_vectors
+storage.vector_indexes
+```
+
+The connector table listing did not inspect bucket rows, storage object rows,
+storage policies, real files, signed URLs, auth settings, provider settings, or
+RLS policy SQL. It used only metadata/listing connector calls.
+
+Remote warning surfaced by the connector:
+
+- The public schema table listing returned a Supabase advisory that 8 public
+  schema tables have RLS disabled:
+  `role_permissions`, `platform_catalog_system_components`,
+  `platform_workflow_defaults`, `platform_catalog_item_seeds`,
+  `platform_user_roles`, `platform_financial_defaults`, `subscription_plans`,
+  and `permissions`.
+- This warning is not specific to field evidence storage and this rerun did not
+  change it. It should remain an owner/security review item before broader
+  staging confidence is claimed.
+
+## 7. Storage Verification Result
 
 Local repo verification is positive:
 
@@ -123,15 +243,24 @@ Local repo verification is positive:
 - FieldTrail, Proof Center, CloseoutTrail, and the closeout package continue to
   consume metadata/counts only, not private file contents.
 
-Remote Supabase verification is blocked:
+Remote Supabase storage verification is now partially confirmed through
+connector metadata:
 
-- No FloorConnector Supabase project was visible to the connector.
-- Remote `storage.objects` schema visibility could not be checked.
-- Remote migration application state could not be checked.
-- Remote bucket existence, privacy, and policy state could not be checked.
+- The intended FloorConnector project is visible to the Supabase connector.
+- The selected project ref is `jcnoraopbwdhshcmplgb`.
+- The remote migration list includes the `documents` bucket and storage policy
+  migration.
+- The remote migration list includes the `execution_attachments` foundation
+  migration.
+- `public.execution_attachments` exists remotely and has RLS enabled.
+- The `storage` schema is visible and includes `storage.objects`,
+  `storage.buckets`, and `storage.migrations`.
+- Bucket row state, storage object policy SQL, and bucket privacy were not
+  directly inspected because this pass did not execute SQL or read storage
+  object/bucket rows.
 - No real storage rows were queried and no signed URLs were generated.
 
-## 7. Documents Bucket And Policy Confidence Level
+## 8. Documents Bucket And Policy Confidence Level
 
 Confidence from local source: **high**.
 
@@ -139,27 +268,28 @@ The repository has a clear private `documents` bucket migration, organization
 first storage policies, server-owned field evidence paths, metadata-first
 tenant scoping, and contractor-only signed URL resolution by attachment id.
 
-Confidence in the current remote Supabase state: **not verified**.
+Confidence in the current remote Supabase state: **moderate**.
 
-The Supabase connector currently cannot see any projects, so the remote bucket,
-policy, and migration state remain an owner/account-access verification item.
+The app env, local CLI, and Supabase connector now point to and can see project
+`jcnoraopbwdhshcmplgb`. The connector confirms the relevant migrations and
+schema/table visibility. Because no SQL was executed, this pass still does not
+directly prove the current `documents` bucket row has `public = false` or that
+the live storage policy definitions exactly match the migration text.
 
-## 8. Gaps Or Owner Actions
+## 9. Gaps Or Owner Actions
 
-- Owner must resolve Supabase project visibility for the intended
-  FloorConnector project before remote storage readiness can be verified.
-- After the project is visible, run a read-only follow-up that lists migrations
-  and table/schema metadata for the selected project.
-- Confirm the remote migration list includes
-  `20260423201000_documents_bucket_and_storage_policies.sql`.
-- Confirm the remote migration list includes
-  `20260417200000_execution_attachments_foundation.sql`.
-- If supported by the connector, confirm storage schema/table metadata is
-  visible without reading `storage.objects` rows.
-- Do not proceed to delete/archive behavior until remote bucket and policy
-  posture is verified or the owner explicitly accepts the remote-unknown risk.
+- Owner should treat project visibility for `jcnoraopbwdhshcmplgb` as resolved
+  for connector-based metadata checks.
+- Before any archive/delete implementation, decide whether migration-list proof
+  is enough or whether the owner wants a separately approved read-only SQL pass
+  to inspect `storage.buckets` and `pg_policies` for the live `documents`
+  bucket and storage policies.
+- Review the connector advisory about 8 public schema tables with RLS disabled
+  before broad staging or security readiness is claimed.
+- Keep archive/delete as a planning/design task until retention, audit, and
+  proof-integrity behavior are explicitly approved.
 
-## 9. Behavior Intentionally Not Changed
+## 10. Behavior Intentionally Not Changed
 
 - No Supabase writes.
 - No buckets created.
@@ -173,10 +303,10 @@ policy, and migration state remain an owner/account-access verification item.
 - No auth/RLS, tenant logic, portal grants, payments, signatures, settings,
   provider behavior, or platform-admin behavior changed.
 
-## 10. Recommended Next Step
+## 11. Recommended Next Step
 
-Keep Mobile Field paused on archive/delete. The next useful action is owner
-access resolution for Supabase project visibility, followed by a second
-read-only remote verification against the exact FloorConnector project. If the
-project remains invisible, treat archive/delete and portal-adjacent field
-evidence work as blocked by remote storage uncertainty.
+It is reasonable to proceed to **archive/delete planning** for field evidence,
+with one boundary: do not implement destructive behavior until the owner accepts
+the migration-list/table-metadata confidence level or approves a separate
+read-only SQL inspection of the live `documents` bucket row and storage policy
+definitions. Portal/customer field evidence exposure remains out of scope.
