@@ -105,6 +105,23 @@ function isExternalReference(value: string) {
   return value.startsWith("http://") || value.startsWith("https://");
 }
 
+function renderAttachmentStorageStatus(storagePath: string) {
+  if (isExternalReference(storagePath)) {
+    return (
+      <a
+        href={storagePath}
+        target="_blank"
+        rel="noreferrer"
+        className="font-medium text-brand-700"
+      >
+        Open attachment reference
+      </a>
+    );
+  }
+
+  return "Private field evidence file stored for this contractor workspace.";
+}
+
 export default async function DailyLogDetailPage({
   params,
   searchParams
@@ -628,21 +645,8 @@ export default async function DailyLogDetailPage({
                                         "No caption provided."}
                                     </p>
                                     <p className="mt-3 text-sm leading-6 text-slate-500">
-                                      {isExternalReference(
+                                      {renderAttachmentStorageStatus(
                                         attachment.storagePath
-                                      ) ? (
-                                        <a
-                                          href={attachment.storagePath}
-                                          target="_blank"
-                                          rel="noreferrer"
-                                          className="font-medium text-brand-700"
-                                        >
-                                          Open attachment reference
-                                        </a>
-                                      ) : (
-                                        <code className="rounded bg-slate-100 px-2 py-1 text-xs text-slate-700">
-                                          {attachment.storagePath}
-                                        </code>
                                       )}
                                     </p>
                                   </div>
@@ -713,20 +717,7 @@ export default async function DailyLogDetailPage({
                       {attachment.caption ?? "No caption provided."}
                     </p>
                     <p className="mt-3 text-sm leading-6 text-slate-500">
-                      {isExternalReference(attachment.storagePath) ? (
-                        <a
-                          href={attachment.storagePath}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="font-medium text-brand-700"
-                        >
-                          Open attachment reference
-                        </a>
-                      ) : (
-                        <code className="rounded bg-slate-100 px-2 py-1 text-xs text-slate-700">
-                          {attachment.storagePath}
-                        </code>
-                      )}
+                      {renderAttachmentStorageStatus(attachment.storagePath)}
                     </p>
                   </div>
                 ))

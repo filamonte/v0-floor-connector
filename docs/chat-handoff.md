@@ -117,6 +117,14 @@ Current operating-core surfaces include:
   This is contractor-only and intentionally does not add previews, signed URL
   downloads, delete/archive, portal/customer exposure, schema, migrations,
   public URLs, AI, notifications, automation, or provider behavior.
+- Mobile Field Phase 3C QA is documented in
+  [docs/design/mobile-field-phase-3c-qa-checkpoint.md](C:/FloorConnector/docs/design/mobile-field-phase-3c-qa-checkpoint.md).
+  The checkpoint confirmed private `documents` bucket upload boundaries,
+  server-generated paths, upload-before-metadata sequencing, file validation,
+  Daily Log / Job Note parent validation, existing FieldTrail / Proof Center /
+  CloseoutTrail metadata integration, and portal exclusion. It also replaced raw
+  private storage path display on Daily Log detail with contractor-facing stored
+  evidence status text. No real upload was submitted in browser QA.
 - CrewBoard Phase 3 drag/drop dispatch planning is documented in
   [docs/design/crewboard-phase-3-drag-drop-dispatch-spec.md](C:/FloorConnector/docs/design/crewboard-phase-3-drag-drop-dispatch-spec.md).
   The recommended path is confirmation-first: add pure move helpers and

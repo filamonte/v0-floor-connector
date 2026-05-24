@@ -143,6 +143,9 @@ High-signal operating-core docs:
   implemented contractor-side field evidence upload foundation using existing
   Daily Job Logs, Job Notes, execution attachments, and the private `documents`
   bucket
+- [docs/design/mobile-field-phase-3c-qa-checkpoint.md](C:/FloorConnector/docs/design/mobile-field-phase-3c-qa-checkpoint.md):
+  QA checkpoint for private field evidence upload boundaries, validation,
+  read-model integration, portal exclusion, and mobile Daily Log smoke
 - [docs/design/messagecenter-phase-1-project-communication-timeline.md](C:/FloorConnector/docs/design/messagecenter-phase-1-project-communication-timeline.md):
   MessageCenter over communication and proof records
 - [docs/design/projectpulse-phase-1-project-health-summary.md](C:/FloorConnector/docs/design/projectpulse-phase-1-project-health-summary.md):
