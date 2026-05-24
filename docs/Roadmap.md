@@ -118,6 +118,15 @@ Implemented good-enough scope:
 - date navigation across day, week, and board layouts
 - schedule-note previews and read-only schedule warnings for missing crew,
   missing end time, and overlapping same-day crew windows
+- confirmed manual/keyboard `Move schedule` review flow through the existing
+  schedule action
+
+Current planning checkpoint:
+
+- pointer drag/drop remains planned as a progressive enhancement only. The
+  recommended next slice is proposed-move/drop-target state with no package,
+  followed by `@dnd-kit/core` only if actual pointer drag/drop is approved.
+  Dropping a card should open confirmation and must not mutate schedule data.
 
 Future depth:
 

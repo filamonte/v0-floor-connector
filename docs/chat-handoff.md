@@ -117,6 +117,12 @@ Current operating-core surfaces include:
   at mobile width with saved contractor auth and no horizontal overflow; deeper
   selected-job action checks were blocked by local Supabase Auth
   `over_request_rate_limit`.
+- CrewBoard Phase 3B pointer drag/drop planning is documented in
+  [docs/design/crewboard-phase-3b-drag-drop-technical-spike.md](C:/FloorConnector/docs/design/crewboard-phase-3b-drag-drop-technical-spike.md).
+  Recommendation: start 3B-A with no package by proving proposed-move state and
+  drop-target abstractions, then install `@dnd-kit/core` only if approved for
+  actual pointer drag/drop. Drag/drop must prepare the existing Move schedule
+  confirmation flow and never mutate on drop.
 - Global search hardening for tenant-scoped canonical records.
 
 These layers are summaries, source-record handoffs, copy/hierarchy
@@ -206,8 +212,10 @@ Good next moves:
   stickiness.
 - If continuing CrewBoard, continue from the Phase 3A QA checkpoint and
   [docs/design/crewboard-phase-3a-confirmed-schedule-move.md](C:/FloorConnector/docs/design/crewboard-phase-3a-confirmed-schedule-move.md)
-  and add projected warning preview or pointer drag/drop only as a proposed
-  move that still saves through confirmation.
+  plus the Phase 3B technical spike. The next safest implementation slice is
+  proposed-move/drop-target state with no package; actual pointer drag/drop can
+  follow with `@dnd-kit/core` only after approval and still saves through
+  confirmation.
 - For the broader drag/drop plan, use
   [docs/design/crewboard-phase-3-drag-drop-dispatch-spec.md](C:/FloorConnector/docs/design/crewboard-phase-3-drag-drop-dispatch-spec.md)
   as the scope boundary.
