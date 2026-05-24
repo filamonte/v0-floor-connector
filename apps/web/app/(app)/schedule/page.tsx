@@ -40,6 +40,13 @@ import {
   type ScheduleItem
 } from "@/lib/schedule/read-model";
 import {
+  buildCrewBoardDropTargetFromSearch,
+  createCrewBoardDateDropTarget,
+  createCrewBoardMoveProposal,
+  createCrewBoardTimeBucketDropTarget,
+  formatDropTargetLabel
+} from "@/lib/schedule/proposed-move";
+import {
   deriveScheduleWarningSummaries,
   type ScheduleWarningSummary
 } from "@/lib/schedule/warnings";
@@ -75,6 +82,12 @@ const SCHEDULE_ITEM_VIEW_OPTIONS = [
 ] as const;
 
 const DAY_TIMELINE_HOURS = [6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18];
+const MOVE_PREVIEW_TIME_BUCKETS = [
+  { startTime: "08:00", endTime: "10:00" },
+  { startTime: "10:00", endTime: "12:00" },
+  { startTime: "13:00", endTime: "15:00" },
+  { startTime: "15:00", endTime: "17:00" }
+] as const;
 
 const schedulePrimaryActionToneClassName =
   "border-[var(--graphite)] bg-[var(--graphite)] text-white hover:bg-[var(--graphite-light)]";
@@ -105,6 +118,10 @@ type RawScheduleSearchParams = {
   date?: string | string[];
   action?: string | string[];
   jobId?: string | string[];
+  moveTarget?: string | string[];
+  moveDate?: string | string[];
+  moveStart?: string | string[];
+  moveEnd?: string | string[];
   error?: string | string[];
   message?: string | string[];
 };
@@ -347,6 +364,10 @@ function normalizeScheduleSearchParams(
     date: normalizeScheduleDate(searchParams?.date, fallbackDateKey),
     action: normalizeScheduleAction(searchParams?.action),
     jobId: normalizeOptionalSearchParam(searchParams?.jobId) ?? null,
+    moveTarget: normalizeOptionalSearchParam(searchParams?.moveTarget),
+    moveDate: normalizeOptionalSearchParam(searchParams?.moveDate),
+    moveStart: normalizeOptionalSearchParam(searchParams?.moveStart),
+    moveEnd: normalizeOptionalSearchParam(searchParams?.moveEnd),
     error: normalizeOptionalSearchParam(searchParams?.error),
     message: normalizeOptionalSearchParam(searchParams?.message)
   };
@@ -1358,6 +1379,34 @@ export default async function SchedulePage({
   const selectedJobEquipmentReadiness = selectedJob
     ? await getJobEquipmentReadinessSummary(selectedJob.id, "/schedule")
     : null;
+  const selectedMoveTarget =
+    selectedAction === "schedule"
+      ? buildCrewBoardDropTargetFromSearch({
+          moveTarget: resolvedSearchParams.moveTarget,
+          moveDate: resolvedSearchParams.moveDate,
+          moveStart: resolvedSearchParams.moveStart,
+          moveEnd: resolvedSearchParams.moveEnd
+        })
+      : null;
+  const selectedMoveProposal =
+    selectedJob && selectedMoveTarget
+      ? createCrewBoardMoveProposal(
+          {
+            id: selectedJob.id,
+            dispatchStatus: selectedJob.dispatchStatus,
+            scheduledDate: selectedJob.scheduledDate,
+            scheduledStartAt: selectedJob.scheduledStartAt,
+            scheduledEndAt: selectedJob.scheduledEndAt
+          },
+          selectedMoveTarget
+        )
+      : null;
+  const selectedMoveProposalKey = [
+    resolvedSearchParams.moveTarget ?? "",
+    resolvedSearchParams.moveDate ?? "",
+    resolvedSearchParams.moveStart ?? "",
+    resolvedSearchParams.moveEnd ?? ""
+  ].join(":");
 
   const visibleJobs = jobsWithAssignments.filter((job) => {
     const matchesProject = projectFilterId
@@ -1806,6 +1855,10 @@ export default async function SchedulePage({
     date?: string;
     action?: ScheduleActionKey;
     jobId?: string;
+    moveTarget?: "unscheduled";
+    moveDate?: string;
+    moveStart?: string;
+    moveEnd?: string;
   }) =>
     buildScheduleHref({
       q: query,
@@ -1832,7 +1885,8 @@ export default async function SchedulePage({
     query.length > 0 ||
     crewFilter !== "all" ||
     itemFilter !== "all" ||
-    Boolean(selectedAction && selectedJobId);
+    Boolean(selectedAction && selectedJobId) ||
+    Boolean(selectedMoveProposal);
   const scheduleViews = SCHEDULE_VIEW_OPTIONS.map((option) => ({
     ...option,
     count:
@@ -2411,6 +2465,18 @@ export default async function SchedulePage({
                     clearHref={clearSelectedContextHref}
                   />
                 ) : null}
+                {selectedMoveProposal ? (
+                  <ScheduleFilterChip
+                    label="Prepared move"
+                    value={selectedMoveProposal.targetLabel}
+                    clearHref={
+                      buildCurrentScheduleHref({
+                        action: "schedule",
+                        jobId: selectedJobId ?? undefined
+                      }) + "#schedule-action"
+                    }
+                  />
+                ) : null}
               </div>
               <div className="mt-3 flex flex-wrap gap-x-4 gap-y-2 text-sm leading-6 text-[var(--text-secondary)]">
                 {projectFilterId ? <p>{activeProjectSummary.detail}</p> : null}
@@ -2424,6 +2490,12 @@ export default async function SchedulePage({
                   <p>
                     The selected job context keeps the composer tied to the same
                     job record until you clear it.
+                  </p>
+                ) : null}
+                {selectedMoveProposal ? (
+                  <p>
+                    Prepared move targets only prefill the existing Move
+                    schedule review.
                   </p>
                 ) : null}
               </div>
@@ -3094,6 +3166,10 @@ export default async function SchedulePage({
                       <div
                         key={bucket.hour}
                         className="grid grid-cols-[92px_minmax(0,1fr)] gap-px bg-[var(--border-warm)]"
+                        data-crewboard-drop-target="time_bucket"
+                        data-crewboard-drop-date={plannerDateKey}
+                        data-crewboard-drop-start={`${String(bucket.hour).padStart(2, "0")}:00`}
+                        data-crewboard-drop-end={`${String(bucket.hour + 1).padStart(2, "0")}:00`}
                       >
                         <div className="bg-[var(--highlight)] px-4 py-4 text-xs font-semibold uppercase tracking-[0.14em] text-[var(--text-secondary)]">
                           {formatHourLabel(bucket.hour)}
@@ -3214,6 +3290,9 @@ export default async function SchedulePage({
                             ? "bg-[var(--highlight)]"
                             : ""
                         ].join(" ")}
+                        data-crewboard-drop-target="date"
+                        data-crewboard-drop-date={day.dateKey}
+                        aria-label={`CrewBoard date target ${boardDate.title} ${boardDate.subtitle}`}
                       >
                         <div className="flex items-start justify-between gap-3 border-b border-[var(--border-warm)] pb-3">
                           <div>
@@ -3390,6 +3469,12 @@ export default async function SchedulePage({
                     <section
                       key={group.key}
                       className={`flex flex-col border ${group.surfaceClass}`}
+                      data-crewboard-drop-target={
+                        group.key === "unscheduled-ready"
+                          ? "unscheduled"
+                          : undefined
+                      }
+                      data-crewboard-lane={group.key}
                     >
                       <div className="border-b border-[var(--border-warm)] px-4 py-4">
                         <div className="flex items-start justify-between gap-3">
@@ -4054,20 +4139,138 @@ export default async function SchedulePage({
                   </div>
                 )
               ) : (
-                <ScheduleJobForm
-                  key={selectedJob.id}
-                  action={scheduleJobAction}
-                  unscheduleAction={unscheduleJobAction}
-                  job={{
-                    id: selectedJob.id,
-                    dispatchStatus: selectedJob.dispatchStatus,
-                    scheduledDate: selectedJob.scheduledDate,
-                    scheduledStartAt: selectedJob.scheduledStartAt,
-                    scheduledEndAt: selectedJob.scheduledEndAt,
-                    scheduleNotes: selectedJob.scheduleNotes
-                  }}
-                  redirectTo={redirectTo}
-                />
+                <div className="space-y-4">
+                  <div className="rounded-[6px] border border-[var(--border-warm)] bg-white px-4 py-3 text-sm leading-6 text-[var(--text-secondary)]">
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--text-secondary)]">
+                          Prepare move
+                        </p>
+                        <p className="mt-1 text-sm leading-6 text-[var(--text-secondary)]">
+                          Preview a CrewBoard target before saving. The selected
+                          target only fills the Move schedule review.
+                        </p>
+                      </div>
+                      {selectedMoveProposal ? (
+                        <Link
+                          href={
+                            buildCurrentScheduleHref({
+                              action: "schedule",
+                              jobId: selectedJob.id
+                            }) + "#schedule-action"
+                          }
+                          className={scheduleCompactLinkClassName}
+                        >
+                          Clear prepared move
+                        </Link>
+                      ) : null}
+                    </div>
+
+                    <div className="mt-3">
+                      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--text-tertiary)]">
+                        Target date
+                      </p>
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        {plannerDays.map((day) => {
+                          const target = createCrewBoardDateDropTarget(
+                            day.dateKey
+                          );
+                          const label = formatDropTargetLabel(target);
+                          const boardDate = getBoardDatePresentation(
+                            day.dateKey,
+                            today
+                          );
+                          const isPrepared =
+                            selectedMoveTarget?.kind === "date" &&
+                            selectedMoveTarget.date === day.dateKey;
+
+                          return (
+                            <Link
+                              key={day.dateKey}
+                              href={
+                                buildCurrentScheduleHref({
+                                  action: "schedule",
+                                  jobId: selectedJob.id,
+                                  moveDate: day.dateKey
+                                }) + "#schedule-action"
+                              }
+                              className={[
+                                "inline-flex items-center rounded-[4px] border px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] transition",
+                                isPrepared
+                                  ? schedulePrimaryActionToneClassName
+                                  : scheduleSecondaryActionToneClassName
+                              ].join(" ")}
+                              aria-label={`Preview move to ${label}`}
+                            >
+                              {boardDate.title}
+                            </Link>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    <div className="mt-3">
+                      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--text-tertiary)]">
+                        Time on selected day
+                      </p>
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        {MOVE_PREVIEW_TIME_BUCKETS.map((bucket) => {
+                          const target = createCrewBoardTimeBucketDropTarget({
+                            date: plannerDateKey,
+                            startTime: bucket.startTime,
+                            endTime: bucket.endTime
+                          });
+                          const label = formatDropTargetLabel(target);
+                          const isPrepared =
+                            selectedMoveTarget?.kind === "time_bucket" &&
+                            selectedMoveTarget.date === plannerDateKey &&
+                            selectedMoveTarget.startTime === bucket.startTime &&
+                            selectedMoveTarget.endTime === bucket.endTime;
+
+                          return (
+                            <Link
+                              key={`${bucket.startTime}-${bucket.endTime}`}
+                              href={
+                                buildCurrentScheduleHref({
+                                  action: "schedule",
+                                  jobId: selectedJob.id,
+                                  moveDate: plannerDateKey,
+                                  moveStart: bucket.startTime,
+                                  moveEnd: bucket.endTime
+                                }) + "#schedule-action"
+                              }
+                              className={[
+                                "inline-flex items-center rounded-[4px] border px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] transition",
+                                isPrepared
+                                  ? schedulePrimaryActionToneClassName
+                                  : scheduleMutedActionToneClassName
+                              ].join(" ")}
+                              aria-label={`Preview move to ${label}`}
+                            >
+                              {bucket.startTime}-{bucket.endTime}
+                            </Link>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
+
+                  <ScheduleJobForm
+                    key={`${selectedJob.id}:${selectedMoveProposalKey}`}
+                    action={scheduleJobAction}
+                    unscheduleAction={unscheduleJobAction}
+                    job={{
+                      id: selectedJob.id,
+                      dispatchStatus: selectedJob.dispatchStatus,
+                      scheduledDate: selectedJob.scheduledDate,
+                      scheduledStartAt: selectedJob.scheduledStartAt,
+                      scheduledEndAt: selectedJob.scheduledEndAt,
+                      scheduleNotes: selectedJob.scheduleNotes
+                    }}
+                    redirectTo={redirectTo}
+                    preparedProposal={selectedMoveProposal}
+                  />
+                </div>
               )}
             </div>
           ) : (

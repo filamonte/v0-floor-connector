@@ -16,6 +16,8 @@ Run focused tests when touching the matching helper or route:
   `pnpm.cmd --filter @floorconnector/web exec tsx --test lib/schedule/warnings.test.ts`
 - Schedule move helpers:
   `pnpm.cmd --filter @floorconnector/web exec tsx --test lib/schedule/move.test.ts`
+- Schedule proposed move helpers:
+  `pnpm.cmd --filter @floorconnector/web exec tsx --test lib/schedule/proposed-move.test.ts`
 - Daily Log links:
   `pnpm.cmd --filter @floorconnector/web exec tsx --test lib/daily-logs/links.test.ts`
 - FieldTrail summary:

@@ -11,6 +11,7 @@ import {
   buildScheduleMoveSummary,
   formatScheduleMoveEndpoint
 } from "@/lib/schedule/move";
+import type { CrewBoardMoveProposal } from "@/lib/schedule/proposed-move";
 
 type ScheduleJobFormProps = {
   action: (formData: FormData) => void | Promise<void>;
@@ -24,13 +25,15 @@ type ScheduleJobFormProps = {
     scheduleNotes: string | null;
   };
   redirectTo?: string | null;
+  preparedProposal?: CrewBoardMoveProposal | null;
 };
 
 export function ScheduleJobForm({
   action,
   unscheduleAction,
   job,
-  redirectTo
+  redirectTo,
+  preparedProposal
 }: ScheduleJobFormProps) {
   const canUnschedule =
     job.dispatchStatus !== "in_progress" && job.dispatchStatus !== "completed";
@@ -46,7 +49,11 @@ export function ScheduleJobForm({
     }),
     [job.scheduledDate, job.scheduledStartAt, job.scheduledEndAt]
   );
-  const [proposedSchedule, setProposedSchedule] = useState(currentSchedule);
+  const initialSchedule = useMemo(
+    () => preparedProposal?.payload ?? currentSchedule,
+    [currentSchedule, preparedProposal]
+  );
+  const [proposedSchedule, setProposedSchedule] = useState(initialSchedule);
   const moveSummary = buildScheduleMoveSummary({
     current: currentSchedule,
     proposed: proposedSchedule
@@ -80,6 +87,32 @@ export function ScheduleJobForm({
               </p>
             </div>
 
+            {preparedProposal ? (
+              <div
+                className={[
+                  "rounded-[4px] border px-4 py-3 text-sm leading-6",
+                  preparedProposal.warnings.length > 0
+                    ? "border-amber-200 bg-amber-50 text-amber-950"
+                    : "border-emerald-200 bg-emerald-50 text-emerald-900"
+                ].join(" ")}
+              >
+                <p className="text-[11px] font-semibold uppercase tracking-[0.16em]">
+                  Prepared move
+                </p>
+                <p className="mt-1 font-medium">
+                  {preparedProposal.targetLabel}
+                </p>
+                <p className="mt-1">{preparedProposal.summary}</p>
+                {preparedProposal.warnings.length > 0 ? (
+                  <ul className="mt-2 space-y-1">
+                    {preparedProposal.warnings.map((warning) => (
+                      <li key={warning}>- {warning}</li>
+                    ))}
+                  </ul>
+                ) : null}
+              </div>
+            ) : null}
+
             <label className="block">
               <span className="mb-2 block text-sm font-medium text-slate-800">
                 New scheduled date
@@ -87,7 +120,7 @@ export function ScheduleJobForm({
               <input
                 type="date"
                 name="scheduledDate"
-                defaultValue={job.scheduledDate ?? ""}
+                defaultValue={initialSchedule.scheduledDate ?? ""}
                 onChange={(event) =>
                   setProposedSchedule((current) => ({
                     ...current,
@@ -107,11 +140,7 @@ export function ScheduleJobForm({
                 <input
                   type="datetime-local"
                   name="scheduledStartAt"
-                  defaultValue={
-                    job.scheduledStartAt
-                      ? job.scheduledStartAt.slice(0, 16)
-                      : ""
-                  }
+                  defaultValue={initialSchedule.scheduledStartAt ?? ""}
                   onChange={(event) =>
                     setProposedSchedule((current) => ({
                       ...current,
@@ -129,9 +158,7 @@ export function ScheduleJobForm({
                 <input
                   type="datetime-local"
                   name="scheduledEndAt"
-                  defaultValue={
-                    job.scheduledEndAt ? job.scheduledEndAt.slice(0, 16) : ""
-                  }
+                  defaultValue={initialSchedule.scheduledEndAt ?? ""}
                   onChange={(event) =>
                     setProposedSchedule((current) => ({
                       ...current,

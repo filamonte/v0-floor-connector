@@ -600,6 +600,7 @@ Current shell behavior:
 - `/schedule` now surfaces canonical appointments beside scheduled jobs in internal contractor schedule views through a discriminated read model; jobs still read from canonical job/job-assignment scheduling data and appointments still read from canonical `appointments`
 - the good-enough `/schedule` release now presents scheduling as a cross-project command center with a Ready work queue, Scheduled timeline, and selected job action panel for schedule/reschedule context and crew assignment on canonical jobs; dashboard, Jobs, and Job Workspace handoffs route unscheduled jobs into that selected action panel, while ready projects without jobs still route through Project Workspace or canonical job creation first; fixture-backed dashboard coverage now covers both ready-project/job-creation and existing-unscheduled-job/schedule-panel handoffs; the Schedule action panel copy now states the no-job-selected, unscheduled-job, and crew-not-assigned states more directly; it does not create schedule-only records, duplicate jobs, route optimization, or automated dispatch behavior
 - CrewBoard Phase 2 improves `/schedule` dispatch usability on the same canonical job/job-assignment foundation: date navigation remains URL-backed for day, week, and board layouts; job cards show schedule-note previews and clearer Project Workspace handoffs; and read-only schedule warnings flag missing crew, missing end times, and overlapping crew/person/vendor windows from existing job timing and assignment data. These warnings are advisory only and do not add schema, migrations, dispatch tables, crew tables, server actions, new enforcement rules, automation, drag/drop, calendar sync, notifications, route optimization, auth/RLS changes, tenant-boundary changes, payment/signature behavior, estimate math, invoice math, portal grants, settings behavior, or platform-admin behavior.
+- CrewBoard Phase 3B-A adds no-package proposed-move groundwork: pure helpers can turn a CrewBoard date/time target into the existing Phase 3A move payload and summary, `/schedule` can carry a prepared target in URL state, and the selected-job panel can preview a target into the existing `Move schedule` confirmation form. This does not add pointer drag/drop, packages, schema, migrations, routes, server actions, dispatch tables, automatic schedule mutation, auth/RLS changes, tenant-boundary changes, payment/signature behavior, estimate math, invoice math, portal grants, settings behavior, or platform-admin behavior.
 - schedule views can filter between all items, jobs, and appointments, and appointment entries link to appointment detail plus lead/customer/project context where present
 - dashboard appointment visibility now uses the existing `people.membership_user_id` linkage to show `My upcoming appointments` when the current user has an active person record, with a safe company-upcoming fallback when that mapping is unavailable or has no assigned upcoming appointments
 - dashboard now includes an internal lead follow-up queue derived from canonical `opportunities.next_follow_up_at`, recent opportunity communication thread timestamps, and existing lead status; it prioritizes overdue and due-today follow-ups without sending reminders or creating a task/reminder table
@@ -2443,9 +2444,12 @@ Implemented UI behavior now:
   advisory schedule warnings, and project/job handoffs. The selected-job panel
   now includes a confirmation-first `Move schedule` flow backed by pure move
   summary helpers and the existing schedule action, so keyboard/manual movement
-  is available before pointer drag/drop. It does not implement drag/drop
-  scheduling, automated dispatch, route optimization, notifications, external
-  calendar sync, or new schedule/dispatch records.
+  is available before pointer drag/drop. Phase 3B-A also adds proposed-move
+  target helpers, URL-backed prepared move state, inert drop-target metadata on
+  board sections, and a compact `Prepare move` preview that fills the same
+  `Move schedule` form. It does not implement drag/drop scheduling, automated
+  dispatch, route optimization, notifications, external calendar sync, or new
+  schedule/dispatch records.
 - `/reports` now includes Reports Phase 1, a read-only operations and
   collections visibility workspace over existing projects, jobs, schedule
   warnings, contracts, invoices, payments, Daily Job Logs, Job Notes, field

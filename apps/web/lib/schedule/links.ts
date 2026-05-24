@@ -21,6 +21,10 @@ export type ScheduleHrefInput = {
   date?: string;
   action?: ScheduleActionKey;
   jobId?: string;
+  moveTarget?: "unscheduled";
+  moveDate?: string;
+  moveStart?: string;
+  moveEnd?: string;
 };
 
 export function buildScheduleSearchParams(input: ScheduleHrefInput) {
@@ -60,6 +64,22 @@ export function buildScheduleSearchParams(input: ScheduleHrefInput) {
 
   if (input.jobId) {
     searchParams.set("jobId", input.jobId);
+  }
+
+  if (input.moveTarget) {
+    searchParams.set("moveTarget", input.moveTarget);
+  }
+
+  if (input.moveDate) {
+    searchParams.set("moveDate", input.moveDate);
+  }
+
+  if (input.moveStart) {
+    searchParams.set("moveStart", input.moveStart);
+  }
+
+  if (input.moveEnd) {
+    searchParams.set("moveEnd", input.moveEnd);
   }
 
   return searchParams;

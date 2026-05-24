@@ -123,6 +123,13 @@ Current operating-core surfaces include:
   drop-target abstractions, then install `@dnd-kit/core` only if approved for
   actual pointer drag/drop. Drag/drop must prepare the existing Move schedule
   confirmation flow and never mutate on drop.
+- CrewBoard Phase 3B-A is implemented and documented in
+  [docs/design/crewboard-phase-3b-a-proposed-move-abstractions.md](C:/FloorConnector/docs/design/crewboard-phase-3b-a-proposed-move-abstractions.md).
+  `/schedule` now has pure proposed-move helpers, URL-backed prepared move
+  state, inert CrewBoard target metadata, and a compact `Prepare move` preview
+  that fills the existing `Move schedule` confirmation form. Pointer drag/drop,
+  packages, schema, routes, server actions, and automatic mutation remain out of
+  scope.
 - Global search hardening for tenant-scoped canonical records.
 
 These layers are summaries, source-record handoffs, copy/hierarchy
