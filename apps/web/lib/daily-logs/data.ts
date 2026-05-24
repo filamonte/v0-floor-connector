@@ -5,7 +5,8 @@ import { redirect } from "next/navigation";
 import { deriveDailyLogLaborSummary } from "@floorconnector/domain";
 import type {
   DailyLog as DailyLogRecord,
-  DailyLogLaborSummary as DailyLogLaborSummaryRecord
+  DailyLogLaborSummary as DailyLogLaborSummaryRecord,
+  MembershipRole
 } from "@floorconnector/types";
 
 import type { DailyLogInput } from "./schemas";
@@ -18,6 +19,7 @@ import { listTimeCardsByProjectAndWorkDate } from "@/lib/time/data";
 type DailyLogScope = {
   userId: string;
   organizationId: string;
+  role: MembershipRole;
 };
 
 type DailyLogRow = {
@@ -40,18 +42,14 @@ type DailyLogRow = {
   updated_by: string | null;
   created_at: string;
   updated_at: string;
-  projects?:
-    | {
-        id: string;
-        name: string;
-      }
-    | null;
-  jobs?:
-    | {
-        id: string;
-        dispatch_status: string;
-      }
-    | null;
+  projects?: {
+    id: string;
+    name: string;
+  } | null;
+  jobs?: {
+    id: string;
+    dispatch_status: string;
+  } | null;
 };
 
 export type DailyLogListItem = DailyLogRecord & {
@@ -161,7 +159,9 @@ function mapDailyLogListItem(row: DailyLogRow): DailyLogListItem {
   };
 }
 
-async function getDailyLogScope(next = "/projects"): Promise<DailyLogScope | null> {
+async function getDailyLogScope(
+  next = "/projects"
+): Promise<DailyLogScope | null> {
   const user = await requireAuthenticatedUser(next);
   const organizationContext = await getActiveOrganizationContext(user.id);
 
@@ -171,7 +171,8 @@ async function getDailyLogScope(next = "/projects"): Promise<DailyLogScope | nul
 
   return {
     userId: user.id,
-    organizationId: organizationContext.organization.id
+    organizationId: organizationContext.organization.id,
+    role: organizationContext.membership.role
   };
 }
 
@@ -203,7 +204,9 @@ async function ensureScopedProject(organizationId: string, projectId: string) {
   const data = response.data as { id?: string } | null;
 
   if (response.error) {
-    throw new Error(`Unable to validate the project: ${response.error.message}`);
+    throw new Error(
+      `Unable to validate the project: ${response.error.message}`
+    );
   }
 
   if (!data?.id) {
@@ -288,7 +291,10 @@ export const listDailyLogs = cache(async (): Promise<DailyLogListItem[]> => {
   return data.map(mapDailyLogListItem);
 });
 
-export async function listDailyLogsByProject(projectId: string, next = "/projects") {
+export async function listDailyLogsByProject(
+  projectId: string,
+  next = "/projects"
+) {
   const scope = await requireDailyLogScope(next);
   const supabase = await getSupabaseServerClient();
   const response = await supabase
@@ -301,7 +307,9 @@ export async function listDailyLogsByProject(projectId: string, next = "/project
   const data: unknown = response.data;
 
   if (response.error) {
-    throw new Error(`Unable to load project daily logs: ${response.error.message}`);
+    throw new Error(
+      `Unable to load project daily logs: ${response.error.message}`
+    );
   }
 
   if (!isDailyLogRowArray(data)) {
@@ -367,7 +375,9 @@ export async function createDailyLog(input: DailyLogInput) {
       throw new Error("A daily log already exists for this project and date.");
     }
 
-    throw new Error(`Unable to create the daily log: ${response.error.message}`);
+    throw new Error(
+      `Unable to create the daily log: ${response.error.message}`
+    );
   }
 
   if (!isDailyLogRow(data)) {
@@ -411,7 +421,9 @@ export async function updateDailyLog(dailyLogId: string, input: DailyLogInput) {
       throw new Error("A daily log already exists for this project and date.");
     }
 
-    throw new Error(`Unable to update the daily log: ${response.error.message}`);
+    throw new Error(
+      `Unable to update the daily log: ${response.error.message}`
+    );
   }
 
   if (!isDailyLogRow(data)) {
@@ -441,9 +453,7 @@ export async function getDailyLogLaborSummary(
       personId: timeCard.personId,
       personDisplayName: timeCard.person?.displayName ?? null,
       jobId: timeCard.jobId,
-      jobLabel: timeCard.job
-        ? `Job ${timeCard.job.id.slice(0, 8)}`
-        : null,
+      jobLabel: timeCard.job ? `Job ${timeCard.job.id.slice(0, 8)}` : null,
       workedMinutes: timeCard.workedMinutes
     }))
   );

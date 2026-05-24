@@ -2717,6 +2717,12 @@ export interface ExecutionAttachment {
   mimeType: string;
   caption: string | null;
   uploadedByUserId: ProfileId | null;
+  archivedAt: string | null;
+  archivedByUserId: ProfileId | null;
+  archiveReason: string | null;
+  restoredAt: string | null;
+  restoredByUserId: ProfileId | null;
+  restoreReason: string | null;
   createdAt: string;
   updatedAt: string;
 }

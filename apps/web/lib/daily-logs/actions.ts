@@ -5,8 +5,15 @@ import { redirect } from "next/navigation";
 
 import { createDailyLog, updateDailyLog } from "./data";
 import { dailyLogInputSchema, dailyLogQuickCreateInputSchema } from "./schemas";
-import { createUploadedExecutionAttachment } from "@/lib/execution-attachments/data";
-import { executionAttachmentUploadInputSchema } from "@/lib/execution-attachments/schemas";
+import {
+  archiveExecutionAttachment,
+  createUploadedExecutionAttachment,
+  restoreExecutionAttachment
+} from "@/lib/execution-attachments/data";
+import {
+  executionAttachmentLifecycleInputSchema,
+  executionAttachmentUploadInputSchema
+} from "@/lib/execution-attachments/schemas";
 import { createFieldNote, updateFieldNote } from "@/lib/field-notes/data";
 import { fieldNoteInputSchema } from "@/lib/field-notes/schemas";
 
@@ -79,6 +86,13 @@ function parseExecutionAttachmentInput(formData: FormData) {
     subjectType: getFieldValue(formData, "subjectType"),
     subjectId: getFieldValue(formData, "subjectId"),
     caption: getFieldValue(formData, "caption")
+  });
+}
+
+function parseExecutionAttachmentLifecycleInput(formData: FormData) {
+  return executionAttachmentLifecycleInputSchema.safeParse({
+    attachmentId: getFieldValue(formData, "attachmentId"),
+    reason: getFieldValue(formData, "reason")
   });
 }
 
@@ -417,6 +431,137 @@ export async function createExecutionAttachmentAction(formData: FormData) {
     appendHash(
       buildRedirect(`/daily-logs/${context.dailyLogId}`, {
         message: "Field evidence uploaded successfully."
+      }),
+      "field-evidence"
+    )
+  );
+}
+
+export async function archiveExecutionAttachmentAction(formData: FormData) {
+  const dailyLogId = getFieldValue(formData, "dailyLogId");
+  const result = parseExecutionAttachmentLifecycleInput(formData);
+
+  if (!result.success) {
+    redirect(
+      appendHash(
+        buildRedirect(`/daily-logs/${dailyLogId}`, {
+          error:
+            result.error.issues[0]?.message ??
+            "Unable to archive the field evidence."
+        }),
+        "field-evidence"
+      )
+    );
+  }
+
+  let context = {
+    dailyLogId,
+    projectId: getFieldValue(formData, "projectId"),
+    jobId: getFieldValue(formData, "jobId") || null
+  };
+
+  try {
+    const archived = await archiveExecutionAttachment({
+      attachmentId: result.data.attachmentId,
+      reason: result.data.reason,
+      next: `/daily-logs/${dailyLogId}`
+    });
+
+    context = {
+      dailyLogId: archived.context.dailyLogId,
+      projectId: archived.context.projectId,
+      jobId: archived.context.jobId
+    };
+  } catch (error) {
+    redirect(
+      appendHash(
+        buildRedirect(`/daily-logs/${dailyLogId}`, {
+          error:
+            error instanceof Error
+              ? error.message
+              : "Unable to archive the field evidence."
+        }),
+        "field-evidence"
+      )
+    );
+  }
+
+  revalidateDailyExecutionPaths(
+    context.projectId,
+    context.jobId,
+    context.dailyLogId
+  );
+
+  redirect(
+    appendHash(
+      buildRedirect(`/daily-logs/${context.dailyLogId}`, {
+        message:
+          "Field evidence archived. The stored file was kept for record review."
+      }),
+      "field-evidence"
+    )
+  );
+}
+
+export async function restoreExecutionAttachmentAction(formData: FormData) {
+  const dailyLogId = getFieldValue(formData, "dailyLogId");
+  const result = parseExecutionAttachmentLifecycleInput(formData);
+
+  if (!result.success) {
+    redirect(
+      appendHash(
+        buildRedirect(`/daily-logs/${dailyLogId}`, {
+          error:
+            result.error.issues[0]?.message ??
+            "Unable to restore the field evidence."
+        }),
+        "field-evidence"
+      )
+    );
+  }
+
+  let context = {
+    dailyLogId,
+    projectId: getFieldValue(formData, "projectId"),
+    jobId: getFieldValue(formData, "jobId") || null
+  };
+
+  try {
+    const restored = await restoreExecutionAttachment({
+      attachmentId: result.data.attachmentId,
+      reason: result.data.reason,
+      next: `/daily-logs/${dailyLogId}`
+    });
+
+    context = {
+      dailyLogId: restored.context.dailyLogId,
+      projectId: restored.context.projectId,
+      jobId: restored.context.jobId
+    };
+  } catch (error) {
+    redirect(
+      appendHash(
+        buildRedirect(`/daily-logs/${dailyLogId}`, {
+          error:
+            error instanceof Error
+              ? error.message
+              : "Unable to restore the field evidence."
+        }),
+        "field-evidence"
+      )
+    );
+  }
+
+  revalidateDailyExecutionPaths(
+    context.projectId,
+    context.jobId,
+    context.dailyLogId
+  );
+
+  redirect(
+    appendHash(
+      buildRedirect(`/daily-logs/${context.dailyLogId}`, {
+        message: "Field evidence restored to active workflow views."
       }),
       "field-evidence"
     )

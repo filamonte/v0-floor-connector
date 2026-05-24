@@ -1,6 +1,6 @@
 # Mobile Field Phase 3E Evidence Archive/Delete Policy
 
-Status: Planned
+Status: Implemented
 Doc Type: Design
 Date: 2026-05-24
 
@@ -16,6 +16,37 @@ users, add thumbnails, add AI summaries, or add notifications/automation.
 
 The recommendation is metadata archive first, storage hard-delete later. In
 contractor terms: hide bad or duplicate evidence without shredding the receipt.
+
+## Phase 3E-A Implementation Note
+
+Implemented on 2026-05-24 as metadata archive/restore only.
+
+Implemented behavior:
+
+- Added migration
+  `20260524190000_execution_attachments_archive_metadata.sql`.
+- Added `archived_at`, `archived_by`, `archive_reason`, `restored_at`,
+  `restored_by`, and `restore_reason` metadata to `execution_attachments`.
+- Default execution attachment list helpers exclude archived evidence.
+- An explicit `includeArchived` option supports contractor-side archived review
+  where needed.
+- Daily Log detail shows active field evidence by default and shows archived
+  evidence in a separate archived section with restore controls.
+- Owner/admin/manager users can archive or restore evidence from Daily Log
+  detail.
+- Archived evidence is hidden from active FieldTrail / Proof Center /
+  CloseoutTrail-style counts because shared list helpers are active-only by
+  default.
+- Signed URL creation remains attachment-id based and active-only by default.
+
+Still not implemented:
+
+- No storage object deletion.
+- No storage policy changes.
+- No hard-delete.
+- No storage cleanup job.
+- No portal/customer exposure.
+- No thumbnails, AI summaries, notifications, automation, or provider behavior.
 
 ## Docs Read
 

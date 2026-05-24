@@ -16,8 +16,10 @@ import { LinkedRecordCard } from "@/components/linked-record-card";
 import { NextActionCard } from "@/components/next-action-card";
 import { WorkspaceSummaryBand } from "@/components/workspace-summary-band";
 import {
+  archiveExecutionAttachmentAction,
   createExecutionAttachmentAction,
   createFieldNoteAction,
+  restoreExecutionAttachmentAction,
   updateDailyLogAction,
   updateFieldNoteAction
 } from "@/lib/daily-logs/actions";
@@ -32,6 +34,7 @@ import {
   resolveExecutionAttachmentPreviews,
   type ExecutionAttachmentPreviewListItem
 } from "@/lib/execution-attachments/data";
+import { partitionExecutionAttachmentsByArchiveState } from "@/lib/execution-attachments/lifecycle";
 import { isExternalExecutionAttachmentReference } from "@/lib/execution-attachments/preview";
 import { listFieldNotesByDailyLog } from "@/lib/field-notes/data";
 import { getFieldNoteTypeLabel } from "@/lib/field-notes/labels";
@@ -39,6 +42,7 @@ import { listJobs } from "@/lib/jobs/data";
 import { listPeople } from "@/lib/people/data";
 import { listProjects } from "@/lib/projects/data";
 import { listTimeCardsByProjectAndWorkDate } from "@/lib/time/data";
+import type { ExecutionAttachment as ExecutionAttachmentRecord } from "@floorconnector/types";
 
 type DailyLogDetailPageProps = {
   params: Promise<{
@@ -136,6 +140,121 @@ function renderAttachmentPreviewAction(
   );
 }
 
+function renderArchiveAttachmentAction(input: {
+  attachment: ExecutionAttachmentPreviewListItem;
+  dailyLogId: string;
+  projectId: string;
+  jobId: string | null;
+}) {
+  return (
+    <form action={archiveExecutionAttachmentAction} className="mt-4 space-y-3">
+      <input type="hidden" name="attachmentId" value={input.attachment.id} />
+      <input type="hidden" name="dailyLogId" value={input.dailyLogId} />
+      <input type="hidden" name="projectId" value={input.projectId} />
+      <input type="hidden" name="jobId" value={input.jobId ?? ""} />
+      <label className="block text-xs font-medium text-slate-600">
+        Archive reason
+        <input
+          name="reason"
+          type="text"
+          maxLength={1000}
+          placeholder="Optional reason"
+          className="mt-2 min-h-10 w-full rounded-[4px] border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none transition focus:border-slate-500"
+        />
+      </label>
+      <div className="flex flex-wrap items-center gap-3">
+        <button
+          type="submit"
+          className="inline-flex min-h-10 items-center justify-center rounded-[4px] border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+        >
+          Archive evidence
+        </button>
+        <span className="text-xs leading-5 text-slate-500">
+          Hides it from active proof views; the stored file is kept.
+        </span>
+      </div>
+    </form>
+  );
+}
+
+function renderRestoreAttachmentAction(input: {
+  attachment: ExecutionAttachmentRecord;
+  dailyLogId: string;
+  projectId: string;
+  jobId: string | null;
+}) {
+  return (
+    <form action={restoreExecutionAttachmentAction} className="mt-4 space-y-3">
+      <input type="hidden" name="attachmentId" value={input.attachment.id} />
+      <input type="hidden" name="dailyLogId" value={input.dailyLogId} />
+      <input type="hidden" name="projectId" value={input.projectId} />
+      <input type="hidden" name="jobId" value={input.jobId ?? ""} />
+      <label className="block text-xs font-medium text-slate-600">
+        Restore reason
+        <input
+          name="reason"
+          type="text"
+          maxLength={1000}
+          placeholder="Optional reason"
+          className="mt-2 min-h-10 w-full rounded-[4px] border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none transition focus:border-slate-500"
+        />
+      </label>
+      <button
+        type="submit"
+        className="inline-flex min-h-10 items-center justify-center rounded-[4px] border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+      >
+        Restore evidence
+      </button>
+    </form>
+  );
+}
+
+function renderArchivedAttachmentCard(input: {
+  attachment: ExecutionAttachmentRecord;
+  dailyLogId: string;
+  projectId: string;
+  jobId: string | null;
+}) {
+  return (
+    <div
+      key={input.attachment.id}
+      className="rounded-2xl border border-dashed border-slate-300 bg-white px-4 py-4"
+    >
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <p className="text-sm font-semibold text-slate-950">
+            {input.attachment.fileName}
+          </p>
+          <p className="mt-1 text-sm leading-6 text-slate-500">
+            {input.attachment.mimeType}
+          </p>
+        </div>
+        <span className="inline-flex rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-slate-700">
+          Archived
+        </span>
+      </div>
+      <p className="mt-3 text-sm leading-6 text-slate-600">
+        {input.attachment.caption ?? "No caption provided."}
+      </p>
+      <p className="mt-3 text-sm leading-6 text-slate-500">
+        Hidden from active field evidence and proof counts. Stored file kept for
+        record review.
+      </p>
+      {input.attachment.archivedAt ? (
+        <p className="mt-2 text-xs leading-5 text-slate-500">
+          Archived {formatDateTime(input.attachment.archivedAt)}
+        </p>
+      ) : null}
+      {input.attachment.archiveReason ? (
+        <p className="mt-2 text-xs leading-5 text-slate-500">
+          Reason: {input.attachment.archiveReason}
+        </p>
+      ) : null}
+      {renderRestoreAttachmentAction(input)}
+    </div>
+  );
+}
+
 export default async function DailyLogDetailPage({
   params,
   searchParams
@@ -158,7 +277,7 @@ export default async function DailyLogDetailPage({
     fieldNotes,
     laborSummary,
     timeCards,
-    dailyLogAttachments
+    rawDailyLogAttachments
   ] = await Promise.all([
     listProjects(),
     listJobs(),
@@ -173,13 +292,26 @@ export default async function DailyLogDetailPage({
     listExecutionAttachmentsBySubject(
       "daily_log",
       dailyLog.id,
-      `/daily-logs/${dailyLog.id}`
+      `/daily-logs/${dailyLog.id}`,
+      { includeArchived: true }
     )
   ]);
-  const rawFieldNoteAttachments = await listExecutionAttachmentsByFieldNotes(
-    fieldNotes.map((fieldNote) => fieldNote.id),
-    `/daily-logs/${dailyLog.id}`
-  );
+  const rawFieldNoteAttachmentsWithArchived =
+    await listExecutionAttachmentsByFieldNotes(
+      fieldNotes.map((fieldNote) => fieldNote.id),
+      `/daily-logs/${dailyLog.id}`,
+      { includeArchived: true }
+    );
+  const dailyLogAttachmentPartition =
+    partitionExecutionAttachmentsByArchiveState(rawDailyLogAttachments);
+  const fieldNoteAttachmentPartition =
+    partitionExecutionAttachmentsByArchiveState(
+      rawFieldNoteAttachmentsWithArchived
+    );
+  const dailyLogAttachments = dailyLogAttachmentPartition.active;
+  const archivedDailyLogAttachments = dailyLogAttachmentPartition.archived;
+  const rawFieldNoteAttachments = fieldNoteAttachmentPartition.active;
+  const archivedFieldNoteAttachments = fieldNoteAttachmentPartition.archived;
   const [fieldNoteAttachments, dailyLogAttachmentPreviews] = await Promise.all([
     resolveExecutionAttachmentPreviews(
       rawFieldNoteAttachments,
@@ -237,6 +369,10 @@ export default async function DailyLogDetailPage({
     string,
     typeof fieldNoteAttachments
   >();
+  const archivedAttachmentsByFieldNoteId = new Map<
+    string,
+    typeof archivedFieldNoteAttachments
+  >();
 
   for (const noteType of fieldNoteTypeOrder) {
     notesByType.set(
@@ -249,6 +385,12 @@ export default async function DailyLogDetailPage({
     attachmentsByFieldNoteId.set(
       fieldNote.id,
       fieldNoteAttachments.filter(
+        (attachment) => attachment.subjectId === fieldNote.id
+      )
+    );
+    archivedAttachmentsByFieldNoteId.set(
+      fieldNote.id,
+      archivedFieldNoteAttachments.filter(
         (attachment) => attachment.subjectId === fieldNote.id
       )
     );
@@ -673,6 +815,12 @@ export default async function DailyLogDetailPage({
                                         attachment
                                       )}
                                     </p>
+                                    {renderArchiveAttachmentAction({
+                                      attachment,
+                                      dailyLogId: dailyLog.id,
+                                      projectId: dailyLog.projectId,
+                                      jobId: fieldNote.jobId ?? dailyLog.jobId
+                                    })}
                                   </div>
                                 ))
                               ) : (
@@ -683,6 +831,36 @@ export default async function DailyLogDetailPage({
                                 </p>
                               )}
                             </div>
+                            {(
+                              archivedAttachmentsByFieldNoteId.get(
+                                fieldNote.id
+                              ) ?? []
+                            ).length > 0 ? (
+                              <div className="mt-5 rounded-2xl border border-dashed border-slate-300 bg-slate-50/80 px-4 py-4">
+                                <p className="text-sm font-medium text-slate-950">
+                                  Archived field evidence
+                                </p>
+                                <p className="mt-2 text-sm leading-6 text-slate-500">
+                                  Archived items are hidden from active proof
+                                  views. Restore them when they should count
+                                  again.
+                                </p>
+                                <div className="mt-4 grid gap-3">
+                                  {(
+                                    archivedAttachmentsByFieldNoteId.get(
+                                      fieldNote.id
+                                    ) ?? []
+                                  ).map((attachment) =>
+                                    renderArchivedAttachmentCard({
+                                      attachment,
+                                      dailyLogId: dailyLog.id,
+                                      projectId: dailyLog.projectId,
+                                      jobId: fieldNote.jobId ?? dailyLog.jobId
+                                    })
+                                  )}
+                                </div>
+                              </div>
+                            ) : null}
                             <div className="mt-5">
                               <ExecutionAttachmentForm
                                 action={createExecutionAttachmentAction}
@@ -743,6 +921,12 @@ export default async function DailyLogDetailPage({
                     <p className="mt-3 text-sm leading-6 text-slate-500">
                       {renderAttachmentPreviewAction(attachment)}
                     </p>
+                    {renderArchiveAttachmentAction({
+                      attachment,
+                      dailyLogId: dailyLog.id,
+                      projectId: dailyLog.projectId,
+                      jobId: dailyLog.jobId
+                    })}
                   </div>
                 ))
               ) : (
@@ -753,6 +937,29 @@ export default async function DailyLogDetailPage({
                 />
               )}
             </div>
+
+            {archivedDailyLogAttachments.length > 0 ? (
+              <section className="rounded-[6px] border border-dashed border-slate-300 bg-slate-50/80 px-5 py-5">
+                <p className="text-sm font-medium text-slate-950">
+                  Archived field evidence
+                </p>
+                <p className="mt-2 text-sm leading-6 text-slate-500">
+                  Archived evidence is hidden from active Daily Job Log rows,
+                  FieldTrail, Proof Center, and CloseoutTrail counts. The stored
+                  file is kept for record review.
+                </p>
+                <div className="mt-4 grid gap-3">
+                  {archivedDailyLogAttachments.map((attachment) =>
+                    renderArchivedAttachmentCard({
+                      attachment,
+                      dailyLogId: dailyLog.id,
+                      projectId: dailyLog.projectId,
+                      jobId: dailyLog.jobId
+                    })
+                  )}
+                </div>
+              </section>
+            ) : null}
 
             <section className="rounded-[6px] border border-slate-200 bg-white px-5 py-5">
               <p className="text-sm font-medium text-slate-950">

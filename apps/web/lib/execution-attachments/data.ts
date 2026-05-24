@@ -3,7 +3,10 @@ import "server-only";
 import { randomUUID } from "node:crypto";
 
 import { STORAGE_BUCKET_NAMES } from "@floorconnector/config";
-import type { ExecutionAttachment as ExecutionAttachmentRecord } from "@floorconnector/types";
+import type {
+  ExecutionAttachment as ExecutionAttachmentRecord,
+  MembershipRole
+} from "@floorconnector/types";
 
 import type { ExecutionAttachmentInput } from "./schemas";
 import {
@@ -32,6 +35,12 @@ type ExecutionAttachmentRow = {
   mime_type: string;
   caption: string | null;
   uploaded_by: string | null;
+  archived_at: string | null;
+  archived_by: string | null;
+  archive_reason: string | null;
+  restored_at: string | null;
+  restored_by: string | null;
+  restore_reason: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -45,6 +54,16 @@ export type ExecutionAttachmentUploadInput = {
   caption: string | null;
 };
 
+export type ExecutionAttachmentListOptions = {
+  includeArchived?: boolean;
+};
+
+export type ExecutionAttachmentLifecycleInput = {
+  attachmentId: string;
+  reason?: string | null;
+  next?: string;
+};
+
 type ExecutionAttachmentSubjectContext = {
   subjectType: ExecutionAttachmentRecord["subjectType"];
   subjectId: string;
@@ -52,6 +71,11 @@ type ExecutionAttachmentSubjectContext = {
   jobId: string | null;
   dailyLogId: string;
   fieldNoteId: string | null;
+};
+
+export type ExecutionAttachmentLifecycleResult = {
+  attachment: ExecutionAttachmentRecord;
+  context: ExecutionAttachmentSubjectContext;
 };
 
 export type ExecutionAttachmentPreviewListItem = ExecutionAttachmentRecord & {
@@ -69,9 +93,17 @@ const executionAttachmentSelect = `
   mime_type,
   caption,
   uploaded_by,
+  archived_at,
+  archived_by,
+  archive_reason,
+  restored_at,
+  restored_by,
+  restore_reason,
   created_at,
   updated_at
 `;
+
+const mutationRoles = new Set<MembershipRole>(["owner", "admin", "manager"]);
 
 function isExecutionAttachmentRow(
   value: unknown
@@ -118,9 +150,27 @@ function mapExecutionAttachment(
     mimeType: row.mime_type,
     caption: row.caption,
     uploadedByUserId: row.uploaded_by,
+    archivedAt: row.archived_at,
+    archivedByUserId: row.archived_by,
+    archiveReason: row.archive_reason,
+    restoredAt: row.restored_at,
+    restoredByUserId: row.restored_by,
+    restoreReason: row.restore_reason,
     createdAt: row.created_at,
     updatedAt: row.updated_at
   };
+}
+
+function normalizeLifecycleReason(value: string | null | undefined) {
+  const trimmed = value?.trim();
+
+  return trimmed ? trimmed.slice(0, 1000) : null;
+}
+
+function assertCanManageExecutionAttachment(role: MembershipRole) {
+  if (!mutationRoles.has(role)) {
+    throw new Error("Field evidence management access is required.");
+  }
 }
 
 function attachmentNotFoundError() {
@@ -222,17 +272,78 @@ async function validateExecutionAttachmentPreviewParent(
   }
 }
 
+async function resolveExecutionAttachmentLifecycleContext(
+  organizationId: string,
+  attachment: Pick<
+    ExecutionAttachmentRecord,
+    "subjectType" | "subjectId" | "organizationId"
+  >,
+  next: string
+): Promise<ExecutionAttachmentSubjectContext> {
+  if (attachment.organizationId !== organizationId) {
+    throw attachmentNotFoundError();
+  }
+
+  if (attachment.subjectType === "daily_log") {
+    const dailyLog = await getDailyLogById(attachment.subjectId, next);
+
+    if (!dailyLog || dailyLog.organizationId !== organizationId) {
+      throw attachmentNotFoundError();
+    }
+
+    return {
+      subjectType: "daily_log",
+      subjectId: dailyLog.id,
+      projectId: dailyLog.projectId,
+      jobId: dailyLog.jobId,
+      dailyLogId: dailyLog.id,
+      fieldNoteId: null
+    };
+  }
+
+  const fieldNote = await getFieldNoteById(attachment.subjectId, next);
+
+  if (!fieldNote || fieldNote.organizationId !== organizationId) {
+    throw attachmentNotFoundError();
+  }
+
+  const dailyLog = await getDailyLogById(fieldNote.dailyLogId, next);
+
+  if (
+    !dailyLog ||
+    dailyLog.organizationId !== organizationId ||
+    dailyLog.projectId !== fieldNote.projectId
+  ) {
+    throw attachmentNotFoundError();
+  }
+
+  return {
+    subjectType: "field_note",
+    subjectId: fieldNote.id,
+    projectId: fieldNote.projectId,
+    jobId: fieldNote.jobId,
+    dailyLogId: fieldNote.dailyLogId,
+    fieldNoteId: fieldNote.id
+  };
+}
+
 async function getExecutionAttachmentById(
   attachmentId: string,
-  organizationId: string
+  organizationId: string,
+  options: ExecutionAttachmentListOptions = {}
 ) {
   const supabase = await getSupabaseServerClient();
-  const response = await supabase
+  let query = supabase
     .from("execution_attachments")
     .select(executionAttachmentSelect)
     .eq("company_id", organizationId)
-    .eq("id", attachmentId)
-    .maybeSingle();
+    .eq("id", attachmentId);
+
+  if (!options.includeArchived) {
+    query = query.is("archived_at", null);
+  }
+
+  const response = await query.maybeSingle();
   const data: unknown = response.data;
 
   if (response.error) {
@@ -251,17 +362,23 @@ async function getExecutionAttachmentById(
 export async function listExecutionAttachmentsBySubject(
   subjectType: ExecutionAttachmentRecord["subjectType"],
   subjectId: string,
-  next = "/daily-logs"
+  next = "/daily-logs",
+  options: ExecutionAttachmentListOptions = {}
 ): Promise<ExecutionAttachmentListItem[]> {
   const scope = await requireDailyLogScope(next);
   const supabase = await getSupabaseServerClient();
-  const response = await supabase
+  let query = supabase
     .from("execution_attachments")
     .select(executionAttachmentSelect)
     .eq("company_id", scope.organizationId)
     .eq("subject_type", subjectType)
-    .eq("subject_id", subjectId)
-    .order("created_at", { ascending: false });
+    .eq("subject_id", subjectId);
+
+  if (!options.includeArchived) {
+    query = query.is("archived_at", null);
+  }
+
+  const response = await query.order("created_at", { ascending: false });
   const data: unknown = response.data;
 
   if (response.error) {
@@ -282,7 +399,8 @@ export async function listExecutionAttachmentsBySubjects(
     subjectType: ExecutionAttachmentRecord["subjectType"];
     subjectId: string;
   }>,
-  next = "/daily-logs"
+  next = "/daily-logs",
+  options: ExecutionAttachmentListOptions = {}
 ): Promise<ExecutionAttachmentListItem[]> {
   if (subjects.length === 0) {
     return [];
@@ -296,7 +414,7 @@ export async function listExecutionAttachmentsBySubjects(
   const fieldNoteIds = subjects
     .filter((subject) => subject.subjectType === "field_note")
     .map((subject) => subject.subjectId);
-  const responses = await Promise.all([
+  const dailyLogQuery =
     dailyLogIds.length > 0
       ? supabase
           .from("execution_attachments")
@@ -304,8 +422,8 @@ export async function listExecutionAttachmentsBySubjects(
           .eq("company_id", scope.organizationId)
           .eq("subject_type", "daily_log")
           .in("subject_id", dailyLogIds)
-          .order("created_at", { ascending: false })
-      : Promise.resolve({ data: [], error: null }),
+      : null;
+  const fieldNoteQuery =
     fieldNoteIds.length > 0
       ? supabase
           .from("execution_attachments")
@@ -313,7 +431,22 @@ export async function listExecutionAttachmentsBySubjects(
           .eq("company_id", scope.organizationId)
           .eq("subject_type", "field_note")
           .in("subject_id", fieldNoteIds)
-          .order("created_at", { ascending: false })
+      : null;
+
+  if (dailyLogQuery && !options.includeArchived) {
+    dailyLogQuery.is("archived_at", null);
+  }
+
+  if (fieldNoteQuery && !options.includeArchived) {
+    fieldNoteQuery.is("archived_at", null);
+  }
+
+  const responses = await Promise.all([
+    dailyLogQuery
+      ? dailyLogQuery.order("created_at", { ascending: false })
+      : Promise.resolve({ data: [], error: null }),
+    fieldNoteQuery
+      ? fieldNoteQuery.order("created_at", { ascending: false })
       : Promise.resolve({ data: [], error: null })
   ]);
   const error = responses.find((response) => response.error)?.error;
@@ -335,7 +468,8 @@ export async function listExecutionAttachmentsBySubjects(
 
 export async function listExecutionAttachmentsByFieldNotes(
   fieldNoteIds: string[],
-  next = "/daily-logs"
+  next = "/daily-logs",
+  options: ExecutionAttachmentListOptions = {}
 ): Promise<ExecutionAttachmentListItem[]> {
   if (fieldNoteIds.length === 0) {
     return [];
@@ -343,13 +477,18 @@ export async function listExecutionAttachmentsByFieldNotes(
 
   const scope = await requireDailyLogScope(next);
   const supabase = await getSupabaseServerClient();
-  const response = await supabase
+  let query = supabase
     .from("execution_attachments")
     .select(executionAttachmentSelect)
     .eq("company_id", scope.organizationId)
     .eq("subject_type", "field_note")
-    .in("subject_id", fieldNoteIds)
-    .order("created_at", { ascending: false });
+    .in("subject_id", fieldNoteIds);
+
+  if (!options.includeArchived) {
+    query = query.is("archived_at", null);
+  }
+
+  const response = await query.order("created_at", { ascending: false });
   const data: unknown = response.data;
 
   if (response.error) {
@@ -459,6 +598,112 @@ export async function createExecutionAttachment(
   }
 
   return mapExecutionAttachment(data);
+}
+
+export async function archiveExecutionAttachment(
+  input: ExecutionAttachmentLifecycleInput
+): Promise<ExecutionAttachmentLifecycleResult> {
+  const scope = await requireDailyLogScope(input.next ?? "/daily-logs");
+  assertCanManageExecutionAttachment(scope.role);
+  const attachment = await getExecutionAttachmentById(
+    input.attachmentId,
+    scope.organizationId,
+    { includeArchived: true }
+  );
+  const context = await resolveExecutionAttachmentLifecycleContext(
+    scope.organizationId,
+    attachment,
+    input.next ?? "/daily-logs"
+  );
+
+  if (attachment.archivedAt) {
+    return { attachment, context };
+  }
+
+  const supabase = await getSupabaseServerClient();
+  const response = await supabase
+    .from("execution_attachments")
+    .update({
+      archived_at: new Date().toISOString(),
+      archived_by: scope.userId,
+      archive_reason: normalizeLifecycleReason(input.reason),
+      restored_at: null,
+      restored_by: null,
+      restore_reason: null
+    })
+    .eq("company_id", scope.organizationId)
+    .eq("id", input.attachmentId)
+    .select(executionAttachmentSelect)
+    .single();
+  const data: unknown = response.data;
+
+  if (response.error) {
+    throw new Error(
+      `Unable to archive field evidence: ${response.error.message}`
+    );
+  }
+
+  if (!isExecutionAttachmentRow(data)) {
+    throw new Error("Unexpected field evidence response after archive.");
+  }
+
+  return {
+    attachment: mapExecutionAttachment(data),
+    context
+  };
+}
+
+export async function restoreExecutionAttachment(
+  input: ExecutionAttachmentLifecycleInput
+): Promise<ExecutionAttachmentLifecycleResult> {
+  const scope = await requireDailyLogScope(input.next ?? "/daily-logs");
+  assertCanManageExecutionAttachment(scope.role);
+  const attachment = await getExecutionAttachmentById(
+    input.attachmentId,
+    scope.organizationId,
+    { includeArchived: true }
+  );
+  const context = await resolveExecutionAttachmentLifecycleContext(
+    scope.organizationId,
+    attachment,
+    input.next ?? "/daily-logs"
+  );
+
+  if (!attachment.archivedAt) {
+    return { attachment, context };
+  }
+
+  const supabase = await getSupabaseServerClient();
+  const response = await supabase
+    .from("execution_attachments")
+    .update({
+      archived_at: null,
+      archived_by: null,
+      archive_reason: null,
+      restored_at: new Date().toISOString(),
+      restored_by: scope.userId,
+      restore_reason: normalizeLifecycleReason(input.reason)
+    })
+    .eq("company_id", scope.organizationId)
+    .eq("id", input.attachmentId)
+    .select(executionAttachmentSelect)
+    .single();
+  const data: unknown = response.data;
+
+  if (response.error) {
+    throw new Error(
+      `Unable to restore field evidence: ${response.error.message}`
+    );
+  }
+
+  if (!isExecutionAttachmentRow(data)) {
+    throw new Error("Unexpected field evidence response after restore.");
+  }
+
+  return {
+    attachment: mapExecutionAttachment(data),
+    context
+  };
 }
 
 export async function createUploadedExecutionAttachment(

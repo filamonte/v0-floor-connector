@@ -670,6 +670,20 @@ Current shell behavior:
   embedding, AI, notifications, automation, provider calls, auth/RLS changes,
   tenant-boundary changes, payment/signature behavior, estimate math, invoice
   math, settings behavior, or platform-admin behavior.
+- Mobile Field Phase 3E-A adds contractor-side metadata archive/restore for
+  Daily Log and Job Note field evidence. `execution_attachments` now records
+  archive/restore timestamps, actors, and optional reasons; default attachment
+  list helpers exclude archived evidence so active Daily Log rows, FieldTrail,
+  Proof Center, CloseoutTrail, Job Workspace, Project Workspace, closeout
+  package context, and Reports counts use active evidence only. Daily Log detail
+  exposes modest owner/admin/manager archive and restore controls, makes clear
+  that archive hides evidence from active workflow views while keeping the
+  stored file, and does not sign archived evidence by default. This does not
+  delete storage objects, change storage bucket policies, implement hard-delete,
+  add provider behavior, create a separate document/file subsystem, create
+  portal-only copies, expose field evidence to portal/customer users, add
+  thumbnails, add AI summaries, add notifications/automation, or change
+  payments/signatures/settings/platform-admin behavior.
 - Project Workspace now includes the first read-only MessageCenter communication timeline inside the Operations Hub. It summarizes existing project and related-record communication threads/messages, document Send Trail events, contract Signature Trail events, invoice Payment Trail events, and Customer Access visibility context with a Next Move link into the existing communication or source-record workspace. This does not add schema, migrations, routes, message/thread/notification/delivery tables, duplicate portal message records, provider sending behavior, email/SMS changes, webhooks, server actions, automation, AI drafting, auth/RLS changes, tenant-boundary changes, payment/signature behavior, estimate math, invoice math, portal grants, settings behavior, or platform-admin behavior.
 - Project Workspace now includes the first read-only ProjectPulse health and Next Move summary near the top of the workspace. It combines existing Ready Check / GateKeeper readiness, contract/signature, CrewBoard scheduling, FieldTrail blocker/log/evidence, MessageCenter communication, and invoice/payment signals into deterministic health copy, signal cards, linked counts, and a Next Move link. This does not add schema, migrations, routes, project-health/status tables, activity/event tables, server actions, automation, AI recommendations, auth/RLS changes, tenant-boundary changes, payment/signature behavior, estimate math, invoice math, portal grants, settings behavior, or platform-admin behavior.
 - Project Workspace now includes the first read-only CloseoutTrail closeout readiness section after the execution history and before the Financial Hub. It summarizes existing jobs, Daily Job Logs, Job Notes, field evidence, change orders, contracts / Signature Trail, invoices / Payment Trail, Customer Access, warranty documents, and service tickets into a closeout checklist, proof counts, and a deterministic closeout Next Move. This does not add schema, migrations, routes, closeout/warranty/document/payment/field tables, duplicate closeout records, server actions, automation, AI summaries, customer-facing field sharing, auth/RLS changes, tenant-boundary changes, payment/signature behavior, estimate math, invoice math, portal grants, settings behavior, or platform-admin behavior.
@@ -1334,6 +1348,9 @@ Current daily log design notes:
 - contractor-side daily-log UX now keeps create, review, editing, and note entry on the same protected workflow instead of splitting execution observations into separate modules
 - daily logs remain project-day narrative execution records even now that durable punchlist items exist on the same broader execution chain
 - daily-log execution attachments are now lightweight subject-scoped references for photos or files, not a full document-management system
+- field evidence archive/restore is metadata-only: active workflows hide
+  archived attachments and keep private `documents` bucket objects intact for
+  record review
 
 ### Field Notes
 

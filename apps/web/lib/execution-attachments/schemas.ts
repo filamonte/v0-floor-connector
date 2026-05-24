@@ -40,11 +40,19 @@ export const executionAttachmentUploadInputSchema = z.object({
   caption: optionalTrimmedString(1000)
 });
 
+export const executionAttachmentLifecycleInputSchema = z.object({
+  attachmentId: z.string().trim().uuid("Select valid field evidence."),
+  reason: optionalTrimmedString(1000)
+});
+
 export type ExecutionAttachmentInput = z.infer<
   typeof executionAttachmentInputSchema
 >;
 export type ExecutionAttachmentUploadFormInput = z.infer<
   typeof executionAttachmentUploadInputSchema
+>;
+export type ExecutionAttachmentLifecycleFormInput = z.infer<
+  typeof executionAttachmentLifecycleInputSchema
 >;
 export const executionAttachmentSubjectTypesList =
   executionAttachmentSubjectTypes;
