@@ -8,10 +8,11 @@ Doc Type: Demo / Design
 This document designs the future owner-approved write mode for the staging demo
 seed script.
 
-This pass does not implement write mode. It does not connect to Supabase, write
-data, apply migrations, create records, create auth users, create portal
-invites, call providers, create payment/signature/email/provider events, or
-change app workflows.
+This pass does not implement write mode. Phase 2A now implements read-only
+target validation only. It can connect to an explicit Supabase target for
+select-only checks, but it does not write data, apply migrations, create
+records, create auth users, create portal invites, call providers, create
+payment/signature/email/provider events, or change app workflows.
 
 The goal is to define the gates, refusal rules, record order, idempotency, and
 post-write validation needed before any future script can safely create staging
@@ -74,15 +75,17 @@ The script should move in stages:
 
 - `dry-run`: current default. Validates input shape and prints the planned
   dataset without env reads, Supabase connections, provider calls, or writes.
-- `validate-target`: future read-only mode. Connects only after owner approval,
-  verifies the target project, required tables, migrations, organization,
-  owner membership, portal customer assumptions, and provider posture, then
-  emits a readiness report. It must not write.
+- `validate-target`: implemented read-only mode. Connects only with explicit
+  target inputs and an approved service-role env var name, verifies queryable
+  required tables, organization, owner user/membership, portal customer
+  assumptions, and optional platform-admin posture, then emits a readiness
+  report. It does not write. Migration alignment remains an owner verification
+  warning.
 - `execute`: future write mode. Disabled until separately implemented after
   `validate-target` succeeds. It must be idempotent, tenant-scoped,
   provider-dark, token-safe, and guarded by the exact confirmation phrase.
 
-Phase 2 is design only. Do not add these modes until a later approved
+Write mode remains design only. Do not add write behavior until a later approved
 implementation slice.
 
 ## 6. Safety Checks
@@ -289,9 +292,8 @@ Only after Phase 2A succeeds should a later prompt consider:
 ## 14. What Is Intentionally Not Implemented Yet
 
 - write mode
-- `validate-target` mode
-- Supabase connection
-- service-role usage
+- Supabase writes
+- service-role write usage
 - schema changes
 - migrations
 - app routes

@@ -79,8 +79,11 @@ The script refuses:
 - `--environment` values outside `local` or `staging`
 - confirmation text containing production/live-data wording
 
-The implementation intentionally does not import Supabase, app data helpers, or
-provider SDKs. It also does not read `.env.local` or inspect secret values.
+The dry-run path intentionally does not create a Supabase client, call app data
+helpers, or import provider SDKs. It also does not read `.env.local` or inspect
+secret values. Phase 2A adds an explicit read-only Supabase client path for
+`--validate-target`, but that path is separate from the Phase 1 dry-run
+planner.
 
 ## 6. Dataset Groups Printed
 

@@ -71,6 +71,18 @@ providers, create auth users, create payment/signature/email events, or print
 portal invite tokens. Any future write-capable seed mode remains owner-approved
 and out of scope until a separate implementation prompt.
 
+Phase 2A is implemented as read-only target validation:
+
+```bash
+pnpm demo:data:seed:validate-target -- --supabase-url <staging-supabase-url> --service-role-key-env SUPABASE_SERVICE_ROLE_KEY --organization-id <uuid> --owner-user-id <uuid> --owner-email <owner@example.test> --portal-customer-email <customer@example.test> --environment staging
+```
+
+That command connects only to the explicit Supabase URL with the named
+service-role env var, hides the secret value, runs select-only target readiness
+checks, and prints passed/warned/failed results. It does not seed records,
+apply migrations, create auth users, create portal invites, create
+payment/signature/email events, call providers, or write data.
+
 Before any future write-capable seed mode exists, review
 [docs/demo/staging-demo-seed-write-mode-design.md](C:/FloorConnector/docs/demo/staging-demo-seed-write-mode-design.md)
 and make these owner decisions explicitly:

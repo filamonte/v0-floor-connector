@@ -331,9 +331,9 @@ pnpm demo:data:seed:dry-run -- --organization-id <uuid> --owner-user-id <uuid> -
 
 The command validates explicit identifiers and prints the planned dataset,
 idempotency notes, provider safety rules, portal safety rules, and future route
-validation checklist. It does not read `.env.local`, import Supabase clients,
-connect to databases, write data, call providers, create auth users, generate
-portal invite tokens, or create payment/signature/email events.
+validation checklist. The dry-run path does not read `.env.local`, create a
+Supabase client, connect to databases, write data, call providers, create auth
+users, generate portal invite tokens, or create payment/signature/email events.
 
 The spec defines required inputs, dry-run behavior, safety checks, idempotency,
 record order, provider/portal boundaries, route validation, and the future

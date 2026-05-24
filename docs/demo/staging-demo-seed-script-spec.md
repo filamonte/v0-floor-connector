@@ -1,27 +1,38 @@
 # Staging Demo Seed Script Spec
 
-Status: Active / Phase 1 Dry Run Implemented
+Status: Active / Phase 2A Read-Only Target Validation Implemented
 Doc Type: Demo / Specification
 
 ## 1. Purpose
 
 This spec defines the future `scripts/seed-staging-demo-data.mjs` design for a
-staging/demo dataset. Phase 1 now implements a strict dry-run-only local
-planner and package command:
+staging/demo dataset. Phase 1 implements a strict dry-run-only local planner
+and package command:
 
 ```bash
 pnpm demo:data:seed:dry-run -- --organization-id <uuid> --owner-user-id <uuid> --owner-email <owner@example.test> --portal-customer-email <customer@example.test> --environment staging
 ```
 
-The implemented Phase 1 script validates required inputs and prints the planned
-canonical demo dataset. It does not write remote data, run Supabase writes,
-apply migrations, create schema, create seed records, call providers, create
-payment or signature events, send email, expose invite tokens, read
-`.env.local`, import Supabase clients, connect to databases, or change app
-behavior.
+The Phase 1 script validates required inputs and prints the planned canonical
+demo dataset. It does not write remote data, run Supabase writes, apply
+migrations, create schema, create seed records, call providers, create payment
+or signature events, send email, expose invite tokens, read `.env.local`,
+connect to databases, or change app behavior.
+
+Phase 2A now implements read-only target validation:
+
+```bash
+pnpm demo:data:seed:validate-target -- --supabase-url <staging-supabase-url> --service-role-key-env SUPABASE_SERVICE_ROLE_KEY --organization-id <uuid> --owner-user-id <uuid> --owner-email <owner@example.test> --portal-customer-email <customer@example.test> --environment staging
+```
+
+The implemented Phase 2A mode connects only when explicit Supabase target inputs
+and an approved service-role env var name are supplied. It runs select-only
+readiness checks, prints a target readiness report, hides secret values, and
+never writes data, creates records, creates auth users, creates portal invites,
+creates payment/signature/email events, applies migrations, or calls providers.
 
 Future write-mode gates, refusal rules, idempotency, portal-token policy, and
-the recommended read-only target validation step are designed in
+the Phase 2A read-only target-validation boundary are designed in
 [docs/demo/staging-demo-seed-write-mode-design.md](C:/FloorConnector/docs/demo/staging-demo-seed-write-mode-design.md).
 
 The future script should make one coherent owner-approved demo company story
@@ -58,6 +69,8 @@ Scripts and package surfaces inspected:
 - `package.json`
 - `scripts/README.md`
 - `scripts/demo-data-inventory.mjs`
+- `scripts/seed-staging-demo-data.mjs`
+- `scripts/seed-staging-demo-data.test.mjs`
 - `scripts/portal-e2e-fixture.mjs`
 - `scripts/e2e-second-tenant-fixture.mjs`
 - `scripts/staging-preflight.mjs`
@@ -132,7 +145,8 @@ Required inputs:
   `I understand this targets the owner-approved staging demo tenant only`.
 - `dry_run`: defaults to true and must be explicit in command output.
 
-Required environment names for a future write-capable implementation:
+Required environment names for read-only target validation and a future
+write-capable implementation:
 
 - `NEXT_PUBLIC_SUPABASE_URL`
 - `SUPABASE_SERVICE_ROLE_KEY`
@@ -140,9 +154,33 @@ Required environment names for a future write-capable implementation:
 - `NODE_ENV`
 - `VERCEL_ENV`
 
-The future Phase 1 implementation should be dry-run only and may validate that
-the env names exist without performing writes. A later owner-approved write mode
-may read values but must never print secrets.
+Phase 2A target validation may read the explicitly named service-role env var
+value after the owner supplies the target URL and required ids. It must never
+print the value. A later owner-approved write mode may read values but must
+never print secrets.
+
+## 4A. Phase 2A Validate Target Mode
+
+Implemented package command:
+
+```bash
+pnpm demo:data:seed:validate-target -- --supabase-url <staging-supabase-url> --service-role-key-env SUPABASE_SERVICE_ROLE_KEY --organization-id <uuid> --owner-user-id <uuid> --owner-email <owner@example.test> --portal-customer-email <customer@example.test> --environment staging
+```
+
+Read-only checks:
+
+- required tables are queryable through select-only checks
+- target organization exists in `companies`
+- owner user id/email exists in `users`
+- owner membership exists in `company_memberships`
+- portal customer canonical user posture can be checked by email
+- portal access grant posture can be checked by organization/email
+- optional platform-admin user/role posture can be checked when supplied
+
+The mode reports migration alignment as an owner action because migration state
+is not safely verified through the PostgREST client. It exits nonzero when
+required inputs are missing, the target looks production-like, the approved
+service-role env var is missing, or required readiness checks fail.
 
 ## 5. Safety Checks
 
