@@ -71,6 +71,22 @@ providers, create auth users, create payment/signature/email events, or print
 portal invite tokens. Any future write-capable seed mode remains owner-approved
 and out of scope until a separate implementation prompt.
 
+Before any future write-capable seed mode exists, review
+[docs/demo/staging-demo-seed-write-mode-design.md](C:/FloorConnector/docs/demo/staging-demo-seed-write-mode-design.md)
+and make these owner decisions explicitly:
+
+- staging Supabase project ref or project URL
+- staging app URL
+- target organization id
+- owner user id and owner email
+- portal customer email
+- platform admin email, only if platform-admin demo coverage is in scope
+- confirmation that the target is not production or production-like
+- confirmation that provider keys are test-mode or provider-isolated
+- confirmation that dry-run output was reviewed first
+- confirmation that remote migrations and expected tables were checked
+- confirmation phrase: `I APPROVE STAGING DEMO SEED WRITES`
+
 Codex should not create these resources or mutate these settings unless the
 owner explicitly authorizes a specific action in a later task.
 

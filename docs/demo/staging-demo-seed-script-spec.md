@@ -20,6 +20,10 @@ payment or signature events, send email, expose invite tokens, read
 `.env.local`, import Supabase clients, connect to databases, or change app
 behavior.
 
+Future write-mode gates, refusal rules, idempotency, portal-token policy, and
+the recommended read-only target validation step are designed in
+[docs/demo/staging-demo-seed-write-mode-design.md](C:/FloorConnector/docs/demo/staging-demo-seed-write-mode-design.md).
+
 The future script should make one coherent owner-approved demo company story
 visible across the existing operating core:
 

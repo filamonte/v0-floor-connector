@@ -190,6 +190,12 @@ Recent staging/demo work is docs-first and no-write:
   It does not import Supabase clients, read `.env.local`, write data, call
   providers, create auth users, create payment/signature/email events, or print
   portal invite tokens.
+- [docs/demo/staging-demo-seed-write-mode-design.md](C:/FloorConnector/docs/demo/staging-demo-seed-write-mode-design.md)
+  defines the owner gates, future script modes, write-mode refusal rules,
+  idempotency strategy, provider-dark policy, portal token policy, post-write
+  validation plan, and cleanup boundary. The recommended next implementation is
+  `Staging Demo Seed Phase 2A - Validate Target Read Only`; actual write mode
+  remains deferred until after that read-only target check succeeds.
 
 ## Guardrails
 
@@ -232,8 +238,11 @@ For current operating-core focused tests and route checks, use
 
 Good next moves:
 
-- Review the dry-run seed planner output with owner-approved staging
-  identifiers before designing any future write-capable seed mode.
+- If staging/demo is next, implement
+  `Staging Demo Seed Phase 2A - Validate Target Read Only` from
+  [docs/demo/staging-demo-seed-write-mode-design.md](C:/FloorConnector/docs/demo/staging-demo-seed-write-mode-design.md).
+  Keep it read-only: no writes, migrations, auth users, portal invites,
+  provider calls, payment/signature/email events, or schema/workflow changes.
 - If continuing Company Documents, use the Phase 1C-A Starter Document Adoption
   prompt from
   [docs/design/company-documents-phase-1c-starter-documents-plan.md](C:/FloorConnector/docs/design/company-documents-phase-1c-starter-documents-plan.md).

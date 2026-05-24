@@ -235,6 +235,9 @@ Demo and staging:
   canonical demo dataset plan and local-only inventory command
 - [docs/demo/staging-demo-seed-script-spec.md](C:/FloorConnector/docs/demo/staging-demo-seed-script-spec.md):
   dry-run specification and Phase 1 no-write seed planner command
+- [docs/demo/staging-demo-seed-write-mode-design.md](C:/FloorConnector/docs/demo/staging-demo-seed-write-mode-design.md):
+  owner-approved future write-mode gates, refusal rules, idempotency, and
+  recommended read-only target validation step
 - [docs/design/staging-demo-seed-phase-1-dry-run-script.md](C:/FloorConnector/docs/design/staging-demo-seed-phase-1-dry-run-script.md):
   implemented dry-run seed planner checkpoint
 
