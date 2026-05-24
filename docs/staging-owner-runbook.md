@@ -43,6 +43,8 @@ The owner must configure:
 - staging URL and preview/protection policy
 - Vercel environment variables
 - Supabase project selection
+- Supabase account/organization access that can see the intended staging
+  project in read-only project listing
 - Supabase Auth site URL and redirect URLs
 - remote migration alignment review
 - RLS/security advisor review
@@ -101,6 +103,14 @@ and make these owner decisions explicitly:
 
 Codex should not create these resources or mutate these settings unless the
 owner explicitly authorizes a specific action in a later task.
+
+Read-only Supabase connector discovery is recorded in
+[docs/design/supabase-staging-target-discovery.md](C:/FloorConnector/docs/design/supabase-staging-target-discovery.md).
+On May 24, 2026, the connector could see one organization,
+`FloorConnectoor` (`cvkfudwshnfsftnnwrro`), but returned no visible projects.
+No staging target was identified, and no project details, migrations, or tables
+were queried. The owner must resolve Supabase project visibility before Phase 2A
+target validation can be run against a real staging project.
 
 ## 4. Vercel Project / Account Checklist
 
@@ -249,6 +259,9 @@ or storage-state blockers until resolved.
 Before staging demo:
 
 - Confirm the selected Supabase project is staging, not production.
+- Confirm the selected Supabase project is visible through the owner-approved
+  account or connector session. The May 24, 2026 connector discovery found no
+  visible projects, so project visibility is currently a staging hold point.
 - Review pending local migrations before applying anything remotely.
 - Run remote migration alignment checks only with owner approval.
 - Run RLS/security advisor checks with owner credentials or approved tooling.
@@ -336,6 +349,8 @@ Hold deployment when:
 - Vercel account/project ownership is unclear.
 - `.vercel/project.json` points to an unapproved project.
 - staging env vars are incomplete or copied from production without review.
+- the intended Supabase staging project is not visible to the approved owner
+  account or connector session.
 - Supabase Auth callback URLs do not match the staging origin.
 - remote migrations have not been reviewed.
 - RLS/security advisor has not been checked for the selected project.

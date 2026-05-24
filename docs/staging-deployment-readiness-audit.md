@@ -321,6 +321,15 @@ access traffic. Keep dev QA tools disabled for clean demos.
 - `supabase/migrations` contains 123 local migration files. The latest files
   inspected end at `20260520130000_document_delivery_events_contracts.sql`.
 - This audit did not apply migrations or call a remote Supabase project.
+- May 24, 2026 read-only Supabase connector discovery is documented in
+  [docs/design/supabase-staging-target-discovery.md](C:/FloorConnector/docs/design/supabase-staging-target-discovery.md).
+  The connector returned one visible organization, `FloorConnectoor`
+  (`cvkfudwshnfsftnnwrro`, free plan), and zero visible projects. No staging
+  project candidate was identified, so no project details, migrations, tables,
+  SQL, auth settings, RLS, or data were queried or changed.
+- Supabase project visibility is currently a staging blocker. The owner must
+  confirm the correct Supabase account/organization or make the intended
+  staging project visible before Phase 2A read-only target validation can run.
 - Remote migration alignment is an owner action. Before staging, run an
   intentional remote check such as `supabase migration list` and a non-mutating
   dry run where appropriate.
@@ -401,6 +410,7 @@ access traffic. Keep dev QA tools disabled for clean demos.
 | Risk                                       | Impact                                                  | Mitigation / owner action                                                                    |
 | ------------------------------------------ | ------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
 | Vercel project/account mismatch            | No reliable staging URL.                                | Owner confirms the correct Vercel account/team before linking or deploying.                  |
+| Supabase project not visible to connector  | No validated staging database target.                   | Owner confirms the correct Supabase organization/account or grants connector visibility.     |
 | Missing staging env vars                   | Build or runtime failures.                              | Configure names from `.env.example` and `packages/config`; do not paste values into docs.    |
 | Supabase Auth callback mismatch            | Login/signup loops or stale sessions.                   | Add staging site URL and redirect URLs in Supabase dashboard.                                |
 | Supabase migrations not applied remotely   | Routes may load against missing tables/functions.       | Run remote migration alignment check with owner credentials.                                 |
@@ -423,18 +433,20 @@ access traffic. Keep dev QA tools disabled for clean demos.
    internal-only or shareable.
 3. Configure Vercel env names from `.env.example` and `packages/config`, using
    staging/test provider values.
-4. Configure Supabase Auth site URL and redirect URLs for the staging origin.
-5. Verify remote migration alignment and run RLS/security checks with owner
+4. Confirm the intended Supabase staging project is visible to the
+   owner-approved account/connector session.
+5. Configure Supabase Auth site URL and redirect URLs for the staging origin.
+6. Verify remote migration alignment and run RLS/security checks with owner
    Supabase credentials.
-6. Confirm contractor, platform-admin, and portal demo users exist and have the
+7. Confirm contractor, platform-admin, and portal demo users exist and have the
    expected canonical memberships/grants.
-7. Decide Stripe posture: provider-isolated, test-mode Checkout/webhook smoke,
+8. Decide Stripe posture: provider-isolated, test-mode Checkout/webhook smoke,
    or explicitly approved live-mode launch work.
-8. Decide Postmark and SignWell posture before triggering any provider sends.
-9. Prepare one approved staging demo record set and avoid stale hardcoded IDs.
-10. Run public, protected, portal, setup, and platform-admin smoke commands
+9. Decide Postmark and SignWell posture before triggering any provider sends.
+10. Prepare one approved staging demo record set and avoid stale hardcoded IDs.
+11. Run public, protected, portal, setup, and platform-admin smoke commands
     against the staging base URL.
-11. Record blockers honestly instead of weakening auth, setup, portal, billing,
+12. Record blockers honestly instead of weakening auth, setup, portal, billing,
     or tenant boundaries for demo convenience.
 
 ## 12. Recommended Next Codex Prompt

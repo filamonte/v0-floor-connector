@@ -208,6 +208,14 @@ Recent staging/demo work is docs-first and no-write:
   validate-target remains explicit/read-only, script safety checks found no
   write verbs or provider/auth-admin paths in the seed script, and write mode
   remains future owner-approved work.
+- [docs/design/supabase-staging-target-discovery.md](C:/FloorConnector/docs/design/supabase-staging-target-discovery.md)
+  records the May 24, 2026 read-only Supabase connector discovery. The
+  connector could see one organization, `FloorConnectoor`
+  (`cvkfudwshnfsftnnwrro`, free plan), but returned zero visible projects. No
+  staging project candidate was identified, and no project details, migrations,
+  tables, SQL, auth settings, RLS, data, providers, or app behavior were
+  touched. The next staging action is owner/account access resolution so the
+  intended Supabase project is visible before Phase 2A validation.
 
 ## Guardrails
 
@@ -258,10 +266,12 @@ For current operating-core focused tests and route checks, use
 Good next moves:
 
 - If staging/demo is next, have the owner run
-  `pnpm demo:data:seed:validate-target` against the intended staging Supabase
-  target and review warnings before considering any write-mode prompt. Keep
-  write mode deferred until read-only target validation is clean and owner
-  approval is explicit.
+  resolve Supabase project visibility first. The current connector discovery
+  sees `FloorConnectoor` but no projects, so there is no confirmed staging
+  Supabase target yet. After the intended project is visible, have the owner run
+  `pnpm demo:data:seed:validate-target` against that target and review warnings
+  before considering any write-mode prompt. Keep write mode deferred until
+  read-only target validation is clean and owner approval is explicit.
 - If continuing Company Documents, use the Phase 1C-A Starter Document Adoption
   prompt from
   [docs/design/company-documents-phase-1c-starter-documents-plan.md](C:/FloorConnector/docs/design/company-documents-phase-1c-starter-documents-plan.md).
