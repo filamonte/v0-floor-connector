@@ -155,6 +155,10 @@ High-signal operating-core docs:
   one-hour signed URLs resolved by execution attachment id from the private
   `documents` bucket, with portal/customer exclusion and no thumbnails,
   delete/archive, schema, migrations, or storage-policy changes
+- [docs/design/mobile-field-phase-3d-a-qa-checkpoint.md](C:/FloorConnector/docs/design/mobile-field-phase-3d-a-qa-checkpoint.md):
+  QA checkpoint for contractor-only field evidence preview links, signed URL
+  boundaries, Daily Log / Job Note parent validation, portal exclusion, and
+  remaining real-evidence browser QA follow-up
 - [docs/design/messagecenter-phase-1-project-communication-timeline.md](C:/FloorConnector/docs/design/messagecenter-phase-1-project-communication-timeline.md):
   MessageCenter over communication and proof records
 - [docs/design/projectpulse-phase-1-project-health-summary.md](C:/FloorConnector/docs/design/projectpulse-phase-1-project-health-summary.md):

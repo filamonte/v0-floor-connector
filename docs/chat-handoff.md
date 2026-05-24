@@ -142,6 +142,16 @@ file` actions without exposing raw storage paths. This remains contractor-only
   and does not add thumbnails, delete/archive, portal/customer exposure, schema,
   migrations, public URLs, storage policy changes, or closeout package file
   embedding.
+- Mobile Field Phase 3D-A QA is documented in
+  [docs/design/mobile-field-phase-3d-a-qa-checkpoint.md](C:/FloorConnector/docs/design/mobile-field-phase-3d-a-qa-checkpoint.md).
+  Static QA confirmed the server-side one-hour signed URL boundary, attachment
+  id based resolution, Daily Log / Job Note parent validation, no raw storage
+  path rendering, portal exclusion, and FieldTrail / Proof Center /
+  CloseoutTrail metadata-only behavior. Browser QA loaded `/daily-logs` and one
+  discovered Daily Log detail with saved contractor auth, but the local data had
+  no uploaded evidence row to click; repeated direct checks then hit local
+  Supabase Auth `over_request_rate_limit`, so real-object preview link QA
+  remains a follow-up after auth cooldown.
 - CrewBoard Phase 3 drag/drop dispatch planning is documented in
   [docs/design/crewboard-phase-3-drag-drop-dispatch-spec.md](C:/FloorConnector/docs/design/crewboard-phase-3-drag-drop-dispatch-spec.md).
   The recommended path is confirmation-first: add pure move helpers and
