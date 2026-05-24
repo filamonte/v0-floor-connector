@@ -97,6 +97,12 @@ Current operating-core surfaces include:
   loaded `/daily-logs`, `/jobs`, and `/schedule` with saved contractor auth;
   Daily Log and Job detail checks were blocked by local Supabase Auth
   `over_request_rate_limit` and should be retried only after auth cooldown.
+- CrewBoard Phase 3 drag/drop dispatch planning is documented in
+  [docs/design/crewboard-phase-3-drag-drop-dispatch-spec.md](C:/FloorConnector/docs/design/crewboard-phase-3-drag-drop-dispatch-spec.md).
+  The recommended path is confirmation-first: add pure move helpers and
+  keyboard/manual scheduling around the existing selected-job action panel
+  before any pointer drag/drop package. Drag/drop should create a proposed move
+  only, then save through existing schedule actions after confirmation.
 - Global search hardening for tenant-scoped canonical records.
 
 These layers are summaries, source-record handoffs, copy/hierarchy
@@ -151,6 +157,9 @@ Recent staging/demo work is docs-first and no-write:
   provider-dark, and invite-token safe.
 - Mobile field work must keep Job Notes and field evidence under Daily Job Logs
   until a separate shared evidence/storage plan is approved.
+- CrewBoard drag/drop work must stay on canonical jobs and job assignments,
+  preserve existing schedule actions, and keep GateKeeper / Ready Check server
+  enforcement authoritative.
 - Customer portal copy should be simpler and customer-safe; do not expose
   contractor-only FieldTrail, Proof Center, internal blockers, provider
   details, or internal Job Notes as portal capability.
@@ -181,6 +190,10 @@ Good next moves:
   [docs/design/next-build-priority-checkpoint.md](C:/FloorConnector/docs/design/next-build-priority-checkpoint.md)
   to decide between product momentum, demo/staging credibility, and mobile field
   stickiness.
+- If continuing CrewBoard, use
+  [docs/design/crewboard-phase-3-drag-drop-dispatch-spec.md](C:/FloorConnector/docs/design/crewboard-phase-3-drag-drop-dispatch-spec.md)
+  for Phase 3A movement helpers and keyboard/manual confirmation UI before
+  implementing pointer drag/drop.
 - Run a real-record operating-core demo rehearsal using
   [docs/demo/operating-core-demo-path.md](C:/FloorConnector/docs/demo/operating-core-demo-path.md)
   and record blockers honestly.
