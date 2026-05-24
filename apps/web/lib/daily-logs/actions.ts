@@ -5,8 +5,8 @@ import { redirect } from "next/navigation";
 
 import { createDailyLog, updateDailyLog } from "./data";
 import { dailyLogInputSchema, dailyLogQuickCreateInputSchema } from "./schemas";
-import { createExecutionAttachment } from "@/lib/execution-attachments/data";
-import { executionAttachmentInputSchema } from "@/lib/execution-attachments/schemas";
+import { createUploadedExecutionAttachment } from "@/lib/execution-attachments/data";
+import { executionAttachmentUploadInputSchema } from "@/lib/execution-attachments/schemas";
 import { createFieldNote, updateFieldNote } from "@/lib/field-notes/data";
 import { fieldNoteInputSchema } from "@/lib/field-notes/schemas";
 
@@ -75,18 +75,22 @@ function parseFieldNoteInput(formData: FormData) {
 }
 
 function parseExecutionAttachmentInput(formData: FormData) {
-  return executionAttachmentInputSchema.safeParse({
+  return executionAttachmentUploadInputSchema.safeParse({
     subjectType: getFieldValue(formData, "subjectType"),
     subjectId: getFieldValue(formData, "subjectId"),
-    attachmentType: getFieldValue(formData, "attachmentType"),
-    storagePath: getFieldValue(formData, "storagePath"),
-    fileName: getFieldValue(formData, "fileName"),
-    mimeType: getFieldValue(formData, "mimeType"),
     caption: getFieldValue(formData, "caption")
   });
 }
 
-function revalidateDailyExecutionPaths(projectId: string, jobId: string | null, dailyLogId: string) {
+function appendHash(path: string, hash: string) {
+  return `${path}#${hash}`;
+}
+
+function revalidateDailyExecutionPaths(
+  projectId: string,
+  jobId: string | null,
+  dailyLogId: string
+) {
   revalidatePath("/daily-logs");
   revalidatePath(`/daily-logs/${dailyLogId}`);
   revalidatePath(`/projects/${projectId}`);
@@ -102,7 +106,8 @@ export async function createDailyLogAction(formData: FormData) {
   if (!result.success) {
     redirect(
       buildRedirect("/daily-logs", {
-        error: result.error.issues[0]?.message ?? "Unable to create the daily log."
+        error:
+          result.error.issues[0]?.message ?? "Unable to create the daily log."
       })
     );
   }
@@ -114,12 +119,19 @@ export async function createDailyLogAction(formData: FormData) {
   } catch (error) {
     redirect(
       buildRedirect("/daily-logs", {
-        error: error instanceof Error ? error.message : "Unable to create the daily log."
+        error:
+          error instanceof Error
+            ? error.message
+            : "Unable to create the daily log."
       })
     );
   }
 
-  revalidateDailyExecutionPaths(dailyLog.projectId, dailyLog.jobId, dailyLog.id);
+  revalidateDailyExecutionPaths(
+    dailyLog.projectId,
+    dailyLog.jobId,
+    dailyLog.id
+  );
 
   redirect(
     buildRedirect(`/daily-logs/${dailyLog.id}`, {
@@ -177,11 +189,16 @@ export async function quickCreateDailyLogAction(formData: FormData) {
     );
   }
 
-  revalidateDailyExecutionPaths(dailyLog.projectId, dailyLog.jobId, dailyLog.id);
+  revalidateDailyExecutionPaths(
+    dailyLog.projectId,
+    dailyLog.jobId,
+    dailyLog.id
+  );
 
   redirect(
     buildRedirect(`/daily-logs/${dailyLog.id}`, {
-      message: "Daily log created. Finish the full project-day record in this workspace."
+      message:
+        "Daily log created. Finish the full project-day record in this workspace."
     })
   );
 }
@@ -201,7 +218,8 @@ export async function updateDailyLogAction(formData: FormData) {
   if (!result.success) {
     redirect(
       buildRedirect(`/daily-logs/${dailyLogId}`, {
-        error: result.error.issues[0]?.message ?? "Unable to update the daily log."
+        error:
+          result.error.issues[0]?.message ?? "Unable to update the daily log."
       })
     );
   }
@@ -213,12 +231,19 @@ export async function updateDailyLogAction(formData: FormData) {
   } catch (error) {
     redirect(
       buildRedirect(`/daily-logs/${dailyLogId}`, {
-        error: error instanceof Error ? error.message : "Unable to update the daily log."
+        error:
+          error instanceof Error
+            ? error.message
+            : "Unable to update the daily log."
       })
     );
   }
 
-  revalidateDailyExecutionPaths(dailyLog.projectId, dailyLog.jobId, dailyLog.id);
+  revalidateDailyExecutionPaths(
+    dailyLog.projectId,
+    dailyLog.jobId,
+    dailyLog.id
+  );
 
   redirect(
     buildRedirect(`/daily-logs/${dailyLog.id}`, {
@@ -235,7 +260,8 @@ export async function createFieldNoteAction(formData: FormData) {
 
     redirect(
       buildRedirect(`/daily-logs/${dailyLogId}`, {
-        error: result.error.issues[0]?.message ?? "Unable to create the field note."
+        error:
+          result.error.issues[0]?.message ?? "Unable to create the field note."
       })
     );
   }
@@ -247,7 +273,10 @@ export async function createFieldNoteAction(formData: FormData) {
   } catch (error) {
     redirect(
       buildRedirect(`/daily-logs/${result.data.dailyLogId}`, {
-        error: error instanceof Error ? error.message : "Unable to create the field note."
+        error:
+          error instanceof Error
+            ? error.message
+            : "Unable to create the field note."
       })
     );
   }
@@ -282,7 +311,8 @@ export async function updateFieldNoteAction(formData: FormData) {
   if (!result.success) {
     redirect(
       buildRedirect(`/daily-logs/${getFieldValue(formData, "dailyLogId")}`, {
-        error: result.error.issues[0]?.message ?? "Unable to update the field note."
+        error:
+          result.error.issues[0]?.message ?? "Unable to update the field note."
       })
     );
   }
@@ -294,7 +324,10 @@ export async function updateFieldNoteAction(formData: FormData) {
   } catch (error) {
     redirect(
       buildRedirect(`/daily-logs/${result.data.dailyLogId}`, {
-        error: error instanceof Error ? error.message : "Unable to update the field note."
+        error:
+          error instanceof Error
+            ? error.message
+            : "Unable to update the field note."
       })
     );
   }
@@ -316,35 +349,76 @@ export async function createExecutionAttachmentAction(formData: FormData) {
   const dailyLogId = getFieldValue(formData, "dailyLogId");
   const projectId = getFieldValue(formData, "projectId");
   const jobId = getFieldValue(formData, "jobId") || null;
+  const uploadFile = formData.get("evidenceFile");
   const result = parseExecutionAttachmentInput(formData);
 
   if (!result.success) {
     redirect(
-      buildRedirect(`/daily-logs/${dailyLogId}`, {
-        error:
-          result.error.issues[0]?.message ?? "Unable to create the execution attachment."
-      })
+      appendHash(
+        buildRedirect(`/daily-logs/${dailyLogId}`, {
+          error:
+            result.error.issues[0]?.message ??
+            "Unable to add the field evidence."
+        }),
+        "field-evidence"
+      )
     );
   }
+
+  if (!(uploadFile instanceof File)) {
+    redirect(
+      appendHash(
+        buildRedirect(`/daily-logs/${dailyLogId}`, {
+          error: "Choose a photo or PDF before adding field evidence."
+        }),
+        "field-evidence"
+      )
+    );
+  }
+
+  let context = {
+    dailyLogId,
+    projectId,
+    jobId
+  };
 
   try {
-    await createExecutionAttachment(result.data);
+    const created = await createUploadedExecutionAttachment({
+      ...result.data,
+      file: uploadFile
+    });
+
+    context = {
+      dailyLogId: created.context.dailyLogId,
+      projectId: created.context.projectId,
+      jobId: created.context.jobId
+    };
   } catch (error) {
     redirect(
-      buildRedirect(`/daily-logs/${dailyLogId}`, {
-        error:
-          error instanceof Error
-            ? error.message
-            : "Unable to create the execution attachment."
-      })
+      appendHash(
+        buildRedirect(`/daily-logs/${dailyLogId}`, {
+          error:
+            error instanceof Error
+              ? error.message
+              : "Unable to add the field evidence."
+        }),
+        "field-evidence"
+      )
     );
   }
 
-  revalidateDailyExecutionPaths(projectId, jobId, dailyLogId);
+  revalidateDailyExecutionPaths(
+    context.projectId,
+    context.jobId,
+    context.dailyLogId
+  );
 
   redirect(
-    buildRedirect(`/daily-logs/${dailyLogId}`, {
-      message: "Execution attachment added successfully."
-    })
+    appendHash(
+      buildRedirect(`/daily-logs/${context.dailyLogId}`, {
+        message: "Field evidence uploaded successfully."
+      }),
+      "field-evidence"
+    )
   );
 }

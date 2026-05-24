@@ -649,6 +649,17 @@ Current shell behavior:
   Daily Log and Job detail route checks were blocked by local Supabase Auth rate
   limiting and should be retried after auth cooldown rather than counted as
   product failure.
+- Mobile Field Phase 3C adds the first contractor-side field evidence upload
+  foundation using existing Daily Job Logs, Job Notes, `execution_attachments`,
+  and the private `documents` bucket. Daily Log detail evidence forms now accept
+  JPG, PNG, WebP, and PDF files up to 10 MB, generate organization/project/Daily
+  Log-scoped storage paths server-side, upload to the private bucket, and create
+  metadata only after upload succeeds. This does not add schema, migrations,
+  public URLs, portal/customer exposure, previews/thumbnails, delete/archive
+  behavior, offline mode, GPS/geofencing, AI, notifications, automation,
+  provider calls, auth/RLS changes, tenant-boundary changes, payment/signature
+  behavior, estimate math, invoice math, settings behavior, or platform-admin
+  behavior.
 - Project Workspace now includes the first read-only MessageCenter communication timeline inside the Operations Hub. It summarizes existing project and related-record communication threads/messages, document Send Trail events, contract Signature Trail events, invoice Payment Trail events, and Customer Access visibility context with a Next Move link into the existing communication or source-record workspace. This does not add schema, migrations, routes, message/thread/notification/delivery tables, duplicate portal message records, provider sending behavior, email/SMS changes, webhooks, server actions, automation, AI drafting, auth/RLS changes, tenant-boundary changes, payment/signature behavior, estimate math, invoice math, portal grants, settings behavior, or platform-admin behavior.
 - Project Workspace now includes the first read-only ProjectPulse health and Next Move summary near the top of the workspace. It combines existing Ready Check / GateKeeper readiness, contract/signature, CrewBoard scheduling, FieldTrail blocker/log/evidence, MessageCenter communication, and invoice/payment signals into deterministic health copy, signal cards, linked counts, and a Next Move link. This does not add schema, migrations, routes, project-health/status tables, activity/event tables, server actions, automation, AI recommendations, auth/RLS changes, tenant-boundary changes, payment/signature behavior, estimate math, invoice math, portal grants, settings behavior, or platform-admin behavior.
 - Project Workspace now includes the first read-only CloseoutTrail closeout readiness section after the execution history and before the Financial Hub. It summarizes existing jobs, Daily Job Logs, Job Notes, field evidence, change orders, contracts / Signature Trail, invoices / Payment Trail, Customer Access, warranty documents, and service tickets into a closeout checklist, proof counts, and a deterministic closeout Next Move. This does not add schema, migrations, routes, closeout/warranty/document/payment/field tables, duplicate closeout records, server actions, automation, AI summaries, customer-facing field sharing, auth/RLS changes, tenant-boundary changes, payment/signature behavior, estimate math, invoice math, portal grants, settings behavior, or platform-admin behavior.

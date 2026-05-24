@@ -1,8 +1,15 @@
 import "server-only";
 
+import { randomUUID } from "node:crypto";
+
+import { STORAGE_BUCKET_NAMES } from "@floorconnector/config";
 import type { ExecutionAttachment as ExecutionAttachmentRecord } from "@floorconnector/types";
 
 import type { ExecutionAttachmentInput } from "./schemas";
+import {
+  buildExecutionAttachmentStoragePath,
+  validateExecutionAttachmentUploadFile
+} from "./storage";
 import { getDailyLogById, requireDailyLogScope } from "@/lib/daily-logs/data";
 import { getFieldNoteById } from "@/lib/field-notes/data";
 import { assertProjectReadinessGate } from "@/lib/projects/readiness";
@@ -24,6 +31,22 @@ type ExecutionAttachmentRow = {
 };
 
 export type ExecutionAttachmentListItem = ExecutionAttachmentRecord;
+
+export type ExecutionAttachmentUploadInput = {
+  subjectType: ExecutionAttachmentRecord["subjectType"];
+  subjectId: string;
+  file: File;
+  caption: string | null;
+};
+
+type ExecutionAttachmentSubjectContext = {
+  subjectType: ExecutionAttachmentRecord["subjectType"];
+  subjectId: string;
+  projectId: string;
+  jobId: string | null;
+  dailyLogId: string;
+  fieldNoteId: string | null;
+};
 
 const executionAttachmentSelect = `
   id,
@@ -90,10 +113,10 @@ function mapExecutionAttachment(
   };
 }
 
-async function validateExecutionAttachmentInput(
+async function resolveExecutionAttachmentSubjectContext(
   organizationId: string,
-  input: ExecutionAttachmentInput
-) {
+  input: Pick<ExecutionAttachmentInput, "subjectType" | "subjectId">
+): Promise<ExecutionAttachmentSubjectContext> {
   if (input.subjectType === "daily_log") {
     const dailyLog = await getDailyLogById(
       input.subjectId,
@@ -111,7 +134,14 @@ async function validateExecutionAttachmentInput(
         "Project is not ready for execution workflows yet. Complete contract, financial, and workflow readiness from the project hub before adding execution attachments."
     });
 
-    return;
+    return {
+      subjectType: "daily_log",
+      subjectId: dailyLog.id,
+      projectId: dailyLog.projectId,
+      jobId: dailyLog.jobId,
+      dailyLogId: dailyLog.id,
+      fieldNoteId: null
+    };
   }
 
   const fieldNote = await getFieldNoteById(input.subjectId, `/daily-logs`);
@@ -126,6 +156,15 @@ async function validateExecutionAttachmentInput(
     errorMessage:
       "Project is not ready for execution workflows yet. Complete contract, financial, and workflow readiness from the project hub before adding execution attachments."
   });
+
+  return {
+    subjectType: "field_note",
+    subjectId: fieldNote.id,
+    projectId: fieldNote.projectId,
+    jobId: fieldNote.jobId,
+    dailyLogId: fieldNote.dailyLogId,
+    fieldNoteId: fieldNote.id
+  };
 }
 
 export async function listExecutionAttachmentsBySubject(
@@ -249,7 +288,7 @@ export async function createExecutionAttachment(
   input: ExecutionAttachmentInput
 ) {
   const scope = await requireDailyLogScope("/daily-logs");
-  await validateExecutionAttachmentInput(scope.organizationId, input);
+  await resolveExecutionAttachmentSubjectContext(scope.organizationId, input);
   const supabase = await getSupabaseServerClient();
   const response = await supabase
     .from("execution_attachments")
@@ -279,4 +318,83 @@ export async function createExecutionAttachment(
   }
 
   return mapExecutionAttachment(data);
+}
+
+export async function createUploadedExecutionAttachment(
+  input: ExecutionAttachmentUploadInput
+) {
+  const scope = await requireDailyLogScope("/daily-logs");
+  const subjectContext = await resolveExecutionAttachmentSubjectContext(
+    scope.organizationId,
+    input
+  );
+  const fileValidation = validateExecutionAttachmentUploadFile(input.file);
+
+  if (!fileValidation.ok) {
+    throw new Error(fileValidation.message);
+  }
+
+  const supabase = await getSupabaseServerClient();
+  const attachmentId = randomUUID();
+  const storagePath = buildExecutionAttachmentStoragePath({
+    companyId: scope.organizationId,
+    projectId: subjectContext.projectId,
+    dailyLogId: subjectContext.dailyLogId,
+    fieldNoteId: subjectContext.fieldNoteId,
+    attachmentId,
+    fileName: fileValidation.safeFileName
+  });
+  const uploadResponse = await supabase.storage
+    .from(STORAGE_BUCKET_NAMES.documents)
+    .upload(storagePath, input.file, {
+      contentType: fileValidation.mimeType,
+      upsert: false
+    });
+
+  if (uploadResponse.error) {
+    throw new Error(
+      `Unable to upload field evidence: ${uploadResponse.error.message}`
+    );
+  }
+
+  const insertResponse = await supabase
+    .from("execution_attachments")
+    .insert({
+      id: attachmentId,
+      company_id: scope.organizationId,
+      subject_type: subjectContext.subjectType,
+      subject_id: subjectContext.subjectId,
+      attachment_type: fileValidation.attachmentType,
+      storage_path: storagePath,
+      file_name: fileValidation.fileName,
+      mime_type: fileValidation.mimeType,
+      caption: input.caption,
+      uploaded_by: scope.userId
+    })
+    .select(executionAttachmentSelect)
+    .single();
+  const data: unknown = insertResponse.data;
+
+  if (insertResponse.error) {
+    await supabase.storage
+      .from(STORAGE_BUCKET_NAMES.documents)
+      .remove([storagePath]);
+
+    throw new Error(
+      `Unable to save the field evidence record: ${insertResponse.error.message}`
+    );
+  }
+
+  if (!isExecutionAttachmentRow(data)) {
+    await supabase.storage
+      .from(STORAGE_BUCKET_NAMES.documents)
+      .remove([storagePath]);
+
+    throw new Error("Unexpected field evidence response after upload.");
+  }
+
+  return {
+    attachment: mapExecutionAttachment(data),
+    context: subjectContext
+  };
 }

@@ -109,6 +109,14 @@ Current operating-core surfaces include:
   project/Daily Log field-evidence prefix, server-generated paths, server-side
   upload first, contractor-only signed URL resolution, and no portal/customer
   field evidence exposure.
+- Mobile Field Phase 3C evidence upload foundation is documented in
+  [docs/design/mobile-field-phase-3c-evidence-upload-foundation.md](C:/FloorConnector/docs/design/mobile-field-phase-3c-evidence-upload-foundation.md).
+  Daily Log detail now uploads JPG, PNG, WebP, or PDF field evidence to the
+  private `documents` bucket through server-generated organization/project/Daily
+  Log paths, then creates the existing `execution_attachments` metadata row.
+  This is contractor-only and intentionally does not add previews, signed URL
+  downloads, delete/archive, portal/customer exposure, schema, migrations,
+  public URLs, AI, notifications, automation, or provider behavior.
 - CrewBoard Phase 3 drag/drop dispatch planning is documented in
   [docs/design/crewboard-phase-3-drag-drop-dispatch-spec.md](C:/FloorConnector/docs/design/crewboard-phase-3-drag-drop-dispatch-spec.md).
   The recommended path is confirmation-first: add pure move helpers and
@@ -284,11 +292,11 @@ Good next moves:
   `pnpm demo:data:seed:validate-target` against that target and review warnings
   before considering any write-mode prompt. Keep write mode deferred until
   read-only target validation is clean and owner approval is explicit.
-- If continuing Mobile Field, run the docs-only
-  `Mobile Field Phase 3C - Evidence Upload Foundation` prompt from
-  [docs/design/mobile-field-phase-3a-evidence-storage-readiness.md](C:/FloorConnector/docs/design/mobile-field-phase-3a-evidence-storage-readiness.md)
-  if upload implementation is approved. Keep it contractor-only, server-owned,
-  private-bucket-backed, and portal-dark.
+- If continuing Mobile Field, run a focused
+  `Mobile Field Phase 3D - Evidence Preview And Download QA` slice from
+  [docs/design/mobile-field-phase-3c-evidence-upload-foundation.md](C:/FloorConnector/docs/design/mobile-field-phase-3c-evidence-upload-foundation.md).
+  Add contractor-only signed URL resolution by attachment id and portal-negative
+  tests before thumbnail previews or delete/archive behavior.
 - If continuing Company Documents, use the Phase 1C-A Starter Document Adoption
   prompt from
   [docs/design/company-documents-phase-1c-starter-documents-plan.md](C:/FloorConnector/docs/design/company-documents-phase-1c-starter-documents-plan.md).

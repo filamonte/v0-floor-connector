@@ -34,6 +34,18 @@ export const executionAttachmentInputSchema = z.object({
   caption: optionalTrimmedString(1000)
 });
 
-export type ExecutionAttachmentInput = z.infer<typeof executionAttachmentInputSchema>;
-export const executionAttachmentSubjectTypesList = executionAttachmentSubjectTypes;
+export const executionAttachmentUploadInputSchema = z.object({
+  subjectType: executionAttachmentSubjectTypeSchema,
+  subjectId: z.string().trim().uuid("Select a valid attachment subject."),
+  caption: optionalTrimmedString(1000)
+});
+
+export type ExecutionAttachmentInput = z.infer<
+  typeof executionAttachmentInputSchema
+>;
+export type ExecutionAttachmentUploadFormInput = z.infer<
+  typeof executionAttachmentUploadInputSchema
+>;
+export const executionAttachmentSubjectTypesList =
+  executionAttachmentSubjectTypes;
 export const executionAttachmentTypesList = executionAttachmentTypes;

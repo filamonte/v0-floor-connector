@@ -649,9 +649,9 @@ export default async function DailyLogDetailPage({
                                 ))
                               ) : (
                                 <p className="text-sm leading-6 text-slate-500">
-                                  No attachment references are linked to this
-                                  Job Note yet. Add photos or files here when
-                                  the observation needs field evidence.
+                                  No field evidence is linked to this Job Note
+                                  yet. Add photos or PDFs here when the
+                                  observation needs support.
                                 </p>
                               )}
                             </div>
@@ -733,8 +733,8 @@ export default async function DailyLogDetailPage({
               ) : (
                 <AppEmptyState
                   eyebrow="No field evidence yet"
-                  title="Add the first field evidence reference"
-                  description="Evidence references can capture progress photos, delivery files, or other job context without turning this slice into a full file-management system."
+                  title="Add the first field evidence"
+                  description="Field evidence can capture progress photos, delivery PDFs, or other job context without turning this slice into a full file-management system."
                 />
               )}
             </div>
