@@ -146,6 +146,10 @@ High-signal operating-core docs:
 - [docs/design/mobile-field-phase-3c-qa-checkpoint.md](C:/FloorConnector/docs/design/mobile-field-phase-3c-qa-checkpoint.md):
   QA checkpoint for private field evidence upload boundaries, validation,
   read-model integration, portal exclusion, and mobile Daily Log smoke
+- [docs/design/mobile-field-phase-3d-evidence-preview-signed-url-plan.md](C:/FloorConnector/docs/design/mobile-field-phase-3d-evidence-preview-signed-url-plan.md):
+  planning spec for contractor-only field evidence preview using short-lived
+  signed URLs, with portal/customer exclusion and no thumbnails, delete/archive,
+  schema, or storage-policy changes
 - [docs/design/messagecenter-phase-1-project-communication-timeline.md](C:/FloorConnector/docs/design/messagecenter-phase-1-project-communication-timeline.md):
   MessageCenter over communication and proof records
 - [docs/design/projectpulse-phase-1-project-health-summary.md](C:/FloorConnector/docs/design/projectpulse-phase-1-project-health-summary.md):

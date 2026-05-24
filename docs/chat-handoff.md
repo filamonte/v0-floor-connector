@@ -125,6 +125,14 @@ Current operating-core surfaces include:
   CloseoutTrail metadata integration, and portal exclusion. It also replaced raw
   private storage path display on Daily Log detail with contractor-facing stored
   evidence status text. No real upload was submitted in browser QA.
+- Mobile Field Phase 3D preview planning is documented in
+  [docs/design/mobile-field-phase-3d-evidence-preview-signed-url-plan.md](C:/FloorConnector/docs/design/mobile-field-phase-3d-evidence-preview-signed-url-plan.md).
+  The plan recommends contractor-only signed URL resolution by execution
+  attachment id, server-side parent access validation for Daily Log / Job Note
+  evidence, one-hour private `documents` bucket URLs matching existing repo
+  patterns, read-only image/PDF preview rows on Daily Log detail first, and no
+  portal/customer exposure, thumbnails, delete/archive, storage policy changes,
+  schema, migrations, or closeout package file embedding.
 - CrewBoard Phase 3 drag/drop dispatch planning is documented in
   [docs/design/crewboard-phase-3-drag-drop-dispatch-spec.md](C:/FloorConnector/docs/design/crewboard-phase-3-drag-drop-dispatch-spec.md).
   The recommended path is confirmation-first: add pure move helpers and
@@ -300,11 +308,12 @@ Good next moves:
   `pnpm demo:data:seed:validate-target` against that target and review warnings
   before considering any write-mode prompt. Keep write mode deferred until
   read-only target validation is clean and owner approval is explicit.
-- If continuing Mobile Field, run a focused
-  `Mobile Field Phase 3D - Evidence Preview And Download QA` slice from
-  [docs/design/mobile-field-phase-3c-evidence-upload-foundation.md](C:/FloorConnector/docs/design/mobile-field-phase-3c-evidence-upload-foundation.md).
-  Add contractor-only signed URL resolution by attachment id and portal-negative
-  tests before thumbnail previews or delete/archive behavior.
+- If continuing Mobile Field, run
+  `Mobile Field Phase 3D-A - Contractor Signed URL Preview Rows` from
+  [docs/design/mobile-field-phase-3d-evidence-preview-signed-url-plan.md](C:/FloorConnector/docs/design/mobile-field-phase-3d-evidence-preview-signed-url-plan.md).
+  Add contractor-only signed URL resolution by attachment id, server-side Daily
+  Log / Job Note parent access validation, and portal-negative tests before
+  thumbnail previews or delete/archive behavior.
 - If continuing Company Documents, use the Phase 1C-A Starter Document Adoption
   prompt from
   [docs/design/company-documents-phase-1c-starter-documents-plan.md](C:/FloorConnector/docs/design/company-documents-phase-1c-starter-documents-plan.md).
