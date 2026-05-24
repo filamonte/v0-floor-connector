@@ -159,11 +159,16 @@ High-signal operating-core docs:
   QA checkpoint for contractor-only field evidence preview links, signed URL
   boundaries, Daily Log / Job Note parent validation, portal exclusion, and
   remaining real-evidence browser QA follow-up
+- [docs/design/mobile-field-phase-3e-evidence-archive-delete-policy.md](C:/FloorConnector/docs/design/mobile-field-phase-3e-evidence-archive-delete-policy.md):
+  planning policy for field evidence archive/delete behavior, recommending
+  metadata archive/restore first while deferring storage hard-delete and cleanup
+  jobs until retention, audit, and owner/admin delete rules are approved
 - [docs/design/supabase-field-evidence-storage-verification.md](C:/FloorConnector/docs/design/supabase-field-evidence-storage-verification.md):
   read-only Supabase storage readiness verification for field evidence,
-  confirming local private `documents` bucket and `execution_attachments`
-  boundaries while recording that remote bucket/policy/migration verification
-  is blocked until the intended Supabase project is visible
+  confirming the intended FloorConnector project, relevant remote migrations,
+  `public.execution_attachments` with RLS, and storage schema visibility while
+  recording that direct live bucket-row/policy-SQL proof still requires
+  separately approved read-only SQL inspection
 - [docs/design/messagecenter-phase-1-project-communication-timeline.md](C:/FloorConnector/docs/design/messagecenter-phase-1-project-communication-timeline.md):
   MessageCenter over communication and proof records
 - [docs/design/projectpulse-phase-1-project-health-summary.md](C:/FloorConnector/docs/design/projectpulse-phase-1-project-health-summary.md):
@@ -278,8 +283,9 @@ Demo and staging:
   QA checkpoint for the read-only target validation mode and preserved no-write
   seed boundaries
 - [docs/design/supabase-field-evidence-storage-verification.md](C:/FloorConnector/docs/design/supabase-field-evidence-storage-verification.md):
-  read-only storage verification for Mobile Field evidence, with remote
-  Supabase project visibility still unresolved
+  read-only storage verification for Mobile Field evidence, with the intended
+  Supabase project now visible and live bucket-row/policy-SQL proof still
+  requiring separately approved read-only SQL inspection
 
 ## Validation And QA
 

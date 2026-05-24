@@ -166,6 +166,13 @@ file` actions without exposing raw storage paths. This remains contractor-only
   data were changed. Live bucket privacy/policy SQL would still require a
   separately approved read-only SQL inspection if the owner wants stronger
   proof before archive/delete implementation.
+- Mobile Field Phase 3E archive/delete policy is documented in
+  [docs/design/mobile-field-phase-3e-evidence-archive-delete-policy.md](C:/FloorConnector/docs/design/mobile-field-phase-3e-evidence-archive-delete-policy.md).
+  Recommendation: implement metadata archive/restore first, leave private
+  `documents` bucket objects intact, hide archived evidence from default Daily
+  Log rows and active FieldTrail / Proof Center / CloseoutTrail counts, and
+  defer hard-delete/cleanup jobs until retention, audit, and owner/admin delete
+  rules are explicitly approved.
 - CrewBoard Phase 3 drag/drop dispatch planning is documented in
   [docs/design/crewboard-phase-3-drag-drop-dispatch-spec.md](C:/FloorConnector/docs/design/crewboard-phase-3-drag-drop-dispatch-spec.md).
   The recommended path is confirmation-first: add pure move helpers and
@@ -344,12 +351,13 @@ Good next moves:
   read-only target validation is clean and owner approval is explicit.
 - If continuing Mobile Field, checkpoint Phase 3D-A browser behavior with real
   uploaded field evidence when saved contractor auth and local data are
-  available. Archive/delete can move to planning now that connector metadata
-  confirms the project, relevant migrations, and storage schema visibility, but
-  implementation should wait for explicit retention/audit decisions and, if the
-  owner wants stronger proof, a separately approved read-only bucket/policy SQL
-  inspection. Keep thumbnails, portal/customer sharing, and closeout package
-  file embedding as separate approved slices.
+  available, or proceed to Phase 3E-A metadata archive/restore using the policy
+  in
+  [docs/design/mobile-field-phase-3e-evidence-archive-delete-policy.md](C:/FloorConnector/docs/design/mobile-field-phase-3e-evidence-archive-delete-policy.md).
+  Keep hard-delete, storage cleanup jobs, thumbnails, portal/customer sharing,
+  and closeout package file embedding as separate approved slices; if the owner
+  wants stronger storage proof first, run a separately approved read-only
+  bucket/policy SQL inspection.
 - If continuing Company Documents, use the Phase 1C-A Starter Document Adoption
   prompt from
   [docs/design/company-documents-phase-1c-starter-documents-plan.md](C:/FloorConnector/docs/design/company-documents-phase-1c-starter-documents-plan.md).
