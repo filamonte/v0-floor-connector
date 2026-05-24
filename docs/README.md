@@ -102,6 +102,9 @@ High-signal operating-core docs:
 - [docs/design/mobile-field-phase-2-quick-job-notes-evidence.md](C:/FloorConnector/docs/design/mobile-field-phase-2-quick-job-notes-evidence.md):
   quick Job Notes, blockers, and field evidence capture using existing Daily
   Job Logs
+- [docs/design/mobile-field-phase-2-qa-checkpoint.md](C:/FloorConnector/docs/design/mobile-field-phase-2-qa-checkpoint.md):
+  QA checkpoint for Mobile Field Phase 2 boundaries, anchors, mobile smoke, and
+  protected-route auth limitations
 - [docs/design/messagecenter-phase-1-project-communication-timeline.md](C:/FloorConnector/docs/design/messagecenter-phase-1-project-communication-timeline.md):
   MessageCenter over communication and proof records
 - [docs/design/projectpulse-phase-1-project-health-summary.md](C:/FloorConnector/docs/design/projectpulse-phase-1-project-health-summary.md):

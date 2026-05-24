@@ -90,6 +90,13 @@ Current operating-core surfaces include:
   and Field Evidence; and FieldTrail Next Move routing to those anchors. It
   reuses Daily Job Logs, Job Notes, execution attachments, jobs, projects, and
   time context only.
+- Mobile Field Phase 2 QA is documented in
+  [docs/design/mobile-field-phase-2-qa-checkpoint.md](C:/FloorConnector/docs/design/mobile-field-phase-2-qa-checkpoint.md).
+  Static QA confirmed no new field subsystem, duplicate note model, schema,
+  upload/storage behavior, portal exposure, or automation. Mobile browser smoke
+  loaded `/daily-logs`, `/jobs`, and `/schedule` with saved contractor auth;
+  Daily Log and Job detail checks were blocked by local Supabase Auth
+  `over_request_rate_limit` and should be retried only after auth cooldown.
 - Global search hardening for tenant-scoped canonical records.
 
 These layers are summaries, source-record handoffs, copy/hierarchy
