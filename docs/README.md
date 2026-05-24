@@ -133,6 +133,9 @@ High-signal operating-core docs:
 - [docs/design/mobile-field-phase-2-qa-checkpoint.md](C:/FloorConnector/docs/design/mobile-field-phase-2-qa-checkpoint.md):
   QA checkpoint for Mobile Field Phase 2 boundaries, anchors, mobile smoke, and
   protected-route auth limitations
+- [docs/design/mobile-field-phase-3-evidence-upload-proof-flow.md](C:/FloorConnector/docs/design/mobile-field-phase-3-evidence-upload-proof-flow.md):
+  planning spec for field evidence upload, storage readiness, proof flow, and
+  portal/customer boundaries
 - [docs/design/messagecenter-phase-1-project-communication-timeline.md](C:/FloorConnector/docs/design/messagecenter-phase-1-project-communication-timeline.md):
   MessageCenter over communication and proof records
 - [docs/design/projectpulse-phase-1-project-health-summary.md](C:/FloorConnector/docs/design/projectpulse-phase-1-project-health-summary.md):

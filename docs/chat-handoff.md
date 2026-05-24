@@ -97,6 +97,12 @@ Current operating-core surfaces include:
   loaded `/daily-logs`, `/jobs`, and `/schedule` with saved contractor auth;
   Daily Log and Job detail checks were blocked by local Supabase Auth
   `over_request_rate_limit` and should be retried only after auth cooldown.
+- Mobile Field Phase 3 evidence upload planning is documented in
+  [docs/design/mobile-field-phase-3-evidence-upload-proof-flow.md](C:/FloorConnector/docs/design/mobile-field-phase-3-evidence-upload-proof-flow.md).
+  The plan confirms current `execution_attachments` are Daily Log / Job Note
+  metadata references, not uploads, and recommends Phase 3A storage readiness
+  before adding field evidence file upload, previews, signed URLs, or customer
+  sharing.
 - CrewBoard Phase 3 drag/drop dispatch planning is documented in
   [docs/design/crewboard-phase-3-drag-drop-dispatch-spec.md](C:/FloorConnector/docs/design/crewboard-phase-3-drag-drop-dispatch-spec.md).
   The recommended path is confirmation-first: add pure move helpers and
@@ -265,13 +271,17 @@ For current operating-core focused tests and route checks, use
 
 Good next moves:
 
-- If staging/demo is next, have the owner run
-  resolve Supabase project visibility first. The current connector discovery
-  sees `FloorConnectoor` but no projects, so there is no confirmed staging
-  Supabase target yet. After the intended project is visible, have the owner run
+- If staging/demo is next, have the owner resolve Supabase project visibility
+  first. The current connector discovery sees `FloorConnectoor` but no
+  projects, so there is no confirmed staging Supabase target yet. After the
+  intended project is visible, have the owner run
   `pnpm demo:data:seed:validate-target` against that target and review warnings
   before considering any write-mode prompt. Keep write mode deferred until
   read-only target validation is clean and owner approval is explicit.
+- If continuing Mobile Field, run the docs-only
+  `Mobile Field Phase 3A - Evidence Storage Readiness Audit` prompt from
+  [docs/design/mobile-field-phase-3-evidence-upload-proof-flow.md](C:/FloorConnector/docs/design/mobile-field-phase-3-evidence-upload-proof-flow.md)
+  before implementing upload behavior.
 - If continuing Company Documents, use the Phase 1C-A Starter Document Adoption
   prompt from
   [docs/design/company-documents-phase-1c-starter-documents-plan.md](C:/FloorConnector/docs/design/company-documents-phase-1c-starter-documents-plan.md).
