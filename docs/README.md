@@ -150,6 +150,11 @@ High-signal operating-core docs:
   planning spec for contractor-only field evidence preview using short-lived
   signed URLs, with portal/customer exclusion and no thumbnails, delete/archive,
   schema, or storage-policy changes
+- [docs/design/mobile-field-phase-3d-a-evidence-preview-rows.md](C:/FloorConnector/docs/design/mobile-field-phase-3d-a-evidence-preview-rows.md):
+  implemented contractor-only Daily Log evidence preview/open links using
+  one-hour signed URLs resolved by execution attachment id from the private
+  `documents` bucket, with portal/customer exclusion and no thumbnails,
+  delete/archive, schema, migrations, or storage-policy changes
 - [docs/design/messagecenter-phase-1-project-communication-timeline.md](C:/FloorConnector/docs/design/messagecenter-phase-1-project-communication-timeline.md):
   MessageCenter over communication and proof records
 - [docs/design/projectpulse-phase-1-project-health-summary.md](C:/FloorConnector/docs/design/projectpulse-phase-1-project-health-summary.md):

@@ -7,6 +7,12 @@ import type { ExecutionAttachment as ExecutionAttachmentRecord } from "@floorcon
 
 import type { ExecutionAttachmentInput } from "./schemas";
 import {
+  EXECUTION_ATTACHMENT_SIGNED_URL_EXPIRES_IN_SECONDS,
+  buildExecutionAttachmentPreviewState,
+  isPrivateFieldEvidenceStoragePath,
+  type ExecutionAttachmentPreviewState
+} from "./preview";
+import {
   buildExecutionAttachmentStoragePath,
   validateExecutionAttachmentUploadFile
 } from "./storage";
@@ -46,6 +52,10 @@ type ExecutionAttachmentSubjectContext = {
   jobId: string | null;
   dailyLogId: string;
   fieldNoteId: string | null;
+};
+
+export type ExecutionAttachmentPreviewListItem = ExecutionAttachmentRecord & {
+  preview: ExecutionAttachmentPreviewState;
 };
 
 const executionAttachmentSelect = `
@@ -113,6 +123,12 @@ function mapExecutionAttachment(
   };
 }
 
+function attachmentNotFoundError() {
+  return new Error(
+    "Field evidence attachment not found for this organization."
+  );
+}
+
 async function resolveExecutionAttachmentSubjectContext(
   organizationId: string,
   input: Pick<ExecutionAttachmentInput, "subjectType" | "subjectId">
@@ -165,6 +181,71 @@ async function resolveExecutionAttachmentSubjectContext(
     dailyLogId: fieldNote.dailyLogId,
     fieldNoteId: fieldNote.id
   };
+}
+
+async function validateExecutionAttachmentPreviewParent(
+  organizationId: string,
+  attachment: Pick<
+    ExecutionAttachmentRecord,
+    "subjectType" | "subjectId" | "organizationId"
+  >,
+  next: string
+) {
+  if (attachment.organizationId !== organizationId) {
+    throw attachmentNotFoundError();
+  }
+
+  if (attachment.subjectType === "daily_log") {
+    const dailyLog = await getDailyLogById(attachment.subjectId, next);
+
+    if (!dailyLog || dailyLog.organizationId !== organizationId) {
+      throw attachmentNotFoundError();
+    }
+
+    return;
+  }
+
+  const fieldNote = await getFieldNoteById(attachment.subjectId, next);
+
+  if (!fieldNote || fieldNote.organizationId !== organizationId) {
+    throw attachmentNotFoundError();
+  }
+
+  const dailyLog = await getDailyLogById(fieldNote.dailyLogId, next);
+
+  if (
+    !dailyLog ||
+    dailyLog.organizationId !== organizationId ||
+    dailyLog.projectId !== fieldNote.projectId
+  ) {
+    throw attachmentNotFoundError();
+  }
+}
+
+async function getExecutionAttachmentById(
+  attachmentId: string,
+  organizationId: string
+) {
+  const supabase = await getSupabaseServerClient();
+  const response = await supabase
+    .from("execution_attachments")
+    .select(executionAttachmentSelect)
+    .eq("company_id", organizationId)
+    .eq("id", attachmentId)
+    .maybeSingle();
+  const data: unknown = response.data;
+
+  if (response.error) {
+    throw new Error(
+      `Unable to load field evidence attachment: ${response.error.message}`
+    );
+  }
+
+  if (!isExecutionAttachmentRow(data)) {
+    throw attachmentNotFoundError();
+  }
+
+  return mapExecutionAttachment(data);
 }
 
 export async function listExecutionAttachmentsBySubject(
@@ -282,6 +363,66 @@ export async function listExecutionAttachmentsByFieldNotes(
   }
 
   return data.map(mapExecutionAttachment);
+}
+
+export async function createExecutionAttachmentSignedUrl(
+  attachmentId: string,
+  next = "/daily-logs"
+) {
+  const scope = await requireDailyLogScope(next);
+  const attachment = await getExecutionAttachmentById(
+    attachmentId,
+    scope.organizationId
+  );
+
+  await validateExecutionAttachmentPreviewParent(
+    scope.organizationId,
+    attachment,
+    next
+  );
+
+  if (!isPrivateFieldEvidenceStoragePath(attachment)) {
+    return null;
+  }
+
+  const supabase = await getSupabaseServerClient();
+  const response = await supabase.storage
+    .from(STORAGE_BUCKET_NAMES.documents)
+    .createSignedUrl(
+      attachment.storagePath,
+      EXECUTION_ATTACHMENT_SIGNED_URL_EXPIRES_IN_SECONDS
+    );
+
+  if (response.error) {
+    return null;
+  }
+
+  return response.data?.signedUrl ?? null;
+}
+
+export async function resolveExecutionAttachmentPreviews(
+  attachments: ExecutionAttachmentRecord[],
+  next = "/daily-logs"
+): Promise<ExecutionAttachmentPreviewListItem[]> {
+  const signedUrlEntries = await Promise.all(
+    attachments.map(async (attachment) => {
+      const signedUrl = await createExecutionAttachmentSignedUrl(
+        attachment.id,
+        next
+      );
+
+      return [attachment.id, signedUrl] as const;
+    })
+  );
+  const signedUrlMap = new Map<string, string | null>(signedUrlEntries);
+
+  return attachments.map((attachment) => ({
+    ...attachment,
+    preview: buildExecutionAttachmentPreviewState(
+      attachment,
+      signedUrlMap.get(attachment.id) ?? null
+    )
+  }));
 }
 
 export async function createExecutionAttachment(

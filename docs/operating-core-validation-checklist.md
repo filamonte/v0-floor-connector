@@ -26,6 +26,8 @@ Run focused tests when touching the matching helper or route:
   `pnpm.cmd --filter @floorconnector/web exec tsx --test lib/field-notes/labels.test.ts`
 - Execution attachment storage helpers:
   `pnpm.cmd --filter @floorconnector/web exec tsx --test lib/execution-attachments/storage.test.ts`
+- Execution attachment preview helpers:
+  `pnpm.cmd --filter @floorconnector/web exec tsx --test lib/execution-attachments/preview.test.ts`
 - MessageCenter summary:
   `pnpm.cmd --filter @floorconnector/web exec tsx --test lib/messagecenter/summary.test.ts`
 - ProjectPulse summary:

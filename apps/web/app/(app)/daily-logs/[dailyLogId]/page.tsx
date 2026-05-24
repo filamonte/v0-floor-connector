@@ -28,8 +28,11 @@ import {
 import { buildDailyLogSectionHref } from "@/lib/daily-logs/links";
 import {
   listExecutionAttachmentsByFieldNotes,
-  listExecutionAttachmentsBySubject
+  listExecutionAttachmentsBySubject,
+  resolveExecutionAttachmentPreviews,
+  type ExecutionAttachmentPreviewListItem
 } from "@/lib/execution-attachments/data";
+import { isExternalExecutionAttachmentReference } from "@/lib/execution-attachments/preview";
 import { listFieldNotesByDailyLog } from "@/lib/field-notes/data";
 import { getFieldNoteTypeLabel } from "@/lib/field-notes/labels";
 import { listJobs } from "@/lib/jobs/data";
@@ -101,15 +104,13 @@ function getFieldNoteStatusClasses(status: string) {
   }
 }
 
-function isExternalReference(value: string) {
-  return value.startsWith("http://") || value.startsWith("https://");
-}
-
-function renderAttachmentStorageStatus(storagePath: string) {
-  if (isExternalReference(storagePath)) {
+function renderAttachmentPreviewAction(
+  attachment: ExecutionAttachmentPreviewListItem
+) {
+  if (isExternalExecutionAttachmentReference(attachment.storagePath)) {
     return (
       <a
-        href={storagePath}
+        href={attachment.storagePath}
         target="_blank"
         rel="noreferrer"
         className="font-medium text-brand-700"
@@ -119,7 +120,20 @@ function renderAttachmentStorageStatus(storagePath: string) {
     );
   }
 
-  return "Private field evidence file stored for this contractor workspace.";
+  if (!attachment.preview.signedUrl) {
+    return attachment.preview.unavailableLabel;
+  }
+
+  return (
+    <a
+      href={attachment.preview.signedUrl}
+      target="_blank"
+      rel="noreferrer"
+      className="font-medium text-brand-700"
+    >
+      {attachment.preview.actionLabel}
+    </a>
+  );
 }
 
 export default async function DailyLogDetailPage({
@@ -162,10 +176,20 @@ export default async function DailyLogDetailPage({
       `/daily-logs/${dailyLog.id}`
     )
   ]);
-  const fieldNoteAttachments = await listExecutionAttachmentsByFieldNotes(
+  const rawFieldNoteAttachments = await listExecutionAttachmentsByFieldNotes(
     fieldNotes.map((fieldNote) => fieldNote.id),
     `/daily-logs/${dailyLog.id}`
   );
+  const [fieldNoteAttachments, dailyLogAttachmentPreviews] = await Promise.all([
+    resolveExecutionAttachmentPreviews(
+      rawFieldNoteAttachments,
+      `/daily-logs/${dailyLog.id}`
+    ),
+    resolveExecutionAttachmentPreviews(
+      dailyLogAttachments,
+      `/daily-logs/${dailyLog.id}`
+    )
+  ]);
 
   const projectJobs = jobs
     .filter((job) => job.projectId === dailyLog.projectId)
@@ -637,7 +661,7 @@ export default async function DailyLogDetailPage({
                                         </p>
                                       </div>
                                       <span className="inline-flex rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-slate-700">
-                                        {attachment.attachmentType}
+                                        {attachment.preview.statusLabel}
                                       </span>
                                     </div>
                                     <p className="mt-3 text-sm leading-6 text-slate-600">
@@ -645,8 +669,8 @@ export default async function DailyLogDetailPage({
                                         "No caption provided."}
                                     </p>
                                     <p className="mt-3 text-sm leading-6 text-slate-500">
-                                      {renderAttachmentStorageStatus(
-                                        attachment.storagePath
+                                      {renderAttachmentPreviewAction(
+                                        attachment
                                       )}
                                     </p>
                                   </div>
@@ -695,7 +719,7 @@ export default async function DailyLogDetailPage({
           <div id="field-evidence" className="scroll-mt-24 space-y-6">
             <div className="grid gap-4">
               {dailyLogAttachments.length > 0 ? (
-                dailyLogAttachments.map((attachment) => (
+                dailyLogAttachmentPreviews.map((attachment) => (
                   <div
                     key={attachment.id}
                     className="rounded-[1.75rem] border border-slate-200 bg-slate-50/80 px-5 py-5"
@@ -710,14 +734,14 @@ export default async function DailyLogDetailPage({
                         </p>
                       </div>
                       <span className="inline-flex rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-slate-700">
-                        {attachment.attachmentType}
+                        {attachment.preview.statusLabel}
                       </span>
                     </div>
                     <p className="mt-3 text-sm leading-6 text-slate-600">
                       {attachment.caption ?? "No caption provided."}
                     </p>
                     <p className="mt-3 text-sm leading-6 text-slate-500">
-                      {renderAttachmentStorageStatus(attachment.storagePath)}
+                      {renderAttachmentPreviewAction(attachment)}
                     </p>
                   </div>
                 ))
