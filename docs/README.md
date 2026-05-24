@@ -98,6 +98,9 @@ High-signal operating-core docs:
   CrewBoard
 - [docs/design/crewboard-phase-3a-confirmed-schedule-move.md](C:/FloorConnector/docs/design/crewboard-phase-3a-confirmed-schedule-move.md):
   implemented confirmation-first manual schedule movement on CrewBoard
+- [docs/design/crewboard-phase-3a-qa-checkpoint.md](C:/FloorConnector/docs/design/crewboard-phase-3a-qa-checkpoint.md):
+  QA checkpoint for confirmed schedule moves, helper coverage, and browser
+  caveats
 - [docs/design/fieldtrail-phase-1-project-execution-timeline.md](C:/FloorConnector/docs/design/fieldtrail-phase-1-project-execution-timeline.md):
   FieldTrail over existing field records
 - [docs/design/mobile-field-phase-1-fast-daily-job-log-capture.md](C:/FloorConnector/docs/design/mobile-field-phase-1-fast-daily-job-log-capture.md)

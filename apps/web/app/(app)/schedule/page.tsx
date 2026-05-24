@@ -3823,7 +3823,7 @@ export default async function SchedulePage({
           title={
             selectedAction === "assign"
               ? "Manage crew assignment"
-              : "Refine schedule"
+              : "Move schedule"
           }
           description={
             selectedJob

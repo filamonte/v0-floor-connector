@@ -109,6 +109,14 @@ Current operating-core surfaces include:
   move helpers and the existing schedule action. Pointer drag/drop, new
   schedule records, packages, routes, and schema changes remain intentionally
   out of scope.
+- CrewBoard Phase 3A QA is documented in
+  [docs/design/crewboard-phase-3a-qa-checkpoint.md](C:/FloorConnector/docs/design/crewboard-phase-3a-qa-checkpoint.md).
+  Static QA confirmed the move helper coverage, existing schedule action path,
+  Ready Check / GateKeeper preservation, advisory warning preservation, and no
+  schema/package/route/server-action expansion. Browser QA loaded `/schedule`
+  at mobile width with saved contractor auth and no horizontal overflow; deeper
+  selected-job action checks were blocked by local Supabase Auth
+  `over_request_rate_limit`.
 - Global search hardening for tenant-scoped canonical records.
 
 These layers are summaries, source-record handoffs, copy/hierarchy
@@ -196,7 +204,7 @@ Good next moves:
   [docs/design/next-build-priority-checkpoint.md](C:/FloorConnector/docs/design/next-build-priority-checkpoint.md)
   to decide between product momentum, demo/staging credibility, and mobile field
   stickiness.
-- If continuing CrewBoard, continue from
+- If continuing CrewBoard, continue from the Phase 3A QA checkpoint and
   [docs/design/crewboard-phase-3a-confirmed-schedule-move.md](C:/FloorConnector/docs/design/crewboard-phase-3a-confirmed-schedule-move.md)
   and add projected warning preview or pointer drag/drop only as a proposed
   move that still saves through confirmation.
