@@ -96,6 +96,8 @@ High-signal operating-core docs:
 - [docs/design/crewboard-phase-3-drag-drop-dispatch-spec.md](C:/FloorConnector/docs/design/crewboard-phase-3-drag-drop-dispatch-spec.md):
   planning-only drag/drop scheduling and dispatch interaction spec for
   CrewBoard
+- [docs/design/crewboard-phase-3a-confirmed-schedule-move.md](C:/FloorConnector/docs/design/crewboard-phase-3a-confirmed-schedule-move.md):
+  implemented confirmation-first manual schedule movement on CrewBoard
 - [docs/design/fieldtrail-phase-1-project-execution-timeline.md](C:/FloorConnector/docs/design/fieldtrail-phase-1-project-execution-timeline.md):
   FieldTrail over existing field records
 - [docs/design/mobile-field-phase-1-fast-daily-job-log-capture.md](C:/FloorConnector/docs/design/mobile-field-phase-1-fast-daily-job-log-capture.md)

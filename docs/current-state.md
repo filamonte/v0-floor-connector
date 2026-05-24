@@ -2440,9 +2440,12 @@ Implemented UI behavior now:
 - `/schedule` now presents as CrewBoard on the existing route. CrewBoard uses
   canonical jobs, appointments, job assignments, people, vendors, projects, and
   customers for scheduling visibility, URL-backed date/layout context,
-  advisory schedule warnings, and project/job handoffs. It does not implement
-  drag/drop scheduling, automated dispatch, route optimization, notifications,
-  external calendar sync, or new schedule/dispatch records.
+  advisory schedule warnings, and project/job handoffs. The selected-job panel
+  now includes a confirmation-first `Move schedule` flow backed by pure move
+  summary helpers and the existing schedule action, so keyboard/manual movement
+  is available before pointer drag/drop. It does not implement drag/drop
+  scheduling, automated dispatch, route optimization, notifications, external
+  calendar sync, or new schedule/dispatch records.
 - `/reports` now includes Reports Phase 1, a read-only operations and
   collections visibility workspace over existing projects, jobs, schedule
   warnings, contracts, invoices, payments, Daily Job Logs, Job Notes, field

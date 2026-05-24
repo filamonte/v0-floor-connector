@@ -1,10 +1,16 @@
 "use client";
 
+import { useMemo, useState } from "react";
+
 import { QuickCreateFormShell } from "@/components/quick-create-form-shell";
 import {
   SaveStateForm,
   SaveStateSubmitButton
 } from "@/components/save-feedback/save-state-form";
+import {
+  buildScheduleMoveSummary,
+  formatScheduleMoveEndpoint
+} from "@/lib/schedule/move";
 
 type ScheduleJobFormProps = {
   action: (formData: FormData) => void | Promise<void>;
@@ -28,6 +34,23 @@ export function ScheduleJobForm({
 }: ScheduleJobFormProps) {
   const canUnschedule =
     job.dispatchStatus !== "in_progress" && job.dispatchStatus !== "completed";
+  const currentSchedule = useMemo(
+    () => ({
+      scheduledDate: job.scheduledDate,
+      scheduledStartAt: job.scheduledStartAt
+        ? job.scheduledStartAt.slice(0, 16)
+        : null,
+      scheduledEndAt: job.scheduledEndAt
+        ? job.scheduledEndAt.slice(0, 16)
+        : null
+    }),
+    [job.scheduledDate, job.scheduledStartAt, job.scheduledEndAt]
+  );
+  const [proposedSchedule, setProposedSchedule] = useState(currentSchedule);
+  const moveSummary = buildScheduleMoveSummary({
+    current: currentSchedule,
+    proposed: proposedSchedule
+  });
 
   return (
     <div className="space-y-4">
@@ -42,20 +65,35 @@ export function ScheduleJobForm({
         ) : null}
 
         <QuickCreateFormShell
-          eyebrow="Schedule"
-          title="Update schedule"
-          description="Keep timing, day-of-work notes, and dispatch state directly on the job."
-          footer="This updates the same shared job used by project continuity, time tracking, daily logs, and billing follow-through."
+          eyebrow="Move schedule"
+          title="Review schedule move"
+          description="Choose the new date or time, review the move, then save it on this job."
+          footer="CrewBoard uses the existing schedule action, so Ready Check and GateKeeper behavior stay in force."
         >
           <div className="grid gap-4">
+            <div className="rounded-[4px] border border-[#e5e5e5] bg-[#f8f8f8] px-4 py-3 text-sm leading-6 text-slate-600">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                Current schedule
+              </p>
+              <p className="mt-1 font-medium text-slate-900">
+                {formatScheduleMoveEndpoint(currentSchedule)}
+              </p>
+            </div>
+
             <label className="block">
               <span className="mb-2 block text-sm font-medium text-slate-800">
-                Scheduled date
+                New scheduled date
               </span>
               <input
                 type="date"
                 name="scheduledDate"
                 defaultValue={job.scheduledDate ?? ""}
+                onChange={(event) =>
+                  setProposedSchedule((current) => ({
+                    ...current,
+                    scheduledDate: event.target.value || null
+                  }))
+                }
                 className="w-full rounded-[4px] border border-[#d6d6d6] bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-[#ef7d32]"
                 required
               />
@@ -64,7 +102,7 @@ export function ScheduleJobForm({
             <div className="grid gap-4 md:grid-cols-2">
               <label className="block">
                 <span className="mb-2 block text-sm font-medium text-slate-800">
-                  Scheduled start
+                  New scheduled start
                 </span>
                 <input
                   type="datetime-local"
@@ -74,13 +112,19 @@ export function ScheduleJobForm({
                       ? job.scheduledStartAt.slice(0, 16)
                       : ""
                   }
+                  onChange={(event) =>
+                    setProposedSchedule((current) => ({
+                      ...current,
+                      scheduledStartAt: event.target.value || null
+                    }))
+                  }
                   className="w-full rounded-[4px] border border-[#d6d6d6] bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-[#ef7d32]"
                 />
               </label>
 
               <label className="block">
                 <span className="mb-2 block text-sm font-medium text-slate-800">
-                  Scheduled end
+                  New scheduled end
                 </span>
                 <input
                   type="datetime-local"
@@ -88,9 +132,31 @@ export function ScheduleJobForm({
                   defaultValue={
                     job.scheduledEndAt ? job.scheduledEndAt.slice(0, 16) : ""
                   }
+                  onChange={(event) =>
+                    setProposedSchedule((current) => ({
+                      ...current,
+                      scheduledEndAt: event.target.value || null
+                    }))
+                  }
                   className="w-full rounded-[4px] border border-[#d6d6d6] bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-[#ef7d32]"
                 />
               </label>
+            </div>
+
+            <div
+              className={[
+                "rounded-[4px] border px-4 py-3 text-sm leading-6",
+                moveSummary.isNoOp
+                  ? "border-[#e5e5e5] bg-white text-slate-600"
+                  : "border-amber-200 bg-amber-50 text-amber-950"
+              ].join(" ")}
+              aria-live="polite"
+            >
+              <p className="text-[11px] font-semibold uppercase tracking-[0.16em]">
+                Move summary
+              </p>
+              <p className="mt-1 font-medium">{moveSummary.summary}</p>
+              <p className="mt-1">{moveSummary.detail}</p>
             </div>
 
             <label className="block">
@@ -109,7 +175,7 @@ export function ScheduleJobForm({
         </QuickCreateFormShell>
 
         <SaveStateSubmitButton
-          submitLabel="Save schedule"
+          submitLabel="Move schedule"
           pendingLabel="Saving..."
           className="w-full"
         />

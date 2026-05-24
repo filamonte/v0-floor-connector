@@ -103,6 +103,12 @@ Current operating-core surfaces include:
   keyboard/manual scheduling around the existing selected-job action panel
   before any pointer drag/drop package. Drag/drop should create a proposed move
   only, then save through existing schedule actions after confirmation.
+- CrewBoard Phase 3A is documented in
+  [docs/design/crewboard-phase-3a-confirmed-schedule-move.md](C:/FloorConnector/docs/design/crewboard-phase-3a-confirmed-schedule-move.md).
+  `/schedule` now has a selected-job `Move schedule` review flow backed by pure
+  move helpers and the existing schedule action. Pointer drag/drop, new
+  schedule records, packages, routes, and schema changes remain intentionally
+  out of scope.
 - Global search hardening for tenant-scoped canonical records.
 
 These layers are summaries, source-record handoffs, copy/hierarchy
@@ -190,10 +196,13 @@ Good next moves:
   [docs/design/next-build-priority-checkpoint.md](C:/FloorConnector/docs/design/next-build-priority-checkpoint.md)
   to decide between product momentum, demo/staging credibility, and mobile field
   stickiness.
-- If continuing CrewBoard, use
+- If continuing CrewBoard, continue from
+  [docs/design/crewboard-phase-3a-confirmed-schedule-move.md](C:/FloorConnector/docs/design/crewboard-phase-3a-confirmed-schedule-move.md)
+  and add projected warning preview or pointer drag/drop only as a proposed
+  move that still saves through confirmation.
+- For the broader drag/drop plan, use
   [docs/design/crewboard-phase-3-drag-drop-dispatch-spec.md](C:/FloorConnector/docs/design/crewboard-phase-3-drag-drop-dispatch-spec.md)
-  for Phase 3A movement helpers and keyboard/manual confirmation UI before
-  implementing pointer drag/drop.
+  as the scope boundary.
 - Run a real-record operating-core demo rehearsal using
   [docs/demo/operating-core-demo-path.md](C:/FloorConnector/docs/demo/operating-core-demo-path.md)
   and record blockers honestly.

@@ -4055,6 +4055,7 @@ export default async function SchedulePage({
                 )
               ) : (
                 <ScheduleJobForm
+                  key={selectedJob.id}
                   action={scheduleJobAction}
                   unscheduleAction={unscheduleJobAction}
                   job={{
