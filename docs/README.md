@@ -136,6 +136,9 @@ High-signal operating-core docs:
 - [docs/design/mobile-field-phase-3-evidence-upload-proof-flow.md](C:/FloorConnector/docs/design/mobile-field-phase-3-evidence-upload-proof-flow.md):
   planning spec for field evidence upload, storage readiness, proof flow, and
   portal/customer boundaries
+- [docs/design/mobile-field-phase-3a-evidence-storage-readiness.md](C:/FloorConnector/docs/design/mobile-field-phase-3a-evidence-storage-readiness.md):
+  storage readiness audit for private field evidence upload pathing, signed URL
+  boundaries, delete/archive policy, and portal-dark implementation sequencing
 - [docs/design/messagecenter-phase-1-project-communication-timeline.md](C:/FloorConnector/docs/design/messagecenter-phase-1-project-communication-timeline.md):
   MessageCenter over communication and proof records
 - [docs/design/projectpulse-phase-1-project-health-summary.md](C:/FloorConnector/docs/design/projectpulse-phase-1-project-health-summary.md):
