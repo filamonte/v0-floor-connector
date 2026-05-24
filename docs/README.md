@@ -115,6 +115,9 @@ High-signal operating-core docs:
   final pre-implementation checklist for approved future pointer drag/drop,
   recommending `@dnd-kit/core` only for the implementation slice while keeping
   Move schedule confirmation as the write boundary
+- [docs/design/crewboard-phase-3b-b-pointer-drag-drop-preview.md](C:/FloorConnector/docs/design/crewboard-phase-3b-b-pointer-drag-drop-preview.md):
+  implemented pointer drag/drop preview layer that prepares the existing Move
+  schedule confirmation flow without saving on drop
 - [docs/design/fieldtrail-phase-1-project-execution-timeline.md](C:/FloorConnector/docs/design/fieldtrail-phase-1-project-execution-timeline.md):
   FieldTrail over existing field records
 - [docs/design/mobile-field-phase-1-fast-daily-job-log-capture.md](C:/FloorConnector/docs/design/mobile-field-phase-1-fast-daily-job-log-capture.md)

@@ -142,6 +142,13 @@ Current operating-core surfaces include:
   approved, then use it only to prepare the existing `Move schedule`
   confirmation flow from a drop. Do not mutate on drop, add schedule records,
   add server actions, or make drag/drop required on mobile.
+- CrewBoard Phase 3B-B pointer drag/drop preview is implemented and documented
+  in
+  [docs/design/crewboard-phase-3b-b-pointer-drag-drop-preview.md](C:/FloorConnector/docs/design/crewboard-phase-3b-b-pointer-drag-drop-preview.md).
+  `/schedule` now uses a small `@dnd-kit/core` client boundary to let job cards
+  prepare existing Move schedule URL state when dropped on date or time-bucket
+  targets. Drop does not save; the existing Move schedule confirmation and
+  server-side Ready Check / GateKeeper path remain authoritative.
 - Global search hardening for tenant-scoped canonical records.
 
 These layers are summaries, source-record handoffs, copy/hierarchy
@@ -229,11 +236,9 @@ Good next moves:
   [docs/design/next-build-priority-checkpoint.md](C:/FloorConnector/docs/design/next-build-priority-checkpoint.md)
   to decide between product momentum, demo/staging credibility, and mobile field
   stickiness.
-- If continuing CrewBoard, continue from the Phase 3B-B checklist:
-  [docs/design/crewboard-phase-3b-b-pointer-drag-drop-checklist.md](C:/FloorConnector/docs/design/crewboard-phase-3b-b-pointer-drag-drop-checklist.md).
-  The next implementation slice may install `@dnd-kit/core` only if approved,
-  must create proposed move state only on drop, and must still save through the
-  existing `Move schedule` confirmation flow.
+- If continuing CrewBoard, checkpoint Phase 3B-B with browser QA when protected
+  auth is healthy, then decide whether to add stable Playwright drag/drop
+  coverage, refine a drag handle, or keep drag-to-unscheduled manual-only.
 - For the broader drag/drop plan, use
   [docs/design/crewboard-phase-3-drag-drop-dispatch-spec.md](C:/FloorConnector/docs/design/crewboard-phase-3-drag-drop-dispatch-spec.md)
   as the scope boundary.

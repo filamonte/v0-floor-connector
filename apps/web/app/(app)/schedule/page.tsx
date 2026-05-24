@@ -7,6 +7,11 @@ import {
 } from "@/components/action-hierarchy";
 import { AppEmptyState } from "@/components/app-empty-state";
 import { ContractorWorkspacePage } from "@/components/contractor-workspace-page";
+import {
+  CrewBoardDragDropLayer,
+  CrewBoardDraggableJob,
+  CrewBoardDropTarget
+} from "@/components/crewboard-drag-drop-layer";
 import { ManagerDashboardCard } from "@/components/manager-dashboard-card";
 import { ScheduleCrewAssignmentForm } from "@/components/schedule-crew-assignment-form";
 import { ScheduleJobForm } from "@/components/schedule-job-form";
@@ -2997,508 +3002,41 @@ export default async function SchedulePage({
               </div>
             </div>
 
-            {plannerItemCount > 0 ? (
-              scheduleLayout === "day" ? (
-                <div className="px-5 py-4 sm:px-6">
-                  <div className="flex items-center justify-between gap-3 border-b border-[var(--border-warm)] pb-4">
-                    <div>
-                      <p className="text-sm font-semibold text-[var(--text-primary)]">
-                        {formatLongDateFromDate(plannerAnchorDate)}
-                      </p>
-                      <p className="mt-1 text-xs uppercase tracking-[0.14em] text-[var(--text-secondary)]">
-                        {(selectedDayGroup?.jobs.length ?? 0) +
-                          selectedDayAppointments.length}{" "}
-                        scheduled item
-                        {(selectedDayGroup?.jobs.length ?? 0) +
-                          selectedDayAppointments.length ===
-                        1
-                          ? ""
-                          : "s"}{" "}
-                        on this day
-                      </p>
+            <CrewBoardDragDropLayer>
+              {plannerItemCount > 0 ? (
+                scheduleLayout === "day" ? (
+                  <div className="px-5 py-4 sm:px-6">
+                    <div className="flex items-center justify-between gap-3 border-b border-[var(--border-warm)] pb-4">
+                      <div>
+                        <p className="text-sm font-semibold text-[var(--text-primary)]">
+                          {formatLongDateFromDate(plannerAnchorDate)}
+                        </p>
+                        <p className="mt-1 text-xs uppercase tracking-[0.14em] text-[var(--text-secondary)]">
+                          {(selectedDayGroup?.jobs.length ?? 0) +
+                            selectedDayAppointments.length}{" "}
+                          scheduled item
+                          {(selectedDayGroup?.jobs.length ?? 0) +
+                            selectedDayAppointments.length ===
+                          1
+                            ? ""
+                            : "s"}{" "}
+                          on this day
+                        </p>
+                      </div>
+                      {plannerAnchorDate.getTime() === today.getTime() ? (
+                        <span className="inline-flex items-center rounded-full border border-[var(--border-warm)] bg-[var(--highlight)] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--text-secondary)]">
+                          Today
+                        </span>
+                      ) : null}
                     </div>
-                    {plannerAnchorDate.getTime() === today.getTime() ? (
-                      <span className="inline-flex items-center rounded-full border border-[var(--border-warm)] bg-[var(--highlight)] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--text-secondary)]">
-                        Today
-                      </span>
-                    ) : null}
-                  </div>
 
-                  {untimedDayJobs.length > 0 ? (
-                    <div className="mt-4 rounded-[4px] border border-dashed border-[var(--border-warm)] bg-[var(--highlight)] p-4">
-                      <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
-                        Time not set
-                      </p>
-                      <div className="mt-3 space-y-3">
-                        {untimedDayJobs.map((job) => {
-                          const crewState = getCrewState(job);
-                          const primaryAction = getBoardPrimaryAction(job);
-                          const boardCardState = getBoardCardState(job);
-                          const jobWarnings =
-                            scheduleWarningsByJobId.get(job.id) ?? [];
-
-                          return (
-                            <div
-                              key={`untimed-${job.id}`}
-                              className={`rounded-[4px] border px-3 py-3 ${getScheduleSurfaceClass(job)}`}
-                            >
-                              <div className="flex items-start justify-between gap-3">
-                                <div className="min-w-0">
-                                  <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--text-secondary)]">
-                                    {boardCardState.eyebrow}
-                                  </p>
-                                  <Link
-                                    href={`/jobs/${job.id}`}
-                                    className="mt-1 block text-sm font-semibold text-[var(--text-primary)] transition hover:text-[var(--copper)]"
-                                  >
-                                    {getScheduleJobTitle(job)}
-                                  </Link>
-                                  <p className="mt-1 text-xs leading-5 text-[var(--text-secondary)]">
-                                    {job.customer?.name ?? "Unknown customer"}
-                                  </p>
-                                  <p className="mt-2 text-sm font-medium text-[var(--text-primary)]">
-                                    {boardCardState.title}
-                                  </p>
-                                </div>
-                                <ScheduleJobStateBadges crewState={crewState} />
-                              </div>
-
-                              <p className="mt-2 text-sm leading-6 text-[var(--text-secondary)]">
-                                {boardCardState.summary}
-                              </p>
-                              <ScheduleNotesPreview notes={job.scheduleNotes} />
-                              <ScheduleWarningBadges warnings={jobWarnings} />
-
-                              <ScheduleJobActionLinks
-                                actionHref={
-                                  buildScheduleHref({
-                                    q: query,
-                                    projectId: projectFilterId ?? undefined,
-                                    view,
-                                    crew: crewFilter,
-                                    layout: scheduleLayout,
-                                    date: plannerDateKey,
-                                    action: primaryAction.action,
-                                    jobId: job.id
-                                  }) + "#schedule-action"
-                                }
-                                actionLabel={primaryAction.label}
-                                actionToneClass={primaryAction.toneClass}
-                                projectHref={`/projects/${job.projectId}`}
-                                projectLabel="Project Workspace"
-                                projectVariant="plain"
-                                size="compact"
-                              />
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  ) : null}
-
-                  {selectedDayAppointments.length > 0 ? (
-                    <div className="mt-4 rounded-[4px] border border-[var(--border-warm)] bg-[var(--highlight)] p-4">
-                      <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
-                        Appointments
-                      </p>
-                      <div className="mt-3 space-y-3">
-                        {selectedDayAppointments.map((appointment) => (
-                          <div
-                            key={`appointment-${appointment.id}`}
-                            className={`rounded-[4px] border px-3 py-3 ${getScheduleItemSurfaceClass(appointment)}`}
-                          >
-                            <div className="flex items-start justify-between gap-3">
-                              <div className="min-w-0">
-                                <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--text-secondary)]">
-                                  Appointment ·{" "}
-                                  {formatStatusLabel(
-                                    appointment.appointmentType
-                                  )}
-                                </p>
-                                <Link
-                                  href={appointment.href}
-                                  className="mt-1 block text-sm font-semibold text-[var(--text-primary)] transition hover:text-[var(--copper)]"
-                                >
-                                  {appointment.title}
-                                </Link>
-                                <p className="mt-1 text-xs leading-5 text-[var(--text-secondary)]">
-                                  {formatScheduleItemTimeWindow(appointment)} ·{" "}
-                                  {appointment.assigneeLabel}
-                                </p>
-                                <p className="mt-2 text-sm leading-6 text-[var(--text-secondary)]">
-                                  {appointment.subtitle}
-                                  {appointment.location
-                                    ? ` · ${appointment.location}`
-                                    : ""}
-                                </p>
-                              </div>
-                              <span className="inline-flex items-center rounded-full border border-[var(--border-warm)] bg-white px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--text-secondary)]">
-                                {appointment.customerVisible
-                                  ? "Customer-visible"
-                                  : "Internal"}
-                              </span>
-                            </div>
-                            <div className="mt-3 flex flex-wrap gap-2">
-                              {appointment.contextHref &&
-                              appointment.contextLabel ? (
-                                <Link
-                                  href={appointment.contextHref}
-                                  className={scheduleCompactLinkClassName}
-                                >
-                                  {appointment.contextLabel}
-                                </Link>
-                              ) : null}
-                              <Link
-                                href={appointment.href}
-                                className={`inline-flex items-center rounded-[4px] border px-2.5 py-1.5 text-xs font-semibold uppercase tracking-[0.14em] transition ${scheduleSecondaryActionToneClassName}`}
-                              >
-                                Open appointment
-                              </Link>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  ) : null}
-
-                  <div className="mt-4 grid gap-px bg-[var(--border-warm)]">
-                    {dayTimelineBuckets.map((bucket) => (
-                      <div
-                        key={bucket.hour}
-                        className="grid grid-cols-[92px_minmax(0,1fr)] gap-px bg-[var(--border-warm)]"
-                        data-crewboard-drop-target="time_bucket"
-                        data-crewboard-drop-date={plannerDateKey}
-                        data-crewboard-drop-start={`${String(bucket.hour).padStart(2, "0")}:00`}
-                        data-crewboard-drop-end={`${String(bucket.hour + 1).padStart(2, "0")}:00`}
-                      >
-                        <div className="bg-[var(--highlight)] px-4 py-4 text-xs font-semibold uppercase tracking-[0.14em] text-[var(--text-secondary)]">
-                          {formatHourLabel(bucket.hour)}
-                        </div>
-                        <div className="bg-white px-4 py-3">
-                          {bucket.jobs.length > 0 ? (
-                            <div className="space-y-3">
-                              {bucket.jobs.map((job) => {
-                                const crewState = getCrewState(job);
-                                const primaryAction =
-                                  getBoardPrimaryAction(job);
-                                const boardCardState = getBoardCardState(job);
-                                const jobWarnings =
-                                  scheduleWarningsByJobId.get(job.id) ?? [];
-
-                                return (
-                                  <div
-                                    key={`${bucket.hour}-${job.id}`}
-                                    className={`rounded-[4px] border px-3 py-3 ${getScheduleSurfaceClass(job)}`}
-                                  >
-                                    <div className="flex items-start justify-between gap-3">
-                                      <div className="min-w-0">
-                                        <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--text-secondary)]">
-                                          {boardCardState.eyebrow}
-                                        </p>
-                                        <Link
-                                          href={`/jobs/${job.id}`}
-                                          className="mt-1 block text-sm font-semibold text-[var(--text-primary)] transition hover:text-[var(--copper)]"
-                                        >
-                                          {getScheduleJobTitle(job)}
-                                        </Link>
-                                        <p className="mt-1 text-xs leading-5 text-[var(--text-secondary)]">
-                                          {job.customer?.name ??
-                                            "Unknown customer"}{" "}
-                                          · {formatScheduleTimeWindow(job)}
-                                        </p>
-                                        <p className="mt-2 text-sm font-medium text-[var(--text-primary)]">
-                                          {boardCardState.title}
-                                        </p>
-                                      </div>
-                                      <ScheduleJobStateBadges
-                                        crewState={crewState}
-                                      />
-                                    </div>
-
-                                    <p className="mt-2 text-sm leading-6 text-[var(--text-secondary)]">
-                                      {boardCardState.summary}
-                                    </p>
-
-                                    <p className="mt-1 text-xs leading-5 text-[var(--text-secondary)]">
-                                      {crewState.detail}
-                                    </p>
-                                    <ScheduleNotesPreview
-                                      notes={job.scheduleNotes}
-                                    />
-                                    <ScheduleWarningBadges
-                                      warnings={jobWarnings}
-                                    />
-
-                                    <ScheduleJobActionLinks
-                                      actionHref={
-                                        buildScheduleHref({
-                                          q: query,
-                                          projectId:
-                                            projectFilterId ?? undefined,
-                                          view,
-                                          crew: crewFilter,
-                                          layout: scheduleLayout,
-                                          date: plannerDateKey,
-                                          action: primaryAction.action,
-                                          jobId: job.id
-                                        }) + "#schedule-action"
-                                      }
-                                      actionLabel={primaryAction.label}
-                                      actionToneClass={primaryAction.toneClass}
-                                      projectHref={`/projects/${job.projectId}`}
-                                      projectLabel="Project Workspace"
-                                      projectVariant="plain"
-                                      jobHref={`/jobs/${job.id}`}
-                                      jobLabel="Open job"
-                                      jobVariant="bordered"
-                                      size="compact"
-                                    />
-                                  </div>
-                                );
-                              })}
-                            </div>
-                          ) : (
-                            <div className="min-h-16 rounded-[4px] border border-dashed border-[var(--border-warm)] bg-[var(--highlight)]" />
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ) : scheduleLayout === "week" ? (
-                <div className="grid gap-px bg-[var(--border-warm)] xl:grid-cols-7">
-                  {plannerDays.map((day) => {
-                    const dayJobs = visibleScheduledJobs.filter(
-                      (job) => job.scheduledDate === day.dateKey
-                    );
-                    const dayAppointments = visiblePlannerAppointments.filter(
-                      (appointment) => appointment.dateKey === day.dateKey
-                    );
-                    const boardDate = getBoardDatePresentation(
-                      day.dateKey,
-                      today
-                    );
-                    const dayItemCount =
-                      dayJobs.length + dayAppointments.length;
-
-                    return (
-                      <section
-                        key={day.dateKey}
-                        className={[
-                          "bg-white px-4 py-4",
-                          day.dateKey === todayDateKey
-                            ? "bg-[var(--highlight)]"
-                            : ""
-                        ].join(" ")}
-                        data-crewboard-drop-target="date"
-                        data-crewboard-drop-date={day.dateKey}
-                        aria-label={`CrewBoard date target ${boardDate.title} ${boardDate.subtitle}`}
-                      >
-                        <div className="flex items-start justify-between gap-3 border-b border-[var(--border-warm)] pb-3">
-                          <div>
-                            <p className="text-sm font-semibold text-[var(--text-primary)]">
-                              {boardDate.title}
-                            </p>
-                            <p className="mt-1 text-xs uppercase tracking-[0.14em] text-[var(--text-secondary)]">
-                              {boardDate.subtitle}
-                            </p>
-                          </div>
-                          <div className="flex flex-col items-end gap-1">
-                            <span className="inline-flex items-center rounded-full border border-[var(--border-warm)] bg-white px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--text-secondary)]">
-                              {dayItemCount} item{dayItemCount === 1 ? "" : "s"}
-                            </span>
-                            {day.dateKey === todayDateKey ? (
-                              <span className="inline-flex items-center rounded-full border border-[var(--border-warm)] bg-[var(--highlight)] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--text-secondary)]">
-                                Today
-                              </span>
-                            ) : null}
-                          </div>
-                        </div>
-
-                        <div className="mt-4 space-y-3">
-                          {dayItemCount > 0 ? (
-                            <>
-                              {dayJobs.map((job) => {
-                                const crewState = getCrewState(job);
-                                const primaryAction =
-                                  getBoardPrimaryAction(job);
-                                const boardCardState = getBoardCardState(job);
-                                const jobWarnings =
-                                  scheduleWarningsByJobId.get(job.id) ?? [];
-
-                                return (
-                                  <div
-                                    key={job.id}
-                                    className={`rounded-[4px] border px-3 py-3 ${getScheduleSurfaceClass(job)}`}
-                                  >
-                                    <div className="flex items-start justify-between gap-3">
-                                      <div className="min-w-0">
-                                        <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--text-secondary)]">
-                                          {boardCardState.eyebrow}
-                                        </p>
-                                        <Link
-                                          href={`/jobs/${job.id}`}
-                                          className="mt-1 block text-sm font-semibold text-[var(--text-primary)] transition hover:text-[var(--copper)]"
-                                        >
-                                          {getScheduleJobTitle(job)}
-                                        </Link>
-                                        <p className="mt-1 text-xs leading-5 text-[var(--text-secondary)]">
-                                          {job.customer?.name ??
-                                            "Unknown customer"}
-                                        </p>
-                                        <p className="mt-2 text-sm font-medium text-[var(--text-primary)]">
-                                          {boardCardState.title}
-                                        </p>
-                                      </div>
-                                      <ScheduleJobStateBadges
-                                        crewState={crewState}
-                                      />
-                                    </div>
-
-                                    <p className="mt-3 text-xs font-medium text-[var(--text-secondary)]">
-                                      {formatScheduleTimeWindow(job)}
-                                    </p>
-                                    <p className="mt-2 text-sm leading-6 text-[var(--text-secondary)]">
-                                      {boardCardState.summary}
-                                    </p>
-                                    <p className="mt-1 text-xs leading-5 text-[var(--text-secondary)]">
-                                      {crewState.detail}
-                                    </p>
-                                    <ScheduleNotesPreview
-                                      notes={job.scheduleNotes}
-                                    />
-                                    <ScheduleWarningBadges
-                                      warnings={jobWarnings}
-                                    />
-
-                                    <ScheduleJobActionLinks
-                                      actionHref={
-                                        buildScheduleHref({
-                                          q: query,
-                                          projectId:
-                                            projectFilterId ?? undefined,
-                                          view,
-                                          crew: crewFilter,
-                                          layout: scheduleLayout,
-                                          date: day.dateKey,
-                                          action: primaryAction.action,
-                                          jobId: job.id
-                                        }) + "#schedule-action"
-                                      }
-                                      actionLabel={primaryAction.label}
-                                      actionToneClass={primaryAction.toneClass}
-                                      projectHref={`/projects/${job.projectId}`}
-                                      projectLabel="Project Workspace"
-                                      projectVariant="plain"
-                                      size="compact"
-                                    />
-                                  </div>
-                                );
-                              })}
-                              {dayAppointments.map((appointment) => (
-                                <div
-                                  key={appointment.id}
-                                  className={`rounded-[4px] border px-3 py-3 ${getScheduleItemSurfaceClass(appointment)}`}
-                                >
-                                  <div className="flex items-start justify-between gap-3">
-                                    <div className="min-w-0">
-                                      <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--text-secondary)]">
-                                        Appointment ·{" "}
-                                        {formatStatusLabel(
-                                          appointment.appointmentType
-                                        )}
-                                      </p>
-                                      <Link
-                                        href={appointment.href}
-                                        className="mt-1 block text-sm font-semibold text-[var(--text-primary)] transition hover:text-[var(--copper)]"
-                                      >
-                                        {appointment.title}
-                                      </Link>
-                                      <p className="mt-1 text-xs leading-5 text-[var(--text-secondary)]">
-                                        {appointment.subtitle}
-                                      </p>
-                                    </div>
-                                    {appointment.customerVisible ? (
-                                      <span className="inline-flex items-center rounded-full border border-[var(--border-warm)] bg-white px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--text-secondary)]">
-                                        Customer-visible
-                                      </span>
-                                    ) : null}
-                                  </div>
-                                  <p className="mt-3 text-xs font-medium text-[var(--text-secondary)]">
-                                    {formatScheduleItemTimeWindow(appointment)}
-                                  </p>
-                                  <p className="mt-2 text-sm leading-6 text-[var(--text-secondary)]">
-                                    {appointment.assigneeLabel}
-                                    {appointment.location
-                                      ? ` · ${appointment.location}`
-                                      : ""}
-                                  </p>
-                                  <div className="mt-3 flex flex-wrap gap-2">
-                                    {appointment.contextHref &&
-                                    appointment.contextLabel ? (
-                                      <Link
-                                        href={appointment.contextHref}
-                                        className={scheduleCompactLinkClassName}
-                                      >
-                                        {appointment.contextLabel}
-                                      </Link>
-                                    ) : null}
-                                    <Link
-                                      href={appointment.href}
-                                      className={`inline-flex items-center rounded-[4px] border px-2.5 py-1.5 text-xs font-semibold uppercase tracking-[0.14em] transition ${scheduleSecondaryActionToneClassName}`}
-                                    >
-                                      Open appointment
-                                    </Link>
-                                  </div>
-                                </div>
-                              ))}
-                            </>
-                          ) : (
-                            <div className="rounded-[4px] border border-dashed border-[var(--border-warm)] bg-[var(--highlight)] px-3 py-8 text-center text-xs uppercase tracking-[0.14em] text-[var(--text-tertiary)]">
-                              Open day
-                            </div>
-                          )}
-                        </div>
-                      </section>
-                    );
-                  })}
-                </div>
-              ) : (
-                <div className="grid gap-4 px-5 py-4 sm:px-6 xl:grid-cols-2 2xl:grid-cols-3">
-                  {boardTimingGroups.map((group) => (
-                    <section
-                      key={group.key}
-                      className={`flex flex-col border ${group.surfaceClass}`}
-                      data-crewboard-drop-target={
-                        group.key === "unscheduled-ready"
-                          ? "unscheduled"
-                          : undefined
-                      }
-                      data-crewboard-lane={group.key}
-                    >
-                      <div className="border-b border-[var(--border-warm)] px-4 py-4">
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="min-w-0">
-                            <p className="text-sm font-semibold text-[var(--text-primary)]">
-                              {group.title}
-                            </p>
-                            <p className="mt-1 text-sm leading-6 text-[var(--text-secondary)]">
-                              {group.description}
-                            </p>
-                            <p className="mt-2 text-xs font-semibold uppercase tracking-[0.16em] text-[var(--text-tertiary)]">
-                              {getBoardLaneMeta(group)}
-                            </p>
-                          </div>
-                          <span className="inline-flex items-center rounded-full border border-[var(--border-warm)] bg-white px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--text-secondary)]">
-                            {group.jobs.length} job
-                            {group.jobs.length === 1 ? "" : "s"}
-                          </span>
-                        </div>
-                      </div>
-
-                      <div className="flex-1 space-y-3 px-4 py-4">
-                        {group.jobs.length > 0 ? (
-                          group.jobs.map((job) => {
+                    {untimedDayJobs.length > 0 ? (
+                      <div className="mt-4 rounded-[4px] border border-dashed border-[var(--border-warm)] bg-[var(--highlight)] p-4">
+                        <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
+                          Time not set
+                        </p>
+                        <div className="mt-3 space-y-3">
+                          {untimedDayJobs.map((job) => {
                             const crewState = getCrewState(job);
                             const primaryAction = getBoardPrimaryAction(job);
                             const boardCardState = getBoardCardState(job);
@@ -3506,9 +3044,17 @@ export default async function SchedulePage({
                               scheduleWarningsByJobId.get(job.id) ?? [];
 
                             return (
-                              <div
-                                key={`${group.key}-${job.id}`}
-                                className={`rounded-[4px] border px-4 py-4 ${getBoardCardSurfaceClass(job)}`}
+                              <CrewBoardDraggableJob
+                                key={`untimed-${job.id}`}
+                                className={`rounded-[4px] border px-3 py-3 ${getScheduleSurfaceClass(job)}`}
+                                label={getScheduleJobTitle(job)}
+                                job={{
+                                  id: job.id,
+                                  dispatchStatus: job.dispatchStatus,
+                                  scheduledDate: job.scheduledDate,
+                                  scheduledStartAt: job.scheduledStartAt,
+                                  scheduledEndAt: job.scheduledEndAt
+                                }}
                               >
                                 <div className="flex items-start justify-between gap-3">
                                   <div className="min-w-0">
@@ -3521,7 +3067,7 @@ export default async function SchedulePage({
                                     >
                                       {getScheduleJobTitle(job)}
                                     </Link>
-                                    <p className="mt-1 text-sm leading-6 text-[var(--text-secondary)]">
+                                    <p className="mt-1 text-xs leading-5 text-[var(--text-secondary)]">
                                       {job.customer?.name ?? "Unknown customer"}
                                     </p>
                                     <p className="mt-2 text-sm font-medium text-[var(--text-primary)]">
@@ -3530,36 +3076,12 @@ export default async function SchedulePage({
                                   </div>
                                   <ScheduleJobStateBadges
                                     crewState={crewState}
-                                    dispatchStatus={job.dispatchStatus}
-                                    includeDispatchStatus
-                                    justifyEnd
                                   />
                                 </div>
 
-                                <div className="mt-3 space-y-1">
-                                  <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--text-secondary)]">
-                                    Schedule
-                                  </p>
-                                  <p className="text-sm font-medium text-[var(--text-secondary)]">
-                                    {formatDate(job.scheduledDate)}
-                                  </p>
-                                  <p className="text-sm leading-6 text-[var(--text-secondary)]">
-                                    {formatScheduleTimeWindow(job)}
-                                  </p>
-                                </div>
-
-                                <div className="mt-3 space-y-1">
-                                  <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--text-secondary)]">
-                                    Crew state
-                                  </p>
-                                  <p className="text-sm font-medium text-[var(--text-secondary)]">
-                                    {boardCardState.summary}
-                                  </p>
-                                  <p className="text-sm leading-6 text-[var(--text-secondary)]">
-                                    {crewState.detail}
-                                  </p>
-                                </div>
-
+                                <p className="mt-2 text-sm leading-6 text-[var(--text-secondary)]">
+                                  {boardCardState.summary}
+                                </p>
                                 <ScheduleNotesPreview
                                   notes={job.scheduleNotes}
                                 />
@@ -3582,53 +3104,580 @@ export default async function SchedulePage({
                                   actionToneClass={primaryAction.toneClass}
                                   projectHref={`/projects/${job.projectId}`}
                                   projectLabel="Project Workspace"
-                                  projectVariant="bordered"
-                                  jobHref={`/jobs/${job.id}`}
-                                  jobLabel="Open job"
-                                  jobVariant="plain"
-                                  size="default"
+                                  projectVariant="plain"
+                                  size="compact"
                                 />
-                              </div>
+                              </CrewBoardDraggableJob>
                             );
-                          })
-                        ) : (
-                          <div className="rounded-[4px] border border-dashed border-[var(--border-warm)] bg-white px-4 py-5">
-                            <p className="text-sm font-semibold text-[var(--text-primary)]">
-                              {group.emptyTitle}
-                            </p>
-                            <p className="mt-2 text-sm leading-6 text-[var(--text-secondary)]">
-                              {group.emptyDescription}
-                            </p>
-                            {group.key === "unscheduled-ready" ? (
-                              <div className="mt-3 text-sm leading-6 text-[var(--text-secondary)]">
-                                If work is missing here entirely, confirm
-                                upstream project readiness first and then create
-                                the job.
-                              </div>
-                            ) : null}
-                            {group.key === "in-progress" ? (
-                              <div className="mt-3 text-sm leading-6 text-[var(--text-secondary)]">
-                                Active execution still lives on the same job
-                                records. Move status forward from the job
-                                workspace when field work actually starts.
-                              </div>
-                            ) : null}
-                          </div>
-                        )}
+                          })}
+                        </div>
                       </div>
-                    </section>
-                  ))}
+                    ) : null}
+
+                    {selectedDayAppointments.length > 0 ? (
+                      <div className="mt-4 rounded-[4px] border border-[var(--border-warm)] bg-[var(--highlight)] p-4">
+                        <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
+                          Appointments
+                        </p>
+                        <div className="mt-3 space-y-3">
+                          {selectedDayAppointments.map((appointment) => (
+                            <div
+                              key={`appointment-${appointment.id}`}
+                              className={`rounded-[4px] border px-3 py-3 ${getScheduleItemSurfaceClass(appointment)}`}
+                            >
+                              <div className="flex items-start justify-between gap-3">
+                                <div className="min-w-0">
+                                  <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--text-secondary)]">
+                                    Appointment ·{" "}
+                                    {formatStatusLabel(
+                                      appointment.appointmentType
+                                    )}
+                                  </p>
+                                  <Link
+                                    href={appointment.href}
+                                    className="mt-1 block text-sm font-semibold text-[var(--text-primary)] transition hover:text-[var(--copper)]"
+                                  >
+                                    {appointment.title}
+                                  </Link>
+                                  <p className="mt-1 text-xs leading-5 text-[var(--text-secondary)]">
+                                    {formatScheduleItemTimeWindow(appointment)}{" "}
+                                    · {appointment.assigneeLabel}
+                                  </p>
+                                  <p className="mt-2 text-sm leading-6 text-[var(--text-secondary)]">
+                                    {appointment.subtitle}
+                                    {appointment.location
+                                      ? ` · ${appointment.location}`
+                                      : ""}
+                                  </p>
+                                </div>
+                                <span className="inline-flex items-center rounded-full border border-[var(--border-warm)] bg-white px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--text-secondary)]">
+                                  {appointment.customerVisible
+                                    ? "Customer-visible"
+                                    : "Internal"}
+                                </span>
+                              </div>
+                              <div className="mt-3 flex flex-wrap gap-2">
+                                {appointment.contextHref &&
+                                appointment.contextLabel ? (
+                                  <Link
+                                    href={appointment.contextHref}
+                                    className={scheduleCompactLinkClassName}
+                                  >
+                                    {appointment.contextLabel}
+                                  </Link>
+                                ) : null}
+                                <Link
+                                  href={appointment.href}
+                                  className={`inline-flex items-center rounded-[4px] border px-2.5 py-1.5 text-xs font-semibold uppercase tracking-[0.14em] transition ${scheduleSecondaryActionToneClassName}`}
+                                >
+                                  Open appointment
+                                </Link>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ) : null}
+
+                    <div className="mt-4 grid gap-px bg-[var(--border-warm)]">
+                      {dayTimelineBuckets.map((bucket) => (
+                        <CrewBoardDropTarget
+                          key={bucket.hour}
+                          className="grid grid-cols-[92px_minmax(0,1fr)] gap-px bg-[var(--border-warm)]"
+                          target={createCrewBoardTimeBucketDropTarget({
+                            date: plannerDateKey,
+                            startTime: `${String(bucket.hour).padStart(2, "0")}:00`,
+                            endTime: `${String(bucket.hour + 1).padStart(2, "0")}:00`
+                          })}
+                        >
+                          <div className="bg-[var(--highlight)] px-4 py-4 text-xs font-semibold uppercase tracking-[0.14em] text-[var(--text-secondary)]">
+                            {formatHourLabel(bucket.hour)}
+                          </div>
+                          <div className="bg-white px-4 py-3">
+                            {bucket.jobs.length > 0 ? (
+                              <div className="space-y-3">
+                                {bucket.jobs.map((job) => {
+                                  const crewState = getCrewState(job);
+                                  const primaryAction =
+                                    getBoardPrimaryAction(job);
+                                  const boardCardState = getBoardCardState(job);
+                                  const jobWarnings =
+                                    scheduleWarningsByJobId.get(job.id) ?? [];
+
+                                  return (
+                                    <CrewBoardDraggableJob
+                                      key={`${bucket.hour}-${job.id}`}
+                                      className={`rounded-[4px] border px-3 py-3 ${getScheduleSurfaceClass(job)}`}
+                                      label={getScheduleJobTitle(job)}
+                                      job={{
+                                        id: job.id,
+                                        dispatchStatus: job.dispatchStatus,
+                                        scheduledDate: job.scheduledDate,
+                                        scheduledStartAt: job.scheduledStartAt,
+                                        scheduledEndAt: job.scheduledEndAt
+                                      }}
+                                    >
+                                      <div className="flex items-start justify-between gap-3">
+                                        <div className="min-w-0">
+                                          <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--text-secondary)]">
+                                            {boardCardState.eyebrow}
+                                          </p>
+                                          <Link
+                                            href={`/jobs/${job.id}`}
+                                            className="mt-1 block text-sm font-semibold text-[var(--text-primary)] transition hover:text-[var(--copper)]"
+                                          >
+                                            {getScheduleJobTitle(job)}
+                                          </Link>
+                                          <p className="mt-1 text-xs leading-5 text-[var(--text-secondary)]">
+                                            {job.customer?.name ??
+                                              "Unknown customer"}{" "}
+                                            · {formatScheduleTimeWindow(job)}
+                                          </p>
+                                          <p className="mt-2 text-sm font-medium text-[var(--text-primary)]">
+                                            {boardCardState.title}
+                                          </p>
+                                        </div>
+                                        <ScheduleJobStateBadges
+                                          crewState={crewState}
+                                        />
+                                      </div>
+
+                                      <p className="mt-2 text-sm leading-6 text-[var(--text-secondary)]">
+                                        {boardCardState.summary}
+                                      </p>
+
+                                      <p className="mt-1 text-xs leading-5 text-[var(--text-secondary)]">
+                                        {crewState.detail}
+                                      </p>
+                                      <ScheduleNotesPreview
+                                        notes={job.scheduleNotes}
+                                      />
+                                      <ScheduleWarningBadges
+                                        warnings={jobWarnings}
+                                      />
+
+                                      <ScheduleJobActionLinks
+                                        actionHref={
+                                          buildScheduleHref({
+                                            q: query,
+                                            projectId:
+                                              projectFilterId ?? undefined,
+                                            view,
+                                            crew: crewFilter,
+                                            layout: scheduleLayout,
+                                            date: plannerDateKey,
+                                            action: primaryAction.action,
+                                            jobId: job.id
+                                          }) + "#schedule-action"
+                                        }
+                                        actionLabel={primaryAction.label}
+                                        actionToneClass={
+                                          primaryAction.toneClass
+                                        }
+                                        projectHref={`/projects/${job.projectId}`}
+                                        projectLabel="Project Workspace"
+                                        projectVariant="plain"
+                                        jobHref={`/jobs/${job.id}`}
+                                        jobLabel="Open job"
+                                        jobVariant="bordered"
+                                        size="compact"
+                                      />
+                                    </CrewBoardDraggableJob>
+                                  );
+                                })}
+                              </div>
+                            ) : (
+                              <div className="min-h-16 rounded-[4px] border border-dashed border-[var(--border-warm)] bg-[var(--highlight)]" />
+                            )}
+                          </div>
+                        </CrewBoardDropTarget>
+                      ))}
+                    </div>
+                  </div>
+                ) : scheduleLayout === "week" ? (
+                  <div className="grid gap-px bg-[var(--border-warm)] xl:grid-cols-7">
+                    {plannerDays.map((day) => {
+                      const dayJobs = visibleScheduledJobs.filter(
+                        (job) => job.scheduledDate === day.dateKey
+                      );
+                      const dayAppointments = visiblePlannerAppointments.filter(
+                        (appointment) => appointment.dateKey === day.dateKey
+                      );
+                      const boardDate = getBoardDatePresentation(
+                        day.dateKey,
+                        today
+                      );
+                      const dayItemCount =
+                        dayJobs.length + dayAppointments.length;
+
+                      return (
+                        <CrewBoardDropTarget
+                          key={day.dateKey}
+                          className={[
+                            "bg-white px-4 py-4",
+                            day.dateKey === todayDateKey
+                              ? "bg-[var(--highlight)]"
+                              : ""
+                          ].join(" ")}
+                          target={createCrewBoardDateDropTarget(
+                            day.dateKey,
+                            `${boardDate.title} ${boardDate.subtitle}`
+                          )}
+                        >
+                          <div className="flex items-start justify-between gap-3 border-b border-[var(--border-warm)] pb-3">
+                            <div>
+                              <p className="text-sm font-semibold text-[var(--text-primary)]">
+                                {boardDate.title}
+                              </p>
+                              <p className="mt-1 text-xs uppercase tracking-[0.14em] text-[var(--text-secondary)]">
+                                {boardDate.subtitle}
+                              </p>
+                            </div>
+                            <div className="flex flex-col items-end gap-1">
+                              <span className="inline-flex items-center rounded-full border border-[var(--border-warm)] bg-white px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--text-secondary)]">
+                                {dayItemCount} item
+                                {dayItemCount === 1 ? "" : "s"}
+                              </span>
+                              {day.dateKey === todayDateKey ? (
+                                <span className="inline-flex items-center rounded-full border border-[var(--border-warm)] bg-[var(--highlight)] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--text-secondary)]">
+                                  Today
+                                </span>
+                              ) : null}
+                            </div>
+                          </div>
+
+                          <div className="mt-4 space-y-3">
+                            {dayItemCount > 0 ? (
+                              <>
+                                {dayJobs.map((job) => {
+                                  const crewState = getCrewState(job);
+                                  const primaryAction =
+                                    getBoardPrimaryAction(job);
+                                  const boardCardState = getBoardCardState(job);
+                                  const jobWarnings =
+                                    scheduleWarningsByJobId.get(job.id) ?? [];
+
+                                  return (
+                                    <CrewBoardDraggableJob
+                                      key={job.id}
+                                      className={`rounded-[4px] border px-3 py-3 ${getScheduleSurfaceClass(job)}`}
+                                      label={getScheduleJobTitle(job)}
+                                      job={{
+                                        id: job.id,
+                                        dispatchStatus: job.dispatchStatus,
+                                        scheduledDate: job.scheduledDate,
+                                        scheduledStartAt: job.scheduledStartAt,
+                                        scheduledEndAt: job.scheduledEndAt
+                                      }}
+                                    >
+                                      <div className="flex items-start justify-between gap-3">
+                                        <div className="min-w-0">
+                                          <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--text-secondary)]">
+                                            {boardCardState.eyebrow}
+                                          </p>
+                                          <Link
+                                            href={`/jobs/${job.id}`}
+                                            className="mt-1 block text-sm font-semibold text-[var(--text-primary)] transition hover:text-[var(--copper)]"
+                                          >
+                                            {getScheduleJobTitle(job)}
+                                          </Link>
+                                          <p className="mt-1 text-xs leading-5 text-[var(--text-secondary)]">
+                                            {job.customer?.name ??
+                                              "Unknown customer"}
+                                          </p>
+                                          <p className="mt-2 text-sm font-medium text-[var(--text-primary)]">
+                                            {boardCardState.title}
+                                          </p>
+                                        </div>
+                                        <ScheduleJobStateBadges
+                                          crewState={crewState}
+                                        />
+                                      </div>
+
+                                      <p className="mt-3 text-xs font-medium text-[var(--text-secondary)]">
+                                        {formatScheduleTimeWindow(job)}
+                                      </p>
+                                      <p className="mt-2 text-sm leading-6 text-[var(--text-secondary)]">
+                                        {boardCardState.summary}
+                                      </p>
+                                      <p className="mt-1 text-xs leading-5 text-[var(--text-secondary)]">
+                                        {crewState.detail}
+                                      </p>
+                                      <ScheduleNotesPreview
+                                        notes={job.scheduleNotes}
+                                      />
+                                      <ScheduleWarningBadges
+                                        warnings={jobWarnings}
+                                      />
+
+                                      <ScheduleJobActionLinks
+                                        actionHref={
+                                          buildScheduleHref({
+                                            q: query,
+                                            projectId:
+                                              projectFilterId ?? undefined,
+                                            view,
+                                            crew: crewFilter,
+                                            layout: scheduleLayout,
+                                            date: day.dateKey,
+                                            action: primaryAction.action,
+                                            jobId: job.id
+                                          }) + "#schedule-action"
+                                        }
+                                        actionLabel={primaryAction.label}
+                                        actionToneClass={
+                                          primaryAction.toneClass
+                                        }
+                                        projectHref={`/projects/${job.projectId}`}
+                                        projectLabel="Project Workspace"
+                                        projectVariant="plain"
+                                        size="compact"
+                                      />
+                                    </CrewBoardDraggableJob>
+                                  );
+                                })}
+                                {dayAppointments.map((appointment) => (
+                                  <div
+                                    key={appointment.id}
+                                    className={`rounded-[4px] border px-3 py-3 ${getScheduleItemSurfaceClass(appointment)}`}
+                                  >
+                                    <div className="flex items-start justify-between gap-3">
+                                      <div className="min-w-0">
+                                        <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--text-secondary)]">
+                                          Appointment ·{" "}
+                                          {formatStatusLabel(
+                                            appointment.appointmentType
+                                          )}
+                                        </p>
+                                        <Link
+                                          href={appointment.href}
+                                          className="mt-1 block text-sm font-semibold text-[var(--text-primary)] transition hover:text-[var(--copper)]"
+                                        >
+                                          {appointment.title}
+                                        </Link>
+                                        <p className="mt-1 text-xs leading-5 text-[var(--text-secondary)]">
+                                          {appointment.subtitle}
+                                        </p>
+                                      </div>
+                                      {appointment.customerVisible ? (
+                                        <span className="inline-flex items-center rounded-full border border-[var(--border-warm)] bg-white px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--text-secondary)]">
+                                          Customer-visible
+                                        </span>
+                                      ) : null}
+                                    </div>
+                                    <p className="mt-3 text-xs font-medium text-[var(--text-secondary)]">
+                                      {formatScheduleItemTimeWindow(
+                                        appointment
+                                      )}
+                                    </p>
+                                    <p className="mt-2 text-sm leading-6 text-[var(--text-secondary)]">
+                                      {appointment.assigneeLabel}
+                                      {appointment.location
+                                        ? ` · ${appointment.location}`
+                                        : ""}
+                                    </p>
+                                    <div className="mt-3 flex flex-wrap gap-2">
+                                      {appointment.contextHref &&
+                                      appointment.contextLabel ? (
+                                        <Link
+                                          href={appointment.contextHref}
+                                          className={
+                                            scheduleCompactLinkClassName
+                                          }
+                                        >
+                                          {appointment.contextLabel}
+                                        </Link>
+                                      ) : null}
+                                      <Link
+                                        href={appointment.href}
+                                        className={`inline-flex items-center rounded-[4px] border px-2.5 py-1.5 text-xs font-semibold uppercase tracking-[0.14em] transition ${scheduleSecondaryActionToneClassName}`}
+                                      >
+                                        Open appointment
+                                      </Link>
+                                    </div>
+                                  </div>
+                                ))}
+                              </>
+                            ) : (
+                              <div className="rounded-[4px] border border-dashed border-[var(--border-warm)] bg-[var(--highlight)] px-3 py-8 text-center text-xs uppercase tracking-[0.14em] text-[var(--text-tertiary)]">
+                                Open day
+                              </div>
+                            )}
+                          </div>
+                        </CrewBoardDropTarget>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="grid gap-4 px-5 py-4 sm:px-6 xl:grid-cols-2 2xl:grid-cols-3">
+                    {boardTimingGroups.map((group) => (
+                      <section
+                        key={group.key}
+                        className={`flex flex-col border ${group.surfaceClass}`}
+                        data-crewboard-drop-target={
+                          group.key === "unscheduled-ready"
+                            ? "unscheduled"
+                            : undefined
+                        }
+                        data-crewboard-lane={group.key}
+                      >
+                        <div className="border-b border-[var(--border-warm)] px-4 py-4">
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="min-w-0">
+                              <p className="text-sm font-semibold text-[var(--text-primary)]">
+                                {group.title}
+                              </p>
+                              <p className="mt-1 text-sm leading-6 text-[var(--text-secondary)]">
+                                {group.description}
+                              </p>
+                              <p className="mt-2 text-xs font-semibold uppercase tracking-[0.16em] text-[var(--text-tertiary)]">
+                                {getBoardLaneMeta(group)}
+                              </p>
+                            </div>
+                            <span className="inline-flex items-center rounded-full border border-[var(--border-warm)] bg-white px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--text-secondary)]">
+                              {group.jobs.length} job
+                              {group.jobs.length === 1 ? "" : "s"}
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="flex-1 space-y-3 px-4 py-4">
+                          {group.jobs.length > 0 ? (
+                            group.jobs.map((job) => {
+                              const crewState = getCrewState(job);
+                              const primaryAction = getBoardPrimaryAction(job);
+                              const boardCardState = getBoardCardState(job);
+                              const jobWarnings =
+                                scheduleWarningsByJobId.get(job.id) ?? [];
+
+                              return (
+                                <div
+                                  key={`${group.key}-${job.id}`}
+                                  className={`rounded-[4px] border px-4 py-4 ${getBoardCardSurfaceClass(job)}`}
+                                >
+                                  <div className="flex items-start justify-between gap-3">
+                                    <div className="min-w-0">
+                                      <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--text-secondary)]">
+                                        {boardCardState.eyebrow}
+                                      </p>
+                                      <Link
+                                        href={`/jobs/${job.id}`}
+                                        className="mt-1 block text-sm font-semibold text-[var(--text-primary)] transition hover:text-[var(--copper)]"
+                                      >
+                                        {getScheduleJobTitle(job)}
+                                      </Link>
+                                      <p className="mt-1 text-sm leading-6 text-[var(--text-secondary)]">
+                                        {job.customer?.name ??
+                                          "Unknown customer"}
+                                      </p>
+                                      <p className="mt-2 text-sm font-medium text-[var(--text-primary)]">
+                                        {boardCardState.title}
+                                      </p>
+                                    </div>
+                                    <ScheduleJobStateBadges
+                                      crewState={crewState}
+                                      dispatchStatus={job.dispatchStatus}
+                                      includeDispatchStatus
+                                      justifyEnd
+                                    />
+                                  </div>
+
+                                  <div className="mt-3 space-y-1">
+                                    <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--text-secondary)]">
+                                      Schedule
+                                    </p>
+                                    <p className="text-sm font-medium text-[var(--text-secondary)]">
+                                      {formatDate(job.scheduledDate)}
+                                    </p>
+                                    <p className="text-sm leading-6 text-[var(--text-secondary)]">
+                                      {formatScheduleTimeWindow(job)}
+                                    </p>
+                                  </div>
+
+                                  <div className="mt-3 space-y-1">
+                                    <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--text-secondary)]">
+                                      Crew state
+                                    </p>
+                                    <p className="text-sm font-medium text-[var(--text-secondary)]">
+                                      {boardCardState.summary}
+                                    </p>
+                                    <p className="text-sm leading-6 text-[var(--text-secondary)]">
+                                      {crewState.detail}
+                                    </p>
+                                  </div>
+
+                                  <ScheduleNotesPreview
+                                    notes={job.scheduleNotes}
+                                  />
+                                  <ScheduleWarningBadges
+                                    warnings={jobWarnings}
+                                  />
+
+                                  <ScheduleJobActionLinks
+                                    actionHref={
+                                      buildScheduleHref({
+                                        q: query,
+                                        projectId: projectFilterId ?? undefined,
+                                        view,
+                                        crew: crewFilter,
+                                        layout: scheduleLayout,
+                                        date: plannerDateKey,
+                                        action: primaryAction.action,
+                                        jobId: job.id
+                                      }) + "#schedule-action"
+                                    }
+                                    actionLabel={primaryAction.label}
+                                    actionToneClass={primaryAction.toneClass}
+                                    projectHref={`/projects/${job.projectId}`}
+                                    projectLabel="Project Workspace"
+                                    projectVariant="bordered"
+                                    jobHref={`/jobs/${job.id}`}
+                                    jobLabel="Open job"
+                                    jobVariant="plain"
+                                    size="default"
+                                  />
+                                </div>
+                              );
+                            })
+                          ) : (
+                            <div className="rounded-[4px] border border-dashed border-[var(--border-warm)] bg-white px-4 py-5">
+                              <p className="text-sm font-semibold text-[var(--text-primary)]">
+                                {group.emptyTitle}
+                              </p>
+                              <p className="mt-2 text-sm leading-6 text-[var(--text-secondary)]">
+                                {group.emptyDescription}
+                              </p>
+                              {group.key === "unscheduled-ready" ? (
+                                <div className="mt-3 text-sm leading-6 text-[var(--text-secondary)]">
+                                  If work is missing here entirely, confirm
+                                  upstream project readiness first and then
+                                  create the job.
+                                </div>
+                              ) : null}
+                              {group.key === "in-progress" ? (
+                                <div className="mt-3 text-sm leading-6 text-[var(--text-secondary)]">
+                                  Active execution still lives on the same job
+                                  records. Move status forward from the job
+                                  workspace when field work actually starts.
+                                </div>
+                              ) : null}
+                            </div>
+                          )}
+                        </div>
+                      </section>
+                    ))}
+                  </div>
+                )
+              ) : (
+                <div className="px-6 py-8 sm:px-8">
+                  <AppEmptyState
+                    eyebrow={plannerEmptyState.eyebrow}
+                    title={plannerEmptyState.title}
+                    description={plannerEmptyState.description}
+                  />
                 </div>
-              )
-            ) : (
-              <div className="px-6 py-8 sm:px-8">
-                <AppEmptyState
-                  eyebrow={plannerEmptyState.eyebrow}
-                  title={plannerEmptyState.title}
-                  description={plannerEmptyState.description}
-                />
-              </div>
-            )}
+              )}
+            </CrewBoardDragDropLayer>
           </section>
 
           {resolvedSearchParams.error ? (
