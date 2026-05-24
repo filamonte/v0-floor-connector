@@ -130,6 +130,12 @@ Current operating-core surfaces include:
   that fills the existing `Move schedule` confirmation form. Pointer drag/drop,
   packages, schema, routes, server actions, and automatic mutation remain out of
   scope.
+- CrewBoard Phase 3B-A QA is documented in
+  [docs/design/crewboard-phase-3b-a-qa-checkpoint.md](C:/FloorConnector/docs/design/crewboard-phase-3b-a-qa-checkpoint.md).
+  Static QA confirmed no pointer handlers, no drag/drop package, no new
+  schedule write path, URL state guarded by selected-job presence, inert target
+  metadata, and manual `Move schedule` preservation. Protected browser QA
+  remains blocked until local Supabase Auth cooldown clears.
 - Global search hardening for tenant-scoped canonical records.
 
 These layers are summaries, source-record handoffs, copy/hierarchy
