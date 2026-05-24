@@ -10,6 +10,10 @@ This plan defines how FloorConnector should evolve from deterministic workflow g
 
 Current implemented truth remains in [docs/current-state.md](C:/FloorConnector/docs/current-state.md). This document is planning and does not authorize schema, provider, automation, billing, signature, payment, portal-access, readiness-gate, or lifecycle behavior changes.
 
+Ownership note: this document owns the deterministic-guidance-to-assisted-system
+bridge. [docs/agentic-operations-layer.md](C:/FloorConnector/docs/agentic-operations-layer.md)
+owns the umbrella long-term agentic strategy and governance model.
+
 Canonical lifecycle:
 
 `opportunity -> customer -> project -> estimate -> contract -> change order -> job -> invoice -> payment`

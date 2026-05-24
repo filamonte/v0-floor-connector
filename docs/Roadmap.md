@@ -5,7 +5,7 @@ Doc Type: Roadmap
 
 This roadmap frames FloorConnector around platform maturity, not early startup build timing. It is sequencing guidance only.
 
-For implemented truth, use [docs/current-state.md](C:/FloorConnector/docs/current-state.md). For concise maturity status, use [docs/platform-maturity.md](C:/FloorConnector/docs/platform-maturity.md), [docs/module-status.md](C:/FloorConnector/docs/module-status.md), and [docs/known-gaps.md](C:/FloorConnector/docs/known-gaps.md). For strategic sequencing, use [docs/platform-build-registry.md](C:/FloorConnector/docs/platform-build-registry.md) and [docs/platform-maturity-model.md](C:/FloorConnector/docs/platform-maturity-model.md). For strategic layer doctrine, use [docs/communications-layer.md](C:/FloorConnector/docs/communications-layer.md), [docs/reporting-and-metrics.md](C:/FloorConnector/docs/reporting-and-metrics.md), [docs/automation-layer.md](C:/FloorConnector/docs/automation-layer.md), and [docs/intelligence-layer.md](C:/FloorConnector/docs/intelligence-layer.md).
+For implemented truth, use [docs/current-state.md](C:/FloorConnector/docs/current-state.md). For concise maturity status, use [docs/platform-maturity.md](C:/FloorConnector/docs/platform-maturity.md), [docs/module-status.md](C:/FloorConnector/docs/module-status.md), and [docs/known-gaps.md](C:/FloorConnector/docs/known-gaps.md). For strategic sequencing, use [docs/platform-build-registry.md](C:/FloorConnector/docs/platform-build-registry.md) and [docs/platform-maturity-model.md](C:/FloorConnector/docs/platform-maturity-model.md). For strategic layer doctrine, use [docs/communications-layer.md](C:/FloorConnector/docs/communications-layer.md), [docs/reporting-and-metrics.md](C:/FloorConnector/docs/reporting-and-metrics.md), [docs/automation-layer.md](C:/FloorConnector/docs/automation-layer.md), [docs/intelligence-layer.md](C:/FloorConnector/docs/intelligence-layer.md), and [docs/agentic-operations-layer.md](C:/FloorConnector/docs/agentic-operations-layer.md).
 
 ## Roadmap Principles
 
@@ -27,14 +27,14 @@ For implemented truth, use [docs/current-state.md](C:/FloorConnector/docs/curren
 
 Current recommended build-order discipline:
 
-| Tier   | Focus                             |
-| ------ | --------------------------------- |
-| Tier 1 | Operational Core Completion       |
-| Tier 2 | Scheduling And Communications     |
-| Tier 3 | Reporting And Workflow Automation |
-| Tier 4 | Intelligence Layer                |
-| Tier 5 | Predictive AI                     |
-| Tier 6 | Ecosystem And Marketplace         |
+| Tier   | Focus                                         |
+| ------ | --------------------------------------------- |
+| Tier 1 | Operational Core Completion                   |
+| Tier 2 | Scheduling And Communications                 |
+| Tier 3 | Reporting And Workflow Automation             |
+| Tier 4 | Intelligence Layer                            |
+| Tier 5 | Predictive AI And Agentic Assistance          |
+| Tier 6 | Governed Autonomy, Ecosystem, And Marketplace |
 
 Use [docs/platform-build-registry.md](C:/FloorConnector/docs/platform-build-registry.md) as the living strategic coordination map for major planned systems, priorities, dependencies, maturity, status, and rationale. Use [docs/platform-maturity-model.md](C:/FloorConnector/docs/platform-maturity-model.md) to prevent foundation-level systems from being treated as ready for intelligence, predictive, or autonomous behavior too early.
 
@@ -263,7 +263,33 @@ This is not a separate reporting module. Intelligence must derive from the same 
 
 Do not add a separate BI source of truth, duplicate metric-entry workflow, AI-only data chain, or cross-tenant benchmarking behavior before opt-in, aggregation, authorization, and privacy rules are designed.
 
-## 8. Ecosystem And Marketplace Expansion
+## 8. Agentic Operations Layer
+
+Current status: Target strategic direction only. Full autonomous or agentic AI
+operations are not implemented.
+
+Strategic reference: [docs/agentic-operations-layer.md](C:/FloorConnector/docs/agentic-operations-layer.md).
+
+Agentic operations is a later-stage roadmap direction after operational core,
+scheduling, communications, automation, reporting, and integration foundations
+are mature enough to support governed action. Initial AI should begin as
+guidance, drafting, summarization, explanation, and recommendation around
+canonical evidence. AI-assisted actions should require human approval before
+they affect customer communications, pricing, contracts, billing, payments,
+scheduling, permissions, legal state, or compliance.
+
+Long-term governed autonomy may eventually coordinate intake, scheduling,
+communications, collections, field documentation, reporting, and admin work,
+but only through canonical records, server-owned actions, permissions,
+workflow state, events, and audit logs.
+
+AI must not become a disconnected chatbot, AI-only CRM, second workflow engine,
+payment replacement, accounting replacement, or separate operational memory
+store. It must extend the same lifecycle:
+
+`opportunity -> customer -> project -> estimate -> contract -> change order -> job -> invoice -> payment`
+
+## 9. Ecosystem And Marketplace Expansion
 
 Current status: Planned / Deferred.
 

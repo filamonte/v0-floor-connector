@@ -15,6 +15,7 @@ Related documents:
 - [docs/reporting-and-metrics.md](C:/FloorConnector/docs/reporting-and-metrics.md): canonical reporting and metrics strategy
 - [docs/automation-layer.md](C:/FloorConnector/docs/automation-layer.md): future automation strategy
 - [docs/intelligence-layer.md](C:/FloorConnector/docs/intelligence-layer.md): future intelligence strategy
+- [docs/agentic-operations-layer.md](C:/FloorConnector/docs/agentic-operations-layer.md): future governed AI operating-layer strategy
 - [docs/build-sequence.md](C:/FloorConnector/docs/build-sequence.md): practical build-order guidance
 
 ## Stage Model
@@ -38,6 +39,8 @@ canonical projects and jobs.
 The maturity model prevents:
 
 - building AI before the workflow evidence is reliable
+- treating agentic operations as ready before action, approval, and audit
+  governance are mature
 - building ecosystem or marketplace behavior before permissions and ownership are mature
 - confusing foundation-level routes with production-complete workflows
 - scattering feature ideas across disconnected docs and chats

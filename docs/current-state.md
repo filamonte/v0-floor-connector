@@ -58,6 +58,14 @@ Current canonical lifecycle:
 
 Implemented surfaces may still use lead or intake language where the UI is describing pre-sale work, but implementation status and data-model language should preserve the canonical `opportunity` record and avoid duplicate lead/customer/project models.
 
+Agentic operations note: full autonomous or agentic AI operations are not
+implemented. The current branch may include deterministic guidance,
+readiness/cue foundations, and review-first planning or memory surfaces where
+this document explicitly records them, but those are not full agentic AI. Future
+AI work must preserve canonical records, tenant boundaries, permissions,
+workflow state, communications, events, and audit/governance controls. The
+strategic target direction lives in [docs/agentic-operations-layer.md](C:/FloorConnector/docs/agentic-operations-layer.md).
+
 ## Repository Shape
 
 - Monorepo managed with `pnpm` and `turbo`

@@ -15,6 +15,7 @@ Related documents:
 - [docs/reporting-and-metrics.md](C:/FloorConnector/docs/reporting-and-metrics.md): canonical reporting and metrics strategy
 - [docs/automation-layer.md](C:/FloorConnector/docs/automation-layer.md): future automation strategy
 - [docs/intelligence-layer.md](C:/FloorConnector/docs/intelligence-layer.md): future intelligence strategy
+- [docs/agentic-operations-layer.md](C:/FloorConnector/docs/agentic-operations-layer.md): future governed AI operating-layer strategy
 - [docs/build-sequence.md](C:/FloorConnector/docs/build-sequence.md): practical near-term build-order rules
 - [docs/future-feature-coverage-map.md](C:/FloorConnector/docs/future-feature-coverage-map.md): broad feature coverage map
 
@@ -49,6 +50,7 @@ Related documents:
 | Reporting and Metrics Layer                | High     | Canonical records, financial lineage, schedule/job state, deterministic cues                                        | Foundation / planned depth    | Trusted operational intelligence requires explainable metrics before broad dashboards, benchmarking, forecasting, or automation.                                                  |
 | Automation Layer                           | High     | Deterministic cues, work items, notifications, approval gates, canonical metrics                                    | Foundation / planned depth    | Automation should reinforce canonical workflows with human review before provider-backed, predictive, or autonomous actions.                                                      |
 | Intelligence Layer                         | High     | Reporting maturity, communications continuity, operational telemetry, privacy governance                            | Planned                       | This is the future operational intelligence system: contractor intelligence, opt-in network benchmarks, and later predictive guidance.                                            |
+| Agentic Operations Layer                   | Later    | Operational core maturity, communications continuity, reporting, deterministic automation, action/audit governance  | Target direction              | Governed AI agents should operate through canonical records, permissions, server-owned actions, events, and audit trails only after the foundations can support them.             |
 | Portal maturity                            | High     | Shared portal records, permissions, delivery proof, customer-safe actions                                           | Foundation / planned depth    | The portal must remain a customer-facing surface over shared canonical records, not a separate customer system.                                                                   |
 | Materials and catalog depth                | High     | Catalog items, system templates, estimate/invoice lineage, inventory foundations                                    | Foundation / planned depth    | Specialty contractors need pricing, production, materials, and system logic to flow into estimates, jobs, invoices, and closeout.                                                 |
 | Business documents source                  | Medium   | Shared templates, documents bucket, signature architecture, canonical record subjects                               | Planned / partial foundations | Estimates, contracts, invoices, warranties, work orders, and SOW output should share governed template/document behavior.                                                         |
@@ -72,7 +74,9 @@ The near-term leverage remains:
 6. Portal maturity.
 7. Intelligence Layer.
 
-Avoid jumping ahead into marketplace behavior, advanced AI agents, giant integration ecosystems, or overexpanded modules before the current operational chain is trustworthy enough to support them.
+Avoid jumping ahead into marketplace behavior, agentic operations, advanced AI
+agents, giant integration ecosystems, or overexpanded modules before the
+current operational chain is trustworthy enough to support them.
 
 ## Updating The Registry
 

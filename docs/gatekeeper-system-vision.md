@@ -17,6 +17,11 @@ Use this with:
 - [docs/calendar-and-scheduling-intelligence.md](C:/FloorConnector/docs/calendar-and-scheduling-intelligence.md)
 - [docs/gatekeeper-controlled-action-bridge.md](C:/FloorConnector/docs/gatekeeper-controlled-action-bridge.md)
 
+Ownership note: GateKeeper docs own operational memory, source-adapter,
+review-queue, and controlled-action bridge doctrine. For the umbrella long-term
+agentic AI strategy, see
+[docs/agentic-operations-layer.md](C:/FloorConnector/docs/agentic-operations-layer.md).
+
 ## 1. GateKeeper Vision
 
 GateKeeper is not a standalone chatbot, AI receptionist, or assistant tab. It is the planned system layer that helps FloorConnector remember, interpret, and reinforce operational work across the contractor lifecycle.

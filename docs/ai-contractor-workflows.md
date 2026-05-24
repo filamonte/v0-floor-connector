@@ -10,6 +10,10 @@ Use this with:
 - [docs/communications-and-ai-intake.md](C:/FloorConnector/docs/communications-and-ai-intake.md)
 - [docs/calendar-and-scheduling-intelligence.md](C:/FloorConnector/docs/calendar-and-scheduling-intelligence.md)
 
+Ownership note: this document owns contractor-facing AI workflow examples and
+guardrails. [docs/agentic-operations-layer.md](C:/FloorConnector/docs/agentic-operations-layer.md)
+owns the umbrella long-term agentic strategy.
+
 ## Principle
 
 Contractor AI should help the contractor operate the existing FloorConnector system. It should not become a second CRM, estimator, calendar, inbox, project system, or billing system.

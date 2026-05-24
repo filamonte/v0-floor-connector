@@ -337,6 +337,22 @@ This stage should support:
 - retainage-aware and future progress-billing-aware financial behavior
 - closeout evidence, selected finish/spec references, warranty context, and payment-request delivery proof tied back to canonical records
 
+## Future Agentic Operations Extension
+
+The future Agentic Operations Layer may assist the sales-to-production path by
+preparing intake summaries, qualification questions, onsite visit options,
+estimate drafts, payment follow-up, scheduling coordination, customer replies,
+and field/admin documentation.
+
+All AI assistance must preserve the single shared record flow:
+
+`opportunity -> customer -> project -> estimate -> contract -> change order -> job -> invoice -> payment`
+
+AI can reduce admin labor by summarizing, drafting, recommending, and preparing
+reviewable actions. It must not introduce duplicate operational records,
+AI-only leads, AI-only customer/project/invoice/payment truth, disconnected
+assistant memory, or customer-facing commitments outside approved workflows.
+
 ## Shared Files, Delivery Proof, And Activity Memory
 
 This is target architecture only.

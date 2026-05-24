@@ -11,6 +11,10 @@ Related focused docs:
 - [docs/calendar-and-scheduling-intelligence.md](C:/FloorConnector/docs/calendar-and-scheduling-intelligence.md): calendar, scheduling, resource, and external calendar integration direction
 - [docs/ai-marketing-and-onboarding.md](C:/FloorConnector/docs/ai-marketing-and-onboarding.md): FloorConnector-facing marketing, sales, onboarding, activation, and support AI direction
 
+Ownership note: this document describes broad AI-assisted operating-system
+planning. [docs/agentic-operations-layer.md](C:/FloorConnector/docs/agentic-operations-layer.md)
+owns the umbrella long-term agentic strategy and governance posture.
+
 ## Core Principle
 
 AI is an operating layer, not a parallel system.

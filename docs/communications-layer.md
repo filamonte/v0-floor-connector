@@ -12,6 +12,7 @@ Related documents:
 - [docs/automation-layer.md](C:/FloorConnector/docs/automation-layer.md): future workflow automation philosophy
 - [docs/reporting-and-metrics.md](C:/FloorConnector/docs/reporting-and-metrics.md): canonical metric philosophy
 - [docs/intelligence-layer.md](C:/FloorConnector/docs/intelligence-layer.md): future operational intelligence strategy
+- [docs/agentic-operations-layer.md](C:/FloorConnector/docs/agentic-operations-layer.md): future governed AI operating-layer strategy
 - [docs/gatekeeper-system-vision.md](C:/FloorConnector/docs/gatekeeper-system-vision.md): future operational memory and communications doctrine
 - [docs/communications-and-ai-intake.md](C:/FloorConnector/docs/communications-and-ai-intake.md): broader communications and intake direction
 
@@ -22,6 +23,17 @@ Communications should be workflow-connected, project-connected, canonical-record
 FloorConnector should not become a disconnected inbox, chat application, or Slack clone. Messages, notifications, approvals, reminders, portal interactions, and customer replies should attach to the same operational chain that runs the contractor business:
 
 `opportunity -> customer -> project -> estimate -> contract -> change order -> job -> invoice -> payment`
+
+## Communications And Agentic AI
+
+Communications are canonical operational infrastructure. Future AI assistance
+and agentic operations should use this substrate rather than separate message
+stores, assistant-only inboxes, or provider-owned communication truth.
+
+Inbound and outbound messages should attach to customers, projects,
+opportunities, appointments, invoices, jobs, payments, or other canonical
+records where appropriate, and they should remain visible, permissioned, and
+auditable in record context.
 
 ## Workflow-Connected Communication
 
@@ -167,6 +179,11 @@ Communication intelligence may later help with:
 - preparing approval-ready action suggestions
 
 This intelligence should come after canonical communication context is reliable. AI summaries and classifications are assistance, not source-of-truth communication records.
+
+Future agentic operations depend on this communications layer. AI should use
+canonical communication history as evidence and action context; it should not
+keep separate message stores, provider-owned inbox truth, or AI-only
+communication memory.
 
 ## Communication Governance
 

@@ -70,6 +70,14 @@ Future public acquisition can also extend the front of this lifecycle. The inten
 
 Contractor-owned websites, tenant-owned domains, landing pages, SEO/service/location pages, public forms, website AI intake, campaign/source attribution, reviews/testimonials, before/after galleries, portals, communications, and operational workflows should all reinforce that same graph. They are not separate systems and should not introduce duplicate lead, customer, contact, project, website, portal, marketing, or AI knowledge models.
 
+Future Agentic Operations Layer note: AI may eventually participate in workflow
+stages as an observer, recommender, drafter, or approved action participant. AI
+must act through canonical transitions, readiness gates, permissions, and audit
+controls. It must never skip project readiness, contract signature, invoice or
+payment controls, tenant isolation, or event/audit requirements. AI suggestions
+and approved AI-prepared actions should be treated as workflow participants, not
+as separate workflows. See [docs/agentic-operations-layer.md](C:/FloorConnector/docs/agentic-operations-layer.md).
+
 ## Canonical Records Vs Supporting Workflow Stages
 
 Canonical system records:

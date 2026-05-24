@@ -354,6 +354,23 @@ Target IA direction:
 
 Risky AI-prepared actions should require human approval before they affect customer communications, pricing, contracts, billing, scheduling commitments, permissions, or compliance.
 
+Future Agentic Operations IA guidance:
+
+- Settings should eventually include AI and automation controls, including
+  organization-level enablement, approval thresholds, mode controls, and
+  per-category assistance toggles.
+- Communications and Dashboard may surface AI activity, suggestions, evidence,
+  and approvals where they help teams triage work.
+- Project Workspace should be the main home for project-specific AI
+  recommendations, summaries, and action history.
+- Do not add a top-level "AI app" that competes with Projects,
+  Communications, Financials, Field, or Settings unless future product
+  decisions explicitly justify it.
+- AI should appear contextually inside existing work areas and route users back
+  to canonical workspaces and approved actions.
+
+See [docs/agentic-operations-layer.md](C:/FloorConnector/docs/agentic-operations-layer.md) for the future operating-layer doctrine.
+
 ## Settings
 
 Settings should be the organization administration area.

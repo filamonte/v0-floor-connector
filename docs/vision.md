@@ -16,6 +16,7 @@ Related documents:
 - [docs/reporting-and-metrics.md](C:/FloorConnector/docs/reporting-and-metrics.md): canonical reporting and metrics philosophy
 - [docs/automation-layer.md](C:/FloorConnector/docs/automation-layer.md): future workflow automation philosophy
 - [docs/intelligence-layer.md](C:/FloorConnector/docs/intelligence-layer.md): future operational intelligence strategy
+- [docs/agentic-operations-layer.md](C:/FloorConnector/docs/agentic-operations-layer.md): future governed AI operating-layer strategy
 - [docs/platform-build-registry.md](C:/FloorConnector/docs/platform-build-registry.md): strategic build-priority registry
 - [docs/platform-maturity-model.md](C:/FloorConnector/docs/platform-maturity-model.md): staged build discipline
 - [docs/gatekeeper-system-vision.md](C:/FloorConnector/docs/gatekeeper-system-vision.md): GateKeeper operational intelligence and communications doctrine
@@ -325,6 +326,25 @@ Detailed planning lives in:
 - [docs/ai-marketing-and-onboarding.md](C:/FloorConnector/docs/ai-marketing-and-onboarding.md)
 
 These are target direction docs. They do not mean AI chat, AI receptionist, external calendar sync, or broad AI workflow execution is currently implemented.
+
+### 13. Agentic Operations Layer
+
+The long-term platform direction is AI-native operations over the same
+contractor operating system. The future Agentic Operations Layer should allow AI
+assistance to observe, recommend, draft, and eventually coordinate approved work
+through the canonical lifecycle:
+
+`opportunity -> customer -> project -> estimate -> contract -> change order -> job -> invoice -> payment`
+
+This layer is not implemented today. It is a target direction for governed AI
+that strengthens operational, financial, communication, field, reporting, and
+admin workflows without fragmenting them.
+
+The durable rule is that AI must operate through shared records, permissions,
+server-owned actions, workflow state, communications, and audit logs. It should
+not become a separate chatbot, CRM, scheduler, inbox, payment tool, workflow
+engine, or assistant memory store that owns business truth. Detailed doctrine
+lives in [docs/agentic-operations-layer.md](C:/FloorConnector/docs/agentic-operations-layer.md).
 
 ## How The Platform Expands Beyond Today
 

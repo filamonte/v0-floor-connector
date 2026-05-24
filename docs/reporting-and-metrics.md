@@ -12,6 +12,7 @@ Implemented note: Reporting Phase 1 now exists on `/reports` as a read-only oper
 Related documents:
 
 - [docs/intelligence-layer.md](C:/FloorConnector/docs/intelligence-layer.md): future operational intelligence strategy
+- [docs/agentic-operations-layer.md](C:/FloorConnector/docs/agentic-operations-layer.md): future governed AI operating-layer strategy
 - [docs/automation-layer.md](C:/FloorConnector/docs/automation-layer.md): future workflow automation philosophy
 - [docs/communications-layer.md](C:/FloorConnector/docs/communications-layer.md): future workflow-connected communication philosophy
 - [docs/financial-architecture.md](C:/FloorConnector/docs/financial-architecture.md): financial record and event guardrails
@@ -228,6 +229,10 @@ Future intelligence may use metrics to support:
 - anonymized industry reporting
 
 These outputs should be explainable and advisory until the related automation policy is approved.
+
+Future agentic operations should use reporting and metrics as explainable
+evidence, not as hidden business truth. AI recommendations, approvals, and any
+later autonomy must be traceable back to canonical records and workflow events.
 
 ## Reporting Governance
 

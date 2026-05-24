@@ -12,6 +12,7 @@ Related documents:
 - [docs/communications-layer.md](C:/FloorConnector/docs/communications-layer.md): future workflow-connected communication philosophy
 - [docs/reporting-and-metrics.md](C:/FloorConnector/docs/reporting-and-metrics.md): canonical metric philosophy
 - [docs/intelligence-layer.md](C:/FloorConnector/docs/intelligence-layer.md): future operational intelligence strategy
+- [docs/agentic-operations-layer.md](C:/FloorConnector/docs/agentic-operations-layer.md): future governed agentic AI operating-layer strategy
 - [docs/Roadmap.md](C:/FloorConnector/docs/Roadmap.md): platform maturity sequencing
 - [docs/ai/README.md](C:/FloorConnector/docs/ai/README.md): AI-readable boundaries
 
@@ -26,6 +27,18 @@ The canonical lifecycle remains:
 `opportunity -> customer -> project -> estimate -> contract -> change order -> job -> invoice -> payment`
 
 Automation must reinforce project continuity, operational readiness, workflow progression, communications continuity, and financial integrity.
+
+## Automation Vs Agentic AI
+
+Automation in this document means deterministic, rule/workflow-based behavior:
+triggers, reminders, queues, server-owned actions, eligibility checks, and
+readiness-driven operational follow-up. It is not the same thing as autonomous
+or agentic AI.
+
+This layer is a prerequisite and bridge for later agentic operations because it
+can produce reliable actions and audit-friendly events that future AI may
+recommend or invoke under governance. It must continue to preserve canonical
+records, permissions, tenant boundaries, and auditability.
 
 ## Why Automation Matters
 
@@ -166,6 +179,12 @@ AI may eventually coordinate:
 - approval queue preparation
 
 AI orchestration must route accepted actions through canonical FloorConnector workflows. It must not own a separate workflow graph, lead list, communication log, calendar, billing state, project memory, or task system.
+
+The later Agentic Operations Layer should be treated as governed automation
+plus intelligence over canonical actions, permissions, and audit trails. It is
+not permission to create autonomous agents before communications, reporting,
+deterministic automation, approval queues, and operational core maturity are
+ready.
 
 ## What FloorConnector Avoids
 

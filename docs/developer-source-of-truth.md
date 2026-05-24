@@ -157,6 +157,7 @@ Future public acquisition, contractor websites, marketing attribution, AI, commu
 
 Planning docs:
 
+- [docs/agentic-operations-layer.md](C:/FloorConnector/docs/agentic-operations-layer.md)
 - [docs/ai-assisted-operating-system.md](C:/FloorConnector/docs/ai-assisted-operating-system.md)
 - [docs/ai-contractor-workflows.md](C:/FloorConnector/docs/ai-contractor-workflows.md)
 - [docs/communications-and-ai-intake.md](C:/FloorConnector/docs/communications-and-ai-intake.md)
@@ -164,6 +165,19 @@ Planning docs:
 - [docs/ai-marketing-and-onboarding.md](C:/FloorConnector/docs/ai-marketing-and-onboarding.md)
 
 These are target direction only unless [docs/current-state.md](C:/FloorConnector/docs/current-state.md) says a capability is implemented.
+
+## FUTURE AGENTIC OPERATIONS GUARDRAILS
+
+Future AI and agentic features must operate through canonical records,
+server-owned actions, permissions, workflow state, communications, events, and
+audit logs.
+
+Do not build AI-only models, detached assistant stores, private project memory,
+parallel workflows, or disconnected automation layers for business truth.
+
+Do not describe agentic AI as implemented unless
+[docs/current-state.md](C:/FloorConnector/docs/current-state.md) explicitly says
+the current branch implements that capability.
 
 ---
 

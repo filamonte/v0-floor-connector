@@ -396,6 +396,22 @@ Payment workflow extends the billing chain through:
 
 There is no separate checkout-payment model and no separate portal billing model.
 
+### Future Agentic Operations Layer
+
+FloorConnector's shared-record architecture makes future AI orchestration
+possible, but the layer is future direction rather than current-state truth.
+The future Agentic Operations Layer should act through the same canonical
+system humans use: records, permissions, server-owned actions, workflow state,
+communications, events, and audit logs.
+
+AI should be able to observe, recommend, draft, summarize, and eventually
+prepare approved actions across intake, scheduling, communications, billing,
+field, reporting, and admin workflows. It must not operate beside the product
+as a detached chatbot, second CRM, second scheduler, second payment system, or
+private assistant memory store.
+
+Detailed doctrine lives in [docs/agentic-operations-layer.md](C:/FloorConnector/docs/agentic-operations-layer.md).
+
 ## Section 5 -- What Is Not Built Yet
 
 The right way to describe the current product is not "unfinished in general." The operating backbone is implemented: the shared commercial, contract, billing, payment, portal, workforce, and field-execution chain is real. The remaining items below are intentionally not yet built or are only partially implemented as later-depth layers.
