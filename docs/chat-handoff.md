@@ -149,6 +149,14 @@ Current operating-core surfaces include:
   prepare existing Move schedule URL state when dropped on date or time-bucket
   targets. Drop does not save; the existing Move schedule confirmation and
   server-side Ready Check / GateKeeper path remain authoritative.
+- CrewBoard Phase 3B-B QA is documented in
+  [docs/design/crewboard-phase-3b-b-qa-checkpoint.md](C:/FloorConnector/docs/design/crewboard-phase-3b-b-qa-checkpoint.md).
+  Static QA confirmed no drag/drop server action calls, no schedule mutation on
+  drop, no package sprawl beyond `@dnd-kit/core`, and preserved manual Move
+  schedule fallback. Browser smoke loaded `/schedule` on desktop and mobile with
+  saved contractor auth and no horizontal overflow, but did not claim full drag
+  execution because the loaded data/layout lacked both a visible draggable card
+  and visible drop target pair.
 - Global search hardening for tenant-scoped canonical records.
 
 These layers are summaries, source-record handoffs, copy/hierarchy
