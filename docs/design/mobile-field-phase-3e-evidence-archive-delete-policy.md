@@ -6,13 +6,14 @@ Date: 2026-05-24
 
 ## Purpose
 
-Define the archive/delete policy for contractor-side field evidence before any
-implementation work begins.
+Define the archive/delete policy for contractor-side field evidence and record
+the Phase 3E-A metadata-only implementation boundary.
 
-This is a planning pass only. It does not implement archive/delete behavior,
-change schema, add migrations, change storage policies, delete objects, add UI
-controls, alter signed URL behavior, expose field evidence to portal/customer
-users, add thumbnails, add AI summaries, or add notifications/automation.
+The original planning pass recommended metadata archive first, storage
+hard-delete later. The implemented Phase 3E-A slice adds metadata archive and
+restore only. It still does not change storage policies, delete objects,
+implement hard-delete, alter portal/customer visibility, add thumbnails, add AI
+summaries, or add notifications/automation.
 
 The recommendation is metadata archive first, storage hard-delete later. In
 contractor terms: hide bad or duplicate evidence without shredding the receipt.
@@ -372,12 +373,13 @@ delete.
 
 ## What Is Intentionally Not Implemented Yet
 
-- No archive/delete app code.
-- No schema or migration.
+- No hard-delete app code.
+- No delete metadata fields.
 - No storage policy change.
 - No storage object deletion.
-- No signed URL behavior change.
-- No UI controls.
+- No signed URL access for archived evidence in normal active rows.
+- No archive/restore controls outside the contractor-side Daily Log detail
+  surface.
 - No portal/customer exposure.
 - No thumbnails.
 - No AI summaries.
