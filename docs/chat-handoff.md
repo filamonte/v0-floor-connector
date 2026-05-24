@@ -136,6 +136,12 @@ Current operating-core surfaces include:
   schedule write path, URL state guarded by selected-job presence, inert target
   metadata, and manual `Move schedule` preservation. Protected browser QA
   remains blocked until local Supabase Auth cooldown clears.
+- CrewBoard Phase 3B-B pre-implementation readiness is documented in
+  [docs/design/crewboard-phase-3b-b-pointer-drag-drop-checklist.md](C:/FloorConnector/docs/design/crewboard-phase-3b-b-pointer-drag-drop-checklist.md).
+  Recommendation: install `@dnd-kit/core` only when actual pointer drag/drop is
+  approved, then use it only to prepare the existing `Move schedule`
+  confirmation flow from a drop. Do not mutate on drop, add schedule records,
+  add server actions, or make drag/drop required on mobile.
 - Global search hardening for tenant-scoped canonical records.
 
 These layers are summaries, source-record handoffs, copy/hierarchy
@@ -223,12 +229,11 @@ Good next moves:
   [docs/design/next-build-priority-checkpoint.md](C:/FloorConnector/docs/design/next-build-priority-checkpoint.md)
   to decide between product momentum, demo/staging credibility, and mobile field
   stickiness.
-- If continuing CrewBoard, continue from the Phase 3A QA checkpoint and
-  [docs/design/crewboard-phase-3a-confirmed-schedule-move.md](C:/FloorConnector/docs/design/crewboard-phase-3a-confirmed-schedule-move.md)
-  plus the Phase 3B technical spike. The next safest implementation slice is
-  proposed-move/drop-target state with no package; actual pointer drag/drop can
-  follow with `@dnd-kit/core` only after approval and still saves through
-  confirmation.
+- If continuing CrewBoard, continue from the Phase 3B-B checklist:
+  [docs/design/crewboard-phase-3b-b-pointer-drag-drop-checklist.md](C:/FloorConnector/docs/design/crewboard-phase-3b-b-pointer-drag-drop-checklist.md).
+  The next implementation slice may install `@dnd-kit/core` only if approved,
+  must create proposed move state only on drop, and must still save through the
+  existing `Move schedule` confirmation flow.
 - For the broader drag/drop plan, use
   [docs/design/crewboard-phase-3-drag-drop-dispatch-spec.md](C:/FloorConnector/docs/design/crewboard-phase-3-drag-drop-dispatch-spec.md)
   as the scope boundary.

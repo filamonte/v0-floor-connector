@@ -111,6 +111,10 @@ High-signal operating-core docs:
   QA checkpoint for CrewBoard proposed-move helpers, URL-backed prepared move
   state, inert target metadata, manual flow preservation, and auth-limited
   browser QA
+- [docs/design/crewboard-phase-3b-b-pointer-drag-drop-checklist.md](C:/FloorConnector/docs/design/crewboard-phase-3b-b-pointer-drag-drop-checklist.md):
+  final pre-implementation checklist for approved future pointer drag/drop,
+  recommending `@dnd-kit/core` only for the implementation slice while keeping
+  Move schedule confirmation as the write boundary
 - [docs/design/fieldtrail-phase-1-project-execution-timeline.md](C:/FloorConnector/docs/design/fieldtrail-phase-1-project-execution-timeline.md):
   FieldTrail over existing field records
 - [docs/design/mobile-field-phase-1-fast-daily-job-log-capture.md](C:/FloorConnector/docs/design/mobile-field-phase-1-fast-daily-job-log-capture.md)
