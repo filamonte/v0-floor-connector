@@ -187,15 +187,27 @@ Recent staging/demo work is docs-first and no-write:
 <customer@example.test> --environment staging` runs the Phase 1 dry-run-only
   planner. It validates explicit inputs and prints planned dataset groups,
   idempotency notes, provider safety, portal safety, and future route checks.
-  It does not import Supabase clients, read `.env.local`, write data, call
-  providers, create auth users, create payment/signature/email events, or print
-  portal invite tokens.
+  The dry-run path does not create a Supabase client, read `.env.local`, write
+  data, call providers, create auth users, create payment/signature/email
+  events, or print portal invite tokens.
 - [docs/demo/staging-demo-seed-write-mode-design.md](C:/FloorConnector/docs/demo/staging-demo-seed-write-mode-design.md)
   defines the owner gates, future script modes, write-mode refusal rules,
   idempotency strategy, provider-dark policy, portal token policy, post-write
-  validation plan, and cleanup boundary. The recommended next implementation is
-  `Staging Demo Seed Phase 2A - Validate Target Read Only`; actual write mode
-  remains deferred until after that read-only target check succeeds.
+  validation plan, and cleanup boundary.
+- `pnpm demo:data:seed:validate-target -- --supabase-url <staging-supabase-url>
+--service-role-key-env SUPABASE_SERVICE_ROLE_KEY --organization-id <uuid>
+--owner-user-id <uuid> --owner-email <owner@example.test>
+--portal-customer-email <customer@example.test> --environment staging` runs the
+  Phase 2A read-only target validation. It uses explicit target inputs, hides
+  service-role values, runs select-only checks, and prints passed/warned/failed
+  readiness. It does not write data, seed records, apply migrations, create
+  auth users, create portal invites, create payment/signature/email events, or
+  call providers.
+- [docs/design/staging-demo-seed-phase-2a-qa-checkpoint.md](C:/FloorConnector/docs/design/staging-demo-seed-phase-2a-qa-checkpoint.md)
+  records the Phase 2A QA checkpoint: dry-run remains no-connection/no-write,
+  validate-target remains explicit/read-only, script safety checks found no
+  write verbs or provider/auth-admin paths in the seed script, and write mode
+  remains future owner-approved work.
 
 ## Guardrails
 
@@ -220,6 +232,13 @@ Recent staging/demo work is docs-first and no-write:
 - CrewBoard drag/drop work must stay on canonical jobs and job assignments,
   preserve existing schedule actions, and keep GateKeeper / Ready Check server
   enforcement authoritative.
+- Long-term direction now includes the Agentic Operations Layer documented in
+  [docs/agentic-operations-layer.md](C:/FloorConnector/docs/agentic-operations-layer.md).
+  AI must stay canonical-record-first, permissioned, auditable, and governed by
+  human approval for risky actions. It must not become a parallel CRM,
+  scheduler, inbox, payment system, workflow engine, or assistant memory source
+  of truth. Current priority remains operational core maturity before
+  autonomous AI.
 - Customer portal copy should be simpler and customer-safe; do not expose
   contractor-only FieldTrail, Proof Center, internal blockers, provider
   details, or internal Job Notes as portal capability.
@@ -238,11 +257,11 @@ For current operating-core focused tests and route checks, use
 
 Good next moves:
 
-- If staging/demo is next, implement
-  `Staging Demo Seed Phase 2A - Validate Target Read Only` from
-  [docs/demo/staging-demo-seed-write-mode-design.md](C:/FloorConnector/docs/demo/staging-demo-seed-write-mode-design.md).
-  Keep it read-only: no writes, migrations, auth users, portal invites,
-  provider calls, payment/signature/email events, or schema/workflow changes.
+- If staging/demo is next, have the owner run
+  `pnpm demo:data:seed:validate-target` against the intended staging Supabase
+  target and review warnings before considering any write-mode prompt. Keep
+  write mode deferred until read-only target validation is clean and owner
+  approval is explicit.
 - If continuing Company Documents, use the Phase 1C-A Starter Document Adoption
   prompt from
   [docs/design/company-documents-phase-1c-starter-documents-plan.md](C:/FloorConnector/docs/design/company-documents-phase-1c-starter-documents-plan.md).

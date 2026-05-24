@@ -234,12 +234,18 @@ Demo and staging:
 - [docs/demo/staging-demo-data-plan.md](C:/FloorConnector/docs/demo/staging-demo-data-plan.md):
   canonical demo dataset plan and local-only inventory command
 - [docs/demo/staging-demo-seed-script-spec.md](C:/FloorConnector/docs/demo/staging-demo-seed-script-spec.md):
-  dry-run specification and Phase 1 no-write seed planner command
+  dry-run specification, Phase 1 no-write seed planner command, and Phase 2A
+  read-only target validation command
 - [docs/demo/staging-demo-seed-write-mode-design.md](C:/FloorConnector/docs/demo/staging-demo-seed-write-mode-design.md):
   owner-approved future write-mode gates, refusal rules, idempotency, and
   recommended read-only target validation step
 - [docs/design/staging-demo-seed-phase-1-dry-run-script.md](C:/FloorConnector/docs/design/staging-demo-seed-phase-1-dry-run-script.md):
   implemented dry-run seed planner checkpoint
+- [docs/design/staging-demo-seed-phase-2a-validate-target-read-only.md](C:/FloorConnector/docs/design/staging-demo-seed-phase-2a-validate-target-read-only.md):
+  implemented read-only target validation checkpoint
+- [docs/design/staging-demo-seed-phase-2a-qa-checkpoint.md](C:/FloorConnector/docs/design/staging-demo-seed-phase-2a-qa-checkpoint.md):
+  QA checkpoint for the read-only target validation mode and preserved no-write
+  seed boundaries
 
 ## Validation And QA
 
@@ -284,6 +290,7 @@ implemented:
 - [docs/reporting-and-metrics.md](C:/FloorConnector/docs/reporting-and-metrics.md)
 - [docs/automation-layer.md](C:/FloorConnector/docs/automation-layer.md)
 - [docs/intelligence-layer.md](C:/FloorConnector/docs/intelligence-layer.md)
+- [docs/agentic-operations-layer.md](C:/FloorConnector/docs/agentic-operations-layer.md)
 - [docs/gatekeeper-system-vision.md](C:/FloorConnector/docs/gatekeeper-system-vision.md)
 - [docs/gatekeeper-source-adapters.md](C:/FloorConnector/docs/gatekeeper-source-adapters.md)
 - [docs/gatekeeper-controlled-action-bridge.md](C:/FloorConnector/docs/gatekeeper-controlled-action-bridge.md)
@@ -297,6 +304,31 @@ implemented:
 - [docs/communications-and-ai-intake.md](C:/FloorConnector/docs/communications-and-ai-intake.md)
 - [docs/calendar-and-scheduling-intelligence.md](C:/FloorConnector/docs/calendar-and-scheduling-intelligence.md)
 - [docs/ai-marketing-and-onboarding.md](C:/FloorConnector/docs/ai-marketing-and-onboarding.md)
+- [docs/design/agentic-operations-docs-ownership-checkpoint.md](C:/FloorConnector/docs/design/agentic-operations-docs-ownership-checkpoint.md):
+  checkpoint for the Agentic Operations docs ownership map and guardrails
+
+## AI, Automation, And Agentic Documentation Ownership
+
+Use this map to keep strategic AI direction, implemented truth, deterministic
+automation, and lower-level guidance docs from drifting into competing sources
+of authority.
+
+| Document                                                                                                                                                                      | Owns                                                                                                                              | Does Not Own                                                                   |
+| ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| [docs/agentic-operations-layer.md](C:/FloorConnector/docs/agentic-operations-layer.md)                                                                                        | Long-term strategic AI/agentic direction; canonical-record-first, permissioned, auditable, human-governed future operating layer. | Implemented truth, near-term execution scope, or duplicate AI business models. |
+| [docs/current-state.md](C:/FloorConnector/docs/current-state.md)                                                                                                              | Implemented reality only. It may state that full autonomous/agentic AI is not implemented.                                        | Future strategy, roadmap promises, or target behavior as shipped capability.   |
+| [docs/developer-source-of-truth.md](C:/FloorConnector/docs/developer-source-of-truth.md)                                                                                      | Day-to-day implementation guardrails, including compact AI/agentic safety rules.                                                  | Detailed agent families, long-term AI architecture, or roadmap sequencing.     |
+| [docs/chat-handoff.md](C:/FloorConnector/docs/chat-handoff.md)                                                                                                                | Compact session-start orientation and current guardrails.                                                                         | Full strategic ownership or implementation planning.                           |
+| [docs/automation-layer.md](C:/FloorConnector/docs/automation-layer.md)                                                                                                        | Deterministic workflow automation, triggers, reminders, queues, and readiness-driven operational automation.                      | Autonomous AI strategy or AI-owned workflow truth.                             |
+| [docs/communications-layer.md](C:/FloorConnector/docs/communications-layer.md)                                                                                                | Canonical communication infrastructure and record-linked messaging.                                                               | Separate AI message stores or the full AI strategy.                            |
+| [docs/reporting-and-metrics.md](C:/FloorConnector/docs/reporting-and-metrics.md)                                                                                              | Operational metrics, reporting, and visibility from canonical evidence.                                                           | AI strategy, agent autonomy, or disconnected analytics truth.                  |
+| [docs/workflows.md](C:/FloorConnector/docs/workflows.md)                                                                                                                      | Current and near-term business workflow behavior.                                                                                 | Separate AI workflows outside canonical transitions and readiness gates.       |
+| [docs/workflow-state-machine.md](C:/FloorConnector/docs/workflow-state-machine.md) and [docs/workflow-spec.md](C:/FloorConnector/docs/workflow-spec.md)                       | Deterministic workflow states, transitions, blockers, gates, and guided journey rules.                                            | Agentic strategy or permission to bypass workflow gates.                       |
+| [docs/platform-build-registry.md](C:/FloorConnector/docs/platform-build-registry.md) and [docs/platform-maturity-model.md](C:/FloorConnector/docs/platform-maturity-model.md) | Sequencing, dependency, and maturity framing.                                                                                     | Detailed AI execution design or implemented-status claims.                     |
+| [docs/vision.md](C:/FloorConnector/docs/vision.md)                                                                                                                            | High-level product thesis.                                                                                                        | Detailed agent families, action architecture, or governance requirements.      |
+| [docs/Roadmap.md](C:/FloorConnector/docs/Roadmap.md)                                                                                                                          | Sequencing and staged roadmap posture.                                                                                            | Implemented truth or near-term displacement by agentic autonomy.               |
+| GateKeeper docs                                                                                                                                                               | GateKeeper memory, source-adapter, review, and controlled-action bridge boundaries.                                               | Umbrella AI strategy or autonomous workflow authority.                         |
+| AI-focused workflow docs                                                                                                                                                      | Lower-level AI assistant, guided system, intake, scheduling, onboarding, or follow-up planning.                                   | The umbrella Agentic Operations strategy or current-state truth.               |
 
 ## Feature Planning Reference
 
