@@ -112,6 +112,13 @@ No staging target was identified, and no project details, migrations, or tables
 were queried. The owner must resolve Supabase project visibility before Phase 2A
 target validation can be run against a real staging project.
 
+Field evidence storage readiness depends on the same project visibility. The
+read-only verification in
+[docs/design/supabase-field-evidence-storage-verification.md](C:/FloorConnector/docs/design/supabase-field-evidence-storage-verification.md)
+confirmed the local private `documents` bucket and `execution_attachments`
+boundaries, but remote bucket, policy, migration, and storage schema state could
+not be checked because the connector still returned zero visible projects.
+
 ## 4. Vercel Project / Account Checklist
 
 - Confirm the canonical repository is `filamonte/v0-floor-connector`.
@@ -262,6 +269,10 @@ Before staging demo:
 - Confirm the selected Supabase project is visible through the owner-approved
   account or connector session. The May 24, 2026 connector discovery found no
   visible projects, so project visibility is currently a staging hold point.
+- Confirm the selected Supabase project is visible before relying on remote
+  field evidence storage readiness; the local source is aligned, but remote
+  `documents` bucket, policy, and migration state are not connector-verified
+  while project listing returns zero projects.
 - Review pending local migrations before applying anything remotely.
 - Run remote migration alignment checks only with owner approval.
 - Run RLS/security advisor checks with owner credentials or approved tooling.

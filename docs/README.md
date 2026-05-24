@@ -159,6 +159,11 @@ High-signal operating-core docs:
   QA checkpoint for contractor-only field evidence preview links, signed URL
   boundaries, Daily Log / Job Note parent validation, portal exclusion, and
   remaining real-evidence browser QA follow-up
+- [docs/design/supabase-field-evidence-storage-verification.md](C:/FloorConnector/docs/design/supabase-field-evidence-storage-verification.md):
+  read-only Supabase storage readiness verification for field evidence,
+  confirming local private `documents` bucket and `execution_attachments`
+  boundaries while recording that remote bucket/policy/migration verification
+  is blocked until the intended Supabase project is visible
 - [docs/design/messagecenter-phase-1-project-communication-timeline.md](C:/FloorConnector/docs/design/messagecenter-phase-1-project-communication-timeline.md):
   MessageCenter over communication and proof records
 - [docs/design/projectpulse-phase-1-project-health-summary.md](C:/FloorConnector/docs/design/projectpulse-phase-1-project-health-summary.md):
@@ -272,6 +277,9 @@ Demo and staging:
 - [docs/design/staging-demo-seed-phase-2a-qa-checkpoint.md](C:/FloorConnector/docs/design/staging-demo-seed-phase-2a-qa-checkpoint.md):
   QA checkpoint for the read-only target validation mode and preserved no-write
   seed boundaries
+- [docs/design/supabase-field-evidence-storage-verification.md](C:/FloorConnector/docs/design/supabase-field-evidence-storage-verification.md):
+  read-only storage verification for Mobile Field evidence, with remote
+  Supabase project visibility still unresolved
 
 ## Validation And QA
 

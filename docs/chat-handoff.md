@@ -152,6 +152,13 @@ file` actions without exposing raw storage paths. This remains contractor-only
   no uploaded evidence row to click; repeated direct checks then hit local
   Supabase Auth `over_request_rate_limit`, so real-object preview link QA
   remains a follow-up after auth cooldown.
+- Supabase field evidence storage readiness is documented in
+  [docs/design/supabase-field-evidence-storage-verification.md](C:/FloorConnector/docs/design/supabase-field-evidence-storage-verification.md).
+  The read-only pass pushed `d3dc06e6`, confirmed local private `documents`
+  bucket and `execution_attachments` boundaries, and found one visible Supabase
+  organization, `FloorConnectoor` (`cvkfudwshnfsftnnwrro`), but zero visible
+  projects. Remote bucket, policy, migration, and storage schema state remain
+  unverified until the owner resolves Supabase project visibility.
 - CrewBoard Phase 3 drag/drop dispatch planning is documented in
   [docs/design/crewboard-phase-3-drag-drop-dispatch-spec.md](C:/FloorConnector/docs/design/crewboard-phase-3-drag-drop-dispatch-spec.md).
   The recommended path is confirmation-first: add pure move helpers and
@@ -329,9 +336,10 @@ Good next moves:
   read-only target validation is clean and owner approval is explicit.
 - If continuing Mobile Field, checkpoint Phase 3D-A browser behavior with real
   uploaded field evidence when saved contractor auth and local data are
-  available, then consider preview polish only. Keep thumbnails, archive/delete,
-  portal/customer sharing, and closeout package file embedding as separate
-  approved slices.
+  available, and resolve Supabase project visibility before planning
+  archive/delete or portal-adjacent field evidence behavior. Keep thumbnails,
+  archive/delete, portal/customer sharing, and closeout package file embedding
+  as separate approved slices.
 - If continuing Company Documents, use the Phase 1C-A Starter Document Adoption
   prompt from
   [docs/design/company-documents-phase-1c-starter-documents-plan.md](C:/FloorConnector/docs/design/company-documents-phase-1c-starter-documents-plan.md).
