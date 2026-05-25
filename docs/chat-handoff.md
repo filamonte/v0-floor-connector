@@ -79,6 +79,13 @@ Current operating-core surfaces include:
   handoffs when AI drafting controls allow them. It does not send reminders,
   create threads, create notification events, call providers, or mutate invoice
   or payment state.
+- Product Stack Audit after the AI, scheduling, communications, and collections
+  slices is documented in
+  [docs/operational-intelligence-stack-audit.md](C:/FloorConnector/docs/operational-intelligence-stack-audit.md).
+  The audit found no P0 defects or duplicate intelligence/scheduling/
+  communications/AR models. It records P1 demo-readiness polish around
+  intentional AI control setup, AR mobile containment, Copilot draft visibility,
+  and communications handoff affordance clarity.
 - CrewBoard on `/schedule` over canonical jobs, appointments, job assignments,
   people, vendors, projects, and customers.
 - Portal Customer Window with Customer Next Step, Project Status Window,

@@ -302,8 +302,8 @@ export default async function AccountsReceivablePage() {
           </div>
         </section>
 
-        <section className="grid gap-4 xl:grid-cols-[minmax(0,1.6fr)_minmax(340px,1fr)]">
-          <section className="border border-[#d6d6d6] bg-white">
+        <section className="grid min-w-0 gap-4 xl:grid-cols-[minmax(0,1.6fr)_minmax(340px,1fr)]">
+          <section className="min-w-0 border border-[#d6d6d6] bg-white">
             <div className="border-b border-[#e5e5e5] px-5 py-4">
               <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#666666]">
                 Collections queue
@@ -318,7 +318,7 @@ export default async function AccountsReceivablePage() {
             </div>
 
             {readModel.collectionOpportunities.length > 0 ? (
-              <div className="overflow-x-auto">
+              <div className="w-full max-w-full overflow-x-auto">
                 <table className="min-w-full divide-y divide-slate-200 text-sm">
                   <thead className="bg-[#f8f8f8] text-left text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
                     <tr>
@@ -409,7 +409,7 @@ export default async function AccountsReceivablePage() {
             )}
           </section>
 
-          <section className="space-y-4">
+          <section className="min-w-0 space-y-4">
             <section className="border border-[#d6d6d6] bg-white">
               <div className="border-b border-[#e5e5e5] px-5 py-4">
                 <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#666666]">
