@@ -354,6 +354,12 @@ file` actions without exposing raw storage paths. This remains contractor-only
   read model for its command cards while preserving existing job schedule
   fields, `job_assignments`, advisory warnings, and confirmation-first schedule
   actions.
+- Scheduling Board Depth v2 post-commit smoke on May 25, 2026 loaded
+  `/schedule` on desktop and 390px mobile with saved contractor auth, opened a
+  canonical Job Workspace, opened the linked Project Workspace, and opened the
+  selected schedule action panel with no page errors or horizontal overflow.
+  Local Next dev navigation still logged 404/aborted requests for route chunk
+  files during transitions, but the protected pages rendered successfully.
 - Global search hardening for tenant-scoped canonical records.
 
 These layers are summaries, source-record handoffs, copy/hierarchy
