@@ -181,6 +181,14 @@ surface into canonical project, contract, invoice, job, schedule, and equipment
 workspaces, not a reporting warehouse, BI truth layer, AI memory system, or
 automation runner.
 
+Collections Follow-Up Intelligence is now another Foundation-stage bridge into
+this hierarchy. It derives deterministic AR follow-up categories from canonical
+invoices, payments, and Payment Trail events, then prepares review-first
+Copilot draft handoffs for Accounts Receivable only when AI drafting controls
+allow them. It remains non-mutating and does not send messages, create threads,
+create notification events, call providers, create duplicate billing/payment
+records, or replace financial truth.
+
 The provider-ready slice adds governance without changing that boundary.
 Organization workflow settings can enable or suppress Copilot summaries, draft
 actions, dashboard digest visibility, and future provider-backed enhancement.

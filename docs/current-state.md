@@ -93,6 +93,17 @@ auto-create new communication threads. It adds no schema, migrations, provider
 calls, persisted AI records, chatbot memory, autonomous workflow execution,
 customer-facing send behavior, financial mutation, signature mutation,
 scheduling mutation, or portal-specific AI copies.
+Accounts Receivable now also uses a deterministic Collections Follow-Up
+Intelligence helper over canonical invoices, payments, and Payment Trail events
+to categorize overdue invoices, unpaid deposits, sent-unpaid balances,
+partially paid balances, checkout/payment-in-progress signals, failed/voided
+payment attempts, and internal-review cases. The `/financials/accounts-receivable`
+workspace shows those items with invoice/project/customer links, amount due,
+payment state, reason, recommended next step, and review-first Copilot draft
+handoffs when AI drafting controls allow them. These drafts use the existing
+communications composer handoff; they do not send reminders, create
+communication threads, create notification events, mutate invoices/payments, add
+provider calls, or create duplicate billing/payment records.
 The dashboard now also includes a compact AI Operational Digest panel derived
 from existing dashboard/project signals, operational cockpit previews, Ready
 Check handoffs, contracts, invoices, jobs, equipment readiness, and project
@@ -876,11 +887,12 @@ Implemented now:
     and Payment Trail attention
   - collection-opportunity links into canonical Invoice Workspaces
 - `/financials/accounts-receivable` is now a read-only AR workspace over canonical invoices, payments, and immutable payment events, with aging buckets, collection queues, invoice-level Next Move labels, project links, pending checkout visibility, and failed/voided/in-progress Payment Trail review
+- Collections Follow-Up Intelligence now deepens `/financials/accounts-receivable` with a deterministic read model over those same canonical invoices, payments, and payment events. It categorizes overdue invoices, unpaid deposits, sent-unpaid balances, partially paid balances, payment-in-progress states, failed/voided payment attempts, and internal-review cases; shows source-record reasons, payment state, amount due, recommended next step, and canonical invoice/project/customer links; and exposes review-first Copilot draft handoffs only when AI drafting controls allow them.
 - `/financials/accounting-readiness` is now a read-only Accounting Readiness workspace over canonical invoices, payments, payment events, customers, projects, invoice tax reporting entries, and invoice retainage snapshots, with accounting review rows, payment review rows, reconciliation attention, tax/retainage snapshot totals, export-ready column mapping, and in-browser Copy CSV / Download CSV export prep generated from the already loaded accounting review rows
 - Invoice Workspace now includes a read-only payment evidence timeline derived from the existing immutable `payment_events` stream, with plain-language settled/pending/failed/voided/review status, compact provider/session references where already stored, and no raw provider payload exposure
 - Payments Manager now includes a read-only reconciliation visibility section over recent immutable payment events, including failed, voided, requested, checkout-started, succeeded, and provider-sync evidence linked back to the canonical Invoice Workspace
 - Estimate, Contract, and Invoice Workspaces now label their document delivery evidence as Send Trail and show compact read-only proof summaries for send events, viewed/acted evidence, pending/failed attention, and the next source-record review move
-- Accounts Receivable does not create a separate AR ledger, accounting subsystem, provider operation, collection-note model, invoice copy, payment copy, or portal-only billing record
+- Accounts Receivable does not create a separate AR ledger, accounting subsystem, provider operation, automatic reminder workflow, collection-note model, invoice copy, payment copy, communication thread, notification event, or portal-only billing record
 - Accounting Readiness does not create a ledger, accounting tables, provider sync, export storage, export audit events, journal entries, reconciliation postings, invoice copies, payment copies, or accounting-provider records
 - The payment evidence and reconciliation visibility slice does not create reconciliation records, mutate invoices/payments/payment events, call providers, add retries/refunds/disputes, or alter invoice/payment math
 - Send Trail visibility does not create delivery tables, send actions, provider integrations, webhook behavior, portal-only copies, fake events, AI summaries, automation, or payment/signature/estimate/invoice behavior changes
@@ -918,11 +930,9 @@ Implemented now:
 
 Defined but still foundation-only:
 
-- `/financials/accounts-receivable` exists as a purpose-defined placeholder for future collections, follow-up, aging, and receivable management work
 - `/financials/accounts-payable` exists as a purpose-defined placeholder for future vendor-bill and outgoing-payment workflows
-- AR and AP are structure/spec routes only in this pass:
+- AP is a structure/spec route only in this pass:
   - no new schema
-  - no new aging engine
   - no payable-side ledger or reporting engine
 
 Additional protected surfaces beyond the contractor app:
@@ -2240,7 +2250,7 @@ These surfaces exist but are still foundational rather than production-complete:
 
 - dashboard command-center surface, including modular queue composition and Quick-Create studio direction
 - early module-dashboard pattern on overview pages
-- Financials Home control-panel structure, read-only Accounts Receivable collections visibility, and read-only invoice/payment-event reconciliation visibility; AP is still defined only as a placeholder
+- Financials Home control-panel structure, read-only Accounts Receivable collections visibility, deterministic collections follow-up intelligence with review-first draft handoff, and read-only invoice/payment-event reconciliation visibility; AP is still defined only as a placeholder
 - payments manager surface on the same shared Manager Page system, now with read-only payment evidence review over canonical payment events
 - first universal-create launcher foundation in the shared shell and dashboard
 - broader contractor-app theming consistency is now established through shared shell and Manager Page components, but page-level cleanup still remains iterative on some deeper or lower-traffic surfaces

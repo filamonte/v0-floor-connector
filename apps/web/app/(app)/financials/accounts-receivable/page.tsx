@@ -5,6 +5,11 @@ import { ContractorWorkspacePage } from "@/components/contractor-workspace-page"
 import { requireAuthenticatedUser } from "@/lib/auth/session";
 import { getFinancialCollectionsReadModel } from "@/lib/financials/collections-read-model";
 import { getActiveOrganizationContext } from "@/lib/organizations/active-context";
+import { getOrganizationWorkflowSettings } from "@/lib/organizations/workflow-settings";
+import {
+  normalizeWorkflowGuidancePreferences,
+  shouldShowAiDraftActions
+} from "@/lib/workflow-guidance/preferences";
 
 function formatMoney(amount: string | number) {
   return Number(amount).toLocaleString("en-US", {
@@ -49,11 +54,18 @@ export default async function AccountsReceivablePage() {
   }
 
   const todayIso = new Date().toISOString().slice(0, 10);
-  const readModel = await getFinancialCollectionsReadModel({
-    organizationId: organizationContext.organization.id,
-    todayIso
-  });
+  const [readModel, workflowSettings] = await Promise.all([
+    getFinancialCollectionsReadModel({
+      organizationId: organizationContext.organization.id,
+      todayIso
+    }),
+    getOrganizationWorkflowSettings(organizationContext.organization.id)
+  ]);
   const financialControl = readModel.financialControl;
+  const guidancePreferences = normalizeWorkflowGuidancePreferences(
+    workflowSettings.workflowGuidancePreferences
+  );
+  const showAiDraftActions = shouldShowAiDraftActions(guidancePreferences);
   const invoiceAttentionById = new Map(
     financialControl.invoicesNeedingAttention.map((invoice) => [
       invoice.id,
@@ -136,6 +148,138 @@ export default async function AccountsReceivablePage() {
       }}
     >
       <div className="space-y-4">
+        <section className="border border-[#d6d6d6] bg-white">
+          <div className="flex flex-col gap-3 border-b border-[#e5e5e5] px-5 py-4 lg:flex-row lg:items-start lg:justify-between">
+            <div>
+              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#8f5b32]">
+                Collections intelligence
+              </p>
+              <h2 className="mt-2 text-xl font-semibold tracking-tight text-slate-950">
+                Payment follow-up foundation
+              </h2>
+              <p className="mt-1 max-w-[78ch] text-sm leading-6 text-slate-500">
+                {readModel.collectionsIntelligence.headline} Items are derived
+                from canonical invoices, payments, and Payment Trail events.
+                Drafts stay review-first and route through the communications
+                composer without sending, creating threads, or mutating payment
+                state.
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {readModel.collectionsIntelligence.categories
+                .filter((category) => category.count > 0)
+                .map((category) => (
+                  <span
+                    key={category.key}
+                    className="inline-flex rounded-full border border-[#e4d7ca] bg-[#fffcf7] px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-[#8f5b32]"
+                  >
+                    {category.label}: {category.count}
+                  </span>
+                ))}
+            </div>
+          </div>
+
+          {readModel.collectionsIntelligence.items.length > 0 ? (
+            <div className="divide-y divide-[#e5e5e5]">
+              {readModel.collectionsIntelligence.items
+                .slice(0, 6)
+                .map((item) => (
+                  <article key={item.id} className="px-5 py-4">
+                    <div className="grid gap-4 lg:grid-cols-[minmax(0,1.35fr)_minmax(260px,0.8fr)_auto] lg:items-start">
+                      <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <Link
+                            href={item.invoiceHref}
+                            className="text-sm font-semibold text-slate-950 transition hover:text-brand-700"
+                          >
+                            {item.invoiceReference}
+                          </Link>
+                          <span className="rounded-full border border-[#d6d6d6] bg-[#f8f8f8] px-2 py-0.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-600">
+                            {item.category.replaceAll("_", " ")}
+                          </span>
+                          <span className="rounded-full border border-[#e4d7ca] bg-[#fffcf7] px-2 py-0.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-[#8f5b32]">
+                            {item.priority}
+                          </span>
+                        </div>
+                        <p className="mt-2 text-sm leading-6 text-slate-600">
+                          {item.reason}
+                        </p>
+                        <p className="mt-1 text-xs leading-5 text-slate-500">
+                          {item.customerHref ? (
+                            <Link
+                              href={item.customerHref}
+                              className="font-medium text-brand-700 transition hover:text-brand-800"
+                            >
+                              {item.customerName}
+                            </Link>
+                          ) : (
+                            item.customerName
+                          )}{" "}
+                          /{" "}
+                          {item.projectHref ? (
+                            <Link
+                              href={item.projectHref}
+                              className="font-medium text-brand-700 transition hover:text-brand-800"
+                            >
+                              {item.projectName}
+                            </Link>
+                          ) : (
+                            item.projectName
+                          )}
+                        </p>
+                      </div>
+
+                      <div>
+                        <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#666666]">
+                          Why now
+                        </p>
+                        <p className="mt-1 text-sm font-semibold text-slate-950">
+                          {formatMoney(item.amountDue)} due
+                        </p>
+                        <p className="mt-1 text-sm leading-5 text-slate-500">
+                          {item.dueOrAgeSignal} Payment state:{" "}
+                          {item.paymentState.replaceAll("_", " ")}.
+                        </p>
+                        <p className="mt-1 text-xs uppercase tracking-[0.12em] text-slate-400">
+                          {formatStatusLabel(item.invoiceStatus)}
+                        </p>
+                      </div>
+
+                      <div className="flex flex-wrap gap-2 lg:justify-end">
+                        <Link
+                          href={item.invoiceHref}
+                          className="inline-flex items-center justify-center rounded-[4px] border border-[#171717] bg-[#171717] px-3 py-2 text-sm font-medium text-white transition hover:bg-[#2a2a2a]"
+                        >
+                          Open invoice
+                        </Link>
+                        {showAiDraftActions && item.communicationHandoffHref ? (
+                          <Link
+                            href={item.communicationHandoffHref}
+                            className="inline-flex items-center justify-center rounded-[4px] border border-[#e4d7ca] bg-[#fffcf7] px-3 py-2 text-sm font-medium text-[#8f5b32] transition hover:bg-white"
+                          >
+                            Use draft
+                          </Link>
+                        ) : item.draftActionAvailable ? (
+                          <span className="inline-flex items-center justify-center rounded-[4px] border border-[#d6d6d6] bg-[#f8f8f8] px-3 py-2 text-sm font-medium text-slate-500">
+                            Draft gated
+                          </span>
+                        ) : null}
+                      </div>
+                    </div>
+                  </article>
+                ))}
+            </div>
+          ) : (
+            <div className="px-6 py-8">
+              <AppEmptyState
+                eyebrow="No collections follow-up"
+                title="No payment nudges need review"
+                description="When overdue balances, unpaid deposits, partial balances, pending checkout, or failed payment attempts appear, they will surface here with source-record links."
+              />
+            </div>
+          )}
+        </section>
+
         <section className="border border-[#d6d6d6] bg-white px-5 py-4">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div>

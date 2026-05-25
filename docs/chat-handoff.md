@@ -70,6 +70,15 @@ Current operating-core surfaces include:
   missing threads remain copy/review only. No customer email/SMS, provider call,
   notification creation, thread auto-create, AI-only communication record, or
   autonomous workflow is introduced.
+- Collections Follow-Up Intelligence now deepens `/financials/accounts-receivable`
+  with deterministic categories over canonical invoices, payments, and Payment
+  Trail events: overdue invoices, unpaid deposits, sent-unpaid balances,
+  partially paid balances, payment-in-progress states, failed/voided attempts,
+  and internal-review cases. The AR workspace shows source-record reasons,
+  payment state, amount due, canonical links, and review-first Copilot draft
+  handoffs when AI drafting controls allow them. It does not send reminders,
+  create threads, create notification events, call providers, or mutate invoice
+  or payment state.
 - CrewBoard on `/schedule` over canonical jobs, appointments, job assignments,
   people, vendors, projects, and customers.
 - Portal Customer Window with Customer Next Step, Project Status Window,

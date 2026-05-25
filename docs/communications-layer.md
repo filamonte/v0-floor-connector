@@ -197,6 +197,10 @@ Current Copilot draft handoff:
 
 - Project Workspace Copilot draft actions can open `/communications` with
   review-first draft context.
+- Accounts Receivable Collections Follow-Up Intelligence can also prepare
+  review-first payment follow-up drafts from canonical invoice/payment evidence
+  and route them through the same `/communications` handoff when AI drafting
+  controls allow it.
 - The handoff preserves action type, audience, subject/body, source project and
   customer context, reason, and source workflow signals.
 - If an existing canonical communication thread is selected, the contractor can

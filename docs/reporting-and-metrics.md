@@ -7,7 +7,7 @@ This document defines FloorConnector's canonical reporting and metrics philosoph
 
 For implemented truth, use [docs/current-state.md](C:/FloorConnector/docs/current-state.md). For the future Intelligence Layer, use [docs/intelligence-layer.md](C:/FloorConnector/docs/intelligence-layer.md).
 
-Implemented note: Reporting Phase 1 now exists on `/reports` as a read-only operations and collections visibility workspace over existing source records. Financial Control Phase 1 now deepens `/financials` and `/financials/accounts-receivable` with read-only collections/payment attention and Next Move routing over existing invoices, payments, and payment events. Accounting Readiness Phase 1 now adds `/financials/accounting-readiness` as read-only export and reconciliation prep over existing invoices, payments, payment events, customers, projects, invoice tax reporting entries, and retainage snapshots. Accounting Export Prep Phase 1 adds in-browser Copy CSV / Download CSV review output from the already loaded Accounting Readiness rows. These do not change the broader planned reporting doctrine in this document; deeper analytics, report-wide file exports, profitability, forecasting, benchmarks, accounting sync, reconciliation posting, and intelligence remain future work unless separately implemented and recorded in `docs/current-state.md`.
+Implemented note: Reporting Phase 1 now exists on `/reports` as a read-only operations and collections visibility workspace over existing source records. Financial Control Phase 1 now deepens `/financials` and `/financials/accounts-receivable` with read-only collections/payment attention and Next Move routing over existing invoices, payments, and payment events. Collections Follow-Up Intelligence now adds deterministic AR follow-up categories and review-first Copilot draft handoffs on `/financials/accounts-receivable` without sending reminders, creating communication threads, creating notifications, calling providers, or mutating invoice/payment state. Accounting Readiness Phase 1 now adds `/financials/accounting-readiness` as read-only export and reconciliation prep over existing invoices, payments, payment events, customers, projects, invoice tax reporting entries, and retainage snapshots. Accounting Export Prep Phase 1 adds in-browser Copy CSV / Download CSV review output from the already loaded Accounting Readiness rows. These do not change the broader planned reporting doctrine in this document; deeper analytics, report-wide file exports, profitability, forecasting, benchmarks, accounting sync, reconciliation posting, and provider-backed intelligence remain future work unless separately implemented and recorded in `docs/current-state.md`.
 
 Related documents:
 
@@ -80,9 +80,12 @@ Operational reports should route back to Project Workspace, Manager Pages, Recor
 Financial reporting must derive from canonical invoices, invoice line items, payments, payment events, approved estimate snapshots, change-order snapshots, schedule-of-values lineage, and relevant financial settings.
 
 Implemented Financial Control is currently a read-only collections and payment
-attention layer. It routes owners to invoice, project, AR, and Payment Trail
-surfaces; it does not post reconciliation, change payment behavior, or create a
-ledger.
+attention layer. Collections Follow-Up Intelligence categorizes invoice/payment
+follow-up from canonical AR evidence and can hand off editable Copilot drafts to
+the communications composer when AI drafting controls allow it. It routes owners
+to invoice, project, AR, communications review, and Payment Trail surfaces; it
+does not post reconciliation, send reminders, create threads, create
+notifications, change payment behavior, or create a ledger.
 
 Implemented Accounting Export Prep is currently limited to in-browser CSV copy
 and download output from already loaded Accounting Readiness rows. It does not

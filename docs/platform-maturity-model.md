@@ -106,13 +106,18 @@ actions from current canonical project summaries and now rolls bounded dashboard
 signals into a company-level operational digest. It also adds the first
 communications review handoff for Copilot drafts by preloading existing
 canonical communication thread review when available and keeping missing-thread
-cases copy/review only. It does not add live provider-backed AI, persisted AI
-output, predictive scoring, autonomous actions, dashboard-owned workflow
-records, customer-facing sends, thread auto-creation, or new source-of-truth
-records. The provider abstraction and organization controls are governance
-foundation only: deterministic output remains the active path when provider
-enhancement is disabled, unavailable, or not yet implemented. It must advance
-through operational usage, deeper communication composer review flows, and
-explicit governance before any predictive or autonomous behavior is considered.
+cases copy/review only. Collections Follow-Up Intelligence extends the same
+Foundation-stage pattern into Accounts Receivable by deriving deterministic
+invoice/payment follow-up categories and review-first draft handoffs from
+canonical invoices, payments, and Payment Trail events. It does not add live
+provider-backed AI, persisted AI output, predictive scoring, autonomous actions,
+dashboard-owned workflow records, customer-facing sends, reminders, thread
+auto-creation, notification creation, financial mutation, or new
+source-of-truth records. The provider abstraction and organization controls are
+governance foundation only: deterministic output remains the active path when
+provider enhancement is disabled, unavailable, or not yet implemented. It must
+advance through operational usage, deeper communication composer review flows,
+and explicit governance before any predictive or autonomous behavior is
+considered.
 
 This document does not add schema, migrations, routes, UI, tests, provider integrations, AI behavior, reporting behavior, auth/RLS changes, or env requirements.

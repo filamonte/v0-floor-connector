@@ -14,6 +14,10 @@ import {
   buildFinancialControlSummary,
   type FinancialControlSummary
 } from "./collections-summary";
+import {
+  buildCollectionsFollowUpIntelligence,
+  type CollectionsFollowUpIntelligence
+} from "./collections-follow-up-intelligence";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 
 export type FinancialCollectionsInvoice = {
@@ -114,6 +118,7 @@ export type FinancialCollectionsEvent = {
 export type FinancialCollectionsReadModel = {
   summary: FinancialCollectionsSummary;
   financialControl: FinancialControlSummary;
+  collectionsIntelligence: CollectionsFollowUpIntelligence;
   overdueInvoices: FinancialCollectionsInvoice[];
   collectionOpportunities: FinancialCollectionsInvoice[];
   partiallyPaidInvoices: FinancialCollectionsInvoice[];
@@ -571,6 +576,12 @@ export const getFinancialCollectionsReadModel = cache(
         todayIso: input.todayIso
       }),
       financialControl: buildFinancialControlSummary({
+        invoices,
+        payments,
+        paymentEvents: events,
+        todayIso: input.todayIso
+      }),
+      collectionsIntelligence: buildCollectionsFollowUpIntelligence({
         invoices,
         payments,
         paymentEvents: events,

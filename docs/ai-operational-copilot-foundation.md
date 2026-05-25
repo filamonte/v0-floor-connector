@@ -23,6 +23,9 @@ Implemented source code:
   provider-ready facade with no-provider deterministic fallback
 - [apps/web/lib/workflow-guidance/preferences.ts](C:/FloorConnector/apps/web/lib/workflow-guidance/preferences.ts):
   organization-level workflow and AI assistance controls
+- [apps/web/lib/financials/collections-follow-up-intelligence.ts](C:/FloorConnector/apps/web/lib/financials/collections-follow-up-intelligence.ts):
+  deterministic collections follow-up intelligence and review-first payment
+  draft handoff helpers over canonical invoice/payment evidence
 
 ## Purpose
 
@@ -214,6 +217,21 @@ copy/review surface and does not create one automatically. Future provider-backe
 assistance must route through the Communications Layer and existing
 notification/delivery evidence patterns.
 
+### Collections Follow-Up Intelligence
+
+`buildCollectionsFollowUpIntelligence(...)` adds the first AR-specific Copilot
+draft source outside Project Workspace. It derives deterministic follow-up items
+from existing invoices, payments, and Payment Trail events, grouping overdue
+invoices, unpaid deposits, sent-unpaid balances, partially paid balances,
+payment-in-progress states, failed/voided attempts, and internal-review cases.
+Each item keeps invoice, project, customer, amount due, payment state, reason,
+recommended next step, source signals, and optional review-first draft action
+context. The Accounts Receivable UI only exposes "Use draft" when AI drafting
+controls allow it, and the draft still routes through the existing
+communications handoff. This does not send reminders, create communication
+threads, create notification events, call providers, mutate invoice/payment
+state, or add a duplicate collections model.
+
 ### Copilot Action Composer
 
 `deriveAiCopilotDraftActions(...)` turns Copilot project intelligence into
@@ -222,6 +240,8 @@ structured review-first draft actions. The composer currently supports:
 - customer follow-up drafts
 - contract/signature reminder drafts
 - deposit/payment reminder drafts
+- payment reminder, payment failed follow-up, partial-balance follow-up, and
+  internal collections review drafts from AR follow-up intelligence
 - scheduling readiness coordination drafts
 - field progress update drafts
 - internal PM/project summary drafts
