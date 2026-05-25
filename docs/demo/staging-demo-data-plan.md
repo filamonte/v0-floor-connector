@@ -308,6 +308,15 @@ Decision matrix:
 | Local-only owner-confirmed seed script | Best next implementation candidate | Can reuse existing write-gated local/test fixture patterns after explicit approval.                                                        |
 | Staging-only seed mode                 | Defer                              | Requires clean read-only target validation, staging identifiers, tenant allowlist, idempotency/cleanup rules, and explicit owner approval. |
 
+The local-only candidate is now designed in
+[docs/demo/local-golden-path-seed-mode-design.md](C:/FloorConnector/docs/demo/local-golden-path-seed-mode-design.md).
+That design keeps local write mode disabled until a separate owner-approved
+implementation slice. It recommends a separate local-only, dry-run-first script
+with `--confirm-local-write`, a local write env guard, production/staging target
+refusal, deterministic demo labels, create-or-find idempotency, and a separate
+reset policy. It does not authorize staging writes or change the existing
+dry-run/read-only staging seed script boundary.
+
 If a future seed script is approved, it must:
 
 - require explicit `company_id`, contractor owner/admin user id or email, and

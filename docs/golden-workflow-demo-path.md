@@ -93,6 +93,11 @@ For founder-customer rehearsals, use [docs/founder-demo-readiness.md](C:/FloorCo
   Timeline, Copilot draft actions, document-specific send readiness, portal
   review links, or field evidence, record that as a fixture/data gap instead of
   creating demo-only shortcuts.
+- The future local-only golden path seed mode is designed in
+  [docs/demo/local-golden-path-seed-mode-design.md](C:/FloorConnector/docs/demo/local-golden-path-seed-mode-design.md).
+  It remains planning-only until separately approved; current QA should continue
+  to use real records, route discovery, dry-run inventory, and existing
+  validation-first fixtures.
 - Existing E2E overrides can point smoke tests at stable real records:
   - `FLOORCONNECTOR_E2E_PROJECT_DETAIL_PATH`
   - `FLOORCONNECTOR_E2E_ESTIMATE_DETAIL_PATH`

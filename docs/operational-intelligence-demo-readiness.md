@@ -246,5 +246,12 @@ Current recommended data step:
 
 - Run `pnpm demo:data:inventory` to review dry-run-only golden-path readiness,
   current fixture signals, and known missing records.
-- Treat local/staging write-mode seeding as a separate owner-confirmed task
-  after read-only target validation and an explicit tenant/cleanup policy.
+- Use
+  [docs/demo/local-golden-path-seed-mode-design.md](C:/FloorConnector/docs/demo/local-golden-path-seed-mode-design.md)
+  as the owner-reviewable design for a future local-only golden path seed mode.
+  The design keeps write mode disabled, proposes `--confirm-local-write` plus a
+  local write env guard, and requires deterministic local fixture labels,
+  create-or-find idempotency, provider-dark records, and a separate reset policy.
+- Treat staging write-mode seeding as a separate owner-confirmed task after
+  read-only target validation, explicit allowlist, and an explicit
+  tenant/cleanup policy.

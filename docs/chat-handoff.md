@@ -379,6 +379,12 @@ Recent staging/demo work is docs-first and no-write:
   recommended path: improve/read inventory now, consider local-only
   owner-confirmed seed behavior later, and defer staging write mode until
   read-only target validation plus explicit owner approval.
+- [docs/demo/local-golden-path-seed-mode-design.md](C:/FloorConnector/docs/demo/local-golden-path-seed-mode-design.md)
+  defines the owner-reviewable design for a future local-only golden path seed
+  mode. It proposes a separate local-only dry-run/write script shape,
+  `--confirm-local-write`, a local write env guard, deterministic demo labels,
+  create-or-find idempotency, reset safety, and strict provider/auth/token
+  boundaries. It does not implement write mode or authorize staging writes.
 - [docs/demo/staging-demo-seed-script-spec.md](C:/FloorConnector/docs/demo/staging-demo-seed-script-spec.md)
   specifies the seed script safety boundary.
 - `pnpm demo:data:seed:dry-run -- --organization-id <uuid> --owner-user-id
