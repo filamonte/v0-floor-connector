@@ -5,6 +5,10 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 
 import {
+  buildAiCopilotCommunicationPayload,
+  type AiCopilotCommunicationHandoff
+} from "@/lib/ai-operational-copilot/communication-handoff";
+import {
   markAllCommunicationNotificationsRead,
   markCommunicationThreadNotificationsRead
 } from "@/lib/notifications/system";
@@ -73,7 +77,9 @@ const customerAppointmentReminderPreferenceActionSchema =
       .string()
       .trim()
       .optional()
-      .transform((value) => (value && value.startsWith("/customers/") ? value : undefined))
+      .transform((value) =>
+        value && value.startsWith("/customers/") ? value : undefined
+      )
   });
 
 const communicationReplyInputSchema = z.object({
@@ -98,11 +104,35 @@ const communicationReplyInputSchema = z.object({
       "change_order",
       "payment"
     ])
-    .optional()
+    .optional(),
+  copilotDraftId: z.string().trim().optional(),
+  copilotActionType: z
+    .enum([
+      "customer_follow_up",
+      "contract_signature_reminder",
+      "deposit_payment_reminder",
+      "scheduling_readiness_coordination",
+      "field_progress_update",
+      "internal_pm_project_summary",
+      "stalled_project_follow_up",
+      "blocker_escalation_summary"
+    ])
+    .optional(),
+  copilotAudience: z.enum(["customer", "internal"]).optional(),
+  copilotSubject: z.string().trim().optional(),
+  copilotReason: z.string().trim().optional(),
+  copilotSignals: z.string().trim().optional(),
+  copilotProjectId: z.string().trim().optional(),
+  copilotProjectName: z.string().trim().optional(),
+  copilotCustomerId: z.string().trim().optional(),
+  copilotCustomerName: z.string().trim().optional()
 });
 
 const communicationTriageInputSchema = z.object({
-  threadId: z.string().uuid("A valid communication thread is required.").optional(),
+  threadId: z
+    .string()
+    .uuid("A valid communication thread is required.")
+    .optional(),
   q: z.string().optional(),
   view: z.enum(["all", "needs_response", "unread", "recent"]).optional(),
   source: z
@@ -126,7 +156,9 @@ function getFieldValue(formData: FormData, key: string) {
   return typeof value === "string" ? value : "";
 }
 
-function buildCommunicationsRedirect(params: Record<string, string | undefined>) {
+function buildCommunicationsRedirect(
+  params: Record<string, string | undefined>
+) {
   const search = new URLSearchParams();
 
   for (const [key, value] of Object.entries(params)) {
@@ -137,6 +169,41 @@ function buildCommunicationsRedirect(params: Record<string, string | undefined>)
 
   const query = search.toString();
   return query.length > 0 ? `/communications?${query}` : "/communications";
+}
+
+function buildCopilotHandoffFromReplyInput(
+  input: z.infer<typeof communicationReplyInputSchema>
+): AiCopilotCommunicationHandoff | null {
+  if (
+    !input.copilotDraftId ||
+    !input.copilotActionType ||
+    !input.copilotAudience ||
+    !input.copilotSubject ||
+    !input.copilotReason ||
+    !input.copilotProjectId ||
+    !input.copilotProjectName
+  ) {
+    return null;
+  }
+
+  return {
+    draftId: input.copilotDraftId,
+    actionType: input.copilotActionType,
+    audience: input.copilotAudience,
+    title: input.copilotSubject,
+    subject: input.copilotSubject,
+    draftBody: input.body,
+    operationalReason: input.copilotReason,
+    sourceWorkflowSignals:
+      input.copilotSignals
+        ?.split("\n")
+        .map((signal) => signal.trim())
+        .filter(Boolean) ?? [],
+    projectId: input.copilotProjectId,
+    projectName: input.copilotProjectName,
+    customerId: input.copilotCustomerId || null,
+    customerName: input.copilotCustomerName || null
+  };
 }
 
 function buildLeadRedirect(
@@ -152,7 +219,9 @@ function buildLeadRedirect(
   }
 
   const query = search.toString();
-  return query.length > 0 ? `/leads/${opportunityId}?${query}` : `/leads/${opportunityId}`;
+  return query.length > 0
+    ? `/leads/${opportunityId}?${query}`
+    : `/leads/${opportunityId}`;
 }
 
 function buildAppointmentRedirect(
@@ -173,7 +242,10 @@ function buildAppointmentRedirect(
     : `/appointments/${appointmentId}`;
 }
 
-function buildCustomerRedirect(customerId: string, params: Record<string, string | undefined>) {
+function buildCustomerRedirect(
+  customerId: string,
+  params: Record<string, string | undefined>
+) {
   const search = new URLSearchParams();
 
   for (const [key, value] of Object.entries(params)) {
@@ -190,7 +262,9 @@ function buildCustomerRedirect(customerId: string, params: Record<string, string
     : `${basePath}#communication-preferences`;
 }
 
-export async function createAppointmentConfirmationLogAction(formData: FormData) {
+export async function createAppointmentConfirmationLogAction(
+  formData: FormData
+) {
   const appointmentId = getFieldValue(formData, "appointmentId");
   const result = appointmentConfirmationLogInputSchema.safeParse({
     appointmentId,
@@ -259,7 +333,9 @@ function getSafeAppointmentEmailError(error: unknown) {
   return "Unable to send appointment confirmation email. The provider attempt was recorded when possible, and the communication message was not marked sent.";
 }
 
-export async function sendAppointmentConfirmationEmailAction(formData: FormData) {
+export async function sendAppointmentConfirmationEmailAction(
+  formData: FormData
+) {
   const appointmentId = getFieldValue(formData, "appointmentId");
   const result = appointmentConfirmationEmailInputSchema.safeParse({
     appointmentId,
@@ -405,7 +481,8 @@ export async function updateCustomerAppointmentReminderPreferenceAction(
     );
   }
 
-  const returnTo = result.data.returnTo ?? `/customers/${result.data.customerId}`;
+  const returnTo =
+    result.data.returnTo ?? `/customers/${result.data.customerId}`;
 
   try {
     await upsertCustomerAppointmentReminderPreference(
@@ -465,7 +542,10 @@ export async function createOpportunityManualCommunicationMessageAction(
   }
 
   try {
-    await createOpportunityManualCommunicationMessage(result.data, `/leads/${result.data.opportunityId}`);
+    await createOpportunityManualCommunicationMessage(
+      result.data,
+      `/leads/${result.data.opportunityId}`
+    );
   } catch (error) {
     redirect(
       buildLeadRedirect(result.data.opportunityId, {
@@ -500,7 +580,21 @@ export async function replyToCommunicationThreadAction(formData: FormData) {
     body,
     q: q || undefined,
     view: view || undefined,
-    source: source || undefined
+    source: source || undefined,
+    copilotDraftId: getFieldValue(formData, "copilotDraftId") || undefined,
+    copilotActionType:
+      getFieldValue(formData, "copilotActionType") || undefined,
+    copilotAudience: getFieldValue(formData, "copilotAudience") || undefined,
+    copilotSubject: getFieldValue(formData, "copilotSubject") || undefined,
+    copilotReason: getFieldValue(formData, "copilotReason") || undefined,
+    copilotSignals: getFieldValue(formData, "copilotSignals") || undefined,
+    copilotProjectId: getFieldValue(formData, "copilotProjectId") || undefined,
+    copilotProjectName:
+      getFieldValue(formData, "copilotProjectName") || undefined,
+    copilotCustomerId:
+      getFieldValue(formData, "copilotCustomerId") || undefined,
+    copilotCustomerName:
+      getFieldValue(formData, "copilotCustomerName") || undefined
   });
 
   if (!result.success) {
@@ -516,10 +610,15 @@ export async function replyToCommunicationThreadAction(formData: FormData) {
   }
 
   try {
+    const copilotHandoff = buildCopilotHandoffFromReplyInput(result.data);
     await postCommunicationMessage(
       {
         threadId: result.data.threadId,
-        body: result.data.body
+        body: result.data.body,
+        payload: copilotHandoff
+          ? buildAiCopilotCommunicationPayload(copilotHandoff)
+          : null,
+        createNotification: copilotHandoff ? false : undefined
       },
       "/communications"
     );
@@ -543,12 +642,16 @@ export async function replyToCommunicationThreadAction(formData: FormData) {
       q: result.data.q,
       view: result.data.view,
       source: result.data.source,
-      message: "Reply sent on the canonical communication thread."
+      message: buildCopilotHandoffFromReplyInput(result.data)
+        ? "Reviewed Copilot draft saved on the canonical communication thread. No notification, email, or SMS was sent."
+        : "Reply sent on the canonical communication thread."
     })
   );
 }
 
-export async function markCommunicationThreadNotificationsReadAction(formData: FormData) {
+export async function markCommunicationThreadNotificationsReadAction(
+  formData: FormData
+) {
   const threadId = getFieldValue(formData, "threadId");
   const q = getFieldValue(formData, "q").trim();
   const view = getFieldValue(formData, "view");
@@ -569,7 +672,8 @@ export async function markCommunicationThreadNotificationsReadAction(formData: F
         source: source || undefined,
         error: result.success
           ? "A valid communication thread is required."
-          : result.error.issues[0]?.message ?? "Unable to update thread notifications."
+          : (result.error.issues[0]?.message ??
+            "Unable to update thread notifications.")
       })
     );
   }
@@ -610,7 +714,9 @@ export async function markCommunicationThreadNotificationsReadAction(formData: F
   }
 }
 
-export async function markAllCommunicationNotificationsReadAction(formData: FormData) {
+export async function markAllCommunicationNotificationsReadAction(
+  formData: FormData
+) {
   const threadId = getFieldValue(formData, "threadId");
   const q = getFieldValue(formData, "q").trim();
   const view = getFieldValue(formData, "view");
@@ -629,13 +735,16 @@ export async function markAllCommunicationNotificationsReadAction(formData: Form
         q: q || undefined,
         view: view || undefined,
         source: source || undefined,
-        error: result.error.issues[0]?.message ?? "Unable to update communication notifications."
+        error:
+          result.error.issues[0]?.message ??
+          "Unable to update communication notifications."
       })
     );
   }
 
   try {
-    const updatedCount = await markAllCommunicationNotificationsRead("/communications");
+    const updatedCount =
+      await markAllCommunicationNotificationsRead("/communications");
 
     revalidatePath("/communications");
 

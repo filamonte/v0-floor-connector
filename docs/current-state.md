@@ -79,9 +79,20 @@ stalled-project follow-up, and blocker/escalation drafts. The foundation lives i
 [apps/web/lib/ai-operational-copilot/summary.ts](C:/FloorConnector/apps/web/lib/ai-operational-copilot/summary.ts)
 and is documented in
 [docs/ai-operational-copilot-foundation.md](C:/FloorConnector/docs/ai-operational-copilot-foundation.md).
-It adds no schema, migrations, provider calls, persisted AI records, chatbot
-memory, autonomous workflow execution, customer-facing send behavior, financial
-mutation, signature mutation, scheduling mutation, or portal-specific AI copies.
+Copilot draft actions now include a review-first handoff into the existing
+contractor-side `/communications` workspace. The handoff preserves the draft
+action type, audience, subject, body, project/customer context, reason, and
+source workflow signals, prefills the selected canonical thread composer when a
+thread already exists, and otherwise shows the draft as copy/review context
+without creating a thread. Saving from the prefilled composer writes only an
+explicit user-submitted internal message on the existing canonical
+`communication_messages` chain with Copilot metadata in message payload. It
+does not send customer email/SMS, create autonomous communication workflows, call
+a provider, create notifications, create AI-only communication records, or
+auto-create new communication threads. It adds no schema, migrations, provider
+calls, persisted AI records, chatbot memory, autonomous workflow execution,
+customer-facing send behavior, financial mutation, signature mutation,
+scheduling mutation, or portal-specific AI copies.
 The dashboard now also includes a compact AI Operational Digest panel derived
 from existing dashboard/project signals, operational cockpit previews, Ready
 Check handoffs, contracts, invoices, jobs, equipment readiness, and project

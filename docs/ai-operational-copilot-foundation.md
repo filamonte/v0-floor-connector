@@ -206,8 +206,13 @@ tasks, mutate canonical records, or call a provider model.
 - internal project summaries
 
 Drafts are not sent automatically and are not stored as communication truth.
-Future provider-backed assistance must route through the Communications Layer
-and existing notification/delivery evidence patterns.
+The implemented communications handoff can move a selected draft into the
+existing contractor-side `/communications` review surface. If a canonical thread
+is already selected, the thread composer is prefilled for explicit user review
+and submission as an internal message. If no thread exists, the handoff remains a
+copy/review surface and does not create one automatically. Future provider-backed
+assistance must route through the Communications Layer and existing
+notification/delivery evidence patterns.
 
 ### Copilot Action Composer
 
@@ -235,10 +240,13 @@ Each draft action includes:
 - review safety note
 
 These are deterministic template-based drafts and are gated by the organization
-AI drafting preference. They do not send messages, create communications,
-create work items, approve contracts, collect payments, schedule jobs, change
-readiness, or persist AI output. The contractor must review, edit, and use any
-draft manually through the appropriate existing workflow.
+AI drafting preference. Each visible draft has a "Use draft" handoff into
+`/communications` that preserves action type, audience, subject/body,
+project/customer context, operational reason, and source workflow signals. The
+handoff does not send messages, create new threads, create work items, approve
+contracts, collect payments, schedule jobs, change readiness, or persist AI
+output. The contractor must review, edit, and submit or copy any draft manually
+through the appropriate existing workflow.
 
 ### AI Field Summary Foundation
 
@@ -262,6 +270,8 @@ intentional:
   schedule, communications, closeout, and field context.
 - Copilot Action Composer shows applicable review-first draft actions inside
   the same Project Workspace panel when AI drafting is enabled.
+- "Use draft" opens `/communications` with review-only draft context and
+  prefilled existing-thread composer state when a canonical thread is available.
 - Existing Workflow Snapshot, cue panels, work items, Ready to Schedule, and
   source-record sections remain the action surfaces.
 
@@ -269,9 +279,9 @@ intentional:
 
 Safe next implementation slices:
 
-1. Communication composer integration that preloads reviewable draft actions but
-   does not send automatically.
-2. Work-item prefill from Copilot recommended actions.
+1. Work-item prefill from Copilot recommended actions.
+2. Deeper communications composer support once customer-facing send/reply
+   behavior is explicitly scoped.
 3. Field mobile summary cards for active jobs.
 4. Live provider-backed summarization/drafting through the existing provider
    facade, with prompt inputs limited to tenant-scoped canonical context and no

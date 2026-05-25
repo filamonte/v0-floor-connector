@@ -158,10 +158,14 @@ The first implemented bridge into this strategy is the deterministic
 It derives project-level summaries, recommended next actions, digest grouping,
 communication-assistance draft text, field summaries, and structured
 review-first draft actions from existing canonical project read models.
+Those draft actions now have a bounded `/communications` handoff: users can move
+a Copilot draft into existing thread review/prefill context, edit it, and
+explicitly save it as an internal canonical communication message only when a
+thread already exists. Missing communication threads remain copy/review only.
 
 The alignment hierarchy is:
 
-`canonical records -> deterministic workflow/readiness signals -> intelligence derivation layer -> Copilot summaries/recommendations -> review-first operational draft actions -> dashboard operational digest -> future provider-backed enhancement -> future orchestration/automation later`
+`canonical records -> deterministic workflow/readiness signals -> intelligence derivation layer -> Copilot summaries/recommendations -> review-first operational draft actions -> communications review handoff -> dashboard operational digest -> future provider-backed enhancement -> future orchestration/automation later`
 
 Copilot is therefore the user-facing presentation and action-composer layer over
 deterministic intelligence signals. It is not a parallel cue, readiness,

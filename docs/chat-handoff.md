@@ -63,6 +63,13 @@ Current operating-core surfaces include:
   visibility, and future provider-backed enhancement; the current provider
   facade has no live model integration and falls back to deterministic
   canonical-context output.
+- Copilot draft actions now have a review-first `/communications` handoff.
+  Project Workspace "Use draft" links preserve the draft action metadata,
+  project/customer context, reason, and source signals. Existing canonical
+  communication threads can be prefilled for explicit internal-message save;
+  missing threads remain copy/review only. No customer email/SMS, provider call,
+  notification creation, thread auto-create, AI-only communication record, or
+  autonomous workflow is introduced.
 - CrewBoard on `/schedule` over canonical jobs, appointments, job assignments,
   people, vendors, projects, and customers.
 - Portal Customer Window with Customer Next Step, Project Status Window,

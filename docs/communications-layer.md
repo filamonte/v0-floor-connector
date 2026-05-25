@@ -1,9 +1,17 @@
 # Communications Layer
 
-Status: Planned
+Status: Foundation / Planned Depth
 Doc Type: Roadmap
 
-This document defines FloorConnector's future communications philosophy. It is strategic architecture guidance only. It does not add messaging routes, notification systems, providers, AI behavior, schema, migrations, APIs, or runtime communication behavior.
+This document defines FloorConnector's communications philosophy. It is mostly
+strategic architecture guidance, with the current branch also containing
+canonical communication threads/messages, notification foundations, the
+contractor-side `/communications` review workspace, and the first review-first
+Copilot draft handoff into that workspace. It does not imply broad unified
+inbox depth, autonomous communication workflows, provider-backed send behavior,
+AI message generation, new communication schema, or customer portal messaging
+beyond what [docs/current-state.md](C:/FloorConnector/docs/current-state.md)
+explicitly records.
 
 For implemented truth, use [docs/current-state.md](C:/FloorConnector/docs/current-state.md). For current workflow rules, use [docs/workflows.md](C:/FloorConnector/docs/workflows.md).
 
@@ -184,6 +192,21 @@ Future agentic operations depend on this communications layer. AI should use
 canonical communication history as evidence and action context; it should not
 keep separate message stores, provider-owned inbox truth, or AI-only
 communication memory.
+
+Current Copilot draft handoff:
+
+- Project Workspace Copilot draft actions can open `/communications` with
+  review-first draft context.
+- The handoff preserves action type, audience, subject/body, source project and
+  customer context, reason, and source workflow signals.
+- If an existing canonical communication thread is selected, the contractor can
+  edit and explicitly save the draft as an internal message on that thread
+  without creating notifications.
+- If no thread exists, the handoff stays copy/review only and does not create a
+  thread automatically.
+- It does not send email or SMS, call providers, create notifications, create
+  autonomous reminders, create AI-only communication records, or replace future
+  composer/send workflows.
 
 ## Communication Governance
 

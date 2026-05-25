@@ -92,6 +92,7 @@ import {
   type AiFieldSummary,
   type AiOperationalCopilotTone
 } from "@/lib/ai-operational-copilot/summary";
+import { buildAiCopilotCommunicationHandoffHref } from "@/lib/ai-operational-copilot/communication-handoff";
 import { getAiProviderAvailability } from "@/lib/ai-operational-copilot/provider";
 import { getOperationalCuesForProject } from "@/lib/operational-cues/data";
 import { requireAuthenticatedUser } from "@/lib/auth/session";
@@ -738,12 +739,22 @@ function AiOperationalCopilotSection({
   summary,
   fieldSummary,
   draftActions,
-  providerEnhancementNote
+  providerEnhancementNote,
+  projectId,
+  projectName,
+  customerId,
+  customerName,
+  communicationThreadId
 }: {
   summary: AiProjectOperationalSummary | null;
   fieldSummary: AiFieldSummary | null;
   draftActions: AiCopilotDraftAction[];
   providerEnhancementNote: string;
+  projectId: string;
+  projectName: string;
+  customerId: string | null;
+  customerName: string | null;
+  communicationThreadId: string | null;
 }) {
   if (!summary || !fieldSummary) {
     return (
@@ -893,6 +904,19 @@ function AiOperationalCopilotSection({
                     <p className="mt-2 text-xs leading-5 text-slate-500">
                       {action.reviewSafetyNote}
                     </p>
+                    <Link
+                      href={buildAiCopilotCommunicationHandoffHref({
+                        action,
+                        projectId,
+                        projectName,
+                        customerId,
+                        customerName,
+                        threadId: communicationThreadId
+                      })}
+                      className="mt-3 inline-flex h-8 items-center rounded-full border border-[#e4d7ca] bg-white px-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-[#8f5b32] transition hover:bg-[#fbf5ee]"
+                    >
+                      Use draft
+                    </Link>
                   </div>
                 ))}
               </div>
@@ -3076,6 +3100,14 @@ export default async function ProjectDetailPage({
     })),
     customerAccessCount: projectVisiblePortalGrants.length
   });
+  const copilotCommunicationThreadId =
+    messageCenterTrail.threads.find(
+      (thread) =>
+        thread.subjectType === "project" && thread.subjectId === project.id
+    )?.id ??
+    messageCenterTrail.threads.find((thread) => thread.projectId === project.id)
+      ?.id ??
+    null;
   const pendingChangeOrder =
     projectChangeOrders.find(
       (changeOrder) =>
@@ -4210,6 +4242,11 @@ export default async function ProjectDetailPage({
               fieldSummary={aiFieldSummary}
               draftActions={showAiDraftActionComposer ? aiDraftActions : []}
               providerEnhancementNote={aiProviderAvailability.reason}
+              projectId={project.id}
+              projectName={project.name}
+              customerId={project.customerId}
+              customerName={project.customer?.name ?? null}
+              communicationThreadId={copilotCommunicationThreadId}
             />
 
             <OperationalGuidanceSection

@@ -4,6 +4,7 @@ import { AppEmptyState } from "@/components/app-empty-state";
 import { CommunicationNotificationTriageForm } from "@/components/communication-notification-triage-form";
 import { CommunicationReplyForm } from "@/components/communication-reply-form";
 import { ContractorWorkspacePage } from "@/components/contractor-workspace-page";
+import { parseAiCopilotCommunicationHandoffSearchParams } from "@/lib/ai-operational-copilot/communication-handoff";
 import { listCommunicationMessages } from "@/lib/communications/data";
 import {
   listContractorCommunicationThreadSummary,
@@ -27,6 +28,19 @@ type CommunicationsPageProps = {
     view?: CommunicationView;
     source?: string;
     threadId?: string;
+    copilotDraft?: string;
+    copilotDraftId?: string;
+    copilotActionType?: string;
+    copilotAudience?: string;
+    copilotTitle?: string;
+    copilotSubject?: string;
+    copilotBody?: string;
+    copilotReason?: string;
+    copilotSignals?: string;
+    copilotProjectId?: string;
+    copilotProjectName?: string;
+    copilotCustomerId?: string;
+    copilotCustomerName?: string;
   }>;
 };
 
@@ -103,16 +117,24 @@ function formatSubjectType(value: string) {
 }
 
 function getCommunicationSourceLabel(value: CommunicationSourceFilter) {
-  return communicationSourceFilters.find((filterOption) => filterOption.key === value)?.label ?? value;
+  return (
+    communicationSourceFilters.find(
+      (filterOption) => filterOption.key === value
+    )?.label ?? value
+  );
 }
 
-function isSupportedCommunicationSource(value: string): value is Exclude<CommunicationSourceFilter, "all"> {
+function isSupportedCommunicationSource(
+  value: string
+): value is Exclude<CommunicationSourceFilter, "all"> {
   return supportedCommunicationSources.includes(
     value as Exclude<CommunicationSourceFilter, "all">
   );
 }
 
-function getMessageSenderLabel(senderType: "organization_user" | "portal_user" | "system") {
+function getMessageSenderLabel(
+  senderType: "organization_user" | "portal_user" | "system"
+) {
   switch (senderType) {
     case "portal_user":
       return "Customer portal";
@@ -123,7 +145,9 @@ function getMessageSenderLabel(senderType: "organization_user" | "portal_user" |
   }
 }
 
-function getMessageSenderTone(senderType: "organization_user" | "portal_user" | "system") {
+function getMessageSenderTone(
+  senderType: "organization_user" | "portal_user" | "system"
+) {
   switch (senderType) {
     case "portal_user":
       return "border-amber-200 bg-amber-50 text-amber-800";
@@ -134,7 +158,10 @@ function getMessageSenderTone(senderType: "organization_user" | "portal_user" | 
   }
 }
 
-function filterThreadsByQuery(threads: ContractorCommunicationThreadListItem[], query: string) {
+function filterThreadsByQuery(
+  threads: ContractorCommunicationThreadListItem[],
+  query: string
+) {
   const normalizedQuery = query.toLowerCase();
 
   return threads.filter((thread) => {
@@ -187,7 +214,7 @@ function getThreadEmptyState(input: {
       title: "Nothing matches this communication search",
       description:
         "Try a broader search term or clear the current source and status filters to return to the full review queue."
-      };
+    };
   }
 
   if (input.source !== "all") {
@@ -225,7 +252,9 @@ function getThreadEmptyState(input: {
   };
 }
 
-export default async function CommunicationsPage({ searchParams }: CommunicationsPageProps) {
+export default async function CommunicationsPage({
+  searchParams
+}: CommunicationsPageProps) {
   const resolvedSearchParams = (await searchParams) ?? {};
   const user = await requireAuthenticatedUser("/communications");
   const organizationContext = await getActiveOrganizationContext(user.id);
@@ -250,12 +279,15 @@ export default async function CommunicationsPage({ searchParams }: Communication
         : isSupportedCommunicationSource(requestedSource)
           ? requestedSource
           : "all";
-  const unsupportedSource = requestedSource.length > 0 && source === "all" && requestedSource !== "all"
-    ? requestedSource
-    : null;
+  const unsupportedSource =
+    requestedSource.length > 0 && source === "all" && requestedSource !== "all"
+      ? requestedSource
+      : null;
   const pageError = resolvedSearchParams.error?.trim() ?? "";
   const pageMessage = resolvedSearchParams.message?.trim() ?? "";
   const requestedThreadId = resolvedSearchParams.threadId?.trim() ?? "";
+  const copilotDraftHandoff =
+    parseAiCopilotCommunicationHandoffSearchParams(resolvedSearchParams);
 
   const [threads, summary, notifications] = await Promise.all([
     listContractorCommunicationThreads({
@@ -266,11 +298,14 @@ export default async function CommunicationsPage({ searchParams }: Communication
     listContractorNotifications()
   ]);
 
-  const filteredThreads = unsupportedSource ? [] : filterThreadsByQuery(threads, query);
+  const filteredThreads = unsupportedSource
+    ? []
+    : filterThreadsByQuery(threads, query);
   const selectedThread =
     requestedThreadId.length > 0
-      ? filteredThreads.find((thread) => thread.id === requestedThreadId) ?? null
-      : filteredThreads[0] ?? null;
+      ? (filteredThreads.find((thread) => thread.id === requestedThreadId) ??
+        null)
+      : (filteredThreads[0] ?? null);
   const requestedThreadUnavailable =
     requestedThreadId.length > 0 && !selectedThread && !unsupportedSource;
   const selectedMessages = selectedThread
@@ -280,11 +315,17 @@ export default async function CommunicationsPage({ searchParams }: Communication
   const sourceCounts = communicationSourceFilters.map((filterOption) => ({
     ...filterOption,
     count:
-      filterOption.key === "all" ? summary.totalCount : summary.sourceCounts[filterOption.key]
+      filterOption.key === "all"
+        ? summary.totalCount
+        : summary.sourceCounts[filterOption.key]
   }));
   const threadViews = [
     { key: "all", label: "All threads", count: summary.totalCount },
-    { key: "needs_response", label: "Needs response", count: summary.needsResponseCount },
+    {
+      key: "needs_response",
+      label: "Needs response",
+      count: summary.needsResponseCount
+    },
     { key: "unread", label: "Unread", count: summary.unreadCount },
     { key: "recent", label: "Recent", count: summary.recentCount }
   ] as const;
@@ -295,9 +336,13 @@ export default async function CommunicationsPage({ searchParams }: Communication
     source,
     unsupportedSource
   });
-  const hasSourceContext = source !== "all" || requestedThreadId.length > 0 || unsupportedSource !== null;
+  const hasSourceContext =
+    source !== "all" ||
+    requestedThreadId.length > 0 ||
+    unsupportedSource !== null;
   const sourceContextSourceLabel =
-    unsupportedSource ?? (source !== "all" ? getCommunicationSourceLabel(source) : null);
+    unsupportedSource ??
+    (source !== "all" ? getCommunicationSourceLabel(source) : null);
 
   return (
     <ContractorWorkspacePage
@@ -344,15 +389,28 @@ export default async function CommunicationsPage({ searchParams }: Communication
         supportSlot: (
           <p>
             Replies and triage stay anchored to canonical
-            <code className="mx-1 rounded bg-white px-1.5 py-0.5">communication_threads</code>,
-            <code className="mx-1 rounded bg-white px-1.5 py-0.5">communication_messages</code>,
-            and stored per-user notifications. No email/SMS send or automation execution runs from this queue.
+            <code className="mx-1 rounded bg-white px-1.5 py-0.5">
+              communication_threads
+            </code>
+            ,
+            <code className="mx-1 rounded bg-white px-1.5 py-0.5">
+              communication_messages
+            </code>
+            , and stored per-user notifications. No email/SMS send or automation
+            execution runs from this queue.
           </p>
         ),
         searchSlot: (
-          <form action="/communications" className="flex flex-col gap-2 sm:flex-row">
-            {view !== "all" ? <input type="hidden" name="view" value={view} /> : null}
-            {source !== "all" ? <input type="hidden" name="source" value={source} /> : null}
+          <form
+            action="/communications"
+            className="flex flex-col gap-2 sm:flex-row"
+          >
+            {view !== "all" ? (
+              <input type="hidden" name="view" value={view} />
+            ) : null}
+            {source !== "all" ? (
+              <input type="hidden" name="source" value={source} />
+            ) : null}
             <input
               type="search"
               name="q"
@@ -398,7 +456,9 @@ export default async function CommunicationsPage({ searchParams }: Communication
               <span
                 className={[
                   "rounded-full px-2 py-0.5 text-xs font-semibold",
-                  isActive ? "bg-white/15 text-white" : "bg-slate-100 text-slate-500"
+                  isActive
+                    ? "bg-white/15 text-white"
+                    : "bg-slate-100 text-slate-500"
                 ].join(" ")}
               >
                 {threadView.count}
@@ -443,6 +503,68 @@ export default async function CommunicationsPage({ searchParams }: Communication
           </section>
         ) : null}
 
+        {copilotDraftHandoff ? (
+          <section className="border border-[#e4d7ca] bg-[#fffcf7] px-5 py-4 sm:px-6">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+              <div className="min-w-0">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#8f5b32]">
+                  Copilot draft handoff
+                </p>
+                <h2 className="mt-2 text-lg font-semibold tracking-tight text-slate-950">
+                  {copilotDraftHandoff.title}
+                </h2>
+                <p className="mt-1 max-w-[74ch] text-sm leading-6 text-slate-600">
+                  AI prepared this draft from canonical project context. Review
+                  and edit it here; FloorConnector will not send email or SMS,
+                  create a new thread, or run automation from this handoff.
+                </p>
+                <div className="mt-3 flex flex-wrap gap-2 text-[11px] font-semibold uppercase tracking-[0.14em]">
+                  <span className="inline-flex rounded-full border border-[#e4d7ca] bg-white px-2.5 py-1 text-[#8f5b32]">
+                    {copilotDraftHandoff.audience}
+                  </span>
+                  <Link
+                    href={`/projects/${copilotDraftHandoff.projectId}`}
+                    className="inline-flex rounded-full border border-[#d6d6d6] bg-white px-2.5 py-1 text-slate-700 transition hover:text-slate-950"
+                  >
+                    {copilotDraftHandoff.projectName}
+                  </Link>
+                  {copilotDraftHandoff.customerId ? (
+                    <Link
+                      href={`/customers/${copilotDraftHandoff.customerId}`}
+                      className="inline-flex rounded-full border border-[#d6d6d6] bg-white px-2.5 py-1 text-slate-700 transition hover:text-slate-950"
+                    >
+                      {copilotDraftHandoff.customerName ?? "Customer"}
+                    </Link>
+                  ) : null}
+                </div>
+                <p className="mt-3 text-xs leading-5 text-slate-500">
+                  Why: {copilotDraftHandoff.operationalReason}
+                </p>
+              </div>
+              <div className="w-full shrink-0 lg:w-[22rem]">
+                <label
+                  htmlFor="copilot-draft-review-body"
+                  className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#666666]"
+                >
+                  Draft body
+                </label>
+                <textarea
+                  id="copilot-draft-review-body"
+                  readOnly={Boolean(selectedThread)}
+                  rows={6}
+                  defaultValue={copilotDraftHandoff.draftBody}
+                  className="mt-2 min-h-[132px] w-full rounded-[4px] border border-[#d6d6d6] bg-white px-3 py-2 text-sm leading-6 text-slate-800"
+                />
+                <p className="mt-2 text-xs leading-5 text-slate-500">
+                  {selectedThread
+                    ? "The selected canonical thread composer below is prefilled with this draft."
+                    : "Review and edit this draft here for copy/paste use, or select an existing canonical thread to save an edited internal note. New communication thread creation is intentionally deferred."}
+                </p>
+              </div>
+            </div>
+          </section>
+        ) : null}
+
         {hasSourceContext ? (
           <section className="border border-[#d6d6d6] bg-[#f8f8f8] px-5 py-4 sm:px-6">
             <div className="flex flex-wrap items-start justify-between gap-4">
@@ -479,9 +601,9 @@ export default async function CommunicationsPage({ searchParams }: Communication
                       ? "Detail pages show conversation summaries only. Review this thread here and send replies from /communications on the same canonical record."
                       : requestedThreadUnavailable
                         ? "The requested thread is not visible in the current queue. It may be outside the selected filters, unavailable to this organization, or no longer match the current source context."
-                      : source !== "all"
-                        ? `This queue is scoped to ${getCommunicationSourceLabel(source).toLowerCase()} conversations. Detail pages only summarize related threads, and reply actions stay in /communications.`
-                        : "This workspace was opened from a direct thread link. Review the canonical thread here and keep any reply on /communications."}
+                        : source !== "all"
+                          ? `This queue is scoped to ${getCommunicationSourceLabel(source).toLowerCase()} conversations. Detail pages only summarize related threads, and reply actions stay in /communications.`
+                          : "This workspace was opened from a direct thread link. Review the canonical thread here and keep any reply on /communications."}
                 </p>
               </div>
               <div className="flex flex-wrap gap-2">
@@ -515,8 +637,9 @@ export default async function CommunicationsPage({ searchParams }: Communication
                   Review conversation summaries and handoff threads
                 </h3>
                 <p className="mt-2 text-sm leading-6 text-slate-500">
-                  Detail pages summarize related conversations only. Full history, replies, and
-                  notification triage stay in this workspace for supported sources.
+                  Detail pages summarize related conversations only. Full
+                  history, replies, and notification triage stay in this
+                  workspace for supported sources.
                 </p>
               </div>
               <p className="text-sm leading-6 text-slate-500">
@@ -562,16 +685,19 @@ export default async function CommunicationsPage({ searchParams }: Communication
 
             {unsupportedSource ? (
               <div className="border-b border-amber-200 bg-amber-50 px-5 py-3 text-sm leading-6 text-amber-900 sm:px-6">
-                Source <span className="font-semibold">{unsupportedSource}</span> is not available
-                yet. Communications currently support lead, customer, project, estimate, contract,
-                invoice, change order, and payment threads only. Unsupported source filters do not
+                Source{" "}
+                <span className="font-semibold">{unsupportedSource}</span> is
+                not available yet. Communications currently support lead,
+                customer, project, estimate, contract, invoice, change order,
+                and payment threads only. Unsupported source filters do not
                 create placeholder queues.
               </div>
             ) : null}
             {requestedThreadUnavailable ? (
               <div className="border-b border-amber-200 bg-amber-50 px-5 py-3 text-sm leading-6 text-amber-900 sm:px-6">
-                The requested thread is not available in this filtered queue. Clear context or
-                broaden the filters to review available canonical communication threads.
+                The requested thread is not available in this filtered queue.
+                Clear context or broaden the filters to review available
+                canonical communication threads.
               </div>
             ) : null}
 
@@ -618,19 +744,29 @@ export default async function CommunicationsPage({ searchParams }: Communication
                           </div>
 
                           <p className="mt-2 text-sm leading-6 text-slate-500">
-                            {thread.lastMessagePreview ?? "No message preview stored yet."}
+                            {thread.lastMessagePreview ??
+                              "No message preview stored yet."}
                           </p>
 
                           <div className="mt-3 flex flex-wrap gap-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">
-                            <Link href={thread.customer.href} className="hover:text-slate-900">
+                            <Link
+                              href={thread.customer.href}
+                              className="hover:text-slate-900"
+                            >
                               {thread.customer.label}
                             </Link>
                             <span className="text-slate-300">/</span>
-                            <Link href={thread.project.href} className="hover:text-slate-900">
+                            <Link
+                              href={thread.project.href}
+                              className="hover:text-slate-900"
+                            >
                               {thread.project.label}
                             </Link>
                             <span className="text-slate-300">/</span>
-                            <Link href={thread.subject.href} className="hover:text-slate-900">
+                            <Link
+                              href={thread.subject.href}
+                              className="hover:text-slate-900"
+                            >
                               Open source
                             </Link>
                             {thread.subjectSecondaryLink ? (
@@ -692,7 +828,7 @@ export default async function CommunicationsPage({ searchParams }: Communication
                     ? "Review the stored canonical summary and message history here. Replies stay on this same thread inside /communications."
                     : requestedThreadUnavailable
                       ? "The direct thread link did not resolve inside the current filters. Pick a visible thread or clear the context."
-                    : "Choose a thread from the queue to inspect its stored canonical messages. Detail pages only surface summary handoff."}
+                      : "Choose a thread from the queue to inspect its stored canonical messages. Detail pages only surface summary handoff."}
                 </p>
               </div>
 
@@ -801,7 +937,11 @@ export default async function CommunicationsPage({ searchParams }: Communication
                                 <div className="absolute bottom-0 left-[11px] top-8 w-px bg-[#d6d6d6]" />
                               ) : null}
                               <div className="absolute left-0 top-1.5 h-[22px] w-[22px] rounded-full border border-[#d6d6d6] bg-white" />
-                              <div className={["pb-5", isLast ? "pb-0" : ""].join(" ")}>
+                              <div
+                                className={["pb-5", isLast ? "pb-0" : ""].join(
+                                  " "
+                                )}
+                              >
                                 <div className="rounded-[4px] border border-[#e5e5e5] bg-[#ffffff] px-4 py-3">
                                   <div className="flex flex-wrap items-start justify-between gap-3">
                                     <div className="min-w-0">
@@ -809,10 +949,14 @@ export default async function CommunicationsPage({ searchParams }: Communication
                                         <span
                                           className={[
                                             "inline-flex rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em]",
-                                            getMessageSenderTone(message.senderType)
+                                            getMessageSenderTone(
+                                              message.senderType
+                                            )
                                           ].join(" ")}
                                         >
-                                          {getMessageSenderLabel(message.senderType)}
+                                          {getMessageSenderLabel(
+                                            message.senderType
+                                          )}
                                         </span>
                                         <span className="text-xs text-slate-400">
                                           Message {index + 1}
@@ -848,7 +992,9 @@ export default async function CommunicationsPage({ searchParams }: Communication
                       </p>
                       <p className="mt-1 text-sm leading-6 text-slate-500">
                         This selected canonical thread exists, but no
-                        <code className="mx-1 rounded bg-slate-100 px-1.5 py-0.5">communication_messages</code>
+                        <code className="mx-1 rounded bg-slate-100 px-1.5 py-0.5">
+                          communication_messages
+                        </code>
                         rows are available to review yet.
                       </p>
                     </section>
@@ -864,10 +1010,13 @@ export default async function CommunicationsPage({ searchParams }: Communication
                           Reply on the existing canonical thread
                         </h4>
                         <p className="mt-1 text-sm leading-6 text-slate-500">
-                          Replies are only available from /communications. This sends one new
-                          message into the current
-                          <code className="mx-1 rounded bg-white px-1.5 py-0.5">communication_messages</code>
-                          chain without creating a second inbox, portal copy, provider send, automation run, or new thread record.
+                          Replies are only available from /communications. This
+                          sends one new message into the current
+                          <code className="mx-1 rounded bg-white px-1.5 py-0.5">
+                            communication_messages
+                          </code>
+                          chain without creating a second inbox, portal copy,
+                          provider send, automation run, or new thread record.
                         </p>
                       </div>
                     </div>
@@ -878,6 +1027,7 @@ export default async function CommunicationsPage({ searchParams }: Communication
                         query={query}
                         view={view}
                         source={source}
+                        copilotHandoff={copilotDraftHandoff}
                       />
                     </div>
                   </section>
@@ -906,18 +1056,20 @@ export default async function CommunicationsPage({ searchParams }: Communication
               ) : (
                 <div className="space-y-4 px-5 py-6">
                   <div className="text-sm leading-6 text-slate-500">
-                    Review the queue to choose a stored thread. This page does not create local-only
-                    drafts, duplicate portal-side conversations, provider sends, or reply actions
-                    outside the shared communications workspace.
+                    Review the queue to choose a stored thread. This page does
+                    not create local-only drafts, duplicate portal-side
+                    conversations, provider sends, or reply actions outside the
+                    shared communications workspace.
                   </div>
                   <section className="rounded-[4px] border border-dashed border-[#d6d6d6] bg-[#f8f8f8] px-4 py-4">
                     <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#666666]">
                       Thread reply
                     </p>
                     <p className="mt-2 text-sm leading-6 text-slate-500">
-                      Replies are disabled until you select an existing canonical communication
-                      thread from the queue. If a direct thread link is unavailable, clear context
-                      or broaden the filters first.
+                      Replies are disabled until you select an existing
+                      canonical communication thread from the queue. If a direct
+                      thread link is unavailable, clear context or broaden the
+                      filters first.
                     </p>
                     <textarea
                       rows={4}
@@ -950,8 +1102,9 @@ export default async function CommunicationsPage({ searchParams }: Communication
                       Stored notifications
                     </h3>
                     <p className="mt-1 text-sm leading-6 text-slate-500">
-                      Triage here only updates canonical per-user notification read state. It does
-                      not send follow-up messages or trigger automation.
+                      Triage here only updates canonical per-user notification
+                      read state. It does not send follow-up messages or trigger
+                      automation.
                     </p>
                   </div>
                   <div className="space-y-2">
@@ -1000,7 +1153,9 @@ export default async function CommunicationsPage({ searchParams }: Communication
                         </span>
                       </div>
                       <div className="mt-3 flex items-center justify-between gap-3">
-                        <p className="text-xs text-slate-500">{formatDateTime(item.occurredAt)}</p>
+                        <p className="text-xs text-slate-500">
+                          {formatDateTime(item.occurredAt)}
+                        </p>
                         <Link
                           href={item.href}
                           className="inline-flex items-center rounded-[4px] border border-[#d6d6d6] bg-white px-2.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#3f3f3f] transition hover:bg-slate-50"
@@ -1013,7 +1168,8 @@ export default async function CommunicationsPage({ searchParams }: Communication
                 </div>
               ) : (
                 <div className="px-5 py-6 text-sm leading-6 text-slate-500">
-                  No unread notifications are currently open for this contractor user.
+                  No unread notifications are currently open for this contractor
+                  user.
                 </div>
               )}
             </section>
