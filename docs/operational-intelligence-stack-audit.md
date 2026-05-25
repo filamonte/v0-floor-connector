@@ -48,9 +48,10 @@ or duplicate communication/payment models.
 ## P1 Polish Before Broader Demo Or Testing
 
 - Dashboard AI digest visibility depends on organization AI dashboard controls.
-  In the current local org smoke, the dashboard route loaded correctly but the
-  digest was not visible. This is expected when disabled, but demo prep should
-  set workflow guidance preferences intentionally so the demo story is visible.
+  Follow-up smoke on May 25, 2026 intentionally set the local contractor E2E
+  owner organization to Guided mode with deterministic AI suggestions,
+  summaries, drafting, and dashboard digest enabled. Provider-backed AI, form
+  prefill, and work-item recommendation controls remained disabled.
 - Accounts Receivable had mobile horizontal overflow caused by the lower
   collections table expanding its grid column. The first fix adds `min-w-0` and
   local overflow containment so the table scroll remains inside the AR panel.
@@ -88,14 +89,23 @@ Protected-route Playwright smoke with saved local contractor auth reached:
 
 Observed behavior:
 
+- Dashboard rendered AI Operational Digest when the dashboard digest control was
+  enabled.
 - Project Workspace rendered AI Operational Copilot and ProjectPulse.
+- Project Workspace rendered review-first "Use draft" actions when AI drafting
+  was enabled.
 - Schedule rendered readiness review and scheduling queues.
 - Accounts Receivable rendered Collections intelligence, canonical invoice
-  links, project links, and customer links.
+  links, project links, customer links, and review-first draft handoffs.
 - Communications rendered the Copilot draft handoff, preserved context, and
   prefilled an editable canonical thread composer without submitting anything.
 - Workflow settings rendered AI assistance controls and human-confirmation
-  boundary copy.
+  boundary copy. The controls reflected Guided mode, AI suggestions/summaries/
+  drafting/dashboard digest enabled, and provider-backed AI disabled.
+- A practical suppression check temporarily disabled the local controls, then
+  restored the demo state. Dashboard digest and draft-action affordances were
+  hidden or reduced without runtime errors while `/dashboard`, the Project
+  Workspace, and `/financials/accounts-receivable` still returned 200.
 
 No runtime or hydration errors were captured during the smoke.
 

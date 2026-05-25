@@ -86,6 +86,13 @@ Current operating-core surfaces include:
   communications/AR models. It records P1 demo-readiness polish around
   intentional AI control setup, AR mobile containment, Copilot draft visibility,
   and communications handoff affordance clarity.
+- Demo readiness controls are now intentionally set for the local contractor
+  E2E owner organization (`jfilamonte`, active): workflow mode is Guided,
+  deterministic AI suggestions, summaries, drafting, and dashboard digest are
+  enabled, and provider-backed AI, form prefill, and work-item recommendation
+  controls remain disabled. The local smoke confirmed dashboard digest,
+  Project Workspace Copilot draft actions, AR draft actions, and workflow
+  settings visibility without provider calls or autonomous actions.
 - CrewBoard on `/schedule` over canonical jobs, appointments, job assignments,
   people, vendors, projects, and customers.
 - Portal Customer Window with Customer Next Step, Project Status Window,
