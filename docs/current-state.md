@@ -188,6 +188,19 @@ matters now` line from existing list fields only. This does not add portal
   payment/signature behavior, estimate math, invoice math, AI, automation,
   notifications, FieldTrail exposure, Proof Center exposure, service requests,
   or closeout package downloads.
+- Portal Project Workspace and portal home now use deterministic portal-safe
+  customer status explanations derived from canonical project, estimate,
+  contract, change-order, invoice/payment, and scoped schedule state. The
+  explanation returns a customer-safe headline, short explanation, optional
+  portal action link, tone, source category, and safe next step for states such
+  as contract review, payment requested, payment in progress, ready for
+  scheduling, scheduled work, work in progress, and no current customer action.
+  Schedule context is limited to project-grant-scoped job dispatch/date fields.
+  This does not add provider AI, Copilot exposure, AR pressure language,
+  internal blockers, field notes, readiness internals, portal-only status
+  records, portal access rule changes, schema, migrations, payment mutation,
+  signature mutation, automated sends, notifications, or customer-facing field
+  evidence.
 - package/billing governance lives under `/super-admin/packages`, including read-only detail routes for package definitions, assignments, provider mappings, and support reviews.
 
 ## Current Architecture

@@ -20,6 +20,7 @@ import { WorkspaceSummaryBand } from "@/components/workspace-summary-band";
 import { derivePortalProjectStatusWindow } from "@/lib/portal/project-status-window";
 import { derivePortalProjectTimeline } from "@/lib/portal/project-timeline";
 import { derivePortalSharedDocuments } from "@/lib/portal/shared-documents";
+import { derivePortalSafeStatusExplanation } from "@/lib/portal/status-explanation";
 import {
   getPortalProjectDetailSummary,
   listPortalProjectAppointments,
@@ -295,6 +296,28 @@ export default async function PortalProjectDetailPage({
     changeOrders,
     invoices
   });
+  const statusExplanation = derivePortalSafeStatusExplanation({
+    projectId: project.id,
+    projectName: project.name,
+    projectStatus: project.status,
+    estimates,
+    contracts,
+    changeOrders,
+    invoices,
+    jobs:
+      project.latestJobId && project.latestJobDispatchStatus
+        ? [
+            {
+              id: project.latestJobId,
+              dispatchStatus: project.latestJobDispatchStatus,
+              scheduledDate: project.latestJobScheduledDate,
+              scheduledStartAt: project.latestJobScheduledStartAt,
+              scheduledEndAt: project.latestJobScheduledEndAt,
+              updatedAt: project.updatedAt
+            }
+          ]
+        : []
+  });
   const timeline = derivePortalProjectTimeline({
     project: {
       id: project.id,
@@ -379,10 +402,10 @@ export default async function PortalProjectDetailPage({
                     </PortalStatusBadge>
                   </div>
                   <p className="text-lg font-semibold tracking-tight text-slate-950">
-                    {statusWindow.customerNextStep.label}
+                    {statusExplanation.headline}
                   </p>
                   <p className="text-sm leading-6 text-slate-600">
-                    {statusWindow.primaryMessage}
+                    {statusExplanation.shortExplanation}
                   </p>
                   <div className={portalInsetPanelClassName}>
                     <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
@@ -400,6 +423,10 @@ export default async function PortalProjectDetailPage({
                       <p>
                         Invoice:{" "}
                         {formatStatusLabel(project.latestInvoiceStatus)}
+                      </p>
+                      <p>
+                        Schedule:{" "}
+                        {formatStatusLabel(project.latestJobDispatchStatus)}
                       </p>
                       {project.latestInvoiceStatus ? (
                         <p>
@@ -433,14 +460,17 @@ export default async function PortalProjectDetailPage({
                     content: (
                       <NextActionCard
                         eyebrow="Project guidance"
-                        title={statusWindow.customerNextStep.label}
-                        description={statusWindow.customerNextStep.description}
+                        title={statusExplanation.headline}
+                        description={statusExplanation.safeNextStep}
                         primaryAction={
-                          <PortalSecondaryLink
-                            href={statusWindow.customerNextStep.href}
-                          >
-                            {statusWindow.customerNextStep.label}
-                          </PortalSecondaryLink>
+                          statusExplanation.customerActionHref ? (
+                            <PortalSecondaryLink
+                              href={statusExplanation.customerActionHref}
+                            >
+                              {statusExplanation.customerActionLabel ??
+                                "Review record"}
+                            </PortalSecondaryLink>
+                          ) : null
                         }
                       />
                     )

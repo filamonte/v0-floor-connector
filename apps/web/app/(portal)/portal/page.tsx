@@ -21,6 +21,7 @@ import {
   listPortalAccessibleProjects,
   listPortalUpcomingAppointments
 } from "@/lib/portal/data";
+import { derivePortalSafeStatusExplanation } from "@/lib/portal/status-explanation";
 
 function formatStatusLabel(status: string | null) {
   if (!status) {
@@ -44,213 +45,107 @@ function formatAppointmentTime(startAt: string, endAt: string | null) {
   return `${start} to ${new Date(endAt).toLocaleTimeString()}`;
 }
 
-function formatMoney(value: string) {
-  return Number(value).toLocaleString("en-US", {
-    style: "currency",
-    currency: "USD"
-  });
-}
-
-function getPortalInvoiceProgressSummary(
-  project: Awaited<ReturnType<typeof listPortalAccessibleProjects>>[number]
-) {
-  if (!project.latestInvoiceStatus) {
-    return "No shared billing record yet";
-  }
-
-  if (project.latestInvoicePaymentEventType === "payment_failed") {
-    return "Recent payment attempt failed";
-  }
-
-  if (project.latestInvoicePaymentEventType === "checkout_started") {
-    return "Payment is currently in progress";
-  }
-
-  if (project.latestInvoicePaymentEventType === "payment_succeeded") {
-    return project.latestInvoiceStatus === "partially_paid"
-      ? project.latestInvoiceWorkflowRole === "deposit"
-        ? `A deposit payment completed | ${formatMoney(project.latestInvoiceBalanceDueAmount ?? "0")} still remains`
-        : `A payment completed | ${formatMoney(project.latestInvoiceBalanceDueAmount ?? "0")} still remains`
-      : project.latestInvoiceWorkflowRole === "deposit"
-        ? "Deposit payment completed"
-        : "Invoice payment completed";
-  }
-
-  if (project.latestInvoicePaymentEventType === "payment_requested") {
-    return "Payment has been requested";
-  }
-
-  if (project.latestInvoicePaymentEventType === "payment_voided") {
-    return "A recent payment was voided";
-  }
-
-  if (project.latestInvoiceStatus === "paid") {
-    return project.latestInvoiceWorkflowRole === "deposit"
-      ? "Deposit is fully paid"
-      : "Invoice is fully paid";
-  }
-
-  if (project.latestInvoiceStatus === "partially_paid") {
-    return project.latestInvoiceWorkflowRole === "deposit"
-      ? `Deposit partially paid | ${formatMoney(project.latestInvoiceBalanceDueAmount ?? "0")} remaining`
-      : `Partially paid | ${formatMoney(project.latestInvoiceBalanceDueAmount ?? "0")} remaining`;
-  }
-
-  if (project.latestInvoiceStatus === "void") {
-    return "Invoice has been voided";
-  }
-
-  return project.latestInvoiceWorkflowRole === "deposit"
-    ? `Deposit due | ${formatMoney(project.latestInvoiceBalanceDueAmount ?? "0")} remaining`
-    : `Balance due | ${formatMoney(project.latestInvoiceBalanceDueAmount ?? "0")} remaining`;
-}
-
 function getPortalHomeNextAction(
   projects: Awaited<ReturnType<typeof listPortalAccessibleProjects>>
 ) {
-  const invoiceProject = projects.find(
-    (project) =>
-      project.latestInvoiceStatus &&
-      !["paid", "void"].includes(project.latestInvoiceStatus)
-  );
+  const explanations = projects.map((project) => ({
+    project,
+    explanation: getPortalHomeStatusExplanation(project)
+  }));
+  const actionableExplanation =
+    explanations.find(
+      ({ explanation }) =>
+        explanation.statusTone === "attention" && explanation.customerActionHref
+    ) ??
+    explanations.find(({ explanation }) => explanation.customerActionHref) ??
+    null;
 
-  if (invoiceProject) {
-    if (invoiceProject.latestInvoicePaymentEventType === "checkout_started") {
-      return {
-        title: `Continue payment for ${invoiceProject.name}`,
-        description:
-          "Checkout has already started, so this project is the clearest place to confirm payment progress.",
-        href: `/portal/projects/${invoiceProject.id}`,
-        label: "Open payment context"
-      };
-    }
-
-    if (invoiceProject.latestInvoicePaymentEventType === "payment_requested") {
-      return {
-        title: `Payment has been requested for ${invoiceProject.name}`,
-        description:
-          "Customer payment activity has started on this invoice, so review that project workspace for the current shared billing state.",
-        href: `/portal/projects/${invoiceProject.id}`,
-        label: "Open payment context"
-      };
-    }
-
-    if (invoiceProject.latestInvoicePaymentEventType === "payment_succeeded") {
-      return {
-        title: `Review the remaining balance for ${invoiceProject.name}`,
-        description:
-          "A payment has already landed, but the project still carries an open balance to review.",
-        href: `/portal/projects/${invoiceProject.id}`,
-        label: "Open payment context"
-      };
-    }
-
-    if (invoiceProject.latestInvoicePaymentEventType === "payment_voided") {
-      return {
-        title: `Review reopened billing for ${invoiceProject.name}`,
-        description:
-          "The latest payment was voided, so the invoice has returned to an open balance on this project.",
-        href: `/portal/projects/${invoiceProject.id}`,
-        label: "Open payment context"
-      };
-    }
-
-    if (invoiceProject.latestInvoiceStatus === "partially_paid") {
-      return {
-        title: `Review the remaining balance for ${invoiceProject.name}`,
-        description:
-          "A payment has already been recorded, but there is still an outstanding balance to review.",
-        href: `/portal/projects/${invoiceProject.id}`,
-        label: "Open project billing"
-      };
-    }
-
+  if (actionableExplanation) {
     return {
-      title: `Review billing for ${invoiceProject.name}`,
-      description:
-        "This project has an active invoice in view, so it is the clearest next record to review from the portal.",
-      href: `/portal/projects/${invoiceProject.id}`,
-      label: "Open project billing"
+      title: `${actionableExplanation.explanation.headline} for ${actionableExplanation.project.name}`,
+      description: actionableExplanation.explanation.shortExplanation,
+      href: `/portal/projects/${actionableExplanation.project.id}`,
+      label:
+        actionableExplanation.explanation.customerActionLabel ??
+        "Open project workspace"
     };
   }
 
-  const paidInvoiceProject = projects.find(
-    (project) => project.latestInvoiceStatus === "paid"
-  );
+  const currentExplanation =
+    explanations.find(
+      ({ explanation }) => explanation.statusTone === "complete"
+    ) ??
+    explanations[0] ??
+    null;
 
-  if (paidInvoiceProject) {
+  if (currentExplanation) {
     return {
-      title: `Billing is current for ${paidInvoiceProject.name}`,
-      description:
-        "The latest invoice is fully paid on this project, so the project page is the best place to review what comes next.",
-      href: `/portal/projects/${paidInvoiceProject.id}`,
-      label: "Open paid billing context"
-    };
-  }
-
-  const contractProject = projects.find(
-    (project) =>
-      project.latestContractStatus &&
-      !["signed", "void"].includes(project.latestContractStatus)
-  );
-
-  if (contractProject) {
-    return {
-      title: `Review contract status for ${contractProject.name}`,
-      description:
-        "A contract is in motion for this project, so that project workspace is the best place to review the latest shared document state.",
-      href: `/portal/projects/${contractProject.id}`,
-      label: "Open contract context"
-    };
-  }
-
-  const estimateProject = projects.find(
-    (project) => project.latestEstimateStatus
-  );
-
-  if (estimateProject) {
-    return {
-      title: `Review proposal details for ${estimateProject.name}`,
-      description:
-        "Estimate and proposal information is already shared for this project, making it the best starting point for review.",
-      href: `/portal/projects/${estimateProject.id}`,
-      label: "Open project proposal"
+      title: `${currentExplanation.explanation.headline} for ${currentExplanation.project.name}`,
+      description: currentExplanation.explanation.shortExplanation,
+      href: `/portal/projects/${currentExplanation.project.id}`,
+      label: "Open project workspace"
     };
   }
 
   return null;
 }
 
-function getPortalProjectHomeAttention(
+function getPortalHomeStatusExplanation(
   project: Awaited<ReturnType<typeof listPortalAccessibleProjects>>[number]
 ) {
-  if (
-    project.latestInvoiceStatus &&
-    !["paid", "void"].includes(project.latestInvoiceStatus)
-  ) {
-    return getPortalInvoiceProgressSummary(project);
-  }
-
-  if (
-    project.latestContractStatus &&
-    !["signed", "void"].includes(project.latestContractStatus)
-  ) {
-    return "Contract review or signature may still be in progress";
-  }
-
-  if (project.latestEstimateStatus === "sent") {
-    return "Estimate is ready for review";
-  }
-
-  if (
-    project.latestInvoiceStatus === "paid" ||
-    project.latestContractStatus === "signed" ||
-    project.latestEstimateStatus === "approved"
-  ) {
-    return "No action needed right now";
-  }
-
-  return "Open the project to see what has been shared";
+  return derivePortalSafeStatusExplanation({
+    projectId: project.id,
+    projectName: project.name,
+    projectStatus: project.status,
+    estimates:
+      project.latestEstimateId && project.latestEstimateStatus
+        ? [
+            {
+              id: project.latestEstimateId,
+              status: project.latestEstimateStatus,
+              updatedAt: project.updatedAt
+            }
+          ]
+        : [],
+    contracts:
+      project.latestContractId && project.latestContractStatus
+        ? [
+            {
+              id: project.latestContractId,
+              status: project.latestContractStatus,
+              updatedAt: project.updatedAt
+            }
+          ]
+        : [],
+    invoices:
+      project.latestInvoiceId && project.latestInvoiceStatus
+        ? [
+            {
+              id: project.latestInvoiceId,
+              status: project.latestInvoiceStatus,
+              referenceNumber: project.latestInvoiceReferenceNumber,
+              workflowRole: project.latestInvoiceWorkflowRole,
+              balanceDueAmount: project.latestInvoiceBalanceDueAmount,
+              latestPaymentEventType: project.latestInvoicePaymentEventType,
+              latestPaymentEventAt: project.latestInvoicePaymentEventAt,
+              updatedAt: project.updatedAt
+            }
+          ]
+        : [],
+    jobs:
+      project.latestJobId && project.latestJobDispatchStatus
+        ? [
+            {
+              id: project.latestJobId,
+              dispatchStatus: project.latestJobDispatchStatus,
+              scheduledDate: project.latestJobScheduledDate,
+              scheduledStartAt: project.latestJobScheduledStartAt,
+              scheduledEndAt: project.latestJobScheduledEndAt,
+              updatedAt: project.updatedAt
+            }
+          ]
+        : []
+  });
 }
 
 export default async function PortalHomePage() {
@@ -267,6 +162,9 @@ export default async function PortalHomePage() {
       : null) ??
     projects[0] ??
     null;
+  const primaryProjectExplanation = primaryProject
+    ? getPortalHomeStatusExplanation(primaryProject)
+    : null;
 
   return (
     <div className="grid gap-8 xl:grid-cols-[minmax(0,1.08fr)_320px]">
@@ -326,7 +224,7 @@ export default async function PortalHomePage() {
                         {primaryProject.name}
                       </p>
                       <p className="mt-1 text-sm text-slate-600">
-                        {getPortalInvoiceProgressSummary(primaryProject)}
+                        {primaryProjectExplanation?.shortExplanation}
                       </p>
                     </div>
                   ) : (
@@ -441,80 +339,88 @@ export default async function PortalHomePage() {
         >
           {projects.length > 0 ? (
             <div className="grid gap-4">
-              {projects.map((project) => (
-                <Link
-                  key={project.id}
-                  href={`/portal/projects/${project.id}`}
-                  className={`block ${portalReviewCardClassName}`}
-                >
-                  <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-                    <div className="min-w-0">
-                      <h2 className="text-xl font-semibold tracking-tight text-slate-950">
-                        {project.name}
-                      </h2>
-                      <p className="mt-2 text-sm leading-6 text-slate-600">
-                        {project.description?.trim() ||
-                          "Open this project workspace to review the connected estimate, contract, and invoice context."}
-                      </p>
-                      <p className="mt-3 text-sm text-slate-500">
-                        {project.customer?.companyName ??
-                          project.customer?.name ??
-                          "Customer record"}{" "}
-                        {project.locationSummary
-                          ? `| ${project.locationSummary}`
-                          : ""}
-                      </p>
-                    </div>
-                    <PortalStatusBadge status={project.status ?? "neutral"}>
-                      {formatStatusLabel(project.status)}
-                    </PortalStatusBadge>
-                  </div>
+              {projects.map((project) =>
+                (() => {
+                  const explanation = getPortalHomeStatusExplanation(project);
 
-                  <div className="mt-5 grid gap-3 md:grid-cols-3">
-                    <div className={portalMetricPanelClassName}>
-                      <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
-                        Estimate
-                      </p>
-                      <p className="mt-2 text-sm font-medium capitalize text-slate-950">
-                        {formatStatusLabel(project.latestEstimateStatus)}
-                      </p>
-                    </div>
-                    <div className={portalMetricPanelClassName}>
-                      <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
-                        Contract
-                      </p>
-                      <p className="mt-2 text-sm font-medium capitalize text-slate-950">
-                        {formatStatusLabel(project.latestContractStatus)}
-                      </p>
-                    </div>
-                    <div className={portalMetricPanelClassName}>
-                      <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
-                        Invoice
-                      </p>
-                      <p className="mt-2 text-sm font-medium capitalize text-slate-950">
-                        {formatStatusLabel(project.latestInvoiceStatus)}
-                      </p>
-                    </div>
-                  </div>
+                  return (
+                    <Link
+                      key={project.id}
+                      href={`/portal/projects/${project.id}`}
+                      className={`block ${portalReviewCardClassName}`}
+                    >
+                      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                        <div className="min-w-0">
+                          <h2 className="text-xl font-semibold tracking-tight text-slate-950">
+                            {project.name}
+                          </h2>
+                          <p className="mt-2 text-sm leading-6 text-slate-600">
+                            {project.description?.trim() ||
+                              "Open this project workspace to review the connected estimate, contract, invoice, and schedule context."}
+                          </p>
+                          <p className="mt-3 text-sm text-slate-500">
+                            {project.customer?.companyName ??
+                              project.customer?.name ??
+                              "Customer record"}{" "}
+                            {project.locationSummary
+                              ? `| ${project.locationSummary}`
+                              : ""}
+                          </p>
+                        </div>
+                        <PortalStatusBadge status={explanation.statusTone}>
+                          {explanation.headline}
+                        </PortalStatusBadge>
+                      </div>
 
-                  <div
-                    className={`${portalMetricPanelClassName} mt-4 text-sm leading-6 text-slate-600`}
-                  >
-                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
-                      Your next step
-                    </p>
-                    <p className="mt-2 font-medium text-slate-950">
-                      {getPortalProjectHomeAttention(project)}
-                    </p>
-                    {project.latestInvoicePaymentEventAt ? (
-                      <p className="mt-1 text-slate-500">
-                        Latest activity{" "}
-                        {formatDateTime(project.latestInvoicePaymentEventAt)}
-                      </p>
-                    ) : null}
-                  </div>
-                </Link>
-              ))}
+                      <div className="mt-5 grid gap-3 md:grid-cols-3">
+                        <div className={portalMetricPanelClassName}>
+                          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+                            Estimate
+                          </p>
+                          <p className="mt-2 text-sm font-medium capitalize text-slate-950">
+                            {formatStatusLabel(project.latestEstimateStatus)}
+                          </p>
+                        </div>
+                        <div className={portalMetricPanelClassName}>
+                          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+                            Contract
+                          </p>
+                          <p className="mt-2 text-sm font-medium capitalize text-slate-950">
+                            {formatStatusLabel(project.latestContractStatus)}
+                          </p>
+                        </div>
+                        <div className={portalMetricPanelClassName}>
+                          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+                            Invoice
+                          </p>
+                          <p className="mt-2 text-sm font-medium capitalize text-slate-950">
+                            {formatStatusLabel(project.latestInvoiceStatus)}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div
+                        className={`${portalMetricPanelClassName} mt-4 text-sm leading-6 text-slate-600`}
+                      >
+                        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+                          Your next step
+                        </p>
+                        <p className="mt-2 font-medium text-slate-950">
+                          {explanation.safeNextStep}
+                        </p>
+                        {project.latestInvoicePaymentEventAt ? (
+                          <p className="mt-1 text-slate-500">
+                            Latest activity{" "}
+                            {formatDateTime(
+                              project.latestInvoicePaymentEventAt
+                            )}
+                          </p>
+                        ) : null}
+                      </div>
+                    </Link>
+                  );
+                })()
+              )}
             </div>
           ) : (
             <AppEmptyState

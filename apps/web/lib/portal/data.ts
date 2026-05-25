@@ -289,6 +289,16 @@ type PortalPaymentEventRow = {
   payload: Record<string, unknown> | null;
 };
 
+type PortalJobRow = {
+  id: string;
+  project_id: string;
+  dispatch_status: string;
+  scheduled_date: string | null;
+  scheduled_start_at: string | null;
+  scheduled_end_at: string | null;
+  updated_at: string;
+};
+
 type PortalWarrantyDocumentRow = {
   id: string;
   company_id: string;
@@ -349,9 +359,15 @@ type PortalDocumentSignatureEventRow = {
 };
 
 type ProjectStatusRow = {
+  id: string;
   project_id: string;
   status: string;
   updated_at: string;
+};
+
+type ProjectLatestStatusSummary = {
+  id: string;
+  status: string;
 };
 
 type PortalDocumentBrandRow = {
@@ -390,14 +406,22 @@ export type PortalAccessibleProjectListItem = {
     phone: string | null;
   } | null;
   locationSummary: string | null;
+  latestEstimateId: string | null;
   latestEstimateStatus: string | null;
+  latestContractId: string | null;
   latestContractStatus: string | null;
+  latestInvoiceId: string | null;
   latestInvoiceStatus: string | null;
   latestInvoiceReferenceNumber: string | null;
   latestInvoiceWorkflowRole: string | null;
   latestInvoiceBalanceDueAmount: string | null;
   latestInvoicePaymentEventType: PaymentEventType | null;
   latestInvoicePaymentEventAt: string | null;
+  latestJobId: string | null;
+  latestJobDispatchStatus: string | null;
+  latestJobScheduledDate: string | null;
+  latestJobScheduledStartAt: string | null;
+  latestJobScheduledEndAt: string | null;
   updatedAt: string;
 };
 
@@ -426,14 +450,22 @@ export type PortalProjectDetailSummary = {
   visibleEstimateCount: number;
   visibleContractCount: number;
   visibleInvoiceCount: number;
+  latestEstimateId: string | null;
   latestEstimateStatus: string | null;
+  latestContractId: string | null;
   latestContractStatus: string | null;
+  latestInvoiceId: string | null;
   latestInvoiceStatus: string | null;
   latestInvoiceReferenceNumber: string | null;
   latestInvoiceWorkflowRole: string | null;
   latestInvoiceBalanceDueAmount: string | null;
   latestInvoicePaymentEventType: PaymentEventType | null;
   latestInvoicePaymentEventAt: string | null;
+  latestJobId: string | null;
+  latestJobDispatchStatus: string | null;
+  latestJobScheduledDate: string | null;
+  latestJobScheduledStartAt: string | null;
+  latestJobScheduledEndAt: string | null;
   createdAt: string;
   updatedAt: string;
 };
@@ -551,12 +583,21 @@ type PortalProjectLatestInvoiceRow = {
 };
 
 type PortalProjectLatestInvoiceSummary = {
+  id: string;
   referenceNumber: string;
   workflowRole: string;
   status: InvoiceStatus;
   balanceDueAmount: string;
   latestPaymentEventType: PaymentEventType | null;
   latestPaymentEventAt: string | null;
+};
+
+type PortalProjectLatestJobSummary = {
+  id: string;
+  dispatchStatus: string;
+  scheduledDate: string | null;
+  scheduledStartAt: string | null;
+  scheduledEndAt: string | null;
 };
 
 export type PortalEstimateReviewDetail = {
@@ -1506,8 +1547,8 @@ async function getPortalDocumentBrand(
 async function getLatestStatusesByProjectIds(projectIds: string[]) {
   if (projectIds.length === 0) {
     return {
-      estimates: new Map<string, string>(),
-      contracts: new Map<string, string>()
+      estimates: new Map<string, ProjectLatestStatusSummary>(),
+      contracts: new Map<string, ProjectLatestStatusSummary>()
     };
   }
 
@@ -1515,12 +1556,12 @@ async function getLatestStatusesByProjectIds(projectIds: string[]) {
   const [estimatesResponse, contractsResponse] = await Promise.all([
     supabase
       .from("estimates")
-      .select("project_id, status, updated_at")
+      .select("id, project_id, status, updated_at")
       .in("project_id", projectIds)
       .order("updated_at", { ascending: false }),
     supabase
       .from("contracts")
-      .select("project_id, status, updated_at")
+      .select("id, project_id, status, updated_at")
       .in("project_id", projectIds)
       .order("updated_at", { ascending: false })
   ]);
@@ -1542,18 +1583,24 @@ async function getLatestStatusesByProjectIds(projectIds: string[]) {
   const contractRows =
     (contractsResponse.data as ProjectStatusRow[] | null) ?? [];
 
-  const estimateMap = new Map<string, string>();
-  const contractMap = new Map<string, string>();
+  const estimateMap = new Map<string, ProjectLatestStatusSummary>();
+  const contractMap = new Map<string, ProjectLatestStatusSummary>();
 
   for (const row of estimateRows) {
     if (!estimateMap.has(row.project_id)) {
-      estimateMap.set(row.project_id, row.status);
+      estimateMap.set(row.project_id, {
+        id: row.id,
+        status: row.status
+      });
     }
   }
 
   for (const row of contractRows) {
     if (!contractMap.has(row.project_id)) {
-      contractMap.set(row.project_id, row.status);
+      contractMap.set(row.project_id, {
+        id: row.id,
+        status: row.status
+      });
     }
   }
 
@@ -1669,6 +1716,7 @@ async function getLatestInvoiceSummariesByProjectIds(projectIds: string[]) {
       return [
         projectId,
         {
+          id: row.id,
           referenceNumber: row.reference_number,
           workflowRole: row.workflow_role,
           status: row.status,
@@ -1678,6 +1726,59 @@ async function getLatestInvoiceSummariesByProjectIds(projectIds: string[]) {
         }
       ];
     })
+  );
+}
+
+async function getLatestJobSummariesByProjectIds(
+  projectIds: string[]
+): Promise<Map<string, PortalProjectLatestJobSummary>> {
+  if (projectIds.length === 0) {
+    return new Map();
+  }
+
+  const admin = getSupabaseAdminClient();
+  const response = await admin
+    .from("jobs")
+    .select(
+      `
+        id,
+        project_id,
+        dispatch_status,
+        scheduled_date,
+        scheduled_start_at,
+        scheduled_end_at,
+        updated_at
+      `
+    )
+    .in("project_id", projectIds)
+    .order("updated_at", { ascending: false });
+  const rows = (response.data as PortalJobRow[] | null) ?? [];
+
+  if (response.error) {
+    throw new Error(
+      `Unable to load portal project job summaries: ${response.error.message}`
+    );
+  }
+
+  const latestJobsByProject = new Map<string, PortalJobRow>();
+
+  for (const row of rows) {
+    if (!latestJobsByProject.has(row.project_id)) {
+      latestJobsByProject.set(row.project_id, row);
+    }
+  }
+
+  return new Map(
+    [...latestJobsByProject.entries()].map(([projectId, row]) => [
+      projectId,
+      {
+        id: row.id,
+        dispatchStatus: row.dispatch_status,
+        scheduledDate: row.scheduled_date,
+        scheduledStartAt: row.scheduled_start_at,
+        scheduledEndAt: row.scheduled_end_at
+      }
+    ])
   );
 }
 
@@ -1710,9 +1811,15 @@ export async function listPortalAccessibleProjects(
   const latestInvoiceSummaries = await getLatestInvoiceSummariesByProjectIds(
     scope.accessibleProjectIds
   );
+  const latestJobSummaries = await getLatestJobSummariesByProjectIds(
+    scope.accessibleProjectIds
+  );
 
   return rows.map((row) => {
+    const latestEstimateSummary = latestStatuses.estimates.get(row.id) ?? null;
+    const latestContractSummary = latestStatuses.contracts.get(row.id) ?? null;
     const latestInvoiceSummary = latestInvoiceSummaries.get(row.id) ?? null;
+    const latestJobSummary = latestJobSummaries.get(row.id) ?? null;
 
     return {
       id: row.id,
@@ -1731,8 +1838,11 @@ export async function listPortalAccessibleProjects(
           }
         : null,
       locationSummary: formatLocationSummary(row),
-      latestEstimateStatus: latestStatuses.estimates.get(row.id) ?? null,
-      latestContractStatus: latestStatuses.contracts.get(row.id) ?? null,
+      latestEstimateId: latestEstimateSummary?.id ?? null,
+      latestEstimateStatus: latestEstimateSummary?.status ?? null,
+      latestContractId: latestContractSummary?.id ?? null,
+      latestContractStatus: latestContractSummary?.status ?? null,
+      latestInvoiceId: latestInvoiceSummary?.id ?? null,
       latestInvoiceStatus: latestInvoiceSummary?.status ?? null,
       latestInvoiceReferenceNumber:
         latestInvoiceSummary?.referenceNumber ?? null,
@@ -1743,6 +1853,11 @@ export async function listPortalAccessibleProjects(
         latestInvoiceSummary?.latestPaymentEventType ?? null,
       latestInvoicePaymentEventAt:
         latestInvoiceSummary?.latestPaymentEventAt ?? null,
+      latestJobId: latestJobSummary?.id ?? null,
+      latestJobDispatchStatus: latestJobSummary?.dispatchStatus ?? null,
+      latestJobScheduledDate: latestJobSummary?.scheduledDate ?? null,
+      latestJobScheduledStartAt: latestJobSummary?.scheduledStartAt ?? null,
+      latestJobScheduledEndAt: latestJobSummary?.scheduledEndAt ?? null,
       updatedAt: row.updated_at
     };
   });
@@ -1781,7 +1896,8 @@ export async function getPortalProjectDetailSummary(
     contractCountResponse,
     invoiceCountResponse,
     latestStatuses,
-    latestInvoiceSummaries
+    latestInvoiceSummaries,
+    latestJobSummaries
   ] = await Promise.all([
     supabase
       .from("estimates")
@@ -1796,7 +1912,8 @@ export async function getPortalProjectDetailSummary(
       .select("id", { count: "exact", head: true })
       .eq("project_id", projectId),
     getLatestStatusesByProjectIds([projectId]),
-    getLatestInvoiceSummariesByProjectIds([projectId])
+    getLatestInvoiceSummariesByProjectIds([projectId]),
+    getLatestJobSummariesByProjectIds([projectId])
   ]);
 
   if (estimateCountResponse.error) {
@@ -1828,7 +1945,10 @@ export async function getPortalProjectDetailSummary(
     next
   );
 
+  const latestEstimateSummary = latestStatuses.estimates.get(projectId) ?? null;
+  const latestContractSummary = latestStatuses.contracts.get(projectId) ?? null;
   const latestInvoiceSummary = latestInvoiceSummaries.get(projectId) ?? null;
+  const latestJobSummary = latestJobSummaries.get(projectId) ?? null;
 
   return {
     id: row.id,
@@ -1857,8 +1977,11 @@ export async function getPortalProjectDetailSummary(
     visibleEstimateCount: estimateCountResponse.count ?? 0,
     visibleContractCount: contractCountResponse.count ?? 0,
     visibleInvoiceCount: invoiceCountResponse.count ?? 0,
-    latestEstimateStatus: latestStatuses.estimates.get(projectId) ?? null,
-    latestContractStatus: latestStatuses.contracts.get(projectId) ?? null,
+    latestEstimateId: latestEstimateSummary?.id ?? null,
+    latestEstimateStatus: latestEstimateSummary?.status ?? null,
+    latestContractId: latestContractSummary?.id ?? null,
+    latestContractStatus: latestContractSummary?.status ?? null,
+    latestInvoiceId: latestInvoiceSummary?.id ?? null,
     latestInvoiceStatus: latestInvoiceSummary?.status ?? null,
     latestInvoiceReferenceNumber: latestInvoiceSummary?.referenceNumber ?? null,
     latestInvoiceWorkflowRole: latestInvoiceSummary?.workflowRole ?? null,
@@ -1868,6 +1991,11 @@ export async function getPortalProjectDetailSummary(
       latestInvoiceSummary?.latestPaymentEventType ?? null,
     latestInvoicePaymentEventAt:
       latestInvoiceSummary?.latestPaymentEventAt ?? null,
+    latestJobId: latestJobSummary?.id ?? null,
+    latestJobDispatchStatus: latestJobSummary?.dispatchStatus ?? null,
+    latestJobScheduledDate: latestJobSummary?.scheduledDate ?? null,
+    latestJobScheduledStartAt: latestJobSummary?.scheduledStartAt ?? null,
+    latestJobScheduledEndAt: latestJobSummary?.scheduledEndAt ?? null,
     createdAt: row.created_at,
     updatedAt: row.updated_at
   };

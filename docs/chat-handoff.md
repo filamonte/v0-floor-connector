@@ -95,8 +95,12 @@ Current operating-core surfaces include:
   settings visibility without provider calls or autonomous actions.
 - CrewBoard on `/schedule` over canonical jobs, appointments, job assignments,
   people, vendors, projects, and customers.
-- Portal Customer Window with Customer Next Step, Project Status Window,
-  Project Timeline, Shared Documents, and existing portal review/print routes.
+- Portal Customer Window with deterministic portal-safe customer status
+  explanations, Customer Next Step, Project Status Window, Project Timeline,
+  Shared Documents, and existing portal review/print routes. The explanation
+  layer uses canonical project, commercial, payment, and scoped schedule state
+  only; it does not expose contractor Copilot, AR, blockers, field notes,
+  readiness internals, or portal-only workflow copies.
 - Reports, Financial Control, Accounting Readiness, and Accounting Export Prep
   as read-only review/export-prep surfaces over source financial and
   operational records.

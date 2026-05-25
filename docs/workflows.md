@@ -709,6 +709,12 @@ Implemented flow:
 - portal customers can see read-only, project-linked appointments only when a contractor explicitly marks the canonical appointment `customer_visible = true`
 - customer-facing appointment display uses customer-safe fields only: appointment title/type, date/time, status, location, and `customer_notes`; it does not expose internal notes, legacy appointment notes, assignment internals, or internal communication
 - portal appointment display does not include appointment confirmation actions, email-send actions, or communication-message display yet, even when a contractor logs or later sends a customer-visible appointment confirmation internally
+- portal status explanations are deterministic customer-facing summaries over
+  canonical project, estimate, contract, change-order, invoice/payment, and
+  project-scoped schedule fields; they may link only to existing portal-safe
+  project, estimate, contract, change-order, or invoice routes and must not
+  expose contractor Copilot, AR, blocker, field-note, readiness, assignment, or
+  provider internals
 
 Current canonical records involved:
 
