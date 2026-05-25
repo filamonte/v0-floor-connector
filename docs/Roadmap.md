@@ -147,7 +147,11 @@ Scheduling must stay on canonical jobs, appointments, and job assignments. Do no
 
 ## 4. Materials, Catalog, And Document Depth
 
-Current status: Foundation.
+Current status: Foundation. A first contractor-side Document Readiness summary
+now exists on Estimate, Contract, and Invoice Workspaces to clarify whether the
+current canonical record is ready for preview, review/signature/payment request,
+or needs missing context before delivery. Stored PDF/version management,
+provider retry lifecycle, and a broad document manager remain future depth.
 
 Future depth:
 

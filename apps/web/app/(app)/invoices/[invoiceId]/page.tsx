@@ -17,6 +17,7 @@ import {
 import { DetailPageHeader } from "@/components/detail-page-header";
 import { DetailPanel } from "@/components/detail-panel";
 import { DocumentDeliveryHistoryPanel } from "@/components/document-delivery-history-panel";
+import { DocumentReadinessCard } from "@/components/document-readiness-card";
 import { EarlyAccessLockNotice } from "@/components/early-access-lock-notice";
 import { InvoiceForm } from "@/components/invoice-form";
 import { InvoicePaymentForm } from "@/components/invoice-payment-form";
@@ -39,6 +40,7 @@ import { listInvoiceChangeOrders } from "@/lib/change-orders/data";
 import { listCommunicationThreadsForSubject } from "@/lib/communications/data";
 import { getDocumentDeliveryState } from "@/lib/document-delivery/data";
 import { buildDocumentPrintHref } from "@/lib/document-engine/print";
+import { deriveInvoiceDocumentReadiness } from "@/lib/document-readiness/readiness";
 import {
   recordInvoicePaymentAction,
   sendInvoiceReviewEmailAction,
@@ -352,6 +354,20 @@ export default async function InvoiceDetailPage({
         projectId: invoice.projectId
       })
     : [];
+  const documentReadiness = deriveInvoiceDocumentReadiness({
+    id: invoice.id,
+    referenceNumber: invoice.referenceNumber,
+    status: invoice.status,
+    customerId: invoice.customerId,
+    customerName: invoice.customer?.name,
+    customerEmail: invoice.customer?.email,
+    projectId: invoice.projectId,
+    projectName: invoice.project?.name,
+    templateId: invoice.templateId,
+    lineItemCount: invoice.lineItems.length,
+    balanceDueAmount: invoice.balanceDueAmount,
+    portalRecipientCount: sendContactOptions.length
+  });
   const isProductionActionLocked = organizationContext
     ? !isOrganizationActivatedForProductionAction({
         id: organizationContext.organization.id,
@@ -859,7 +875,7 @@ export default async function InvoiceDetailPage({
                     })}
                     className={secondaryActionClassName}
                   >
-                    Print / Save PDF
+                    {documentReadiness.safePreviewLabel}
                   </Link>
                   <a
                     href="#invoice-editing"
@@ -1656,6 +1672,9 @@ export default async function InvoiceDetailPage({
             title="Provider Email Send"
             description="Send the customer a portal invoice review/payment link without starting checkout."
           >
+            <div className="mb-4">
+              <DocumentReadinessCard readiness={documentReadiness} />
+            </div>
             {canSendInvoiceReviewLink ? (
               invoice.customer?.email ? (
                 <form

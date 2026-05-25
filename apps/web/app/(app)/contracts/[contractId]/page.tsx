@@ -18,6 +18,7 @@ import {
   commercialDocumentHeaderShellClassName
 } from "@/components/commercial-document-command-band";
 import { DocumentDeliveryHistoryPanel } from "@/components/document-delivery-history-panel";
+import { DocumentReadinessCard } from "@/components/document-readiness-card";
 import { OnsiteSignatureModal } from "@/components/contracts/onsite-signature-modal";
 import { ContextFactsList } from "@/components/context-facts-list";
 import { DetailPageHeader } from "@/components/detail-page-header";
@@ -42,6 +43,7 @@ import {
 } from "@/lib/contracts/data";
 import { getDocumentDeliveryState } from "@/lib/document-delivery/data";
 import { buildDocumentPrintHref } from "@/lib/document-engine/print";
+import { deriveContractDocumentReadiness } from "@/lib/document-readiness/readiness";
 import { listInvoices } from "@/lib/invoices/data";
 import { listJobAssignmentsByJobIds, listJobs } from "@/lib/jobs/data";
 import { getActiveOrganizationContext } from "@/lib/organizations/active-context";
@@ -564,6 +566,25 @@ export default async function ContractDetailPage({
       signerStatus: signer.signerStatus
     }))
   });
+  const documentReadiness = deriveContractDocumentReadiness({
+    id: contract.id,
+    referenceNumber: contract.referenceNumber,
+    status: contract.status,
+    internalApprovalStatus: contract.internalApprovalStatus,
+    signatureReadinessStatus: contract.signatureReadinessStatus,
+    customerId: contract.customerId,
+    customerName: contract.customer?.name,
+    customerEmail: contract.customer?.email,
+    projectId: contract.projectId,
+    projectName: contract.project?.name,
+    templateId: contract.templateId,
+    templateName: contract.template?.name,
+    renderedContent: contract.renderedContent,
+    customerSignerCount: contract.signers.filter(
+      (signer) => signer.signerRole === "customer"
+    ).length,
+    signedAt: contract.signedAt
+  });
 
   const relatedJobs = jobs.filter(
     (job) => job.projectId === contract.projectId
@@ -901,7 +922,7 @@ export default async function ContractDetailPage({
                   })}
                   className={secondaryActionClassName}
                 >
-                  Print / Save PDF
+                  {documentReadiness.safePreviewLabel}
                 </Link>
                 {contract.isEditable ? (
                   <Link
@@ -1120,6 +1141,9 @@ export default async function ContractDetailPage({
               title="Workflow Actions"
               description="Move the contract through approval, send, customer signature, and countersign from this review surface without changing downstream readiness rules."
             >
+              <div className="mb-4">
+                <DocumentReadinessCard readiness={documentReadiness} />
+              </div>
               <div id="contract-workflow-actions" className="space-y-4">
                 <ContractStatusActions
                   contractId={contract.id}

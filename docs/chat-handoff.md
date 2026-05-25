@@ -114,6 +114,14 @@ Current operating-core surfaces include:
   operational records.
 - Document Engine print/save routes for source-record exports, including the
   contractor-side project closeout package route.
+- Estimate, Contract, and Invoice Workspaces now show a contractor-side
+  Document Readiness summary before send/delivery review. It is deterministic
+  and source-record-derived, covering preview/readiness labels, template or
+  rendering availability, customer/project context, signature/payment state
+  where relevant, missing fields, and the safe next action. It does not add
+  stored PDFs, document records, portal-only copies, provider calls, autonomous
+  sends, payment/signature mutations, schema, migrations, or customer-facing
+  internal readiness language.
 - Service Center and warranty document foundations tied to customer, project,
   job, proof, and warranty context.
 - Company Documents Phase 1C-A under `/settings/company-documents`, backed by the

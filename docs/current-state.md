@@ -2570,6 +2570,15 @@ Implemented UI behavior now:
   over current source records; they now make explicit that printing or saving
   does not send the document, create delivery proof, create a separate document
   record, or change approval, signature, payment, or delivery state.
+- Estimate, Contract, and Invoice Workspaces now include a contractor-side
+  Document Readiness summary derived from the same canonical source record,
+  customer/project context, template/rendering availability, signature or
+  payment state where relevant, line/scope presence, and portal contact
+  availability. The summary clarifies whether the document is ready for preview,
+  customer review/signature/payment request, already complete, or blocked by
+  missing context. It does not create stored PDFs, document records, portal-only
+  copies, provider calls, autonomous sends, payment mutations, signature
+  mutations, schema, migrations, or portal-facing readiness copy.
 - `/schedule` now presents as CrewBoard on the existing route. CrewBoard uses
   canonical jobs, appointments, job assignments, people, vendors, projects, and
   customers for scheduling visibility, URL-backed date/layout context,

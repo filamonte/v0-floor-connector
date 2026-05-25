@@ -15,6 +15,7 @@ import {
 import { DetailPageHeader } from "@/components/detail-page-header";
 import { DetailPanel } from "@/components/detail-panel";
 import { DocumentDeliveryHistoryPanel } from "@/components/document-delivery-history-panel";
+import { DocumentReadinessCard } from "@/components/document-readiness-card";
 import { EstimateStatusActions } from "@/components/estimate-status-actions";
 import { EstimateApprovalNextStepsPanel } from "@/components/estimates/approval-next-steps-panel";
 import { EstimateCustomerTimeline } from "@/components/estimates/estimate-customer-timeline";
@@ -39,6 +40,7 @@ import { quickCreateContractFromEstimateAction } from "@/lib/contracts/actions";
 import { listContracts } from "@/lib/contracts/data";
 import { getDocumentDeliveryState } from "@/lib/document-delivery/data";
 import { buildDocumentPrintHref } from "@/lib/document-engine/print";
+import { deriveEstimateDocumentReadiness } from "@/lib/document-readiness/readiness";
 import {
   openOrCreateScheduleOfValuesAction,
   rebuildApprovedEstimateSnapshotAction,
@@ -366,6 +368,20 @@ export default async function EstimateDetailPage({
           projectId: estimate.projectId
         })
       : [];
+  const documentReadiness = deriveEstimateDocumentReadiness({
+    id: estimate.id,
+    referenceNumber: estimate.referenceNumber,
+    status: estimate.status,
+    customerId: estimate.customerId,
+    customerName: estimate.customer?.name,
+    customerEmail: estimate.customer?.email,
+    projectId: estimate.projectId,
+    projectName: estimate.project?.name,
+    templateId: estimate.templateId,
+    lineItemCount: estimate.lineItems.length,
+    totalAmount: estimate.totalAmount,
+    portalRecipientCount: sendContactOptions.length
+  });
   const isProductionActionLocked = organizationContext
     ? !isOrganizationActivatedForProductionAction({
         id: organizationContext.organization.id,
@@ -728,7 +744,7 @@ export default async function EstimateDetailPage({
                   })}
                   className={secondaryActionClassName}
                 >
-                  Print / Save PDF
+                  {documentReadiness.safePreviewLabel}
                 </Link>
                 <Link
                   href={`/estimates/${estimate.id}/edit`}
@@ -1164,6 +1180,9 @@ export default async function EstimateDetailPage({
               title="Workflow Actions"
               description="Use the existing send and approval handoff in the right order before moving into contract or billing work."
             >
+              <div className="mb-4">
+                <DocumentReadinessCard readiness={documentReadiness} />
+              </div>
               {estimate.status === "draft" || estimate.status === "rejected" ? (
                 <div className="space-y-4">
                   <div className="rounded-[1.5rem] border border-[var(--border-warm)] bg-[var(--highlight)] px-4 py-4 text-sm leading-6 text-[var(--text-secondary)]">

@@ -92,7 +92,8 @@ test("record detail pages expose customer-facing document actions", async ({
       `${documentPath} should load successfully`
     ).toBeLessThan(400);
     await expect(
-      page.getByRole("link", { name: /print|save pdf/i })
+      page.getByRole("link", { name: /preview|print|save pdf/i })
     ).toBeVisible();
+    await expect(page.locator("body")).toContainText(/Document readiness/i);
   }
 });
