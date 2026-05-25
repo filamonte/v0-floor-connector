@@ -19,6 +19,7 @@ const requiredDemoRecords = [
   "Unscheduled job, scheduled-today job, upcoming job, in-progress job, missing-crew example, and completed job",
   "Daily Job Log, open blocker Job Note, resolved note, field evidence placeholder, and labor/time summary where supported",
   "Communication thread/message, document delivery event, signature event, payment request/event, and portal record view",
+  "Project Command Timeline coverage over estimate, contract, invoice, payment, schedule, Daily Log, field note, document readiness, portal visibility, and communication handoff signals",
   "Open invoice, partially paid invoice, paid invoice, overdue invoice, pending payment event, and failed payment event",
   "Proof Center and CloseoutTrail source records, closeout package route support, signed contract, paid invoice, and field proof",
   "Open and closed service tickets plus warranty handoff/document where supported",

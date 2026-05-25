@@ -257,6 +257,18 @@ const datasetGroups = [
       "/estimates/[estimateId], /contracts/[contractId], /invoices/[invoiceId]"
   },
   {
+    heading: "project command timeline readiness",
+    purpose:
+      "Plan one coherent project story that lights up the Project Command Timeline needs-attention, ready-to-move, and recent-movement groups.",
+    records:
+      "No separate timeline records; coverage comes from estimate, contract/signature, invoice/payment, job/schedule, Daily Log, field note, proof readiness, communication, and portal visibility records above.",
+    safety:
+      "No activity table, duplicate project history, provider events, fake production behavior, or portal-only timeline copy.",
+    providerExcluded:
+      "Yes. Timeline readiness is derived presentation and never calls providers.",
+    routes: "/projects/[projectId], /schedule, /daily-logs, /communications"
+  },
+  {
     heading: "service tickets/warranty documents",
     purpose:
       "Plan service and warranty continuity tied to the same customer/project/job history.",

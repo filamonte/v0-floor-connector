@@ -54,17 +54,17 @@ a dispatch optimizer, or a customer-facing internal operations feed.
 
 ## Recommended Route
 
-| Step | Route                                            | What It Proves                                                                                                                                      | Demo Notes                                                                                                                                                  |
-| ---- | ------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1    | `/dashboard`                                     | The contractor starts from a command center that groups high-signal operating attention.                                                            | Show AI Operational Digest if enabled. Say it routes to source records and does not create tasks, messages, or AI truth.                                    |
-| 2    | `/projects`                                      | Projects remain the operating root, while global pages still act as queues.                                                                         | Open a real project from the list rather than relying on stale IDs.                                                                                         |
-| 3    | `/projects/[projectId]`                          | Project Workspace explains state through ProjectPulse, Copilot, FieldTrail, MessageCenter, CloseoutTrail, Proof Center, and source-record handoffs. | Show Copilot as deterministic, review-first synthesis. Use draft actions only as editable handoffs, not sends.                                              |
-| 4    | `/schedule`                                      | CrewBoard shows ready, scheduled, in-progress, and readiness-review work from canonical jobs and assignments.                                       | Do not claim full dispatch automation, route optimization, or automatic scheduling.                                                                         |
-| 5    | `/financials/accounts-receivable`                | Collections Follow-Up Intelligence explains collectible/payment follow-up items from canonical invoices, payments, and payment events.              | Show canonical invoice/project/customer links and optional review-first draft handoffs. Avoid pressure language.                                            |
-| 6    | `/communications` with a Copilot handoff query   | Copilot drafts can land in the existing communications review surface.                                                                              | The contractor edits/reviews manually. No provider send, notification, thread auto-create, or customer email/SMS happens automatically.                     |
-| 7    | `/daily-logs` and one `/daily-logs/[dailyLogId]` | Field execution continuity stays on Daily Logs, Job Notes, field evidence, labor/time, and project/job handoffs.                                    | Show mobile-friendly scanning if useful. Do not claim offline/native mobile or customer-facing field evidence.                                              |
-| 8    | `/portal` and one `/portal/projects/[projectId]` | The customer sees safe project status explanations from the same canonical records.                                                                 | Confirm the portal does not expose Copilot, AR pressure, FieldTrail, internal blockers, internal Job Notes, readiness machinery, or raw evidence internals. |
-| 9    | `/settings/workflows`                            | AI/workflow controls are explicit and organization-scoped.                                                                                          | Show Guided mode, deterministic AI controls, dashboard digest/drafting toggles, and provider-backed AI disabled unless intentionally configured.            |
+| Step | Route                                            | What It Proves                                                                                                                                                                | Demo Notes                                                                                                                                                                       |
+| ---- | ------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1    | `/dashboard`                                     | The contractor starts from a command center that groups high-signal operating attention.                                                                                      | Show AI Operational Digest if enabled. Say it routes to source records and does not create tasks, messages, or AI truth.                                                         |
+| 2    | `/projects`                                      | Projects remain the operating root, while global pages still act as queues.                                                                                                   | Open a real project from the list rather than relying on stale IDs.                                                                                                              |
+| 3    | `/projects/[projectId]`                          | Project Workspace explains state through ProjectPulse, Project Command Timeline, Copilot, FieldTrail, MessageCenter, CloseoutTrail, Proof Center, and source-record handoffs. | Show the timeline as a derived read model over canonical records. Show Copilot as deterministic, review-first synthesis. Use draft actions only as editable handoffs, not sends. |
+| 4    | `/schedule`                                      | CrewBoard shows ready, scheduled, in-progress, and readiness-review work from canonical jobs and assignments.                                                                 | Do not claim full dispatch automation, route optimization, or automatic scheduling.                                                                                              |
+| 5    | `/financials/accounts-receivable`                | Collections Follow-Up Intelligence explains collectible/payment follow-up items from canonical invoices, payments, and payment events.                                        | Show canonical invoice/project/customer links and optional review-first draft handoffs. Avoid pressure language.                                                                 |
+| 6    | `/communications` with a Copilot handoff query   | Copilot drafts can land in the existing communications review surface.                                                                                                        | The contractor edits/reviews manually. No provider send, notification, thread auto-create, or customer email/SMS happens automatically.                                          |
+| 7    | `/daily-logs` and one `/daily-logs/[dailyLogId]` | Field execution continuity stays on Daily Logs, Job Notes, field evidence, labor/time, and project/job handoffs.                                                              | Show mobile-friendly scanning if useful. Do not claim offline/native mobile or customer-facing field evidence.                                                                   |
+| 8    | `/portal` and one `/portal/projects/[projectId]` | The customer sees safe project status explanations from the same canonical records.                                                                                           | Confirm the portal does not expose Copilot, AR pressure, FieldTrail, internal blockers, internal Job Notes, readiness machinery, or raw evidence internals.                      |
+| 9    | `/settings/workflows`                            | AI/workflow controls are explicit and organization-scoped.                                                                                                                    | Show Guided mode, deterministic AI controls, dashboard digest/drafting toggles, and provider-backed AI disabled unless intentionally configured.                                 |
 
 ## Demo Script
 
@@ -91,7 +91,8 @@ a dispatch optimizer, or a customer-facing internal operations feed.
 ## What Each Stop Should Prove
 
 - Dashboard proves the company has a source-record command center.
-- Project Workspace proves the product has a project-centered intelligence hub.
+- Project Workspace proves the product has a project-centered intelligence hub
+  and derived command timeline over the connected lifecycle.
 - Schedule proves dispatch visibility stays on canonical jobs, appointments,
   and assignments.
 - Accounts Receivable proves collections intelligence is deterministic and
@@ -126,8 +127,13 @@ Before a live demo, check:
 - `/dashboard` loads with contractor auth and no runtime/hydration errors.
 - AI Operational Digest appears when dashboard digest controls are enabled.
 - `/projects` loads and has at least one suitable project link.
-- The selected Project Workspace shows ProjectPulse and, when controls allow,
-  AI Operational Copilot with review-first draft actions.
+- The selected Project Workspace shows ProjectPulse, Project Command Timeline,
+  and, when controls allow, AI Operational Copilot with review-first draft
+  actions.
+- The Project Command Timeline renders needs-attention, ready-to-move, and
+  recent movement from canonical estimates, contracts, invoices, payments,
+  schedule, Daily Logs, field blockers, proof/document readiness, communication,
+  and portal visibility where the sample project has those records.
 - `/schedule` loads and shows CrewBoard queues/readiness review.
 - `/financials/accounts-receivable` loads and contains collections/payment
   follow-up context without horizontal overflow.

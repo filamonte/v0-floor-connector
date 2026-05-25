@@ -286,6 +286,10 @@ The first Project Workspace panel appears after ProjectPulse. That placement is
 intentional:
 
 - ProjectPulse remains the compact deterministic project health lens.
+- Project Command Timeline now sits beside the same Project Workspace stack as
+  a deterministic lifecycle rail over canonical records and existing read
+  models. It is not AI output and does not replace Copilot; it gives users a
+  source-record timeline before or after they read the Copilot synthesis.
 - AI Operational Copilot synthesizes ProjectPulse plus readiness, finance,
   schedule, communications, closeout, and field context.
 - Copilot Action Composer shows applicable review-first draft actions inside

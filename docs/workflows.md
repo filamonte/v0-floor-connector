@@ -215,6 +215,14 @@ Future Activity Timeline:
 - project, customer, and record timelines should summarize important canonical events across the lifecycle
 - timeline entries should be readable memory over canonical records, not replacement source-of-truth rows
 - examples include finish selected, estimate sent/viewed/approved, contract sent/signed, invoice sent/paid, payment completed, file uploaded, message received, job scheduled, daily log finalized, and closeout evidence captured
+- implemented Project Command Timeline is the first contractor-side project
+  command timeline slice. It derives needs-attention, ready-to-move, and recent
+  movement items from existing project-linked canonical records, ProjectPulse /
+  FieldTrail / MessageCenter / Proof Center context, payment and signature
+  evidence, document/proof readiness, and scoped portal visibility. It remains
+  a read-only presentation layer and does not create activity rows, mutate
+  source records, send messages, schedule jobs, collect payments, or expose
+  internal-only field note contents to the customer portal.
 
 Implemented Revision Timeline:
 

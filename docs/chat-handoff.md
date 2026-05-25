@@ -42,8 +42,14 @@ Current operating-core surfaces include:
 - Command Center dashboard with source-record attention groups and deterministic
   next moves.
 - Project Workspace as the main continuity hub with ProjectPulse, FieldTrail,
-  MessageCenter, CloseoutTrail, Proof Center, Send Trail context,
-  service/warranty continuity, customer access, and closeout package handoff.
+  MessageCenter, CloseoutTrail, Proof Center, Project Command Timeline, Send
+  Trail context, service/warranty continuity, customer access, and closeout
+  package handoff.
+- Project Command Timeline derives a compact needs-attention / ready-to-move /
+  recent-movement rail from existing canonical project, opportunity, estimate,
+  contract/signature, invoice/payment, job/schedule, Daily Log, field blocker,
+  proof readiness, MessageCenter, and portal visibility signals. It is
+  read-only presentation, not an activity source of truth or action executor.
 - AI Operational Copilot Foundation in Project Workspace, deriving review-first
   project intelligence, recommended next actions, draft-assistance text, and
   field summaries from ProjectPulse, Ready Check, FieldTrail, MessageCenter,

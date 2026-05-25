@@ -117,6 +117,12 @@ import { listProgressBillingByProject } from "@/lib/progress-billing/data";
 import { updateProjectAction } from "@/lib/projects/actions";
 import { buildProjectCues, type ProjectCue } from "@/lib/projects/cues";
 import { getProjectById } from "@/lib/projects/data";
+import {
+  deriveProjectCommandTimeline,
+  type ProjectCommandTimeline,
+  type ProjectCommandTimelineItem,
+  type ProjectCommandTimelineTone
+} from "@/lib/projects/timeline";
 import type { ProjectFinancialReadinessSnapshot } from "@/lib/projects/readiness";
 import { getProjectFinancialReadinessSnapshot } from "@/lib/projects/readiness";
 import { financingStatusesList } from "@/lib/projects/schemas";
@@ -564,6 +570,178 @@ function LinkedRecordRecencyPanel({
       ) : (
         <div className="mt-4 rounded-lg border border-dashed border-[var(--border-warm)] bg-[var(--highlight)] px-4 py-3 text-sm leading-6 text-[var(--text-secondary)]">
           No timestamped linked records are available for this project yet.
+        </div>
+      )}
+    </section>
+  );
+}
+
+function getTimelineToneClassName(tone: ProjectCommandTimelineTone) {
+  switch (tone) {
+    case "complete":
+      return "border-emerald-200 bg-emerald-50 text-emerald-950";
+    case "ready":
+      return "border-teal-200 bg-teal-50 text-teal-950";
+    case "attention":
+      return "border-amber-200 bg-amber-50 text-amber-950";
+    case "blocked":
+      return "border-rose-200 bg-rose-50 text-rose-950";
+    default:
+      return "border-[var(--border-warm)] bg-white text-[var(--text-secondary)]";
+  }
+}
+
+function ProjectCommandTimelineRow({
+  item
+}: {
+  item: ProjectCommandTimelineItem;
+}) {
+  return (
+    <div className="grid gap-3 border-t border-[var(--border-warm)] py-3 first:border-t-0 first:pt-0 last:pb-0 md:grid-cols-[minmax(0,1fr)_auto]">
+      <div className="min-w-0">
+        <div className="flex flex-wrap items-center gap-2">
+          <span
+            className={[
+              "rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em]",
+              getTimelineToneClassName(item.tone)
+            ].join(" ")}
+          >
+            {item.status}
+          </span>
+          <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--text-tertiary)]">
+            {item.sourceLabel}
+          </span>
+          {item.customerSafe ? (
+            <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--text-tertiary)]">
+              Customer-safe
+            </span>
+          ) : null}
+        </div>
+        <Link
+          href={item.href}
+          className="mt-2 block text-sm font-semibold text-[var(--text-primary)] transition hover:text-[var(--copper)]"
+        >
+          {item.title}
+        </Link>
+        <p className="mt-1 text-sm leading-6 text-[var(--text-secondary)]">
+          {item.summary}
+        </p>
+      </div>
+      {item.nextActionLabel && item.nextActionHref ? (
+        <div className="flex items-start md:justify-end">
+          <Link
+            href={item.nextActionHref}
+            className={getWorkspaceActionLinkClassName(
+              item.needsAttention ? "warning" : "secondary"
+            )}
+          >
+            {item.nextActionLabel}
+          </Link>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function ProjectCommandTimelineSection({
+  timeline
+}: {
+  timeline: ProjectCommandTimeline;
+}) {
+  const headlineItems =
+    timeline.needsAttention.length > 0
+      ? timeline.needsAttention.slice(0, 3)
+      : timeline.readyToMove.slice(0, 3);
+  const supportingItems = timeline.recentMovement
+    .filter(
+      (item) => !headlineItems.some((headline) => headline.id === item.id)
+    )
+    .slice(0, 5);
+
+  return (
+    <section
+      id="project-command-timeline"
+      className="rounded-lg border border-[var(--border-warm)] bg-white px-4 py-4 shadow-[0_14px_36px_-34px_rgba(31,41,55,0.42)] sm:px-5"
+    >
+      <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+        <div>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--text-secondary)]">
+            Project command timeline
+          </p>
+          <h3 className="mt-1 text-base font-semibold text-[var(--text-primary)]">
+            Recent movement and next handoffs
+          </h3>
+          <p className="mt-1 max-w-[72ch] text-sm leading-6 text-[var(--text-secondary)]">
+            Derived from linked canonical records, proof, field, payment,
+            signature, and communication evidence. It does not create activity
+            truth or change source records.
+          </p>
+        </div>
+        <div className="grid grid-cols-3 gap-2 text-center md:w-72">
+          <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2">
+            <p className="text-lg font-semibold text-amber-950">
+              {timeline.needsAttention.length}
+            </p>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-amber-900">
+              Needs attention
+            </p>
+          </div>
+          <div className="rounded-lg border border-teal-200 bg-teal-50 px-3 py-2">
+            <p className="text-lg font-semibold text-teal-950">
+              {timeline.readyToMove.length}
+            </p>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-teal-900">
+              Ready
+            </p>
+          </div>
+          <div className="rounded-lg border border-[var(--border-warm)] bg-[var(--highlight)] px-3 py-2">
+            <p className="text-lg font-semibold text-[var(--text-primary)]">
+              {timeline.items.length}
+            </p>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--text-secondary)]">
+              Signals
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {timeline.items.length > 0 ? (
+        <div className="mt-5 grid gap-5 xl:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
+          <div className="rounded-lg border border-[var(--border-warm)] bg-[var(--highlight)] px-4 py-4">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
+              {timeline.needsAttention.length > 0
+                ? "Needs attention"
+                : "Ready to move"}
+            </p>
+            <div className="mt-3">
+              {headlineItems.map((item) => (
+                <ProjectCommandTimelineRow key={item.id} item={item} />
+              ))}
+            </div>
+          </div>
+
+          <div className="rounded-lg border border-[var(--border-warm)] bg-white px-4 py-4">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
+              Recent movement
+            </p>
+            <div className="mt-3">
+              {supportingItems.length > 0 ? (
+                supportingItems.map((item) => (
+                  <ProjectCommandTimelineRow key={item.id} item={item} />
+                ))
+              ) : (
+                <p className="text-sm leading-6 text-[var(--text-secondary)]">
+                  New linked record movement will appear here as the project
+                  moves through estimates, contracts, invoices, schedule, field,
+                  proof, and communication records.
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div className="mt-4 rounded-lg border border-dashed border-[var(--border-warm)] bg-[var(--highlight)] px-4 py-3 text-sm leading-6 text-[var(--text-secondary)]">
+          {timeline.emptyStateMessage}
         </div>
       )}
     </section>
@@ -3437,6 +3615,90 @@ export default async function ProjectDetailPage({
         ? `/warranty-documents/${projectWarrantyDocuments[0].id}`
         : `/service-tickets?projectId=${project.id}`
   });
+  const projectCommandTimeline = deriveProjectCommandTimeline({
+    project: {
+      id: project.id,
+      name: project.name,
+      status: project.status,
+      createdAt: project.createdAt,
+      updatedAt: project.updatedAt
+    },
+    opportunity: projectOpportunity
+      ? {
+          id: projectOpportunity.id,
+          status: projectOpportunity.status,
+          siteAssessmentStatus: projectOpportunity.siteAssessmentStatus,
+          updatedAt: projectOpportunity.updatedAt,
+          createdAt: projectOpportunity.createdAt
+        }
+      : null,
+    estimates: projectEstimates.map((estimate) => ({
+      id: estimate.id,
+      referenceNumber: estimate.referenceNumber,
+      status: estimate.status,
+      totalAmount: estimate.totalAmount,
+      updatedAt: estimate.updatedAt,
+      createdAt: estimate.createdAt
+    })),
+    contracts: projectContracts.map((contract) => ({
+      id: contract.id,
+      title: contract.title,
+      referenceNumber: contract.referenceNumber,
+      status: contract.status,
+      internalApprovalStatus: contract.internalApprovalStatus,
+      signedAt: contract.signedAt,
+      sentAt: contract.sentAt,
+      updatedAt: contract.updatedAt,
+      createdAt: contract.createdAt
+    })),
+    invoices: projectInvoices.map((invoice) => ({
+      id: invoice.id,
+      referenceNumber: invoice.referenceNumber,
+      status: invoice.status,
+      workflowRole: invoice.workflowRole,
+      balanceDueAmount: invoice.balanceDueAmount,
+      updatedAt: invoice.updatedAt,
+      createdAt: invoice.createdAt
+    })),
+    jobs: projectJobs.map((job) => ({
+      id: job.id,
+      dispatchStatus: job.dispatchStatus,
+      scheduledDate: job.scheduledDate,
+      updatedAt: job.updatedAt,
+      createdAt: job.createdAt
+    })),
+    dailyLogs: projectDailyLogs.map((dailyLog) => ({
+      id: dailyLog.id,
+      logDate: dailyLog.logDate,
+      status: dailyLog.status,
+      summary: dailyLog.summary,
+      updatedAt: dailyLog.updatedAt,
+      createdAt: dailyLog.createdAt
+    })),
+    fieldNotes: projectFieldNotes.map((fieldNote) => ({
+      id: fieldNote.id,
+      dailyLogId: fieldNote.dailyLogId,
+      noteType: fieldNote.noteType,
+      status: fieldNote.status,
+      title: fieldNote.title,
+      updatedAt: fieldNote.updatedAt,
+      createdAt: fieldNote.createdAt
+    })),
+    messageItems: messageCenter.timeline,
+    documentReadiness: {
+      label:
+        proofCenter.missingProofItems.length > 0
+          ? "Document and proof readiness needs review"
+          : "Document and proof readiness connected",
+      detail: proofCenter.primaryMessage,
+      href: "#proofcenter",
+      tone: proofCenter.proofTone,
+      missingCount: proofCenter.missingProofItems.length
+    },
+    customerAccessCount: projectVisiblePortalGrants.length,
+    readyToSchedule: readinessSnapshot?.isReadyToSchedule ?? false,
+    scheduleHref: projectScheduleHref
+  });
   const recentPayments = (paymentFocusInvoice?.payments ?? []).slice(0, 4);
   const currentBillableValue = projectProgressBilling.reduce(
     (sum, workspace) => sum + Number(workspace.currentBillableTotal),
@@ -4248,6 +4510,8 @@ export default async function ProjectDetailPage({
               customerName={project.customer?.name ?? null}
               communicationThreadId={copilotCommunicationThreadId}
             />
+
+            <ProjectCommandTimelineSection timeline={projectCommandTimeline} />
 
             <OperationalGuidanceSection
               title="Workflow snapshot"

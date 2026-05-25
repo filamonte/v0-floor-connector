@@ -36,7 +36,7 @@ For founder-customer rehearsals, use [docs/founder-demo-readiness.md](C:/FloorCo
    - Relationship expectation: customer remains the commercial/financial account record; project remains the execution root.
 
 4. `/projects` and `/projects/[projectId]`
-   - Outcome: project detail acts as the continuity hub with current stage, next best action, readiness state, an operational command-center summary, connected record lanes, linked estimate/contract/invoice/job/payment context, schedule context, project-specific customer access context, and field-execution context.
+   - Outcome: project detail acts as the continuity hub with current stage, next best action, readiness state, an operational command-center summary, Project Command Timeline, connected record lanes, linked estimate/contract/invoice/job/payment context, schedule context, project-specific customer access context, and field-execution context.
    - Relationship expectation: all downstream records stay linked to this project and customer.
 
 5. `/estimates` and `/estimates/[estimateId]`
@@ -132,7 +132,7 @@ Use this checklist after running validation:
 2. Open `/dashboard`, `/leads`, `/customers`, `/projects`, `/estimates`, `/contracts`, `/invoices`, `/payments`, `/jobs`, `/schedule`, and `/daily-logs`.
 3. Confirm no protected route stops at `/login`.
 4. Open one linked detail record for project, estimate, contract, invoice, job, and daily log where fixture data exists.
-5. Confirm project detail shows current state, the `Operational command center`, `Connected record lanes`, linked records, readiness facts, and a clear next step in Guided mode.
+5. Confirm project detail shows current state, the `Operational command center`, `Project command timeline`, `Connected record lanes`, linked records, readiness facts, and a clear next step in Guided mode.
 6. Confirm estimate detail and edit remain proposal-first and functional.
 7. Confirm contract, invoice, and job detail each link back to project context.
 8. Confirm `/schedule` respects project/job handoff query parameters where fixture data exists and still shows the Scheduling command center, Ready work queue, Scheduled timeline, and selected job action panel.

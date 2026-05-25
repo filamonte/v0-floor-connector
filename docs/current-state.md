@@ -93,6 +93,18 @@ auto-create new communication threads. It adds no schema, migrations, provider
 calls, persisted AI records, chatbot memory, autonomous workflow execution,
 customer-facing send behavior, financial mutation, signature mutation,
 scheduling mutation, or portal-specific AI copies.
+Project Workspace now also includes a compact Project Command Timeline derived
+from existing canonical records and read models. The timeline groups the latest
+and highest-priority project movement across project/opportunity context,
+estimates, contracts and signature state, invoices, payments, jobs/schedule,
+Daily Logs, field blockers, document/proof readiness, MessageCenter, Send
+Trail, Signature Trail, Payment Trail, and project-scoped portal visibility.
+It is a deterministic read model in
+[apps/web/lib/projects/timeline.ts](C:/FloorConnector/apps/web/lib/projects/timeline.ts)
+and a presentation section in the Project Workspace. It does not add an
+activity table, audit/event system, duplicate project history model, provider
+calls, autonomous actions, customer-facing internal field-note exposure, or any
+payment/signature/job/invoice mutation.
 Accounts Receivable now also uses a deterministic Collections Follow-Up
 Intelligence helper over canonical invoices, payments, and Payment Trail events
 to categorize overdue invoices, unpaid deposits, sent-unpaid balances,
