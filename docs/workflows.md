@@ -46,9 +46,10 @@ In practical terms:
 - CrewBoard is the current scheduling visibility/action surface on `/schedule`;
   it uses canonical jobs, appointments, assignments, people, vendors, projects,
   and customers rather than schedule-local records. Its schedule board read
-  model derives operating queues and readiness-review items from canonical jobs,
-  `job_assignments`, and advisory schedule warnings without creating a second
-  dispatch source of truth.
+  model derives daily/weekly operating lanes, ready-to-schedule jobs,
+  readiness-review items, crew gaps, and advisory schedule warnings from
+  canonical jobs and `job_assignments` without creating a second dispatch source
+  of truth.
 - Reports is the current company-level operations/collections visibility
   surface on `/reports`; it summarizes source records and routes users back to
   Project Workspace, CrewBoard, Invoice Workspace, and Contract Workspace.
@@ -374,7 +375,7 @@ When the existing readiness snapshot is clear after contract signature, contract
 - create the canonical project job
 - schedule that job through the shared schedule surface
 
-This is a Sign -> Schedule -> Execute UI handoff only. It must continue to use the centralized readiness gate and canonical `jobs` scheduling fields rather than introducing a contract-specific scheduling model. When the handoff starts from signed contract or project readiness context and an approved estimate is available, job Quick-Create should preserve that estimate lineage on the canonical job. When exactly one unscheduled canonical job already exists for the project, the `/schedule` handoff may carry `jobId` and `action=schedule` so the existing schedule action panel opens in that job context. `/schedule` is the cross-project scheduling receiver: it shows the command-center summary, schedule readiness review, Ready work queue, Scheduled timeline, and selected job action panel over canonical jobs/job assignments, not a schedule-only record set.
+This is a Sign -> Schedule -> Execute UI handoff only. It must continue to use the centralized readiness gate and canonical `jobs` scheduling fields rather than introducing a contract-specific scheduling model. When the handoff starts from signed contract or project readiness context and an approved estimate is available, job Quick-Create should preserve that estimate lineage on the canonical job. When exactly one unscheduled canonical job already exists for the project, the `/schedule` handoff may carry `jobId` and `action=schedule` so the existing schedule action panel opens in that job context. `/schedule` is the cross-project scheduling receiver: it shows the command-center summary, daily/weekly timing lanes, schedule readiness review, Ready work queue, Scheduled timeline, and selected job action panel over canonical jobs/job assignments, not a schedule-only record set.
 
 ## Configurable Workflow Guidance
 

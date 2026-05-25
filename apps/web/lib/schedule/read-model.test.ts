@@ -246,10 +246,14 @@ void test("schedule board read model derives canonical job operating queues", ()
   );
   assert.deepEqual(
     board.crewAssignmentGaps.map((job) => job.id),
-    [scheduledToday.id, inProgress.id]
+    [inProgress.id, scheduledToday.id]
   );
   assert.deepEqual(
     board.upcomingJobs.map((job) => job.id),
+    [upcoming.id]
+  );
+  assert.deepEqual(
+    board.thisWeekJobs.map((job) => job.id),
     [upcoming.id]
   );
   assert.deepEqual(
@@ -262,6 +266,122 @@ void test("schedule board read model derives canonical job operating queues", ()
   );
   assert.deepEqual(
     board.readinessReviewJobs.map((job) => job.id),
-    [scheduledToday.id, unscheduled.id, inProgress.id]
+    [inProgress.id, scheduledToday.id]
+  );
+  assert.deepEqual(
+    board.timingGroups
+      .find((group) => group.key === "this-week")
+      ?.jobs.map((job) => job.id),
+    [upcoming.id]
+  );
+});
+
+void test("schedule board read model separates daily, weekly, ready, and review lanes", () => {
+  const today = {
+    ...baseJob,
+    id: "11111111-aaaa-4aaa-8aaa-111111111111",
+    dispatchStatus: "scheduled" as const,
+    scheduledDate: "2026-05-08",
+    scheduledStartAt: "2026-05-08T13:00:00.000Z",
+    assignmentCount: 1,
+    assignments: [
+      {
+        id: "22222222-aaaa-4aaa-8aaa-222222222222",
+        jobId: "11111111-aaaa-4aaa-8aaa-111111111111",
+        personId: "33333333-aaaa-4aaa-8aaa-333333333333",
+        vendorId: null,
+        role: "lead" as const,
+        assignedStartAt: null,
+        assignedEndAt: null,
+        person: {
+          id: "33333333-aaaa-4aaa-8aaa-333333333333",
+          displayName: "Taylor Installer"
+        },
+        vendor: null
+      }
+    ],
+    crewSummary: ["Taylor Installer"]
+  };
+  const tomorrow = {
+    ...baseJob,
+    id: "44444444-aaaa-4aaa-8aaa-444444444444",
+    scheduledDate: "2026-05-09",
+    scheduledStartAt: "2026-05-09T09:00:00.000Z"
+  };
+  const thisWeek = {
+    ...baseJob,
+    id: "55555555-aaaa-4aaa-8aaa-555555555555",
+    scheduledDate: "2026-05-12",
+    scheduledStartAt: "2026-05-12T08:00:00.000Z",
+    assignmentCount: 1,
+    assignments: [],
+    crewSummary: ["Vendor crew"]
+  };
+  const unscheduledReady = {
+    ...baseJob,
+    id: "66666666-aaaa-4aaa-8aaa-666666666666",
+    dispatchStatus: "unscheduled" as const,
+    scheduledDate: null,
+    scheduledStartAt: null,
+    scheduledEndAt: null
+  };
+  const missingCrew = {
+    ...baseJob,
+    id: "77777777-aaaa-4aaa-8aaa-777777777777",
+    scheduledDate: "2026-05-10",
+    scheduledStartAt: "2026-05-10T08:00:00.000Z",
+    assignmentCount: 0,
+    assignments: [],
+    crewSummary: []
+  };
+  const inProgress = {
+    ...baseJob,
+    id: "88888888-aaaa-4aaa-8aaa-888888888888",
+    dispatchStatus: "in_progress" as const,
+    scheduledDate: "2026-05-08",
+    scheduledStartAt: "2026-05-08T07:00:00.000Z",
+    assignmentCount: 1,
+    crewSummary: ["Field crew"]
+  };
+
+  const board = buildScheduleBoardReadModel({
+    jobs: [
+      thisWeek,
+      unscheduledReady,
+      missingCrew,
+      today,
+      tomorrow,
+      inProgress
+    ],
+    today: new Date(2026, 4, 8)
+  });
+
+  assert.deepEqual(
+    board.scheduledTodayJobs.map((job) => job.id),
+    [inProgress.id, today.id]
+  );
+  assert.deepEqual(
+    board.tomorrowJobs.map((job) => job.id),
+    [tomorrow.id]
+  );
+  assert.deepEqual(
+    board.thisWeekJobs.map((job) => job.id),
+    [missingCrew.id, thisWeek.id]
+  );
+  assert.deepEqual(
+    board.unscheduledReadyJobs.map((job) => job.id),
+    [unscheduledReady.id]
+  );
+  assert.deepEqual(
+    board.needsReadinessReviewJobs.map((job) => job.id),
+    [tomorrow.id, missingCrew.id]
+  );
+  assert.deepEqual(
+    board.crewAssignmentGaps.map((job) => job.id),
+    [tomorrow.id, missingCrew.id]
+  );
+  assert.deepEqual(
+    board.inProgressJobs.map((job) => job.id),
+    [inProgress.id]
   );
 });

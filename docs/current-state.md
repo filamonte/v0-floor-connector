@@ -696,6 +696,7 @@ Current shell behavior:
 - CrewBoard Phase 2 improves `/schedule` dispatch usability on the same canonical job/job-assignment foundation: date navigation remains URL-backed for day, week, and board layouts; job cards show schedule-note previews and clearer Project Workspace handoffs; and read-only schedule warnings flag missing crew, missing end times, and overlapping crew/person/vendor windows from existing job timing and assignment data. These warnings are advisory only and do not add schema, migrations, dispatch tables, crew tables, server actions, new enforcement rules, automation, drag/drop, calendar sync, notifications, route optimization, auth/RLS changes, tenant-boundary changes, payment/signature behavior, estimate math, invoice math, portal grants, settings behavior, or platform-admin behavior.
 - CrewBoard Phase 3B-A adds no-package proposed-move groundwork: pure helpers can turn a CrewBoard date/time target into the existing Phase 3A move payload and summary, `/schedule` can carry a prepared target in URL state, and the selected-job panel can preview a target into the existing `Move schedule` confirmation form. This does not add pointer drag/drop, packages, schema, migrations, routes, server actions, dispatch tables, automatic schedule mutation, auth/RLS changes, tenant-boundary changes, payment/signature behavior, estimate math, invoice math, portal grants, settings behavior, or platform-admin behavior.
 - CrewBoard Phase 3B-B adds pointer drag/drop preview with `@dnd-kit/core` as a progressive enhancement on `/schedule`: dragging a job card to a CrewBoard date or time-bucket target prepares the existing Move schedule confirmation flow through URL-backed proposed-move state. Dropping does not save, call a server action, or mutate schedule data; confirmation still runs through the existing schedule action and Ready Check / GateKeeper enforcement. Manual Move schedule controls remain the fallback. This does not add schema, migrations, route paths, dispatch tables, new schedule write paths, route optimization, calendar sync, notifications, automation, auth/RLS changes, tenant-boundary changes, payment/signature behavior, estimate math, invoice math, portal grants, settings behavior, or platform-admin behavior.
+- Scheduling Board Depth v2 deepens `/schedule` as a daily/weekly operating board on the same canonical job/job-assignment foundation. The reusable read model now separates Today, Tomorrow, This week, Later scheduled, Ready to schedule, Needs readiness review, Missing Crew, In progress, and recently done lanes; `/schedule` surfaces clearer readiness badges, crew-assignment copy, project/job links, and mobile-wrapping action hierarchy while preserving the existing selected-job action panel and confirmation-first Move schedule flow. It does not add schema, migrations, dispatch tables, duplicate schedule records, new server actions, route optimization, autonomous scheduling, external calendar sync, notifications, provider integrations, fake/demo data, Project Command Timeline mutation, payment/signature/document mutation, or new readiness enforcement.
 - schedule views can filter between all items, jobs, and appointments, and appointment entries link to appointment detail plus lead/customer/project context where present
 - dashboard appointment visibility now uses the existing `people.membership_user_id` linkage to show `My upcoming appointments` when the current user has an active person record, with a safe company-upcoming fallback when that mapping is unavailable or has no assigned upcoming appointments
 - dashboard now includes an internal lead follow-up queue derived from canonical `opportunities.next_follow_up_at`, recent opportunity communication thread timestamps, and existing lead status; it prioritizes overdue and due-today follow-ups without sending reminders or creating a task/reminder table
@@ -1742,9 +1743,9 @@ Current invoice design notes:
   - continuity back into the same canonical invoice, customer, and project chain
   - immutable payment-event visibility without replacing invoice detail as billing truth
 - a first contractor-side CrewBoard scheduling workspace now exists on the existing `/schedule` route on top of the canonical job model:
-  - review-first summary of Needs Scheduling, today, in-progress, Missing Crew, upcoming work, and recently done work
+  - review-first summary of Ready to schedule, Today, Tomorrow, This week, in-progress, Needs readiness review, Missing Crew, later scheduled work, and recently done work
   - reusable schedule board read model in `apps/web/lib/schedule/read-model.ts` deriving operating queues from canonical jobs, job assignments, and advisory warning summaries
-  - dashboard-style readiness review queue for schedule records needing human review before the day runs cleanly, including missing timing, missing crew, and schedule warnings
+  - dashboard-style readiness review queue for scheduled or active job records needing human review before the day runs cleanly, including missing crew, missing end time, and schedule warnings
   - explicit schedule-view and crew-filter state normalization on the same `/schedule` surface
   - optional `projectId` URL filtering for project-scoped schedule handoff, applied directly against canonical `jobs.project_id` while still allowing `q` text search to narrow the same result set
   - optional `jobId` plus `action=schedule|assign` URL context for opening the existing schedule action panel on a canonical job, with project-scoped single-job inference for older ready-to-schedule handoffs that arrive without `jobId`
@@ -1756,7 +1757,7 @@ Current invoice design notes:
   - CrewBoard planner depth on the same `/schedule` surface:
     - bounded week planner
     - day focus view
-    - board layout grouped into operational timing lanes for Needs Scheduling, today, tomorrow, upcoming work, later scheduled work, in-progress jobs, Missing Crew, and Completed / Recently Done
+    - board layout grouped into operational timing lanes for Ready to schedule, today, tomorrow, this week, later scheduled work, in-progress jobs, Missing Crew, and Completed / Recently Done
   - scheduled jobs render from the same canonical job scheduling fields without introducing a separate scheduling model
 - inline schedule and crew-assignment action panel that reuses the existing job scheduling and assignment server actions
 - crew assignment can now be reviewed and unassigned directly from the same `/schedule` action panel, without leaving the canonical job and `job_assignments` chain
@@ -2611,7 +2612,8 @@ Implemented UI behavior now:
 - `/schedule` now presents as CrewBoard on the existing route. CrewBoard uses
   canonical jobs, appointments, job assignments, people, vendors, projects, and
   customers for scheduling visibility, URL-backed date/layout context,
-  advisory schedule warnings, and project/job handoffs. The selected-job panel
+  advisory schedule warnings, daily/weekly readiness grouping, and project/job
+  handoffs. The selected-job panel
   now includes a confirmation-first `Move schedule` flow backed by pure move
   summary helpers and the existing schedule action, so keyboard/manual movement
   is available before pointer drag/drop. Phase 3B-A also adds proposed-move

@@ -118,7 +118,8 @@ Current operating-core surfaces include:
   autonomous AI, provider-backed AI, automatic sends, automatic scheduling,
   automatic collections, or customer-facing internal operations language.
 - CrewBoard on `/schedule` over canonical jobs, appointments, job assignments,
-  people, vendors, projects, and customers.
+  people, vendors, projects, and customers, with daily/weekly operating lanes,
+  clearer crew/readiness badges, and canonical project/job handoffs.
 - Portal Customer Window with deterministic portal-safe customer status
   explanations, Customer Next Step, Project Status Window, Project Timeline,
   Shared Documents, and existing portal review/print routes. The explanation
@@ -347,11 +348,12 @@ file` actions without exposing raw storage paths. This remains contractor-only
   execution because the loaded data/layout lacked both a visible draggable card
   and visible drop target pair.
 - CrewBoard schedule board depth now has a reusable canonical-job read model in
-  `apps/web/lib/schedule/read-model.ts` for Needs Scheduling, today, upcoming,
-  in-progress, Missing Crew, recently completed, grouped timing lanes, and
-  schedule readiness review. `/schedule` consumes that read model for its
-  command cards while preserving existing job schedule fields, `job_assignments`,
-  advisory warnings, and confirmation-first schedule actions.
+  `apps/web/lib/schedule/read-model.ts` for Ready to schedule, Today, Tomorrow,
+  This week, Later scheduled, In progress, Missing Crew, recently completed,
+  grouped timing lanes, and schedule readiness review. `/schedule` consumes that
+  read model for its command cards while preserving existing job schedule
+  fields, `job_assignments`, advisory warnings, and confirmation-first schedule
+  actions.
 - Global search hardening for tenant-scoped canonical records.
 
 These layers are summaries, source-record handoffs, copy/hierarchy

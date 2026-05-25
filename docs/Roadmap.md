@@ -110,11 +110,12 @@ Next maturity focus:
 
 ## 3. Scheduling And Dispatch Expansion
 
-Current status: Good-enough release on the canonical job/job-assignment foundation. CrewBoard Phase 1 and Phase 2 now exist on `/schedule`; remaining scheduling work should add depth rather than reframe scheduling as unbuilt.
+Current status: Good-enough release on the canonical job/job-assignment foundation. CrewBoard now exists on `/schedule` with daily/weekly operating-board depth; remaining scheduling work should add dispatch depth rather than reframe scheduling as unbuilt.
 
 Implemented good-enough scope:
 
-- `/schedule` command-center summary for unscheduled, today, upcoming, in-progress, and blocked/not-ready work
+- `/schedule` command-center summary for ready-to-schedule, today, tomorrow,
+  this-week, in-progress, missing-crew, and blocked/not-ready work
 - reusable schedule board read model for canonical job operating queues,
   grouped timing lanes, crew assignment gaps, and schedule readiness review
 - Ready work queue and Scheduled timeline over canonical jobs plus appointment read-model context

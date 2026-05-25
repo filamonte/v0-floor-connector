@@ -75,7 +75,7 @@ export type ScheduleBoardTimingGroupKey =
   | "unscheduled-ready"
   | "today"
   | "tomorrow"
-  | "next-seven-days"
+  | "this-week"
   | "later-scheduled"
   | "in-progress"
   | "missing-crew"
@@ -89,6 +89,9 @@ export type ScheduleBoardTimingGroup<TJob extends ScheduleBoardJobSource> = {
 export type ScheduleBoardReadModel<TJob extends ScheduleBoardJobSource> = {
   unscheduledReadyJobs: TJob[];
   scheduledTodayJobs: TJob[];
+  tomorrowJobs: TJob[];
+  thisWeekJobs: TJob[];
+  laterScheduledJobs: TJob[];
   upcomingJobs: TJob[];
   inProgressJobs: TJob[];
   assignedJobs: TJob[];
@@ -98,6 +101,7 @@ export type ScheduleBoardReadModel<TJob extends ScheduleBoardJobSource> = {
   activeTodayJobs: TJob[];
   scheduledJobs: TJob[];
   latestScheduledJobs: TJob[];
+  needsReadinessReviewJobs: TJob[];
   readinessReviewJobs: TJob[];
   timingGroups: ScheduleBoardTimingGroup<TJob>[];
   scheduledJobsByDate: Map<string, TJob[]>;
@@ -214,16 +218,33 @@ export function buildScheduleBoardReadModel<
       .map((summary) => summary.jobId)
   );
 
-  const unscheduledReadyJobs = input.jobs.filter(
-    (job) => job.dispatchStatus === "unscheduled"
+  const unscheduledReadyJobs = sortByUpdatedAtDesc(
+    input.jobs.filter((job) => job.dispatchStatus === "unscheduled")
   );
-  const scheduledTodayJobs = input.jobs.filter(
-    (job) => job.scheduledDate === todayDateKey
+  const scheduledTodayJobs = sortBySchedule(
+    input.jobs.filter((job) => job.scheduledDate === todayDateKey)
   );
-  const inProgressJobs = input.jobs.filter(
-    (job) => job.dispatchStatus === "in_progress"
+  const inProgressJobs = sortBySchedule(
+    input.jobs.filter((job) => job.dispatchStatus === "in_progress")
   );
-  const upcomingJobs = input.jobs.filter((job) => {
+  const tomorrowJobs = sortBySchedule(
+    input.jobs.filter((job) => job.scheduledDate === tomorrowDateKey)
+  );
+  const thisWeekJobs = sortBySchedule(input.jobs).filter((job) => {
+    const scheduledDate = parseDateKey(job.scheduledDate);
+
+    return (
+      scheduledDate !== null &&
+      scheduledDate > tomorrow &&
+      scheduledDate <= nextSevenDaysEnd
+    );
+  });
+  const laterScheduledJobs = sortBySchedule(input.jobs).filter((job) => {
+    const scheduledDate = parseDateKey(job.scheduledDate);
+
+    return scheduledDate !== null && scheduledDate > nextSevenDaysEnd;
+  });
+  const upcomingJobs = sortBySchedule(input.jobs).filter((job) => {
     const scheduledDate = parseDateKey(job.scheduledDate);
 
     return (
@@ -233,11 +254,13 @@ export function buildScheduleBoardReadModel<
     );
   });
   const assignedJobs = input.jobs.filter((job) => getAssignmentCount(job) > 0);
-  const crewAssignmentGaps = input.jobs.filter(
-    (job) =>
-      job.dispatchStatus !== "unscheduled" &&
-      job.dispatchStatus !== "completed" &&
-      getAssignmentCount(job) === 0
+  const crewAssignmentGaps = sortBySchedule(
+    input.jobs.filter(
+      (job) =>
+        job.dispatchStatus !== "unscheduled" &&
+        job.dispatchStatus !== "completed" &&
+        getAssignmentCount(job) === 0
+    )
   );
   const recentlyCompletedJobs = sortByUpdatedAtDesc(
     input.jobs.filter((job) => job.dispatchStatus === "completed")
@@ -292,16 +315,22 @@ export function buildScheduleBoardReadModel<
 
     return scheduledDate !== null && scheduledDate > nextSevenDaysEnd;
   });
-  const readinessReviewJobs = input.jobs.filter(
-    (job) =>
-      job.dispatchStatus === "unscheduled" ||
-      crewAssignmentGaps.some((crewGapJob) => crewGapJob.id === job.id) ||
-      warningJobIds.has(job.id)
+  const needsReadinessReviewJobs = sortBySchedule(
+    input.jobs.filter(
+      (job) =>
+        job.dispatchStatus !== "completed" &&
+        job.dispatchStatus !== "unscheduled" &&
+        (crewAssignmentGaps.some((crewGapJob) => crewGapJob.id === job.id) ||
+          warningJobIds.has(job.id))
+    )
   );
 
   return {
     unscheduledReadyJobs,
     scheduledTodayJobs,
+    tomorrowJobs,
+    thisWeekJobs,
+    laterScheduledJobs,
     upcomingJobs,
     inProgressJobs,
     assignedJobs,
@@ -311,13 +340,14 @@ export function buildScheduleBoardReadModel<
     activeTodayJobs,
     scheduledJobs,
     latestScheduledJobs,
-    readinessReviewJobs,
+    needsReadinessReviewJobs,
+    readinessReviewJobs: needsReadinessReviewJobs,
     scheduledJobsByDate,
     timingGroups: [
       { key: "unscheduled-ready", jobs: unscheduledReadyJobs },
       { key: "today", jobs: todayBoardJobs },
       { key: "tomorrow", jobs: tomorrowBoardJobs },
-      { key: "next-seven-days", jobs: nextSevenDaysBoardJobs },
+      { key: "this-week", jobs: nextSevenDaysBoardJobs },
       { key: "later-scheduled", jobs: laterScheduledBoardJobs },
       { key: "in-progress", jobs: inProgressJobs },
       { key: "missing-crew", jobs: crewAssignmentGaps },

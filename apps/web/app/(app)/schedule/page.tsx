@@ -639,10 +639,10 @@ function getBoardCardState(job: {
 
   if (job.dispatchStatus === "unscheduled") {
     return {
-      eyebrow: "Ready Check passed",
+      eyebrow: "Ready to schedule",
       title: "Waiting on first date commitment",
       summary:
-        "GateKeeper cleared this job for scheduling. Set the first calendar date to move it onto CrewBoard."
+        "This job is in the schedule queue. Set the first calendar date to move it onto CrewBoard."
     };
   }
 
@@ -662,15 +662,54 @@ function getBoardCardState(job: {
   };
 }
 
+function getScheduleReadinessBadge(input: {
+  dispatchStatus: string;
+  assignmentCount: number;
+  warningCount: number;
+}) {
+  if (input.dispatchStatus === "in_progress") {
+    return {
+      label: "In progress",
+      className:
+        "border-[var(--copper)] bg-[var(--highlight)] text-[var(--text-primary)]"
+    };
+  }
+
+  if (input.dispatchStatus === "unscheduled") {
+    return {
+      label: "Ready to schedule",
+      className: "border-amber-200 bg-amber-50 text-amber-800"
+    };
+  }
+
+  if (
+    input.dispatchStatus !== "completed" &&
+    (input.assignmentCount === 0 || input.warningCount > 0)
+  ) {
+    return {
+      label: "Needs readiness review",
+      className: "border-rose-200 bg-rose-50 text-rose-700"
+    };
+  }
+
+  if (input.dispatchStatus === "completed") {
+    return {
+      label: "Recently done",
+      className: "border-emerald-200 bg-emerald-50 text-emerald-700"
+    };
+  }
+
+  return {
+    label: "Scheduled",
+    className: "border-emerald-200 bg-emerald-50 text-emerald-700"
+  };
+}
+
 function getScheduleReadinessReviewMeta(input: {
   dispatchStatus: string;
   assignmentCount: number;
   warningCount: number;
 }) {
-  if (input.dispatchStatus === "unscheduled") {
-    return "Waiting on first schedule commitment";
-  }
-
   if (input.assignmentCount === 0 && input.dispatchStatus !== "completed") {
     return "Date exists, crew assignment is still open";
   }
@@ -868,13 +907,13 @@ function ScheduleJobActionLinks(input: {
 
   const projectClassName =
     input.projectVariant === "bordered"
-      ? `inline-flex items-center rounded-[4px] border ${scheduleSecondaryActionToneClassName} ${secondaryPadding} ${secondaryText} transition`
-      : `inline-flex items-center rounded-[4px] ${secondaryPadding} ${secondaryText} text-[var(--text-secondary)] transition hover:text-[var(--text-primary)]`;
+      ? `inline-flex items-center justify-center rounded-[4px] border text-center leading-4 ${scheduleSecondaryActionToneClassName} ${secondaryPadding} ${secondaryText} transition`
+      : `inline-flex items-center justify-center rounded-[4px] text-center leading-4 ${secondaryPadding} ${secondaryText} text-[var(--text-secondary)] transition hover:text-[var(--text-primary)]`;
 
   const jobClassName =
     input.jobVariant === "bordered"
-      ? `inline-flex items-center rounded-[4px] border ${scheduleSecondaryActionToneClassName} ${secondaryPadding} ${secondaryText} transition`
-      : `inline-flex items-center rounded-[4px] ${secondaryPadding} ${secondaryText} text-[var(--text-secondary)] transition hover:text-[var(--text-primary)]`;
+      ? `inline-flex items-center justify-center rounded-[4px] border text-center leading-4 ${scheduleSecondaryActionToneClassName} ${secondaryPadding} ${secondaryText} transition`
+      : `inline-flex items-center justify-center rounded-[4px] text-center leading-4 ${secondaryPadding} ${secondaryText} text-[var(--text-secondary)] transition hover:text-[var(--text-primary)]`;
 
   return (
     <div
@@ -883,7 +922,7 @@ function ScheduleJobActionLinks(input: {
       <Link
         href={input.actionHref}
         className={[
-          `inline-flex items-center rounded-[4px] border ${actionPadding} text-xs font-semibold uppercase tracking-[0.14em] transition`,
+          `inline-flex items-center justify-center rounded-[4px] border ${actionPadding} text-center text-xs font-semibold uppercase leading-4 tracking-[0.14em] transition`,
           input.actionToneClass
         ].join(" ")}
       >
@@ -1300,10 +1339,13 @@ export default async function SchedulePage({
   });
   const unscheduledJobs = scheduleBoard.unscheduledReadyJobs;
   const scheduledTodayJobs = scheduleBoard.scheduledTodayJobs;
+  const tomorrowJobs = scheduleBoard.tomorrowJobs;
+  const thisWeekJobs = scheduleBoard.thisWeekJobs;
   const inProgressJobs = scheduleBoard.inProgressJobs;
   const upcomingJobs = scheduleBoard.upcomingJobs;
   const assignedJobs = scheduleBoard.assignedJobs;
   const missingCrewJobs = scheduleBoard.crewAssignmentGaps;
+  const needsReadinessReviewJobs = scheduleBoard.needsReadinessReviewJobs;
   const recentlyCompletedJobs = scheduleBoard.recentlyCompletedJobs;
   const todayWithoutCrewJobs = scheduleBoard.todayWithoutCrewJobs;
   const activeTodayJobs = scheduleBoard.activeTodayJobs;
@@ -1624,17 +1666,17 @@ export default async function SchedulePage({
       surfaceClass: "border-[var(--border-warm)] bg-[var(--highlight)]"
     },
     {
-      key: "next-seven-days",
-      title: "Upcoming",
+      key: "this-week",
+      title: "This week",
       description:
-        "This lane holds the near-term schedule horizon after tomorrow and before later backlog work.",
+        "This lane holds the next few scheduled days after tomorrow so the weekly field picture stays scannable.",
       jobs:
         visibleScheduleBoard.timingGroups.find(
-          (group) => group.key === "next-seven-days"
+          (group) => group.key === "this-week"
         )?.jobs ?? [],
       emptyTitle: "No near-term scheduled work is queued after tomorrow.",
       emptyDescription:
-        "The next week of scheduled jobs will gather here once the board moves beyond tomorrow.",
+        "This week's remaining scheduled jobs will gather here once the board moves beyond tomorrow.",
       surfaceClass: "border-[var(--border-warm)] bg-[var(--highlight)]"
     },
     {
@@ -1932,7 +1974,7 @@ export default async function SchedulePage({
     },
     {
       key: "today",
-      label: "Scheduled today",
+      label: "Today",
       value: scheduledTodayJobs.length + todayAppointments.length,
       href: buildScheduleHref({
         q: query,
@@ -1945,6 +1987,24 @@ export default async function SchedulePage({
       active: view === "today",
       borderClass: "border-[var(--border-warm)]",
       bgClass: "bg-[var(--highlight)]",
+      labelClass: "text-[var(--text-secondary)]",
+      valueClass: "text-[var(--text-primary)]"
+    },
+    {
+      key: "tomorrow",
+      label: "Tomorrow",
+      value: tomorrowJobs.length,
+      href: buildScheduleHref({
+        q: query,
+        projectId: projectFilterId ?? undefined,
+        view: "upcoming",
+        crew: crewFilter,
+        layout: scheduleLayout,
+        date: toDateKey(addDays(today, 1))
+      }),
+      active: false,
+      borderClass: "border-[var(--border-warm)]",
+      bgClass: "bg-white",
       labelClass: "text-[var(--text-secondary)]",
       valueClass: "text-[var(--text-primary)]"
     },
@@ -1986,8 +2046,8 @@ export default async function SchedulePage({
     },
     {
       key: "warnings",
-      label: "Schedule warnings",
-      value: visibleScheduleWarningCount,
+      label: "Readiness review",
+      value: needsReadinessReviewJobs.length,
       href: buildScheduleHref({
         q: query,
         projectId: projectFilterId ?? undefined,
@@ -1997,15 +2057,15 @@ export default async function SchedulePage({
         date: plannerDateKey
       }),
       active: false,
-      borderClass: "border-amber-200",
-      bgClass: "bg-amber-50/45",
-      labelClass: "text-amber-800",
-      valueClass: "text-amber-900"
+      borderClass: "border-rose-200",
+      bgClass: "bg-rose-50/45",
+      labelClass: "text-rose-700",
+      valueClass: "text-rose-800"
     },
     {
       key: "upcoming",
-      label: "Upcoming",
-      value: upcomingJobs.length + upcomingAppointments.length,
+      label: "This week",
+      value: thisWeekJobs.length + upcomingAppointments.length,
       href: buildScheduleHref({
         q: query,
         projectId: projectFilterId ?? undefined,
@@ -2158,7 +2218,7 @@ export default async function SchedulePage({
       title="CrewBoard"
       description={`Run daily scheduling for ${organizationContext.organization.displayName}: see what needs a date, what is happening today, where crew is missing, and which job or project to open next.`}
       summary={
-        <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-7">
+        <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
           {summaryItems.map((item) => (
             <Link
               key={item.key}
@@ -2733,36 +2793,34 @@ export default async function SchedulePage({
             <ManagerDashboardCard
               eyebrow="Readiness"
               title="Needs readiness review"
-              description="This queue collects schedule records that need human review before the day runs cleanly: missing timing, missing crew, or schedule warnings."
+              description="This queue collects scheduled or active jobs that need human review before the day runs cleanly: missing crew, missing end time, or schedule warnings."
               actionHref={buildCurrentScheduleHref({ view: "all" })}
               actionLabel="Review schedule"
-              items={scheduleBoard.readinessReviewJobs
-                .slice(0, 4)
-                .map((job) => {
-                  const primaryAction = getPrimaryScheduleAction(job);
-                  const jobWarnings = scheduleWarningsByJobId.get(job.id) ?? [];
+              items={needsReadinessReviewJobs.slice(0, 4).map((job) => {
+                const primaryAction = getPrimaryScheduleAction(job);
+                const jobWarnings = scheduleWarningsByJobId.get(job.id) ?? [];
+                const readinessBadge = getScheduleReadinessBadge({
+                  dispatchStatus: job.dispatchStatus,
+                  assignmentCount: job.assignmentCount,
+                  warningCount: jobWarnings.length
+                });
 
-                  return {
-                    href: buildCurrentScheduleHref({
-                      action: primaryAction.action,
-                      jobId: job.id
-                    }),
-                    title: getScheduleJobTitle(job),
-                    subtitle: getScheduleJobSubtitle(job),
-                    meta: getScheduleReadinessReviewMeta({
-                      dispatchStatus: job.dispatchStatus,
-                      assignmentCount: job.assignmentCount,
-                      warningCount: jobWarnings.length
-                    }),
-                    badge:
-                      job.dispatchStatus === "unscheduled"
-                        ? "Needs Scheduling"
-                        : jobWarnings.length > 0
-                          ? "Warning"
-                          : "Needs crew",
-                    trailing: primaryAction.label
-                  };
-                })}
+                return {
+                  href: buildCurrentScheduleHref({
+                    action: primaryAction.action,
+                    jobId: job.id
+                  }),
+                  title: getScheduleJobTitle(job),
+                  subtitle: getScheduleJobSubtitle(job),
+                  meta: getScheduleReadinessReviewMeta({
+                    dispatchStatus: job.dispatchStatus,
+                    assignmentCount: job.assignmentCount,
+                    warningCount: jobWarnings.length
+                  }),
+                  badge: readinessBadge.label,
+                  trailing: primaryAction.label
+                };
+              })}
               emptyTitle="No schedule readiness review items."
               emptyDescription="Jobs with timing, crew, and warning context in place will stay out of this review queue."
             />
@@ -3840,6 +3898,11 @@ export default async function SchedulePage({
                   const primaryAction = getPrimaryScheduleAction(job);
                   const boardCardState = getBoardCardState(job);
                   const jobWarnings = scheduleWarningsByJobId.get(job.id) ?? [];
+                  const readinessBadge = getScheduleReadinessBadge({
+                    dispatchStatus: job.dispatchStatus,
+                    assignmentCount: job.assignmentCount,
+                    warningCount: jobWarnings.length
+                  });
 
                   return (
                     <div key={job.id} className="px-5 py-4 sm:px-6">
@@ -3856,6 +3919,14 @@ export default async function SchedulePage({
                               ].join(" ")}
                             >
                               {formatStatusLabel(job.dispatchStatus)}
+                            </span>
+                            <span
+                              className={[
+                                "inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em]",
+                                readinessBadge.className
+                              ].join(" ")}
+                            >
+                              {readinessBadge.label}
                             </span>
                           </div>
                           <Link
@@ -3892,6 +3963,7 @@ export default async function SchedulePage({
                             {job.customer?.name ?? "Unknown customer"}
                           </p>
                           <p className="mt-1 text-sm leading-6 text-[var(--text-secondary)]">
+                            {job.project?.name ?? "Project"} ·{" "}
                             <Link
                               href={`/projects/${job.projectId}`}
                               className="hover:text-[var(--text-primary)]"
