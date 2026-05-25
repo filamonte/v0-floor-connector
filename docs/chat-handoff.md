@@ -134,6 +134,17 @@ Current operating-core surfaces include:
   home/project views with saved portal auth and no page errors or horizontal
   overflow; local Next dev navigation still logged route-chunk 404/abort noise
   during transitions while the pages rendered successfully.
+- Full Operating Loop Demo Smoke on May 25, 2026 passed on a fresh local Next
+  dev server with saved contractor and portal auth. The route loop loaded
+  `/dashboard`, `/projects`, a Project Workspace with command/timeline signals,
+  `/schedule`, `/financials/accounts-receivable`, a Copilot/collections
+  handoff into `/communications`, `/daily-logs`, one Daily Log detail, one
+  invoice document review path, `/settings/workflows`, `/portal`, one portal
+  project, portal estimate/contract/invoice review routes, and 390px portal
+  home/project views. No app code changed. No page errors, bad responses, or
+  horizontal overflow were observed on the fresh-server pass. A stale preexisting
+  dev server on port 3000 had shown missing Next route chunks for
+  `/settings/workflows`; restarting on port 3002 cleared that artifact.
 - Reports, Financial Control, Accounting Readiness, and Accounting Export Prep
   as read-only review/export-prep surfaces over source financial and
   operational records.

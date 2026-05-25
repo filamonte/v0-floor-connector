@@ -158,6 +158,21 @@ Before a live demo, check:
   provider metadata.
 - `/settings/workflows` shows the intended workflow/AI controls.
 
+May 25, 2026 checkpoint: a full operating-loop smoke passed on a fresh local
+Next dev server with saved contractor and portal auth. The contractor loop
+loaded Dashboard, Projects, one Project Workspace, CrewBoard, Accounts
+Receivable, a Copilot/collections handoff into Communications, Daily Logs, one
+Daily Log detail, one invoice document review path, and Workflow settings. The
+portal loop loaded portal home, one portal project, portal estimate, contract,
+invoice review routes, and 390px portal home/project views. The fresh-server
+pass had no page errors, bad responses, or horizontal overflow on checked
+routes, and the portal scan did not expose contractor-only Copilot, AR pressure,
+FieldTrail, Proof Center, internal blockers, readiness internals, provider
+metadata, gateway status, Job Notes, or contractor send-readiness language. A
+stale preexisting dev server on port 3000 showed missing Next route chunks for
+`/settings/workflows`; rerunning on a fresh port 3002 cleared that local
+artifact.
+
 Suggested commands for this docs-only checklist:
 
 ```powershell
