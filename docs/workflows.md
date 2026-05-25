@@ -206,6 +206,11 @@ Implemented communication and delivery visibility:
 - Project Workspace Proof Center references Send Trail, Signature Trail,
   Payment Trail, Customer Access, field evidence, and source records as a
   project proof index.
+- `/communications` now includes Customer Communication Send Readiness for
+  Copilot handoffs. It derives review/preparation status from the draft
+  audience/action, selected canonical thread/source record, customer context,
+  and document readiness when supplied, and it keeps the boundary explicit that
+  no customer send happens automatically.
 - These layers are read-only visibility over current records. They do not add
   provider retry workflow, automated reminders, new message/delivery tables,
   portal-only copies, AI summaries, or customer-facing field sharing.

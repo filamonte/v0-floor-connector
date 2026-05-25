@@ -2591,6 +2591,14 @@ Implemented UI behavior now:
   missing context. It does not create stored PDFs, document records, portal-only
   copies, provider calls, autonomous sends, payment mutations, signature
   mutations, schema, migrations, or portal-facing readiness copy.
+- `/communications` now shows Customer Communication Send Readiness for Copilot
+  draft handoffs. The summary is derived from the draft audience/action,
+  selected canonical thread/source record, customer context, and document
+  readiness when supplied. It labels ready/needs-review/blocked state, missing
+  requirements, safe subject/body framing, customer-safety warnings, and the
+  explicit "nothing is sent automatically" boundary. It does not send email/SMS,
+  call providers, create delivery events, create notifications, create threads,
+  add a draft table, mutate source records, or expose the draft to the customer.
 - `/schedule` now presents as CrewBoard on the existing route. CrewBoard uses
   canonical jobs, appointments, job assignments, people, vendors, projects, and
   customers for scheduling visibility, URL-backed date/layout context,

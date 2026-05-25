@@ -7,11 +7,14 @@ This document defines FloorConnector's communications philosophy. It is mostly
 strategic architecture guidance, with the current branch also containing
 canonical communication threads/messages, notification foundations, the
 contractor-side `/communications` review workspace, and the first review-first
-Copilot draft handoff into that workspace. It does not imply broad unified
-inbox depth, autonomous communication workflows, provider-backed send behavior,
-AI message generation, new communication schema, or customer portal messaging
-beyond what [docs/current-state.md](C:/FloorConnector/docs/current-state.md)
-explicitly records.
+Copilot draft handoff into that workspace. The current branch also has a
+deterministic customer send-readiness review summary for Copilot handoffs in
+`/communications`; it is preparation/readiness copy only. It does not imply
+broad unified inbox depth, autonomous communication workflows, provider-backed
+send behavior, AI message generation, new communication schema, or customer
+portal messaging beyond what
+[docs/current-state.md](C:/FloorConnector/docs/current-state.md) explicitly
+records.
 
 For implemented truth, use [docs/current-state.md](C:/FloorConnector/docs/current-state.md). For current workflow rules, use [docs/workflows.md](C:/FloorConnector/docs/workflows.md).
 
@@ -208,6 +211,13 @@ Current Copilot draft handoff:
   without creating notifications.
 - If no thread exists, the handoff stays copy/review only and does not create a
   thread automatically.
+- `/communications` derives a customer send-readiness summary for the handoff,
+  including intended audience, related canonical record, readiness status,
+  missing requirements, safe subject/framing suggestions, and the explicit
+  reminder that nothing is sent automatically.
+- Estimate, contract, and invoice communication readiness can reuse document
+  readiness output when supplied and otherwise prompts review of the canonical
+  document workspace before any future customer send.
 - It does not send email or SMS, call providers, create notifications, create
   autonomous reminders, create AI-only communication records, or replace future
   composer/send workflows.

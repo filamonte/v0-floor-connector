@@ -54,17 +54,17 @@ a dispatch optimizer, or a customer-facing internal operations feed.
 
 ## Recommended Route
 
-| Step | Route                                            | What It Proves                                                                                                                                                                | Demo Notes                                                                                                                                                                       |
-| ---- | ------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1    | `/dashboard`                                     | The contractor starts from a command center that groups high-signal operating attention.                                                                                      | Show AI Operational Digest if enabled. Say it routes to source records and does not create tasks, messages, or AI truth.                                                         |
-| 2    | `/projects`                                      | Projects remain the operating root, while global pages still act as queues.                                                                                                   | Open a real project from the list rather than relying on stale IDs.                                                                                                              |
-| 3    | `/projects/[projectId]`                          | Project Workspace explains state through ProjectPulse, Project Command Timeline, Copilot, FieldTrail, MessageCenter, CloseoutTrail, Proof Center, and source-record handoffs. | Show the timeline as a derived read model over canonical records. Show Copilot as deterministic, review-first synthesis. Use draft actions only as editable handoffs, not sends. |
-| 4    | `/schedule`                                      | CrewBoard shows ready, scheduled, in-progress, and readiness-review work from canonical jobs and assignments.                                                                 | Do not claim full dispatch automation, route optimization, or automatic scheduling.                                                                                              |
-| 5    | `/financials/accounts-receivable`                | Collections Follow-Up Intelligence explains collectible/payment follow-up items from canonical invoices, payments, and payment events.                                        | Show canonical invoice/project/customer links and optional review-first draft handoffs. Avoid pressure language.                                                                 |
-| 6    | `/communications` with a Copilot handoff query   | Copilot drafts can land in the existing communications review surface.                                                                                                        | The contractor edits/reviews manually. No provider send, notification, thread auto-create, or customer email/SMS happens automatically.                                          |
-| 7    | `/daily-logs` and one `/daily-logs/[dailyLogId]` | Field execution continuity stays on Daily Logs, Job Notes, field evidence, labor/time, and project/job handoffs.                                                              | Show mobile-friendly scanning if useful. Do not claim offline/native mobile or customer-facing field evidence.                                                                   |
-| 8    | `/portal` and one `/portal/projects/[projectId]` | The customer sees safe project status explanations from the same canonical records.                                                                                           | Confirm the portal does not expose Copilot, AR pressure, FieldTrail, internal blockers, internal Job Notes, readiness machinery, or raw evidence internals.                      |
-| 9    | `/settings/workflows`                            | AI/workflow controls are explicit and organization-scoped.                                                                                                                    | Show Guided mode, deterministic AI controls, dashboard digest/drafting toggles, and provider-backed AI disabled unless intentionally configured.                                 |
+| Step | Route                                            | What It Proves                                                                                                                                                                | Demo Notes                                                                                                                                                                                                             |
+| ---- | ------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1    | `/dashboard`                                     | The contractor starts from a command center that groups high-signal operating attention.                                                                                      | Show AI Operational Digest if enabled. Say it routes to source records and does not create tasks, messages, or AI truth.                                                                                               |
+| 2    | `/projects`                                      | Projects remain the operating root, while global pages still act as queues.                                                                                                   | Open a real project from the list rather than relying on stale IDs.                                                                                                                                                    |
+| 3    | `/projects/[projectId]`                          | Project Workspace explains state through ProjectPulse, Project Command Timeline, Copilot, FieldTrail, MessageCenter, CloseoutTrail, Proof Center, and source-record handoffs. | Show the timeline as a derived read model over canonical records. Show Copilot as deterministic, review-first synthesis. Use draft actions only as editable handoffs, not sends.                                       |
+| 4    | `/schedule`                                      | CrewBoard shows ready, scheduled, in-progress, and readiness-review work from canonical jobs and assignments.                                                                 | Do not claim full dispatch automation, route optimization, or automatic scheduling.                                                                                                                                    |
+| 5    | `/financials/accounts-receivable`                | Collections Follow-Up Intelligence explains collectible/payment follow-up items from canonical invoices, payments, and payment events.                                        | Show canonical invoice/project/customer links and optional review-first draft handoffs. Avoid pressure language.                                                                                                       |
+| 6    | `/communications` with a Copilot handoff query   | Copilot drafts can land in the existing communications review surface with customer send-readiness status.                                                                    | Show intended audience, related canonical record, readiness/missing requirements, and the no-automatic-send boundary. No provider send, notification, thread auto-create, or customer email/SMS happens automatically. |
+| 7    | `/daily-logs` and one `/daily-logs/[dailyLogId]` | Field execution continuity stays on Daily Logs, Job Notes, field evidence, labor/time, and project/job handoffs.                                                              | Show mobile-friendly scanning if useful. Do not claim offline/native mobile or customer-facing field evidence.                                                                                                         |
+| 8    | `/portal` and one `/portal/projects/[projectId]` | The customer sees safe project status explanations from the same canonical records.                                                                                           | Confirm the portal does not expose Copilot, AR pressure, FieldTrail, internal blockers, internal Job Notes, readiness machinery, or raw evidence internals.                                                            |
+| 9    | `/settings/workflows`                            | AI/workflow controls are explicit and organization-scoped.                                                                                                                    | Show Guided mode, deterministic AI controls, dashboard digest/drafting toggles, and provider-backed AI disabled unless intentionally configured.                                                                       |
 
 ## Demo Script
 
@@ -79,8 +79,9 @@ a dispatch optimizer, or a customer-facing internal operations feed.
    payments, and payment events. It prepares follow-up, but does not send or
    mutate payment state."
 5. Open Communications with a draft handoff and say: "The draft is a
-   review-first starting point. A person edits and submits through the existing
-   communications surface."
+   review-first starting point. Send readiness explains whether the message is
+   customer-safe enough to prepare, and a person edits through the existing
+   communications surface. Nothing sends automatically."
 6. Open Daily Logs and say: "Field execution stays attached to the same
    project/job chain."
 7. Open the portal and say: "The customer sees the same project chain through a
@@ -97,7 +98,8 @@ a dispatch optimizer, or a customer-facing internal operations feed.
   and assignments.
 - Accounts Receivable proves collections intelligence is deterministic and
   payment-record grounded.
-- Communications proves AI drafts hand off to human review instead of sending.
+- Communications proves AI drafts hand off to human review with customer
+  send-readiness checks instead of sending.
 - Daily Logs prove field execution remains connected to project/job truth.
 - Portal proves customer-facing status is canonical and safe.
 - Workflow Settings prove the assistance layer is governed and optional.
@@ -137,8 +139,9 @@ Before a live demo, check:
 - `/schedule` loads and shows CrewBoard queues/readiness review.
 - `/financials/accounts-receivable` loads and contains collections/payment
   follow-up context without horizontal overflow.
-- A Copilot or AR draft handoff opens `/communications` with review context and
-  no automatic send.
+- A Copilot or AR draft handoff opens `/communications` with customer
+  send-readiness context, review/missing-requirement copy, and no automatic
+  send.
 - `/daily-logs` loads and at least one Daily Log detail route is available for
   field continuity, if the environment has a valid daily log.
 - `/portal` loads with portal customer auth.

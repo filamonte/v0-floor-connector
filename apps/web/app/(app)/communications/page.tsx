@@ -6,6 +6,7 @@ import { CommunicationReplyForm } from "@/components/communication-reply-form";
 import { ContractorWorkspacePage } from "@/components/contractor-workspace-page";
 import { parseAiCopilotCommunicationHandoffSearchParams } from "@/lib/ai-operational-copilot/communication-handoff";
 import { listCommunicationMessages } from "@/lib/communications/data";
+import { deriveCustomerCommunicationSendReadiness } from "@/lib/communications/send-readiness";
 import {
   listContractorCommunicationThreadSummary,
   listContractorCommunicationThreads,
@@ -311,6 +312,34 @@ export default async function CommunicationsPage({
   const selectedMessages = selectedThread
     ? await listCommunicationMessages(selectedThread.id)
     : [];
+  const customerSendReadiness = copilotDraftHandoff
+    ? deriveCustomerCommunicationSendReadiness({
+        audience: copilotDraftHandoff.audience,
+        actionType: copilotDraftHandoff.actionType,
+        subject: copilotDraftHandoff.subject,
+        body: copilotDraftHandoff.draftBody,
+        customer: {
+          id: selectedThread?.customer.id || copilotDraftHandoff.customerId,
+          label:
+            selectedThread?.customer.label ||
+            copilotDraftHandoff.customerName ||
+            null
+        },
+        relatedRecord: selectedThread
+          ? {
+              type: selectedThread.subject.type,
+              id: selectedThread.subject.id,
+              label: selectedThread.subject.label,
+              href: selectedThread.subject.href
+            }
+          : {
+              type: "project",
+              id: copilotDraftHandoff.projectId,
+              label: copilotDraftHandoff.projectName,
+              href: `/projects/${copilotDraftHandoff.projectId}`
+            }
+      })
+    : null;
 
   const sourceCounts = communicationSourceFilters.map((filterOption) => ({
     ...filterOption,
@@ -540,6 +569,31 @@ export default async function CommunicationsPage({
                 <p className="mt-3 text-xs leading-5 text-slate-500">
                   Why: {copilotDraftHandoff.operationalReason}
                 </p>
+                {customerSendReadiness ? (
+                  <div className="mt-4 border border-[#ead9c7] bg-white px-4 py-3 text-xs leading-5 text-slate-600">
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div>
+                        <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#8f5b32]">
+                          Customer send readiness
+                        </p>
+                        <p className="mt-1 font-medium text-slate-800">
+                          {customerSendReadiness.recommendedNextStep}
+                        </p>
+                      </div>
+                      <span className="inline-flex rounded-full border border-[#ead9c7] bg-[#fff8f2] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#8f5b32]">
+                        {customerSendReadiness.readinessStatus.replaceAll(
+                          "_",
+                          " "
+                        )}
+                      </span>
+                    </div>
+                    <p className="mt-2">
+                      Intended for {customerSendReadiness.targetCustomerLabel}{" "}
+                      about {customerSendReadiness.relatedRecordLabel}. Nothing
+                      is sent automatically.
+                    </p>
+                  </div>
+                ) : null}
               </div>
               <div className="w-full shrink-0 lg:w-[22rem]">
                 <label
@@ -1028,6 +1082,7 @@ export default async function CommunicationsPage({
                         view={view}
                         source={source}
                         copilotHandoff={copilotDraftHandoff}
+                        sendReadiness={customerSendReadiness}
                       />
                     </div>
                   </section>

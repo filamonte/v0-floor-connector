@@ -213,9 +213,12 @@ The implemented communications handoff can move a selected draft into the
 existing contractor-side `/communications` review surface. If a canonical thread
 is already selected, the thread composer is prefilled for explicit user review
 and submission as an internal message. If no thread exists, the handoff remains a
-copy/review surface and does not create one automatically. Future provider-backed
-assistance must route through the Communications Layer and existing
-notification/delivery evidence patterns.
+copy/review surface and does not create one automatically. The communications
+surface now derives customer send-readiness copy for handoffs, including
+audience, related canonical record, readiness status, missing requirements, safe
+subject/body framing, and the explicit no-automatic-send boundary. Future
+provider-backed assistance must route through the Communications Layer and
+existing notification/delivery evidence patterns.
 
 ### Collections Follow-Up Intelligence
 
@@ -263,10 +266,12 @@ These are deterministic template-based drafts and are gated by the organization
 AI drafting preference. Each visible draft has a "Use draft" handoff into
 `/communications` that preserves action type, audience, subject/body,
 project/customer context, operational reason, and source workflow signals. The
-handoff does not send messages, create new threads, create work items, approve
-contracts, collect payments, schedule jobs, change readiness, or persist AI
-output. The contractor must review, edit, and submit or copy any draft manually
-through the appropriate existing workflow.
+handoff now shows deterministic customer send-readiness when opened in the
+communications review surface. It does not send messages, create new threads,
+create work items, approve contracts, collect payments, schedule jobs, change
+readiness, create delivery events, or persist AI output. The contractor must
+review, edit, and submit or copy any draft manually through the appropriate
+existing workflow.
 
 ### AI Field Summary Foundation
 
@@ -296,6 +301,8 @@ intentional:
   the same Project Workspace panel when AI drafting is enabled.
 - "Use draft" opens `/communications` with review-only draft context and
   prefilled existing-thread composer state when a canonical thread is available.
+  `/communications` adds deterministic customer send-readiness review copy; it
+  does not turn the draft into a customer send.
 - Existing Workflow Snapshot, cue panels, work items, Ready to Schedule, and
   source-record sections remain the action surfaces.
 

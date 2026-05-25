@@ -76,6 +76,12 @@ Current operating-core surfaces include:
   missing threads remain copy/review only. No customer email/SMS, provider call,
   notification creation, thread auto-create, AI-only communication record, or
   autonomous workflow is introduced.
+- Customer Communication Send Readiness now appears on Copilot handoffs inside
+  `/communications`. It derives intended audience, related canonical record,
+  readiness status, missing requirements, safe subject/framing suggestions, and
+  document-readiness blockers when supplied. It is review/preparation copy only:
+  no provider send, notification, thread creation, delivery event, portal-only
+  message, or autonomous action is introduced.
 - Collections Follow-Up Intelligence now deepens `/financials/accounts-receivable`
   with deterministic categories over canonical invoices, payments, and Payment
   Trail events: overdue invoices, unpaid deposits, sent-unpaid balances,
