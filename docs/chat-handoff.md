@@ -126,6 +126,14 @@ Current operating-core surfaces include:
   layer uses canonical project, commercial, payment, and scoped schedule state
   only; it does not expose contractor Copilot, AR, blockers, field notes,
   readiness internals, or portal-only workflow copies.
+- Portal Customer Hub Polish v2 adds clearer customer-facing project cards on
+  `/portal`, a Customer Action Hub on the portal Project Workspace, calmer
+  estimate/contract/invoice action cues, safer payment-activity wording, and
+  mobile wrapping polish. The May 25, 2026 smoke loaded `/portal`, a portal
+  project, portal estimate, portal contract, portal invoice, and 390px
+  home/project views with saved portal auth and no page errors or horizontal
+  overflow; local Next dev navigation still logged route-chunk 404/abort noise
+  during transitions while the pages rendered successfully.
 - Reports, Financial Control, Accounting Readiness, and Accounting Export Prep
   as read-only review/export-prep surfaces over source financial and
   operational records.

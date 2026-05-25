@@ -157,6 +157,12 @@ Implemented good-enough document delivery:
 - contractor estimate, contract, and invoice workspaces expose customer-facing `Print / save PDF` actions
 - portal estimate, contract, and invoice review pages expose customer-safe `Print / save PDF` actions
 - these routes render the existing canonical estimate, contract, and invoice data for browser print/save; portal print views use safe contractor organization branding after portal access is scoped; they do not create a second document source of truth, portal-only copies, financial mutations, signature mutations, payment mutations, or stored PDF versioning
+- `/portal` and portal Project Workspace now act as the customer hub over the
+  same shared project chain: customers see customer-safe project status,
+  estimate/contract/invoice cues, the next customer step, shared documents, and
+  existing review/sign/pay/print paths without seeing contractor-only
+  intelligence, readiness internals, field notes, provider metadata, or
+  portal-only copies
 - the existing sent-contract PDF snapshot foundation remains separate workflow evidence for contract send behavior; the print/save views are current renderings of canonical records
 - contractor estimate, contract, and invoice workspaces now derive a compact
   document readiness summary from the same canonical records before send or

@@ -148,6 +148,40 @@ function getPortalHomeStatusExplanation(
   });
 }
 
+function getPortalHomeRecordCues(
+  project: Awaited<ReturnType<typeof listPortalAccessibleProjects>>[number]
+) {
+  return [
+    {
+      key: "estimate",
+      label: "Estimate",
+      value: formatStatusLabel(project.latestEstimateStatus),
+      href: project.latestEstimateId
+        ? `/portal/estimates/${project.latestEstimateId}`
+        : null,
+      actionLabel: "Review estimate"
+    },
+    {
+      key: "contract",
+      label: "Contract",
+      value: formatStatusLabel(project.latestContractStatus),
+      href: project.latestContractId
+        ? `/portal/contracts/${project.latestContractId}`
+        : null,
+      actionLabel: "Review contract"
+    },
+    {
+      key: "invoice",
+      label: "Invoice",
+      value: formatStatusLabel(project.latestInvoiceStatus),
+      href: project.latestInvoiceId
+        ? `/portal/invoices/${project.latestInvoiceId}`
+        : null,
+      actionLabel: "Review invoice"
+    }
+  ];
+}
+
 export default async function PortalHomePage() {
   const [projects, upcomingAppointments] = await Promise.all([
     listPortalAccessibleProjects("/portal"),
@@ -184,7 +218,7 @@ export default async function PortalHomePage() {
           <PortalTrustStrip
             eyebrow="Customer-safe access"
             title="Your portal shows only records your contractor shared"
-            description="Every review, signature, or payment path returns to a project-scoped record instead of a separate portal-only copy."
+            description="Every review, signature, or payment path returns to a project-scoped record instead of a separate copy."
             items={[
               {
                 label: "Projects",
@@ -342,12 +376,12 @@ export default async function PortalHomePage() {
               {projects.map((project) =>
                 (() => {
                   const explanation = getPortalHomeStatusExplanation(project);
+                  const recordCues = getPortalHomeRecordCues(project);
 
                   return (
-                    <Link
+                    <article
                       key={project.id}
-                      href={`/portal/projects/${project.id}`}
-                      className={`block ${portalReviewCardClassName}`}
+                      className={`${portalReviewCardClassName} space-y-5`}
                     >
                       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                         <div className="min-w-0">
@@ -372,52 +406,57 @@ export default async function PortalHomePage() {
                         </PortalStatusBadge>
                       </div>
 
-                      <div className="mt-5 grid gap-3 md:grid-cols-3">
-                        <div className={portalMetricPanelClassName}>
-                          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
-                            Estimate
-                          </p>
-                          <p className="mt-2 text-sm font-medium capitalize text-slate-950">
-                            {formatStatusLabel(project.latestEstimateStatus)}
-                          </p>
-                        </div>
-                        <div className={portalMetricPanelClassName}>
-                          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
-                            Contract
-                          </p>
-                          <p className="mt-2 text-sm font-medium capitalize text-slate-950">
-                            {formatStatusLabel(project.latestContractStatus)}
-                          </p>
-                        </div>
-                        <div className={portalMetricPanelClassName}>
-                          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
-                            Invoice
-                          </p>
-                          <p className="mt-2 text-sm font-medium capitalize text-slate-950">
-                            {formatStatusLabel(project.latestInvoiceStatus)}
-                          </p>
-                        </div>
+                      <div className="grid gap-3 md:grid-cols-3">
+                        {recordCues.map((cue) => (
+                          <div
+                            key={cue.key}
+                            className={portalMetricPanelClassName}
+                          >
+                            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+                              {cue.label}
+                            </p>
+                            <p className="mt-2 text-sm font-medium capitalize text-slate-950">
+                              {cue.value}
+                            </p>
+                            {cue.href ? (
+                              <div className="mt-3">
+                                <PortalSecondaryLink href={cue.href}>
+                                  {cue.actionLabel}
+                                </PortalSecondaryLink>
+                              </div>
+                            ) : null}
+                          </div>
+                        ))}
                       </div>
 
                       <div
-                        className={`${portalMetricPanelClassName} mt-4 text-sm leading-6 text-slate-600`}
+                        className={`${portalMetricPanelClassName} text-sm leading-6 text-slate-600`}
                       >
-                        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
-                          Your next step
-                        </p>
-                        <p className="mt-2 font-medium text-slate-950">
-                          {explanation.safeNextStep}
-                        </p>
-                        {project.latestInvoicePaymentEventAt ? (
-                          <p className="mt-1 text-slate-500">
-                            Latest activity{" "}
-                            {formatDateTime(
-                              project.latestInvoicePaymentEventAt
-                            )}
-                          </p>
-                        ) : null}
+                        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                          <div className="min-w-0">
+                            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+                              Your next step
+                            </p>
+                            <p className="mt-2 font-medium text-slate-950">
+                              {explanation.safeNextStep}
+                            </p>
+                            {project.latestInvoicePaymentEventAt ? (
+                              <p className="mt-1 text-slate-500">
+                                Latest billing activity{" "}
+                                {formatDateTime(
+                                  project.latestInvoicePaymentEventAt
+                                )}
+                              </p>
+                            ) : null}
+                          </div>
+                          <PortalSecondaryLink
+                            href={`/portal/projects/${project.id}`}
+                          >
+                            Open project hub
+                          </PortalSecondaryLink>
+                        </div>
                       </div>
-                    </Link>
+                    </article>
                   );
                 })()
               )}

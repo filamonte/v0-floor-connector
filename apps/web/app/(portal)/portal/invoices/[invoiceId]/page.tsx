@@ -65,7 +65,7 @@ function formatPaymentEventLabel(eventType: string) {
     case "payment_voided":
       return "Payment voided";
     case "provider_sync":
-      return "Provider sync";
+      return "Payment status updated";
     default:
       return formatStatusLabel(eventType);
   }
@@ -78,11 +78,22 @@ function formatPaymentActorLabel(actorType: string) {
     case "organization_user":
       return "Contractor team";
     case "provider":
-      return "Payment provider";
+      return "Payment service";
     case "system":
-      return "System";
+      return "Project update";
     default:
       return formatStatusLabel(actorType);
+  }
+}
+
+function formatPaymentMethodLabel(paymentMethod: string) {
+  switch (paymentMethod) {
+    case "local_manual":
+      return "manual payment";
+    case "stripe":
+      return "online payment";
+    default:
+      return formatStatusLabel(paymentMethod);
   }
 }
 
@@ -534,7 +545,7 @@ export default async function PortalInvoiceReviewPage({
                           </p>
                           <p className="capitalize">
                             {formatStatusLabel(payment.status)} via{" "}
-                            {payment.paymentMethod}
+                            {formatPaymentMethodLabel(payment.paymentMethod)}
                           </p>
                           {payment.reference ? (
                             <p>Ref: {payment.reference}</p>
@@ -785,11 +796,6 @@ export default async function PortalInvoiceReviewPage({
                     <p>{formatDateTime(event.occurredAt)}</p>
                     {typeof event.payload?.amount === "string" ? (
                       <p>Amount: {formatMoney(event.payload.amount)}</p>
-                    ) : null}
-                    {typeof event.payload?.gatewayStatus === "string" ? (
-                      <p>
-                        Status: {formatStatusLabel(event.payload.gatewayStatus)}
-                      </p>
                     ) : null}
                   </div>
                 </div>

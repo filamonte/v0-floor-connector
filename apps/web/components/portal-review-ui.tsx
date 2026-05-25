@@ -16,7 +16,7 @@ export const portalMetricPanelClassName =
   "min-w-0 rounded-lg border border-[var(--border-warm)] bg-white/85 px-4 py-3";
 
 export const portalReviewCardClassName =
-  "rounded-xl border border-[var(--border-warm)] bg-white px-5 py-4 transition hover:border-[var(--graphite-light)]/30 hover:bg-[var(--highlight)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--copper)]";
+  "min-w-0 rounded-xl border border-[var(--border-warm)] bg-white px-5 py-4 transition hover:border-[var(--graphite-light)]/30 hover:bg-[var(--highlight)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--copper)]";
 
 export const portalDocumentPanelClassName =
   "rounded-xl border border-[var(--border-warm)] bg-[var(--highlight)] px-5 py-5 sm:px-6";
@@ -110,7 +110,7 @@ export function PortalSecondaryLink({
   return (
     <Link
       href={href}
-      className="inline-flex items-center rounded-md border border-[var(--border-warm)] bg-white px-3.5 py-2 text-sm font-medium text-[var(--text-secondary)] transition hover:border-[var(--graphite-light)] hover:bg-[var(--highlight)] hover:text-[var(--text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--copper)] focus-visible:ring-offset-2"
+      className="inline-flex max-w-full items-center justify-center rounded-md border border-[var(--border-warm)] bg-white px-3.5 py-2 text-center text-sm font-medium text-[var(--text-secondary)] transition hover:border-[var(--graphite-light)] hover:bg-[var(--highlight)] hover:text-[var(--text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--copper)] focus-visible:ring-offset-2"
     >
       {children}
     </Link>

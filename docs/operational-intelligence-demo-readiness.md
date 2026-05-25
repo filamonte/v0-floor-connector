@@ -152,6 +152,10 @@ Before a live demo, check:
 - `/portal` loads with portal customer auth.
 - A portal project workspace renders a customer-safe status explanation and
   links only to portal-safe routes.
+- Portal home and the portal project workspace show the customer next action,
+  shared estimate/contract/invoice cues, print/review/sign/pay affordances, and
+  mobile-safe stacking without exposing contractor-only intelligence or
+  provider metadata.
 - `/settings/workflows` shows the intended workflow/AI controls.
 
 Suggested commands for this docs-only checklist:

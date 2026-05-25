@@ -209,6 +209,20 @@ matters now` line from existing list fields only. This does not add portal
   payment/signature behavior, estimate math, invoice math, AI, automation,
   notifications, FieldTrail exposure, Proof Center exposure, service requests,
   or closeout package downloads.
+- Portal Customer Hub Polish v2 makes `/portal` and the portal Project
+  Workspace read more like a customer project hub. Portal home project cards now
+  show customer-safe project status, direct estimate/contract/invoice review
+  cues, and a clear project hub action; the Project Workspace now includes a
+  Customer Action Hub that summarizes the next customer step and the most
+  relevant shared records before the deeper status/timeline/document sections.
+  Portal invoice payment activity now uses customer-safe payment wording instead
+  of provider/gateway metadata. This is presentation-only over existing portal
+  loaders, canonical projects, estimates, contracts, invoices, payments,
+  change orders, schedule state, and scoped portal access. It does not add
+  schema, migrations, portal-only records, access rules, server actions,
+  customer messaging, provider integrations, notifications, payment/signature
+  mutation beyond existing explicit portal actions, or contractor-only
+  intelligence exposure.
 - Portal Project Workspace and portal home now use deterministic portal-safe
   customer status explanations derived from canonical project, estimate,
   contract, change-order, invoice/payment, and scoped schedule state. The

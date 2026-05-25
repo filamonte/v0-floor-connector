@@ -339,6 +339,29 @@ export default async function PortalProjectDetailPage({
     invoices,
     changeOrders
   });
+  const customerHubCards = [
+    {
+      key: "next-step",
+      eyebrow: "Next customer step",
+      title: statusWindow.customerNextStep.label,
+      description: statusWindow.customerNextStep.description,
+      href: statusWindow.customerNextStep.href,
+      actionLabel:
+        statusWindow.customerNextStep.source === "none"
+          ? "Review project"
+          : statusWindow.customerNextStep.label,
+      badge: statusWindow.customerNextStep.tone
+    },
+    ...sharedDocuments.documents.slice(0, 3).map((document) => ({
+      key: document.key,
+      eyebrow: document.label,
+      title: document.reference,
+      description: document.helperText,
+      href: document.primaryHref,
+      actionLabel: document.actionLabel,
+      badge: document.tone
+    }))
+  ];
 
   return (
     <div className="grid gap-8 xl:grid-cols-[minmax(0,1.08fr)_320px]">
@@ -495,6 +518,61 @@ export default async function PortalProjectDetailPage({
             </div>
           </div>
         </div>
+
+        <DetailPanel
+          title="Customer Action Hub"
+          description="The clearest customer-safe path through the project records currently shared with you."
+        >
+          <div className="grid gap-4 lg:grid-cols-2">
+            <section className={`${portalStatePanelClassName} lg:col-span-2`}>
+              <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                <div className="min-w-0">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.26em] text-slate-500">
+                    Project summary
+                  </p>
+                  <h2 className="mt-2 text-lg font-semibold tracking-tight text-slate-950">
+                    {statusWindow.primaryMessage}
+                  </h2>
+                  <p className="mt-2 text-sm leading-6 text-slate-600">
+                    {statusExplanation.safeNextStep}
+                  </p>
+                </div>
+                <PortalStatusBadge
+                  status={statusWindow.statusTone}
+                  className="shrink-0"
+                >
+                  {statusWindow.statusLabel}
+                </PortalStatusBadge>
+              </div>
+            </section>
+
+            {customerHubCards.map((card) => (
+              <article key={card.key} className={portalReviewCardClassName}>
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                  <div className="min-w-0">
+                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+                      {card.eyebrow}
+                    </p>
+                    <h3 className="mt-2 text-base font-semibold text-slate-950">
+                      {card.title}
+                    </h3>
+                    <p className="mt-2 text-sm leading-6 text-slate-600">
+                      {card.description}
+                    </p>
+                  </div>
+                  <PortalStatusBadge status={card.badge}>
+                    {card.badge === "attention" ? "Needs review" : card.badge}
+                  </PortalStatusBadge>
+                </div>
+                <div className="mt-4">
+                  <PortalSecondaryLink href={card.href}>
+                    {card.actionLabel}
+                  </PortalSecondaryLink>
+                </div>
+              </article>
+            ))}
+          </div>
+        </DetailPanel>
 
         <DetailPanel
           title="Project Status"
