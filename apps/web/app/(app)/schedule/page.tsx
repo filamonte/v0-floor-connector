@@ -41,6 +41,7 @@ import {
   type ScheduleViewKey
 } from "@/lib/schedule/links";
 import {
+  buildScheduleBoardReadModel,
   buildScheduleItems,
   type ScheduleItem
 } from "@/lib/schedule/read-model";
@@ -661,6 +662,26 @@ function getBoardCardState(job: {
   };
 }
 
+function getScheduleReadinessReviewMeta(input: {
+  dispatchStatus: string;
+  assignmentCount: number;
+  warningCount: number;
+}) {
+  if (input.dispatchStatus === "unscheduled") {
+    return "Waiting on first schedule commitment";
+  }
+
+  if (input.assignmentCount === 0 && input.dispatchStatus !== "completed") {
+    return "Date exists, crew assignment is still open";
+  }
+
+  if (input.warningCount > 0) {
+    return formatWarningCount(input.warningCount);
+  }
+
+  return "Open project readiness context";
+}
+
 function getBoardCardSurfaceClass(job: {
   dispatchStatus: string;
   assignmentCount: number;
@@ -1272,39 +1293,21 @@ export default async function SchedulePage({
     projectId: projectFilterId
   });
 
-  const unscheduledJobs = jobsWithAssignments.filter(
-    (job) => job.dispatchStatus === "unscheduled"
-  );
-  const scheduledTodayJobs = jobsWithAssignments.filter((job) => job.isToday);
-  const inProgressJobs = jobsWithAssignments.filter(
-    (job) => job.dispatchStatus === "in_progress"
-  );
-  const upcomingJobs = jobsWithAssignments.filter((job) => job.isUpcoming);
-  const assignedJobs = jobsWithAssignments.filter(
-    (job) => job.assignmentCount > 0
-  );
-  const missingCrewJobs = jobsWithAssignments.filter(
-    (job) =>
-      job.dispatchStatus !== "unscheduled" &&
-      job.dispatchStatus !== "completed" &&
-      job.assignmentCount === 0
-  );
-  const recentlyCompletedJobs = jobsWithAssignments
-    .filter((job) => job.dispatchStatus === "completed")
-    .sort(
-      (left, right) =>
-        new Date(right.updatedAt).getTime() - new Date(left.updatedAt).getTime()
-    );
-  const todayWithoutCrewJobs = scheduledTodayJobs.filter(
-    (job) => job.assignmentCount === 0
-  );
-  const activeTodayJobs = [
-    ...inProgressJobs,
-    ...scheduledTodayJobs.filter((job) => job.dispatchStatus !== "in_progress")
-  ];
-  const scheduledJobs = jobsWithAssignments.filter(
-    (job) => job.scheduledDate !== null
-  );
+  const scheduleBoard = buildScheduleBoardReadModel({
+    jobs: jobsWithAssignments,
+    today,
+    warningSummaries: scheduleWarningSummaries
+  });
+  const unscheduledJobs = scheduleBoard.unscheduledReadyJobs;
+  const scheduledTodayJobs = scheduleBoard.scheduledTodayJobs;
+  const inProgressJobs = scheduleBoard.inProgressJobs;
+  const upcomingJobs = scheduleBoard.upcomingJobs;
+  const assignedJobs = scheduleBoard.assignedJobs;
+  const missingCrewJobs = scheduleBoard.crewAssignmentGaps;
+  const recentlyCompletedJobs = scheduleBoard.recentlyCompletedJobs;
+  const todayWithoutCrewJobs = scheduleBoard.todayWithoutCrewJobs;
+  const activeTodayJobs = scheduleBoard.activeTodayJobs;
+  const scheduledJobs = scheduleBoard.scheduledJobs;
   const scheduledAppointments = appointments.filter(
     (appointment) => appointment.status === "scheduled"
   );
@@ -1325,11 +1328,7 @@ export default async function SchedulePage({
     const dateKey = new Date(appointment.startsAt).toISOString().slice(0, 10);
     return dateKey > todayDateKey && dateKey < toDateKey(upcomingHorizon);
   });
-  const latestScheduledJobs = [...scheduledJobs]
-    .sort(
-      (left, right) => getScheduledSortTime(right) - getScheduledSortTime(left)
-    )
-    .slice(0, 3);
+  const latestScheduledJobs = scheduleBoard.latestScheduledJobs;
 
   const inferredSelectedJobs =
     selectedAction && !explicitSelectedJobId && projectFilterId
@@ -1577,57 +1576,21 @@ export default async function SchedulePage({
     includeUndatedJobs: true
   });
 
-  const tomorrowDateKey = toDateKey(tomorrow);
-  const nextSevenDaysEnd = addDays(today, 7);
-  const boardTimingJobs = visibleJobs.filter(
-    (job) => job.dispatchStatus !== "in_progress"
-  );
-  const unscheduledReadyBoardJobs = boardTimingJobs.filter(
-    (job) => job.dispatchStatus === "unscheduled"
-  );
-  const todayBoardJobs = boardTimingJobs.filter(
-    (job) => job.scheduledDate === todayDateKey
-  );
-  const tomorrowBoardJobs = boardTimingJobs.filter(
-    (job) => job.scheduledDate === tomorrowDateKey
-  );
-  const nextSevenDaysBoardJobs = boardTimingJobs.filter((job) => {
-    const scheduledDate = toDate(job.scheduledDate);
-
-    return (
-      scheduledDate !== null &&
-      scheduledDate > tomorrow &&
-      scheduledDate <= nextSevenDaysEnd
-    );
+  const visibleScheduleBoard = buildScheduleBoardReadModel({
+    jobs: visibleJobs,
+    today,
+    warningSummaries: visibleScheduleWarningSummaries
   });
-  const laterScheduledBoardJobs = boardTimingJobs.filter((job) => {
-    const scheduledDate = toDate(job.scheduledDate);
-
-    return scheduledDate !== null && scheduledDate > nextSevenDaysEnd;
-  });
-  const inProgressBoardJobs = visibleJobs.filter(
-    (job) => job.dispatchStatus === "in_progress"
-  );
-  const missingCrewBoardJobs = visibleJobs.filter(
-    (job) =>
-      job.dispatchStatus !== "unscheduled" &&
-      job.dispatchStatus !== "completed" &&
-      job.assignmentCount === 0
-  );
-  const recentlyCompletedBoardJobs = visibleJobs
-    .filter((job) => job.dispatchStatus === "completed")
-    .sort(
-      (left, right) =>
-        new Date(right.updatedAt).getTime() - new Date(left.updatedAt).getTime()
-    )
-    .slice(0, 12);
   const boardTimingGroups = [
     {
       key: "unscheduled-ready",
       title: "Needs Scheduling",
       description:
         "GateKeeper has let these jobs reach CrewBoard, but operations still needs to set the first real date commitment.",
-      jobs: unscheduledReadyBoardJobs,
+      jobs:
+        visibleScheduleBoard.timingGroups.find(
+          (group) => group.key === "unscheduled-ready"
+        )?.jobs ?? [],
       emptyTitle: "No jobs need scheduling.",
       emptyDescription:
         "When Ready Check-approved jobs exist without a committed date, they will collect here first.",
@@ -1638,7 +1601,9 @@ export default async function SchedulePage({
       title: "Today",
       description:
         "Use this lane to keep the immediate field picture visible without leaving the shared scheduling surface.",
-      jobs: todayBoardJobs,
+      jobs:
+        visibleScheduleBoard.timingGroups.find((group) => group.key === "today")
+          ?.jobs ?? [],
       emptyTitle: "No jobs are scheduled for today.",
       emptyDescription:
         "Today's committed work will appear here once the job schedule fields are set.",
@@ -1649,7 +1614,10 @@ export default async function SchedulePage({
       title: "Tomorrow",
       description:
         "Keep tomorrow's crew commitments visible before they become same-day blockers.",
-      jobs: tomorrowBoardJobs,
+      jobs:
+        visibleScheduleBoard.timingGroups.find(
+          (group) => group.key === "tomorrow"
+        )?.jobs ?? [],
       emptyTitle: "Nothing is lined up for tomorrow yet.",
       emptyDescription:
         "As soon as tomorrow's timing is captured on shared jobs, they will appear here.",
@@ -1660,7 +1628,10 @@ export default async function SchedulePage({
       title: "Upcoming",
       description:
         "This lane holds the near-term schedule horizon after tomorrow and before later backlog work.",
-      jobs: nextSevenDaysBoardJobs,
+      jobs:
+        visibleScheduleBoard.timingGroups.find(
+          (group) => group.key === "next-seven-days"
+        )?.jobs ?? [],
       emptyTitle: "No near-term scheduled work is queued after tomorrow.",
       emptyDescription:
         "The next week of scheduled jobs will gather here once the board moves beyond tomorrow.",
@@ -1671,7 +1642,10 @@ export default async function SchedulePage({
       title: "Later scheduled",
       description:
         "Longer-horizon commitments stay visible here without turning `/schedule` into a second planning system.",
-      jobs: laterScheduledBoardJobs,
+      jobs:
+        visibleScheduleBoard.timingGroups.find(
+          (group) => group.key === "later-scheduled"
+        )?.jobs ?? [],
       emptyTitle: "No later scheduled work is on the board.",
       emptyDescription:
         "Farther-out commitments will appear here once the calendar extends past the next seven days.",
@@ -1682,7 +1656,10 @@ export default async function SchedulePage({
       title: "In progress",
       description:
         "Active field work stays separate so live execution remains visible even when schedule timing shifts.",
-      jobs: inProgressBoardJobs,
+      jobs:
+        visibleScheduleBoard.timingGroups.find(
+          (group) => group.key === "in-progress"
+        )?.jobs ?? [],
       emptyTitle: "No jobs are marked in progress.",
       emptyDescription:
         "Once crews are actively executing work on jobs, those records will surface here.",
@@ -1693,7 +1670,10 @@ export default async function SchedulePage({
       title: "Missing Crew",
       description:
         "Scheduled or active jobs with no person or labor-provider assignment stay visible here until crew is attached.",
-      jobs: missingCrewBoardJobs,
+      jobs:
+        visibleScheduleBoard.timingGroups.find(
+          (group) => group.key === "missing-crew"
+        )?.jobs ?? [],
       emptyTitle: "No scheduled jobs are missing crew.",
       emptyDescription:
         "CrewBoard will flag scheduled work here when the date exists but the crew assignment is still open.",
@@ -1704,7 +1684,10 @@ export default async function SchedulePage({
       title: "Completed / Recently Done",
       description:
         "Completed jobs stay visible for schedule closeout and project handoff review.",
-      jobs: recentlyCompletedBoardJobs,
+      jobs:
+        visibleScheduleBoard.timingGroups.find(
+          (group) => group.key === "recently-done"
+        )?.jobs ?? [],
       emptyTitle: "No completed jobs are showing here yet.",
       emptyDescription:
         "Jobs marked completed will appear here from the same job records; full closeout remains in the Job and Project Workspaces.",
@@ -2748,6 +2731,43 @@ export default async function SchedulePage({
             />
 
             <ManagerDashboardCard
+              eyebrow="Readiness"
+              title="Needs readiness review"
+              description="This queue collects schedule records that need human review before the day runs cleanly: missing timing, missing crew, or schedule warnings."
+              actionHref={buildCurrentScheduleHref({ view: "all" })}
+              actionLabel="Review schedule"
+              items={scheduleBoard.readinessReviewJobs
+                .slice(0, 4)
+                .map((job) => {
+                  const primaryAction = getPrimaryScheduleAction(job);
+                  const jobWarnings = scheduleWarningsByJobId.get(job.id) ?? [];
+
+                  return {
+                    href: buildCurrentScheduleHref({
+                      action: primaryAction.action,
+                      jobId: job.id
+                    }),
+                    title: getScheduleJobTitle(job),
+                    subtitle: getScheduleJobSubtitle(job),
+                    meta: getScheduleReadinessReviewMeta({
+                      dispatchStatus: job.dispatchStatus,
+                      assignmentCount: job.assignmentCount,
+                      warningCount: jobWarnings.length
+                    }),
+                    badge:
+                      job.dispatchStatus === "unscheduled"
+                        ? "Needs Scheduling"
+                        : jobWarnings.length > 0
+                          ? "Warning"
+                          : "Needs crew",
+                    trailing: primaryAction.label
+                  };
+                })}
+              emptyTitle="No schedule readiness review items."
+              emptyDescription="Jobs with timing, crew, and warning context in place will stay out of this review queue."
+            />
+
+            <ManagerDashboardCard
               eyebrow="Today"
               title="Scheduled work for today"
               description="Keep the immediate field picture visible without turning the page into a full calendar app."
@@ -2870,7 +2890,7 @@ export default async function SchedulePage({
                     jobId: job.id
                   }),
                   title: getScheduleJobTitle(job),
-                  subtitle: `${getScheduleJobSubtitle(job)} Â· ${formatDate(job.scheduledDate)}`,
+                  subtitle: `${getScheduleJobSubtitle(job)} - ${formatDate(job.scheduledDate)}`,
                   meta: "Date exists, crew assignment is still open",
                   badge: "Missing Crew",
                   trailing: "Assign crew"
@@ -2889,7 +2909,7 @@ export default async function SchedulePage({
               items={recentlyCompletedJobs.slice(0, 4).map((job) => ({
                 href: `/jobs/${job.id}`,
                 title: getScheduleJobTitle(job),
-                subtitle: `${getScheduleJobSubtitle(job)} Â· updated ${formatDate(job.updatedAt.slice(0, 10))}`,
+                subtitle: `${getScheduleJobSubtitle(job)} - updated ${formatDate(job.updatedAt.slice(0, 10))}`,
                 meta: "Open the job or project for closeout, billing, or evidence follow-through",
                 badge: "Completed",
                 trailing: "Open job"

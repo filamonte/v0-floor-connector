@@ -112,6 +112,8 @@ Current status: Good-enough release on the canonical job/job-assignment foundati
 Implemented good-enough scope:
 
 - `/schedule` command-center summary for unscheduled, today, upcoming, in-progress, and blocked/not-ready work
+- reusable schedule board read model for canonical job operating queues,
+  grouped timing lanes, crew assignment gaps, and schedule readiness review
 - Ready work queue and Scheduled timeline over canonical jobs plus appointment read-model context
 - selected job action panel for schedule/reschedule context and crew assignment
 - project/job handoff query parameters into the schedule action panel where safe

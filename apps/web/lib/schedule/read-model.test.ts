@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  buildScheduleBoardReadModel,
   buildScheduleItems,
   filterUpcomingAssignedAppointments
 } from "./read-model";
@@ -154,4 +155,113 @@ void test("upcoming appointment helper respects assigned person when mapping exi
 
   assert.equal(appointments.length, 1);
   assert.equal(appointments[0].id, baseAppointment.id);
+});
+
+void test("schedule board read model derives canonical job operating queues", () => {
+  const scheduledToday = {
+    ...baseJob,
+    id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+    dispatchStatus: "scheduled" as const,
+    scheduledDate: "2026-05-08",
+    scheduledStartAt: "2026-05-08T13:00:00.000Z",
+    updatedAt: "2026-05-07T12:00:00.000Z",
+    assignmentCount: 0,
+    assignments: [],
+    crewSummary: []
+  };
+  const unscheduled = {
+    ...baseJob,
+    id: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+    dispatchStatus: "unscheduled" as const,
+    scheduledDate: null,
+    scheduledStartAt: null,
+    scheduledEndAt: null,
+    updatedAt: "2026-05-06T12:00:00.000Z"
+  };
+  const upcoming = {
+    ...baseJob,
+    id: "cccccccc-cccc-4ccc-8ccc-cccccccccccc",
+    scheduledDate: "2026-05-12",
+    scheduledStartAt: "2026-05-12T14:00:00.000Z",
+    updatedAt: "2026-05-05T12:00:00.000Z",
+    assignmentCount: 1,
+    assignments: [
+      {
+        id: "dddddddd-dddd-4ddd-8ddd-dddddddddddd",
+        jobId: "cccccccc-cccc-4ccc-8ccc-cccccccccccc",
+        personId: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee",
+        vendorId: null,
+        role: "lead" as const,
+        assignedStartAt: null,
+        assignedEndAt: null,
+        person: {
+          id: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee",
+          displayName: "Jordan Crew"
+        },
+        vendor: null
+      }
+    ],
+    crewSummary: ["Jordan Crew"]
+  };
+  const inProgress = {
+    ...baseJob,
+    id: "ffffffff-ffff-4fff-8fff-ffffffffffff",
+    dispatchStatus: "in_progress" as const,
+    scheduledDate: "2026-05-08",
+    scheduledStartAt: "2026-05-08T08:00:00.000Z",
+    updatedAt: "2026-05-08T12:00:00.000Z"
+  };
+  const completed = {
+    ...baseJob,
+    id: "99999999-9999-4999-8999-999999999999",
+    dispatchStatus: "completed" as const,
+    scheduledDate: "2026-05-01",
+    scheduledStartAt: "2026-05-01T08:00:00.000Z",
+    updatedAt: "2026-05-09T12:00:00.000Z"
+  };
+
+  const board = buildScheduleBoardReadModel({
+    jobs: [scheduledToday, unscheduled, upcoming, inProgress, completed],
+    today: new Date(2026, 4, 8),
+    warningSummaries: [
+      {
+        jobId: scheduledToday.id,
+        warnings: [
+          {
+            id: `${scheduledToday.id}:missing-crew`,
+            jobId: scheduledToday.id,
+            kind: "missing_crew",
+            label: "Missing crew",
+            detail: "This scheduled job has no crew.",
+            relatedJobIds: []
+          }
+        ]
+      }
+    ]
+  });
+
+  assert.deepEqual(
+    board.unscheduledReadyJobs.map((job) => job.id),
+    [unscheduled.id]
+  );
+  assert.deepEqual(
+    board.crewAssignmentGaps.map((job) => job.id),
+    [scheduledToday.id, inProgress.id]
+  );
+  assert.deepEqual(
+    board.upcomingJobs.map((job) => job.id),
+    [upcoming.id]
+  );
+  assert.deepEqual(
+    board.recentlyCompletedJobs.map((job) => job.id),
+    [completed.id]
+  );
+  assert.deepEqual(
+    board.scheduledJobsByDate.get("2026-05-08")?.map((job) => job.id),
+    [inProgress.id, scheduledToday.id]
+  );
+  assert.deepEqual(
+    board.readinessReviewJobs.map((job) => job.id),
+    [scheduledToday.id, unscheduled.id, inProgress.id]
+  );
 });

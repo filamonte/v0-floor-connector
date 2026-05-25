@@ -1669,6 +1669,8 @@ Current invoice design notes:
   - immutable payment-event visibility without replacing invoice detail as billing truth
 - a first contractor-side CrewBoard scheduling workspace now exists on the existing `/schedule` route on top of the canonical job model:
   - review-first summary of Needs Scheduling, today, in-progress, Missing Crew, upcoming work, and recently done work
+  - reusable schedule board read model in `apps/web/lib/schedule/read-model.ts` deriving operating queues from canonical jobs, job assignments, and advisory warning summaries
+  - dashboard-style readiness review queue for schedule records needing human review before the day runs cleanly, including missing timing, missing crew, and schedule warnings
   - explicit schedule-view and crew-filter state normalization on the same `/schedule` surface
   - optional `projectId` URL filtering for project-scoped schedule handoff, applied directly against canonical `jobs.project_id` while still allowing `q` text search to narrow the same result set
   - optional `jobId` plus `action=schedule|assign` URL context for opening the existing schedule action panel on a canonical job, with project-scoped single-job inference for older ready-to-schedule handoffs that arrive without `jobId`

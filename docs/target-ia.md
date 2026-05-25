@@ -312,7 +312,7 @@ Target AI intake behavior:
 
 ## Calendar / Schedule
 
-Calendar and schedule should become the cross-project time and capacity layer for contractor operations. The current `/schedule` surface is the good-enough scheduling command center: summary counts, a Ready work queue, a Scheduled timeline, and a selected job action panel over canonical jobs and job assignments.
+Calendar and schedule should become the cross-project time and capacity layer for contractor operations. The current `/schedule` surface is the good-enough scheduling command center: summary counts, schedule readiness review, a Ready work queue, grouped daily/weekly timing lanes, a Scheduled timeline, and a selected job action panel over canonical jobs and job assignments.
 
 This area may appear as part of Field, as a dedicated Calendar/Schedule navigation item, or both if the product needs a global calendar plus field-dispatch workspace. The route strategy should preserve the current `/schedule` direction until a specific refactor is approved.
 

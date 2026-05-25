@@ -6,6 +6,7 @@ import type {
   ScheduleJobAssignmentSummary,
   ScheduleJobSummary
 } from "@/lib/jobs/data";
+import type { ScheduleWarningSummary } from "@/lib/schedule/warnings";
 
 export type ScheduleJobSource = ScheduleJobSummary & {
   assignments?: ScheduleJobAssignmentSummary[];
@@ -66,6 +67,42 @@ export type ScheduleAppointmentItem = {
 
 export type ScheduleItem = ScheduleJobItem | ScheduleAppointmentItem;
 
+export type ScheduleBoardJobSource = ScheduleJobSource & {
+  updatedAt: string;
+};
+
+export type ScheduleBoardTimingGroupKey =
+  | "unscheduled-ready"
+  | "today"
+  | "tomorrow"
+  | "next-seven-days"
+  | "later-scheduled"
+  | "in-progress"
+  | "missing-crew"
+  | "recently-done";
+
+export type ScheduleBoardTimingGroup<TJob extends ScheduleBoardJobSource> = {
+  key: ScheduleBoardTimingGroupKey;
+  jobs: TJob[];
+};
+
+export type ScheduleBoardReadModel<TJob extends ScheduleBoardJobSource> = {
+  unscheduledReadyJobs: TJob[];
+  scheduledTodayJobs: TJob[];
+  upcomingJobs: TJob[];
+  inProgressJobs: TJob[];
+  assignedJobs: TJob[];
+  crewAssignmentGaps: TJob[];
+  recentlyCompletedJobs: TJob[];
+  todayWithoutCrewJobs: TJob[];
+  activeTodayJobs: TJob[];
+  scheduledJobs: TJob[];
+  latestScheduledJobs: TJob[];
+  readinessReviewJobs: TJob[];
+  timingGroups: ScheduleBoardTimingGroup<TJob>[];
+  scheduledJobsByDate: Map<string, TJob[]>;
+};
+
 function formatDateKeyFromIso(value: string) {
   return new Date(value).toISOString().slice(0, 10);
 }
@@ -75,7 +112,9 @@ function getJobDateKey(job: ScheduleJobSource) {
     return job.scheduledDate;
   }
 
-  return job.scheduledStartAt ? formatDateKeyFromIso(job.scheduledStartAt) : null;
+  return job.scheduledStartAt
+    ? formatDateKeyFromIso(job.scheduledStartAt)
+    : null;
 }
 
 function getJobAssigneeLabel(job: ScheduleJobSource) {
@@ -94,6 +133,197 @@ function getJobAssigneeLabel(job: ScheduleJobSource) {
   }
 
   return "No crew assigned";
+}
+
+function parseDateKey(value: string | null) {
+  return value ? new Date(`${value}T00:00:00`) : null;
+}
+
+function addDays(date: Date, days: number) {
+  const result = new Date(date);
+  result.setDate(result.getDate() + days);
+  result.setHours(0, 0, 0, 0);
+  return result;
+}
+
+function getScheduledSortTime(job: {
+  scheduledDate: string | null;
+  scheduledStartAt: string | null;
+}) {
+  if (job.scheduledStartAt) {
+    return new Date(job.scheduledStartAt).getTime();
+  }
+
+  if (job.scheduledDate) {
+    return new Date(`${job.scheduledDate}T00:00:00`).getTime();
+  }
+
+  return 0;
+}
+
+function getAssignmentCount(job: ScheduleJobSource) {
+  return job.assignmentCount ?? job.assignments?.length ?? 0;
+}
+
+function getDateKey(value: Date) {
+  const year = value.getFullYear();
+  const month = `${value.getMonth() + 1}`.padStart(2, "0");
+  const day = `${value.getDate()}`.padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
+}
+
+function sortBySchedule<TJob extends ScheduleBoardJobSource>(jobs: TJob[]) {
+  return [...jobs].sort(
+    (left, right) => getScheduledSortTime(left) - getScheduledSortTime(right)
+  );
+}
+
+function sortByUpdatedAtDesc<TJob extends ScheduleBoardJobSource>(
+  jobs: TJob[]
+) {
+  return [...jobs].sort((left, right) =>
+    right.updatedAt.localeCompare(left.updatedAt)
+  );
+}
+
+export function buildScheduleBoardReadModel<
+  TJob extends ScheduleBoardJobSource
+>(input: {
+  jobs: TJob[];
+  today: Date;
+  warningSummaries?: Array<{
+    jobId: string;
+    warnings: ScheduleWarningSummary[];
+  }>;
+  upcomingHorizonDays?: number;
+  recentCompletedLimit?: number;
+  latestScheduledLimit?: number;
+}): ScheduleBoardReadModel<TJob> {
+  const today = new Date(input.today);
+  today.setHours(0, 0, 0, 0);
+
+  const tomorrow = addDays(today, 1);
+  const upcomingHorizon = addDays(today, input.upcomingHorizonDays ?? 8);
+  const nextSevenDaysEnd = addDays(today, 7);
+  const todayDateKey = getDateKey(today);
+  const tomorrowDateKey = getDateKey(tomorrow);
+  const warningJobIds = new Set(
+    (input.warningSummaries ?? [])
+      .filter((summary) => summary.warnings.length > 0)
+      .map((summary) => summary.jobId)
+  );
+
+  const unscheduledReadyJobs = input.jobs.filter(
+    (job) => job.dispatchStatus === "unscheduled"
+  );
+  const scheduledTodayJobs = input.jobs.filter(
+    (job) => job.scheduledDate === todayDateKey
+  );
+  const inProgressJobs = input.jobs.filter(
+    (job) => job.dispatchStatus === "in_progress"
+  );
+  const upcomingJobs = input.jobs.filter((job) => {
+    const scheduledDate = parseDateKey(job.scheduledDate);
+
+    return (
+      scheduledDate !== null &&
+      scheduledDate >= tomorrow &&
+      scheduledDate < upcomingHorizon
+    );
+  });
+  const assignedJobs = input.jobs.filter((job) => getAssignmentCount(job) > 0);
+  const crewAssignmentGaps = input.jobs.filter(
+    (job) =>
+      job.dispatchStatus !== "unscheduled" &&
+      job.dispatchStatus !== "completed" &&
+      getAssignmentCount(job) === 0
+  );
+  const recentlyCompletedJobs = sortByUpdatedAtDesc(
+    input.jobs.filter((job) => job.dispatchStatus === "completed")
+  ).slice(0, input.recentCompletedLimit ?? 12);
+  const todayWithoutCrewJobs = scheduledTodayJobs.filter(
+    (job) => getAssignmentCount(job) === 0
+  );
+  const activeTodayJobs = [
+    ...inProgressJobs,
+    ...scheduledTodayJobs.filter((job) => job.dispatchStatus !== "in_progress")
+  ];
+  const scheduledJobs = input.jobs.filter((job) => job.scheduledDate !== null);
+  const latestScheduledJobs = sortBySchedule(scheduledJobs)
+    .reverse()
+    .slice(0, input.latestScheduledLimit ?? 3);
+  const scheduledJobsByDate = new Map<string, TJob[]>();
+
+  for (const job of sortBySchedule(scheduledJobs)) {
+    if (!job.scheduledDate) {
+      continue;
+    }
+
+    const existing = scheduledJobsByDate.get(job.scheduledDate);
+
+    if (existing) {
+      existing.push(job);
+    } else {
+      scheduledJobsByDate.set(job.scheduledDate, [job]);
+    }
+  }
+
+  const boardTimingJobs = input.jobs.filter(
+    (job) => job.dispatchStatus !== "in_progress"
+  );
+  const todayBoardJobs = boardTimingJobs.filter(
+    (job) => job.scheduledDate === todayDateKey
+  );
+  const tomorrowBoardJobs = boardTimingJobs.filter(
+    (job) => job.scheduledDate === tomorrowDateKey
+  );
+  const nextSevenDaysBoardJobs = boardTimingJobs.filter((job) => {
+    const scheduledDate = parseDateKey(job.scheduledDate);
+
+    return (
+      scheduledDate !== null &&
+      scheduledDate > tomorrow &&
+      scheduledDate <= nextSevenDaysEnd
+    );
+  });
+  const laterScheduledBoardJobs = boardTimingJobs.filter((job) => {
+    const scheduledDate = parseDateKey(job.scheduledDate);
+
+    return scheduledDate !== null && scheduledDate > nextSevenDaysEnd;
+  });
+  const readinessReviewJobs = input.jobs.filter(
+    (job) =>
+      job.dispatchStatus === "unscheduled" ||
+      crewAssignmentGaps.some((crewGapJob) => crewGapJob.id === job.id) ||
+      warningJobIds.has(job.id)
+  );
+
+  return {
+    unscheduledReadyJobs,
+    scheduledTodayJobs,
+    upcomingJobs,
+    inProgressJobs,
+    assignedJobs,
+    crewAssignmentGaps,
+    recentlyCompletedJobs,
+    todayWithoutCrewJobs,
+    activeTodayJobs,
+    scheduledJobs,
+    latestScheduledJobs,
+    readinessReviewJobs,
+    scheduledJobsByDate,
+    timingGroups: [
+      { key: "unscheduled-ready", jobs: unscheduledReadyJobs },
+      { key: "today", jobs: todayBoardJobs },
+      { key: "tomorrow", jobs: tomorrowBoardJobs },
+      { key: "next-seven-days", jobs: nextSevenDaysBoardJobs },
+      { key: "later-scheduled", jobs: laterScheduledBoardJobs },
+      { key: "in-progress", jobs: inProgressJobs },
+      { key: "missing-crew", jobs: crewAssignmentGaps },
+      { key: "recently-done", jobs: recentlyCompletedJobs }
+    ]
+  };
 }
 
 export function buildScheduleItems(input: {
@@ -145,7 +375,9 @@ export function buildScheduleItems(input: {
         continue;
       }
 
-      const dateKey = formatDateKeyFromIso(opportunity.siteAssessmentScheduledAt);
+      const dateKey = formatDateKeyFromIso(
+        opportunity.siteAssessmentScheduledAt
+      );
 
       if (dateKey < rangeStartKey || dateKey > rangeEndKey) {
         continue;
@@ -225,8 +457,10 @@ export function buildScheduleItems(input: {
   }
 
   return items.sort((left, right) => {
-    const leftTime = left.startsAt ?? `${left.dateKey ?? "9999-12-31"}T23:59:59`;
-    const rightTime = right.startsAt ?? `${right.dateKey ?? "9999-12-31"}T23:59:59`;
+    const leftTime =
+      left.startsAt ?? `${left.dateKey ?? "9999-12-31"}T23:59:59`;
+    const rightTime =
+      right.startsAt ?? `${right.dateKey ?? "9999-12-31"}T23:59:59`;
     const timeComparison = leftTime.localeCompare(rightTime);
 
     if (timeComparison !== 0) {
