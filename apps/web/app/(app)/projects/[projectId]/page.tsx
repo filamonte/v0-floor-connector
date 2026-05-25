@@ -672,8 +672,9 @@ function ProjectCommandTimelineSection({
             Recent movement and next handoffs
           </h3>
           <p className="mt-1 max-w-[72ch] text-sm leading-6 text-[var(--text-secondary)]">
-            Derived from linked canonical records, proof, field, payment,
-            signature, and communication evidence. It does not create activity
+            Timeline answers what happened and where the source record lives. It
+            is derived from linked canonical records, proof, field, payment,
+            signature, and communication evidence; it does not create activity
             truth or change source records.
           </p>
         </div>
@@ -731,9 +732,9 @@ function ProjectCommandTimelineSection({
                 ))
               ) : (
                 <p className="text-sm leading-6 text-[var(--text-secondary)]">
-                  New linked record movement will appear here as the project
-                  moves through estimates, contracts, invoices, schedule, field,
-                  proof, and communication records.
+                  New linked record movement will appear here after real
+                  estimate, contract, invoice, schedule, field, proof, and
+                  communication records are created through the app.
                 </p>
               )}
             </div>
@@ -976,7 +977,8 @@ function AiOperationalCopilotSection({
               Project intelligence
             </h3>
             <p className="mt-2 max-w-[74ch] text-sm leading-6 text-[var(--text-secondary)]">
-              {summary.executiveSummary}
+              Copilot explains what the timeline and readiness signals mean,
+              then prepares review-first next moves. {summary.executiveSummary}
             </p>
           </div>
           <span
@@ -1605,6 +1607,154 @@ function OperationalCommandCenter({
   );
 }
 
+function ProjectCommandCenterMap({
+  nextAction,
+  readinessLabel,
+  readinessDetail,
+  blockerCount,
+  timeline,
+  aiSummary,
+  draftActionCount,
+  connectedRecordLanes
+}: {
+  nextAction: NextAction;
+  readinessLabel: string;
+  readinessDetail: string;
+  blockerCount: number;
+  timeline: ProjectCommandTimeline;
+  aiSummary: AiProjectOperationalSummary | null;
+  draftActionCount: number;
+  connectedRecordLanes: ConnectedRecordLane[];
+}) {
+  const blockedLaneCount = connectedRecordLanes.filter(
+    (lane) => lane.blocker
+  ).length;
+  const mapItems = [
+    {
+      eyebrow: "Current status",
+      title: readinessLabel,
+      description:
+        blockerCount > 0
+          ? `${blockerCount} ${blockerCount === 1 ? "item needs" : "items need"} attention before the project moves cleanly.`
+          : readinessDetail,
+      href: nextAction.primaryHref ?? "#project-command-center-title",
+      label: nextAction.primaryLabel ?? "Review status",
+      tone: blockerCount > 0 ? "warning" : "positive"
+    },
+    {
+      eyebrow: "What happened",
+      title:
+        timeline.needsAttention.length > 0
+          ? `${timeline.needsAttention.length} attention signal${
+              timeline.needsAttention.length === 1 ? "" : "s"
+            }`
+          : `${timeline.readyToMove.length} ready handoff${
+              timeline.readyToMove.length === 1 ? "" : "s"
+            }`,
+      description:
+        "Project Command Timeline keeps recent lifecycle movement tied back to canonical records.",
+      href: "#project-command-timeline",
+      label: "Review timeline",
+      tone: timeline.needsAttention.length > 0 ? "warning" : "neutral"
+    },
+    {
+      eyebrow: "What it means",
+      title: aiSummary ? aiSummary.stage : "Copilot quiet",
+      description: aiSummary
+        ? `${aiSummary.recommendedNextActions.length} recommendation${
+            aiSummary.recommendedNextActions.length === 1 ? "" : "s"
+          } and ${draftActionCount} review-first draft${
+            draftActionCount === 1 ? "" : "s"
+          } available when controls allow.`
+        : "Copilot summaries are disabled; ProjectPulse and canonical records still show the project state.",
+      href: "#ai-operational-copilot",
+      label: "Review Copilot",
+      tone:
+        aiSummary?.tone === "blocked"
+          ? "critical"
+          : aiSummary?.tone === "attention"
+            ? "warning"
+            : "neutral"
+    },
+    {
+      eyebrow: "Where to act",
+      title:
+        blockedLaneCount > 0
+          ? `${blockedLaneCount} lane${blockedLaneCount === 1 ? "" : "s"} flagged`
+          : `${connectedRecordLanes.length} linked lanes`,
+      description:
+        "Connected records route editing back to estimate, contract, invoice, job, field, portal, and schedule workspaces.",
+      href: "#connected-record-lanes",
+      label: "Open lanes",
+      tone: blockedLaneCount > 0 ? "warning" : "neutral"
+    }
+  ] satisfies Array<{
+    eyebrow: string;
+    title: string;
+    description: string;
+    href: string;
+    label: string;
+    tone: WorkspaceStateTone;
+  }>;
+
+  return (
+    <section
+      aria-labelledby="project-command-center-map-title"
+      className={projectWorkspacePanelClassName}
+    >
+      <div
+        className={[
+          "flex flex-col gap-3 px-4 py-4 md:flex-row md:items-start md:justify-between sm:px-5",
+          projectWorkspacePanelHeaderClassName
+        ].join(" ")}
+      >
+        <div>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--copper)]">
+            Command center map
+          </p>
+          <h2
+            id="project-command-center-map-title"
+            className="mt-1 text-lg font-semibold text-[var(--text-primary)]"
+          >
+            Status, timeline, guidance, and action lanes
+          </h2>
+          <p className="mt-1 max-w-[74ch] text-sm leading-6 text-[var(--text-secondary)]">
+            Use this map to scan the project without losing the source of truth:
+            status comes from readiness, timeline comes from linked records,
+            Copilot explains review-first next moves, and lanes open the
+            canonical workspaces.
+          </p>
+        </div>
+        <span className="rounded-full border border-[var(--border-warm)] bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-[var(--text-secondary)]">
+          No automatic actions
+        </span>
+      </div>
+
+      <div className="grid gap-px bg-[var(--border-warm)] md:grid-cols-2 xl:grid-cols-4">
+        {mapItems.map((item) => (
+          <a
+            key={item.eyebrow}
+            href={item.href}
+            className={[
+              "flex min-h-[168px] flex-col px-4 py-4 text-sm leading-6 transition hover:bg-white",
+              getCommandSummaryToneClassName(item.tone)
+            ].join(" ")}
+          >
+            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] opacity-75">
+              {item.eyebrow}
+            </p>
+            <p className="mt-2 font-semibold">{item.title}</p>
+            <p className="mt-2 opacity-80">{item.description}</p>
+            <span className="mt-auto pt-4 text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--copper)]">
+              {item.label}
+            </span>
+          </a>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 function ProjectConnectedRecordLanes({
   lanes
 }: {
@@ -1612,6 +1762,7 @@ function ProjectConnectedRecordLanes({
 }) {
   return (
     <section
+      id="connected-record-lanes"
       aria-labelledby="connected-record-lanes-title"
       className={projectWorkspacePanelClassName}
     >
@@ -4497,7 +4648,30 @@ export default async function ProjectDetailPage({
               summaryItems={commandSummaryItems}
             />
 
+            <ProjectCommandCenterMap
+              nextAction={nextAction}
+              readinessLabel={
+                readinessSnapshot?.isReadyToSchedule
+                  ? "Ready to schedule"
+                  : formatStatusLabel(readinessStatus)
+              }
+              readinessDetail={
+                readinessSnapshot?.isReadyToSchedule
+                  ? "Commercial handoff is complete."
+                  : "Clear the current gate before operations moves forward."
+              }
+              blockerCount={workspaceBlockers.length}
+              timeline={projectCommandTimeline}
+              aiSummary={aiOperationalSummary}
+              draftActionCount={
+                showAiDraftActionComposer ? aiDraftActions.length : 0
+              }
+              connectedRecordLanes={connectedRecordLanes}
+            />
+
             <ProjectPulseSection summary={projectPulse} />
+
+            <ProjectCommandTimelineSection timeline={projectCommandTimeline} />
 
             <AiOperationalCopilotSection
               summary={aiOperationalSummary}
@@ -4510,8 +4684,6 @@ export default async function ProjectDetailPage({
               customerName={project.customer?.name ?? null}
               communicationThreadId={copilotCommunicationThreadId}
             />
-
-            <ProjectCommandTimelineSection timeline={projectCommandTimeline} />
 
             <OperationalGuidanceSection
               title="Workflow snapshot"

@@ -105,6 +105,15 @@ and a presentation section in the Project Workspace. It does not add an
 activity table, audit/event system, duplicate project history model, provider
 calls, autonomous actions, customer-facing internal field-note exposure, or any
 payment/signature/job/invoice mutation.
+Project Workspace command-center polish now adds a compact top-level command
+map and reorders the main project intelligence stack so current status,
+ProjectPulse, Project Command Timeline, Copilot synthesis, workflow snapshot,
+and connected record lanes have clearer jobs. Timeline is framed as what
+happened and where the source record lives; Copilot is framed as review-first
+interpretation and draft preparation. This is presentation-only over existing
+read models and routes, with no schema, migrations, provider calls, autonomous
+actions, fake/demo data, duplicate activity storage, or payment, signature,
+job, invoice, or document mutation.
 Accounts Receivable now also uses a deterministic Collections Follow-Up
 Intelligence helper over canonical invoices, payments, and Payment Trail events
 to categorize overdue invoices, unpaid deposits, sent-unpaid balances,

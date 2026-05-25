@@ -50,6 +50,10 @@ Current operating-core surfaces include:
   contract/signature, invoice/payment, job/schedule, Daily Log, field blocker,
   proof readiness, MessageCenter, and portal visibility signals. It is
   read-only presentation, not an activity source of truth or action executor.
+- Project Workspace command-center polish adds a compact status/timeline/
+  Copilot/action-lane map near the top and places Project Command Timeline
+  before Copilot so the page reads as current status, what happened, what it
+  means, and where to act. This is UI hierarchy over existing read models only.
 - AI Operational Copilot Foundation in Project Workspace, deriving review-first
   project intelligence, recommended next actions, draft-assistance text, and
   field summaries from ProjectPulse, Ready Check, FieldTrail, MessageCenter,
