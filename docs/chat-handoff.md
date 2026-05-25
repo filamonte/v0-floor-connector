@@ -122,6 +122,12 @@ Current operating-core surfaces include:
   stored PDFs, document records, portal-only copies, provider calls, autonomous
   sends, payment/signature mutations, schema, migrations, or customer-facing
   internal readiness language.
+- Post-commit Document Readiness smoke after `3b0a1541` passed focused
+  readiness and print-engine tests, web typecheck/lint, targeted Prettier,
+  whitespace checks, invoice contractor print/PDF smoke, and portal estimate,
+  contract, invoice review/print/mobile smoke. The active contractor fixture
+  did not expose estimate or contract detail links, so those contractor-side
+  detail/PDF paths remain sample-data gaps rather than verified failures.
 - Service Center and warranty document foundations tied to customer, project,
   job, proof, and warranty context.
 - Company Documents Phase 1C-A under `/settings/company-documents`, backed by the
