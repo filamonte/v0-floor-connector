@@ -29,6 +29,7 @@ const requiredDemoRecords = [
 
 const inspectedPaths = [
   "scripts/portal-e2e-fixture.mjs",
+  "scripts/seed-local-golden-path-demo-data.mjs",
   "scripts/e2e-second-tenant-fixture.mjs",
   "e2e/protected-route-utils.js",
   "e2e/auth.setup.js",
@@ -42,6 +43,12 @@ const inspectedPaths = [
 ];
 
 const fixtureSignals = [
+  {
+    name: "Local golden-path seed mode",
+    path: "scripts/seed-local-golden-path-demo-data.mjs",
+    coverage:
+      "Owner-confirmed local-only seed script for one deterministic golden path project across customer, project, estimate, contract, invoice, job, daily log, field notes, payment event, communication draft, and optional portal access."
+  },
   {
     name: "Portal golden-path fixture",
     path: "scripts/portal-e2e-fixture.mjs",
@@ -83,9 +90,9 @@ const currentCoverageMatrix = [
   },
   {
     surface: "Project Command Timeline",
-    readiness: "partial",
+    readiness: "seedable locally",
     currentSignal:
-      "The read model is implemented and tested, but current fixture paths do not guarantee one project with estimate, contract, invoice, payment, schedule, field, document, portal, and communication coverage together."
+      "The read model is implemented and tested. The guarded local seed mode can create/reuse one project with estimate, contract, invoice, payment-event, schedule, field, document, portal, and communication coverage when owner-confirmed local writes are allowed."
   },
   {
     surface: "Project Copilot and draft actions",
@@ -107,15 +114,15 @@ const currentCoverageMatrix = [
   },
   {
     surface: "Estimate/contract/invoice document readiness",
-    readiness: "partial",
+    readiness: "seedable locally",
     currentSignal:
-      "Document readiness is implemented; recent smoke found invoice coverage while active local estimate/contract detail paths were not always present."
+      "Document readiness is implemented. The guarded local seed mode creates/reuses linked estimate, contract, and invoice records for local QA when write mode is explicitly confirmed."
   },
   {
     surface: "Communications handoff and send readiness",
-    readiness: "partial",
+    readiness: "seedable locally",
     currentSignal:
-      "Send readiness is implemented; browser smoke did not find a durable document-specific customer-bound handoff in active sample data."
+      "Send readiness is implemented. The guarded local seed mode creates/reuses an invoice-tied internal communication draft suitable for send-readiness review without sending."
   },
   {
     surface: "Daily Log / field blocker / evidence",
@@ -132,12 +139,12 @@ const currentCoverageMatrix = [
 ];
 
 const knownGoldenPathGaps = [
-  "No confirmed single local/staging project currently carries every golden-path layer together.",
-  "Document-specific customer-bound send-readiness handoff data is not guaranteed.",
-  "Active local contractor fixture discovery can miss estimate and contract detail paths.",
-  "Timeline QA can land on a valid project that does not contain enough linked records to show the full command-center story.",
-  "Payment event depth exists in payment QA lanes, but those lanes should not be treated as reusable staging demo data.",
-  "Portal fixture write mode is explicitly gated and local/test-oriented; staging write mode still needs owner confirmation and target validation."
+  "No confirmed staging project currently carries every golden-path layer together.",
+  "Local golden-path coverage now depends on the owner-confirmed local seed command being run against a local Supabase target.",
+  "Portal access is seeded only when the requested portal customer email already belongs to a local canonical user; this script does not create auth users or send invites.",
+  "Execution attachment placeholders are intentionally omitted because local seed mode does not create storage objects.",
+  "Payment event depth is limited to a safe local payment-request event; no payment record or provider checkout/payment attempt is created.",
+  "Staging write mode still needs owner confirmation, target validation, allowlist, idempotency, and cleanup policy before implementation."
 ];
 
 const recommendedImplementationPaths = [
@@ -155,9 +162,9 @@ const recommendedImplementationPaths = [
   },
   {
     option: "local-only owner-confirmed seed script",
-    recommendation: "best next implementation candidate",
+    recommendation: "available for local-only use",
     detail:
-      "Appropriate only after owner confirmation; should reuse existing write-gated local/test fixture patterns and remain provider-dark."
+      "Use only with --confirm-local-write plus FLOORCONNECTOR_ALLOW_LOCAL_DEMO_SEED_WRITE=1 against a local Supabase URL. It remains provider-dark and does not create auth users or invite emails."
   },
   {
     option: "staging-only seed mode",
@@ -252,7 +259,7 @@ function main() {
 
   printSection("Owner action reminder");
   console.log(
-    "Use docs/demo/staging-demo-data-plan.md before creating staging data. Remote data creation must be owner-approved, tenant-scoped, idempotent or cleanup-safe, and must not call providers, send email, create real payments, mutate signatures, or expose portal invite tokens."
+    "Use docs/demo/local-golden-path-seed-mode-design.md before local writes and docs/demo/staging-demo-data-plan.md before any staging data. Local writes require pnpm.cmd demo:data:seed:local -- --confirm-local-write plus FLOORCONNECTOR_ALLOW_LOCAL_DEMO_SEED_WRITE=1 against a local Supabase URL. Remote data creation must remain separately owner-approved, tenant-scoped, idempotent or cleanup-safe, and must not call providers, send email, create real payments, mutate signatures, or expose portal invite tokens."
   );
 }
 

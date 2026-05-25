@@ -248,10 +248,15 @@ Current recommended data step:
   current fixture signals, and known missing records.
 - Use
   [docs/demo/local-golden-path-seed-mode-design.md](C:/FloorConnector/docs/demo/local-golden-path-seed-mode-design.md)
-  as the owner-reviewable design for a future local-only golden path seed mode.
-  The design keeps write mode disabled, proposes `--confirm-local-write` plus a
-  local write env guard, and requires deterministic local fixture labels,
-  create-or-find idempotency, provider-dark records, and a separate reset policy.
+  for the implemented local-only golden path seed mode. Dry-run is safe for
+  planning; write mode requires `--confirm-local-write`,
+  `FLOORCONNECTOR_ALLOW_LOCAL_DEMO_SEED_WRITE=1`, a local Supabase URL,
+  deterministic local fixture labels, create-or-find idempotency, and
+  provider-dark records. There is no reset command yet.
+- The local seed intentionally does not create auth users, send portal invites,
+  create storage uploads, create payment records, call providers, or write to
+  staging/production. Portal access is created only when the supplied portal
+  customer email already maps to a local canonical user.
 - Treat staging write-mode seeding as a separate owner-confirmed task after
   read-only target validation, explicit allowlist, and an explicit
   tenant/cleanup policy.

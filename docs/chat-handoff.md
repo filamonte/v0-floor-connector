@@ -375,16 +375,27 @@ Recent staging/demo work is docs-first and no-write:
   document readiness, communications send-readiness, Daily Logs/field blockers,
   and portal review surfaces.
 - `pnpm demo:data:inventory` is still dry-run-only and now prints golden-path
-  surface readiness, current fixture signals, known data gaps, and the
-  recommended path: improve/read inventory now, consider local-only
-  owner-confirmed seed behavior later, and defer staging write mode until
-  read-only target validation plus explicit owner approval.
+  surface readiness, current fixture signals, known data gaps, local seed
+  availability, and the staging write-mode deferral boundary.
 - [docs/demo/local-golden-path-seed-mode-design.md](C:/FloorConnector/docs/demo/local-golden-path-seed-mode-design.md)
-  defines the owner-reviewable design for a future local-only golden path seed
-  mode. It proposes a separate local-only dry-run/write script shape,
-  `--confirm-local-write`, a local write env guard, deterministic demo labels,
-  create-or-find idempotency, reset safety, and strict provider/auth/token
-  boundaries. It does not implement write mode or authorize staging writes.
+  defines the implemented local-only golden path seed mode. The separate
+  `scripts/seed-local-golden-path-demo-data.mjs` command defaults to dry-run and
+  requires `--confirm-local-write`,
+  `FLOORCONNECTOR_ALLOW_LOCAL_DEMO_SEED_WRITE=1`, a local Supabase URL,
+  deterministic demo labels, create-or-find idempotency, and strict
+  provider/auth/token boundaries for local writes. It does not authorize staging
+  writes and it does not implement reset behavior.
+- `pnpm demo:data:seed:local -- --dry-run --organization-id <uuid>
+--owner-user-id <uuid> --owner-email <owner@example.test>
+--portal-customer-email <customer@example.test>` prints the local golden-path
+  plan without reading `.env.local`, creating a Supabase client, connecting to a
+  database, or writing data.
+- Local write mode is intentionally owner-confirmed only:
+  `FLOORCONNECTOR_ALLOW_LOCAL_DEMO_SEED_WRITE=1 pnpm demo:data:seed:local --
+--confirm-local-write ...` and must point at local Supabase. It creates or
+  reuses canonical local records only and does not create auth users, send
+  portal invites, call providers, create notifications, create payment records,
+  or upload storage objects.
 - [docs/demo/staging-demo-seed-script-spec.md](C:/FloorConnector/docs/demo/staging-demo-seed-script-spec.md)
   specifies the seed script safety boundary.
 - `pnpm demo:data:seed:dry-run -- --organization-id <uuid> --owner-user-id

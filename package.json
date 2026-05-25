@@ -23,6 +23,7 @@
     "e2e:headed": "playwright test --headed",
     "lint": "turbo run lint",
     "demo:data:inventory": "node scripts/demo-data-inventory.mjs",
+    "demo:data:seed:local": "node scripts/seed-local-golden-path-demo-data.mjs",
     "demo:data:seed:dry-run": "node scripts/seed-staging-demo-data.mjs --dry-run",
     "demo:data:seed:validate-target": "node scripts/seed-staging-demo-data.mjs --validate-target",
     "platform-admin": "node scripts/platform-admin.mjs",

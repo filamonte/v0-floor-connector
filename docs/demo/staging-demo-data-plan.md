@@ -281,9 +281,8 @@ Unsafe or not ready to seed without more design:
 
 ## 7. Recommended Demo Data Strategy
 
-Recommended next step: **Dry-run inventory enhancement now; hybrid manual
-auth/org setup plus a safe tenant-scoped seed script only after separate owner
-approval.**
+Recommended next step: **use the guarded local-only seed mode for local QA when
+the owner explicitly approves local writes; keep staging write mode deferred.**
 
 Why:
 
@@ -296,28 +295,27 @@ Why:
   tenant-scoped script can be safe for local/test use
 - staging should not inherit spec-local cleanup behavior without a clearer
   idempotency and cleanup policy
-- the current immediate need is not broader product behavior; it is knowing
-  which golden-path records are missing before any owner considers write mode
+- the current immediate need is not broader product behavior; it is keeping
+  golden-path local QA reproducible while remote/staging data remains protected
 
 Decision matrix:
 
-| Path                                   | Recommendation                     | Why                                                                                                                                        |
-| -------------------------------------- | ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
-| Docs-only checklist                    | Safe but incomplete                | Preserves boundaries but does not make future QA less fragile.                                                                             |
-| Dry-run inventory enhancement          | Recommended now                    | Gives repeatable gap visibility without reads from `.env.local`, Supabase connections, writes, or provider calls.                          |
-| Local-only owner-confirmed seed script | Best next implementation candidate | Can reuse existing write-gated local/test fixture patterns after explicit approval.                                                        |
-| Staging-only seed mode                 | Defer                              | Requires clean read-only target validation, staging identifiers, tenant allowlist, idempotency/cleanup rules, and explicit owner approval. |
+| Path                                   | Recommendation               | Why                                                                                                                                        |
+| -------------------------------------- | ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| Docs-only checklist                    | Safe but incomplete          | Preserves boundaries but does not make future QA less fragile.                                                                             |
+| Dry-run inventory enhancement          | Available now                | Gives repeatable gap visibility without reads from `.env.local`, Supabase connections, writes, or provider calls.                          |
+| Local-only owner-confirmed seed script | Available for local-only use | `pnpm.cmd demo:data:seed:local` can dry-run or create/reuse the local golden path only with explicit local write confirmation and guard.   |
+| Staging-only seed mode                 | Defer                        | Requires clean read-only target validation, staging identifiers, tenant allowlist, idempotency/cleanup rules, and explicit owner approval. |
 
-The local-only candidate is now designed in
+The local-only mode is implemented and documented in
 [docs/demo/local-golden-path-seed-mode-design.md](C:/FloorConnector/docs/demo/local-golden-path-seed-mode-design.md).
-That design keeps local write mode disabled until a separate owner-approved
-implementation slice. It recommends a separate local-only, dry-run-first script
-with `--confirm-local-write`, a local write env guard, production/staging target
-refusal, deterministic demo labels, create-or-find idempotency, and a separate
-reset policy. It does not authorize staging writes or change the existing
-dry-run/read-only staging seed script boundary.
+It uses a separate local-only, dry-run-first script with
+`--confirm-local-write`, `FLOORCONNECTOR_ALLOW_LOCAL_DEMO_SEED_WRITE=1`,
+production/staging target refusal, deterministic demo labels, create-or-find
+idempotency, and no reset command yet. It does not authorize staging writes or
+change the existing dry-run/read-only staging seed script boundary.
 
-If a future seed script is approved, it must:
+The local seed script must:
 
 - require explicit `company_id`, contractor owner/admin user id or email, and
   portal customer email
@@ -332,6 +330,19 @@ If a future seed script is approved, it must:
 - avoid auth/RLS bypasses except for an explicitly reviewed service-role
   owner-approved fixture path
 - preserve canonical lifecycle and avoid duplicate models
+
+Run local dry-run mode with:
+
+```powershell
+pnpm.cmd demo:data:seed:local -- --dry-run --organization-id <uuid> --owner-user-id <uuid> --owner-email owner@example.test --portal-customer-email portal@example.test
+```
+
+Run local write mode only after owner approval, against local Supabase, with:
+
+```powershell
+$env:FLOORCONNECTOR_ALLOW_LOCAL_DEMO_SEED_WRITE = "1"
+pnpm.cmd demo:data:seed:local -- --confirm-local-write --organization-id <uuid> --owner-user-id <uuid> --owner-email owner@example.test --portal-customer-email portal@example.test
+```
 
 ## 8. Safety Rules
 
