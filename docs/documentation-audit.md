@@ -160,6 +160,18 @@ Use this hierarchy in `docs/README.md`:
 - Updated the documentation index and governance standards to reinforce current-truth versus target-direction boundaries.
 - Kept `chat-handoff.md` compact by adding only a short checkpoint.
 
+## Follow-Up Cleanup Actions
+
+May 25, 2026 docs cleanup:
+
+- `docs/README.md` now names the required active docs set explicitly so
+  supporting references and phase notes do not compete with current truth.
+- Redundant archive pointer files were removed where active stubs already point
+  directly to the canonical archived documents.
+- A local Codex image-path troubleshooting plan was removed from
+  `docs/superpowers/plans/` because it was closed operator scratch context, not
+  product, architecture, QA, setup, governance, or repo-operation guidance.
+
 ## Follow-Up Cleanup Prompt
 
 Recommended next cleanup prompt after implementation priorities allow it:

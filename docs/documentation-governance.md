@@ -100,6 +100,9 @@ Rule:
 
 - if they remain useful after the work is done, archive them
 - if they are pure noise and provide no meaningful context, they may be removed
+- local agent/tool troubleshooting plans that are not product, architecture,
+  QA, setup, governance, or repo-operation guidance should not remain in the
+  active docs tree after the issue is closed
 
 ## Primary Documentation Set
 
@@ -298,3 +301,5 @@ Good future hygiene moves:
 - keep [docs/chat-handoff.md](C:/FloorConnector/docs/chat-handoff.md) compact where possible; archive older checkpoint history when it stops helping current work
 - keep [docs/current-state.md](C:/FloorConnector/docs/current-state.md) focused on implemented truth and avoid adding broad future feature catalogs there
 - keep broad future coverage in dedicated feature-coverage docs instead of bloating roadmap, current-state, or handoff docs
+- remove redundant pointer files when a clearer active stub already points to
+  the archived source document

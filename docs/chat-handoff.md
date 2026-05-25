@@ -145,6 +145,12 @@ Current operating-core surfaces include:
   horizontal overflow were observed on the fresh-server pass. A stale preexisting
   dev server on port 3000 had shown missing Next route chunks for
   `/settings/workflows`; restarting on port 3002 cleared that artifact.
+- Docs cleanup on May 25, 2026 named the required active docs set in
+  [docs/README.md](C:/FloorConnector/docs/README.md), kept current truth anchored
+  to [docs/current-state.md](C:/FloorConnector/docs/current-state.md), removed
+  redundant archive pointer files, and deleted one closed local agent scratch
+  plan that was not product, architecture, QA, setup, governance, or
+  repo-operation guidance.
 - Reports, Financial Control, Accounting Readiness, and Accounting Export Prep
   as read-only review/export-prep surfaces over source financial and
   operational records.

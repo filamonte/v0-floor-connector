@@ -29,6 +29,27 @@ Use these first for most implementation or documentation tasks:
 - [docs/local-auth-qa-recovery.md](C:/FloorConnector/docs/local-auth-qa-recovery.md):
   protected-route browser QA recovery
 
+## Required Active Docs
+
+For most future work, treat this as the required active documentation set:
+
+- Development guardrails: [docs/developer-source-of-truth.md](C:/FloorConnector/docs/developer-source-of-truth.md)
+- Implemented truth: [docs/current-state.md](C:/FloorConnector/docs/current-state.md)
+- Workflow behavior: [docs/workflows.md](C:/FloorConnector/docs/workflows.md)
+- System synthesis: [docs/system-overview.md](C:/FloorConnector/docs/system-overview.md)
+- Roadmap and IA direction: [docs/Roadmap.md](C:/FloorConnector/docs/Roadmap.md)
+  and [docs/target-ia.md](C:/FloorConnector/docs/target-ia.md)
+- Current feature status: [docs/feature-build-status.md](C:/FloorConnector/docs/feature-build-status.md),
+  [docs/module-status.md](C:/FloorConnector/docs/module-status.md), and
+  [docs/known-gaps.md](C:/FloorConnector/docs/known-gaps.md)
+- Current operating handoff: [docs/chat-handoff.md](C:/FloorConnector/docs/chat-handoff.md)
+- Documentation rules: [docs/documentation-governance.md](C:/FloorConnector/docs/documentation-governance.md)
+  and [docs/documentation-standards.md](C:/FloorConnector/docs/documentation-standards.md)
+
+Other docs are supporting references, focused evidence, planning context, or
+archive material. They should not override `current-state.md`, and they should
+be archived or removed when they stop serving one of those jobs.
+
 ## Implemented Truth And Guardrails
 
 - [docs/current-state.md](C:/FloorConnector/docs/current-state.md): source of
@@ -428,3 +449,6 @@ Current documentation focus:
 - keep staging/demo docs grouped under `docs/demo/` plus the owner runbooks
 - move clearly superseded planning docs into `docs/archive/` instead of
   deleting them
+- remove redundant pointer files and local agent scratch plans that do not
+  preserve product, architecture, QA, setup, governance, or repo-operation
+  context
