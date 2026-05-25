@@ -93,6 +93,14 @@ Current operating-core surfaces include:
   controls remain disabled. The local smoke confirmed dashboard digest,
   Project Workspace Copilot draft actions, AR draft actions, and workflow
   settings visibility without provider calls or autonomous actions.
+- Operational intelligence demo readiness is documented in
+  [docs/operational-intelligence-demo-readiness.md](C:/FloorConnector/docs/operational-intelligence-demo-readiness.md).
+  Use it as the concise route-by-route checklist for showing Dashboard
+  Operational Digest, Project Workspace Copilot, CrewBoard, Accounts Receivable
+  collections intelligence, Communications handoff, Daily Log continuity,
+  portal-safe status explanations, and workflow/AI controls without claiming
+  autonomous AI, provider-backed AI, automatic sends, automatic scheduling,
+  automatic collections, or customer-facing internal operations language.
 - CrewBoard on `/schedule` over canonical jobs, appointments, job assignments,
   people, vendors, projects, and customers.
 - Portal Customer Window with deterministic portal-safe customer status
