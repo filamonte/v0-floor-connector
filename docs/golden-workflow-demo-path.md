@@ -93,13 +93,10 @@ For founder-customer rehearsals, use [docs/founder-demo-readiness.md](C:/FloorCo
   Timeline, Copilot draft actions, document-specific send readiness, portal
   review links, or field evidence, record that as a fixture/data gap instead of
   creating demo-only shortcuts.
-- The local-only golden path seed mode is implemented and documented in
-  [docs/demo/local-golden-path-seed-mode-design.md](C:/FloorConnector/docs/demo/local-golden-path-seed-mode-design.md).
-  Dry-run mode is safe for planning. Write mode remains local-only and requires
-  explicit owner confirmation, `FLOORCONNECTOR_ALLOW_LOCAL_DEMO_SEED_WRITE=1`,
-  and a local Supabase URL. Current QA should continue to use real records,
-  route discovery, dry-run inventory, and existing validation-first fixtures
-  unless the owner deliberately runs the local seed.
+- FloorConnector uses remote Supabase-backed canonical records for demo and QA.
+  Golden path coverage should come from real records created through the app
+  workflows, route discovery, and existing validation-first checks. Do not seed
+  fake/demo database records to make this path appear complete.
 - Existing E2E overrides can point smoke tests at stable real records:
   - `FLOORCONNECTOR_E2E_PROJECT_DETAIL_PATH`
   - `FLOORCONNECTOR_E2E_ESTIMATE_DETAIL_PATH`
@@ -123,9 +120,9 @@ The golden path includes customer-facing checkpoints for estimate review, contra
 
 Portal QA must use a valid portal/customer session or valid scoped portal route. A portal login, access-denied page, missing invite, or missing project visibility is not a successful customer-facing check unless the expected result is specifically access denied.
 
-Phase 1.1 adds an opt-in portal/customer Playwright auth and smoke path, and Phase 1.2 adds a stable local fixture setup/validation helper:
+Phase 1.1 adds an opt-in portal/customer Playwright auth and smoke path, and Phase 1.2 adds a stable portal fixture validation helper:
 
-- `pnpm e2e:portal-fixture` validates whether the local portal fixture exists without mutating data.
+- `pnpm e2e:portal-fixture` validates whether the portal fixture prerequisites exist without mutating data.
 - `FLOORCONNECTOR_ALLOW_E2E_FIXTURE_WRITE=1 pnpm e2e:portal-fixture -- --write` creates or repairs the dev/test-only canonical fixture when the required Supabase and E2E env vars are configured.
 - `pnpm e2e:portal-auth` creates `playwright/.auth/portal-user.json` when `FLOORCONNECTOR_PORTAL_E2E_EMAIL` and `FLOORCONNECTOR_PORTAL_E2E_PASSWORD` are configured for a real customer portal user.
 - `pnpm e2e:portal` runs portal smoke coverage over `/portal`, a granted portal project, and linked estimate/contract/invoice review routes where fixture data exists.

@@ -275,13 +275,12 @@ Demo and staging:
 - [docs/staging-demo-readiness.md](C:/FloorConnector/docs/staging-demo-readiness.md):
   earlier staging/demo readiness runbook
 - [docs/demo/staging-demo-data-plan.md](C:/FloorConnector/docs/demo/staging-demo-data-plan.md):
-  canonical demo dataset plan and local-only inventory command
+  live workflow readiness plan and no-write inventory checklist
 - [docs/demo/staging-demo-seed-script-spec.md](C:/FloorConnector/docs/demo/staging-demo-seed-script-spec.md):
   dry-run specification, Phase 1 no-write seed planner command, and Phase 2A
   read-only target validation command
 - [docs/demo/staging-demo-seed-write-mode-design.md](C:/FloorConnector/docs/demo/staging-demo-seed-write-mode-design.md):
-  owner-approved future write-mode gates, refusal rules, idempotency, and
-  recommended read-only target validation step
+  historical/future write-mode gates and refusal rules; not current demo policy
 - [docs/design/staging-demo-seed-phase-1-dry-run-script.md](C:/FloorConnector/docs/design/staging-demo-seed-phase-1-dry-run-script.md):
   implemented dry-run seed planner checkpoint
 - [docs/design/staging-demo-seed-phase-2a-validate-target-read-only.md](C:/FloorConnector/docs/design/staging-demo-seed-phase-2a-validate-target-read-only.md):

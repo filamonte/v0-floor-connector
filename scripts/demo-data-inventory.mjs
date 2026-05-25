@@ -29,7 +29,6 @@ const requiredDemoRecords = [
 
 const inspectedPaths = [
   "scripts/portal-e2e-fixture.mjs",
-  "scripts/seed-local-golden-path-demo-data.mjs",
   "scripts/e2e-second-tenant-fixture.mjs",
   "e2e/protected-route-utils.js",
   "e2e/auth.setup.js",
@@ -44,22 +43,16 @@ const inspectedPaths = [
 
 const fixtureSignals = [
   {
-    name: "Local golden-path seed mode",
-    path: "scripts/seed-local-golden-path-demo-data.mjs",
-    coverage:
-      "Owner-confirmed local-only seed script for one deterministic golden path project across customer, project, estimate, contract, invoice, job, daily log, field notes, payment event, communication draft, and optional portal access."
-  },
-  {
     name: "Portal golden-path fixture",
     path: "scripts/portal-e2e-fixture.mjs",
     coverage:
-      "Local validation/write-gated fixture for customer, contact, project, portal access, estimate, contract, invoice, and change order records."
+      "E2E validation/write-gated fixture for customer, contact, project, portal access, estimate, contract, invoice, and change order records. Not normal demo data setup."
   },
   {
     name: "Second-tenant payment boundary fixture",
     path: "scripts/e2e-second-tenant-fixture.mjs",
     coverage:
-      "Local validation/write-gated tenant-B invoice/payment boundary fixture for webhook integrity tests."
+      "E2E validation/write-gated tenant-B invoice/payment boundary fixture for webhook integrity tests. Not normal demo data setup."
   },
   {
     name: "Route discovery helper",
@@ -71,13 +64,13 @@ const fixtureSignals = [
     name: "Project cue bridge fixtures",
     path: "e2e/project-ai-cue-work-item-bridge.spec.js",
     coverage:
-      "Spec-local fixture patterns for approved estimate, signed-ready-no-job, unscheduled job, scheduled job, and open blocker field note states."
+      "Spec-scoped fixture patterns for approved estimate, signed-ready-no-job, unscheduled job, scheduled job, and open blocker field note states."
   },
   {
     name: "Dashboard My Work queue fixtures",
     path: "e2e/dashboard-ui-my-work-queue-modes.spec.js",
     coverage:
-      "Spec-local fixture patterns for sent estimate follow-up, overdue invoice, unscheduled job, people, and responsibility defaults."
+      "Spec-scoped fixture patterns for sent estimate follow-up, overdue invoice, unscheduled job, people, and responsibility defaults."
   }
 ];
 
@@ -90,9 +83,9 @@ const currentCoverageMatrix = [
   },
   {
     surface: "Project Command Timeline",
-    readiness: "seedable locally",
+    readiness: "needs real-record coverage",
     currentSignal:
-      "The read model is implemented and tested. The guarded local seed mode can create/reuse one project with estimate, contract, invoice, payment-event, schedule, field, document, portal, and communication coverage when owner-confirmed local writes are allowed."
+      "The read model is implemented and tested. A live remote project needs real app-created estimate, contract, invoice, payment-event, schedule, field, document, portal, and communication coverage to show the full story."
   },
   {
     surface: "Project Copilot and draft actions",
@@ -104,7 +97,7 @@ const currentCoverageMatrix = [
     surface: "Schedule readiness / CrewBoard",
     readiness: "partial",
     currentSignal:
-      "Spec-local patterns cover unscheduled and scheduled jobs; one durable demo project with the full job-state matrix is not yet guaranteed."
+      "Spec-scoped patterns cover unscheduled and scheduled jobs; one durable remote project with the full job-state matrix is not yet guaranteed."
   },
   {
     surface: "AR collections intelligence",
@@ -114,37 +107,37 @@ const currentCoverageMatrix = [
   },
   {
     surface: "Estimate/contract/invoice document readiness",
-    readiness: "seedable locally",
+    readiness: "needs real-record coverage",
     currentSignal:
-      "Document readiness is implemented. The guarded local seed mode creates/reuses linked estimate, contract, and invoice records for local QA when write mode is explicitly confirmed."
+      "Document readiness is implemented. Demo coverage depends on real remote estimate, contract, and invoice records created through the app workflows."
   },
   {
     surface: "Communications handoff and send readiness",
-    readiness: "seedable locally",
+    readiness: "needs real-record coverage",
     currentSignal:
-      "Send readiness is implemented. The guarded local seed mode creates/reuses an invoice-tied internal communication draft suitable for send-readiness review without sending."
+      "Send readiness is implemented. Demo coverage depends on a real remote document-related communication handoff, not synthetic inserted records."
   },
   {
     surface: "Daily Log / field blocker / evidence",
     readiness: "partial",
     currentSignal:
-      "Spec-local patterns cover open blocker field notes; one fixture-safe project with daily log, blocker, resolved note, and evidence is not guaranteed."
+      "Spec-scoped patterns cover open blocker field notes; one remote project with daily log, blocker, resolved note, and evidence is not guaranteed."
   },
   {
     surface: "Portal-safe status and review pages",
     readiness: "partial",
     currentSignal:
-      "Portal fixture can validate/create local/test portal access and shared review routes when write-gated prerequisites are approved."
+      "Portal E2E harnesses can validate shared review routes when write-gated prerequisites are approved, but live demo coverage should come from real portal access records."
   }
 ];
 
 const knownGoldenPathGaps = [
-  "No confirmed staging project currently carries every golden-path layer together.",
-  "Local golden-path coverage now depends on the owner-confirmed local seed command being run against a local Supabase target.",
-  "Portal access is seeded only when the requested portal customer email already belongs to a local canonical user; this script does not create auth users or send invites.",
-  "Execution attachment placeholders are intentionally omitted because local seed mode does not create storage objects.",
-  "Payment event depth is limited to a safe local payment-request event; no payment record or provider checkout/payment attempt is created.",
-  "Staging write mode still needs owner confirmation, target validation, allowlist, idempotency, and cleanup policy before implementation."
+  "No confirmed live remote project currently carries every golden-path layer together.",
+  "Document-specific customer-bound send-readiness handoff data must be created through real app workflows.",
+  "Active contractor route discovery can miss estimate and contract detail paths when the live data does not contain those linked records.",
+  "Timeline QA can land on a valid project that does not contain enough linked records to show the full command-center story.",
+  "Payment event depth should come from real payment/request workflows or approved test-mode payment QA, not synthetic demo inserts.",
+  "Any remote write-capable data setup remains a separate owner-approved operation and is not part of this inventory."
 ];
 
 const recommendedImplementationPaths = [
@@ -155,22 +148,16 @@ const recommendedImplementationPaths = [
       "Keeps boundaries clear, but does not reduce future QA friction or stale fixture hunting."
   },
   {
-    option: "dry-run inventory enhancement",
-    recommendation: "recommended now",
+    option: "readiness checklist",
+    recommendation: "available now",
     detail:
-      "Improves visibility into missing golden-path coverage without env reads, Supabase access, provider calls, or data writes."
+      "Identifies which real remote records and workflows are needed without env reads, Supabase access, provider calls, or data writes."
   },
   {
-    option: "local-only owner-confirmed seed script",
-    recommendation: "available for local-only use",
-    detail:
-      "Use only with --confirm-local-write plus FLOORCONNECTOR_ALLOW_LOCAL_DEMO_SEED_WRITE=1 against a local Supabase URL. It remains provider-dark and does not create auth users or invite emails."
-  },
-  {
-    option: "staging-only seed mode",
+    option: "remote write-mode seeding",
     recommendation: "defer",
     detail:
-      "Requires clean read-only target validation, explicit staging identifiers, tenant allowlist, idempotency/cleanup policy, and owner approval."
+      "Not current policy. Any remote data mutation would require explicit owner approval, target validation, tenant allowlist, idempotency, and cleanup policy."
   }
 ];
 
@@ -198,10 +185,10 @@ function printSection(title) {
 }
 
 function main() {
-  console.log("FloorConnector staging demo data inventory");
+  console.log("FloorConnector live workflow readiness inventory");
   console.log("");
   console.log(
-    "Mode: dry-run only. No Supabase connection, no env reads, no writes."
+    "Mode: read-only checklist. No Supabase connection, no env reads, no writes."
   );
 
   printSection("Required demo record checklist");
@@ -209,7 +196,7 @@ function main() {
     console.log(`${index + 1}. ${item}`);
   });
 
-  printSection("Local fixture and discovery signals");
+  printSection("Existing QA fixture and discovery signals");
   for (const signal of fixtureSignals) {
     const status = exists(signal.path) ? "present" : "missing";
     console.log(`- ${signal.name}: ${status}`);
@@ -254,12 +241,12 @@ function main() {
     )}`
   );
   console.log(
-    `- Local scripts: ${countFiles("scripts", (name) => /\.(mjs|cjs|js|sql)$/i.test(name))}`
+    `- Repository scripts: ${countFiles("scripts", (name) => /\.(mjs|cjs|js|sql)$/i.test(name))}`
   );
 
   printSection("Owner action reminder");
   console.log(
-    "Use docs/demo/local-golden-path-seed-mode-design.md before local writes and docs/demo/staging-demo-data-plan.md before any staging data. Local writes require pnpm.cmd demo:data:seed:local -- --confirm-local-write plus FLOORCONNECTOR_ALLOW_LOCAL_DEMO_SEED_WRITE=1 against a local Supabase URL. Remote data creation must remain separately owner-approved, tenant-scoped, idempotent or cleanup-safe, and must not call providers, send email, create real payments, mutate signatures, or expose portal invite tokens."
+    "FloorConnector uses remote Supabase-backed canonical records for demos and QA. Create missing golden-path coverage through the real app workflows. Do not seed fake/demo records into the live database; any remote data mutation remains separately owner-approved, tenant-scoped, idempotent or cleanup-safe, and must not call providers, send email, create real payments, mutate signatures, or expose portal invite tokens."
   );
 }
 

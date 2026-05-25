@@ -723,7 +723,7 @@ Current shell behavior:
   [docs/design/mobile-field-phase-2-qa-checkpoint.md](C:/FloorConnector/docs/design/mobile-field-phase-2-qa-checkpoint.md).
   Static validation and focused helper tests passed. Mobile browser smoke loaded
   `/daily-logs`, `/jobs`, and `/schedule` with saved contractor auth; protected
-  Daily Log and Job detail route checks were blocked by local Supabase Auth rate
+  Daily Log and Job detail route checks were blocked by Supabase Auth rate
   limiting and should be retried after auth cooldown rather than counted as
   product failure.
 - Mobile Field Phase 3C adds the first contractor-side field evidence upload

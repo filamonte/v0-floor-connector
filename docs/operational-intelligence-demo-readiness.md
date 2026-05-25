@@ -34,7 +34,7 @@ a dispatch optimizer, or a customer-facing internal operations feed.
 
 ## Preconditions
 
-- Use real local/staging auth and database-backed records.
+- Use real saved/staging auth and remote Supabase-backed records.
 - Use one coherent sample project with customer, contract/signature, invoice or
   payment, schedule/job, daily-log/field, communication, and portal context
   where possible.
@@ -45,7 +45,7 @@ a dispatch optimizer, or a customer-facing internal operations feed.
   feature as failed.
 - Use a portal customer session backed by real `portal_access_grants` and
   `portal_project_access` before showing `/portal`.
-- Keep the local organization workflow guidance set to Guided for the main
+- Keep the QA organization workflow guidance set to Guided for the main
   walkthrough.
 - Enable deterministic AI suggestions, AI summaries, AI drafting, and dashboard
   digest visibility when the demo should show Copilot/draft affordances.
@@ -109,9 +109,9 @@ a dispatch optimizer, or a customer-facing internal operations feed.
 - Portal proves customer-facing status is canonical and safe.
 - Workflow Settings prove the assistance layer is governed and optional.
 
-## Local Org Settings
+## QA Org Settings
 
-For the cleanest local demo state:
+For the cleanest QA walkthrough state:
 
 - workflow guidance mode: Guided
 - AI suggestions: enabled
@@ -244,19 +244,11 @@ one guarded implementation slice.
 
 Current recommended data step:
 
-- Run `pnpm demo:data:inventory` to review dry-run-only golden-path readiness,
-  current fixture signals, and known missing records.
-- Use
-  [docs/demo/local-golden-path-seed-mode-design.md](C:/FloorConnector/docs/demo/local-golden-path-seed-mode-design.md)
-  for the implemented local-only golden path seed mode. Dry-run is safe for
-  planning; write mode requires `--confirm-local-write`,
-  `FLOORCONNECTOR_ALLOW_LOCAL_DEMO_SEED_WRITE=1`, a local Supabase URL,
-  deterministic local fixture labels, create-or-find idempotency, and
-  provider-dark records. There is no reset command yet.
-- The local seed intentionally does not create auth users, send portal invites,
-  create storage uploads, create payment records, call providers, or write to
-  staging/production. Portal access is created only when the supplied portal
-  customer email already maps to a local canonical user.
-- Treat staging write-mode seeding as a separate owner-confirmed task after
-  read-only target validation, explicit allowlist, and an explicit
-  tenant/cleanup policy.
+- Run `pnpm demo:data:inventory` to review the no-write golden-path readiness
+  checklist, current QA signals, and known missing real-record coverage.
+- FloorConnector demos and QA use remote Supabase-backed canonical records.
+  Missing coverage should be created through real app workflows and verified in
+  the live environment, not through fake/demo database inserts.
+- Treat any remote write-capable data setup as a separate owner-confirmed task
+  after read-only target validation, explicit tenant allowlist, idempotency, and
+  cleanup policy. It is not current demo policy.

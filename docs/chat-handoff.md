@@ -98,8 +98,8 @@ Current operating-core surfaces include:
   communications/AR models. It records P1 demo-readiness polish around
   intentional AI control setup, AR mobile containment, Copilot draft visibility,
   and communications handoff affordance clarity.
-- Demo readiness controls are now intentionally set for the local contractor
-  E2E owner organization (`jfilamonte`, active): workflow mode is Guided,
+- Demo readiness controls are intentionally set for the contractor E2E owner
+  organization (`jfilamonte`, active): workflow mode is Guided,
   deterministic AI suggestions, summaries, drafting, and dashboard digest are
   enabled, and provider-backed AI, form prefill, and work-item recommendation
   controls remain disabled. The local smoke confirmed dashboard digest,
@@ -187,7 +187,7 @@ Current operating-core surfaces include:
   Static QA confirmed no new field subsystem, duplicate note model, schema,
   upload/storage behavior, portal exposure, or automation. Mobile browser smoke
   loaded `/daily-logs`, `/jobs`, and `/schedule` with saved contractor auth;
-  Daily Log and Job detail checks were blocked by local Supabase Auth
+  Daily Log and Job detail checks were blocked by Supabase Auth
   `over_request_rate_limit` and should be retried only after auth cooldown.
 - Mobile Field Phase 3 evidence upload planning is documented in
   [docs/design/mobile-field-phase-3-evidence-upload-proof-flow.md](C:/FloorConnector/docs/design/mobile-field-phase-3-evidence-upload-proof-flow.md).
@@ -240,7 +240,8 @@ file` actions without exposing raw storage paths. This remains contractor-only
   id based resolution, Daily Log / Job Note parent validation, no raw storage
   path rendering, portal exclusion, and FieldTrail / Proof Center /
   CloseoutTrail metadata-only behavior. Browser QA loaded `/daily-logs` and one
-  discovered Daily Log detail with saved contractor auth, but the local data had
+  discovered Daily Log detail with saved contractor auth, but the checked remote
+  data had
   no uploaded evidence row to click; repeated direct checks then hit local
   Supabase Auth `over_request_rate_limit`, so real-object preview link QA
   remains a follow-up after auth cooldown.
@@ -299,7 +300,7 @@ file` actions without exposing raw storage paths. This remains contractor-only
   Ready Check / GateKeeper preservation, advisory warning preservation, and no
   schema/package/route/server-action expansion. Browser QA loaded `/schedule`
   at mobile width with saved contractor auth and no horizontal overflow; deeper
-  selected-job action checks were blocked by local Supabase Auth
+  selected-job action checks were blocked by Supabase Auth
   `over_request_rate_limit`.
 - CrewBoard Phase 3B pointer drag/drop planning is documented in
   [docs/design/crewboard-phase-3b-drag-drop-technical-spike.md](C:/FloorConnector/docs/design/crewboard-phase-3b-drag-drop-technical-spike.md).
@@ -319,7 +320,7 @@ file` actions without exposing raw storage paths. This remains contractor-only
   Static QA confirmed no pointer handlers, no drag/drop package, no new
   schedule write path, URL state guarded by selected-job presence, inert target
   metadata, and manual `Move schedule` preservation. Protected browser QA
-  remains blocked until local Supabase Auth cooldown clears.
+  remains blocked until Supabase Auth cooldown clears.
 - CrewBoard Phase 3B-B pre-implementation readiness is documented in
   [docs/design/crewboard-phase-3b-b-pointer-drag-drop-checklist.md](C:/FloorConnector/docs/design/crewboard-phase-3b-b-pointer-drag-drop-checklist.md).
   Recommendation: install `@dnd-kit/core` only when actual pointer drag/drop is
@@ -355,7 +356,7 @@ not create duplicate models or change core workflow behavior.
 
 ## Staging And Demo Status
 
-Recent staging/demo work is docs-first and no-write:
+Recent staging/demo work is remote-Supabase-first and no-write by default:
 
 - [docs/demo/operating-core-demo-path.md](C:/FloorConnector/docs/demo/operating-core-demo-path.md)
   is the current route-based demo path over real database-backed records.
@@ -368,48 +369,29 @@ Recent staging/demo work is docs-first and no-write:
   key docs/files, Node/pnpm, and `.env.example` variable names. It does not read
   `.env.local`, deploy, call providers, call Supabase, or mutate remote state.
 - [docs/demo/staging-demo-data-plan.md](C:/FloorConnector/docs/demo/staging-demo-data-plan.md)
-  defines the ideal canonical demo dataset and recommends owner-controlled
-  auth/org setup plus a future dry-run-first seed script. It now calls out the
-  one-project golden-path readiness target for Dashboard Operational Digest,
-  Project Command Timeline, Copilot draft actions, CrewBoard, AR collections,
-  document readiness, communications send-readiness, Daily Logs/field blockers,
-  and portal review surfaces.
-- `pnpm demo:data:inventory` is still dry-run-only and now prints golden-path
-  surface readiness, current fixture signals, known data gaps, local seed
-  availability, and the staging write-mode deferral boundary.
-- [docs/demo/local-golden-path-seed-mode-design.md](C:/FloorConnector/docs/demo/local-golden-path-seed-mode-design.md)
-  defines the implemented local-only golden path seed mode. The separate
-  `scripts/seed-local-golden-path-demo-data.mjs` command defaults to dry-run and
-  requires `--confirm-local-write`,
-  `FLOORCONNECTOR_ALLOW_LOCAL_DEMO_SEED_WRITE=1`, a local Supabase URL,
-  deterministic demo labels, create-or-find idempotency, and strict
-  provider/auth/token boundaries for local writes. It does not authorize staging
-  writes and it does not implement reset behavior.
-- `pnpm demo:data:seed:local -- --dry-run --organization-id <uuid>
---owner-user-id <uuid> --owner-email <owner@example.test>
---portal-customer-email <customer@example.test>` prints the local golden-path
-  plan without reading `.env.local`, creating a Supabase client, connecting to a
-  database, or writing data.
-- Local write mode is intentionally owner-confirmed only:
-  `FLOORCONNECTOR_ALLOW_LOCAL_DEMO_SEED_WRITE=1 pnpm demo:data:seed:local --
---confirm-local-write ...` and must point at local Supabase. It creates or
-  reuses canonical local records only and does not create auth users, send
-  portal invites, call providers, create notifications, create payment records,
-  or upload storage objects.
+  defines the ideal canonical live workflow coverage for demos and QA. It now
+  treats golden-path readiness as real remote records created through the app:
+  Dashboard Operational Digest, Project Command Timeline, Copilot draft
+  actions, CrewBoard, AR collections, document readiness, communications
+  send-readiness, Daily Logs/field blockers, and portal review surfaces.
+- `pnpm demo:data:inventory` is a no-write readiness checklist. It does not read
+  `.env.local`, connect to Supabase, write data, call providers, or recommend
+  seeding fake/demo records.
+- The misaligned local golden path write seeder was removed. FloorConnector has
+  no local database workflow; demos and QA should use real remote Supabase
+  records created through the app. Missing golden-path coverage should be
+  logged as real workflow/data setup, not solved with synthetic inserts.
 - [docs/demo/staging-demo-seed-script-spec.md](C:/FloorConnector/docs/demo/staging-demo-seed-script-spec.md)
   specifies the seed script safety boundary.
 - `pnpm demo:data:seed:dry-run -- --organization-id <uuid> --owner-user-id
 <uuid> --owner-email <owner@example.test> --portal-customer-email
-<customer@example.test> --environment staging` runs the Phase 1 dry-run-only
-  planner. It validates explicit inputs and prints planned dataset groups,
-  idempotency notes, provider safety, portal safety, and future route checks.
-  The dry-run path does not create a Supabase client, read `.env.local`, write
-  data, call providers, create auth users, create payment/signature/email
-  events, or print portal invite tokens.
+<customer@example.test> --environment staging` is retained only as a no-write
+  legacy planner/guardrail check. It must not be interpreted as permission to
+  seed demo data.
 - [docs/demo/staging-demo-seed-write-mode-design.md](C:/FloorConnector/docs/demo/staging-demo-seed-write-mode-design.md)
-  defines the owner gates, future script modes, write-mode refusal rules,
-  idempotency strategy, provider-dark policy, portal token policy, post-write
-  validation plan, and cleanup boundary.
+  remains historical/future planning only. Any remote write-capable data setup
+  would require separate owner approval, target validation, tenant allowlist,
+  idempotency, cleanup policy, and no provider sends.
 - `pnpm demo:data:seed:validate-target -- --supabase-url <staging-supabase-url>
 --service-role-key-env SUPABASE_SERVICE_ROLE_KEY --organization-id <uuid>
 --owner-user-id <uuid> --owner-email <owner@example.test>
@@ -422,16 +404,16 @@ Recent staging/demo work is docs-first and no-write:
 - [docs/design/staging-demo-seed-phase-2a-qa-checkpoint.md](C:/FloorConnector/docs/design/staging-demo-seed-phase-2a-qa-checkpoint.md)
   records the Phase 2A QA checkpoint: dry-run remains no-connection/no-write,
   validate-target remains explicit/read-only, script safety checks found no
-  write verbs or provider/auth-admin paths in the seed script, and write mode
-  remains future owner-approved work.
+  write verbs or provider/auth-admin paths in the staging seed script, and
+  write mode remains outside current policy.
 - [docs/design/supabase-staging-target-discovery.md](C:/FloorConnector/docs/design/supabase-staging-target-discovery.md)
   records the May 24, 2026 read-only Supabase connector discovery. The
   connector could see one organization, `FloorConnectoor`
   (`cvkfudwshnfsftnnwrro`, free plan), but returned zero visible projects. No
   staging project candidate was identified, and no project details, migrations,
   tables, SQL, auth settings, RLS, data, providers, or app behavior were
-  touched. A later remote-only CLI check confirmed local Supabase CLI
-  authentication and visibility for `FloorConnector`
+  touched. A later remote-only CLI check confirmed Supabase CLI authentication
+  and visibility for `FloorConnector`
   (`jcnoraopbwdhshcmplgb`) under `FloorConnectorPro`; the later connector
   rerun also sees that same project under `FloorConnectorPro`.
 
@@ -442,6 +424,9 @@ Recent staging/demo work is docs-first and no-write:
   are direction unless current-state and code confirm implementation.
 - Do not add fake dashboards, demo-only protected data, local-only persistence,
   portal-only copies, duplicate jobs/projects, or module-local record models.
+- Do not add local database seed workflows. FloorConnector demos and QA use real
+  remote Supabase-backed canonical records; missing coverage should be created
+  through app workflows or treated as a blocker.
 - Do not weaken auth, RLS, tenant checks, portal grants, payment/signature
   state, estimate math, invoice math, readiness gates, settings, or
   platform-admin boundaries for QA or demo convenience.
@@ -471,7 +456,7 @@ Recent staging/demo work is docs-first and no-write:
 
 ## QA Caveats
 
-Protected-route browser QA can be blocked by local Supabase Auth rate limits,
+Protected-route browser QA can be blocked by Supabase Auth rate limits,
 stale Playwright storage state, base-URL mismatch, or stale fixed fixture IDs.
 Use [docs/local-auth-qa-recovery.md](C:/FloorConnector/docs/local-auth-qa-recovery.md)
 before treating a protected-route redirect or fixture miss as product failure.
@@ -485,12 +470,12 @@ Good next moves:
 
 - If staging/demo is next, use the connector-visible remote project ref
   `jcnoraopbwdhshcmplgb` for `FloorConnector` under `FloorConnectorPro` as the
-  currently confirmed target. Before any writes, have the owner run
-  `pnpm demo:data:seed:validate-target` against that target and review warnings
-  before considering any write-mode prompt. Keep write mode deferred until
-  read-only target validation is clean and owner approval is explicit.
+  currently confirmed target for read-only checks. Demo readiness should be
+  improved by creating real records through app workflows. Keep any direct
+  remote data mutation outside current policy unless the owner separately
+  approves target validation, tenant allowlist, idempotency, and cleanup.
 - If continuing Mobile Field, checkpoint Phase 3D-A browser behavior with real
-  uploaded field evidence when saved contractor auth and local data are
+  uploaded field evidence when saved contractor auth and remote data are
   available, then checkpoint Phase 3E-A archive/restore with real uploaded
   evidence using the policy in
   [docs/design/mobile-field-phase-3e-evidence-archive-delete-policy.md](C:/FloorConnector/docs/design/mobile-field-phase-3e-evidence-archive-delete-policy.md).

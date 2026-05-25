@@ -5,11 +5,16 @@ Doc Type: Demo / Runbook
 
 ## 1. Purpose
 
-This plan defines the safe demo data shape needed to show FloorConnector's
-current operating core without relying on stale local records or hardcoded IDs.
-It is a planning and local fixture-audit artifact only.
+This plan defines the live workflow coverage needed to show FloorConnector's
+current operating core without relying on stale hardcoded IDs, fake records, or
+local database assumptions. It is a planning and readiness artifact only.
 
-It does not authorize production or staging writes, remote Supabase commands,
+FloorConnector uses remote Supabase-backed canonical records for demos and QA.
+Golden-path coverage should be created through the real app workflows and
+verified against that live remote environment.
+
+This plan does not authorize fake/demo data inserts, local database seed
+workflows, production or staging writes, remote Supabase mutation commands,
 migrations, provider actions, real payment processing, signature mutation,
 email sending, portal invite-token exposure, schema changes, RLS changes, auth
 changes, tenant logic changes, routes, server actions, settings changes,
@@ -53,34 +58,33 @@ Inspected:
 - route and data helpers under `apps/web/lib`
 - core Supabase migrations under `supabase/migrations`
 
-Current useful patterns:
+Current useful patterns and boundaries:
 
 - `scripts/portal-e2e-fixture.mjs` validates by default and writes only with
-  `--write` plus `FLOORCONNECTOR_ALLOW_E2E_FIXTURE_WRITE=1`. It creates
-  canonical local/test portal records for customer, contact, project,
-  opportunity, catalog item, portal grant, portal project access, stored portal
-  permissions, sent estimate, sent contract, sent invoice, and sent change
-  order. It prints non-secret route paths, not invite tokens.
+  `--write` plus `FLOORCONNECTOR_ALLOW_E2E_FIXTURE_WRITE=1`. Treat this as an
+  E2E test harness, not the normal demo-data workflow. Do not use it to seed
+  fake records into the live remote environment.
 - `scripts/e2e-second-tenant-fixture.mjs` validates by default and writes only
   with the same explicit fixture-write guard. It creates a disposable tenant-B
   invoice/payment chain for cross-tenant payment boundary tests, not demo use.
 - `e2e/protected-route-utils.js` discovers real protected detail links from
   index pages and skips invalid/stale detail records.
-- `e2e/project-ai-cue-work-item-bridge.spec.js` has local fixture patterns for
+- `e2e/project-ai-cue-work-item-bridge.spec.js` has spec-scoped fixture patterns for
   approved-estimate-missing-contract, signed-ready-no-job, unscheduled-job,
   scheduled-job, and open blocker field-note states.
-- `e2e/dashboard-ui-my-work-queue-modes.spec.js` has local fixture patterns for
+- `e2e/dashboard-ui-my-work-queue-modes.spec.js` has spec-scoped fixture patterns for
   sent estimate follow-up, overdue invoice, unscheduled job, people, and
   responsibility defaults.
 
-Unsafe as a staging demo strategy:
+Unsafe as a live/demo strategy:
 
-- spec-local fixture creation that deletes or resets data without a staging
+- fake/demo record insertion outside the app workflow
+- spec-scoped fixture creation that deletes or resets data without an
   owner-approved cleanup policy
-- service-role scripts against remote Supabase without an explicit environment
-  and tenant allowlist
+- service-role scripts against remote Supabase without an explicit environment,
+  tenant allowlist, idempotency, cleanup policy, and owner approval
 - using provider test scripts as demo data creation
-- hardcoding UUIDs from one local database into staging docs or scripts
+- hardcoding UUIDs from one environment into docs or scripts
 
 ## 4. Ideal Canonical Demo Dataset
 
@@ -127,7 +131,7 @@ Unsafe as a staging demo strategy:
 - at least one open blocker or issue Job Note
 - at least one resolved Job Note
 - at least one execution attachment/evidence placeholder if the environment
-  supports safe local fixture references
+  supports safe existing evidence references
 - one time card or labor summary when the current model supports it
 
 ### MessageCenter / Send Trail
@@ -157,7 +161,7 @@ Unsafe as a staging demo strategy:
 - one paid invoice
 - one overdue invoice if due dates are supported in the selected environment
 - one pending payment event
-- one failed or voided payment event if created through safe local/test
+- one failed or voided payment event if created through approved test
   boundary tooling
 - no Stripe charge, live Checkout, provider replay, or fake success event
 
@@ -221,7 +225,8 @@ center on one customer/project story.
 
 ## 5. Existing Coverage
 
-Existing local fixture/test patterns cover part of the dataset:
+Existing implementation and test patterns prove that the app can represent much
+of the dataset when real records exist:
 
 - portal user, customer, contact, project, grant, project access, estimate,
   contract, invoice, and change order
@@ -233,29 +238,29 @@ Existing local fixture/test patterns cover part of the dataset:
   responsibility defaults inside dashboard My Work tests
 - payment pending/failure/void/success event coverage inside payment E2E lanes,
   but those are QA lanes and should not be treated as staging demo data creation
-- Project Command Timeline, Document Readiness, Customer Communication
-  Send Readiness, Collections Follow-Up Intelligence, and AI Operational
-  Copilot are implemented and tested, but current local data discovery does not
-  guarantee that one project lights all of them up together
+- Project Command Timeline, Document Readiness, Customer Communication Send
+  Readiness, Collections Follow-Up Intelligence, and AI Operational Copilot are
+  implemented and tested, but current live data discovery does not guarantee
+  that one project lights all of them up together
 
 Route discovery already handles:
 
 - protected detail discovery from index pages in `e2e/protected-route-utils.js`
-- portal fixture route output through non-secret `FLOORCONNECTOR_E2E_PORTAL_*`
-  path suggestions
-- documented local auth recovery when fixed IDs are stale or storage state is
+- portal route output through non-secret `FLOORCONNECTOR_E2E_PORTAL_*` path
+  suggestions where the E2E harness is intentionally used
+- documented saved-auth recovery when fixed IDs are stale or storage state is
   mismatched
 
 ## 6. Gaps
 
-Missing for a full staging operating-core demo:
+Missing for a full live operating-core demo:
 
 - a single coherent owner-approved dataset that ties every demo surface to one
   recognizable customer/project story
 - a document-specific customer-bound communication handoff that reliably shows
   send-readiness for an estimate, contract, or invoice
-- guaranteed estimate, contract, and invoice detail paths in the active local
-  contractor fixture
+- guaranteed estimate, contract, and invoice detail paths in the active remote
+  contractor data
 - one project with enough linked records for the Project Command Timeline to
   show the full lifecycle story instead of a minimal valid project
 - controlled fixture coverage for completed/closeout-ready project state
@@ -267,7 +272,7 @@ Missing for a full staging operating-core demo:
 - safe portal record-view evidence without exposing invite tokens
 - a clear paid/partial/open/overdue invoice set that does not call Stripe or
   fake provider completion
-- staging-specific idempotency, cleanup, and tenant allowlist rules
+- any direct remote data setup policy beyond normal app workflows
 
 Unsafe or not ready to seed without more design:
 
@@ -281,73 +286,48 @@ Unsafe or not ready to seed without more design:
 
 ## 7. Recommended Demo Data Strategy
 
-Recommended next step: **use the guarded local-only seed mode for local QA when
-the owner explicitly approves local writes; keep staging write mode deferred.**
+Recommended next step: **treat demo readiness as live workflow readiness over
+remote Supabase-backed canonical records.**
 
 Why:
 
 - auth users, contractor setup, platform-admin role, provider posture, and
   portal customer credentials are environment-owner concerns and should be
   created or confirmed manually
-- the canonical operating dataset is large enough that manual creation through
-  the app would be slow and error-prone
-- existing fixture patterns prove that a validation-first, write-gated,
-  tenant-scoped script can be safe for local/test use
-- staging should not inherit spec-local cleanup behavior without a clearer
-  idempotency and cleanup policy
-- the current immediate need is not broader product behavior; it is keeping
-  golden-path local QA reproducible while remote/staging data remains protected
+- the canonical operating dataset should be created through real app workflows
+  so tenant behavior, portal access, readiness, signatures, payments,
+  communications, and audit state stay truthful
+- existing fixture patterns are useful for E2E tests, but they are not the
+  normal demo data workflow
+- direct remote mutation should not become the answer to missing demo coverage
+- the current immediate need is not broader product behavior; it is identifying
+  which live records/workflows need to be completed through the app
 
 Decision matrix:
 
-| Path                                   | Recommendation               | Why                                                                                                                                        |
-| -------------------------------------- | ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
-| Docs-only checklist                    | Safe but incomplete          | Preserves boundaries but does not make future QA less fragile.                                                                             |
-| Dry-run inventory enhancement          | Available now                | Gives repeatable gap visibility without reads from `.env.local`, Supabase connections, writes, or provider calls.                          |
-| Local-only owner-confirmed seed script | Available for local-only use | `pnpm.cmd demo:data:seed:local` can dry-run or create/reuse the local golden path only with explicit local write confirmation and guard.   |
-| Staging-only seed mode                 | Defer                        | Requires clean read-only target validation, staging identifiers, tenant allowlist, idempotency/cleanup rules, and explicit owner approval. |
+| Path                             | Recommendation     | Why                                                                                                                                       |
+| -------------------------------- | ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| Live workflow checklist          | Recommended now    | Keeps golden-path coverage grounded in real remote Supabase records and app workflows.                                                    |
+| No-write readiness inventory     | Available now      | Gives repeatable visibility into needed golden-path surfaces without env reads, Supabase access, provider calls, or data writes.          |
+| E2E fixture helpers              | Test harness only  | Useful for targeted automated tests, but not a normal demo-data workflow and not a source of live demo truth.                             |
+| Direct remote write-mode seeding | Not current policy | Would require separate owner approval, target validation, tenant allowlist, idempotency, cleanup policy, and strict no-provider behavior. |
 
-The local-only mode is implemented and documented in
-[docs/demo/local-golden-path-seed-mode-design.md](C:/FloorConnector/docs/demo/local-golden-path-seed-mode-design.md).
-It uses a separate local-only, dry-run-first script with
-`--confirm-local-write`, `FLOORCONNECTOR_ALLOW_LOCAL_DEMO_SEED_WRITE=1`,
-production/staging target refusal, deterministic demo labels, create-or-find
-idempotency, and no reset command yet. It does not authorize staging writes or
-change the existing dry-run/read-only staging seed script boundary.
+The live workflow policy is:
 
-The local seed script must:
-
-- require explicit `company_id`, contractor owner/admin user id or email, and
-  portal customer email
-- refuse production-marked environments and refuse unknown/remote targets unless
-  an explicit staging allowlist is supplied
-- default to dry-run and print the planned records without secrets
-- be idempotent by stable demo slugs/names or provide a cleanup-safe reset plan
-- create only tenant-scoped canonical records
-- never create provider-side events, Stripe charges, Checkout Sessions, email
-  sends, SignWell actions, webhook replays, or fake external callbacks
-- never generate or print portal invite tokens
-- avoid auth/RLS bypasses except for an explicitly reviewed service-role
-  owner-approved fixture path
-- preserve canonical lifecycle and avoid duplicate models
-
-Run local dry-run mode with:
-
-```powershell
-pnpm.cmd demo:data:seed:local -- --dry-run --organization-id <uuid> --owner-user-id <uuid> --owner-email owner@example.test --portal-customer-email portal@example.test
-```
-
-Run local write mode only after owner approval, against local Supabase, with:
-
-```powershell
-$env:FLOORCONNECTOR_ALLOW_LOCAL_DEMO_SEED_WRITE = "1"
-pnpm.cmd demo:data:seed:local -- --confirm-local-write --organization-id <uuid> --owner-user-id <uuid> --owner-email owner@example.test --portal-customer-email portal@example.test
-```
+- create customers, projects, estimates, contracts, invoices, jobs, Daily Logs,
+  communications, portal grants, and related records through the real app
+  workflows
+- use route discovery and explicit saved route overrides for stable QA links
+- record missing coverage as workflow/data setup gaps, not product failures and
+  not permission to insert fake rows
+- keep payment/signature/provider evidence tied to real implemented flows or
+  approved test-mode QA lanes
+- do not seed fake/demo records into the live database
 
 ## 8. Safety Rules
 
-- No production or staging writes in this pass.
-- No remote SQL execution.
+- No fake/demo record seeding.
+- No direct remote SQL execution for demo coverage.
 - No migrations.
 - No env var changes.
 - No secrets, provider keys, storage state, invite tokens, checkout URLs, or
@@ -359,29 +339,16 @@ pnpm.cmd demo:data:seed:local -- --confirm-local-write --organization-id <uuid> 
 - No auth/RLS bypasses for demo convenience.
 - No new data model.
 
-## 9. Future Implementation Prompt
+## 9. Live Workflow Setup Guidance
 
-```text
-Chat: Staging Demo Data Seed Script - Explicit Owner-Approved Dry Run First
+Use this checklist when preparing a live demo or QA walkthrough:
 
-Build a tenant-scoped staging demo seed script for FloorConnector.
-
-Do not run it in write mode. Do not mutate remote data unless the owner later
-provides explicit staging identifiers and approval.
-
-Start from docs/demo/staging-demo-data-plan.md and existing fixture patterns in
-scripts/portal-e2e-fixture.mjs, e2e/project-ai-cue-work-item-bridge.spec.js,
-and e2e/dashboard-ui-my-work-queue-modes.spec.js.
-
-Create a dry-run-first script that requires explicit company/user/customer
-identifiers, prints a canonical record plan, refuses production-marked
-environments, never prints secrets or portal invite tokens, and never calls
-Stripe, Postmark, SignWell, Supabase Auth invite, webhooks, migrations, or
-external providers.
-
-Only after the dry-run behavior is reviewed should a separate task consider a
-write-gated, idempotent staging seed mode.
-```
+1. Select the remote Supabase project and tenant intentionally.
+2. Confirm contractor and portal auth through the real app.
+3. Create or complete missing records through the app workflow chain.
+4. Use route discovery or explicit safe route overrides to avoid stale UUIDs.
+5. Record any missing golden-path coverage as a real setup gap.
+6. Do not use service-role mutation as a substitute for app workflows.
 
 ## 10. Dry-Run Inventory Script
 
@@ -397,14 +364,14 @@ or:
 node scripts/demo-data-inventory.mjs
 ```
 
-The script prints the required demo record checklist, fixture/script path
-availability, golden-path surface readiness, known data gaps, repository
-counts, and an owner-action reminder. It does not read `.env.local`, connect to
+The script prints the required live workflow checklist, existing QA signal
+availability, golden-path surface readiness, known data gaps, repository counts,
+and an owner-action reminder. It does not read `.env.local`, connect to
 Supabase, call providers, or write files/data.
 
-## 11. Seed Script Specification
+## 11. Legacy No-Write Staging Planner
 
-The future seed script design is specified in
+The historical no-write staging planner is specified in
 [docs/demo/staging-demo-seed-script-spec.md](C:/FloorConnector/docs/demo/staging-demo-seed-script-spec.md).
 Phase 1 of that script is implemented as a strict no-write dry-run planner:
 
@@ -412,19 +379,10 @@ Phase 1 of that script is implemented as a strict no-write dry-run planner:
 pnpm demo:data:seed:dry-run -- --organization-id <uuid> --owner-user-id <uuid> --owner-email <owner@example.test> --portal-customer-email <customer@example.test> --environment staging
 ```
 
-The command validates explicit identifiers and prints the planned dataset,
-idempotency notes, provider safety rules, portal safety rules, and future route
-validation checklist. The dry-run path does not read `.env.local`, create a
-Supabase client, connect to databases, write data, call providers, create auth
-users, generate portal invite tokens, or create payment/signature/email events.
-
-The spec defines required inputs, dry-run behavior, safety checks, idempotency,
-record order, provider/portal boundaries, route validation, and the future
-write-capable implementation boundary if the owner approves it later.
-
-It does not authorize staging writes, remote Supabase commands, migrations,
-provider actions, payment/signature mutation, portal invite-token exposure, or
-auth/RLS/tenant/settings/platform-admin changes.
+Treat that command as a legacy guardrail/planner only, not a seed workflow. It
+does not authorize staging writes, remote Supabase mutation commands,
+migrations, provider actions, payment/signature mutation, portal invite-token
+exposure, or auth/RLS/tenant/settings/platform-admin changes.
 
 ## 12. What Was Intentionally Not Changed
 
