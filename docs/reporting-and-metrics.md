@@ -274,6 +274,12 @@ Reporting describes and measures. Intelligence interprets, compares, predicts, a
 
 The Intelligence Layer should be built on top of reliable reporting foundations. If a metric cannot be explained from canonical records, it should not become a predictive input, benchmark, operational health score, or AI recommendation.
 
+The AI Operational Digest is the first dashboard-level Copilot rollup over
+existing operational signals. It is not a reporting warehouse, reporting
+source-of-truth, or metric engine. It groups current attention and handoff
+signals from canonical records so users can route back to project, contract,
+invoice, job, schedule, and equipment workspaces.
+
 ## Relationship To Automation Layer
 
 Automation should use metrics as evidence, not as a hidden source of action.

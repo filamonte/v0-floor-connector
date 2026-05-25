@@ -33,6 +33,9 @@ Use these first for most implementation or documentation tasks:
 
 - [docs/current-state.md](C:/FloorConnector/docs/current-state.md): source of
   truth for implemented status
+- [docs/feature-build-status.md](C:/FloorConnector/docs/feature-build-status.md):
+  investor/demo/dev-friendly feature status inventory over current truth,
+  planned depth, and strategic future layers
 - [docs/platform-maturity.md](C:/FloorConnector/docs/platform-maturity.md):
   concise platform maturity framing
 - [docs/module-status.md](C:/FloorConnector/docs/module-status.md): concise
@@ -73,6 +76,9 @@ Use these first for most implementation or documentation tasks:
   broad future coverage map
 - [docs/contractor-foreman-gap-decision-list.md](C:/FloorConnector/docs/contractor-foreman-gap-decision-list.md):
   owner feature coverage decisions
+- [docs/ai-operational-copilot-foundation.md](C:/FloorConnector/docs/ai-operational-copilot-foundation.md):
+  implemented deterministic AI Operational Copilot foundation and review-first
+  intelligence boundaries
 
 ## Operating Core Feature Docs
 

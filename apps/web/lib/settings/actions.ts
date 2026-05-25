@@ -25,18 +25,14 @@ import {
   clearOrganizationResponsibilityDefault,
   upsertOrganizationResponsibilityDefault
 } from "@/lib/operational-cues/responsibility-defaults";
-import {
-  upsertOrganizationFeatureOverride
-} from "@/lib/organizations/module-settings";
+import { upsertOrganizationFeatureOverride } from "@/lib/organizations/module-settings";
 import {
   listOrganizationMembers,
   requireOrganizationAdminScope,
   updateOrganizationMembershipRole,
   updateOrganizationProfile
 } from "@/lib/organizations/admin";
-import {
-  upsertOrganizationFinancialSettings
-} from "@/lib/organizations/financial-settings";
+import { upsertOrganizationFinancialSettings } from "@/lib/organizations/financial-settings";
 import {
   upsertOrganizationAutomationNotificationPreferences,
   upsertOrganizationWorkflowSettings
@@ -79,10 +75,15 @@ function getCheckboxValue(formData: FormData, key: string) {
 }
 
 function getFieldValues(formData: FormData, key: string) {
-  return formData.getAll(key).map((value) => (typeof value === "string" ? value : ""));
+  return formData
+    .getAll(key)
+    .map((value) => (typeof value === "string" ? value : ""));
 }
 
-function buildRedirect(pathname: string, params: Record<string, string | undefined>) {
+function buildRedirect(
+  pathname: string,
+  params: Record<string, string | undefined>
+) {
   const search = new URLSearchParams();
 
   for (const [key, value] of Object.entries(params)) {
@@ -98,13 +99,16 @@ function buildRedirect(pathname: string, params: Record<string, string | undefin
 
 function getCatalogItemSaveErrorMessage(error: unknown) {
   const message =
-    error instanceof Error ? error.message : "Unable to update reusable catalog item.";
+    error instanceof Error
+      ? error.message
+      : "Unable to update reusable catalog item.";
   const normalized = message.toLowerCase();
 
   if (
     normalized.includes("cost item with this name") ||
     normalized.includes("catalog_items_company_normalized_name") ||
-    normalized.includes("duplicate key") && normalized.includes("normalized_name")
+    (normalized.includes("duplicate key") &&
+      normalized.includes("normalized_name"))
   ) {
     return "A cost item with this name already exists for this organization. Use a unique item name or edit the existing catalog item.";
   }
@@ -112,7 +116,8 @@ function getCatalogItemSaveErrorMessage(error: unknown) {
   if (
     normalized.includes("cost item with this sku") ||
     normalized.includes("catalog_items_company_normalized_sku") ||
-    normalized.includes("duplicate key") && normalized.includes("normalized_sku")
+    (normalized.includes("duplicate key") &&
+      normalized.includes("normalized_sku"))
   ) {
     return "A cost item with this SKU already exists for this organization. Use a unique SKU or edit the existing catalog item.";
   }
@@ -150,7 +155,9 @@ function revalidateSettingsSlice() {
   revalidatePath("/dashboard");
 }
 
-export async function updatePreferredEstimateTemplateAction(formData: FormData) {
+export async function updatePreferredEstimateTemplateAction(
+  formData: FormData
+) {
   const returnTo = getFieldValue(formData, "returnTo") || "/settings/profile";
   const preferredEstimateTemplateId = getFieldValue(
     formData,
@@ -191,7 +198,9 @@ export async function updateDocumentTemplateSettingsAction(formData: FormData) {
   if (!result.success) {
     redirect(
       buildRedirect("/settings/templates", {
-        error: result.error.issues[0]?.message ?? "Unable to update document template."
+        error:
+          result.error.issues[0]?.message ??
+          "Unable to update document template."
       })
     );
   }
@@ -207,7 +216,9 @@ export async function updateDocumentTemplateSettingsAction(formData: FormData) {
     redirect(
       buildRedirect("/settings/templates", {
         error:
-          error instanceof Error ? error.message : "Unable to update document template."
+          error instanceof Error
+            ? error.message
+            : "Unable to update document template."
       })
     );
   }
@@ -278,7 +289,8 @@ export async function updateOrganizationProfileAction(formData: FormData) {
     redirect(
       buildRedirect("/settings/organization", {
         error:
-          result.error.issues[0]?.message ?? "Unable to update organization profile."
+          result.error.issues[0]?.message ??
+          "Unable to update organization profile."
       })
     );
   }
@@ -309,13 +321,18 @@ export async function updateOrganizationProfileAction(formData: FormData) {
   );
 }
 
-export async function updateOrganizationFinancialSettingsAction(formData: FormData) {
+export async function updateOrganizationFinancialSettingsAction(
+  formData: FormData
+) {
   const scope = await requireSettingsScope();
   const returnTo = getFieldValue(formData, "returnTo") || "/settings/financial";
   const result = organizationFinancialSettingsInputSchema.safeParse({
     defaultTaxBehavior: getFieldValue(formData, "defaultTaxBehavior"),
     defaultTaxRate: getFieldValue(formData, "defaultTaxRate"),
-    defaultRetainagePercentage: getFieldValue(formData, "defaultRetainagePercentage")
+    defaultRetainagePercentage: getFieldValue(
+      formData,
+      "defaultRetainagePercentage"
+    )
   });
 
   if (!result.success) {
@@ -354,7 +371,9 @@ export async function updateOrganizationFinancialSettingsAction(formData: FormDa
   );
 }
 
-export async function updateOrganizationWorkflowSettingsAction(formData: FormData) {
+export async function updateOrganizationWorkflowSettingsAction(
+  formData: FormData
+) {
   const scope = await requireSettingsScope();
   const result = organizationWorkflowSettingsInputSchema.safeParse({
     approvedEstimateContractTemplateId: getFieldValue(
@@ -377,8 +396,14 @@ export async function updateOrganizationWorkflowSettingsAction(formData: FormDat
       formData,
       "requireFinancingApprovalBeforeJobScheduling"
     ),
-    defaultDepositPercentage: getFieldValue(formData, "defaultDepositPercentage"),
-    defaultEstimateTermsHtml: getFieldValue(formData, "defaultEstimateTermsHtml"),
+    defaultDepositPercentage: getFieldValue(
+      formData,
+      "defaultDepositPercentage"
+    ),
+    defaultEstimateTermsHtml: getFieldValue(
+      formData,
+      "defaultEstimateTermsHtml"
+    ),
     defaultEstimateInclusionsHtml: getFieldValue(
       formData,
       "defaultEstimateInclusionsHtml"
@@ -413,6 +438,14 @@ export async function updateOrganizationWorkflowSettingsAction(formData: FormDat
     enableAiSuggestions: getCheckboxValue(formData, "enableAiSuggestions"),
     enableAiSummaries: getCheckboxValue(formData, "enableAiSummaries"),
     enableAiDrafting: getCheckboxValue(formData, "enableAiDrafting"),
+    enableAiDashboardDigest: getCheckboxValue(
+      formData,
+      "enableAiDashboardDigest"
+    ),
+    enableAiProviderEnhancements: getCheckboxValue(
+      formData,
+      "enableAiProviderEnhancements"
+    ),
     enableAiFormPrefillSuggestions: getCheckboxValue(
       formData,
       "enableAiFormPrefillSuggestions"
@@ -439,10 +472,15 @@ export async function updateOrganizationWorkflowSettingsAction(formData: FormDat
       "/settings/workflows"
     );
 
-    if (!template || template.templateType !== "contract" || template.status !== "active") {
+    if (
+      !template ||
+      template.templateType !== "contract" ||
+      template.status !== "active"
+    ) {
       redirect(
         buildRedirect("/settings/workflows", {
-          error: "Approved-estimate contract workflow must use an active contract template."
+          error:
+            "Approved-estimate contract workflow must use an active contract template."
         })
       );
     }
@@ -452,18 +490,22 @@ export async function updateOrganizationWorkflowSettingsAction(formData: FormDat
     await upsertOrganizationWorkflowSettings({
       organizationId: scope.organizationId,
       userId: scope.userId,
-      approvedEstimateContractTemplateId: result.data.approvedEstimateContractTemplateId,
-      requireContractInternalApproval: result.data.requireContractInternalApproval,
+      approvedEstimateContractTemplateId:
+        result.data.approvedEstimateContractTemplateId,
+      requireContractInternalApproval:
+        result.data.requireContractInternalApproval,
       requireContractSignatureBeforeJobScheduling:
         result.data.requireContractSignatureBeforeJobScheduling,
-      requireDepositBeforeJobScheduling: result.data.requireDepositBeforeJobScheduling,
+      requireDepositBeforeJobScheduling:
+        result.data.requireDepositBeforeJobScheduling,
       requireFinancingApprovalBeforeJobScheduling:
         result.data.requireFinancingApprovalBeforeJobScheduling,
       defaultDepositPercentage: result.data.defaultDepositPercentage,
       defaultEstimateTermsHtml: result.data.defaultEstimateTermsHtml,
       defaultEstimateInclusionsHtml: result.data.defaultEstimateInclusionsHtml,
       defaultEstimateExclusionsHtml: result.data.defaultEstimateExclusionsHtml,
-      defaultEstimateScopeSummaryHtml: result.data.defaultEstimateScopeSummaryHtml,
+      defaultEstimateScopeSummaryHtml:
+        result.data.defaultEstimateScopeSummaryHtml,
       nextEstimateNumber: result.data.nextEstimateNumber,
       nextInvoiceNumber: result.data.nextInvoiceNumber,
       nextChangeOrderNumber: result.data.nextChangeOrderNumber,
@@ -479,8 +521,12 @@ export async function updateOrganizationWorkflowSettingsAction(formData: FormDat
         enableAiSuggestions: result.data.enableAiSuggestions,
         enableAiSummaries: result.data.enableAiSummaries,
         enableAiDrafting: result.data.enableAiDrafting,
-        enableAiFormPrefillSuggestions: result.data.enableAiFormPrefillSuggestions,
-        enableAiWorkItemRecommendations: result.data.enableAiWorkItemRecommendations,
+        enableAiDashboardDigest: result.data.enableAiDashboardDigest,
+        enableAiProviderEnhancements: result.data.enableAiProviderEnhancements,
+        enableAiFormPrefillSuggestions:
+          result.data.enableAiFormPrefillSuggestions,
+        enableAiWorkItemRecommendations:
+          result.data.enableAiWorkItemRecommendations,
         requireConfirmationBeforeAiActions: true
       }
     });
@@ -504,9 +550,12 @@ export async function updateOrganizationWorkflowSettingsAction(formData: FormDat
   );
 }
 
-export async function updateAutomationNotificationPreferencesAction(formData: FormData) {
+export async function updateAutomationNotificationPreferencesAction(
+  formData: FormData
+) {
   const scope = await requireSettingsScope();
-  const returnTo = getFieldValue(formData, "returnTo") || "/settings/automation";
+  const returnTo =
+    getFieldValue(formData, "returnTo") || "/settings/automation";
   const result = automationNotificationPreferencesInputSchema.safeParse({
     preferences: automationNotificationPreferenceCategories.map((category) => ({
       category,
@@ -514,7 +563,10 @@ export async function updateAutomationNotificationPreferencesAction(formData: Fo
         formData,
         `automation.${category}.enabledForFutureExecution`
       ),
-      notifyRoles: getFieldValues(formData, `automation.${category}.notifyRoles`)
+      notifyRoles: getFieldValues(
+        formData,
+        `automation.${category}.notifyRoles`
+      )
     }))
   });
 
@@ -555,7 +607,9 @@ export async function updateAutomationNotificationPreferencesAction(formData: Fo
   );
 }
 
-export async function updateOperationalCueRuleSettingsAction(formData: FormData) {
+export async function updateOperationalCueRuleSettingsAction(
+  formData: FormData
+) {
   const scope = await requireSettingsScope();
   const result = operationalCueRuleSettingsInputSchema.safeParse({
     cueKey: getFieldValue(formData, "cueKey"),
@@ -597,7 +651,8 @@ export async function updateOperationalCueRuleSettingsAction(formData: FormData)
 
   redirect(
     buildRedirect("/settings/operational-intelligence", {
-      message: "Operational cue rule was updated. My Work will use the saved rule immediately."
+      message:
+        "Operational cue rule was updated. My Work will use the saved rule immediately."
     })
   );
 }
@@ -750,7 +805,10 @@ export async function updateOrganizationCatalogItemAction(formData: FormData) {
     trackInventory: getCheckboxValue(formData, "trackInventory"),
     inventoryLocation: getFieldValue(formData, "inventoryLocation"),
     inventoryReorderPoint: getFieldValue(formData, "inventoryReorderPoint"),
-    inventoryAdjustmentQuantity: getFieldValue(formData, "inventoryAdjustmentQuantity"),
+    inventoryAdjustmentQuantity: getFieldValue(
+      formData,
+      "inventoryAdjustmentQuantity"
+    ),
     inventoryAdjustmentNote: getFieldValue(formData, "inventoryAdjustmentNote"),
     submitMode: getFieldValue(formData, "submitMode") || "save"
   });
@@ -759,7 +817,8 @@ export async function updateOrganizationCatalogItemAction(formData: FormData) {
     redirect(
       buildRedirect(returnTo, {
         error:
-          result.error.issues[0]?.message ?? "Unable to update reusable catalog item."
+          result.error.issues[0]?.message ??
+          "Unable to update reusable catalog item."
       })
     );
   }
@@ -776,7 +835,9 @@ export async function updateOrganizationCatalogItemAction(formData: FormData) {
           ? await replaceCatalogItemFiles({
               catalogItemId: item.id,
               files: uploadFiles,
-              replacedPaths: item.photoStoragePath ? [item.photoStoragePath] : [],
+              replacedPaths: item.photoStoragePath
+                ? [item.photoStoragePath]
+                : [],
               photoFileName: photoFile.name,
               next: returnTo
             })
@@ -787,7 +848,10 @@ export async function updateOrganizationCatalogItemAction(formData: FormData) {
               next: returnTo
             });
 
-      if (uploaded.photoStoragePath && uploaded.photoStoragePath !== item.photoStoragePath) {
+      if (
+        uploaded.photoStoragePath &&
+        uploaded.photoStoragePath !== item.photoStoragePath
+      ) {
         item = await upsertOrganizationCatalogItem({
           ...result.data,
           itemId: item.id,
@@ -814,7 +878,9 @@ export async function updateOrganizationCatalogItemAction(formData: FormData) {
 
     if (result.data.inventoryAdjustmentQuantity) {
       if (!result.data.trackInventory || !linkedInventoryItem) {
-        throw new Error("Enable inventory tracking before recording a manual inventory adjustment.");
+        throw new Error(
+          "Enable inventory tracking before recording a manual inventory adjustment."
+        );
       }
 
       await recordCatalogItemInventoryAdjustment({
@@ -845,7 +911,8 @@ export async function updateOrganizationCatalogItemAction(formData: FormData) {
 
 export async function updateTaxCodeAction(formData: FormData) {
   await requireSettingsScope();
-  const returnTo = getFieldValue(formData, "returnTo") || "/cost-items-database";
+  const returnTo =
+    getFieldValue(formData, "returnTo") || "/cost-items-database";
   const result = taxCodeSettingsInputSchema.safeParse({
     taxCodeId: getFieldValue(formData, "taxCodeId"),
     name: getFieldValue(formData, "name"),
@@ -867,7 +934,8 @@ export async function updateTaxCodeAction(formData: FormData) {
   } catch (error) {
     redirect(
       buildRedirect(returnTo, {
-        error: error instanceof Error ? error.message : "Unable to save tax code."
+        error:
+          error instanceof Error ? error.message : "Unable to save tax code."
       })
     );
   }
@@ -883,7 +951,8 @@ export async function updateTaxCodeAction(formData: FormData) {
 
 export async function updateInventoryItemAction(formData: FormData) {
   await requireSettingsScope();
-  const returnTo = getFieldValue(formData, "returnTo") || "/cost-items-database";
+  const returnTo =
+    getFieldValue(formData, "returnTo") || "/cost-items-database";
   const result = inventoryItemSettingsInputSchema.safeParse({
     inventoryItemId: getFieldValue(formData, "inventoryItemId"),
     name: getFieldValue(formData, "name"),
@@ -900,7 +969,8 @@ export async function updateInventoryItemAction(formData: FormData) {
   if (!result.success) {
     redirect(
       buildRedirect(returnTo, {
-        error: result.error.issues[0]?.message ?? "Unable to save inventory item."
+        error:
+          result.error.issues[0]?.message ?? "Unable to save inventory item."
       })
     );
   }
@@ -910,7 +980,10 @@ export async function updateInventoryItemAction(formData: FormData) {
   } catch (error) {
     redirect(
       buildRedirect(returnTo, {
-        error: error instanceof Error ? error.message : "Unable to save inventory item."
+        error:
+          error instanceof Error
+            ? error.message
+            : "Unable to save inventory item."
       })
     );
   }
@@ -926,7 +999,8 @@ export async function updateInventoryItemAction(formData: FormData) {
 
 export async function deleteInventoryItemAction(formData: FormData) {
   await requireSettingsScope();
-  const returnTo = getFieldValue(formData, "returnTo") || "/cost-items-database";
+  const returnTo =
+    getFieldValue(formData, "returnTo") || "/cost-items-database";
   const inventoryItemId = getFieldValue(formData, "inventoryItemId");
 
   if (!inventoryItemId) {
@@ -942,7 +1016,10 @@ export async function deleteInventoryItemAction(formData: FormData) {
   } catch (error) {
     redirect(
       buildRedirect(returnTo, {
-        error: error instanceof Error ? error.message : "Unable to delete inventory item."
+        error:
+          error instanceof Error
+            ? error.message
+            : "Unable to delete inventory item."
       })
     );
   }
@@ -958,7 +1035,8 @@ export async function deleteInventoryItemAction(formData: FormData) {
 
 export async function updateInventoryTransactionAction(formData: FormData) {
   await requireSettingsScope();
-  const returnTo = getFieldValue(formData, "returnTo") || "/cost-items-database";
+  const returnTo =
+    getFieldValue(formData, "returnTo") || "/cost-items-database";
   const result = inventoryTransactionSettingsInputSchema.safeParse({
     transactionId: getFieldValue(formData, "transactionId"),
     inventoryItemId: getFieldValue(formData, "inventoryItemId"),
@@ -974,7 +1052,8 @@ export async function updateInventoryTransactionAction(formData: FormData) {
     redirect(
       buildRedirect(returnTo, {
         error:
-          result.error.issues[0]?.message ?? "Unable to save inventory transaction."
+          result.error.issues[0]?.message ??
+          "Unable to save inventory transaction."
       })
     );
   }
@@ -1003,7 +1082,8 @@ export async function updateInventoryTransactionAction(formData: FormData) {
 
 export async function deleteInventoryTransactionAction(formData: FormData) {
   await requireSettingsScope();
-  const returnTo = getFieldValue(formData, "returnTo") || "/cost-items-database";
+  const returnTo =
+    getFieldValue(formData, "returnTo") || "/cost-items-database";
   const transactionId = getFieldValue(formData, "transactionId");
 
   if (!transactionId) {
@@ -1036,9 +1116,12 @@ export async function deleteInventoryTransactionAction(formData: FormData) {
   );
 }
 
-export async function deleteOrganizationCatalogItemFileAction(formData: FormData) {
+export async function deleteOrganizationCatalogItemFileAction(
+  formData: FormData
+) {
   await requireSettingsScope();
-  const returnTo = getFieldValue(formData, "returnTo") || "/cost-items-database";
+  const returnTo =
+    getFieldValue(formData, "returnTo") || "/cost-items-database";
   const catalogItemId = getFieldValue(formData, "catalogItemId");
   const filePath = getFieldValue(formData, "filePath");
 
@@ -1059,7 +1142,10 @@ export async function deleteOrganizationCatalogItemFileAction(formData: FormData
   } catch (error) {
     redirect(
       buildRedirect(returnTo, {
-        error: error instanceof Error ? error.message : "Unable to delete catalog item file."
+        error:
+          error instanceof Error
+            ? error.message
+            : "Unable to delete catalog item file."
       })
     );
   }
@@ -1118,8 +1204,14 @@ export async function updateOrganizationCatalogSystemComponentsAction(
   const returnTo =
     getFieldValue(formData, "returnTo") || "/cost-items-database/systems";
   const systemCatalogItemId = getFieldValue(formData, "systemCatalogItemId");
-  const componentCatalogItemIds = getFieldValues(formData, "componentCatalogItemId");
-  const quantitiesPerUnit = getFieldValues(formData, "componentQuantityPerUnit");
+  const componentCatalogItemIds = getFieldValues(
+    formData,
+    "componentCatalogItemId"
+  );
+  const quantitiesPerUnit = getFieldValues(
+    formData,
+    "componentQuantityPerUnit"
+  );
   const basisUnits = getFieldValues(formData, "componentBasisUnit");
   const sortOrders = getFieldValues(formData, "componentSortOrder");
 
@@ -1205,7 +1297,9 @@ export async function updateOrganizationCatalogSystemComponentsAction(
   );
 }
 
-export async function updateOrganizationFeatureOverrideAction(formData: FormData) {
+export async function updateOrganizationFeatureOverrideAction(
+  formData: FormData
+) {
   const scope = await requireSettingsScope();
   const returnTo = getFieldValue(formData, "returnTo") || "/settings/modules";
   const result = organizationFeatureOverrideInputSchema.safeParse({
@@ -1236,7 +1330,9 @@ export async function updateOrganizationFeatureOverrideAction(formData: FormData
     redirect(
       buildRedirect(returnTo, {
         error:
-          error instanceof Error ? error.message : "Unable to update module override."
+          error instanceof Error
+            ? error.message
+            : "Unable to update module override."
       })
     );
   }
@@ -1250,7 +1346,9 @@ export async function updateOrganizationFeatureOverrideAction(formData: FormData
   );
 }
 
-export async function updateOrganizationMembershipRoleAction(formData: FormData) {
+export async function updateOrganizationMembershipRoleAction(
+  formData: FormData
+) {
   const scope = await requireSettingsScope();
   const result = organizationMembershipRoleInputSchema.safeParse({
     membershipId: getFieldValue(formData, "membershipId"),
@@ -1267,7 +1365,9 @@ export async function updateOrganizationMembershipRoleAction(formData: FormData)
   }
 
   const members = await listOrganizationMembers(scope.organizationId);
-  const membership = members.find((member) => member.id === result.data.membershipId);
+  const membership = members.find(
+    (member) => member.id === result.data.membershipId
+  );
 
   if (!membership) {
     redirect(
@@ -1277,7 +1377,10 @@ export async function updateOrganizationMembershipRoleAction(formData: FormData)
     );
   }
 
-  if (membership.user_id === scope.userId && result.data.nextRole !== membership.membership_role) {
+  if (
+    membership.user_id === scope.userId &&
+    result.data.nextRole !== membership.membership_role
+  ) {
     redirect(
       buildRedirect("/settings/admin", {
         error: "Change your own organization role from another admin account."
@@ -1312,7 +1415,10 @@ export async function updateOrganizationMembershipRoleAction(formData: FormData)
   } catch (error) {
     redirect(
       buildRedirect("/settings/admin", {
-        error: error instanceof Error ? error.message : "Unable to update member role."
+        error:
+          error instanceof Error
+            ? error.message
+            : "Unable to update member role."
       })
     );
   }

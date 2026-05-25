@@ -82,6 +82,17 @@ import {
   type ProofCenterSummary,
   type ProofCenterTone
 } from "@/lib/proofcenter/summary";
+import {
+  deriveAiCopilotDraftActions,
+  deriveAiCommunicationAssistance,
+  deriveAiFieldSummary,
+  deriveAiProjectOperationalSummary,
+  type AiCopilotDraftAction,
+  type AiProjectOperationalSummary,
+  type AiFieldSummary,
+  type AiOperationalCopilotTone
+} from "@/lib/ai-operational-copilot/summary";
+import { getAiProviderAvailability } from "@/lib/ai-operational-copilot/provider";
 import { getOperationalCuesForProject } from "@/lib/operational-cues/data";
 import { requireAuthenticatedUser } from "@/lib/auth/session";
 import {
@@ -129,6 +140,8 @@ import { listWorkItemsForProject } from "@/lib/work-items/data";
 import { buildProjectGuidanceWorkItemPrefill } from "@/lib/work-items/prefill";
 import {
   normalizeWorkflowGuidancePreferences,
+  shouldShowAiCopilotSummaries,
+  shouldShowAiDraftActions,
   shouldShowNextBestActions,
   shouldShowReadinessGuidance
 } from "@/lib/workflow-guidance/preferences";
@@ -702,6 +715,217 @@ function ProjectPulseSection({ summary }: { summary: ProjectPulseSummary }) {
               </p>
             </div>
           ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function getAiOperationalCopilotToneClassName(tone: AiOperationalCopilotTone) {
+  switch (tone) {
+    case "ready":
+      return "border-emerald-200 bg-emerald-50 text-emerald-950";
+    case "attention":
+      return "border-amber-200 bg-amber-50 text-amber-950";
+    case "blocked":
+      return "border-rose-200 bg-rose-50 text-rose-950";
+    case "neutral":
+      return "border-[var(--border-warm)] bg-white text-[var(--text-primary)]";
+  }
+}
+
+function AiOperationalCopilotSection({
+  summary,
+  fieldSummary,
+  draftActions,
+  providerEnhancementNote
+}: {
+  summary: AiProjectOperationalSummary | null;
+  fieldSummary: AiFieldSummary | null;
+  draftActions: AiCopilotDraftAction[];
+  providerEnhancementNote: string;
+}) {
+  if (!summary || !fieldSummary) {
+    return (
+      <section
+        id="ai-operational-copilot"
+        className={projectWorkspacePanelClassName}
+      >
+        <div
+          className={`${projectWorkspacePanelHeaderClassName} px-4 py-4 sm:px-5`}
+        >
+          <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--copper)]">
+            AI Operational Copilot
+          </p>
+          <h3 className="mt-2 text-lg font-semibold tracking-tight text-[var(--text-primary)]">
+            Copilot summaries are disabled
+          </h3>
+          <p className="mt-2 max-w-[74ch] text-sm leading-6 text-[var(--text-secondary)]">
+            Organization workflow settings are keeping Copilot summaries quiet
+            for this workspace. ProjectPulse, readiness gates, workflow cues,
+            and connected records remain available from canonical project data.
+          </p>
+        </div>
+      </section>
+    );
+  }
+
+  return (
+    <section
+      id="ai-operational-copilot"
+      className={projectWorkspacePanelClassName}
+    >
+      <div
+        className={`${projectWorkspacePanelHeaderClassName} px-4 py-4 sm:px-5`}
+      >
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+          <div className="min-w-0">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--copper)]">
+              AI Operational Copilot
+            </p>
+            <h3 className="mt-2 text-lg font-semibold tracking-tight text-[var(--text-primary)]">
+              Project intelligence
+            </h3>
+            <p className="mt-2 max-w-[74ch] text-sm leading-6 text-[var(--text-secondary)]">
+              {summary.executiveSummary}
+            </p>
+          </div>
+          <span
+            className={[
+              "inline-flex rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em]",
+              getAiOperationalCopilotToneClassName(summary.tone)
+            ].join(" ")}
+          >
+            {summary.stage}
+          </span>
+        </div>
+        <p className="mt-3 text-xs leading-5 text-[var(--text-secondary)]">
+          {providerEnhancementNote}
+        </p>
+      </div>
+
+      <div className="grid gap-px bg-[var(--border-warm)] lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
+        <div className="bg-white px-4 py-4 sm:px-5">
+          <div className="grid gap-3 md:grid-cols-2">
+            {[
+              ["Readiness", summary.readinessState],
+              ["Financials", summary.financialState],
+              ["Schedule", summary.scheduleState],
+              ["Execution", summary.executionState]
+            ].map(([label, value]) => (
+              <div
+                key={label}
+                className="rounded-lg border border-[var(--border-warm)] bg-[var(--highlight)] px-3 py-3"
+              >
+                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
+                  {label}
+                </p>
+                <p className="mt-1 text-sm leading-5 text-[var(--text-primary)]">
+                  {value}
+                </p>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-4">
+            <p className="text-sm font-semibold text-[var(--text-primary)]">
+              Recommended next actions
+            </p>
+            <div className="mt-3 space-y-3">
+              {summary.recommendedNextActions.map((action) => (
+                <div
+                  key={action.id}
+                  className="rounded-lg border border-slate-200 bg-white px-3 py-3 text-sm leading-5"
+                >
+                  <div className="flex flex-wrap items-start justify-between gap-2">
+                    <p className="font-semibold text-slate-950">
+                      {action.title}
+                    </p>
+                    <span className="rounded-md border border-slate-200 bg-slate-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-600">
+                      {action.priority}
+                    </span>
+                  </div>
+                  <p className="mt-1 text-slate-600">{action.detail}</p>
+                  <p className="mt-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">
+                    Why: {action.reason}
+                  </p>
+                  <Link
+                    href={action.href}
+                    className="mt-3 inline-flex h-8 items-center rounded-full border border-slate-200 bg-slate-50 px-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-700 transition hover:bg-white"
+                  >
+                    {action.label}
+                  </Link>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div className="space-y-px bg-[var(--border-warm)]">
+          <div className="bg-white px-4 py-4 sm:px-5">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--text-secondary)]">
+              Draft action composer
+            </p>
+            {draftActions.length > 0 ? (
+              <div className="mt-3 space-y-3">
+                {draftActions.slice(0, 3).map((action) => (
+                  <div
+                    key={action.id}
+                    className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-3 text-sm leading-5"
+                  >
+                    <div className="flex flex-wrap items-start justify-between gap-2">
+                      <p className="font-semibold text-slate-950">
+                        {action.title}
+                      </p>
+                      <span className="rounded-md border border-slate-200 bg-white px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-600">
+                        {action.audience}
+                      </span>
+                    </div>
+                    <p className="mt-2 text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
+                      {action.subject}
+                    </p>
+                    <p className="mt-2 whitespace-pre-line text-sm leading-6 text-[var(--text-primary)]">
+                      {action.draftBody}
+                    </p>
+                    <p className="mt-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">
+                      Why: {action.operationalReason}
+                    </p>
+                    <p className="mt-2 text-xs leading-5 text-slate-500">
+                      {action.reviewSafetyNote}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="mt-3 rounded-lg border border-dashed border-[var(--border-warm)] bg-[var(--highlight)] px-3 py-3">
+                <p className="text-sm font-semibold text-[var(--text-primary)]">
+                  Draft actions are disabled
+                </p>
+                <p className="mt-1 text-xs leading-5 text-[var(--text-secondary)]">
+                  Summaries can stay visible while organization settings keep
+                  Copilot draft text out of the workspace.
+                </p>
+              </div>
+            )}
+          </div>
+          <div className="bg-white px-4 py-4 sm:px-5">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--text-secondary)]">
+              Field summary
+            </p>
+            <p className="mt-2 text-sm leading-6 text-[var(--text-primary)]">
+              {fieldSummary.pmSummary}
+            </p>
+            {fieldSummary.riskIndicators.length > 0 ? (
+              <ul className="mt-3 space-y-2 text-sm leading-5 text-slate-600">
+                {fieldSummary.riskIndicators.map((risk) => (
+                  <li key={risk}>- {risk}</li>
+                ))}
+              </ul>
+            ) : null}
+          </div>
+          <div className="bg-slate-50 px-4 py-3 text-xs leading-5 text-slate-600 sm:px-5">
+            {summary.reviewBoundary}
+          </div>
         </div>
       </div>
     </section>
@@ -3087,6 +3311,45 @@ export default async function ProjectDetailPage({
         ? `/warranty-documents/${projectWarrantyDocuments[0].id}`
         : `/service-tickets?projectId=${project.id}`
   });
+  const showAiCopilotSummary =
+    shouldShowAiCopilotSummaries(guidancePreferences);
+  const showAiDraftActionComposer =
+    shouldShowAiDraftActions(guidancePreferences);
+  const aiProviderAvailability = getAiProviderAvailability({
+    preferences: guidancePreferences
+  });
+  const aiOperationalSummary = showAiCopilotSummary
+    ? deriveAiProjectOperationalSummary({
+        project: {
+          id: project.id,
+          name: project.name,
+          customerName: project.customer?.name ?? null
+        },
+        readinessSnapshot,
+        projectPulse,
+        fieldTrail,
+        messageCenter,
+        closeoutTrail
+      })
+    : null;
+  const aiCommunicationAssistance = aiOperationalSummary
+    ? deriveAiCommunicationAssistance(aiOperationalSummary)
+    : null;
+  const aiFieldSummary = aiOperationalSummary
+    ? deriveAiFieldSummary({
+        projectId: project.id,
+        projectName: project.name,
+        fieldTrail
+      })
+    : null;
+  const aiDraftActions =
+    aiOperationalSummary && aiCommunicationAssistance && aiFieldSummary
+      ? deriveAiCopilotDraftActions({
+          summary: aiOperationalSummary,
+          communicationAssistance: aiCommunicationAssistance,
+          fieldSummary: aiFieldSummary
+        })
+      : [];
   const proofCenter = deriveProofCenterSummary({
     projectId: project.id,
     estimates: projectEstimates.map((estimate) => ({
@@ -3941,6 +4204,13 @@ export default async function ProjectDetailPage({
             />
 
             <ProjectPulseSection summary={projectPulse} />
+
+            <AiOperationalCopilotSection
+              summary={aiOperationalSummary}
+              fieldSummary={aiFieldSummary}
+              draftActions={showAiDraftActionComposer ? aiDraftActions : []}
+              providerEnhancementNote={aiProviderAvailability.reason}
+            />
 
             <OperationalGuidanceSection
               title="Workflow snapshot"

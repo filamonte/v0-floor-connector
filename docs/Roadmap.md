@@ -202,7 +202,10 @@ Financial work must preserve canonical invoices, payments, line-item lineage, ap
 
 ## 6. Communications, Automation, And AI Assistance
 
-Current status: Foundation for communications/notifications and a closed deterministic Operational Intelligence / Intelligent Follow-Up foundation; GateKeeper and broad AI remain planned.
+Current status: Foundation for communications/notifications, a closed
+deterministic Operational Intelligence / Intelligent Follow-Up foundation, and
+the first AI Operational Copilot Foundation. GateKeeper and broad autonomous AI
+remain planned.
 
 Strategic references:
 
@@ -222,12 +225,20 @@ Implemented deterministic foundation:
 - user-scoped dismiss/snooze through `workflow_cue_states`
 - admin-facing built-in cue-rule guidance at `/settings/operational-intelligence`
 - dashboard awareness surfaces without cue mutation controls
+- AI Operational Copilot deterministic summary helpers and Project Workspace
+  panel deriving review-first project intelligence, recommended next actions,
+  communication-assistance draft text, and field summaries from ProjectPulse,
+  Ready Check, FieldTrail, MessageCenter, and CloseoutTrail; dashboard digest
+  rollup and organization-level AI controls now exist, with provider-ready
+  deterministic fallback but no live provider calls, persisted AI records, or
+  autonomous mutation
 
 Deferred:
 
 - company-scoped cue resolve or mark-handled
 - dashboard dismiss/snooze controls
-- AI summaries and draft assistance
+- live provider-backed AI summaries and draft assistance through the existing
+  internal provider facade
 - autonomous or provider-backed AI actions
 - controlled automation beyond existing guarded notification-only foundations
 

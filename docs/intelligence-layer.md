@@ -153,4 +153,36 @@ Do not build advanced AI, benchmarking, marketplace intelligence, or autonomous 
 
 ## Current Boundary
 
-This document adds a strategic platform layer only. It does not add schema, migrations, routes, UI, reports, AI calls, providers, billing behavior, portal behavior, auth/RLS changes, or implemented metric behavior.
+The first implemented bridge into this strategy is the deterministic
+[AI Operational Copilot Foundation](C:/FloorConnector/docs/ai-operational-copilot-foundation.md).
+It derives project-level summaries, recommended next actions, digest grouping,
+communication-assistance draft text, field summaries, and structured
+review-first draft actions from existing canonical project read models.
+
+The alignment hierarchy is:
+
+`canonical records -> deterministic workflow/readiness signals -> intelligence derivation layer -> Copilot summaries/recommendations -> review-first operational draft actions -> dashboard operational digest -> future provider-backed enhancement -> future orchestration/automation later`
+
+Copilot is therefore the user-facing presentation and action-composer layer over
+deterministic intelligence signals. It is not a parallel cue, readiness,
+recommendation, memory, or orchestration system. It does not add schema,
+migrations, provider AI calls, persisted AI outputs, predictive scoring, billing
+behavior, portal behavior, auth/RLS changes, or autonomous action behavior.
+
+The first dashboard rollup now extends the same hierarchy into an AI
+Operational Digest on the contractor dashboard. That digest aggregates bounded
+dashboard/project signals into attention, ready-to-move, financial, signature,
+field/execution, and suggested-draft sections. It is a company-level entry
+surface into canonical project, contract, invoice, job, schedule, and equipment
+workspaces, not a reporting warehouse, BI truth layer, AI memory system, or
+automation runner.
+
+The provider-ready slice adds governance without changing that boundary.
+Organization workflow settings can enable or suppress Copilot summaries, draft
+actions, dashboard digest visibility, and future provider-backed enhancement.
+The provider facade currently has no live model integration and falls back to
+deterministic canonical-context output when provider enhancement is enabled but
+unavailable. Future model calls must use that facade or a successor internal
+adapter rather than scattering provider SDK logic through pages or components.
+
+Everything beyond that foundation remains strategic platform guidance only.

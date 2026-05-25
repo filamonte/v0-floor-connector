@@ -2,6 +2,11 @@ import { redirect } from "next/navigation";
 
 import { ContractorDashboardSurface } from "@/components/dashboard/contractor-dashboard-surface";
 import type { OperationalGuidanceBucket } from "@/components/operational-guidance-section";
+import {
+  deriveAiOperationalDashboardDigest,
+  type AiOperationalDigestPriority,
+  type AiOperationalDigestSignal
+} from "@/lib/ai-operational-copilot/dashboard-digest";
 import { requireAuthenticatedUser } from "@/lib/auth/session";
 import { listDashboardProjectCueFieldNotes } from "@/lib/field-notes/data";
 import { listContractorNotificationsForContext } from "@/lib/notifications/data";
@@ -10,6 +15,7 @@ import { isOrganizationActivatedForProductionAction } from "@/lib/organizations/
 import { listLeadFollowUpQueue } from "@/lib/opportunities/follow-up-data";
 import { labelLeadFollowUpBucket } from "@/lib/opportunities/follow-up-read-model";
 import { getActiveOrganizationContext } from "@/lib/organizations/active-context";
+import { getOrganizationWorkflowSettings } from "@/lib/organizations/workflow-settings";
 import { hasCompanyProfileFields } from "@/lib/organizations/setup-status";
 import { getOperationalCueDashboard } from "@/lib/operational-cues/data";
 import { applyCueStates } from "@/lib/cue-states/apply";
@@ -37,6 +43,10 @@ import {
 } from "@/lib/projects/cues";
 import { getDashboardProjectFinancialReadinessSummaries } from "@/lib/projects/readiness";
 import { buildScheduleHref } from "@/lib/schedule/links";
+import {
+  normalizeWorkflowGuidancePreferences,
+  shouldShowAiDashboardDigest
+} from "@/lib/workflow-guidance/preferences";
 import {
   completeWorkItemAction,
   dismissWorkItemAction
@@ -116,6 +126,70 @@ function groupByProjectId<T extends { projectId?: string | null }>(items: T[]) {
   }
 
   return grouped;
+}
+
+function mapProjectCuePriority(
+  priority: "critical" | "high" | "medium"
+): AiOperationalDigestPriority {
+  return priority === "medium" ? "normal" : priority;
+}
+
+function inferDigestCategoryFromProjectCue(
+  cue: ReturnType<typeof buildProjectCues>[number]
+): AiOperationalDigestSignal["category"] {
+  if (cue.id.includes("deposit") || /invoice|payment/i.test(cue.title)) {
+    return "financial_follow_up";
+  }
+
+  if (/contract|signature/i.test(cue.title)) {
+    return "signature_follow_up";
+  }
+
+  if (/schedule|job creation|ready/i.test(cue.title)) {
+    return "ready_to_move";
+  }
+
+  if (/field|blocker|daily log/i.test(cue.title)) {
+    return "field_execution_review";
+  }
+
+  return "needs_attention";
+}
+
+function inferDigestDraftActionType(
+  category: AiOperationalDigestSignal["category"]
+): AiOperationalDigestSignal["draftActionType"] {
+  switch (category) {
+    case "financial_follow_up":
+      return "deposit_payment_reminder";
+    case "signature_follow_up":
+      return "contract_signature_reminder";
+    case "ready_to_move":
+      return "scheduling_readiness_coordination";
+    case "field_execution_review":
+      return "blocker_escalation_summary";
+    case "needs_attention":
+    case "suggested_draft_action":
+      return undefined;
+  }
+}
+
+function inferDigestActionKind(
+  category: AiOperationalDigestSignal["category"]
+): AiOperationalDigestSignal["actionKind"] {
+  switch (category) {
+    case "financial_follow_up":
+      return "payment";
+    case "signature_follow_up":
+      return "signature";
+    case "ready_to_move":
+      return "schedule";
+    case "field_execution_review":
+      return "field";
+    case "needs_attention":
+    case "suggested_draft_action":
+      return "review";
+  }
 }
 
 function mapOperationalCueToDashboardItem(cue: OperationalCue) {
@@ -268,7 +342,8 @@ export default async function DashboardPage({
     operationalCueDashboard,
     operationalCockpitReadModel,
     dashboardOverviewReadModel,
-    dashboardProjectCueInputReadModel
+    dashboardProjectCueInputReadModel,
+    workflowSettings
   ] = await Promise.all([
     listLeadFollowUpQueue({ upcomingDays: 7 }),
     countOpenPunchlistItemsForDashboard(),
@@ -300,8 +375,12 @@ export default async function DashboardPage({
     getDashboardProjectCueInputReadModel({
       organizationId: organizationContext.organization.id,
       today
-    })
+    }),
+    getOrganizationWorkflowSettings(organizationContext.organization.id)
   ]);
+  const guidancePreferences = normalizeWorkflowGuidancePreferences(
+    workflowSettings.workflowGuidancePreferences
+  );
 
   const activeProjects = dashboardProjectCueInputReadModel.activeProjects;
   const projectReadinessSnapshots =
@@ -576,6 +655,127 @@ export default async function DashboardPage({
     operationalCockpitReadModel.inProgressServiceJobs;
   const cockpitWarrantyDocumentsNeedingSignature =
     operationalCockpitReadModel.warrantyDocumentsNeedingSignature;
+  const aiOperationalDigestSignals: AiOperationalDigestSignal[] = [
+    ...projectCues.map((cue) => {
+      const category = inferDigestCategoryFromProjectCue(cue);
+
+      return {
+        id: `project-cue-${cue.id}`,
+        category,
+        title: cue.title,
+        summary: cue.projectName
+          ? `${cue.projectName}: ${cue.description}`
+          : cue.description,
+        reason: cue.reason,
+        priority: mapProjectCuePriority(cue.priority),
+        href: cue.href,
+        linkedRecordLabel: cue.projectName || "Project suggestion",
+        sourceSignals: ["Project cue", "Ready Check", "Project Workspace"],
+        recommendedNextStep: cue.actionLabel,
+        draftActionAvailable:
+          category === "financial_follow_up" ||
+          category === "signature_follow_up" ||
+          category === "ready_to_move" ||
+          category === "field_execution_review",
+        draftActionType: inferDigestDraftActionType(category),
+        actionKind: inferDigestActionKind(category)
+      };
+    }),
+    ...cockpitOverdueInvoices.map((invoice) => ({
+      id: `digest-overdue-invoice-${invoice.id}`,
+      category: "financial_follow_up" as const,
+      title: `${invoice.referenceNumber} overdue`,
+      summary: `${invoice.customer?.name ?? "Unknown customer"} / ${invoice.project?.name ?? "Unknown project"}`,
+      reason: `Overdue balance ${formatCurrency(invoice.balanceDueAmount)} was due ${formatShortDate(invoice.dueDate)}.`,
+      priority: "critical" as const,
+      href: `/invoices/${invoice.id}`,
+      linkedRecordLabel: invoice.project?.name ?? invoice.referenceNumber,
+      sourceSignals: ["Invoice", "Payment Trail", "Operational Cockpit"],
+      recommendedNextStep: "Open invoice",
+      draftActionAvailable: true,
+      draftActionType: "deposit_payment_reminder" as const,
+      actionKind: "payment" as const
+    })),
+    ...cockpitWaitingContracts.map((contract) => ({
+      id: `digest-waiting-contract-${contract.id}`,
+      category: "signature_follow_up" as const,
+      title: `${contract.title} needs signature follow-up`,
+      summary: `${contract.customer?.name ?? "Unknown customer"} / ${contract.project?.name ?? "Unknown project"}`,
+      reason:
+        "Signature state still blocks downstream readiness or scheduling handoff.",
+      priority: "high" as const,
+      href: `/contracts/${contract.id}`,
+      linkedRecordLabel: contract.project?.name ?? contract.title,
+      sourceSignals: ["Contract", "Signature Trail", "Operational Cockpit"],
+      recommendedNextStep: "Open contract",
+      draftActionAvailable: true,
+      draftActionType: "contract_signature_reminder" as const,
+      actionKind: "signature" as const
+    })),
+    ...readyProjectsWithoutJobs.map((project) => ({
+      id: `digest-ready-project-${project.id}`,
+      category: "ready_to_move" as const,
+      title: `${project.name} is ready for job creation`,
+      summary: `${project.customer?.name ?? "Unknown customer"} is commercially clear but does not have a job yet.`,
+      reason:
+        "Ready Check is clear and Schedule needs a canonical job before date or crew assignment.",
+      priority: "normal" as const,
+      href: `/projects/${project.id}`,
+      linkedRecordLabel: project.name,
+      sourceSignals: ["Ready Check", "Project Workspace", "CrewBoard"],
+      recommendedNextStep: "Open project",
+      draftActionAvailable: true,
+      draftActionType: "scheduling_readiness_coordination" as const,
+      actionKind: "schedule" as const
+    })),
+    ...cockpitUnscheduledJobs.map((job) => ({
+      id: `digest-unscheduled-job-${job.id}`,
+      category: "ready_to_move" as const,
+      title: `${job.project?.name ?? "Job"} needs schedule placement`,
+      summary: `${job.customer?.name ?? "Unknown customer"} / ${job.estimate?.referenceNumber ?? "Project job"}`,
+      reason:
+        "The canonical job exists but still needs date and crew follow-through.",
+      priority: "normal" as const,
+      href:
+        buildScheduleHref({
+          projectId: job.projectId,
+          view: "unscheduled",
+          action: "schedule",
+          jobId: job.id
+        }) + "#schedule-action",
+      linkedRecordLabel: job.project?.name ?? "Job",
+      sourceSignals: ["Job", "CrewBoard", "Operational Cockpit"],
+      recommendedNextStep: "Open schedule",
+      draftActionAvailable: true,
+      draftActionType: "scheduling_readiness_coordination" as const,
+      actionKind: "schedule" as const
+    })),
+    ...cockpitEquipmentWarnings.map((item) => ({
+      id: `digest-${item.id}`,
+      category: "field_execution_review" as const,
+      title: item.title,
+      summary: item.description,
+      reason: item.why,
+      priority:
+        item.badge === "Blocked" ? ("high" as const) : ("normal" as const),
+      href: item.href,
+      linkedRecordLabel: item.title,
+      sourceSignals: ["Equipment readiness", "Job", "Operational Cockpit"],
+      recommendedNextStep: item.actionLabel,
+      draftActionAvailable: item.badge === "Blocked",
+      draftActionType:
+        item.badge === "Blocked"
+          ? ("blocker_escalation_summary" as const)
+          : undefined,
+      actionKind: "field" as const
+    }))
+  ].slice(0, 24);
+  const aiOperationalDigest = shouldShowAiDashboardDigest(guidancePreferences)
+    ? deriveAiOperationalDashboardDigest({
+        derivedAt: nowIso,
+        signals: aiOperationalDigestSignals
+      })
+    : null;
   const operationalCockpitBuckets: OperationalGuidanceBucket[] = [
     {
       key: "needs-attention",
@@ -1224,6 +1424,7 @@ export default async function DashboardPage({
                 : "ready"
         }
       ]}
+      aiOperationalDigest={aiOperationalDigest}
       operationalCockpitBuckets={operationalCockpitBuckets}
       attentionWidget={attentionWidget}
       projectCueWidget={{

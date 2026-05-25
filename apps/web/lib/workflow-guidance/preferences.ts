@@ -20,6 +20,8 @@ export const defaultWorkflowGuidancePreferences: WorkflowGuidancePreferences = {
   enableAiSuggestions: false,
   enableAiSummaries: false,
   enableAiDrafting: false,
+  enableAiDashboardDigest: false,
+  enableAiProviderEnhancements: false,
   enableAiFormPrefillSuggestions: false,
   enableAiWorkItemRecommendations: false,
   requireConfirmationBeforeAiActions: true
@@ -55,14 +57,18 @@ export function normalizeWorkflowGuidancePreferences(
     return defaultWorkflowGuidancePreferences;
   }
 
-  const candidate = value as Partial<Record<keyof WorkflowGuidancePreferences, unknown>>;
+  const candidate = value as Partial<
+    Record<keyof WorkflowGuidancePreferences, unknown>
+  >;
   const workflowMode = normalizeWorkflowMode(candidate.workflowMode);
 
   return {
     workflowMode,
     showNextBestActions: coerceBoolean(
       candidate.showNextBestActions,
-      workflowMode === "manual" ? false : defaultWorkflowGuidancePreferences.showNextBestActions,
+      workflowMode === "manual"
+        ? false
+        : defaultWorkflowGuidancePreferences.showNextBestActions,
       workflowMode
     ),
     showReadinessGuidance: coerceBoolean(
@@ -107,6 +113,16 @@ export function normalizeWorkflowGuidancePreferences(
       defaultWorkflowGuidancePreferences.enableAiDrafting,
       workflowMode
     ),
+    enableAiDashboardDigest: coerceBoolean(
+      candidate.enableAiDashboardDigest,
+      defaultWorkflowGuidancePreferences.enableAiDashboardDigest,
+      workflowMode
+    ),
+    enableAiProviderEnhancements: coerceBoolean(
+      candidate.enableAiProviderEnhancements,
+      defaultWorkflowGuidancePreferences.enableAiProviderEnhancements,
+      workflowMode
+    ),
     enableAiFormPrefillSuggestions: coerceBoolean(
       candidate.enableAiFormPrefillSuggestions,
       defaultWorkflowGuidancePreferences.enableAiFormPrefillSuggestions,
@@ -124,7 +140,9 @@ export function normalizeWorkflowGuidancePreferences(
 export function shouldShowNextBestActions(
   preferences: WorkflowGuidancePreferences
 ) {
-  return preferences.workflowMode !== "manual" && preferences.showNextBestActions;
+  return (
+    preferences.workflowMode !== "manual" && preferences.showNextBestActions
+  );
 }
 
 export function shouldShowReadinessGuidance(
@@ -136,7 +154,10 @@ export function shouldShowReadinessGuidance(
 export function shouldUseStrictReadinessPresentation(
   preferences: WorkflowGuidancePreferences
 ) {
-  return preferences.workflowMode === "guided" && preferences.strictReadinessEnforcement;
+  return (
+    preferences.workflowMode === "guided" &&
+    preferences.strictReadinessEnforcement
+  );
 }
 
 export function isAiAssistanceEnabled(
@@ -146,8 +167,44 @@ export function isAiAssistanceEnabled(
     preferences.enableAiSuggestions ||
     preferences.enableAiSummaries ||
     preferences.enableAiDrafting ||
+    preferences.enableAiDashboardDigest ||
+    preferences.enableAiProviderEnhancements ||
     preferences.enableAiFormPrefillSuggestions ||
     preferences.enableAiWorkItemRecommendations
+  );
+}
+
+export function shouldShowAiCopilotSummaries(
+  preferences: WorkflowGuidancePreferences
+) {
+  return preferences.workflowMode !== "manual" && preferences.enableAiSummaries;
+}
+
+export function shouldShowAiDraftActions(
+  preferences: WorkflowGuidancePreferences
+) {
+  return (
+    preferences.workflowMode !== "manual" &&
+    preferences.enableAiDrafting &&
+    preferences.requireConfirmationBeforeAiActions
+  );
+}
+
+export function shouldShowAiDashboardDigest(
+  preferences: WorkflowGuidancePreferences
+) {
+  return (
+    preferences.workflowMode !== "manual" && preferences.enableAiDashboardDigest
+  );
+}
+
+export function areAiProviderEnhancementsAllowed(
+  preferences: WorkflowGuidancePreferences
+) {
+  return (
+    preferences.workflowMode !== "manual" &&
+    preferences.enableAiProviderEnhancements &&
+    isAiAssistanceEnabled(preferences)
   );
 }
 

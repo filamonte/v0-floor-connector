@@ -7,12 +7,17 @@ This is a compact handoff for future Codex sessions. It is not a competing
 source of truth. Use it to orient quickly, then verify implementation truth in
 `docs/current-state.md`.
 
+Use [docs/feature-build-status.md](C:/FloorConnector/docs/feature-build-status.md)
+as an important planning reference when a task needs investor/demo/dev-friendly
+feature inventory, status categories, or built-versus-planned boundaries.
+
 ## Required First Reads
 
 Read these before implementation or documentation work:
 
 - [docs/developer-source-of-truth.md](C:/FloorConnector/docs/developer-source-of-truth.md)
 - [docs/current-state.md](C:/FloorConnector/docs/current-state.md)
+- [docs/feature-build-status.md](C:/FloorConnector/docs/feature-build-status.md)
 - [docs/workflows.md](C:/FloorConnector/docs/workflows.md)
 - [docs/system-overview.md](C:/FloorConnector/docs/system-overview.md)
 - [docs/Roadmap.md](C:/FloorConnector/docs/Roadmap.md)
@@ -39,6 +44,25 @@ Current operating-core surfaces include:
 - Project Workspace as the main continuity hub with ProjectPulse, FieldTrail,
   MessageCenter, CloseoutTrail, Proof Center, Send Trail context,
   service/warranty continuity, customer access, and closeout package handoff.
+- AI Operational Copilot Foundation in Project Workspace, deriving review-first
+  project intelligence, recommended next actions, draft-assistance text, and
+  field summaries from ProjectPulse, Ready Check, FieldTrail, MessageCenter,
+  and CloseoutTrail. The Copilot Action Composer now adds structured
+  review-first operational draft actions for customer follow-up, signature,
+  payment, scheduling, field progress, PM summary, stalled-workflow, and blocker
+  escalation contexts; drafts are deterministic, manual-use only, and never
+  sent or persisted as AI truth. See
+  [docs/ai-operational-copilot-foundation.md](C:/FloorConnector/docs/ai-operational-copilot-foundation.md).
+- Dashboard AI Operational Digest now rolls existing dashboard/project signals
+  into compact company-level attention, ready-to-move, financial, field, and
+  suggested-draft sections. It links back to canonical workspaces and does not
+  create tasks, send messages, persist AI output, call provider AI, or mutate
+  source records.
+- AI provider abstraction and organization controls are in place. Workflow
+  settings can suppress Copilot summaries, draft actions, dashboard digest
+  visibility, and future provider-backed enhancement; the current provider
+  facade has no live model integration and falls back to deterministic
+  canonical-context output.
 - CrewBoard on `/schedule` over canonical jobs, appointments, job assignments,
   people, vendors, projects, and customers.
 - Portal Customer Window with Customer Next Step, Project Status Window,

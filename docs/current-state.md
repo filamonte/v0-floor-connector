@@ -66,6 +66,36 @@ AI work must preserve canonical records, tenant boundaries, permissions,
 workflow state, communications, events, and audit/governance controls. The
 strategic target direction lives in [docs/agentic-operations-layer.md](C:/FloorConnector/docs/agentic-operations-layer.md).
 
+AI Operational Copilot Foundation is now implemented as a deterministic,
+review-first intelligence layer over existing canonical project summaries. The
+Project Workspace shows an AI Operational Copilot panel after ProjectPulse,
+deriving project summary, readiness/financial/schedule/execution state,
+recommended next actions, draft-assistance text, field summary, and structured
+review-first draft actions from ProjectPulse, Ready Check, FieldTrail,
+MessageCenter, and CloseoutTrail. The action composer can produce deterministic
+customer follow-up, contract/signature reminder, deposit/payment reminder,
+scheduling coordination, field progress update, internal PM summary,
+stalled-project follow-up, and blocker/escalation drafts. The foundation lives in
+[apps/web/lib/ai-operational-copilot/summary.ts](C:/FloorConnector/apps/web/lib/ai-operational-copilot/summary.ts)
+and is documented in
+[docs/ai-operational-copilot-foundation.md](C:/FloorConnector/docs/ai-operational-copilot-foundation.md).
+It adds no schema, migrations, provider calls, persisted AI records, chatbot
+memory, autonomous workflow execution, customer-facing send behavior, financial
+mutation, signature mutation, scheduling mutation, or portal-specific AI copies.
+The dashboard now also includes a compact AI Operational Digest panel derived
+from existing dashboard/project signals, operational cockpit previews, Ready
+Check handoffs, contracts, invoices, jobs, equipment readiness, and project
+cues. It groups what needs attention, ready-to-move handoffs, financial
+follow-up, field/execution review, and suggested draft-action availability while
+linking back to canonical workspaces. The digest does not create dashboard-owned
+workflow records, send messages, create tasks, persist AI output, call provider
+AI, or mutate projects, invoices, contracts, jobs, payments, messages, or tasks.
+The AI foundation now also has organization-level workflow controls for AI
+summaries, drafting, dashboard digest visibility, and future provider-backed
+enhancement. Those controls live in the existing workflow guidance preferences
+JSON, so this slice adds no schema or migration. The provider abstraction is a
+no-provider deterministic fallback today; live model calls remain future work.
+
 ## Repository Shape
 
 - Monorepo managed with `pnpm` and `turbo`

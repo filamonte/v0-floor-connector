@@ -831,6 +831,8 @@ export interface WorkflowGuidancePreferences {
   enableAiSuggestions: boolean;
   enableAiSummaries: boolean;
   enableAiDrafting: boolean;
+  enableAiDashboardDigest: boolean;
+  enableAiProviderEnhancements: boolean;
   enableAiFormPrefillSuggestions: boolean;
   enableAiWorkItemRecommendations: boolean;
   requireConfirmationBeforeAiActions: boolean;

@@ -65,26 +65,29 @@ function optionalEmailField() {
 }
 
 function optionalHttpUrlField(label: string) {
-  return trimmedNullableString(2000).refine((value) => {
-    if (value === null) {
-      return true;
-    }
+  return trimmedNullableString(2000).refine(
+    (value) => {
+      if (value === null) {
+        return true;
+      }
 
-    const parsed = z.string().url().safeParse(value);
+      const parsed = z.string().url().safeParse(value);
 
-    if (!parsed.success) {
-      return false;
-    }
+      if (!parsed.success) {
+        return false;
+      }
 
-    try {
-      const url = new URL(value);
-      return url.protocol === "http:" || url.protocol === "https:";
-    } catch {
-      return false;
+      try {
+        const url = new URL(value);
+        return url.protocol === "http:" || url.protocol === "https:";
+      } catch {
+        return false;
+      }
+    },
+    {
+      message: `${label} must be a valid http or https URL.`
     }
-  }, {
-    message: `${label} must be a valid http or https URL.`
-  });
+  );
 }
 
 function optionalBrandAccentColorField() {
@@ -149,9 +152,12 @@ function optionalUuidField(message: string) {
     .transform((value) => (value.length > 0 ? value : null))
     .nullable()
     .optional()
-    .refine((value) => value === null || z.string().uuid().safeParse(value).success, {
-      message
-    })
+    .refine(
+      (value) => value === null || z.string().uuid().safeParse(value).success,
+      {
+        message
+      }
+    )
     .transform((value) => value ?? null);
 }
 
@@ -220,6 +226,8 @@ export const organizationWorkflowSettingsInputSchema = z.object({
   enableAiSuggestions: z.boolean(),
   enableAiSummaries: z.boolean(),
   enableAiDrafting: z.boolean(),
+  enableAiDashboardDigest: z.boolean(),
+  enableAiProviderEnhancements: z.boolean(),
   enableAiFormPrefillSuggestions: z.boolean(),
   enableAiWorkItemRecommendations: z.boolean()
 });
@@ -298,9 +306,12 @@ export const organizationProfileInputSchema = z.object({
     .max(2000, "Logo URL must be 2000 characters or fewer.")
     .transform((value) => (value.length > 0 ? value : null))
     .nullable()
-    .refine((value) => value === null || z.string().url().safeParse(value).success, {
-      message: "Logo URL must be a valid absolute URL."
-    }),
+    .refine(
+      (value) => value === null || z.string().url().safeParse(value).success,
+      {
+        message: "Logo URL must be a valid absolute URL."
+      }
+    ),
   phone: trimmedNullableString(40),
   email: optionalEmailField(),
   websiteUrl: optionalHttpUrlField("Website URL"),
@@ -321,17 +332,15 @@ export const catalogItemSettingsInputSchema = z
   .object({
     itemId: optionalUuidField("Select a valid catalog item."),
     inventoryItemId: optionalUuidField("Select a valid inventory record."),
-    itemType: z.enum(
-      [
-        "material",
-        "labor",
-        "service",
-        "equipment",
-        "subcontractor",
-        "other",
-        "system"
-      ] as const
-    ),
+    itemType: z.enum([
+      "material",
+      "labor",
+      "service",
+      "equipment",
+      "subcontractor",
+      "other",
+      "system"
+    ] as const),
     name: z.string().trim().min(1, "Catalog item name is required.").max(120),
     description: trimmedNullableString(255),
     internalNotes: trimmedNullableString(2000),
@@ -413,7 +422,11 @@ export const inventoryItemSettingsInputSchema = z.object({
   sku: trimmedNullableString(120),
   description: trimmedNullableString(255),
   category: trimmedNullableString(120),
-  unitOfMeasure: z.string().trim().min(1, "Unit of measure is required.").max(40),
+  unitOfMeasure: z
+    .string()
+    .trim()
+    .min(1, "Unit of measure is required.")
+    .max(40),
   reorderPoint: z
     .string()
     .trim()
@@ -445,9 +458,14 @@ export const inventoryItemSettingsInputSchema = z.object({
 export const inventoryTransactionSettingsInputSchema = z.object({
   transactionId: optionalUuidField("Select a valid inventory transaction."),
   inventoryItemId: z.string().uuid("Select a valid inventory item."),
-  transactionType: z.enum(
-    ["purchase", "adjustment", "job_usage", "return", "waste", "transfer"] as const
-  ),
+  transactionType: z.enum([
+    "purchase",
+    "adjustment",
+    "job_usage",
+    "return",
+    "waste",
+    "transfer"
+  ] as const),
   quantityChange: z
     .string()
     .trim()

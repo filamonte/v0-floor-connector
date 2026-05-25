@@ -340,6 +340,16 @@ export default async function SettingsWorkflowsPage({
                   checked: guidancePreferences.enableAiDrafting
                 },
                 {
+                  name: "enableAiDashboardDigest",
+                  label: "AI dashboard digest",
+                  checked: guidancePreferences.enableAiDashboardDigest
+                },
+                {
+                  name: "enableAiProviderEnhancements",
+                  label: "Provider-backed AI enhancements",
+                  checked: guidancePreferences.enableAiProviderEnhancements
+                },
+                {
                   name: "enableAiFormPrefillSuggestions",
                   label: "AI form prefill suggestions",
                   checked: guidancePreferences.enableAiFormPrefillSuggestions
