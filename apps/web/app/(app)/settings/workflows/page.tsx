@@ -311,14 +311,14 @@ export default async function SettingsWorkflowsPage({
           <section className={workflowPanelClassName}>
             <div>
               <p className="text-sm font-semibold text-slate-950">
-                AI assistance
+                Guided assistance controls
               </p>
               <p className="mt-2 text-sm leading-6 text-slate-600">
-                AI assistance is separate from workflow guidance. Turning
-                guidance down does not turn AI on, and turning AI on later will
-                still require human confirmation before customer-facing,
-                billing, scheduling, permission, signature, or commercial
-                actions.
+                These preferences govern advisory summaries, draft preparation,
+                and future provider enhancement separately from workflow
+                guidance. Human confirmation remains required before any
+                customer-facing, billing, scheduling, permission, signature, or
+                commercial action.
               </p>
             </div>
 
@@ -326,37 +326,37 @@ export default async function SettingsWorkflowsPage({
               {[
                 {
                   name: "enableAiSuggestions",
-                  label: "AI suggestions",
+                  label: "Suggestions",
                   checked: guidancePreferences.enableAiSuggestions
                 },
                 {
                   name: "enableAiSummaries",
-                  label: "AI summaries",
+                  label: "Summaries",
                   checked: guidancePreferences.enableAiSummaries
                 },
                 {
                   name: "enableAiDrafting",
-                  label: "AI drafting",
+                  label: "Draft preparation",
                   checked: guidancePreferences.enableAiDrafting
                 },
                 {
                   name: "enableAiDashboardDigest",
-                  label: "AI dashboard digest",
+                  label: "Dashboard digest",
                   checked: guidancePreferences.enableAiDashboardDigest
                 },
                 {
                   name: "enableAiProviderEnhancements",
-                  label: "Provider-backed AI enhancements",
+                  label: "Provider-backed enhancement",
                   checked: guidancePreferences.enableAiProviderEnhancements
                 },
                 {
                   name: "enableAiFormPrefillSuggestions",
-                  label: "AI form prefill suggestions",
+                  label: "Form prefill suggestions",
                   checked: guidancePreferences.enableAiFormPrefillSuggestions
                 },
                 {
                   name: "enableAiWorkItemRecommendations",
-                  label: "AI work-item recommendations",
+                  label: "Work-item recommendations",
                   checked: guidancePreferences.enableAiWorkItemRecommendations
                 }
               ].map((preference) => (
@@ -375,8 +375,8 @@ export default async function SettingsWorkflowsPage({
                       {preference.label}
                     </span>
                     <span className="mt-1 block text-xs leading-5 text-slate-500">
-                      Stores the preference contract only; no autonomous AI
-                      action is enabled here.
+                      Stores the preference contract only; this setting does not
+                      enable autonomous action.
                     </span>
                   </span>
                 </label>

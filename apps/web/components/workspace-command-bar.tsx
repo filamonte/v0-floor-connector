@@ -35,7 +35,9 @@ export function WorkspaceCommandBar({
       <div className="flex flex-col gap-1.5 xl:min-w-[420px] xl:max-w-[620px] xl:items-end">
         {searchSlot ? <div className="w-full">{searchSlot}</div> : null}
         {actionSlot ? (
-          <div className="flex flex-wrap justify-end gap-1.5">{actionSlot}</div>
+          <div className="flex flex-wrap justify-start gap-1.5 sm:justify-end">
+            {actionSlot}
+          </div>
         ) : null}
       </div>
     </div>

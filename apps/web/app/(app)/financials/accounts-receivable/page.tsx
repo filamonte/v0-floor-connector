@@ -77,7 +77,7 @@ export default async function AccountsReceivablePage() {
     <ContractorWorkspacePage
       eyebrow="Financials"
       title="Accounts Receivable"
-      description="Review open balances, overdue invoices, pending checkout activity, and payment attention."
+      description="Review open balances, overdue invoices, pending checkout activity, and the next collection move."
       summary={
         <div className="grid gap-px border border-[#d6d6d6] bg-[#d6d6d6] sm:grid-cols-2 xl:grid-cols-4">
           <div className="bg-white px-3 py-2.5">
@@ -152,10 +152,10 @@ export default async function AccountsReceivablePage() {
           <div className="flex flex-col gap-3 border-b border-[#e5e5e5] px-5 py-4 lg:flex-row lg:items-start lg:justify-between">
             <div>
               <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#8f5b32]">
-                Collections intelligence
+                Collections review
               </p>
               <h2 className="mt-2 text-xl font-semibold tracking-tight text-slate-950">
-                Payment follow-up foundation
+                Payment follow-up queue
               </h2>
               <p className="mt-1 max-w-[78ch] text-sm leading-6 text-slate-500">
                 {readModel.collectionsIntelligence.headline} Items are derived
@@ -257,7 +257,7 @@ export default async function AccountsReceivablePage() {
                             href={item.communicationHandoffHref}
                             className="inline-flex items-center justify-center rounded-[4px] border border-[#e4d7ca] bg-[#fffcf7] px-3 py-2 text-sm font-medium text-[#8f5b32] transition hover:bg-white"
                           >
-                            Use draft
+                            Review draft
                           </Link>
                         ) : item.draftActionAvailable ? (
                           <span className="inline-flex items-center justify-center rounded-[4px] border border-[#d6d6d6] bg-[#f8f8f8] px-3 py-2 text-sm font-medium text-slate-500">
@@ -273,7 +273,7 @@ export default async function AccountsReceivablePage() {
             <div className="px-6 py-8">
               <AppEmptyState
                 eyebrow="No collections follow-up"
-                title="No payment nudges need review"
+                title="No payment follow-ups need review"
                 description="When overdue balances, unpaid deposits, partial balances, pending checkout, or failed payment attempts appear, they will surface here with source-record links."
               />
             </div>

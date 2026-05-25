@@ -157,13 +157,13 @@ export default async function ProjectsPage({
   return (
     <ContractorWorkspacePage
       eyebrow="Projects"
-      title={`Operational hubs for ${organizationContext.organization.displayName}`}
+      title={`Project command centers for ${organizationContext.organization.displayName}`}
       description="Projects are the operational root connecting customer context to estimating, contracts, execution, billing, and closeout."
       summary={
         <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
           <div className="rounded-lg border border-[var(--border-warm)] bg-white px-4 py-3">
             <p className="text-[11px] uppercase tracking-[0.14em] text-[var(--text-secondary)]">
-              Lead
+              Opportunity
             </p>
             <p className="mt-1 text-2xl font-semibold tracking-tight text-[var(--text-primary)]">
               {counts.lead}
@@ -198,9 +198,9 @@ export default async function ProjectsPage({
       commandBar={{
         supportSlot: (
           <p>
-            Search the operational project manager, switch between real project
+            Search the project command center, switch between real project
             statuses, and quick create only when you are ready to open the full
-            project workspace.
+            Project Workspace.
           </p>
         ),
         searchSlot: (
@@ -308,10 +308,10 @@ export default async function ProjectsPage({
         <section className="order-2 grid gap-3 xl:grid-cols-2 2xl:grid-cols-4">
           <ManagerDashboardCard
             eyebrow="Workflow queue"
-            title="Lead"
-            description="Projects that are still sitting in the earliest commercial stage."
+            title="Opportunity"
+            description="Projects still in the earliest commercial handoff."
             actionHref={buildProjectsHref({ q: query, status: "lead" })}
-            actionLabel="View lead"
+            actionLabel="Open opportunities"
             items={leadProjects.slice(0, 4).map((project) => ({
               href: `/projects/${project.id}`,
               title: project.name,
@@ -320,15 +320,15 @@ export default async function ProjectsPage({
               badge: project.status,
               trailing: formatDateLabel(project.updatedAt)
             }))}
-            emptyTitle="No lead-stage projects"
-            emptyDescription="Lead-stage projects will appear here when they are first created."
+            emptyTitle="No opportunity-stage projects"
+            emptyDescription="Early commercial projects will appear here when they are first created."
           />
           <ManagerDashboardCard
             eyebrow="Workflow queue"
             title="Estimating"
             description="Projects currently tied to estimate follow-through."
             actionHref={buildProjectsHref({ q: query, status: "estimating" })}
-            actionLabel="View estimating"
+            actionLabel="Open estimating"
             items={estimatingProjects.slice(0, 4).map((project) => ({
               href: `/projects/${project.id}`,
               title: project.name,
@@ -362,7 +362,7 @@ export default async function ProjectsPage({
             title="Ready to schedule"
             description="Projects carrying a ready-to-schedule marker."
             actionHref={buildProjectsHref({ q: query })}
-            actionLabel="Open projects"
+            actionLabel="Open ready projects"
             items={readyToScheduleProjects.slice(0, 4).map((project) => ({
               href: `/projects/${project.id}`,
               title: project.name,
@@ -471,7 +471,7 @@ export default async function ProjectsPage({
                 description={
                   counts.all > 0
                     ? "Try a broader search or switch to another real project status."
-                    : "Create your first project. Everything starts from the project."
+                    : "Create your first project to anchor customer, estimate, contract, job, invoice, and payment continuity."
                 }
                 actionHref={buildProjectsHref({
                   q: query,

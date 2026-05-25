@@ -44,7 +44,7 @@ export function ContractorWorkspacePage({
             darkHeader ? "bg-[var(--copper)]" : "bg-[var(--graphite)]"
           ].join(" ")}
         />
-        <div className="flex flex-col gap-2 xl:flex-row xl:items-end xl:justify-between">
+        <div className="flex min-w-0 flex-col gap-2 xl:flex-row xl:items-end xl:justify-between">
           <div className="min-w-0">
             <p
               className={[
@@ -58,7 +58,7 @@ export function ContractorWorkspacePage({
             </p>
             <h1
               className={[
-                "mt-1 text-[20px] font-semibold tracking-tight sm:text-[22px]",
+                "mt-1 break-words text-[20px] font-semibold tracking-tight [overflow-wrap:anywhere] sm:text-[22px]",
                 darkHeader ? "text-white" : "text-[var(--text-primary)]"
               ].join(" ")}
             >
@@ -66,7 +66,7 @@ export function ContractorWorkspacePage({
             </h1>
             <p
               className={[
-                "mt-1 max-w-4xl text-[13px] leading-5",
+                "mt-1 max-w-4xl break-words text-[13px] leading-5 [overflow-wrap:anywhere]",
                 darkHeader ? "text-gray-200" : "text-[var(--text-secondary)]"
               ].join(" ")}
             >
@@ -74,7 +74,9 @@ export function ContractorWorkspacePage({
             </p>
           </div>
           {summary ? (
-            <div className="xl:max-w-[560px] xl:flex-shrink-0">{summary}</div>
+            <div className="min-w-0 xl:max-w-[560px] xl:flex-shrink-0">
+              {summary}
+            </div>
           ) : null}
         </div>
 

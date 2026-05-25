@@ -974,7 +974,7 @@ function AiOperationalCopilotSection({
               AI Operational Copilot
             </p>
             <h3 className="mt-2 text-lg font-semibold tracking-tight text-[var(--text-primary)]">
-              Project intelligence
+              Project guidance
             </h3>
             <p className="mt-2 max-w-[74ch] text-sm leading-6 text-[var(--text-secondary)]">
               Copilot explains what the timeline and readiness signals mean,
@@ -1055,7 +1055,7 @@ function AiOperationalCopilotSection({
         <div className="space-y-px bg-[var(--border-warm)]">
           <div className="bg-white px-4 py-4 sm:px-5">
             <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--text-secondary)]">
-              Draft action composer
+              Review-first draft composer
             </p>
             {draftActions.length > 0 ? (
               <div className="mt-3 space-y-3">
@@ -1095,7 +1095,7 @@ function AiOperationalCopilotSection({
                       })}
                       className="mt-3 inline-flex h-8 items-center rounded-full border border-[#e4d7ca] bg-white px-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-[#8f5b32] transition hover:bg-[#fbf5ee]"
                     >
-                      Use draft
+                      Review draft
                     </Link>
                   </div>
                 ))}
