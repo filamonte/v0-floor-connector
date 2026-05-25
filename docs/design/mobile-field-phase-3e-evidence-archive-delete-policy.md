@@ -121,9 +121,11 @@ Current schema shape:
 
 - `execution_attachments` has `id`, `company_id`, `subject_type`,
   `subject_id`, `attachment_type`, `storage_path`, `file_name`, `mime_type`,
-  `caption`, `uploaded_by`, `created_at`, and `updated_at`.
-- There is no `archived_at`, `archived_by`, `deleted_at`, `deleted_by`,
-  status, archive reason, deletion reason, or attachment event model.
+  `caption`, `uploaded_by`, `created_at`, `updated_at`, `archived_at`,
+  `archived_by`, `archive_reason`, `restored_at`, `restored_by`, and
+  `restore_reason`.
+- There is no `deleted_at`, `deleted_by`, delete reason, generic lifecycle
+  status, storage cleanup marker, or attachment event model.
 - RLS exists for select/insert/update by active company membership. There is no
   delete policy on `execution_attachments`.
 
@@ -166,22 +168,21 @@ archived the item and when.
 
 ## Schema Implications
 
-The current schema does not support archive/delete safely.
+The current schema now supports metadata archive/restore safely, but it does
+not support permanent deletion or storage cleanup policy safely.
 
-Phase 3E-A should include a future migration that adds archive metadata to
-`execution_attachments`, likely:
+Phase 3E-A added `archived_at`, `archived_by`, `archive_reason`,
+`restored_at`, `restored_by`, and `restore_reason` through
+`supabase/migrations/20260524190000_execution_attachments_archive_metadata.sql`.
+It also added active and archived indexes so default subject reads can stay
+active-only:
 
-- `archived_at timestamptz`
-- `archived_by uuid references public.users(id) on delete set null`
-- optional `archive_reason text`
+- `execution_attachments_company_subject_active_idx`
+- `execution_attachments_company_archived_at_idx`
 
-Recommended indexes/checks:
-
-- Add an index that keeps active subject reads efficient, such as
-  `(company_id, subject_type, subject_id, created_at desc) where archived_at is null`,
-  or update query planning based on measured usage.
-- Keep restore simple by clearing `archived_at`, `archived_by`, and optional
-  `archive_reason`.
+Current restore behavior clears `archived_at`, `archived_by`, and
+`archive_reason`, then records the latest restore timestamp, actor, and optional
+reason.
 
 Do not use hard delete or storage deletion to represent ordinary "remove this
 from the row" behavior. Do not reuse `updated_at` alone as an archive signal. Do
@@ -348,27 +349,34 @@ Future Phase 3E-A tests should cover:
 Validation for the planning pass itself is docs-only: focused Prettier and
 `git diff --check`.
 
-## Recommended Next Implementation Prompt
+## Recommended Future Prompt
 
-Title: `Mobile Field Phase 3E-A - Evidence Archive Metadata`
+Phase 3E-A has already been implemented as metadata archive/restore only. The
+next safe prompt should not build hard-delete yet; it should either QA the
+implemented archive/restore behavior against real uploaded evidence or plan
+retention and audit policy for any later destructive action.
+
+Recommended immediate prompt:
+
+Title: `Mobile Field Phase 3E-A QA - Evidence Archive Restore Checkpoint`
 
 Prompt:
 
 ```text
-Implement Mobile Field Phase 3E-A: contractor-side field evidence metadata
-archive and restore.
+Verify Mobile Field Phase 3E-A archive/restore behavior for contractor-side
+field evidence.
 
-This is not storage deletion. Do not hard-delete storage objects. Do not change
-storage policies. Do not expose field evidence to portal/customer users. Do not
-add thumbnails, AI summaries, notifications, automation, or closeout package
-file embedding.
+This is a QA/checkpoint pass. Do not add schema or migrations. Do not hard-delete
+storage objects. Do not change storage policies. Do not expose field evidence to
+portal/customer users. Do not add thumbnails, AI summaries, notifications,
+automation, or closeout package file embedding.
 
-Add a migration for `execution_attachments` archive metadata, update generated
-types as needed, add owner/admin/manager archive and restore server actions,
-filter archived evidence from default Daily Log rows and active proof counts,
-preserve contractor-only signed URL boundaries, and add focused tests proving
-archived evidence is hidden from active rows/counts and does not call storage
-delete.
+Confirm archived evidence is hidden from default Daily Log rows and active
+FieldTrail / Proof Center / CloseoutTrail counts, restore returns evidence to
+active rows/counts, signed URL access stays active-only by default, storage
+delete is not called, and portal/customer routes remain dark. Use real uploaded
+evidence only when saved contractor auth and local data are healthy; otherwise
+report the exact blocker.
 ```
 
 ## What Is Intentionally Not Implemented Yet

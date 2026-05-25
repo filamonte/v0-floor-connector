@@ -228,6 +228,8 @@ file` actions without exposing raw storage paths. This remains contractor-only
   detail exposes owner/admin/manager archive/restore controls; archived evidence
   is hidden from active Daily Log rows and active FieldTrail / Proof Center /
   CloseoutTrail counts; private `documents` bucket objects are kept.
+  The policy doc was reconciled after implementation so its schema and next
+  prompt sections no longer describe Phase 3E-A as future-only.
   Hard-delete, storage cleanup jobs, storage policy changes, portal/customer
   exposure, thumbnails, AI summaries, notifications, and automation remain
   deferred.

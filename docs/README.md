@@ -166,9 +166,10 @@ High-signal operating-core docs:
   boundaries, Daily Log / Job Note parent validation, portal exclusion, and
   remaining real-evidence browser QA follow-up
 - [docs/design/mobile-field-phase-3e-evidence-archive-delete-policy.md](C:/FloorConnector/docs/design/mobile-field-phase-3e-evidence-archive-delete-policy.md):
-  planning policy for field evidence archive/delete behavior, recommending
-  metadata archive/restore first while deferring storage hard-delete and cleanup
-  jobs until retention, audit, and owner/admin delete rules are approved
+  field evidence archive/delete policy and current Phase 3E-A implementation
+  note, recording metadata archive/restore as implemented while deferring
+  storage hard-delete and cleanup jobs until retention, audit, and owner/admin
+  delete rules are approved
 - [docs/design/supabase-field-evidence-storage-verification.md](C:/FloorConnector/docs/design/supabase-field-evidence-storage-verification.md):
   read-only Supabase storage readiness verification for field evidence,
   confirming the intended FloorConnector project, relevant remote migrations,
