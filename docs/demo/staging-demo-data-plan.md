@@ -191,6 +191,34 @@ Unsafe as a staging demo strategy:
   customer, project, estimate, contract, invoice, job, daily log, service
   ticket, and communication records without relying on UUIDs.
 
+### One-Project Golden Path Readiness Matrix
+
+The strongest current demo target is one recognizable project that can exercise
+the newer operational stack without making users hunt across unrelated fixtures.
+That project should have enough canonical records to prove:
+
+- Dashboard Operational Digest source signals from project, financial,
+  schedule, field, and communication context
+- Project Command Timeline coverage for needs-attention, ready-to-move, and
+  recent movement items
+- Project Copilot summary and at least one review-first draft action
+- CrewBoard readiness and scheduling context on canonical jobs and assignments
+- Accounts Receivable collections intelligence from canonical invoice/payment
+  state
+- Document Readiness on estimate, contract, and invoice workspaces
+- Communications handoff plus customer send-readiness for at least one
+  estimate-, contract-, or invoice-related draft
+- Daily Log, open blocker/issue note, resolved note, and field evidence where
+  fixture-safe
+- portal-safe customer project status plus portal estimate, contract, and
+  invoice review routes
+
+This is a read-model and QA target, not a new data model. The project does not
+need separate activity records, portal-only copies, provider events, or AI-owned
+truth. If one project cannot safely carry every state, a secondary companion
+project may cover closeout/paid-state evidence, but the main demo should still
+center on one customer/project story.
+
 ## 5. Existing Coverage
 
 Existing local fixture/test patterns cover part of the dataset:
@@ -205,6 +233,10 @@ Existing local fixture/test patterns cover part of the dataset:
   responsibility defaults inside dashboard My Work tests
 - payment pending/failure/void/success event coverage inside payment E2E lanes,
   but those are QA lanes and should not be treated as staging demo data creation
+- Project Command Timeline, Document Readiness, Customer Communication
+  Send Readiness, Collections Follow-Up Intelligence, and AI Operational
+  Copilot are implemented and tested, but current local data discovery does not
+  guarantee that one project lights all of them up together
 
 Route discovery already handles:
 
@@ -220,6 +252,12 @@ Missing for a full staging operating-core demo:
 
 - a single coherent owner-approved dataset that ties every demo surface to one
   recognizable customer/project story
+- a document-specific customer-bound communication handoff that reliably shows
+  send-readiness for an estimate, contract, or invoice
+- guaranteed estimate, contract, and invoice detail paths in the active local
+  contractor fixture
+- one project with enough linked records for the Project Command Timeline to
+  show the full lifecycle story instead of a minimal valid project
 - controlled fixture coverage for completed/closeout-ready project state
 - one intentional matrix of job states for CrewBoard
 - durable service ticket plus warranty document examples linked to the same
@@ -243,8 +281,9 @@ Unsafe or not ready to seed without more design:
 
 ## 7. Recommended Demo Data Strategy
 
-Recommended next step: **Hybrid: manual auth/org setup plus safe tenant-scoped
-seed script, after a separate approved implementation prompt.**
+Recommended next step: **Dry-run inventory enhancement now; hybrid manual
+auth/org setup plus a safe tenant-scoped seed script only after separate owner
+approval.**
 
 Why:
 
@@ -257,6 +296,17 @@ Why:
   tenant-scoped script can be safe for local/test use
 - staging should not inherit spec-local cleanup behavior without a clearer
   idempotency and cleanup policy
+- the current immediate need is not broader product behavior; it is knowing
+  which golden-path records are missing before any owner considers write mode
+
+Decision matrix:
+
+| Path                                   | Recommendation                     | Why                                                                                                                                        |
+| -------------------------------------- | ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| Docs-only checklist                    | Safe but incomplete                | Preserves boundaries but does not make future QA less fragile.                                                                             |
+| Dry-run inventory enhancement          | Recommended now                    | Gives repeatable gap visibility without reads from `.env.local`, Supabase connections, writes, or provider calls.                          |
+| Local-only owner-confirmed seed script | Best next implementation candidate | Can reuse existing write-gated local/test fixture patterns after explicit approval.                                                        |
+| Staging-only seed mode                 | Defer                              | Requires clean read-only target validation, staging identifiers, tenant allowlist, idempotency/cleanup rules, and explicit owner approval. |
 
 If a future seed script is approved, it must:
 
@@ -328,8 +378,9 @@ node scripts/demo-data-inventory.mjs
 ```
 
 The script prints the required demo record checklist, fixture/script path
-availability, repository counts, and an owner-action reminder. It does not read
-`.env.local`, connect to Supabase, call providers, or write files/data.
+availability, golden-path surface readiness, known data gaps, repository
+counts, and an owner-action reminder. It does not read `.env.local`, connect to
+Supabase, call providers, or write files/data.
 
 ## 11. Seed Script Specification
 

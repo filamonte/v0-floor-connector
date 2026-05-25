@@ -38,6 +38,11 @@ a dispatch optimizer, or a customer-facing internal operations feed.
 - Use one coherent sample project with customer, contract/signature, invoice or
   payment, schedule/job, daily-log/field, communication, and portal context
   where possible.
+- For the strongest current rehearsal, prefer one golden-path project that also
+  includes estimate, contract, and invoice document-readiness coverage plus at
+  least one document-specific customer-bound communications handoff. If that
+  data is missing, record it as a sample-data gap rather than treating the
+  feature as failed.
 - Use a portal customer session backed by real `portal_access_grants` and
   `portal_project_access` before showing `/portal`.
 - Keep the local organization workflow guidance set to Guided for the main
@@ -227,8 +232,19 @@ such as:
 - a document/PDF generation gap that prevents a clean handoff
 - a communications/customer-send gap that blocks the review-first message story
 - a data/fixture gap that prevents showing the connected route chain
+- a missing document-specific customer-bound handoff for estimate, contract, or
+  invoice send-readiness
+- a project-timeline data gap where the selected project is valid but lacks the
+  linked records needed to show the full command-center story
 - a mobile field evidence QA gap that prevents showing real uploaded evidence
 - a scheduling interaction gap that confuses the CrewBoard story
 
 Do not create demo-only shortcuts to cover those gaps. Record the gap and pick
 one guarded implementation slice.
+
+Current recommended data step:
+
+- Run `pnpm demo:data:inventory` to review dry-run-only golden-path readiness,
+  current fixture signals, and known missing records.
+- Treat local/staging write-mode seeding as a separate owner-confirmed task
+  after read-only target validation and an explicit tenant/cleanup policy.

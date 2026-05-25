@@ -369,7 +369,16 @@ Recent staging/demo work is docs-first and no-write:
   `.env.local`, deploy, call providers, call Supabase, or mutate remote state.
 - [docs/demo/staging-demo-data-plan.md](C:/FloorConnector/docs/demo/staging-demo-data-plan.md)
   defines the ideal canonical demo dataset and recommends owner-controlled
-  auth/org setup plus a future dry-run-first seed script.
+  auth/org setup plus a future dry-run-first seed script. It now calls out the
+  one-project golden-path readiness target for Dashboard Operational Digest,
+  Project Command Timeline, Copilot draft actions, CrewBoard, AR collections,
+  document readiness, communications send-readiness, Daily Logs/field blockers,
+  and portal review surfaces.
+- `pnpm demo:data:inventory` is still dry-run-only and now prints golden-path
+  surface readiness, current fixture signals, known data gaps, and the
+  recommended path: improve/read inventory now, consider local-only
+  owner-confirmed seed behavior later, and defer staging write mode until
+  read-only target validation plus explicit owner approval.
 - [docs/demo/staging-demo-seed-script-spec.md](C:/FloorConnector/docs/demo/staging-demo-seed-script-spec.md)
   specifies the seed script safety boundary.
 - `pnpm demo:data:seed:dry-run -- --organization-id <uuid> --owner-user-id

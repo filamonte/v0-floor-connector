@@ -20,6 +20,7 @@ const requiredDemoRecords = [
   "Daily Job Log, open blocker Job Note, resolved note, field evidence placeholder, and labor/time summary where supported",
   "Communication thread/message, document delivery event, signature event, payment request/event, and portal record view",
   "Project Command Timeline coverage over estimate, contract, invoice, payment, schedule, Daily Log, field note, document readiness, portal visibility, and communication handoff signals",
+  "Customer-bound send-readiness scenario tied to an estimate, contract, or invoice without sending",
   "Open invoice, partially paid invoice, paid invoice, overdue invoice, pending payment event, and failed payment event",
   "Proof Center and CloseoutTrail source records, closeout package route support, signed contract, paid invoice, and field proof",
   "Open and closed service tickets plus warranty handoff/document where supported",
@@ -73,6 +74,99 @@ const fixtureSignals = [
   }
 ];
 
+const currentCoverageMatrix = [
+  {
+    surface: "Dashboard Operational Digest",
+    readiness: "partial",
+    currentSignal:
+      "Dashboard and My Work E2E patterns can create source-record attention, but no single owner-approved demo project is guaranteed to drive the full digest."
+  },
+  {
+    surface: "Project Command Timeline",
+    readiness: "partial",
+    currentSignal:
+      "The read model is implemented and tested, but current fixture paths do not guarantee one project with estimate, contract, invoice, payment, schedule, field, document, portal, and communication coverage together."
+  },
+  {
+    surface: "Project Copilot and draft actions",
+    readiness: "partial",
+    currentSignal:
+      "Project Copilot and Use Draft handoff work when source signals exist; current data may surface internal blocker drafts rather than document-specific customer drafts."
+  },
+  {
+    surface: "Schedule readiness / CrewBoard",
+    readiness: "partial",
+    currentSignal:
+      "Spec-local patterns cover unscheduled and scheduled jobs; one durable demo project with the full job-state matrix is not yet guaranteed."
+  },
+  {
+    surface: "AR collections intelligence",
+    readiness: "partial",
+    currentSignal:
+      "Dashboard and payment tests cover overdue and payment-event states, but those are QA lanes rather than a single stable demo story."
+  },
+  {
+    surface: "Estimate/contract/invoice document readiness",
+    readiness: "partial",
+    currentSignal:
+      "Document readiness is implemented; recent smoke found invoice coverage while active local estimate/contract detail paths were not always present."
+  },
+  {
+    surface: "Communications handoff and send readiness",
+    readiness: "partial",
+    currentSignal:
+      "Send readiness is implemented; browser smoke did not find a durable document-specific customer-bound handoff in active sample data."
+  },
+  {
+    surface: "Daily Log / field blocker / evidence",
+    readiness: "partial",
+    currentSignal:
+      "Spec-local patterns cover open blocker field notes; one fixture-safe project with daily log, blocker, resolved note, and evidence is not guaranteed."
+  },
+  {
+    surface: "Portal-safe status and review pages",
+    readiness: "partial",
+    currentSignal:
+      "Portal fixture can validate/create local/test portal access and shared review routes when write-gated prerequisites are approved."
+  }
+];
+
+const knownGoldenPathGaps = [
+  "No confirmed single local/staging project currently carries every golden-path layer together.",
+  "Document-specific customer-bound send-readiness handoff data is not guaranteed.",
+  "Active local contractor fixture discovery can miss estimate and contract detail paths.",
+  "Timeline QA can land on a valid project that does not contain enough linked records to show the full command-center story.",
+  "Payment event depth exists in payment QA lanes, but those lanes should not be treated as reusable staging demo data.",
+  "Portal fixture write mode is explicitly gated and local/test-oriented; staging write mode still needs owner confirmation and target validation."
+];
+
+const recommendedImplementationPaths = [
+  {
+    option: "docs-only checklist",
+    recommendation: "safe but not sufficient",
+    detail:
+      "Keeps boundaries clear, but does not reduce future QA friction or stale fixture hunting."
+  },
+  {
+    option: "dry-run inventory enhancement",
+    recommendation: "recommended now",
+    detail:
+      "Improves visibility into missing golden-path coverage without env reads, Supabase access, provider calls, or data writes."
+  },
+  {
+    option: "local-only owner-confirmed seed script",
+    recommendation: "best next implementation candidate",
+    detail:
+      "Appropriate only after owner confirmation; should reuse existing write-gated local/test fixture patterns and remain provider-dark."
+  },
+  {
+    option: "staging-only seed mode",
+    recommendation: "defer",
+    detail:
+      "Requires clean read-only target validation, explicit staging identifiers, tenant allowlist, idempotency/cleanup policy, and owner approval."
+  }
+];
+
 function exists(relativePath) {
   return fs.existsSync(path.join(workspaceRoot, relativePath));
 }
@@ -114,6 +208,23 @@ function main() {
     console.log(`- ${signal.name}: ${status}`);
     console.log(`  Path: ${signal.path}`);
     console.log(`  Coverage: ${signal.coverage}`);
+  }
+
+  printSection("Golden-path surface readiness");
+  for (const item of currentCoverageMatrix) {
+    console.log(`- ${item.surface}: ${item.readiness}`);
+    console.log(`  Current signal: ${item.currentSignal}`);
+  }
+
+  printSection("Known golden-path data gaps");
+  knownGoldenPathGaps.forEach((gap, index) => {
+    console.log(`${index + 1}. ${gap}`);
+  });
+
+  printSection("Recommended implementation path");
+  for (const item of recommendedImplementationPaths) {
+    console.log(`- ${item.option}: ${item.recommendation}`);
+    console.log(`  ${item.detail}`);
   }
 
   printSection("Inspected path availability");

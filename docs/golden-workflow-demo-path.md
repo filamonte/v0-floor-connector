@@ -83,7 +83,16 @@ For founder-customer rehearsals, use [docs/founder-demo-readiness.md](C:/FloorCo
 
 - Protected QA must use the configured Playwright contractor storage state from `.env.local` through `pnpm e2e:auth` or the `chromium-protected` setup dependency.
 - Do not print credentials or commit storage-state files.
-- The strongest demo uses one real project with linked estimate, contract, invoice, job, and daily-log records.
+- The strongest demo uses one real project with linked estimate, contract,
+  invoice, job, and daily-log records.
+- The current operational-intelligence demo is strongest when that same project
+  also has document-readiness coverage for estimate, contract, and invoice plus
+  at least one customer-bound communications handoff that exercises send
+  readiness without sending.
+- If the selected project is valid but does not populate the Project Command
+  Timeline, Copilot draft actions, document-specific send readiness, portal
+  review links, or field evidence, record that as a fixture/data gap instead of
+  creating demo-only shortcuts.
 - Existing E2E overrides can point smoke tests at stable real records:
   - `FLOORCONNECTOR_E2E_PROJECT_DETAIL_PATH`
   - `FLOORCONNECTOR_E2E_ESTIMATE_DETAIL_PATH`
