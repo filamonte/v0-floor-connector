@@ -79,6 +79,9 @@ The operational core is already real on the current branch. Current-state owns t
 - invoices, invoice line items, payments, payment events, and portal payment foundations
 - portal access and project-scoped customer surfaces
 - people, vendors, compliance, time, daily logs, field notes, and execution attachments
+- mobile-first field execution polish on the existing Daily Log / Job Note /
+  field evidence chain, including clearer blocker/issue scanning and project/job
+  handoffs without new field subsystems
 - settings and super-admin foundations
 - normalized contractor UI shell, Manager Pages, Quick-Create, and Record Workspace patterns
 - CrewBoard Phase 1/2 on `/schedule`, including job-centered scheduling

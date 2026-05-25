@@ -1008,6 +1008,10 @@ Implemented flow:
 - workforce participants now live on shared canonical people records, with vendors modeling external labor companies and compliance records attaching to either subject type
 - auditable time capture now flows through canonical time punch events and derived time cards
 - daily execution now flows through canonical daily logs, field notes, and lightweight execution attachments
+- the field execution UI now makes phone-sized daily-log review easier by
+  surfacing open blockers, open issues, unresolved Job Notes, field evidence,
+  and project/job handoffs near the top of Daily Log detail while preserving the
+  same canonical records
 - daily logs, field notes, execution attachments, punchlist items, and project-attributed time punches require project readiness at the server boundary
 - Project Workspace and Job Workspace now surface linked labor and field-execution context through those same shared records
 

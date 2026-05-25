@@ -736,6 +736,19 @@ Current shell behavior:
   portal-only copies, expose field evidence to portal/customer users, add
   thumbnails, add AI summaries, add notifications/automation, or change
   payments/signatures/settings/platform-admin behavior.
+- Field Execution Mobile Polish tightens the existing Daily Log Workspace for
+  phone-sized field use. Daily Log detail now gives crews a compact blocker,
+  issue, unresolved-note, and evidence snapshot near the top of the workspace;
+  the Add blocker quick action preselects the existing blocker Job Note type;
+  Job Workspace uses the same preselected blocker handoff when today's Daily
+  Job Log already exists; and Job Note cards make type/status easier to scan.
+  This is UI/linking polish only on existing `daily_logs`, `field_notes`,
+  `execution_attachments`, jobs, projects, and time-card context. It does not
+  add schema, migrations, routes, server actions, duplicate issue/blocker/punch
+  models, attachment models, customer/portal field visibility, AI behavior,
+  provider calls, notifications, payroll/time changes, auth/RLS changes,
+  tenant-boundary changes, payment/signature behavior, estimate math, invoice
+  math, settings behavior, or platform-admin behavior.
 - Project Workspace now includes the first read-only MessageCenter communication timeline inside the Operations Hub. It summarizes existing project and related-record communication threads/messages, document Send Trail events, contract Signature Trail events, invoice Payment Trail events, and Customer Access visibility context with a Next Move link into the existing communication or source-record workspace. This does not add schema, migrations, routes, message/thread/notification/delivery tables, duplicate portal message records, provider sending behavior, email/SMS changes, webhooks, server actions, automation, AI drafting, auth/RLS changes, tenant-boundary changes, payment/signature behavior, estimate math, invoice math, portal grants, settings behavior, or platform-admin behavior.
 - Project Workspace now includes the first read-only ProjectPulse health and Next Move summary near the top of the workspace. It combines existing Ready Check / GateKeeper readiness, contract/signature, CrewBoard scheduling, FieldTrail blocker/log/evidence, MessageCenter communication, and invoice/payment signals into deterministic health copy, signal cards, linked counts, and a Next Move link. This does not add schema, migrations, routes, project-health/status tables, activity/event tables, server actions, automation, AI recommendations, auth/RLS changes, tenant-boundary changes, payment/signature behavior, estimate math, invoice math, portal grants, settings behavior, or platform-admin behavior.
 - Project Workspace now includes the first read-only CloseoutTrail closeout readiness section after the execution history and before the Financial Hub. It summarizes existing jobs, Daily Job Logs, Job Notes, field evidence, change orders, contracts / Signature Trail, invoices / Payment Trail, Customer Access, warranty documents, and service tickets into a closeout checklist, proof counts, and a deterministic closeout Next Move. This does not add schema, migrations, routes, closeout/warranty/document/payment/field tables, duplicate closeout records, server actions, automation, AI summaries, customer-facing field sharing, auth/RLS changes, tenant-boundary changes, payment/signature behavior, estimate math, invoice math, portal grants, settings behavior, or platform-admin behavior.
@@ -1397,6 +1410,9 @@ Current daily log design notes:
 - job linkage is validated against the selected project in the tenant-scoped server data layer
 - labor continuity now reads through canonical time cards for the same project and log date instead of persisting a second daily-log labor-entry model
 - contractor-side daily-log UX now keeps create, review, editing, and note entry on the same protected workflow instead of splitting execution observations into separate modules
+- daily-log detail now includes mobile-oriented summary counts for blockers,
+  issues, unresolved Job Notes, and field evidence, plus quick actions into
+  the existing Job Note and evidence sections
 - daily logs remain project-day narrative execution records even now that durable punchlist items exist on the same broader execution chain
 - daily-log execution attachments are now lightweight subject-scoped references for photos or files, not a full document-management system
 - field evidence archive/restore is metadata-only: active workflows hide
@@ -1413,6 +1429,9 @@ Implemented:
 - optional linkage to project-related execution context such as job, workforce person, and time card
 - structured note type and simple status foundation for blockers, issues, and punch-list-ready observations without separate subsystem tables
 - field-note create and edit UX inside the daily-log detail workflow
+- field-note type/status display is now easier to scan in the daily-log
+  workspace, with blockers and issues highlighted while preserving the same
+  internal-only `field_notes` model
 - field-note attachment visibility and add-attachment flow inside the same daily-log workflow
 - field-note creation is blocked server-side unless the connected project passes the centralized readiness gate
 

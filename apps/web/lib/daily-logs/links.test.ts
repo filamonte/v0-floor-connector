@@ -47,6 +47,12 @@ void test("buildDailyLogSectionHref points to specific Daily Job Log capture are
     buildDailyLogSectionHref("log-1", "field-evidence"),
     "/daily-logs/log-1#field-evidence"
   );
+  assert.equal(
+    buildDailyLogSectionHref("log-1", "job-notes", {
+      noteType: "blocker"
+    }),
+    "/daily-logs/log-1?noteType=blocker#job-notes"
+  );
 });
 
 void test("findDailyLogForJobDate selects an existing job-day log without creating duplicates", () => {

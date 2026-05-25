@@ -30,12 +30,24 @@ export function buildDailyLogCaptureHref(input: {
 }
 
 export type DailyLogSectionAnchor = "job-notes" | "field-evidence";
+export type DailyLogQuickNoteType = "blocker" | "issue";
 
 export function buildDailyLogSectionHref(
   dailyLogId: string,
-  section: DailyLogSectionAnchor
+  section: DailyLogSectionAnchor,
+  options?: {
+    noteType?: DailyLogQuickNoteType;
+  }
 ) {
-  return `/daily-logs/${dailyLogId}#${section}`;
+  const searchParams = new URLSearchParams();
+
+  if (options?.noteType) {
+    searchParams.set("noteType", options.noteType);
+  }
+
+  const query = searchParams.toString();
+
+  return `/daily-logs/${dailyLogId}${query ? `?${query}` : ""}#${section}`;
 }
 
 export function findDailyLogForJobDate<

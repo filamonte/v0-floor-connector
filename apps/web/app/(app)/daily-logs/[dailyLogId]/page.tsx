@@ -42,7 +42,10 @@ import { listJobs } from "@/lib/jobs/data";
 import { listPeople } from "@/lib/people/data";
 import { listProjects } from "@/lib/projects/data";
 import { listTimeCardsByProjectAndWorkDate } from "@/lib/time/data";
-import type { ExecutionAttachment as ExecutionAttachmentRecord } from "@floorconnector/types";
+import type {
+  ExecutionAttachment as ExecutionAttachmentRecord,
+  FieldNoteType
+} from "@floorconnector/types";
 
 type DailyLogDetailPageProps = {
   params: Promise<{
@@ -51,6 +54,7 @@ type DailyLogDetailPageProps = {
   searchParams?: Promise<{
     error?: string;
     message?: string;
+    noteType?: string;
   }>;
 };
 
@@ -106,6 +110,24 @@ function getFieldNoteStatusClasses(status: string) {
     default:
       return "border-amber-200 bg-amber-50 text-amber-900";
   }
+}
+
+function isQuickFieldNoteType(
+  value: string | undefined
+): value is FieldNoteType {
+  return value === "blocker" || value === "issue";
+}
+
+function getFieldNoteCardClasses(noteType: string, status: string) {
+  if (status === "open" && noteType === "blocker") {
+    return "rounded-lg border border-amber-300 bg-amber-50/70 px-4 py-4 sm:px-5 sm:py-5";
+  }
+
+  if (status === "open" && noteType === "issue") {
+    return "rounded-lg border border-orange-200 bg-orange-50/60 px-4 py-4 sm:px-5 sm:py-5";
+  }
+
+  return "rounded-lg border border-slate-200 bg-white px-4 py-4 sm:px-5 sm:py-5";
 }
 
 function renderAttachmentPreviewAction(
@@ -261,6 +283,11 @@ export default async function DailyLogDetailPage({
 }: DailyLogDetailPageProps) {
   const { dailyLogId } = await params;
   const resolvedSearchParams = (await searchParams) ?? {};
+  const defaultQuickNoteType = isQuickFieldNoteType(
+    resolvedSearchParams.noteType
+  )
+    ? resolvedSearchParams.noteType
+    : "general";
   const dailyLog = await getDailyLogById(
     dailyLogId,
     `/daily-logs/${dailyLogId}`
@@ -352,6 +379,18 @@ export default async function DailyLogDetailPage({
     label: timeCard.person?.displayName ?? "Unknown worker",
     meta: `${formatDuration(timeCard.workedMinutes)} | ${formatStatusLabel(timeCard.status)}`
   }));
+  const openBlockerNotes = fieldNotes.filter(
+    (fieldNote) =>
+      fieldNote.status === "open" && fieldNote.noteType === "blocker"
+  );
+  const openIssueNotes = fieldNotes.filter(
+    (fieldNote) => fieldNote.status === "open" && fieldNote.noteType === "issue"
+  );
+  const unresolvedFieldNotes = fieldNotes.filter(
+    (fieldNote) => fieldNote.status !== "resolved"
+  );
+  const activeEvidenceCount =
+    dailyLogAttachments.length + fieldNoteAttachments.length;
   const nextAction =
     dailyLog.status === "draft"
       ? {
@@ -454,11 +493,8 @@ export default async function DailyLogDetailPage({
                   value: `${fieldNotes.length} note${
                     fieldNotes.length === 1 ? "" : "s"
                   }`,
-                  detail: `${dailyLogAttachments.length + fieldNoteAttachments.length} evidence item${
-                    dailyLogAttachments.length + fieldNoteAttachments.length ===
-                    1
-                      ? ""
-                      : "s"
+                  detail: `${activeEvidenceCount} evidence item${
+                    activeEvidenceCount === 1 ? "" : "s"
                   } linked`
                 },
                 {
@@ -564,7 +600,9 @@ export default async function DailyLogDetailPage({
                 Add Job Note
               </Link>
               <Link
-                href={buildDailyLogSectionHref(dailyLog.id, "job-notes")}
+                href={buildDailyLogSectionHref(dailyLog.id, "job-notes", {
+                  noteType: "blocker"
+                })}
                 className="inline-flex min-h-12 items-center justify-center rounded-[4px] border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-900 transition hover:bg-amber-100"
               >
                 Add blocker
@@ -575,6 +613,64 @@ export default async function DailyLogDetailPage({
               >
                 Add field evidence
               </Link>
+            </div>
+
+            <div className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+              {[
+                {
+                  label: "Open blockers",
+                  value: openBlockerNotes.length,
+                  detail:
+                    openBlockerNotes.length > 0
+                      ? "Needs project/job follow-up"
+                      : "No open blockers",
+                  tone:
+                    openBlockerNotes.length > 0
+                      ? "border-amber-300 bg-amber-50 text-amber-950"
+                      : "border-slate-200 bg-white text-slate-950"
+                },
+                {
+                  label: "Open issues",
+                  value: openIssueNotes.length,
+                  detail:
+                    openIssueNotes.length > 0
+                      ? "Keep visible until reviewed"
+                      : "No open issues",
+                  tone:
+                    openIssueNotes.length > 0
+                      ? "border-orange-200 bg-orange-50 text-orange-950"
+                      : "border-slate-200 bg-white text-slate-950"
+                },
+                {
+                  label: "Unresolved notes",
+                  value: unresolvedFieldNotes.length,
+                  detail: `${fieldNotes.length} total Job Note${
+                    fieldNotes.length === 1 ? "" : "s"
+                  }`,
+                  tone: "border-slate-200 bg-white text-slate-950"
+                },
+                {
+                  label: "Field evidence",
+                  value: activeEvidenceCount,
+                  detail: `${archivedDailyLogAttachments.length + archivedFieldNoteAttachments.length} archived`,
+                  tone: "border-slate-200 bg-white text-slate-950"
+                }
+              ].map((item) => (
+                <div
+                  key={item.label}
+                  className={`min-w-0 rounded-lg border px-4 py-3 ${item.tone}`}
+                >
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                    {item.label}
+                  </p>
+                  <p className="mt-2 text-2xl font-semibold tracking-tight">
+                    {item.value}
+                  </p>
+                  <p className="mt-1 text-xs leading-5 text-slate-600">
+                    {item.detail}
+                  </p>
+                </div>
+              ))}
             </div>
           </div>
         </div>
@@ -717,6 +813,7 @@ export default async function DailyLogDetailPage({
                   people={activePeople}
                   timeCards={timeCardOptions}
                   defaultJobId={dailyLog.jobId}
+                  defaultNoteType={defaultQuickNoteType}
                 />
               </div>
             </section>
@@ -737,17 +834,24 @@ export default async function DailyLogDetailPage({
                       </p>
                       <p className="mt-1 text-sm leading-6 text-slate-600">
                         {notes.length} note{notes.length === 1 ? "" : "s"} in
-                        this execution category.
+                        this execution category
+                        {notes.some((note) => note.status === "open")
+                          ? `, ${notes.filter((note) => note.status === "open").length} open`
+                          : ""}
+                        .
                       </p>
                     </div>
                     <div className="grid gap-4">
                       {notes.map((fieldNote) => (
                         <div
                           key={fieldNote.id}
-                          className="rounded-[1.75rem] border border-slate-200 bg-white px-5 py-5"
+                          className={getFieldNoteCardClasses(
+                            fieldNote.noteType,
+                            fieldNote.status
+                          )}
                         >
-                          <div className="flex flex-wrap items-center justify-between gap-3">
-                            <div>
+                          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                            <div className="min-w-0">
                               <p className="text-sm font-semibold text-slate-950">
                                 {fieldNote.title}
                               </p>
@@ -755,13 +859,18 @@ export default async function DailyLogDetailPage({
                                 Created {formatDateTime(fieldNote.createdAt)}
                               </p>
                             </div>
-                            <span
-                              className={`inline-flex rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] ${getFieldNoteStatusClasses(
-                                fieldNote.status
-                              )}`}
-                            >
-                              {formatStatusLabel(fieldNote.status)}
-                            </span>
+                            <div className="flex flex-wrap gap-2 sm:justify-end">
+                              <span className="inline-flex rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-slate-700">
+                                {formatNoteTypeLabel(fieldNote.noteType)}
+                              </span>
+                              <span
+                                className={`inline-flex rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] ${getFieldNoteStatusClasses(
+                                  fieldNote.status
+                                )}`}
+                              >
+                                {formatStatusLabel(fieldNote.status)}
+                              </span>
+                            </div>
                           </div>
                           <div className="mt-5">
                             <FieldNoteForm
@@ -1047,7 +1156,7 @@ export default async function DailyLogDetailPage({
               },
               {
                 label: "Field evidence",
-                value: `${dailyLogAttachments.length + fieldNoteAttachments.length} total`
+                value: `${activeEvidenceCount} total`
               },
               {
                 label: "People on site",

@@ -1,4 +1,4 @@
-import type { FieldNote } from "@floorconnector/types";
+import type { FieldNote, FieldNoteType } from "@floorconnector/types";
 
 import {
   SaveStateForm,
@@ -38,6 +38,7 @@ type FieldNoteFormProps = {
   timeCards: TimeCardOption[];
   fieldNote?: FieldNote | null;
   defaultJobId?: string | null;
+  defaultNoteType?: FieldNoteType;
 };
 
 const jobNoteTypes = [
@@ -64,8 +65,11 @@ export function FieldNoteForm({
   people,
   timeCards,
   fieldNote,
-  defaultJobId
+  defaultJobId,
+  defaultNoteType = "general"
 }: FieldNoteFormProps) {
+  const selectedNoteType = fieldNote?.noteType ?? defaultNoteType;
+
   return (
     <SaveStateForm
       action={action}
@@ -88,7 +92,7 @@ export function FieldNoteForm({
           </span>
           <select
             name="noteType"
-            defaultValue={fieldNote?.noteType ?? "general"}
+            defaultValue={selectedNoteType}
             className="w-full rounded-[4px] border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-brand-700 focus:ring-4 focus:ring-brand-100"
           >
             {jobNoteTypes.map((noteType) => (
@@ -98,7 +102,7 @@ export function FieldNoteForm({
             ))}
           </select>
           <span className="mt-2 block text-xs leading-5 text-slate-500">
-            {getFieldNoteTypeHelper(fieldNote?.noteType ?? "general")}
+            {getFieldNoteTypeHelper(selectedNoteType)}
           </span>
         </label>
 

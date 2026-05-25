@@ -231,6 +231,16 @@ file` actions without exposing raw storage paths. This remains contractor-only
   Hard-delete, storage cleanup jobs, storage policy changes, portal/customer
   exposure, thumbnails, AI summaries, notifications, and automation remain
   deferred.
+- Field Execution Mobile Polish is now implemented on the existing Daily Log
+  and Job Workspace chain. Daily Log detail has a compact mobile-first snapshot
+  for open blockers, open issues, unresolved Job Notes, and field evidence; Add
+  blocker now preselects the existing blocker Job Note type; Job Workspace uses
+  the same blocker handoff when today's Daily Job Log exists; and Job Note cards
+  expose type/status more clearly. This stays on canonical `daily_logs`,
+  `field_notes`, `execution_attachments`, jobs, projects, and time cards only,
+  with no schema, migrations, duplicate issue/blocker/punch-list subsystem,
+  attachment model, AI, provider call, notification send, portal/customer field
+  visibility, or payroll/time model change.
 - CrewBoard Phase 3 drag/drop dispatch planning is documented in
   [docs/design/crewboard-phase-3-drag-drop-dispatch-spec.md](C:/FloorConnector/docs/design/crewboard-phase-3-drag-drop-dispatch-spec.md).
   The recommended path is confirmation-first: add pure move helpers and

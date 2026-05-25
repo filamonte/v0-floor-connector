@@ -482,6 +482,11 @@ export default async function JobDetailPage({
   const jobNoteFastPathHref = todayDailyLog
     ? buildDailyLogSectionHref(todayDailyLog.id, "job-notes")
     : dailyLogFastPathHref;
+  const blockerFastPathHref = todayDailyLog
+    ? buildDailyLogSectionHref(todayDailyLog.id, "job-notes", {
+        noteType: "blocker"
+      })
+    : dailyLogFastPathHref;
   const fieldEvidenceFastPathHref = todayDailyLog
     ? buildDailyLogSectionHref(todayDailyLog.id, "field-evidence")
     : dailyLogFastPathHref;
@@ -1389,7 +1394,7 @@ export default async function JobDetailPage({
                     Add Job Note
                   </Link>
                   <Link
-                    href={jobNoteFastPathHref}
+                    href={blockerFastPathHref}
                     className="inline-flex min-h-11 items-center justify-center rounded-[4px] border border-amber-200 bg-amber-50 px-4 py-2.5 text-sm font-semibold text-amber-900 transition hover:bg-amber-100"
                   >
                     Add blocker
