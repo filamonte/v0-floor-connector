@@ -45,7 +45,12 @@ function attachIssueCapture(page) {
 }
 
 function projectIdFromPath(projectPath) {
-  return projectPath.split("?")[0].split("#")[0].split("/").filter(Boolean).at(-1);
+  return projectPath
+    .split("?")[0]
+    .split("#")[0]
+    .split("/")
+    .filter(Boolean)
+    .at(-1);
 }
 
 async function expectAuthenticatedSchedulePage(page) {
@@ -58,11 +63,17 @@ async function expectAuthenticatedSchedulePage(page) {
   }
 
   await expect(
-    page.getByText("Run the operational schedule from one shared job surface")
+    page.getByText("see what needs a date, what is happening today")
   ).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Scheduling command center" })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Ready work queue" })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Scheduled timeline" })).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "CrewBoard command center" })
+  ).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Needs Scheduling" })
+  ).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Schedule board" })
+  ).toBeVisible();
 }
 
 async function expectAuthenticatedDashboardPage(page, failureMessage) {
@@ -75,7 +86,9 @@ async function expectAuthenticatedDashboardPage(page, failureMessage) {
   await expect(
     page.getByRole("heading", { name: "Decide what needs attention first" })
   ).toBeVisible();
-  await expect(page.getByRole("region", { name: "Follow up by workflow area" })).toBeVisible();
+  await expect(
+    page.getByRole("region", { name: "Follow up by workflow area" })
+  ).toBeVisible();
 }
 
 function getDashboardWorkflowQueue(page, headingName) {
@@ -88,9 +101,11 @@ function getDashboardWorkflowQueue(page, headingName) {
 }
 
 function getDashboardQueueRow(page, { queueHeading, rowText }) {
-  return getDashboardWorkflowQueue(page, queueHeading).locator("article").filter({
-    hasText: rowText
-  });
+  return getDashboardWorkflowQueue(page, queueHeading)
+    .locator("article")
+    .filter({
+      hasText: rowText
+    });
 }
 
 function expectScheduleActionUrl(url, fixture, { view = "unscheduled" } = {}) {
@@ -105,29 +120,35 @@ function expectScheduleActionUrl(url, fixture, { view = "unscheduled" } = {}) {
 async function expectUnscheduledSchedulePanelForJob(page, fixture) {
   const schedulePanel = page.locator("#schedule-action");
   await expect(schedulePanel).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Selected job action panel" })).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Selected job action panel" })
+  ).toBeVisible();
 
   if (fixture.projectName) {
     await expect(schedulePanel).toContainText(fixture.projectName);
   }
 
-  await expect(schedulePanel).toContainText("Unscheduled job");
+  await expect(schedulePanel).toContainText("Current schedule");
   await expect(schedulePanel).toContainText(
     "Choose a date and time before assigning people or labor-provider vendors."
   );
   await expect(schedulePanel).toContainText("Crew not assigned yet");
-  await expect(schedulePanel).toContainText("Update schedule");
+  await expect(schedulePanel).toContainText("Review schedule move");
 
   const scheduleForm = await getScheduleUpdateForm(page);
-  await expect(scheduleForm.locator('input[name="jobId"]')).toHaveValue(fixture.jobId);
-  await expect(scheduleForm.locator('input[name="scheduledDate"]')).toHaveValue("");
+  await expect(scheduleForm.locator('input[name="jobId"]')).toHaveValue(
+    fixture.jobId
+  );
+  await expect(scheduleForm.locator('input[name="scheduledDate"]')).toHaveValue(
+    ""
+  );
 
   return { schedulePanel, scheduleForm };
 }
 
 async function getScheduleUpdateForm(page) {
   const scheduleForm = page.locator("#schedule-action form").filter({
-    hasText: "Update schedule"
+    hasText: "Review schedule move"
   });
 
   await expect(scheduleForm).toHaveCount(1);
@@ -160,7 +181,9 @@ async function getSupabaseFixtureContext() {
     .maybeSingle();
 
   if (userResponse.error) {
-    throw new Error(`Unable to load E2E user for schedule fixture: ${userResponse.error.message}`);
+    throw new Error(
+      `Unable to load E2E user for schedule fixture: ${userResponse.error.message}`
+    );
   }
 
   if (!userResponse.data) {
@@ -214,7 +237,9 @@ async function ensureFixtureCustomer({
     .maybeSingle();
 
   if (existingResponse.error) {
-    throw new Error(`Unable to load schedule fixture customer: ${existingResponse.error.message}`);
+    throw new Error(
+      `Unable to load schedule fixture customer: ${existingResponse.error.message}`
+    );
   }
 
   if (existingResponse.data) {
@@ -237,7 +262,9 @@ async function ensureFixtureCustomer({
     .single();
 
   if (insertResponse.error) {
-    throw new Error(`Unable to create schedule fixture customer: ${insertResponse.error.message}`);
+    throw new Error(
+      `Unable to create schedule fixture customer: ${insertResponse.error.message}`
+    );
   }
 
   return insertResponse.data.id;
@@ -252,13 +279,19 @@ async function loadFixtureProjects({ supabase, organizationId, projectName }) {
     .order("created_at", { ascending: true });
 
   if (projectsResponse.error) {
-    throw new Error(`Unable to load schedule fixture projects: ${projectsResponse.error.message}`);
+    throw new Error(
+      `Unable to load schedule fixture projects: ${projectsResponse.error.message}`
+    );
   }
 
   return projectsResponse.data ?? [];
 }
 
-async function findSignedFixtureContract({ supabase, organizationId, projectId }) {
+async function findSignedFixtureContract({
+  supabase,
+  organizationId,
+  projectId
+}) {
   const contractResponse = await supabase
     .from("contracts")
     .select("id, title, estimate_id")
@@ -278,7 +311,11 @@ async function findSignedFixtureContract({ supabase, organizationId, projectId }
   return contractResponse.data;
 }
 
-async function findFixtureUnscheduledJobs({ supabase, organizationId, projectId }) {
+async function findFixtureUnscheduledJobs({
+  supabase,
+  organizationId,
+  projectId
+}) {
   const jobsResponse = await supabase
     .from("jobs")
     .select("id")
@@ -288,13 +325,19 @@ async function findFixtureUnscheduledJobs({ supabase, organizationId, projectId 
     .order("created_at", { ascending: true });
 
   if (jobsResponse.error) {
-    throw new Error(`Unable to load schedule fixture unscheduled jobs: ${jobsResponse.error.message}`);
+    throw new Error(
+      `Unable to load schedule fixture unscheduled jobs: ${jobsResponse.error.message}`
+    );
   }
 
   return jobsResponse.data ?? [];
 }
 
-async function findFixtureScheduledJobs({ supabase, organizationId, projectId }) {
+async function findFixtureScheduledJobs({
+  supabase,
+  organizationId,
+  projectId
+}) {
   const jobsResponse = await supabase
     .from("jobs")
     .select("id")
@@ -304,7 +347,9 @@ async function findFixtureScheduledJobs({ supabase, organizationId, projectId })
     .order("created_at", { ascending: true });
 
   if (jobsResponse.error) {
-    throw new Error(`Unable to load schedule fixture scheduled jobs: ${jobsResponse.error.message}`);
+    throw new Error(
+      `Unable to load schedule fixture scheduled jobs: ${jobsResponse.error.message}`
+    );
   }
 
   return jobsResponse.data ?? [];
@@ -331,7 +376,9 @@ async function ensureFixtureOpportunity({
     .maybeSingle();
 
   if (existingResponse.error) {
-    throw new Error(`Unable to load schedule fixture opportunity: ${existingResponse.error.message}`);
+    throw new Error(
+      `Unable to load schedule fixture opportunity: ${existingResponse.error.message}`
+    );
   }
 
   if (existingResponse.data) {
@@ -365,7 +412,9 @@ async function ensureFixtureOpportunity({
     .single();
 
   if (insertResponse.error) {
-    throw new Error(`Unable to create schedule fixture opportunity: ${insertResponse.error.message}`);
+    throw new Error(
+      `Unable to create schedule fixture opportunity: ${insertResponse.error.message}`
+    );
   }
 
   return insertResponse.data.id;
@@ -402,7 +451,9 @@ async function createFixtureProject({
     .single();
 
   if (projectResponse.error) {
-    throw new Error(`Unable to create schedule fixture project: ${projectResponse.error.message}`);
+    throw new Error(
+      `Unable to create schedule fixture project: ${projectResponse.error.message}`
+    );
   }
 
   return projectResponse.data;
@@ -446,7 +497,9 @@ async function createApprovedFixtureEstimate({
     .single();
 
   if (estimateResponse.error) {
-    throw new Error(`Unable to create approved schedule fixture estimate: ${estimateResponse.error.message}`);
+    throw new Error(
+      `Unable to create approved schedule fixture estimate: ${estimateResponse.error.message}`
+    );
   }
 
   return estimateResponse.data;
@@ -489,7 +542,9 @@ async function createSignedFixtureContract({
     .single();
 
   if (contractResponse.error) {
-    throw new Error(`Unable to create signed schedule fixture contract: ${contractResponse.error.message}`);
+    throw new Error(
+      `Unable to create signed schedule fixture contract: ${contractResponse.error.message}`
+    );
   }
 
   return contractResponse.data;
@@ -519,7 +574,9 @@ async function createFixtureJob({
       project_id: projectId,
       estimate_id: estimateId,
       dispatch_status: scheduled ? "scheduled" : "unscheduled",
-      scheduled_date: scheduled ? scheduledDate.toISOString().slice(0, 10) : null,
+      scheduled_date: scheduled
+        ? scheduledDate.toISOString().slice(0, 10)
+        : null,
       scheduled_start_at: scheduled ? scheduledDate.toISOString() : null,
       scheduled_end_at: scheduled ? scheduledEnd.toISOString() : null,
       schedule_notes: scheduled
@@ -536,7 +593,9 @@ async function createFixtureJob({
     .single();
 
   if (jobResponse.error) {
-    throw new Error(`Unable to create schedule fixture job: ${jobResponse.error.message}`);
+    throw new Error(
+      `Unable to create schedule fixture job: ${jobResponse.error.message}`
+    );
   }
 
   return jobResponse.data;
@@ -852,7 +911,9 @@ async function countWorkItemsForProject({ projectId }) {
     .eq("project_id", projectId);
 
   if (response.error) {
-    throw new Error(`Unable to count project work items: ${response.error.message}`);
+    throw new Error(
+      `Unable to count project work items: ${response.error.message}`
+    );
   }
 
   return response.count ?? 0;
@@ -887,14 +948,18 @@ async function getJobScheduleState({ projectId, jobId }) {
 
   const response = await context.supabase
     .from("jobs")
-    .select("id, project_id, dispatch_status, scheduled_date, scheduled_start_at, scheduled_end_at, schedule_notes")
+    .select(
+      "id, project_id, dispatch_status, scheduled_date, scheduled_start_at, scheduled_end_at, schedule_notes"
+    )
     .eq("company_id", context.organizationId)
     .eq("project_id", projectId)
     .eq("id", jobId)
     .single();
 
   if (response.error) {
-    throw new Error(`Unable to load job schedule state: ${response.error.message}`);
+    throw new Error(
+      `Unable to load job schedule state: ${response.error.message}`
+    );
   }
 
   return response.data;
@@ -920,11 +985,15 @@ async function resetJobToUnscheduled({ projectId, jobId }) {
     .eq("company_id", context.organizationId)
     .eq("project_id", projectId)
     .eq("id", jobId)
-    .select("id, project_id, dispatch_status, scheduled_date, scheduled_start_at, scheduled_end_at, schedule_notes")
+    .select(
+      "id, project_id, dispatch_status, scheduled_date, scheduled_start_at, scheduled_end_at, schedule_notes"
+    )
     .single();
 
   if (response.error) {
-    throw new Error(`Unable to reset schedule submit fixture job: ${response.error.message}`);
+    throw new Error(
+      `Unable to reset schedule submit fixture job: ${response.error.message}`
+    );
   }
 
   return response.data;
@@ -971,26 +1040,48 @@ test("schedule handoff opens one unscheduled job in the focused scheduling compo
 
   expectScheduleActionUrl(new URL(page.url()), fixture);
 
-  await expect(page.getByText("Schedule handoff context is active")).toBeVisible();
-  await expect(page.getByText("Only jobs attached to this project are shown.")).toBeVisible();
+  await expect(
+    page.getByText("CrewBoard handoff context is active")
+  ).toBeVisible();
+  await expect(
+    page.getByText("Only jobs attached to this project are shown.")
+  ).toBeVisible();
   await expect(page.getByText("Schedule view")).toBeVisible();
-  await expect(page.getByRole("link", { name: /Unscheduled \d+/ })).toBeVisible();
+  await expect(
+    page.getByRole("link", { name: /Needs Scheduling \d+/ }).first()
+  ).toBeVisible();
   await expect(page.locator("#schedule-action")).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Selected job action panel" })).toBeVisible();
-  await expect(page.locator("#schedule-action")).toContainText("Refine schedule");
+  await expect(
+    page.getByRole("heading", { name: "Selected job action panel" })
+  ).toBeVisible();
+  await expect(page.locator("#schedule-action")).toContainText("Move schedule");
   await expect(page.locator("#schedule-action")).toContainText(
     "keeps the schedule surface tied to the same project and job chain"
   );
-  await expect(page.locator("#schedule-action")).toContainText("Update schedule");
+  await expect(page.locator("#schedule-action")).toContainText(
+    "Review schedule move"
+  );
   await expect(page.locator("#schedule-action")).toContainText("Unscheduled");
-  await expect(page.locator("#schedule-action")).toContainText("Crew not assigned yet");
+  await expect(page.locator("#schedule-action")).toContainText(
+    "Crew not assigned yet"
+  );
   const scheduleForm = await getScheduleUpdateForm(page);
-  await expect(scheduleForm.locator('input[name="jobId"]')).toHaveValue(fixture.jobId);
-  await expect(scheduleForm.locator('input[name="scheduledDate"]')).toHaveValue("");
-  await expect(scheduleForm.getByRole("button", { name: "Save schedule" })).toBeDisabled();
+  await expect(scheduleForm.locator('input[name="jobId"]')).toHaveValue(
+    fixture.jobId
+  );
+  await expect(scheduleForm.locator('input[name="scheduledDate"]')).toHaveValue(
+    ""
+  );
+  await expect(
+    scheduleForm.getByRole("button", { name: "Move schedule" })
+  ).toBeDisabled();
   await expect(scheduleForm.locator('[role="status"]')).toContainText("Saved");
-  await expect(page.getByRole("button", { name: "Move back to unscheduled" })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Create job" })).toHaveCount(0);
+  await expect(
+    page.getByRole("button", { name: "Move back to unscheduled" })
+  ).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Create job" })).toHaveCount(
+    0
+  );
   await expect(page.locator("#work-items")).toHaveCount(0);
 
   const scheduleStateAfter = await getJobScheduleState({
@@ -1000,9 +1091,9 @@ test("schedule handoff opens one unscheduled job in the focused scheduling compo
   expect(scheduleStateAfter).toEqual(scheduleStateBefore);
 
   if (workItemCountBefore !== null) {
-    expect(await countWorkItemsForProject({ projectId: fixture.projectId })).toBe(
-      workItemCountBefore
-    );
+    expect(
+      await countWorkItemsForProject({ projectId: fixture.projectId })
+    ).toBe(workItemCountBefore);
   }
 
   expect(issues).toEqual([]);
@@ -1028,7 +1119,10 @@ test("dashboard ready project without a job links to canonical job creation", as
     "Dashboard ready queue QA requires authenticated storage state. Run the setup project with FLOORCONNECTOR_E2E_EMAIL and FLOORCONNECTOR_E2E_PASSWORD."
   );
 
-  const readyQueue = getDashboardWorkflowQueue(page, "Projects ready for job creation");
+  const readyQueue = getDashboardWorkflowQueue(
+    page,
+    "Projects ready for job creation"
+  );
   await expect(readyQueue).toBeVisible();
   const fixtureRow = getDashboardQueueRow(page, {
     queueHeading: "Projects ready for job creation",
@@ -1052,8 +1146,12 @@ test("dashboard ready project without a job links to canonical job creation", as
   expect(jobCreationUrl.pathname).toBe("/jobs");
   expect(jobCreationUrl.searchParams.get("projectId")).toBe(fixture.projectId);
   expect(jobCreationUrl.searchParams.get("compose")).toBe("1");
-  expect(jobCreationUrl.searchParams.get("estimateId")).toBe(fixture.estimateId);
-  expect(jobCreationUrl.searchParams.get("contractId")).toBe(fixture.contractId);
+  expect(jobCreationUrl.searchParams.get("estimateId")).toBe(
+    fixture.estimateId
+  );
+  expect(jobCreationUrl.searchParams.get("contractId")).toBe(
+    fixture.contractId
+  );
 
   expect(issues).toEqual([]);
 });
@@ -1085,7 +1183,10 @@ test("dashboard unscheduled job opens the schedule action panel with selected jo
     "Dashboard unscheduled job handoff QA requires authenticated storage state. Run the setup project with FLOORCONNECTOR_E2E_EMAIL and FLOORCONNECTOR_E2E_PASSWORD."
   );
 
-  const schedulingQueue = getDashboardWorkflowQueue(page, "Jobs needing scheduling");
+  const schedulingQueue = getDashboardWorkflowQueue(
+    page,
+    "Jobs needing scheduling"
+  );
   await expect(schedulingQueue).toBeVisible();
 
   const fixtureRow = getDashboardQueueRow(page, {
@@ -1164,15 +1265,25 @@ test("schedule submit path schedules an isolated unscheduled job and persists af
     await expectAuthenticatedSchedulePage(page);
 
     await expect(page.locator("#schedule-action")).toBeVisible();
-    await expect(page.locator("#schedule-action")).toContainText("Refine schedule");
-    await expect(page.locator("#schedule-action")).toContainText(/unscheduled/i);
+    await expect(page.locator("#schedule-action")).toContainText(
+      "Move schedule"
+    );
+    await expect(page.locator("#schedule-action")).toContainText(
+      /unscheduled/i
+    );
     const scheduleForm = await getScheduleUpdateForm(page);
     await expect(scheduleForm.locator('input[name="jobId"]')).toHaveValue(
       fixture.jobId
     );
-    await expect(scheduleForm.locator('input[name="scheduledDate"]')).toHaveValue("");
-    await expect(scheduleForm.locator('input[name="scheduledStartAt"]')).toHaveValue("");
-    await expect(scheduleForm.locator('input[name="scheduledEndAt"]')).toHaveValue("");
+    await expect(
+      scheduleForm.locator('input[name="scheduledDate"]')
+    ).toHaveValue("");
+    await expect(
+      scheduleForm.locator('input[name="scheduledStartAt"]')
+    ).toHaveValue("");
+    await expect(
+      scheduleForm.locator('input[name="scheduledEndAt"]')
+    ).toHaveValue("");
 
     const scheduleStateBeforeSubmit = await getJobScheduleState({
       projectId: fixture.projectId,
@@ -1180,18 +1291,18 @@ test("schedule submit path schedules an isolated unscheduled job and persists af
     });
     expect(scheduleStateBeforeSubmit).toEqual(scheduleStateBefore);
 
-    await scheduleForm.locator('input[name="scheduledDate"]').fill(
-      scheduleInput.scheduledDate
-    );
-    await scheduleForm.locator('input[name="scheduledStartAt"]').fill(
-      scheduleInput.scheduledStartAt
-    );
-    await scheduleForm.locator('input[name="scheduledEndAt"]').fill(
-      scheduleInput.scheduledEndAt
-    );
-    await scheduleForm.locator('textarea[name="scheduleNotes"]').fill(
-      scheduleInput.scheduleNotes
-    );
+    await scheduleForm
+      .locator('input[name="scheduledDate"]')
+      .fill(scheduleInput.scheduledDate);
+    await scheduleForm
+      .locator('input[name="scheduledStartAt"]')
+      .fill(scheduleInput.scheduledStartAt);
+    await scheduleForm
+      .locator('input[name="scheduledEndAt"]')
+      .fill(scheduleInput.scheduledEndAt);
+    await scheduleForm
+      .locator('textarea[name="scheduleNotes"]')
+      .fill(scheduleInput.scheduleNotes);
     await expect(scheduleForm.locator('button[type="submit"]')).toBeEnabled();
     await scheduleForm.locator('button[type="submit"]').click();
 
@@ -1215,7 +1326,9 @@ test("schedule submit path schedules an isolated unscheduled job and persists af
       jobId: fixture.jobId
     });
     expect(scheduleStateAfterSubmit.id).toBe(scheduleStateBefore.id);
-    expect(scheduleStateAfterSubmit.project_id).toBe(scheduleStateBefore.project_id);
+    expect(scheduleStateAfterSubmit.project_id).toBe(
+      scheduleStateBefore.project_id
+    );
     expect(scheduleStateAfterSubmit.dispatch_status).toBe("scheduled");
     expect(scheduleStateAfterSubmit.scheduled_date).toBe(
       scheduleInput.scheduledDate
@@ -1233,24 +1346,26 @@ test("schedule submit path schedules an isolated unscheduled job and persists af
     }
 
     if (workItemCountBefore !== null) {
-      expect(await countWorkItemsForProject({ projectId: fixture.projectId })).toBe(
-        workItemCountBefore
-      );
+      expect(
+        await countWorkItemsForProject({ projectId: fixture.projectId })
+      ).toBe(workItemCountBefore);
     }
 
     await expect(page.locator("#work-items")).toHaveCount(0);
-    await expect(page.getByRole("heading", { name: "Create job" })).toHaveCount(0);
+    await expect(page.getByRole("heading", { name: "Create job" })).toHaveCount(
+      0
+    );
 
     await page.goto(
       `/schedule?projectId=${fixture.projectId}&jobId=${fixture.jobId}&view=scheduled&action=schedule#schedule-action`,
       { waitUntil: "domcontentloaded" }
     );
     await expectAuthenticatedSchedulePage(page);
-    await expect(page.locator("#schedule-action")).toContainText("Scheduled");
+    await expect(page.locator("#schedule-action")).toContainText(/scheduled/i);
     const savedScheduleForm = await getScheduleUpdateForm(page);
-    await expect(savedScheduleForm.locator('input[name="scheduledDate"]')).toHaveValue(
-      scheduleInput.scheduledDate
-    );
+    await expect(
+      savedScheduleForm.locator('input[name="scheduledDate"]')
+    ).toHaveValue(scheduleInput.scheduledDate);
     const persistedStartAt = await savedScheduleForm
       .locator('input[name="scheduledStartAt"]')
       .inputValue();
@@ -1263,7 +1378,7 @@ test("schedule submit path schedules an isolated unscheduled job and persists af
     await page.reload({ waitUntil: "domcontentloaded" });
     await expectAuthenticatedSchedulePage(page);
     await expect(page.locator("#schedule-action")).toBeVisible();
-    await expect(page.locator("#schedule-action")).toContainText("Scheduled");
+    await expect(page.locator("#schedule-action")).toContainText(/scheduled/i);
     const reloadedScheduleForm = await getScheduleUpdateForm(page);
     await expect(
       reloadedScheduleForm.locator('input[name="scheduledDate"]')
@@ -1308,9 +1423,11 @@ test("schedule handoff infers the exact one unscheduled project job without savi
 
   expect(new URL(page.url()).searchParams.get("jobId")).toBeNull();
   await expect(page.locator("#schedule-action")).toBeVisible();
-  await expect(page.locator("#schedule-action")).toContainText("Refine schedule");
+  await expect(page.locator("#schedule-action")).toContainText("Move schedule");
   const scheduleForm = await getScheduleUpdateForm(page);
-  await expect(scheduleForm.locator('input[name="jobId"]')).toHaveValue(fixture.jobId);
+  await expect(scheduleForm.locator('input[name="jobId"]')).toHaveValue(
+    fixture.jobId
+  );
   await expect(page.locator("#schedule-action")).toContainText("Unscheduled");
 
   const scheduleStateAfter = await getJobScheduleState({
@@ -1348,16 +1465,26 @@ test("schedule project-only handoff for scheduled jobs stays project-scoped with
   await expectAuthenticatedSchedulePage(page);
 
   expect(new URL(page.url()).pathname).toBe("/schedule");
-  expect(new URL(page.url()).searchParams.get("projectId")).toBe(fixture.projectId);
+  expect(new URL(page.url()).searchParams.get("projectId")).toBe(
+    fixture.projectId
+  );
   expect(new URL(page.url()).searchParams.get("jobId")).toBeNull();
   expect(new URL(page.url()).searchParams.get("action")).toBeNull();
 
-  await expect(page.getByText("Schedule handoff context is active")).toBeVisible();
-  await expect(page.getByText("Only jobs attached to this project are shown.")).toBeVisible();
-  await expect(page.getByRole("link", { name: "Open project" }).first()).toBeVisible();
+  await expect(
+    page.getByText("CrewBoard handoff context is active")
+  ).toBeVisible();
+  await expect(
+    page.getByText("Only jobs attached to this project are shown.")
+  ).toBeVisible();
+  await expect(
+    page.getByRole("link", { name: "Open project" }).first()
+  ).toBeVisible();
   await expect(page.locator("#schedule-action")).toHaveCount(0);
-  await expect(page.getByText("Update schedule")).toHaveCount(0);
-  await expect(page.getByRole("heading", { name: "Create job" })).toHaveCount(0);
+  await expect(page.getByText("Review schedule move")).toHaveCount(0);
+  await expect(page.getByRole("heading", { name: "Create job" })).toHaveCount(
+    0
+  );
   await expect(page.locator("#work-items")).toHaveCount(0);
 
   const scheduleStateAfter = await getJobScheduleState({
@@ -1367,9 +1494,9 @@ test("schedule project-only handoff for scheduled jobs stays project-scoped with
   expect(scheduleStateAfter).toEqual(scheduleStateBefore);
 
   if (workItemCountBefore !== null) {
-    expect(await countWorkItemsForProject({ projectId: fixture.projectId })).toBe(
-      workItemCountBefore
-    );
+    expect(
+      await countWorkItemsForProject({ projectId: fixture.projectId })
+    ).toBe(workItemCountBefore);
   }
 
   expect(issues).toEqual([]);

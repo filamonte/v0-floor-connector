@@ -73,6 +73,7 @@ export type ScheduleBoardJobSource = ScheduleJobSource & {
 
 export type ScheduleBoardTimingGroupKey =
   | "unscheduled-ready"
+  | "unscheduled-blocked"
   | "today"
   | "tomorrow"
   | "this-week"
@@ -88,6 +89,8 @@ export type ScheduleBoardTimingGroup<TJob extends ScheduleBoardJobSource> = {
 
 export type ScheduleBoardReadModel<TJob extends ScheduleBoardJobSource> = {
   unscheduledReadyJobs: TJob[];
+  unscheduledBlockedJobs: TJob[];
+  overdueSchedulingJobs: TJob[];
   scheduledTodayJobs: TJob[];
   tomorrowJobs: TJob[];
   thisWeekJobs: TJob[];
@@ -177,6 +180,15 @@ function getDateKey(value: Date) {
   return `${year}-${month}-${day}`;
 }
 
+function isJobBlockedByReadiness(
+  job: { projectId: string },
+  readinessByProjectId?: Map<string, { isReadyToSchedule: boolean }>
+) {
+  const readiness = readinessByProjectId?.get(job.projectId);
+
+  return readiness ? !readiness.isReadyToSchedule : false;
+}
+
 function sortBySchedule<TJob extends ScheduleBoardJobSource>(jobs: TJob[]) {
   return [...jobs].sort(
     (left, right) => getScheduledSortTime(left) - getScheduledSortTime(right)
@@ -196,6 +208,7 @@ export function buildScheduleBoardReadModel<
 >(input: {
   jobs: TJob[];
   today: Date;
+  readinessByProjectId?: Map<string, { isReadyToSchedule: boolean } | null>;
   warningSummaries?: Array<{
     jobId: string;
     warnings: ScheduleWarningSummary[];
@@ -217,9 +230,28 @@ export function buildScheduleBoardReadModel<
       .filter((summary) => summary.warnings.length > 0)
       .map((summary) => summary.jobId)
   );
+  const readinessByProjectId = new Map(
+    [...(input.readinessByProjectId?.entries() ?? [])].filter(
+      (entry): entry is [string, { isReadyToSchedule: boolean }] =>
+        entry[1] !== null
+    )
+  );
 
+  const unscheduledJobs = input.jobs.filter(
+    (job) => job.dispatchStatus === "unscheduled"
+  );
   const unscheduledReadyJobs = sortByUpdatedAtDesc(
-    input.jobs.filter((job) => job.dispatchStatus === "unscheduled")
+    unscheduledJobs.filter(
+      (job) => !isJobBlockedByReadiness(job, readinessByProjectId)
+    )
+  );
+  const unscheduledBlockedJobs = sortByUpdatedAtDesc(
+    unscheduledJobs.filter((job) =>
+      isJobBlockedByReadiness(job, readinessByProjectId)
+    )
+  );
+  const overdueSchedulingJobs = unscheduledReadyJobs.filter(
+    (job) => job.updatedAt.slice(0, 10) < todayDateKey
   );
   const scheduledTodayJobs = sortBySchedule(
     input.jobs.filter((job) => job.scheduledDate === todayDateKey)
@@ -316,17 +348,27 @@ export function buildScheduleBoardReadModel<
     return scheduledDate !== null && scheduledDate > nextSevenDaysEnd;
   });
   const needsReadinessReviewJobs = sortBySchedule(
-    input.jobs.filter(
-      (job) =>
-        job.dispatchStatus !== "completed" &&
+    input.jobs.filter((job) => {
+      if (job.dispatchStatus === "completed") {
+        return false;
+      }
+
+      if (isJobBlockedByReadiness(job, readinessByProjectId)) {
+        return true;
+      }
+
+      return (
         job.dispatchStatus !== "unscheduled" &&
         (crewAssignmentGaps.some((crewGapJob) => crewGapJob.id === job.id) ||
           warningJobIds.has(job.id))
-    )
+      );
+    })
   );
 
   return {
     unscheduledReadyJobs,
+    unscheduledBlockedJobs,
+    overdueSchedulingJobs,
     scheduledTodayJobs,
     tomorrowJobs,
     thisWeekJobs,
@@ -345,6 +387,7 @@ export function buildScheduleBoardReadModel<
     scheduledJobsByDate,
     timingGroups: [
       { key: "unscheduled-ready", jobs: unscheduledReadyJobs },
+      { key: "unscheduled-blocked", jobs: unscheduledBlockedJobs },
       { key: "today", jobs: todayBoardJobs },
       { key: "tomorrow", jobs: tomorrowBoardJobs },
       { key: "this-week", jobs: nextSevenDaysBoardJobs },

@@ -385,3 +385,58 @@ void test("schedule board read model separates daily, weekly, ready, and review 
     [inProgress.id]
   );
 });
+
+void test("schedule board read model separates blocked unscheduled jobs from ready scheduling queue", () => {
+  const readyUnscheduled = {
+    ...baseJob,
+    id: "99999999-aaaa-4aaa-8aaa-999999999999",
+    dispatchStatus: "unscheduled" as const,
+    projectId: "project-ready",
+    scheduledDate: null,
+    scheduledStartAt: null,
+    scheduledEndAt: null,
+    updatedAt: "2026-05-07T12:00:00.000Z"
+  };
+  const blockedUnscheduled = {
+    ...baseJob,
+    id: "aaaaaaaa-bbbb-4bbb-8bbb-aaaaaaaaaaaa",
+    dispatchStatus: "unscheduled" as const,
+    projectId: "project-blocked",
+    scheduledDate: null,
+    scheduledStartAt: null,
+    scheduledEndAt: null,
+    updatedAt: "2026-05-07T13:00:00.000Z"
+  };
+
+  const board = buildScheduleBoardReadModel({
+    jobs: [blockedUnscheduled, readyUnscheduled],
+    today: new Date(2026, 4, 8),
+    readinessByProjectId: new Map([
+      ["project-ready", { isReadyToSchedule: true }],
+      ["project-blocked", { isReadyToSchedule: false }]
+    ])
+  });
+
+  assert.deepEqual(
+    board.unscheduledReadyJobs.map((job) => job.id),
+    [readyUnscheduled.id]
+  );
+  assert.deepEqual(
+    board.unscheduledBlockedJobs.map((job) => job.id),
+    [blockedUnscheduled.id]
+  );
+  assert.deepEqual(
+    board.overdueSchedulingJobs.map((job) => job.id),
+    [readyUnscheduled.id]
+  );
+  assert.deepEqual(
+    board.readinessReviewJobs.map((job) => job.id),
+    [blockedUnscheduled.id]
+  );
+  assert.deepEqual(
+    board.timingGroups
+      .find((group) => group.key === "unscheduled-blocked")
+      ?.jobs.map((job) => job.id),
+    [blockedUnscheduled.id]
+  );
+});

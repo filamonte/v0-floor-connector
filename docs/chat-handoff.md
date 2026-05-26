@@ -54,6 +54,12 @@ Current operating-core surfaces include:
   Copilot/action-lane map near the top and places Project Command Timeline
   before Copilot so the page reads as current status, what happened, what it
   means, and where to act. This is UI hierarchy over existing read models only.
+- Project Workspace Maturity v1 further tightens `/projects/[projectId]` as the
+  operational hub: the command summary names the current lifecycle position, a
+  Readiness + Blockers panel links blockers back to canonical source records,
+  and connected lanes split invoices, payments, field/Daily Logs, and
+  time/labor while staying read-only over existing project, readiness, payment,
+  job, Daily Log, field-note, and time-card records.
 - AI Operational Copilot Foundation in Project Workspace, deriving review-first
   project intelligence, recommended next actions, draft-assistance text, and
   field summaries from ProjectPulse, Ready Check, FieldTrail, MessageCenter,
@@ -119,7 +125,10 @@ Current operating-core surfaces include:
   automatic collections, or customer-facing internal operations language.
 - CrewBoard on `/schedule` over canonical jobs, appointments, job assignments,
   people, vendors, projects, and customers, with daily/weekly operating lanes,
-  clearer crew/readiness badges, and canonical project/job handoffs.
+  readiness-aware ready-vs-blocked unscheduled queues, blocked/overdue
+  scheduling metrics, commercial-readiness blocker links back to canonical
+  estimate/contract/deposit/opportunity/project records, clearer crew/readiness
+  badges, Daily Job Log continuity, and canonical project/job handoffs.
 - Portal Customer Window with deterministic portal-safe customer status
   explanations, Customer Next Step, Project Status Window, Project Timeline,
   Shared Documents, and existing portal review/print routes. The explanation
@@ -379,6 +388,12 @@ file` actions without exposing raw storage paths. This remains contractor-only
   read model for its command cards while preserving existing job schedule
   fields, `job_assignments`, advisory warnings, and confirmation-first schedule
   actions.
+- Scheduling Board v1 maturity extends that read model with blocked
+  unscheduled and overdue-scheduling queues driven by existing project
+  commercial-readiness snapshots. `/schedule` now shows blocked/not-ready jobs
+  instead of hiding them, links the first blocker to the canonical source record
+  where possible, and keeps date/crew changes on the existing schedule and
+  assignment action paths.
 - Scheduling Board Depth v2 post-commit smoke on May 25, 2026 loaded
   `/schedule` on desktop and 390px mobile with saved contractor auth, opened a
   canonical Job Workspace, opened the linked Project Workspace, and opened the

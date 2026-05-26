@@ -56,6 +56,10 @@ import {
   deriveScheduleWarningSummaries,
   type ScheduleWarningSummary
 } from "@/lib/schedule/warnings";
+import {
+  getDashboardProjectFinancialReadinessSummaries,
+  type ProjectFinancialReadinessSnapshot
+} from "@/lib/projects/readiness";
 import { listScheduleAppointments } from "@/lib/appointments/data";
 import { listScheduleLaborVendors } from "@/lib/vendors/data";
 
@@ -138,6 +142,114 @@ type SchedulePageProps = {
 
 function formatStatusLabel(value: string) {
   return value.replaceAll("_", " ");
+}
+
+function formatCommercialReadinessStatus(value: string) {
+  switch (value) {
+    case "ready_to_schedule":
+      return "Ready to schedule";
+    case "waiting_on_estimate_approval":
+      return "Waiting on estimate approval";
+    case "waiting_on_contract":
+      return "Waiting on contract";
+    case "waiting_on_signature":
+      return "Waiting on signature";
+    case "waiting_on_deposit":
+      return "Waiting on deposit";
+    case "waiting_on_financing":
+      return "Waiting on financing";
+    case "blocked":
+      return "Blocked";
+    default:
+      return formatStatusLabel(value);
+  }
+}
+
+function formatReadinessBlockerLabel(blocker: string) {
+  switch (blocker) {
+    case "site_assessment_incomplete":
+      return "Site assessment incomplete";
+    case "estimate_not_approved":
+      return "Estimate approval missing";
+    case "contract_missing":
+      return "Contract missing";
+    case "contract_internal_approval_pending":
+      return "Contract approval pending";
+    case "contract_signature_pending":
+      return "Unsigned contract";
+    case "deposit_required":
+      return "Unpaid deposit";
+    case "financing_pending":
+      return "Financing pending";
+    case "financing_declined":
+      return "Financing declined";
+    default:
+      return formatStatusLabel(blocker);
+  }
+}
+
+function getReadinessBlockerHref(
+  blocker: string,
+  readiness: ProjectFinancialReadinessSnapshot | null | undefined,
+  projectId: string
+) {
+  switch (blocker) {
+    case "estimate_not_approved":
+      return readiness?.estimateId
+        ? `/estimates/${readiness.estimateId}`
+        : null;
+    case "contract_missing":
+    case "contract_internal_approval_pending":
+    case "contract_signature_pending":
+      return readiness?.contractId
+        ? `/contracts/${readiness.contractId}`
+        : null;
+    case "deposit_required":
+      return readiness?.depositInvoiceId
+        ? `/invoices/${readiness.depositInvoiceId}`
+        : `/invoices?projectId=${projectId}&workflowRole=deposit`;
+    case "site_assessment_incomplete":
+      return readiness?.opportunityId
+        ? `/leads/${readiness.opportunityId}`
+        : null;
+    case "financing_pending":
+    case "financing_declined":
+      return `/projects/${projectId}#project-details`;
+    default:
+      return null;
+  }
+}
+
+function getReadinessBlockerDetail(
+  blocker: string,
+  readiness: ProjectFinancialReadinessSnapshot | null | undefined
+) {
+  switch (blocker) {
+    case "estimate_not_approved":
+      return readiness?.estimateStatus
+        ? `Estimate is ${formatStatusLabel(readiness.estimateStatus)}.`
+        : "Approve the project estimate before scheduling.";
+    case "contract_missing":
+      return "Generate the project contract from approved scope.";
+    case "contract_internal_approval_pending":
+      return "Clear internal contract approval before the schedule handoff.";
+    case "contract_signature_pending":
+      return readiness?.contractStatus
+        ? `Contract is ${formatStatusLabel(readiness.contractStatus)}.`
+        : "Complete signature before production scheduling.";
+    case "deposit_required":
+      return readiness?.depositInvoiceStatus
+        ? `Deposit invoice is ${formatStatusLabel(readiness.depositInvoiceStatus)}.`
+        : "Create or collect the required deposit invoice.";
+    case "site_assessment_incomplete":
+      return "Complete the linked site assessment.";
+    case "financing_pending":
+      return "Financing must be approved before scheduling.";
+    case "financing_declined":
+      return "Resolve declined financing before committing work.";
+    default:
+      return "Resolve this project readiness blocker.";
+  }
 }
 
 function getScheduleJobTitle(job: {
@@ -868,6 +980,168 @@ function ScheduleWarningBadges(input: {
   );
 }
 
+type ScheduleOperationalIndicator = {
+  id: string;
+  label: string;
+  detail: string;
+  href?: string | null;
+  tone: "ready" | "warning" | "blocked" | "neutral";
+};
+
+function getIndicatorClassName(tone: ScheduleOperationalIndicator["tone"]) {
+  switch (tone) {
+    case "ready":
+      return "border-emerald-200 bg-emerald-50 text-emerald-700";
+    case "blocked":
+      return "border-rose-200 bg-rose-50 text-rose-700";
+    case "warning":
+      return "border-amber-200 bg-amber-50 text-amber-800";
+    default:
+      return "border-[var(--border-warm)] bg-white text-[var(--text-secondary)]";
+  }
+}
+
+function buildScheduleOperationalIndicators(input: {
+  job: {
+    id: string;
+    projectId: string;
+    dispatchStatus: string;
+    scheduledDate: string | null;
+    assignmentCount: number;
+  };
+  readiness: ProjectFinancialReadinessSnapshot | null | undefined;
+  warnings: ScheduleWarningSummary[];
+  todayDateKey: string;
+}) {
+  const indicators: ScheduleOperationalIndicator[] = [];
+
+  if (input.readiness) {
+    if (input.readiness.isReadyToSchedule) {
+      indicators.push({
+        id: "commercial-ready",
+        label: "Ready to schedule",
+        detail: formatCommercialReadinessStatus(input.readiness.status),
+        href: `/projects/${input.job.projectId}`,
+        tone: "ready"
+      });
+    } else {
+      for (const blocker of input.readiness.blockers.slice(0, 3)) {
+        indicators.push({
+          id: `blocker:${blocker}`,
+          label: formatReadinessBlockerLabel(blocker),
+          detail: getReadinessBlockerDetail(blocker, input.readiness),
+          href: getReadinessBlockerHref(
+            blocker,
+            input.readiness,
+            input.job.projectId
+          ),
+          tone: "blocked"
+        });
+      }
+    }
+  }
+
+  if (
+    input.job.dispatchStatus !== "unscheduled" &&
+    input.job.dispatchStatus !== "completed" &&
+    input.job.assignmentCount === 0
+  ) {
+    indicators.push({
+      id: "missing-crew",
+      label: "Missing crew",
+      detail: "Assign people or a labor-provider vendor.",
+      href: buildScheduleHref({
+        view: "scheduled",
+        crew: "unassigned",
+        action: "assign",
+        jobId: input.job.id
+      }),
+      tone: "warning"
+    });
+  }
+
+  if (
+    input.job.dispatchStatus === "in_progress" ||
+    input.job.scheduledDate === input.todayDateKey
+  ) {
+    indicators.push({
+      id: "daily-log",
+      label:
+        input.job.dispatchStatus === "in_progress"
+          ? "Daily log check"
+          : "Daily log ready",
+      detail: "Open or start field execution continuity.",
+      href: buildDailyLogCaptureHref({
+        projectId: input.job.projectId,
+        jobId: input.job.id,
+        logDate: input.job.scheduledDate
+      }),
+      tone: input.job.dispatchStatus === "in_progress" ? "warning" : "neutral"
+    });
+  }
+
+  for (const warning of input.warnings.slice(0, 2)) {
+    indicators.push({
+      id: `warning:${warning.id}`,
+      label: warning.label,
+      detail: warning.detail,
+      tone: "warning"
+    });
+  }
+
+  return indicators;
+}
+
+function ScheduleOperationalIndicators(input: {
+  indicators: ScheduleOperationalIndicator[];
+  limit?: number;
+}) {
+  const visibleIndicators = input.indicators.slice(0, input.limit ?? 4);
+  const hiddenCount = Math.max(
+    input.indicators.length - visibleIndicators.length,
+    0
+  );
+
+  if (visibleIndicators.length === 0) {
+    return null;
+  }
+
+  return (
+    <div className="mt-3 flex flex-wrap gap-2">
+      {visibleIndicators.map((indicator) => {
+        const className = [
+          "inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em]",
+          getIndicatorClassName(indicator.tone)
+        ].join(" ");
+
+        return indicator.href ? (
+          <Link
+            key={indicator.id}
+            href={indicator.href}
+            className={`${className} transition hover:opacity-80`}
+            title={indicator.detail}
+          >
+            {indicator.label}
+          </Link>
+        ) : (
+          <span
+            key={indicator.id}
+            className={className}
+            title={indicator.detail}
+          >
+            {indicator.label}
+          </span>
+        );
+      })}
+      {hiddenCount > 0 ? (
+        <span className="inline-flex items-center rounded-full border border-[var(--border-warm)] bg-white px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--text-secondary)]">
+          +{hiddenCount}
+        </span>
+      ) : null}
+    </div>
+  );
+}
+
 function ScheduleNotesPreview(input: { notes: string | null }) {
   const notes = input.notes?.trim();
 
@@ -1294,6 +1568,11 @@ export default async function SchedulePage({
       isUpcoming
     };
   });
+  const projectReadinessByProjectId =
+    await getDashboardProjectFinancialReadinessSummaries({
+      organizationId: organizationContext.organization.id,
+      projectIds: jobsWithAssignments.map((job) => job.projectId)
+    });
   const scheduleWarningSummaries = deriveScheduleWarningSummaries(
     jobsWithAssignments.map((job) => ({
       id: job.id,
@@ -1335,9 +1614,14 @@ export default async function SchedulePage({
   const scheduleBoard = buildScheduleBoardReadModel({
     jobs: jobsWithAssignments,
     today,
+    readinessByProjectId: projectReadinessByProjectId,
     warningSummaries: scheduleWarningSummaries
   });
   const unscheduledJobs = scheduleBoard.unscheduledReadyJobs;
+  const blockedUnscheduledJobs = scheduleBoard.unscheduledBlockedJobs;
+  const overdueSchedulingJobs = scheduleBoard.overdueSchedulingJobs;
+  const totalUnscheduledJobs =
+    unscheduledJobs.length + blockedUnscheduledJobs.length;
   const scheduledTodayJobs = scheduleBoard.scheduledTodayJobs;
   const tomorrowJobs = scheduleBoard.tomorrowJobs;
   const thisWeekJobs = scheduleBoard.thisWeekJobs;
@@ -1418,6 +1702,14 @@ export default async function SchedulePage({
     : null;
   const selectedJobScheduleWarnings = selectedJob
     ? (scheduleWarningsByJobId.get(selectedJob.id) ?? [])
+    : [];
+  const selectedJobOperationalIndicators = selectedJob
+    ? buildScheduleOperationalIndicators({
+        job: selectedJob,
+        readiness: projectReadinessByProjectId.get(selectedJob.projectId),
+        warnings: selectedJobScheduleWarnings,
+        todayDateKey
+      })
     : [];
   const selectedJobNeedsScheduleBeforeCrew =
     selectedAction === "assign" &&
@@ -1621,6 +1913,7 @@ export default async function SchedulePage({
   const visibleScheduleBoard = buildScheduleBoardReadModel({
     jobs: visibleJobs,
     today,
+    readinessByProjectId: projectReadinessByProjectId,
     warningSummaries: visibleScheduleWarningSummaries
   });
   const boardTimingGroups = [
@@ -1637,6 +1930,20 @@ export default async function SchedulePage({
       emptyDescription:
         "When Ready Check-approved jobs exist without a committed date, they will collect here first.",
       surfaceClass: "border-amber-200 bg-amber-50/45"
+    },
+    {
+      key: "unscheduled-blocked",
+      title: "Blocked / not ready",
+      description:
+        "These jobs exist, but the linked project readiness snapshot says scheduling should not proceed yet.",
+      jobs:
+        visibleScheduleBoard.timingGroups.find(
+          (group) => group.key === "unscheduled-blocked"
+        )?.jobs ?? [],
+      emptyTitle: "No unscheduled jobs are blocked by readiness.",
+      emptyDescription:
+        "If a job becomes commercially or financially blocked after creation, it stays visible here with links back to the source record.",
+      surfaceClass: "border-rose-200 bg-rose-50/35"
     },
     {
       key: "today",
@@ -1805,6 +2112,8 @@ export default async function SchedulePage({
   const plannerJobCount = visibleScheduledJobs.length;
   const plannerAppointmentCount = visiblePlannerAppointments.length;
   const plannerItemCount = plannerJobCount + plannerAppointmentCount;
+  const boardItemCount =
+    scheduleLayout === "board" ? visibleJobs.length : plannerItemCount;
   const plannerNeedsCrewCount = visibleScheduledJobs.filter(
     (job) => job.assignmentCount === 0
   ).length;
@@ -1923,7 +2232,7 @@ export default async function SchedulePage({
       option.value === "all"
         ? jobsWithAssignments.length
         : option.value === "unscheduled"
-          ? unscheduledJobs.length
+          ? totalUnscheduledJobs
           : option.value === "scheduled"
             ? scheduledJobs.length
             : option.value === "today"
@@ -1969,6 +2278,42 @@ export default async function SchedulePage({
       active: view === "unscheduled",
       borderClass: "border-amber-200",
       bgClass: "bg-amber-50/60",
+      labelClass: "text-amber-800",
+      valueClass: "text-amber-900"
+    },
+    {
+      key: "blocked",
+      label: "Blocked",
+      value: blockedUnscheduledJobs.length,
+      href: buildScheduleHref({
+        q: query,
+        projectId: projectFilterId ?? undefined,
+        view: "unscheduled",
+        crew: crewFilter,
+        layout: "board",
+        date: plannerDateKey
+      }),
+      active: false,
+      borderClass: "border-rose-200",
+      bgClass: "bg-rose-50/45",
+      labelClass: "text-rose-700",
+      valueClass: "text-rose-800"
+    },
+    {
+      key: "overdue",
+      label: "Overdue scheduling",
+      value: overdueSchedulingJobs.length,
+      href: buildScheduleHref({
+        q: query,
+        projectId: projectFilterId ?? undefined,
+        view: "unscheduled",
+        crew: crewFilter,
+        layout: scheduleLayout,
+        date: plannerDateKey
+      }),
+      active: false,
+      borderClass: "border-amber-200",
+      bgClass: "bg-amber-50/45",
       labelClass: "text-amber-800",
       valueClass: "text-amber-900"
     },
@@ -2143,6 +2488,28 @@ export default async function SchedulePage({
       ctaLabel: "View unassigned",
       jobs: todayWithoutCrewJobs.slice(0, 2),
       empty: todayWithoutCrewJobs.length === 0
+    },
+    {
+      key: "blocked-unscheduled",
+      eyebrow: "Blocked handoffs",
+      title: getActionDescription(
+        blockedUnscheduledJobs.length,
+        "1 unscheduled job is blocked by project readiness.",
+        `${blockedUnscheduledJobs.length} unscheduled jobs are blocked by project readiness.`
+      ),
+      description:
+        "Do not bypass Ready Check. Open the linked estimate, contract, deposit invoice, financing, or Project Workspace record before committing the date.",
+      href: buildScheduleHref({
+        q: query,
+        projectId: projectFilterId ?? undefined,
+        view: "unscheduled",
+        crew: crewFilter,
+        layout: "board",
+        date: plannerDateKey
+      }),
+      ctaLabel: "Review blockers",
+      jobs: blockedUnscheduledJobs.slice(0, 2),
+      empty: blockedUnscheduledJobs.length === 0
     },
     {
       key: "happening-today",
@@ -2826,6 +3193,44 @@ export default async function SchedulePage({
             />
 
             <ManagerDashboardCard
+              eyebrow="Readiness"
+              title="Blocked / not ready"
+              description="These jobs stay visible, but CrewBoard should not commit dates until the linked project readiness blocker is resolved."
+              actionHref={buildCurrentScheduleHref({
+                view: "unscheduled",
+                layout: "board"
+              })}
+              actionLabel="Open blocked lane"
+              items={blockedUnscheduledJobs.slice(0, 4).map((job) => {
+                const readiness = projectReadinessByProjectId.get(
+                  job.projectId
+                );
+                const blocker = readiness?.blockers[0] ?? null;
+
+                return {
+                  href: blocker
+                    ? (getReadinessBlockerHref(
+                        blocker,
+                        readiness,
+                        job.projectId
+                      ) ?? `/projects/${job.projectId}`)
+                    : `/projects/${job.projectId}`,
+                  title: getScheduleJobTitle(job),
+                  subtitle: getScheduleJobSubtitle(job),
+                  meta: blocker
+                    ? getReadinessBlockerDetail(blocker, readiness)
+                    : "Open the Project Workspace to review readiness.",
+                  badge: blocker
+                    ? formatReadinessBlockerLabel(blocker)
+                    : "Blocked",
+                  trailing: "Resolve blocker"
+                };
+              })}
+              emptyTitle="No unscheduled jobs are readiness-blocked."
+              emptyDescription="If project commercial readiness changes after a job exists, blocked jobs remain visible here instead of disappearing from scheduling."
+            />
+
+            <ManagerDashboardCard
               eyebrow="Today"
               title="Scheduled work for today"
               description="Keep the immediate field picture visible without turning the page into a full calendar app."
@@ -3081,7 +3486,7 @@ export default async function SchedulePage({
             </div>
 
             <CrewBoardDragDropLayer>
-              {plannerItemCount > 0 ? (
+              {boardItemCount > 0 ? (
                 scheduleLayout === "day" ? (
                   <div className="px-5 py-4 sm:px-6">
                     <div className="flex items-center justify-between gap-3 border-b border-[var(--border-warm)] pb-4">
@@ -3281,6 +3686,16 @@ export default async function SchedulePage({
                                   const boardCardState = getBoardCardState(job);
                                   const jobWarnings =
                                     scheduleWarningsByJobId.get(job.id) ?? [];
+                                  const operationalIndicators =
+                                    buildScheduleOperationalIndicators({
+                                      job,
+                                      readiness:
+                                        projectReadinessByProjectId.get(
+                                          job.projectId
+                                        ),
+                                      warnings: jobWarnings,
+                                      todayDateKey
+                                    });
 
                                   return (
                                     <CrewBoardDraggableJob
@@ -3327,6 +3742,10 @@ export default async function SchedulePage({
                                       <p className="mt-1 text-xs leading-5 text-[var(--text-secondary)]">
                                         {crewState.detail}
                                       </p>
+                                      <ScheduleOperationalIndicators
+                                        indicators={operationalIndicators}
+                                        limit={3}
+                                      />
                                       <ScheduleNotesPreview
                                         notes={job.scheduleNotes}
                                       />
@@ -3627,6 +4046,15 @@ export default async function SchedulePage({
                               const boardCardState = getBoardCardState(job);
                               const jobWarnings =
                                 scheduleWarningsByJobId.get(job.id) ?? [];
+                              const operationalIndicators =
+                                buildScheduleOperationalIndicators({
+                                  job,
+                                  readiness: projectReadinessByProjectId.get(
+                                    job.projectId
+                                  ),
+                                  warnings: jobWarnings,
+                                  todayDateKey
+                                });
 
                               return (
                                 <div
@@ -3686,6 +4114,9 @@ export default async function SchedulePage({
 
                                   <ScheduleNotesPreview
                                     notes={job.scheduleNotes}
+                                  />
+                                  <ScheduleOperationalIndicators
+                                    indicators={operationalIndicators}
                                   />
                                   <ScheduleWarningBadges
                                     warnings={jobWarnings}
@@ -3903,6 +4334,13 @@ export default async function SchedulePage({
                     assignmentCount: job.assignmentCount,
                     warningCount: jobWarnings.length
                   });
+                  const operationalIndicators =
+                    buildScheduleOperationalIndicators({
+                      job,
+                      readiness: projectReadinessByProjectId.get(job.projectId),
+                      warnings: jobWarnings,
+                      todayDateKey
+                    });
 
                   return (
                     <div key={job.id} className="px-5 py-4 sm:px-6">
@@ -3951,6 +4389,9 @@ export default async function SchedulePage({
                           <p className="mt-2 text-sm leading-6 text-[var(--text-secondary)]">
                             {boardCardState.summary}
                           </p>
+                          <ScheduleOperationalIndicators
+                            indicators={operationalIndicators}
+                          />
                           <ScheduleNotesPreview notes={job.scheduleNotes} />
                           <ScheduleWarningBadges warnings={jobWarnings} />
                         </div>
@@ -4104,6 +4545,9 @@ export default async function SchedulePage({
                     ? `${formatAssignmentLabel(selectedJobAssignments.length)} already attached`
                     : "Crew not assigned yet"}
                 </p>
+                <ScheduleOperationalIndicators
+                  indicators={selectedJobOperationalIndicators}
+                />
               </div>
 
               <div className="flex flex-wrap gap-2">

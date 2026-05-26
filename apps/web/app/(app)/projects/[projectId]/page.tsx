@@ -229,6 +229,14 @@ type LifecycleStepId =
   | "estimate-contract"
   | "job-schedule"
   | "invoice-payment";
+type ReadinessBlockerItem = {
+  id: string;
+  title: string;
+  detail: string;
+  href?: string;
+  actionLabel?: string;
+  tone: "blocked" | "warning" | "ready";
+};
 
 const projectWorkspacePanelClassName =
   "rounded-lg border border-[var(--border-warm)] bg-white shadow-[0_18px_44px_-38px_rgba(31,41,55,0.42)]";
@@ -1586,7 +1594,7 @@ function OperationalCommandCenter({
         </div>
       </div>
 
-      <div className="grid gap-px bg-[var(--border-warm)] md:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-px bg-[var(--border-warm)] md:grid-cols-2 xl:grid-cols-5">
         {summaryItems.map((item) => (
           <div
             key={item.label}
@@ -1836,6 +1844,106 @@ function ProjectConnectedRecordLanes({
           </article>
         ))}
       </div>
+    </section>
+  );
+}
+
+function ProjectReadinessBlockersPanel({
+  readinessLabel,
+  readinessDetail,
+  readyToScheduleAt,
+  blockers
+}: {
+  readinessLabel: string;
+  readinessDetail: string;
+  readyToScheduleAt: string | null;
+  blockers: ReadinessBlockerItem[];
+}) {
+  const hasBlockers = blockers.length > 0;
+
+  return (
+    <section
+      id="project-readiness-blockers"
+      aria-labelledby="project-readiness-blockers-title"
+      className={projectWorkspacePanelClassName}
+    >
+      <div
+        className={[
+          "flex flex-col gap-3 px-4 py-4 md:flex-row md:items-start md:justify-between sm:px-5",
+          projectWorkspacePanelHeaderClassName
+        ].join(" ")}
+      >
+        <div>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--text-secondary)]">
+            Readiness + blockers
+          </p>
+          <h2
+            id="project-readiness-blockers-title"
+            className="mt-1 text-lg font-semibold text-[var(--text-primary)]"
+          >
+            {readinessLabel}
+          </h2>
+          <p className="mt-1 max-w-[72ch] text-sm leading-6 text-[var(--text-secondary)]">
+            {readinessDetail}
+          </p>
+        </div>
+        <span
+          className={[
+            "rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em]",
+            hasBlockers
+              ? "border-amber-200 bg-amber-50 text-amber-900"
+              : "border-emerald-200 bg-emerald-50 text-emerald-900"
+          ].join(" ")}
+        >
+          {hasBlockers
+            ? `${blockers.length} ${blockers.length === 1 ? "blocker" : "blockers"}`
+            : readyToScheduleAt
+              ? `Ready ${formatDateTime(readyToScheduleAt)}`
+              : "Clear"}
+        </span>
+      </div>
+
+      {hasBlockers ? (
+        <div className="grid gap-px bg-[var(--border-warm)] md:grid-cols-2">
+          {blockers.map((blocker) => (
+            <article
+              key={blocker.id}
+              className={[
+                "flex min-h-[156px] flex-col px-4 py-4 text-sm leading-6",
+                blocker.tone === "blocked"
+                  ? "bg-rose-50 text-rose-950"
+                  : "bg-amber-50 text-amber-950"
+              ].join(" ")}
+            >
+              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] opacity-75">
+                {blocker.tone === "blocked" ? "Blocked" : "Needs review"}
+              </p>
+              <h3 className="mt-2 text-sm font-semibold">{blocker.title}</h3>
+              <p className="mt-2 opacity-85">{blocker.detail}</p>
+              <div className="mt-auto pt-4">
+                {blocker.href && blocker.actionLabel ? (
+                  <Link
+                    href={blocker.href}
+                    className={getWorkspaceActionLinkClassName("secondary")}
+                  >
+                    {blocker.actionLabel}
+                  </Link>
+                ) : (
+                  <span className="inline-flex h-9 items-center justify-center rounded-[4px] border border-current/20 bg-white/70 px-3 text-sm font-medium">
+                    Resolve in project
+                  </span>
+                )}
+              </div>
+            </article>
+          ))}
+        </div>
+      ) : (
+        <div className="border-t border-[var(--border-warm)] bg-emerald-50 px-4 py-4 text-sm leading-6 text-emerald-950 sm:px-5">
+          Commercial, scheduling, billing, and closeout blockers are currently
+          clear in the Project Workspace. Scheduling still happens through the
+          canonical job and schedule chain.
+        </div>
+      )}
     </section>
   );
 }
@@ -3228,6 +3336,232 @@ function buildWorkspaceActions(input: {
   return actions.slice(0, 5);
 }
 
+function buildReadinessBlockerItems(input: {
+  projectId: string;
+  customerId: string;
+  opportunityId: string | null;
+  approvedEstimateId: string | null;
+  readinessSnapshot: ProjectFinancialReadinessSnapshot | null;
+  activeBlockers: NonNullable<ProjectFinancialReadinessSnapshot>["blockers"];
+  latestEstimate: ProjectEstimateListItem | null;
+  latestContract: ProjectContractListItem | null;
+  depositInvoice: ProjectInvoiceListItem | null;
+  latestOpenInvoice: ProjectInvoiceListItem | null;
+  pendingChangeOrder: ProjectChangeOrderListItem | null;
+  unscheduledJobs: ProjectJobListItem[];
+  hasCompletedJobWithoutInvoice: boolean;
+  completedJobWithoutInvoiceId: string | null;
+  hasProgressBillingInvoiceGap: boolean;
+  openFieldBlocker: ProjectFieldNoteListItem | null;
+}) {
+  const items: ReadinessBlockerItem[] = [];
+  const pushUnique = (item: ReadinessBlockerItem) => {
+    if (items.some((existing) => existing.id === item.id)) {
+      return;
+    }
+
+    items.push(item);
+  };
+
+  for (const blocker of input.activeBlockers) {
+    switch (blocker) {
+      case "site_assessment_incomplete":
+        pushUnique({
+          id: blocker,
+          title: "Complete the sales assessment",
+          detail: formatBlockerLabel(blocker),
+          href: input.opportunityId
+            ? `/leads/${input.opportunityId}`
+            : undefined,
+          actionLabel: input.opportunityId ? "Open opportunity" : undefined,
+          tone: "blocked"
+        });
+        break;
+      case "estimate_not_approved":
+        pushUnique({
+          id: blocker,
+          title: "Approve the project estimate",
+          detail: formatBlockerLabel(blocker),
+          href: input.readinessSnapshot?.estimateId
+            ? `/estimates/${input.readinessSnapshot.estimateId}`
+            : input.latestEstimate
+              ? `/estimates/${input.latestEstimate.id}`
+              : buildProjectEstimateCreateHref(
+                  input.projectId,
+                  input.customerId,
+                  input.opportunityId
+                ),
+          actionLabel:
+            input.readinessSnapshot?.estimateId || input.latestEstimate
+              ? "Open estimate"
+              : "Create estimate",
+          tone: "blocked"
+        });
+        break;
+      case "contract_missing":
+        pushUnique({
+          id: blocker,
+          title: "Generate the contract",
+          detail: formatBlockerLabel(blocker),
+          href: input.approvedEstimateId
+            ? `/contracts?estimateId=${input.approvedEstimateId}`
+            : undefined,
+          actionLabel: input.approvedEstimateId
+            ? "Generate contract"
+            : undefined,
+          tone: "blocked"
+        });
+        break;
+      case "contract_internal_approval_pending":
+      case "contract_signature_pending":
+        pushUnique({
+          id: blocker,
+          title:
+            blocker === "contract_internal_approval_pending"
+              ? "Clear contract approval"
+              : "Complete contract signature",
+          detail: formatBlockerLabel(blocker),
+          href: input.readinessSnapshot?.contractId
+            ? `/contracts/${input.readinessSnapshot.contractId}`
+            : input.latestContract
+              ? `/contracts/${input.latestContract.id}`
+              : undefined,
+          actionLabel: "Open contract",
+          tone: "blocked"
+        });
+        break;
+      case "deposit_required":
+        pushUnique({
+          id: blocker,
+          title: input.depositInvoice
+            ? "Collect the required deposit"
+            : "Create the deposit invoice",
+          detail: formatBlockerLabel(blocker),
+          href: input.depositInvoice
+            ? `/invoices/${input.depositInvoice.id}`
+            : `/invoices?projectId=${input.projectId}&estimateId=${input.approvedEstimateId ?? ""}&workflowRole=deposit`,
+          actionLabel: input.depositInvoice
+            ? "Open deposit invoice"
+            : "Create deposit invoice",
+          tone: "blocked"
+        });
+        break;
+      case "financing_pending":
+      case "financing_declined":
+        pushUnique({
+          id: blocker,
+          title:
+            blocker === "financing_declined"
+              ? "Resolve declined financing"
+              : "Resolve financing readiness",
+          detail: formatBlockerLabel(blocker),
+          href: "#project-details",
+          actionLabel: "Edit project financing",
+          tone: "blocked"
+        });
+        break;
+      default:
+        pushUnique({
+          id: blocker,
+          title: formatStatusLabel(blocker),
+          detail: formatBlockerLabel(blocker),
+          tone: "blocked"
+        });
+    }
+  }
+
+  if (input.pendingChangeOrder) {
+    pushUnique({
+      id: `change-order:${input.pendingChangeOrder.id}`,
+      title: "Resolve pending change order",
+      detail:
+        input.pendingChangeOrder.status === "draft"
+          ? "A draft change order is still open on this project."
+          : "A sent change order is waiting on customer decision.",
+      href: `/change-orders/${input.pendingChangeOrder.id}`,
+      actionLabel: "Open change order",
+      tone: "warning"
+    });
+  }
+
+  if (input.unscheduledJobs.length > 0) {
+    pushUnique({
+      id: "unscheduled-jobs",
+      title:
+        input.unscheduledJobs.length === 1
+          ? "Schedule the project job"
+          : "Schedule project jobs",
+      detail:
+        input.unscheduledJobs.length === 1
+          ? "One canonical job exists but has no schedule commitment yet."
+          : `${input.unscheduledJobs.length} canonical jobs still need schedule placement.`,
+      href: buildProjectScheduleHref({
+        projectId: input.projectId,
+        view: "unscheduled",
+        action: "schedule",
+        jobId:
+          input.unscheduledJobs.length === 1
+            ? input.unscheduledJobs[0].id
+            : undefined
+      }),
+      actionLabel: "Open schedule",
+      tone: "warning"
+    });
+  }
+
+  if (input.latestOpenInvoice) {
+    pushUnique({
+      id: `open-invoice:${input.latestOpenInvoice.id}`,
+      title: "Follow open invoice balance",
+      detail: getProjectInvoiceSummary(input.latestOpenInvoice),
+      href: `/invoices/${input.latestOpenInvoice.id}`,
+      actionLabel: "Open invoice",
+      tone: "warning"
+    });
+  }
+
+  if (input.hasCompletedJobWithoutInvoice) {
+    pushUnique({
+      id: "completed-job-without-invoice",
+      title: "Create invoice for completed work",
+      detail:
+        "A completed job exists without a connected canonical invoice yet.",
+      href: input.completedJobWithoutInvoiceId
+        ? `/invoices?projectId=${input.projectId}&jobId=${input.completedJobWithoutInvoiceId}`
+        : `/invoices?projectId=${input.projectId}`,
+      actionLabel: "Create invoice",
+      tone: "warning"
+    });
+  }
+
+  if (input.hasProgressBillingInvoiceGap) {
+    pushUnique({
+      id: "progress-billing-invoice-gap",
+      title: "Review progress billing invoice gap",
+      detail:
+        "Progress billing has current billable value, but no connected progress invoice exists yet.",
+      href: "/progress-billing",
+      actionLabel: "Open progress billing",
+      tone: "warning"
+    });
+  }
+
+  if (input.openFieldBlocker) {
+    pushUnique({
+      id: `field-blocker:${input.openFieldBlocker.id}`,
+      title: "Review open field blocker",
+      detail: input.openFieldBlocker.title,
+      href: input.openFieldBlocker.dailyLog
+        ? `/daily-logs/${input.openFieldBlocker.dailyLog.id}#job-notes`
+        : "/daily-logs",
+      actionLabel: "Open daily log",
+      tone: "warning"
+    });
+  }
+
+  return items;
+}
+
 export default async function ProjectDetailPage({
   params,
   searchParams
@@ -4108,6 +4442,35 @@ export default async function ProjectDetailPage({
     projectJobs,
     unscheduledJobs
   });
+  const currentReadinessStage =
+    readinessStages.find((stage) => stage.state === "blocked") ??
+    readinessStages.find((stage) => stage.state === "current") ??
+    readinessStages[readinessStages.length - 1] ??
+    null;
+  const openFieldBlocker =
+    projectFieldNotes.find(
+      (note) =>
+        note.status === "open" &&
+        (note.noteType === "blocker" || note.noteType === "issue")
+    ) ?? null;
+  const readinessBlockerItems = buildReadinessBlockerItems({
+    projectId: project.id,
+    customerId: project.customerId,
+    opportunityId: projectOpportunity?.id ?? null,
+    approvedEstimateId,
+    readinessSnapshot,
+    activeBlockers,
+    latestEstimate,
+    latestContract,
+    depositInvoice,
+    latestOpenInvoice,
+    pendingChangeOrder,
+    unscheduledJobs,
+    hasCompletedJobWithoutInvoice: canCreateInvoice,
+    completedJobWithoutInvoiceId: canCreateInvoice ? completedJobId : null,
+    hasProgressBillingInvoiceGap,
+    openFieldBlocker
+  });
   const linkedRecordRecencyItems = buildLinkedRecordRecencyItems({
     estimates: projectEstimates,
     contracts: projectContracts,
@@ -4129,6 +4492,17 @@ export default async function ProjectDetailPage({
             } can see this project`
           : "No active portal visibility on this project",
       tone: projectVisiblePortalGrants.length > 0 ? "positive" : "neutral"
+    },
+    {
+      label: "Lifecycle",
+      value: currentReadinessStage?.title ?? workflowDriverLabel,
+      detail: currentReadinessStage?.detail ?? "Project is the continuity hub.",
+      tone:
+        currentReadinessStage?.state === "blocked"
+          ? "warning"
+          : currentReadinessStage?.state === "complete"
+            ? "positive"
+            : "neutral"
     },
     {
       label: "Commercial",
@@ -4279,6 +4653,33 @@ export default async function ProjectDetailPage({
           : undefined
     },
     {
+      title: "Payments",
+      status:
+        recentPayments.length > 0
+          ? formatStatusLabel(recentPayments[0].status)
+          : paymentFocusLatestEventType
+            ? formatStatusLabel(paymentFocusLatestEventType)
+            : "not started",
+      keyFact:
+        recentPayments.length > 0
+          ? getPaymentRecordSummary(recentPayments[0])
+          : paymentFocusLatestEventType
+            ? `Latest payment event: ${formatStatusLabel(paymentFocusLatestEventType)}`
+            : "No recorded payments are attached to this project yet.",
+      href: paymentFocusInvoiceId
+        ? `/invoices/${paymentFocusInvoiceId}`
+        : "/payments",
+      actionLabel: paymentFocusInvoiceId
+        ? "Open payment invoice"
+        : "Open payments",
+      note: "Payments are shown through the canonical invoice/payment chain, not a separate project ledger.",
+      blocker:
+        paymentFocusLatestEventType === "payment_failed" ||
+        paymentFocusLatestEventType === "payment_voided"
+          ? "Latest payment evidence needs billing review."
+          : undefined
+    },
+    {
       title: "Job / Schedule",
       status: formatStatusLabel(schedulingState.value),
       keyFact: schedulingState.detail,
@@ -4329,6 +4730,37 @@ export default async function ProjectDetailPage({
         : undefined
     },
     {
+      title: "Time / Labor",
+      status:
+        projectOpenTimeStates.length > 0
+          ? "active"
+          : projectTimeCards.length > 0
+            ? "recorded"
+            : "not started",
+      keyFact:
+        projectTimeCards.length > 0
+          ? `${formatDuration(
+              projectTimeCards.reduce(
+                (sum, timeCard) => sum + timeCard.workedMinutes,
+                0
+              )
+            )} across ${projectTimeCards.length} time card${
+              projectTimeCards.length === 1 ? "" : "s"
+            }`
+          : "No labor time is attributed to this project yet.",
+      href: projectTimeCards[0]
+        ? `/time-cards/${projectTimeCards[0].id}`
+        : "/time",
+      actionLabel: projectTimeCards[0] ? "Open time card" : "Open time",
+      note: "Labor summary is derived from existing time cards and open punch state.",
+      blocker:
+        projectOpenTimeStates.length > 0
+          ? `${projectOpenTimeStates.length} open time session${
+              projectOpenTimeStates.length === 1 ? "" : "s"
+            } need review.`
+          : undefined
+    },
+    {
       title: "Customer Access",
       status: projectVisiblePortalGrants.length > 0 ? "visible" : "not shared",
       keyFact:
@@ -4346,11 +4778,6 @@ export default async function ProjectDetailPage({
           : undefined
     }
   ];
-  const currentReadinessStage =
-    readinessStages.find((stage) => stage.state === "blocked") ??
-    readinessStages.find((stage) => stage.state === "current") ??
-    readinessStages[readinessStages.length - 1] ??
-    null;
   const drivingRecord =
     linkedRecordRecencyItems.find((item) => item.isDrivingRecord) ??
     linkedRecordRecencyItems[0] ??
@@ -4646,6 +5073,21 @@ export default async function ProjectDetailPage({
                   : "Clear the current gate before operations moves forward."
               }
               summaryItems={commandSummaryItems}
+            />
+
+            <ProjectReadinessBlockersPanel
+              readinessLabel={
+                readinessSnapshot?.isReadyToSchedule
+                  ? "Ready to schedule"
+                  : formatStatusLabel(readinessStatus)
+              }
+              readinessDetail={
+                readinessSnapshot?.isReadyToSchedule
+                  ? "Commercial handoff is complete. The next move should stay on the canonical job and schedule chain."
+                  : "Readiness blockers are linked to the canonical record that can resolve them where the current data makes that link available."
+              }
+              readyToScheduleAt={readyToScheduleAt}
+              blockers={readinessBlockerItems}
             />
 
             <ProjectCommandCenterMap
@@ -6228,6 +6670,7 @@ export default async function ProjectDetailPage({
         </DetailPanel>
 
         <DetailPanel
+          id="project-details"
           title="Edit Project"
           description="Editing stays on the same record, but it is intentionally lower priority than the readiness workspace above."
         >
