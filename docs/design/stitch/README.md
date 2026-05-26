@@ -40,3 +40,7 @@ Do:
 No `stitch_floorconnector_enterprise_design_system.zip`, `DESIGN.md`, `industrial_contrast`, `project_management`, `estimate_details`, `platform_administration`, or non-`node_modules` Stitch artifacts were found in this workspace during this adoption pass.
 
 Because the export was not present, [docs/design/stitch/industrial-contrast-DESIGN.md](C:/FloorConnector/docs/design/stitch/industrial-contrast-DESIGN.md) is a curated adoption summary based on the requested Stitch direction and the existing FloorConnector Graphite / Copper UI doctrine, not a copied export file.
+
+## Current Foundation Note
+
+[docs/design/stitch/full-system-redesign-foundation.md](C:/FloorConnector/docs/design/stitch/full-system-redesign-foundation.md) records the current system-wide redesign DNA, screen-family direction, and safe first Projects Manager Page slice. It is grounded in the committed Stitch adoption trail because the live Stitch MCP tool was not callable in that Codex session.

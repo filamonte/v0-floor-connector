@@ -93,6 +93,25 @@ function getProjectContinuityCue(project: ProjectsManagerProject) {
   }
 }
 
+function ProjectsSummaryStat({
+  label,
+  value
+}: {
+  label: string;
+  value: number;
+}) {
+  return (
+    <div className="rounded-lg border border-white/10 bg-white/[0.07] px-4 py-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]">
+      <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--copper-light)]">
+        {label}
+      </p>
+      <p className="mt-1 text-2xl font-semibold tracking-tight text-white">
+        {value}
+      </p>
+    </div>
+  );
+}
+
 export default async function ProjectsPage({
   searchParams
 }: ProjectsPageProps) {
@@ -159,40 +178,13 @@ export default async function ProjectsPage({
       eyebrow="Projects"
       title={`Project command centers for ${organizationContext.organization.displayName}`}
       description="Projects are the operational root connecting customer context to estimating, contracts, execution, billing, and closeout."
+      headerTone="dark"
       summary={
         <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
-          <div className="rounded-lg border border-[var(--border-warm)] bg-white px-4 py-3">
-            <p className="text-[11px] uppercase tracking-[0.14em] text-[var(--text-secondary)]">
-              Opportunity
-            </p>
-            <p className="mt-1 text-2xl font-semibold tracking-tight text-[var(--text-primary)]">
-              {counts.lead}
-            </p>
-          </div>
-          <div className="rounded-lg border border-[var(--border-warm)] bg-white px-4 py-3">
-            <p className="text-[11px] uppercase tracking-[0.14em] text-[var(--text-secondary)]">
-              Estimating
-            </p>
-            <p className="mt-1 text-2xl font-semibold tracking-tight text-[var(--text-primary)]">
-              {counts.estimating}
-            </p>
-          </div>
-          <div className="rounded-lg border border-[var(--border-warm)] bg-white px-4 py-3">
-            <p className="text-[11px] uppercase tracking-[0.14em] text-[var(--text-secondary)]">
-              Scheduled
-            </p>
-            <p className="mt-1 text-2xl font-semibold tracking-tight text-[var(--text-primary)]">
-              {counts.scheduled}
-            </p>
-          </div>
-          <div className="rounded-lg border border-[var(--border-warm)] bg-white px-4 py-3">
-            <p className="text-[11px] uppercase tracking-[0.14em] text-[var(--text-secondary)]">
-              In progress
-            </p>
-            <p className="mt-1 text-2xl font-semibold tracking-tight text-[var(--text-primary)]">
-              {counts.in_progress}
-            </p>
-          </div>
+          <ProjectsSummaryStat label="Opportunity" value={counts.lead} />
+          <ProjectsSummaryStat label="Estimating" value={counts.estimating} />
+          <ProjectsSummaryStat label="Scheduled" value={counts.scheduled} />
+          <ProjectsSummaryStat label="In progress" value={counts.in_progress} />
         </div>
       }
       commandBar={{
