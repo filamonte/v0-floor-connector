@@ -944,11 +944,20 @@ Implemented now:
 - `/financials` is now the implemented Financials Home route
 - Financials Home is intentionally summary-first and routing-first:
   - open receivables and overdue receivable amount
-  - pending payment count and payment attention count
+  - deposit receivables, retained amount, pending payment count, and payment attention count
   - deterministic Financial Control Next Move
+  - command-center signals for overdue AR, unpaid deposits, Payment Trail review,
+    retained amounts, and open progress-billing balances
   - overdue invoices, pending checkout activity, project collection attention,
     and Payment Trail attention
   - collection-opportunity links into canonical Invoice Workspaces
+- Financials Home now uses the shared Financial Control read model to surface a
+  contractor finance command-center layer across AR, deposits, retained amounts,
+  SOV/progress-billing invoices, pending payment activity, failed/voided payment
+  events, and customer-facing collection signals. These are read-only derived
+  signals over canonical invoices, payments, and payment events; each route
+  returns the user to the owning Invoice, Payments, Progress Billing, AR, or
+  Accounting Readiness workspace.
 - `/financials/accounts-receivable` is now a read-only AR workspace over canonical invoices, payments, and immutable payment events, with aging buckets, collection queues, invoice-level Next Move labels, project links, pending checkout visibility, and failed/voided/in-progress Payment Trail review
 - Collections Follow-Up Intelligence now deepens `/financials/accounts-receivable` with a deterministic read model over those same canonical invoices, payments, and payment events. It categorizes overdue invoices, unpaid deposits, sent-unpaid balances, partially paid balances, payment-in-progress states, failed/voided payment attempts, and internal-review cases; shows source-record reasons, payment state, amount due, recommended next step, and canonical invoice/project/customer links; and exposes review-first Copilot draft handoffs only when AI drafting controls allow them.
 - `/financials/accounting-readiness` is now a read-only Accounting Readiness workspace over canonical invoices, payments, payment events, customers, projects, invoice tax reporting entries, and invoice retainage snapshots, with accounting review rows, payment review rows, reconciliation attention, tax/retainage snapshot totals, export-ready column mapping, and in-browser Copy CSV / Download CSV export prep generated from the already loaded accounting review rows
@@ -958,6 +967,9 @@ Implemented now:
 - Accounts Receivable does not create a separate AR ledger, accounting subsystem, provider operation, automatic reminder workflow, collection-note model, invoice copy, payment copy, communication thread, notification event, or portal-only billing record
 - Accounting Readiness does not create a ledger, accounting tables, provider sync, export storage, export audit events, journal entries, reconciliation postings, invoice copies, payment copies, or accounting-provider records
 - The payment evidence and reconciliation visibility slice does not create reconciliation records, mutate invoices/payments/payment events, call providers, add retries/refunds/disputes, or alter invoice/payment math
+- The Financials command-center signals do not create ledger rows, accounting
+  entries, collection tasks, payment retries, provider sync, retainage-release
+  workflow, pay applications, or duplicate finance records.
 - Send Trail visibility does not create delivery tables, send actions, provider integrations, webhook behavior, portal-only copies, fake events, AI summaries, automation, or payment/signature/estimate/invoice behavior changes
 - `/financials/accounts-payable` remains a module-home placeholder only
 - the Financials routes use a shared tenant-scoped collections read model over existing canonical records and do not introduce a new finance data model

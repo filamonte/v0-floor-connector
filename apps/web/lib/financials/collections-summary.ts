@@ -15,8 +15,11 @@ export type FinancialControlInvoiceInput = {
   referenceNumber: string;
   workflowRole: InvoiceWorkflowRole;
   status: InvoiceStatus;
+  billingModel?: string | null;
   dueDate: string | null;
   balanceDueAmount: string;
+  paidAmount?: string | null;
+  retainageHeldAmount?: string | null;
   totalAmount: string;
   updatedAt: string;
   customer?: {
@@ -125,11 +128,29 @@ export type FinancialControlNextMove = {
   reason: string;
 };
 
+export type FinancialControlSignal = {
+  id: string;
+  label: string;
+  value: string;
+  detail: string;
+  href: string;
+  tone: FinancialControlTone;
+};
+
 export type FinancialControlSummary = {
   openReceivablesAmount: string;
   overdueAmount: string;
+  depositReceivablesAmount: string;
+  standardReceivablesAmount: string;
+  progressBillingReceivablesAmount: string;
+  retainageHeldAmount: string;
+  recordedPaymentAmount: string;
+  pendingPaymentAmount: string;
   openInvoiceCount: number;
   overdueInvoiceCount: number;
+  depositInvoiceCount: number;
+  sentUnpaidInvoiceCount: number;
+  progressBillingInvoiceCount: number;
   pendingPaymentCount: number;
   failedPaymentCount: number;
   paymentRequestedCount: number;
@@ -138,6 +159,7 @@ export type FinancialControlSummary = {
   invoicesNeedingAttention: FinancialControlInvoiceAttention[];
   paymentEventsNeedingReview: FinancialControlPaymentEventAttention[];
   projectCollectionAttention: FinancialControlProjectAttention[];
+  commandSignals: FinancialControlSignal[];
   nextMove: FinancialControlNextMove;
 };
 
@@ -391,6 +413,82 @@ function buildProjectAttention(input: {
   });
 }
 
+function buildCommandSignals(input: {
+  collectionsSummary: ReturnType<typeof buildFinancialCollectionsSummary>;
+  progressBillingInvoiceCount: number;
+  progressBillingReceivablesAmount: string;
+  retainageHeldAmount: string;
+  failedPaymentCount: number;
+  overdueInvoiceCount: number;
+  depositInvoiceCount: number;
+  pendingPaymentCount: number;
+}): FinancialControlSignal[] {
+  return [
+    {
+      id: "overdue-ar",
+      label: "Overdue AR",
+      value: input.collectionsSummary.overdueReceivableAmount,
+      detail:
+        input.overdueInvoiceCount > 0
+          ? `${input.overdueInvoiceCount} overdue invoice${input.overdueInvoiceCount === 1 ? "" : "s"} need collection review.`
+          : "No overdue receivables from current invoice balances.",
+      href: "/financials/accounts-receivable",
+      tone: input.overdueInvoiceCount > 0 ? "warning" : "neutral"
+    },
+    {
+      id: "deposit-ar",
+      label: "Deposits",
+      value: input.collectionsSummary.depositReceivableAmount,
+      detail:
+        input.depositInvoiceCount > 0
+          ? `${input.depositInvoiceCount} deposit invoice${input.depositInvoiceCount === 1 ? "" : "s"} still carry readiness-sensitive balance.`
+          : "No open deposit invoices are blocking financial readiness.",
+      href: "/financials/accounts-receivable",
+      tone: input.depositInvoiceCount > 0 ? "attention" : "neutral"
+    },
+    {
+      id: "payment-trail",
+      label: "Payment Trail",
+      value: String(input.failedPaymentCount + input.pendingPaymentCount),
+      detail:
+        input.failedPaymentCount > 0
+          ? `${input.failedPaymentCount} failed or voided payment event${input.failedPaymentCount === 1 ? "" : "s"} need review.`
+          : input.pendingPaymentCount > 0
+            ? `${input.pendingPaymentCount} pending payment${input.pendingPaymentCount === 1 ? "" : "s"} still need a clear outcome.`
+            : "No pending or failed payment activity needs review.",
+      href: "/payments",
+      tone:
+        input.failedPaymentCount > 0
+          ? "warning"
+          : input.pendingPaymentCount > 0
+            ? "attention"
+            : "neutral"
+    },
+    {
+      id: "retainage",
+      label: "Retainage",
+      value: input.retainageHeldAmount,
+      detail:
+        Number(input.retainageHeldAmount) > 0
+          ? "Retainage is held on existing invoice snapshots for review."
+          : "No retained amount is currently held on invoice snapshots.",
+      href: "/financials/accounting-readiness",
+      tone: Number(input.retainageHeldAmount) > 0 ? "attention" : "neutral"
+    },
+    {
+      id: "progress-billing",
+      label: "Progress billing",
+      value: input.progressBillingReceivablesAmount,
+      detail:
+        input.progressBillingInvoiceCount > 0
+          ? `${input.progressBillingInvoiceCount} progress invoice${input.progressBillingInvoiceCount === 1 ? "" : "s"} have open SOV-linked balance.`
+          : "No open progress-billing invoices are waiting in AR.",
+      href: "/progress-billing",
+      tone: input.progressBillingInvoiceCount > 0 ? "attention" : "neutral"
+    }
+  ];
+}
+
 export function buildFinancialControlSummary(input: {
   invoices: FinancialControlInvoiceInput[];
   payments: FinancialControlPaymentInput[];
@@ -404,6 +502,25 @@ export function buildFinancialControlSummary(input: {
     todayIso: input.todayIso
   });
   const openInvoices = input.invoices.filter(isOpenReceivableInvoice);
+  const depositInvoices = openInvoices.filter(
+    (invoice) => invoice.workflowRole === "deposit"
+  );
+  const sentUnpaidInvoices = openInvoices.filter(
+    (invoice) => invoice.status === "sent"
+  );
+  const progressBillingInvoices = openInvoices.filter(
+    (invoice) => invoice.billingModel === "aia_progress"
+  );
+  const retainageHeldAmount = money(
+    input.invoices
+      .filter((invoice) => invoice.status !== "void")
+      .reduce(
+        (sum, invoice) => sum + Number(invoice.retainageHeldAmount ?? 0),
+        0
+      )
+  );
+  const recordedPaymentAmount = collectionsSummary.recordedPaymentAmount;
+  const pendingPaymentAmount = collectionsSummary.pendingPaymentAmount;
   const invoicesNeedingAttention = openInvoices
     .map((invoice) =>
       buildInvoiceAttention({
@@ -454,8 +571,22 @@ export function buildFinancialControlSummary(input: {
   return {
     openReceivablesAmount: collectionsSummary.openReceivableAmount,
     overdueAmount: collectionsSummary.overdueReceivableAmount,
+    depositReceivablesAmount: collectionsSummary.depositReceivableAmount,
+    standardReceivablesAmount: collectionsSummary.standardReceivableAmount,
+    progressBillingReceivablesAmount: money(
+      progressBillingInvoices.reduce(
+        (sum, invoice) => sum + Number(invoice.balanceDueAmount),
+        0
+      )
+    ),
+    retainageHeldAmount,
+    recordedPaymentAmount,
+    pendingPaymentAmount,
     openInvoiceCount: collectionsSummary.openInvoiceCount,
     overdueInvoiceCount: collectionsSummary.overdueInvoiceCount,
+    depositInvoiceCount: depositInvoices.length,
+    sentUnpaidInvoiceCount: sentUnpaidInvoices.length,
+    progressBillingInvoiceCount: progressBillingInvoices.length,
     pendingPaymentCount: input.payments.filter(
       (payment) => payment.status === "pending"
     ).length,
@@ -472,6 +603,25 @@ export function buildFinancialControlSummary(input: {
     invoicesNeedingAttention,
     paymentEventsNeedingReview,
     projectCollectionAttention,
+    commandSignals: buildCommandSignals({
+      collectionsSummary,
+      progressBillingInvoiceCount: progressBillingInvoices.length,
+      progressBillingReceivablesAmount: money(
+        progressBillingInvoices.reduce(
+          (sum, invoice) => sum + Number(invoice.balanceDueAmount),
+          0
+        )
+      ),
+      retainageHeldAmount,
+      failedPaymentCount: input.paymentEvents.filter((event) =>
+        ["payment_failed", "payment_voided"].includes(event.eventType)
+      ).length,
+      overdueInvoiceCount: collectionsSummary.overdueInvoiceCount,
+      depositInvoiceCount: depositInvoices.length,
+      pendingPaymentCount: input.payments.filter(
+        (payment) => payment.status === "pending"
+      ).length
+    }),
     nextMove
   };
 }

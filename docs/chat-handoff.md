@@ -163,6 +163,15 @@ Current operating-core surfaces include:
 - Reports, Financial Control, Accounting Readiness, and Accounting Export Prep
   as read-only review/export-prep surfaces over source financial and
   operational records.
+- Financials Home now reads more like a contractor finance command center
+  without adding finance state. The shared Financial Control read model powers
+  command signals for overdue AR, unpaid deposits, Payment Trail attention,
+  retained amounts, and open SOV/progress-billing balances, with links back to
+  canonical Invoice, Payments, Progress Billing, AR, and Accounting Readiness
+  workspaces. It derives only from canonical invoices, payments, and immutable
+  payment events; it does not create ledgers, collection tasks, payment retries,
+  provider sync, retainage-release workflows, pay applications, or duplicate
+  finance records.
 - Document Engine print/save routes for source-record exports, including the
   contractor-side project closeout package route.
 - Estimate, Contract, and Invoice Workspaces now show a contractor-side

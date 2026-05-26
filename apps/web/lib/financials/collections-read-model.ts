@@ -29,10 +29,12 @@ export type FinancialCollectionsInvoice = {
   referenceNumber: string;
   workflowRole: InvoiceWorkflowRole;
   status: InvoiceStatus;
+  billingModel: string;
   issueDate: string;
   dueDate: string | null;
   totalAmount: string;
   balanceDueAmount: string;
+  retainageHeldAmount: string;
   updatedAt: string;
   agingBucket: ReturnType<typeof getInvoiceAgingBucket>;
   customer: {
@@ -137,10 +139,12 @@ type InvoiceRow = {
   reference_number: string;
   workflow_role: InvoiceWorkflowRole;
   status: InvoiceStatus;
+  billing_model: string;
   issue_date: string;
   due_date: string | null;
   total_amount: string | number;
   balance_due_amount: string | number;
+  retainage_held_amount: string | number;
   updated_at: string;
   customers?: {
     id: string;
@@ -231,10 +235,12 @@ const invoiceSelect = `
   reference_number,
   workflow_role,
   status,
+  billing_model,
   issue_date,
   due_date,
   total_amount,
   balance_due_amount,
+  retainage_held_amount,
   updated_at,
   customers (
     id,
@@ -329,8 +335,10 @@ function mapInvoice(
     referenceNumber: row.reference_number,
     workflowRole: row.workflow_role,
     status: row.status,
+    billingModel: row.billing_model,
     dueDate: row.due_date,
     balanceDueAmount: money(row.balance_due_amount),
+    retainageHeldAmount: money(row.retainage_held_amount),
     totalAmount: money(row.total_amount),
     updatedAt: row.updated_at
   };
@@ -344,10 +352,12 @@ function mapInvoice(
     referenceNumber: row.reference_number,
     workflowRole: row.workflow_role,
     status: row.status,
+    billingModel: row.billing_model,
     issueDate: row.issue_date,
     dueDate: row.due_date,
     totalAmount: money(row.total_amount),
     balanceDueAmount: money(row.balance_due_amount),
+    retainageHeldAmount: money(row.retainage_held_amount),
     updatedAt: row.updated_at,
     agingBucket: getInvoiceAgingBucket(invoiceInput, todayIso),
     customer: row.customers

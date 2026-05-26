@@ -69,19 +69,18 @@ export default async function FinancialsHomePage() {
           </div>
           <div className="bg-white px-3 py-2.5">
             <p className="text-[11px] uppercase tracking-[0.14em] text-[#666666]">
-              Pending payments
+              Deposits due
             </p>
             <p className="mt-1 text-lg font-semibold tracking-tight text-[#171717]">
-              {financialControl.pendingPaymentCount}
+              {formatMoney(financialControl.depositReceivablesAmount)}
             </p>
           </div>
           <div className="bg-white px-3 py-2.5">
             <p className="text-[11px] uppercase tracking-[0.14em] text-[#666666]">
-              Payment attention
+              Retainage held
             </p>
             <p className="mt-1 text-lg font-semibold tracking-tight text-[#171717]">
-              {financialControl.failedPaymentCount +
-                financialControl.paymentRequestedCount}
+              {formatMoney(financialControl.retainageHeldAmount)}
             </p>
           </div>
         </div>
@@ -137,6 +136,56 @@ export default async function FinancialsHomePage() {
             >
               Open next move
             </Link>
+          </div>
+        </section>
+
+        <section className="border border-[#d6d6d6] bg-white">
+          <div className="border-b border-[#e5e5e5] px-4 py-3 sm:px-5">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#666666]">
+              Command Center
+            </p>
+            <h2 className="mt-1 text-xl font-semibold tracking-tight text-[#171717]">
+              Financial control signals
+            </h2>
+            <p className="mt-1 max-w-[78ch] text-sm leading-6 text-slate-500">
+              Read-only finance signals across AR, deposits, Payment Trail,
+              retainage, and SOV-linked invoices. Each item routes back to the
+              canonical workspace that owns the source record.
+            </p>
+          </div>
+          <div className="grid gap-px bg-[#e5e5e5] md:grid-cols-2 xl:grid-cols-5">
+            {financialControl.commandSignals.map((signal) => (
+              <Link
+                key={signal.id}
+                href={signal.href}
+                className="min-w-0 bg-white px-4 py-4 transition hover:bg-[#f8f8f8]"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#666666]">
+                    {signal.label}
+                  </p>
+                  <span
+                    className={
+                      signal.tone === "warning"
+                        ? "rounded-full border border-red-200 bg-red-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-red-700"
+                        : signal.tone === "attention"
+                          ? "rounded-full border border-[#e4d7ca] bg-[#fffcf7] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#8f5b32]"
+                          : "rounded-full border border-[#d6d6d6] bg-[#f8f8f8] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-500"
+                    }
+                  >
+                    {signal.tone}
+                  </span>
+                </div>
+                <p className="mt-2 text-lg font-semibold tracking-tight text-[#171717]">
+                  {signal.id === "payment-trail"
+                    ? signal.value
+                    : formatMoney(signal.value)}
+                </p>
+                <p className="mt-2 text-xs leading-5 text-slate-500">
+                  {signal.detail}
+                </p>
+              </Link>
+            ))}
           </div>
         </section>
 

@@ -18,10 +18,13 @@ function invoice(
     referenceNumber: overrides.referenceNumber ?? "INV-001",
     workflowRole: overrides.workflowRole ?? "standard",
     status: overrides.status ?? "sent",
+    billingModel: overrides.billingModel ?? "standard",
     dueDate: Object.hasOwn(overrides, "dueDate")
       ? (overrides.dueDate ?? null)
       : "2026-05-01",
     balanceDueAmount: overrides.balanceDueAmount ?? "100.00",
+    paidAmount: overrides.paidAmount ?? "0.00",
+    retainageHeldAmount: overrides.retainageHeldAmount ?? "0.00",
     totalAmount: overrides.totalAmount ?? "100.00",
     updatedAt: overrides.updatedAt ?? "2026-05-20T12:00:00.000Z",
     customer: overrides.customer ?? {
@@ -89,6 +92,43 @@ void test("summarizes open invoice totals without changing invoice math", () => 
   assert.equal(summary.openReceivablesAmount, "675.25");
   assert.equal(summary.openInvoiceCount, 2);
   assert.equal(summary.invoicesNeedingAttention.length, 2);
+});
+
+void test("summarizes command-center deposit retainage and progress billing signals", () => {
+  const summary = buildFinancialControlSummary({
+    todayIso: "2026-05-20",
+    invoices: [
+      invoice({
+        id: "deposit",
+        workflowRole: "deposit",
+        balanceDueAmount: "250.00",
+        retainageHeldAmount: "0.00"
+      }),
+      invoice({
+        id: "progress",
+        billingModel: "aia_progress",
+        balanceDueAmount: "400.00",
+        retainageHeldAmount: "40.00"
+      }),
+      invoice({
+        id: "paid-retainage",
+        status: "paid",
+        balanceDueAmount: "0.00",
+        retainageHeldAmount: "10.00"
+      })
+    ],
+    payments: [payment({ status: "recorded", amount: "100.00" })],
+    paymentEvents: []
+  });
+
+  assert.equal(summary.depositReceivablesAmount, "250.00");
+  assert.equal(summary.progressBillingReceivablesAmount, "400.00");
+  assert.equal(summary.retainageHeldAmount, "50.00");
+  assert.equal(summary.recordedPaymentAmount, "100.00");
+  assert.equal(
+    summary.commandSignals.find((signal) => signal.id === "retainage")?.value,
+    "50.00"
+  );
 });
 
 void test("counts overdue invoice amount when a due date exists", () => {
