@@ -68,7 +68,8 @@ direction, channel, kind, or delivery status.
 ## Future Work
 
 - provider-backed customer messaging after explicit delivery policy
-- notification handling for customer replies
+- persisted reviewed/handled state for customer replies if a future schema
+  slice is approved
 - portal unread/read state
 - broader customer conversation list if product scope calls for it
 - response-time metrics and communication reporting

@@ -5,6 +5,7 @@ import type {
   MessageCenterPaymentEvent,
   MessageCenterSignatureEvent
 } from "./data";
+import { deriveCommunicationReplyTriage } from "@/lib/communications/reply-triage";
 
 type MessageCenterRecord = {
   id: string;
@@ -38,6 +39,8 @@ export type MessageCenterSummary = {
   latestSignatureTrail: MessageCenterTimelineItem | null;
   latestPaymentTrail: MessageCenterTimelineItem | null;
   latestCustomerMessage?: MessageCenterTimelineItem | null;
+  customerReplyNeedsResponseCount?: number;
+  latestCustomerReply?: MessageCenterTimelineItem | null;
   nextMove: {
     label: string;
     href: string;
@@ -148,9 +151,21 @@ function latest(
 function buildNextMove(input: {
   timeline: MessageCenterTimelineItem[];
   attentionCount: number;
+  customerReplyNeedsResponseCount: number;
+  latestCustomerReply: MessageCenterTimelineItem | null;
   latestCustomerMessage: MessageCenterTimelineItem | null;
   projectId: string;
 }) {
+  if (input.customerReplyNeedsResponseCount > 0 && input.latestCustomerReply) {
+    return {
+      label: "Reply to customer",
+      href: input.latestCustomerReply.href,
+      detail: `${input.customerReplyNeedsResponseCount} portal customer repl${
+        input.customerReplyNeedsResponseCount === 1 ? "y needs" : "ies need"
+      } contractor follow-up.`
+    };
+  }
+
   if (input.attentionCount > 0) {
     return {
       label: "Review MessageCenter",
@@ -202,6 +217,31 @@ export function deriveMessageCenterSummary(input: {
   const threadsById = new Map(
     input.threads.map((thread) => [thread.id, thread])
   );
+  const replyTriage = deriveCommunicationReplyTriage({
+    threads: input.threads.map((thread) => ({
+      id: thread.id,
+      threadStatus: thread.threadStatus,
+      lastMessageAt: thread.lastMessageAt,
+      lastMessagePreview: thread.lastMessagePreview
+    })),
+    messages: input.messages.map((message) => ({
+      id: message.id,
+      threadId: message.threadId,
+      senderType: message.senderType,
+      direction: message.direction,
+      channelKind: message.channelKind,
+      messageKind: message.messageKind,
+      visibility: message.visibility,
+      body: message.body,
+      occurredAt: message.occurredAt,
+      createdAt: message.createdAt
+    }))
+  });
+  const needsResponseThreadIds = new Set(
+    replyTriage.items
+      .filter((item) => item.needsResponse)
+      .map((item) => item.threadId)
+  );
   const estimateById = new Map(
     input.estimates.map((record) => [record.id, record])
   );
@@ -217,6 +257,8 @@ export function deriveMessageCenterSummary(input: {
       const thread = threadsById.get(message.threadId);
       const isCustomer =
         message.senderType === "portal_user" || message.direction === "inbound";
+      const needsResponse =
+        isCustomer && needsResponseThreadIds.has(message.threadId);
 
       return {
         id: `message:${message.id}`,
@@ -226,7 +268,7 @@ export function deriveMessageCenterSummary(input: {
         description: truncateBody(message.body),
         href: getThreadHref(thread),
         occurredAt: message.occurredAt,
-        tone: isCustomer ? "warning" : "neutral"
+        tone: needsResponse ? "warning" : "neutral"
       };
     }
   );
@@ -304,6 +346,20 @@ export function deriveMessageCenterSummary(input: {
   ).length;
   const latestCustomerMessage =
     messageItems.find((item) => item.title === "Customer message") ?? null;
+  const latestCustomerReplyMessage =
+    [...input.messages]
+      .sort((left, right) => right.occurredAt.localeCompare(left.occurredAt))
+      .find(
+        (message) =>
+          needsResponseThreadIds.has(message.threadId) &&
+          (message.senderType === "portal_user" ||
+            message.direction === "inbound")
+      ) ?? null;
+  const latestCustomerReply = latestCustomerReplyMessage
+    ? (messageItems.find(
+        (item) => item.id === `message:${latestCustomerReplyMessage.id}`
+      ) ?? null)
+    : null;
 
   return {
     latestActivityAt: timeline[0]?.occurredAt ?? null,
@@ -324,9 +380,13 @@ export function deriveMessageCenterSummary(input: {
     latestSignatureTrail: latest(timeline, "signature"),
     latestPaymentTrail: latest(timeline, "payment"),
     latestCustomerMessage,
+    customerReplyNeedsResponseCount: replyTriage.needsResponseCount,
+    latestCustomerReply,
     nextMove: buildNextMove({
       timeline,
       attentionCount,
+      customerReplyNeedsResponseCount: replyTriage.needsResponseCount,
+      latestCustomerReply,
       latestCustomerMessage,
       projectId: input.projectId
     }),

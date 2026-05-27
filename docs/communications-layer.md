@@ -246,6 +246,14 @@ Current Copilot draft handoff:
   visibility, show only customer-visible messages, and do not create provider
   sends, delivery events, notification events, portal-only copies, or internal
   note exposure.
+- Contractor-side reply triage is now derived from the same canonical message
+  history. `/communications` and Project MessageCenter treat an inbound
+  customer-visible portal reply as needing contractor follow-up until a later
+  contractor customer-visible response exists. Internal notes stay internal and
+  do not clear this derived needs-response state. Existing `notifications`
+  read-state still controls the stored notification triage buttons; this pass
+  does not create new notification events, persisted handled state, provider
+  sends, reminders, automation, or portal-visible triage state.
 - Estimate, contract, and invoice communication readiness can reuse document
   readiness output when supplied and otherwise prompts review of the canonical
   document workspace before any future customer send.

@@ -43,6 +43,9 @@ function buildThread(
     unreadCount: overrides.unreadCount ?? 0,
     needsResponse: overrides.needsResponse ?? false,
     lastUnreadAt: overrides.lastUnreadAt ?? null,
+    customerReplyNeedsResponse: overrides.customerReplyNeedsResponse ?? false,
+    latestCustomerReplyAt: overrides.latestCustomerReplyAt ?? null,
+    latestCustomerReplyPreview: overrides.latestCustomerReplyPreview ?? null,
     lastActivityAt: overrides.lastActivityAt ?? "2026-05-25T15:00:00.000Z",
     createdAt: overrides.createdAt ?? "2026-05-25T14:00:00.000Z",
     updatedAt: overrides.updatedAt ?? "2026-05-25T15:00:00.000Z"
@@ -131,6 +134,9 @@ void test("communication workspace derives follow-up attention without creating 
     buildThread({
       id: "needs-response",
       needsResponse: true,
+      customerReplyNeedsResponse: true,
+      latestCustomerReplyAt: "2026-05-26T18:00:00.000Z",
+      latestCustomerReplyPreview: "Can you confirm the closeout package?",
       unreadCount: 1,
       lastUnreadAt: "2026-05-26T18:00:00.000Z"
     })
@@ -164,6 +170,7 @@ void test("communication workspace derives follow-up attention without creating 
     summary.attentionItems.map((item) => item.label).join(" "),
     /Customer response waiting/
   );
+  assert.match(summary.primaryDetail, /portal customer reply/);
 });
 
 void test("communication workspace treats shared evidence as closeout context", () => {

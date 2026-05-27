@@ -160,9 +160,14 @@ function buildThreadAttentionItems(input: {
         {
           key: `needs-response:${thread.id}`,
           label: "Customer response waiting",
-          detail: `${thread.subject.label} has customer-originated unread communication.`,
+          detail: thread.customerReplyNeedsResponse
+            ? `${thread.subject.label} has a portal customer reply waiting for contractor follow-up.`
+            : `${thread.subject.label} has customer-originated unread communication.`,
           href,
-          occurredAt: thread.lastUnreadAt ?? thread.lastActivityAt,
+          occurredAt:
+            thread.latestCustomerReplyAt ??
+            thread.lastUnreadAt ??
+            thread.lastActivityAt,
           tone: "warning" as const
         }
       ];
@@ -292,6 +297,9 @@ export function deriveCommunicationWorkspaceSummary(input: {
   const followUpCount =
     input.threadSummary.needsResponseCount +
     input.contextEvents.filter((event) => event.tone === "critical").length;
+  const customerReplyCount = input.threads.filter(
+    (thread) => thread.customerReplyNeedsResponse
+  ).length;
   const primaryStatus =
     followUpCount > 0
       ? "Follow-up needed"
@@ -302,9 +310,13 @@ export function deriveCommunicationWorkspaceSummary(input: {
   return {
     primaryStatus,
     primaryDetail:
-      followUpCount > 0
-        ? `Customer replies, unread items, or delivery issues need review before the workflow can be treated as quiet. ${input.notificationCount} unread communication notification${input.notificationCount === 1 ? "" : "s"} are currently open.`
-        : "Threads, document delivery proof, and shared-evidence activity are connected back to source records without sending anything from this workspace.",
+      customerReplyCount > 0
+        ? `${customerReplyCount} portal customer repl${
+            customerReplyCount === 1 ? "y is" : "ies are"
+          } waiting for contractor follow-up. Existing notification read-state remains separate from this derived reply triage.`
+        : followUpCount > 0
+          ? `Customer replies, unread items, or delivery issues need review before the workflow can be treated as quiet. ${input.notificationCount} unread communication notification${input.notificationCount === 1 ? "" : "s"} are currently open.`
+          : "Threads, document delivery proof, and shared-evidence activity are connected back to source records without sending anything from this workspace.",
     customerVisibleThreadCount: customerVisibleThreads.length,
     internalThreadCount: internalThreads.length,
     followUpCount,

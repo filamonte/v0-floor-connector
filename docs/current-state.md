@@ -2750,6 +2750,19 @@ Implemented UI behavior now:
   history only in this slice; it does not send email/SMS, create provider
   attempts, create delivery proof, create portal-only message copies, expose
   internal notes to the portal, add schema, or run automation.
+- Communication Reply Triage v1 adds a no-schema contractor-side unread/triage
+  layer for portal customer replies. The shared
+  `apps/web/lib/communications/reply-triage.ts` helper derives needs-response
+  state from canonical `communication_messages` and `communication_threads`:
+  an inbound portal customer-visible reply after the latest contractor
+  customer-visible response is treated as waiting on the contractor, while
+  internal notes do not clear it. `/communications` now uses that derived state
+  for the Needs response lane and follow-up intelligence, and Project
+  MessageCenter highlights the latest customer reply needing follow-up. Existing
+  notification read-state still uses `notifications`; this slice does not add
+  schema, persisted reviewed/handled state, notification events, provider sends,
+  reminders, automation, portal-visible triage state, or message-history
+  mutation.
 - `/schedule` now presents as CrewBoard on the existing route. CrewBoard uses
   canonical jobs, appointments, job assignments, people, vendors, projects, and
   customers for scheduling visibility, URL-backed date/layout context,

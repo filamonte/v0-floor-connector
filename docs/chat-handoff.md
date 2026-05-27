@@ -135,7 +135,15 @@ Current operating-core surfaces include:
   notification/delivery events, automation, or internal-note exposure. Related
   conversation cards and Project MessageCenter now surface clearer
   internal/customer-visible counts while deeper review still stays inside
-  `/communications`.
+  `/communications`. Communication Reply Triage v1 now derives contractor-side
+  needs-response state for portal customer replies from canonical
+  `communication_messages` and `communication_threads`: a customer-visible
+  inbound portal reply after the latest contractor customer-visible response is
+  shown in `/communications` and Project MessageCenter as waiting for
+  contractor follow-up. Internal notes do not clear this derived state, and
+  existing per-user notification read-state remains separate. No schema,
+  notification events, provider sends, reminders, automation, portal triage
+  exposure, or message-history mutation were added.
 - Collections Follow-Up Intelligence now deepens `/financials/accounts-receivable`
   with deterministic categories over canonical invoices, payments, and Payment
   Trail events: overdue invoices, unpaid deposits, sent-unpaid balances,

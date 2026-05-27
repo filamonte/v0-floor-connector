@@ -236,9 +236,9 @@ function getThreadEmptyState(input: {
   if (input.view === "needs_response") {
     return {
       eyebrow: "No response pressure",
-      title: "No customer-originated unread messages are waiting right now",
+      title: "No portal customer replies are waiting right now",
       description:
-        "Threads move into this queue when unread portal-side communication notifications indicate the latest follow-through is on the contractor side."
+        "Threads move into this queue when canonical message history or thread state shows a customer-visible portal reply after the latest contractor customer-visible response."
     };
   }
 
@@ -959,9 +959,20 @@ export default async function CommunicationsPage({
                           </div>
 
                           <p className="mt-2 text-sm leading-6 text-slate-500">
-                            {thread.lastMessagePreview ??
-                              "No message preview stored yet."}
+                            {thread.customerReplyNeedsResponse &&
+                            thread.latestCustomerReplyPreview
+                              ? `Latest portal reply: ${thread.latestCustomerReplyPreview}`
+                              : (thread.lastMessagePreview ??
+                                "No message preview stored yet.")}
                           </p>
+                          {thread.customerReplyNeedsResponse ? (
+                            <p className="mt-1 text-xs font-medium leading-5 text-amber-800">
+                              Waiting on contractor response. Marking
+                              notifications read does not clear this derived
+                              reply state; a customer-visible contractor reply
+                              does.
+                            </p>
+                          ) : null}
 
                           <div className="mt-3 flex flex-wrap gap-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">
                             <Link

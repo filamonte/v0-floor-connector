@@ -152,8 +152,39 @@ void test("messagecenter next move points to attention before latest activity", 
   const summary = buildSummary();
 
   assert.equal(summary.attentionCount, 3);
-  assert.equal(summary.nextMove.href, "#messagecenter");
-  assert.match(summary.nextMove.detail, /need follow-up/);
+  assert.equal(summary.customerReplyNeedsResponseCount, 1);
+  assert.match(summary.nextMove.href, /^\/communications/);
+  assert.match(summary.nextMove.detail, /portal customer reply/);
+});
+
+void test("messagecenter customer reply attention clears after contractor customer-visible response", () => {
+  const summary = deriveMessageCenterSummary({
+    projectId: "project-1",
+    threads,
+    messages: [
+      ...messages,
+      {
+        ...messages[0],
+        id: "message-2",
+        senderType: "organization_user",
+        direction: "outbound",
+        body: "We will arrive at 8 AM.",
+        occurredAt: "2026-05-21T14:30:00.000Z",
+        createdAt: "2026-05-21T14:30:00.000Z"
+      }
+    ],
+    deliveryEvents: [],
+    signatureEvents: [],
+    paymentEvents: [],
+    estimates: [],
+    contracts: [],
+    invoices: [],
+    customerAccessCount: 1
+  });
+
+  assert.equal(summary.customerReplyNeedsResponseCount, 0);
+  assert.equal(summary.latestCustomerReply, null);
+  assert.equal(summary.attentionCount, 0);
 });
 
 void test("messagecenter empty state falls back to communications workspace", () => {

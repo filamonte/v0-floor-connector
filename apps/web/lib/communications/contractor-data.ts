@@ -16,6 +16,12 @@ import type {
 import { requireAuthenticatedUser } from "@/lib/auth/session";
 import { getActiveOrganizationContext } from "@/lib/organizations/active-context";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
+import {
+  deriveCommunicationReplyTriage,
+  type CommunicationReplyTriageItem,
+  type CommunicationReplyTriageMessage,
+  type CommunicationReplyTriageThread
+} from "./reply-triage";
 
 type CommunicationThreadRow = {
   id: string;
@@ -111,8 +117,26 @@ type ThreadUnreadState = {
 
 type CommunicationThreadSummaryRow = Pick<
   CommunicationThreadRow,
-  "id" | "project_id" | "subject_type" | "last_message_at"
+  | "id"
+  | "project_id"
+  | "subject_type"
+  | "thread_status"
+  | "last_message_at"
+  | "last_message_preview"
 >;
+
+type CommunicationMessageTriageRow = {
+  id: string;
+  thread_id: string;
+  sender_type: CommunicationReplyTriageMessage["senderType"];
+  direction: CommunicationReplyTriageMessage["direction"];
+  channel_kind: CommunicationReplyTriageMessage["channelKind"];
+  message_kind: CommunicationReplyTriageMessage["messageKind"];
+  visibility: CommunicationReplyTriageMessage["visibility"];
+  body: string;
+  occurred_at: string;
+  created_at: string;
+};
 
 type DocumentDeliveryContextRow = {
   id: string;
@@ -183,6 +207,9 @@ export type ContractorCommunicationThreadListItem = {
   unreadCount: number;
   needsResponse: boolean;
   lastUnreadAt: string | null;
+  customerReplyNeedsResponse: boolean;
+  latestCustomerReplyAt: string | null;
+  latestCustomerReplyPreview: string | null;
   lastActivityAt: string;
   createdAt: string;
   updatedAt: string;
@@ -317,6 +344,82 @@ function isRecentThreadRow(
   return Boolean(
     thread.last_message_at && thread.last_message_at >= getRecentCutoffIso()
   );
+}
+
+function mapThreadRowForReplyTriage(
+  thread: Pick<
+    CommunicationThreadRow,
+    "id" | "thread_status" | "last_message_at" | "last_message_preview"
+  >
+): CommunicationReplyTriageThread {
+  return {
+    id: thread.id,
+    threadStatus: thread.thread_status,
+    lastMessageAt: thread.last_message_at,
+    lastMessagePreview: thread.last_message_preview
+  };
+}
+
+function mapMessageRowForReplyTriage(
+  row: CommunicationMessageTriageRow
+): CommunicationReplyTriageMessage {
+  return {
+    id: row.id,
+    threadId: row.thread_id,
+    senderType: row.sender_type,
+    direction: row.direction,
+    channelKind: row.channel_kind,
+    messageKind: row.message_kind,
+    visibility: row.visibility,
+    body: row.body,
+    occurredAt: row.occurred_at,
+    createdAt: row.created_at
+  };
+}
+
+async function listCommunicationReplyTriageMessages(input: {
+  organizationId: string;
+  threadIds: string[];
+}) {
+  if (input.threadIds.length === 0) {
+    return [] as CommunicationReplyTriageMessage[];
+  }
+
+  const supabase = await getSupabaseServerClient();
+  const response = await supabase
+    .from("communication_messages")
+    .select(
+      `
+        id,
+        thread_id,
+        sender_type,
+        direction,
+        channel_kind,
+        message_kind,
+        visibility,
+        body,
+        occurred_at,
+        created_at
+      `
+    )
+    .eq("company_id", input.organizationId)
+    .in("thread_id", input.threadIds)
+    .order("occurred_at", { ascending: false })
+    .limit(1000);
+
+  if (response.error) {
+    throw new Error(
+      `Unable to load communication reply triage messages: ${response.error.message}`
+    );
+  }
+
+  return ((response.data as CommunicationMessageTriageRow[] | null) ?? []).map(
+    mapMessageRowForReplyTriage
+  );
+}
+
+function buildReplyTriageByThreadId(items: CommunicationReplyTriageItem[]) {
+  return new Map(items.map((item) => [item.threadId, item]));
 }
 
 function buildUnreadByThreadId(rows: CommunicationNotificationRow[]) {
@@ -567,6 +670,8 @@ const listContractorCommunicationThreadSummaryCached = cache(
             id,
             project_id,
             subject_type,
+            thread_status,
+            last_message_preview,
             last_message_at
           `
           )
@@ -588,6 +693,19 @@ const listContractorCommunicationThreadSummaryCached = cache(
     const unreadByThreadId = buildUnreadByThreadId(
       unreadCommunicationNotificationRows
     );
+    const replyTriage = deriveCommunicationReplyTriage({
+      threads: threadRows.map((thread) => ({
+        id: thread.id,
+        threadStatus: thread.thread_status,
+        lastMessageAt: thread.last_message_at,
+        lastMessagePreview: thread.last_message_preview
+      })),
+      messages: await listCommunicationReplyTriageMessages({
+        organizationId,
+        threadIds: threadRows.map((thread) => thread.id)
+      })
+    });
+    const replyTriageByThreadId = buildReplyTriageByThreadId(replyTriage.items);
     const sourceCounts: ContractorCommunicationThreadSummary["sourceCounts"] = {
       opportunity: 0,
       appointment: 0,
@@ -617,7 +735,10 @@ const listContractorCommunicationThreadSummaryCached = cache(
         unreadCount += 1;
       }
 
-      if (unreadState?.needsResponse) {
+      if (
+        unreadState?.needsResponse ||
+        replyTriageByThreadId.get(thread.id)?.needsResponse
+      ) {
         needsResponseCount += 1;
       }
     }
@@ -660,18 +781,9 @@ const listContractorCommunicationThreadsCached = cache(
       unreadCommunicationNotificationRows
     );
     const matchingUnreadThreadIds =
-      view === "needs_response"
-        ? [...unreadByThreadId.entries()]
-            .filter(([, state]) => state.needsResponse)
-            .map(([threadId]) => threadId)
-        : view === "unread"
-          ? [...unreadByThreadId.keys()]
-          : [];
+      view === "unread" ? [...unreadByThreadId.keys()] : [];
 
-    if (
-      (view === "needs_response" || view === "unread") &&
-      matchingUnreadThreadIds.length === 0
-    ) {
+    if (view === "unread" && matchingUnreadThreadIds.length === 0) {
       return [];
     }
 
@@ -707,7 +819,7 @@ const listContractorCommunicationThreadsCached = cache(
       threadsQuery = threadsQuery.gte("last_message_at", getRecentCutoffIso());
     }
 
-    if (view === "needs_response" || view === "unread") {
+    if (view === "unread") {
       threadsQuery = threadsQuery.in("id", matchingUnreadThreadIds);
     }
 
@@ -727,6 +839,15 @@ const listContractorCommunicationThreadsCached = cache(
     if (threadRows.length === 0) {
       return [];
     }
+
+    const replyTriage = deriveCommunicationReplyTriage({
+      threads: threadRows.map(mapThreadRowForReplyTriage),
+      messages: await listCommunicationReplyTriageMessages({
+        organizationId,
+        threadIds: threadRows.map((thread) => thread.id)
+      })
+    });
+    const replyTriageByThreadId = buildReplyTriageByThreadId(replyTriage.items);
 
     const customerIds = [
       ...new Set(
@@ -885,6 +1006,7 @@ const listContractorCommunicationThreadsCached = cache(
           ? projectsById.get(thread.project_id)
           : undefined;
         const unreadState = unreadByThreadId.get(thread.id);
+        const replyTriageItem = replyTriageByThreadId.get(thread.id);
         const subject = getSubjectDescriptor({
           thread,
           customersById,
@@ -928,16 +1050,27 @@ const listContractorCommunicationThreadsCached = cache(
           lastMessagePreview: thread.last_message_preview,
           lastMessageVisibility: thread.last_message_visibility,
           unreadCount: unreadState?.count ?? 0,
-          needsResponse: unreadState?.needsResponse ?? false,
+          needsResponse:
+            Boolean(unreadState?.needsResponse) ||
+            Boolean(replyTriageItem?.needsResponse),
           lastUnreadAt: unreadState?.lastUnreadAt ?? null,
+          customerReplyNeedsResponse: replyTriageItem?.needsResponse ?? false,
+          latestCustomerReplyAt: replyTriageItem?.latestCustomerReplyAt ?? null,
+          latestCustomerReplyPreview:
+            replyTriageItem?.latestCustomerReplyPreview ?? null,
           lastActivityAt: getThreadActivityAt(
             thread,
-            unreadState?.lastUnreadAt ?? null
+            replyTriageItem?.latestCustomerReplyAt ??
+              unreadState?.lastUnreadAt ??
+              null
           ),
           createdAt: thread.created_at,
           updatedAt: thread.updated_at
         } satisfies ContractorCommunicationThreadListItem;
       })
+      .filter((thread) =>
+        view === "needs_response" ? thread.needsResponse : true
+      )
       .sort((left, right) =>
         right.lastActivityAt.localeCompare(left.lastActivityAt)
       );

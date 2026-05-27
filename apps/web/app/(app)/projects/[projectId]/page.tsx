@@ -7171,11 +7171,13 @@ export default async function ProjectDetailPage({
                   {
                     label: "Communication Next Move",
                     value:
-                      messageCenter.attentionCount > 0
-                        ? "Needs follow-up"
-                        : messageCenter.latestActivityAt
-                          ? "Review latest"
-                          : "Start thread",
+                      (messageCenter.customerReplyNeedsResponseCount ?? 0) > 0
+                        ? "Customer reply"
+                        : messageCenter.attentionCount > 0
+                          ? "Needs follow-up"
+                          : messageCenter.latestActivityAt
+                            ? "Review latest"
+                            : "Start thread",
                     detail: messageCenter.nextMove.detail
                   }
                 ].map((item) => (
@@ -7197,6 +7199,33 @@ export default async function ProjectDetailPage({
               </div>
 
               <div className="mt-6 grid gap-4">
+                {(messageCenter.customerReplyNeedsResponseCount ?? 0) > 0 &&
+                messageCenter.latestCustomerReply ? (
+                  <Link
+                    href={messageCenter.latestCustomerReply.href}
+                    className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-amber-900 transition hover:bg-amber-100/70"
+                  >
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                      <div className="min-w-0">
+                        <p className="text-xs font-semibold uppercase tracking-[0.16em]">
+                          Customer reply needs follow-up
+                        </p>
+                        <p className="mt-2 text-sm font-semibold">
+                          {messageCenter.latestCustomerReply.title}
+                        </p>
+                        <p className="mt-1 text-sm leading-6">
+                          {messageCenter.latestCustomerReply.description}
+                        </p>
+                      </div>
+                      <p className="shrink-0 text-xs font-medium uppercase tracking-[0.12em] opacity-75">
+                        {formatDateTime(
+                          messageCenter.latestCustomerReply.occurredAt
+                        )}
+                      </p>
+                    </div>
+                  </Link>
+                ) : null}
+
                 <RecordLinkedCommunicationComposer
                   subjectType="project"
                   subjectId={project.id}
