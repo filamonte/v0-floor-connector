@@ -1449,8 +1449,8 @@ export default async function DashboardPage({
             ? "No assigned work items are open for your linked people record right now, so this falls back to the company queue."
             : "No active people record is linked to your user yet, so this shows open company work items with assignee labels."
           : "Manual internal work items assigned to your linked people record.",
-        href: "/dashboard",
-        actionLabel: "Dashboard",
+        href: "/field/work-items",
+        actionLabel: "Open my work",
         emptyTitle: "No open work items yet.",
         emptyDescription:
           "Create manual work items from a lead workspace when a contractor-owned action needs an owner or due date.",
@@ -1468,7 +1468,7 @@ export default async function DashboardPage({
               ? ` - ${workItem.assignedPerson.displayName}`
               : ""
           }`,
-          href: workItem.linkPath ?? "/dashboard",
+          href: `/field/work-items/${workItem.id}`,
           actionLabel: "Open",
           badge: labelize(workItem.priority),
           contextHref: workItem.linkPath,

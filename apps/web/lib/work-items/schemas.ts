@@ -25,9 +25,12 @@ function optionalUuidField(message: string) {
     .transform((value) => (value.length > 0 ? value : null))
     .nullable()
     .optional()
-    .refine((value) => value === null || z.string().uuid().safeParse(value).success, {
-      message
-    })
+    .refine(
+      (value) => value === null || z.string().uuid().safeParse(value).success,
+      {
+        message
+      }
+    )
     .transform((value) => value ?? null);
 }
 
@@ -58,7 +61,11 @@ const linkPathSchema = trimmedNullableString(800).refine(
 );
 
 const sourceFields = {
-  sourceType: z.enum(workItemSourceTypes).nullable().optional().transform((value) => value ?? null),
+  sourceType: z
+    .enum(workItemSourceTypes)
+    .nullable()
+    .optional()
+    .transform((value) => value ?? null),
   sourceId: optionalUuidField("Select a valid source record.")
 };
 
@@ -78,9 +85,12 @@ export const workItemCreateSchema = z
     dedupeKey: trimmedNullableString(300),
     metadata: metadataSchema
   })
-  .refine((value) => (value.sourceType === null) === (value.sourceId === null), {
-    message: "Source type and source id must be provided together."
-  })
+  .refine(
+    (value) => (value.sourceType === null) === (value.sourceId === null),
+    {
+      message: "Source type and source id must be provided together."
+    }
+  )
   .refine((value) => value.visibility === "internal", {
     message: "Work items are internal-only in V1."
   });
@@ -118,6 +128,23 @@ export const workItemIdSchema = z.object({
   workItemId: z.string().uuid("Select a valid work item.")
 });
 
+export const assignedWorkItemFieldStateSchema = z.object({
+  workItemId: z.string().uuid("Select a valid work item."),
+  fieldState: z.enum(["not_started", "in_progress", "blocked"]),
+  blockerReason: trimmedNullableString(1000)
+});
+
+export const assignedWorkItemCompletionSchema = z.object({
+  workItemId: z.string().uuid("Select a valid work item."),
+  completionNote: trimmedNullableString(2000)
+});
+
 export type WorkItemCreateInput = z.infer<typeof workItemCreateSchema>;
 export type WorkItemUpdateInput = z.infer<typeof workItemUpdateSchema>;
 export type WorkItemSourceInput = z.infer<typeof workItemSourceSchema>;
+export type AssignedWorkItemFieldStateInput = z.infer<
+  typeof assignedWorkItemFieldStateSchema
+>;
+export type AssignedWorkItemCompletionInput = z.infer<
+  typeof assignedWorkItemCompletionSchema
+>;

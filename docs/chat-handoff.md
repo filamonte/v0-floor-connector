@@ -203,9 +203,21 @@ Current operating-core surfaces include:
   project work-item evidence paths, and shows contractor-only signed previews
   plus upload controls in Project and Job work-item panels. Work Item evidence
   remains internal-only and is explicitly not eligible for current portal
-  evidence grants. Structured measurement tables, comments, richer field
-  statuses, vendor/team assignment, mobile assignee queues, reminders, and
-  portal-safe sharing remain future-only.
+  evidence grants. Mobile Assignee Work Item View v1 now adds
+  `/field/work-items` and `/field/work-items/[workItemId]`: the list uses the
+  current user's linked active assignable `people.membership_user_id` record,
+  groups assigned Work Items by blocked, overdue, today, upcoming, and recently
+  completed, and the detail shows instructions, measurement notes, source
+  context, due/priority/status, and internal evidence previews through the
+  existing signed URL path. Field actions are schema-free in V1:
+  `metadata.fieldState` tracks in progress/blocked while open, completion uses
+  the existing completed status/timestamps and optional
+  `metadata.completionNote`, and server validation limits mutation to the
+  linked assignee or owner/admin/manager. The field view does not upload
+  evidence, create comments, send notifications, expose portal data, or mutate
+  jobs/Daily Logs/Job Notes/source records. Structured measurement tables,
+  comments, richer field statuses, vendor/team assignment, assignee-side
+  uploads, reminders, and portal-safe sharing remain future-only.
 - Future Universal Capture + Assistant Action Layer planning is now locked into
   the roadmap/workflow docs as planned capability only. The idea is to capture
   callbacks, reminders, follow-ups, site-visit intent, estimate scheduling

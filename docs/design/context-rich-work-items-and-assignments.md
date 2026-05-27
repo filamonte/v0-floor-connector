@@ -1,6 +1,6 @@
 # Context-Rich Work Items And Assignments
 
-Status: Implemented Foundation / Evidence Attachment Support / Planned Depth
+Status: Implemented Foundation / Evidence Attachment Support / Mobile Assignee View V1 / Planned Depth
 Doc Type: Design
 
 ## Product Problem
@@ -64,6 +64,9 @@ Missing or intentionally shallow today:
   structured measurement tables are not implemented yet.
 - Work items now have direct internal attachment support through
   `execution_attachments.subject_type = work_item`.
+- `/field/work-items` now provides a mobile-friendly assigned Work Item queue
+  for the current user's linked active assignable `people` record, and
+  `/field/work-items/[workItemId]` provides field detail.
 - Work items do not yet have a dedicated comment/discussion stream.
 - Work items do not yet support richer lifecycle states such as blocked,
   in_progress, ready_for_review, or closed.
@@ -108,6 +111,28 @@ Work Item evidence behavior:
   visible, and current `portal_evidence_grants` eligibility remains limited to
   active Daily Log / Job Note execution attachments.
 
+Mobile assignee behavior:
+
+- `/field/work-items` loads only Work Items assigned to the current user's
+  linked active assignable people record. If no people record is linked, the
+  route shows a safe setup/empty state instead of guessing an assignee.
+- The mobile queue groups assigned items into blocked, overdue, today,
+  upcoming, and recently completed sections and shows project/customer/source
+  context, due date, priority, measurement-note presence, evidence count, and
+  field state.
+- `/field/work-items/[workItemId]` shows instructions, measurement notes,
+  customer/project/source context, assignee, due date, priority, internal
+  Work Item evidence previews, and source links where present.
+- Field status is schema-free in this V1: `metadata.fieldState` records
+  not-started/in-progress/blocked while the canonical `status` remains `open`;
+  completion uses existing `status = completed`, `completed_at`, and
+  `completed_by` fields plus optional `metadata.completionNote`.
+- Field actions are allowed for the linked assignee or owner/admin/manager
+  membership only. They do not mutate jobs, Daily Logs, Job Notes, invoices,
+  contracts, portal grants, or source records.
+- Assignee-side evidence upload is intentionally not included; upload remains
+  in the contractor Project and Job work-item panels for now.
+
 V1 non-goals:
 
 - no duplicate task table
@@ -115,7 +140,7 @@ V1 non-goals:
 - no structured measurement table
 - no comments/discussion stream
 - no vendor/team assignment
-- no mobile employee work queue
+- no assignee-side evidence upload
 - no notifications/reminders
 - no portal exposure
 - no job, Daily Log, Job Note, invoice, contract, or readiness mutation from
@@ -253,6 +278,11 @@ The field workflow should treat work items as actionable instructions and
 Daily Logs/Job Notes as field narrative/evidence records. A work item can point
 to a field note; it should not replace the field note.
 
+Implemented mobile field V1 covers assigned queue, detail, internal evidence
+preview, in-progress/blocked metadata, and done with completion note. It does
+not yet cover assignee-side upload, comments, notifications, offline mode,
+ready-for-review lifecycle, or portal-safe sharing.
+
 ## Project / Job / Customer Integration
 
 Project Workspace should surface:
@@ -368,10 +398,15 @@ Portal exposure should require a future explicit share/review model:
 
 ### Phase 4 - Assignee / Field Mobile View
 
-- Add a mobile-friendly assigned-work queue.
-- Let field users open instructions, context, due date, priority, photos, and
-  source links quickly.
-- Keep completion actions server-owned and source-record safe.
+- Implemented first slice: `/field/work-items` and detail pages provide a
+  mobile-friendly assigned-work queue and source-record-safe field actions.
+- Field users can open instructions, context, due date, priority, current
+  internal evidence previews, and source links quickly.
+- Completion actions are server-owned, assignee/manager validated, and
+  source-record safe.
+- Future depth: assignee-side upload, comments, notifications/reminders,
+  offline support, ready-for-review lifecycle, and richer team/vendor
+  assignment.
 
 ### Phase 5 - Attachments / Photos / Evidence Continuity
 

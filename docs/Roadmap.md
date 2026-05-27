@@ -68,8 +68,12 @@ Roadmap sequencing should account for these future areas without turning them in
   Evidence Attachment Support now extends `execution_attachments` with
   internal `work_item` subjects so current-condition photos/files and
   completion evidence can stay attached to the assignment through the private
-  documents bucket and signed contractor previews. Comments, richer statuses,
-  mobile assignee queues, and portal-safe sharing remain future depth documented in
+  documents bucket and signed contractor previews. Mobile Assignee Work Item
+  View v1 now adds `/field/work-items` as a linked-person field queue with
+  detail pages for instructions, measurement notes, internal evidence previews,
+  safe field-state metadata, and completion notes without source-record or
+  portal mutation. Comments, richer statuses, assignee-side uploads, reminders,
+  and portal-safe sharing remain future depth documented in
   [docs/design/context-rich-work-items-and-assignments.md](C:/FloorConnector/docs/design/context-rich-work-items-and-assignments.md)
 - Universal Capture + Assistant Action Layer as future operational continuity
   infrastructure: users should eventually capture callbacks, reminders,

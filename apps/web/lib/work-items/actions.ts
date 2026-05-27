@@ -7,12 +7,16 @@ import { createUploadedExecutionAttachment } from "@/lib/execution-attachments/d
 import { executionAttachmentUploadInputSchema } from "@/lib/execution-attachments/schemas";
 
 import {
+  completeAssignedWorkItem,
   completeWorkItem,
   createWorkItem,
   dismissWorkItem,
+  updateAssignedWorkItemFieldState,
   updateWorkItem
 } from "./data";
 import {
+  assignedWorkItemCompletionSchema,
+  assignedWorkItemFieldStateSchema,
   workItemCreateSchema,
   workItemIdSchema,
   workItemUpdateSchema
@@ -49,9 +53,11 @@ function getReturnTo(formData: FormData) {
 
 function revalidateWorkItemSurfaces(returnTo: string) {
   revalidatePath("/dashboard");
+  revalidatePath("/field/work-items");
   revalidatePath("/leads");
   revalidatePath("/appointments");
   revalidatePath("/projects");
+  revalidatePath("/jobs");
   revalidatePath(returnTo);
 }
 
@@ -234,6 +240,83 @@ export async function dismissWorkItemAction(formData: FormData) {
   redirect(buildRedirect(returnTo, { message: "Work item dismissed." }));
 }
 
+export async function updateAssignedWorkItemFieldStateAction(
+  formData: FormData
+) {
+  const returnTo = getReturnTo(formData);
+  const result = assignedWorkItemFieldStateSchema.safeParse({
+    workItemId: getFieldValue(formData, "workItemId"),
+    fieldState: getFieldValue(formData, "fieldState") || "not_started",
+    blockerReason: getFieldValue(formData, "blockerReason")
+  });
+
+  if (!result.success) {
+    redirect(
+      buildRedirect(returnTo, {
+        error:
+          result.error.issues[0]?.message ??
+          "Unable to update work item field status."
+      })
+    );
+  }
+
+  try {
+    await updateAssignedWorkItemFieldState({
+      ...result.data,
+      next: returnTo
+    });
+    revalidateWorkItemSurfaces(returnTo);
+  } catch (error) {
+    redirect(
+      buildRedirect(returnTo, {
+        error:
+          error instanceof Error
+            ? error.message
+            : "Unable to update work item field status."
+      })
+    );
+  }
+
+  redirect(buildRedirect(returnTo, { message: "Work item status updated." }));
+}
+
+export async function completeAssignedWorkItemAction(formData: FormData) {
+  const returnTo = getReturnTo(formData);
+  const result = assignedWorkItemCompletionSchema.safeParse({
+    workItemId: getFieldValue(formData, "workItemId"),
+    completionNote: getFieldValue(formData, "completionNote")
+  });
+
+  if (!result.success) {
+    redirect(
+      buildRedirect(returnTo, {
+        error:
+          result.error.issues[0]?.message ??
+          "Unable to complete assigned work item."
+      })
+    );
+  }
+
+  try {
+    await completeAssignedWorkItem({
+      ...result.data,
+      next: returnTo
+    });
+    revalidateWorkItemSurfaces(returnTo);
+  } catch (error) {
+    redirect(
+      buildRedirect(returnTo, {
+        error:
+          error instanceof Error
+            ? error.message
+            : "Unable to complete assigned work item."
+      })
+    );
+  }
+
+  redirect(buildRedirect(returnTo, { message: "Work item completed." }));
+}
+
 export async function createWorkItemEvidenceAttachmentAction(
   formData: FormData
 ) {
@@ -265,6 +348,7 @@ export async function createWorkItemEvidenceAttachmentAction(
     });
 
     revalidatePath("/dashboard");
+    revalidatePath("/field/work-items");
     revalidatePath("/projects");
     revalidatePath(`/projects/${created.context.projectId}`);
 

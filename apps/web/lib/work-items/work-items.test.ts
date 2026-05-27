@@ -6,7 +6,11 @@ import type { WorkItem } from "@floorconnector/types";
 import { executionAttachmentSubjectTypeSchema } from "../execution-attachments/schemas";
 import {
   buildContextRichWorkItemPreview,
+  canActOnAssignedWorkItem,
   filterDashboardWorkItems,
+  getWorkItemCompletionNote,
+  getWorkItemFieldState,
+  groupMobileAssignedWorkItems,
   selectAssignedWorkItems,
   selectBlockedWorkItems,
   selectDashboardWorkItemQueue,
@@ -373,5 +377,128 @@ void test("work item read model filters by project job assignee overdue and bloc
   assert.deepEqual(
     selectBlockedWorkItems({ workItems }).map((item) => item.title),
     ["Blocked project item"]
+  );
+});
+
+void test("mobile assigned work item helper groups blocked overdue today upcoming and completed items", () => {
+  const workItems: WorkItem[] = [
+    {
+      ...baseWorkItem,
+      id: "56565656-5656-4565-8565-565656565656",
+      title: "Blocked item",
+      dueAt: "2026-05-28T12:00:00.000Z",
+      metadata: { fieldState: "blocked", blockerReason: "Need access." }
+    },
+    {
+      ...baseWorkItem,
+      id: "67676767-6767-4676-8676-676767676767",
+      title: "Overdue item",
+      dueAt: "2026-05-26T12:00:00.000Z"
+    },
+    {
+      ...baseWorkItem,
+      id: "78787878-7878-4787-8787-787878787878",
+      title: "Today item",
+      dueAt: "2026-05-27T18:00:00.000Z"
+    },
+    {
+      ...baseWorkItem,
+      id: "89898989-8989-4898-8898-898989898989",
+      title: "Upcoming item",
+      dueAt: "2026-05-29T12:00:00.000Z"
+    },
+    {
+      ...baseWorkItem,
+      id: "90909090-9090-4909-8909-909090909090",
+      title: "Completed item",
+      status: "completed",
+      completedAt: "2026-05-27T11:00:00.000Z",
+      metadata: { completionNote: "Measured west wall." }
+    }
+  ];
+
+  const groups = groupMobileAssignedWorkItems({
+    workItems,
+    nowIso: "2026-05-27T12:00:00.000Z"
+  });
+
+  assert.deepEqual(
+    Object.fromEntries(
+      Object.entries(groups).map(([key, items]) => [
+        key,
+        items.map((item) => item.title)
+      ])
+    ),
+    {
+      blocked: ["Blocked item"],
+      overdue: ["Overdue item"],
+      today: ["Today item"],
+      upcoming: ["Upcoming item"],
+      completed: ["Completed item"]
+    }
+  );
+});
+
+void test("mobile field state and completion helpers preserve assignment context metadata", () => {
+  assert.equal(
+    getWorkItemFieldState({
+      ...baseWorkItem,
+      metadata: { fieldState: "in_progress" }
+    }),
+    "in_progress"
+  );
+  assert.equal(
+    getWorkItemFieldState({
+      ...baseWorkItem,
+      metadata: { blocked: true }
+    }),
+    "blocked"
+  );
+  assert.equal(
+    getWorkItemFieldState({
+      ...baseWorkItem,
+      status: "completed",
+      metadata: { fieldState: "in_progress" }
+    }),
+    "completed"
+  );
+  assert.equal(
+    getWorkItemCompletionNote({
+      ...baseWorkItem,
+      metadata: { completionNote: "Photographed crack repair." }
+    }),
+    "Photographed crack repair."
+  );
+});
+
+void test("assigned work item action policy allows assignee or elevated roles only", () => {
+  const assignedWorkItem: WorkItem = {
+    ...baseWorkItem,
+    assignedPersonId: "person-1"
+  };
+
+  assert.equal(
+    canActOnAssignedWorkItem({
+      workItem: assignedWorkItem,
+      currentPersonId: "person-1",
+      membershipRole: "member"
+    }),
+    true
+  );
+  assert.equal(
+    canActOnAssignedWorkItem({
+      workItem: assignedWorkItem,
+      currentPersonId: "person-2",
+      membershipRole: "member"
+    }),
+    false
+  );
+  assert.equal(
+    canActOnAssignedWorkItem({
+      workItem: assignedWorkItem,
+      currentPersonId: null,
+      membershipRole: "manager"
+    }),
+    true
   );
 });

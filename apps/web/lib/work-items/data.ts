@@ -4,6 +4,7 @@ import { cache } from "react";
 import { redirect } from "next/navigation";
 import type {
   CustomerId,
+  MembershipRole,
   OrganizationId,
   PersonId,
   ProfileId,
@@ -20,12 +21,18 @@ import { requireAuthenticatedUser } from "@/lib/auth/session";
 import { getActiveOrganizationContext } from "@/lib/organizations/active-context";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 
-import { filterDashboardWorkItems, sortWorkItemsForQueue } from "./read-model";
+import {
+  canActOnAssignedWorkItem,
+  filterDashboardWorkItems,
+  sortWorkItemsForQueue,
+  type WorkItemFieldState
+} from "./read-model";
 import type { WorkItemCreateInput, WorkItemUpdateInput } from "./schemas";
 
 type WorkItemScope = {
   userId: ProfileId;
   organizationId: OrganizationId;
+  membershipRole: MembershipRole;
 };
 
 type WorkItemRow = {
@@ -117,6 +124,14 @@ export type WorkItemListItem = WorkItem & {
     name: string;
     status: string;
   } | null;
+};
+
+export type CurrentUserWorkItemPerson = {
+  id: PersonId;
+  displayName: string;
+  isActive: boolean;
+  isAssignable: boolean;
+  membershipUserId: ProfileId | null;
 };
 
 const workItemSelect = `
@@ -243,7 +258,8 @@ async function getWorkItemScope(
 
   return {
     userId: user.id,
-    organizationId: organizationContext.organization.id
+    organizationId: organizationContext.organization.id,
+    membershipRole: organizationContext.membership.role
   };
 }
 
@@ -462,6 +478,43 @@ async function getScopedWorkItem(workItemId: string, scope: WorkItemScope) {
   return response.data ? mapWorkItem(response.data as WorkItemRow) : null;
 }
 
+function mapCurrentUserPerson(
+  row: WorkItemPersonRelation
+): CurrentUserWorkItemPerson {
+  return {
+    id: row.id,
+    displayName: row.display_name,
+    isActive: row.is_active,
+    isAssignable: row.is_assignable,
+    membershipUserId: row.membership_user_id
+  };
+}
+
+export async function getCurrentUserWorkItemPerson(
+  next = "/field/work-items"
+): Promise<CurrentUserWorkItemPerson | null> {
+  const scope = await requireWorkItemScope(next);
+  const supabase = await getSupabaseServerClient();
+  const response = await supabase
+    .from("people")
+    .select("id, display_name, is_active, is_assignable, membership_user_id")
+    .eq("company_id", scope.organizationId)
+    .eq("membership_user_id", scope.userId)
+    .eq("is_active", true)
+    .eq("is_assignable", true)
+    .maybeSingle();
+
+  if (response.error) {
+    throw new Error(
+      `Unable to load your linked people record: ${response.error.message}`
+    );
+  }
+
+  return response.data
+    ? mapCurrentUserPerson(response.data as WorkItemPersonRelation)
+    : null;
+}
+
 export const listWorkItems = cache(
   async (input?: {
     status?: WorkItemStatus;
@@ -512,6 +565,71 @@ export async function listDashboardWorkItems(input?: {
     assignedPersonId: input?.assignedPersonId,
     limit: input?.limit ?? 6
   });
+}
+
+export async function listAssignedWorkItemsForCurrentUser(
+  next = "/field/work-items"
+) {
+  const scope = await requireWorkItemScope(next);
+  const currentPerson = await getCurrentUserWorkItemPerson(next);
+
+  if (!currentPerson) {
+    return {
+      currentPerson: null,
+      workItems: []
+    };
+  }
+
+  const supabase = await getSupabaseServerClient();
+  const response = await supabase
+    .from("work_items")
+    .select(workItemSelect)
+    .eq("company_id", scope.organizationId)
+    .eq("assigned_person_id", currentPerson.id)
+    .in("status", ["open", "completed"])
+    .order("status", { ascending: true })
+    .order("due_at", { ascending: true, nullsFirst: false })
+    .order("created_at", { ascending: true });
+
+  if (response.error) {
+    throw new Error(
+      `Unable to load assigned work items: ${response.error.message}`
+    );
+  }
+
+  return {
+    currentPerson,
+    workItems: ((response.data ?? []) as WorkItemRow[]).map(mapWorkItem)
+  };
+}
+
+export async function getAssignedWorkItemForCurrentUser(
+  workItemId: string,
+  next = "/field/work-items"
+) {
+  const scope = await requireWorkItemScope(next);
+  const currentPerson = await getCurrentUserWorkItemPerson(next);
+  const workItem = await getScopedWorkItem(workItemId, scope);
+
+  if (!workItem) {
+    return {
+      currentPerson,
+      workItem: null,
+      canAct: false
+    };
+  }
+
+  const canAct = canActOnAssignedWorkItem({
+    workItem,
+    currentPersonId: currentPerson?.id ?? null,
+    membershipRole: scope.membershipRole
+  });
+
+  return {
+    currentPerson,
+    workItem,
+    canAct
+  };
 }
 
 export async function listWorkItemsForSource(input: {
@@ -750,6 +868,154 @@ export async function completeWorkItem(workItemId: string) {
 
   if (response.error) {
     throw new Error(`Unable to complete work item: ${response.error.message}`);
+  }
+
+  if (!response.data) {
+    throw new Error("Work item was not found or is no longer open.");
+  }
+
+  return mapWorkItem(response.data as WorkItemRow);
+}
+
+function buildFieldStateMetadata(input: {
+  existing: Record<string, unknown>;
+  fieldState: Exclude<WorkItemFieldState, "completed">;
+  blockerReason?: string | null;
+}) {
+  const metadata = { ...input.existing };
+
+  if (input.fieldState === "blocked") {
+    metadata.fieldState = "blocked";
+    metadata.blocked = true;
+
+    if (input.blockerReason) {
+      metadata.blockerReason = input.blockerReason;
+    }
+
+    return metadata;
+  }
+
+  metadata.fieldState = input.fieldState;
+  delete metadata.blocked;
+  delete metadata.blockerReason;
+
+  return metadata;
+}
+
+async function requireAssignedWorkItemActionScope(input: {
+  workItemId: string;
+  next?: string;
+}) {
+  const scope = await requireWorkItemScope(input.next ?? "/field/work-items");
+  const currentPerson = await getCurrentUserWorkItemPerson(
+    input.next ?? "/field/work-items"
+  );
+  const existing = await getScopedWorkItem(input.workItemId, scope);
+
+  if (!existing) {
+    throw new Error("Work item was not found.");
+  }
+
+  if (
+    !canActOnAssignedWorkItem({
+      workItem: existing,
+      currentPersonId: currentPerson?.id ?? null,
+      membershipRole: scope.membershipRole
+    })
+  ) {
+    throw new Error(
+      "Only the assignee or a manager can update this work item."
+    );
+  }
+
+  if (existing.status !== "open") {
+    throw new Error("Only open work items can be updated from the field view.");
+  }
+
+  return {
+    scope,
+    existing
+  };
+}
+
+export async function updateAssignedWorkItemFieldState(input: {
+  workItemId: string;
+  fieldState: Exclude<WorkItemFieldState, "completed">;
+  blockerReason?: string | null;
+  next?: string;
+}) {
+  const { scope, existing } = await requireAssignedWorkItemActionScope({
+    workItemId: input.workItemId,
+    next: input.next
+  });
+  const metadata = buildFieldStateMetadata({
+    existing: existing.metadata,
+    fieldState: input.fieldState,
+    blockerReason: input.blockerReason?.trim() || null
+  });
+  const supabase = await getSupabaseServerClient();
+  const response = await supabase
+    .from("work_items")
+    .update({
+      metadata,
+      updated_by: scope.userId
+    })
+    .eq("company_id", scope.organizationId)
+    .eq("id", input.workItemId)
+    .eq("status", "open")
+    .select(workItemSelect)
+    .maybeSingle();
+
+  if (response.error) {
+    throw new Error(
+      `Unable to update work item field status: ${response.error.message}`
+    );
+  }
+
+  if (!response.data) {
+    throw new Error("Work item was not found or is no longer open.");
+  }
+
+  return mapWorkItem(response.data as WorkItemRow);
+}
+
+export async function completeAssignedWorkItem(input: {
+  workItemId: string;
+  completionNote?: string | null;
+  next?: string;
+}) {
+  const { scope, existing } = await requireAssignedWorkItemActionScope({
+    workItemId: input.workItemId,
+    next: input.next
+  });
+  const completionNote = input.completionNote?.trim() || null;
+  const metadata = {
+    ...existing.metadata,
+    fieldState: "completed",
+    ...(completionNote ? { completionNote } : {})
+  };
+  const nowIso = new Date().toISOString();
+  const supabase = await getSupabaseServerClient();
+  const response = await supabase
+    .from("work_items")
+    .update({
+      status: "completed",
+      completed_at: nowIso,
+      completed_by: scope.userId,
+      dismissed_at: null,
+      metadata,
+      updated_by: scope.userId
+    })
+    .eq("company_id", scope.organizationId)
+    .eq("id", input.workItemId)
+    .eq("status", "open")
+    .select(workItemSelect)
+    .maybeSingle();
+
+  if (response.error) {
+    throw new Error(
+      `Unable to complete assigned work item: ${response.error.message}`
+    );
   }
 
   if (!response.data) {

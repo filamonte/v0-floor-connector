@@ -1,7 +1,23 @@
-import type { WorkItem, WorkItemPriority } from "@floorconnector/types";
+import type {
+  MembershipRole,
+  PersonId,
+  WorkItem,
+  WorkItemPriority
+} from "@floorconnector/types";
 
 export type WorkItemQueueFilter = "open" | "assigned" | "due" | "all";
 export type WorkItemDueState = "none" | "upcoming" | "overdue";
+export type WorkItemFieldState =
+  | "not_started"
+  | "in_progress"
+  | "blocked"
+  | "completed";
+export type MobileAssignedWorkItemGroupKey =
+  | "blocked"
+  | "overdue"
+  | "today"
+  | "upcoming"
+  | "completed";
 
 export type ContextRichWorkItemPreview = {
   id: string;
@@ -67,6 +83,55 @@ export function getWorkItemAttachmentCount(
   workItem: Pick<WorkItem, "metadata">
 ) {
   return getMetadataNumber(workItem.metadata.attachmentCount);
+}
+
+export function getWorkItemFieldState(
+  workItem: Pick<WorkItem, "metadata" | "status">
+): WorkItemFieldState {
+  if (workItem.status === "completed") {
+    return "completed";
+  }
+
+  if (
+    workItem.metadata.fieldState === "in_progress" ||
+    workItem.metadata.fieldState === "blocked"
+  ) {
+    return workItem.metadata.fieldState;
+  }
+
+  if (
+    workItem.metadata.blocked === true ||
+    trimString(workItem.metadata.blockerReason)
+  ) {
+    return "blocked";
+  }
+
+  return "not_started";
+}
+
+export function getWorkItemBlockerReason(workItem: Pick<WorkItem, "metadata">) {
+  return trimString(workItem.metadata.blockerReason);
+}
+
+export function getWorkItemCompletionNote(
+  workItem: Pick<WorkItem, "metadata">
+) {
+  return trimString(workItem.metadata.completionNote);
+}
+
+export function canActOnAssignedWorkItem(input: {
+  workItem: Pick<WorkItem, "assignedPersonId">;
+  currentPersonId: PersonId | null;
+  membershipRole: MembershipRole;
+}) {
+  if (
+    input.currentPersonId &&
+    input.workItem.assignedPersonId === input.currentPersonId
+  ) {
+    return true;
+  }
+
+  return ["owner", "admin", "manager"].includes(input.membershipRole);
 }
 
 export function getWorkItemDueState(
@@ -205,6 +270,73 @@ export function selectBlockedWorkItems<T extends WorkItem>(input: {
           typeof workItem.metadata.blockerReason === "string")
     )
   );
+}
+
+function isSameDateKey(leftIso: string, rightIso: string) {
+  return leftIso.slice(0, 10) === rightIso.slice(0, 10);
+}
+
+function sortCompletedWorkItems<
+  T extends Pick<WorkItem, "completedAt" | "updatedAt" | "createdAt">
+>(workItems: T[]) {
+  return [...workItems].sort((left, right) =>
+    (right.completedAt ?? right.updatedAt ?? right.createdAt).localeCompare(
+      left.completedAt ?? left.updatedAt ?? left.createdAt
+    )
+  );
+}
+
+export function groupMobileAssignedWorkItems<T extends WorkItem>(input: {
+  workItems: T[];
+  nowIso: string;
+  completedLimit?: number;
+}): Record<MobileAssignedWorkItemGroupKey, T[]> {
+  const groups: Record<MobileAssignedWorkItemGroupKey, T[]> = {
+    blocked: [],
+    overdue: [],
+    today: [],
+    upcoming: [],
+    completed: []
+  };
+
+  for (const workItem of input.workItems) {
+    if (workItem.status === "completed") {
+      groups.completed.push(workItem);
+      continue;
+    }
+
+    if (!isOpenWorkItem(workItem)) {
+      continue;
+    }
+
+    if (getWorkItemFieldState(workItem) === "blocked") {
+      groups.blocked.push(workItem);
+      continue;
+    }
+
+    if (workItem.dueAt && workItem.dueAt < input.nowIso) {
+      groups.overdue.push(workItem);
+      continue;
+    }
+
+    if (workItem.dueAt && isSameDateKey(workItem.dueAt, input.nowIso)) {
+      groups.today.push(workItem);
+      continue;
+    }
+
+    groups.upcoming.push(workItem);
+  }
+
+  return {
+    blocked: sortWorkItemsForQueue(groups.blocked),
+    overdue: sortWorkItemsForQueue(groups.overdue),
+    today: sortWorkItemsForQueue(groups.today),
+    upcoming: sortWorkItemsForQueue(groups.upcoming),
+    completed: sortCompletedWorkItems(groups.completed).slice(
+      0,
+      input.completedLimit ?? 10
+    )
+  };
 }
 
 export function selectDashboardWorkItemQueue<T extends WorkItem>(input: {

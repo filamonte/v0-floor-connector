@@ -623,9 +623,13 @@ They should **not** create duplicate models or parallel architecture.
 - Context-rich Work Item depth should support instructions, measurements,
   photos/files, due date, priority, assignee, status, internal discussion, and
   completion evidence while remaining internal-only by default.
-- A standalone top-level task route is not required by default; work items
-  should first appear in Dashboard/My Work, Project Workspace, Job Workspace,
-  Field, and related record workspaces.
+- `/field/work-items` is the first dedicated Field route for the assigned
+  worker view. It should remain an internal field execution surface tied to the
+  current user's linked people record, not a separate employee portal or
+  generic task manager.
+- A broad standalone task manager is not required by default; work items should
+  first appear in Dashboard/My Work, Project Workspace, Job Workspace, Field,
+  and related record workspaces.
 - Customer/portal visibility should only happen through explicit future
   sharing or evidence-grant behavior, not by exposing internal work-item bodies.
 
