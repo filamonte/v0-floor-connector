@@ -1,0 +1,363 @@
+# Context-Rich Work Items And Assignments
+
+Status: Planned
+Doc Type: Design
+
+## Product Problem
+
+Contractor task assignment is often too thin for real field work. A specialty
+surface contractor may need to send an employee or subcontractor a work item
+that includes job instructions, current-condition photos, measurements,
+customer/project/job context, priority, due date, owner, follow-up notes,
+completion evidence, and internal discussion in one place.
+
+FloorConnector should solve this as a connected work-item layer over canonical
+records, not as a generic checklist beside the operating system.
+
+## Contractor Foreman Gap / Opportunity
+
+The product gap is not "tasks exist." The gap is that assignment context often
+splits across task notes, project notes, photo folders, field reports, schedule
+records, and message threads. That split forces office and field teams to
+reconstruct what the assigned person needs to know.
+
+FloorConnector's advantage should be a context-rich Work Item that stays
+attached to the same `opportunity -> customer -> project -> estimate ->
+contract -> change order -> job -> invoice -> payment` chain and can pull the
+right project, job, field, evidence, and communication context forward.
+
+## Current Foundations Discovered
+
+Implemented today:
+
+- `work_items` exists as the tenant-scoped internal work/action item foundation.
+- Work items already store title, description, status, priority, kind, due
+  date, assigned person, optional source link, optional customer/project links,
+  internal visibility, safe metadata, creator/updater/completion fields, and
+  timestamps.
+- Current source types include opportunity, appointment, customer, project,
+  estimate, contract, change order, job, invoice, payment,
+  communication_thread, notification_event, and workflow_error_event.
+- Dashboard, Lead Workspace, Appointment Workspace, Project Workspace, Estimate
+  Workspace, and Invoice Workspace can create/list/complete/dismiss internal
+  work items through existing server utilities.
+- Project guidance and selected estimate/invoice operational cues can prefill
+  source-locked work-item drafts, but the contractor must submit the form.
+- Daily Job Logs, Job Notes, `execution_attachments`, FieldTrail, Proof Center,
+  CloseoutTrail, and Project Evidence already provide project/job field
+  evidence continuity.
+- Field evidence upload currently attaches files/photos to Daily Job Logs or
+  Job Notes through `execution_attachments` and the private `documents` bucket.
+- Explicit portal evidence sharing exists for selected active
+  `execution_attachment` rows through `portal_evidence_grants`, with
+  contractor-only default visibility.
+- Canonical `communication_threads` and `communication_messages` exist for
+  record-linked internal/customer-visible communication history.
+- `/schedule` / CrewBoard already uses canonical jobs, appointments,
+  `job_assignments`, people, vendors, projects, and customers.
+
+Missing or intentionally shallow today:
+
+- Work items do not yet have a dedicated Work Items Manager Page.
+- Work items do not yet support structured measurement fields.
+- Work items do not yet have direct attachment subjects or completion-evidence
+  attachment groups.
+- Work items do not yet have a dedicated comment/discussion stream.
+- Work items do not yet support richer lifecycle states such as blocked,
+  in_progress, ready_for_review, or closed.
+- Work items do not yet support team/vendor/subcontractor assignment beyond a
+  single assignable person.
+- Work items are internal-only and have no portal/customer exposure.
+
+## Canonical Model Proposal
+
+Use **Work Items** as the durable canonical concept.
+
+Avoid introducing a parallel `tasks` table, portal task model, checklist app, or
+field-only assignment system. "Task" can remain user-facing shorthand where it
+helps, but the durable product concept should be Work Item because it already
+exists in code, schema, docs, and workflow guidance.
+
+Recommended future work-item types:
+
+- general task
+- field task
+- measurement request
+- photo/evidence request
+- punch-list item
+- customer follow-up
+- internal office follow-up
+- material check
+- scheduling follow-up
+- closeout item
+
+Near-term model direction:
+
+- Keep `work_items` as the parent action/assignment record.
+- Add richer kind/type values only when a build slice needs them.
+- Extend source linking instead of copying canonical records into work items.
+- Treat structured measurements and attachment/evidence links as child records
+  or safe metadata only after the schema design is approved.
+- Prefer references to Daily Logs, Job Notes, execution attachments, and
+  communication threads over duplicating their content into work items.
+
+## Lifecycle And Statuses
+
+Current implemented statuses:
+
+- open
+- completed
+- dismissed
+
+Target lifecycle:
+
+- draft, if an item is prepared by a cue, template, or future AI review flow
+- open, for assigned or unassigned work not yet started
+- in_progress, when a field or office user starts work
+- blocked, when progress needs another record, person, customer answer, or
+  material/schedule decision
+- ready_for_review, when completion evidence or notes need office review
+- completed, when the item is done
+- dismissed or canceled, when the item is intentionally not pursued
+
+V1 should not reopen completed/dismissed work items unless a later approved
+history/audit design supports it.
+
+## Target Behavior
+
+A context-rich work item should support:
+
+- title
+- instructions/body
+- structured measurement notes or measurement references
+- linked customer/project/job
+- optional linked daily log, field note, invoice, contract, change order,
+  communication thread, portal evidence grant, service ticket, or other
+  approved canonical source
+- assignee person, and later vendor/team/subcontractor assignment
+- creator
+- due date
+- priority
+- status
+- internal notes/comments
+- attached photos/files
+- source context
+- completion notes and completion evidence
+- audit timestamps and actor ids
+
+The work item should explain what to do while source records remain the system
+of truth for commercial scope, schedule state, customer commitments, field
+narrative, documents, payments, and portal visibility.
+
+## Attachment / Evidence Approach
+
+Work-item attachments should not create a second file system.
+
+Recommended path:
+
+1. Reuse the private `documents` bucket and server-generated organization-first
+   storage paths when direct work-item uploads are approved.
+2. Extend the evidence subject model intentionally instead of forcing
+   `execution_attachments` to pretend every attachment belongs to a Daily Log or
+   Job Note.
+3. If near-term work needs work-item evidence before a broad shared-file model,
+   extend `execution_attachments` only after confirming the subject enum,
+   source validation, RLS, portal-negative tests, and Project Evidence rollups.
+4. Keep current-condition photos, measurement photos, and completion photos
+   internal-only by default.
+5. Use explicit future portal evidence grants for customer sharing; do not leak
+   task body, internal comments, raw storage paths, Daily Log bodies, or Job
+   Note internals.
+6. Keep customer-safe sharing as an explicit grant/review model, not a property
+   of the work item itself.
+
+Recommended attachment roles:
+
+- current_condition
+- measurement_reference
+- instruction_reference
+- completion_evidence
+- blocker_evidence
+- closeout_reference
+
+## Field / Mobile Workflow
+
+A field user should be able to:
+
+- see assigned work items from a mobile-friendly "My Work" or Field queue
+- open a Work Item Workspace or compact detail panel
+- read instructions and source context
+- see linked project/job/customer context
+- view job notes, measurement context, and attached photos/files
+- jump to the linked Job Workspace, Daily Job Log, or schedule item
+- add a completion note
+- attach completion photos/files
+- mark the work item done, blocked, or ready for review
+- optionally create or link a Daily Job Log / Job Note when the assignment
+  produces field narrative that should live in the field execution chain
+
+The field workflow should treat work items as actionable instructions and
+Daily Logs/Job Notes as field narrative/evidence records. A work item can point
+to a field note; it should not replace the field note.
+
+## Project / Job / Customer Integration
+
+Project Workspace should surface:
+
+- open work items
+- assigned person/vendor/team
+- due and overdue items
+- blocked items
+- work items tied to open field blockers
+- completion evidence or linked field evidence
+- completed work items
+- related communication thread or discussion status
+
+Job Workspace should surface:
+
+- work items tied to the job
+- schedule/crew context
+- daily-log and field-note links
+- field-ready instructions
+- completion evidence status
+
+Customer Workspace may summarize internal work-item counts only when useful for
+contractor operations. It must not expose internal details to portal users.
+
+## Communications Integration
+
+Work items should connect to communication without becoming a chat silo.
+
+Recommended behavior:
+
+- A work item can link to an existing project/customer/source communication
+  thread.
+- Future comments can either be dedicated internal work-item comments or a
+  constrained projection of canonical `communication_messages`; this needs a
+  schema decision before implementation.
+- Assignment updates should become communication context only where useful.
+- Customer-facing email/SMS must remain future provider work and require human
+  approval, eligibility, consent, and delivery-proof design.
+- No automatic email/SMS/reminder should be sent by creating or updating a work
+  item in the near-term phases.
+
+## Scheduling / Dispatch Integration
+
+Jobs are execution records/work orders. Work items are assignable actions,
+checks, tasks, and follow-through inside or around that work.
+
+Work items can support scheduling by:
+
+- tying a checklist/action to a job before or after the scheduled window
+- capturing schedule follow-up without mutating the job schedule
+- assigning prep work before a crew arrives
+- tracking material/equipment/readiness checks
+- tracking blocked work back to the Project Workspace
+- giving CrewBoard an internal follow-through signal without creating a
+  schedule-only record
+
+Crew assignment remains on canonical jobs and `job_assignments`. Work-item
+assignment should not be used as a substitute for scheduled crew assignment.
+
+## Portal / Customer Boundary
+
+Work items are internal-only by default.
+
+Portal exposure should require a future explicit share/review model:
+
+- no work-item body leakage to portal
+- no internal comments leakage to portal
+- no current-condition or completion photo leakage unless explicitly granted
+- customer-safe evidence sharing should use `portal_evidence_grants` or a
+  future extension of that explicit policy layer
+- customer-visible messages should remain in canonical communications with
+  visibility controls, not in internal work-item comments
+
+## Architecture Guardrails
+
+- Do not create disconnected task silos.
+- Do not create portal-only tasks.
+- Do not duplicate jobs, field notes, daily logs, communication threads, or
+  attachment models.
+- Do not turn work items into a separate project model.
+- Do not expose internal task notes/photos to customers by default.
+- Do not create fake data or local-only persistence.
+- Do not add schema/migrations without an approved implementation slice.
+- Do not weaken tenant isolation, RLS, source-record validation, or server
+  validation.
+- Do not make work-item completion silently mutate canonical records such as
+  job status, invoice status, estimate status, appointment status, or readiness
+  gates.
+
+## Phased Build Plan
+
+### Phase 1 - Docs + Model Design
+
+- Adopt Work Items as the canonical concept.
+- Document current foundation and missing depth.
+- Decide whether direct attachments should extend `execution_attachments` or
+  wait for a broader shared file/evidence subject model.
+- Define status/kind expansion candidates.
+
+### Phase 2 - Canonical Work Item Foundation
+
+- Add approved status/type fields or child tables only after schema review.
+- Add same-company validation for any new source/assignment subjects.
+- Preserve RLS and internal-only visibility.
+- Add focused server tests for source validation, assignment validation, and
+  portal-negative behavior.
+
+### Phase 3 - Contractor Project/Job/Customer UI
+
+- Create richer Project Workspace and Job Workspace work-item panels.
+- Add filters for open, blocked, overdue, assigned, and completed work.
+- Keep Customer Workspace internal-only and summary-oriented.
+
+### Phase 4 - Assignee / Field Mobile View
+
+- Add a mobile-friendly assigned-work queue.
+- Let field users open instructions, context, due date, priority, photos, and
+  source links quickly.
+- Keep completion actions server-owned and source-record safe.
+
+### Phase 5 - Attachments / Photos / Evidence Continuity
+
+- Add direct work-item attachment support or approved linked-evidence support.
+- Support current-condition, measurement-reference, blocker, and completion
+  evidence roles.
+- Feed Project Evidence, FieldTrail, Proof Center, and CloseoutTrail only after
+  the evidence relationship is explicit.
+
+### Phase 6 - Communication / Comments
+
+- Add internal discussion/comment support.
+- Link or project communication context without duplicating message truth.
+- Keep provider sends and customer-visible messages out of this phase unless a
+  separate communications slice approves them.
+
+### Phase 7 - Portal-Safe Sharing
+
+- Add explicit customer-safe review/share paths only after portal evidence
+  policy is extended.
+- Share selected evidence, not internal instructions/comments by default.
+- Preserve grant/event audit and signed URL boundaries.
+
+### Phase 8 - Notifications / Reminders / Automation
+
+- Add reminder and notification behavior only after deterministic rules,
+  delivery eligibility, assignment semantics, and user controls are approved.
+- Keep AI and automation review-first and non-autonomous until governed action
+  policies exist.
+
+## Explicit Non-Goals
+
+- No schema or migrations in this planning pass.
+- No new task app or disconnected checklist module.
+- No portal/customer task exposure.
+- No automatic work-item generation.
+- No automatic email/SMS/provider send.
+- No AI-owned task creation.
+- No direct mutation of job, invoice, estimate, contract, appointment, or
+  readiness status from work-item completion.
+- No duplicate attachment/file/document model.
+- No fake data, seed data, or local-only persistence.

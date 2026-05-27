@@ -607,7 +607,19 @@ They should **not** create duplicate models or parallel architecture.
 
 ## Tasks System
 
-- Task list, assignment, lifecycle.
+- Work Items are the target task/assignment concept, extending the existing
+  `work_items` foundation rather than adding a disconnected task app.
+- Future task-like UI should stay record-linked to customers, projects, jobs,
+  Daily Logs, Job Notes, communications, evidence, and other canonical source
+  records.
+- Context-rich Work Item depth should support instructions, measurements,
+  photos/files, due date, priority, assignee, status, internal discussion, and
+  completion evidence while remaining internal-only by default.
+- A standalone top-level task route is not required by default; work items
+  should first appear in Dashboard/My Work, Project Workspace, Job Workspace,
+  Field, and related record workspaces.
+- Customer/portal visibility should only happen through explicit future
+  sharing or evidence-grant behavior, not by exposing internal work-item bodies.
 
 ## Reports Alignment
 

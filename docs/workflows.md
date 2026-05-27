@@ -1133,11 +1133,21 @@ How this should be interpreted today:
 
 - Complete: Open work items can be completed or dismissed from the dashboard, lead workspace, appointment workspace, project workspace, estimate workspace, or invoice workspace. Completed/dismissed work items are not reopened in V1.
 
+Target direction:
+
+- Work Items are the canonical task/assignment concept. "Task" can remain user-facing shorthand, but future implementation should extend `work_items` rather than add a disconnected task model.
+- Context-rich work items should be able to carry instructions, measurement context, current-condition photos, completion evidence, linked customer/project/job context, due date, priority, assignee, status, and internal discussion.
+- Work items can link to jobs, Daily Job Logs, Job Notes, communication threads, portal evidence grants, and other approved source records, but those source records remain the business truth.
+- Jobs remain execution records/work orders. Work items are assignable actions, checks, tasks, and follow-through within or around those jobs.
+- Future field/mobile work-item depth should let assigned people open instructions, source context, photos/files, and completion actions without replacing Daily Job Logs or Job Notes.
+
 Boundary:
 
 - Work items do not replace canonical opportunity follow-up fields, appointment statuses, notification events, automation runs, workflow error events, or the main lifecycle.
 - Work items are internal-only and are not exposed to portal/customer users.
 - No automated work-item generation, reminder delivery, provider send, autonomous AI action, or generic workflow engine is implemented.
+- Internal work-item instructions, comments, and photos must not be exposed to portal users by default. Customer-safe sharing requires explicit future portal evidence grant or review/share behavior.
+- Direct work-item attachments and comments are planned depth, not implemented by the current foundation.
 
 ### Operational Intelligence / My Work Cue Workflow
 

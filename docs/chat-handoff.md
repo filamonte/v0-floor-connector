@@ -180,6 +180,13 @@ Current operating-core surfaces include:
   scheduling metrics, commercial-readiness blocker links back to canonical
   estimate/contract/deposit/opportunity/project records, clearer crew/readiness
   badges, Daily Job Log continuity, and canonical project/job handoffs.
+- Context-rich Work Item assignment planning is documented in
+  [docs/design/context-rich-work-items-and-assignments.md](C:/FloorConnector/docs/design/context-rich-work-items-and-assignments.md).
+  The canonical concept is Work Items, extending the existing internal
+  `work_items` foundation rather than creating a disconnected task module.
+  Current implementation remains internal-only and shallow: no direct
+  work-item attachments, structured measurements, comments, richer field
+  statuses, vendor/team assignment, or portal sharing yet.
 - Portal Customer Window with deterministic portal-safe customer status
   explanations, Customer Next Step, Project Status Window, Project Timeline,
   Shared Documents, and existing portal review/print routes. The explanation

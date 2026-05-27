@@ -90,6 +90,13 @@ FloorConnector is not chasing Contractor Foreman feature-for-feature. The produc
 
 That means FloorConnector should cover core contractor operations while avoiding generic-module bloat. Equipment, bid/RFP workflows, subcontractors, documents/submittals, warranty/service, weather-aware scheduling, procurement/materials, job costing, and future AI/takeoff depth should extend the existing record chain instead of becoming detached products.
 
+One practical example is task assignment. FloorConnector should not settle for
+thin generic tasks when real contractor work needs instructions, measurements,
+current-condition photos, job/customer/project context, field follow-up,
+completion evidence, and internal discussion in one place. The durable product
+concept should be context-rich Work Items connected to canonical records, not a
+side checklist or portal-only task system.
+
 The durable rule is still one system of record:
 
 `opportunity -> customer -> project -> estimate -> contract -> change order -> job -> invoice -> payment`
