@@ -90,6 +90,12 @@ portal, opened through the safe signed URL route, acknowledged by the customer,
 or revoked. Proof Center remains the contractor-side index; the portal receives
 only customer-safe shared-evidence status and acknowledgement controls.
 
+Shared Evidence Receipt Rollups + Customer Record Export v1 now turns those
+grant/event rows into project-level receipt status and print/save receipt
+views. The rollup is a read model only: Proof Center still indexes source proof,
+portal sharing still controls visibility, and the receipt routes do not create
+stored PDFs, evidence copies, legal certificates, or duplicate proof records.
+
 ## Proof Categories Implemented
 
 Proof Center groups real records into:

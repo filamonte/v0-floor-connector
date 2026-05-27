@@ -204,8 +204,20 @@ Current operating-core surfaces include:
   idempotent portal customer acknowledgement events. Contractor Project
   Workspace summarizes proof counts/timestamps; portal shared evidence shows
   status and an acknowledgement action with non-signature/non-scope-changing
-  copy. The migration must be applied through the normal Supabase flow before
-  remote/protected browser QA can exercise the new table.
+  copy. The migration has been applied and verified against the intended
+  Supabase project.
+- Shared Evidence Receipt Rollups + Customer Record Export v1 adds
+  `apps/web/lib/portal-evidence-grants/receipt-rollup.ts` as a no-schema
+  read-model over explicit evidence grants and append-only delivery events. It
+  derives project-level receipt status, active shared evidence count,
+  viewed/downloaded/acknowledged/revoked counts, outstanding acknowledgement
+  count, last customer interaction, contractor proof rows, and customer-safe
+  rows. Contractor Project Workspace now shows a customer receipt history
+  summary and links to `/projects/:id/evidence/receipt`; the portal Project
+  Workspace and Closeout Handoff show customer-safe receipt status and link to
+  `/portal/projects/:id/evidence/receipt`. The routes are browser print/save
+  renderings only: no stored PDFs, file copies, portal-only records, schema,
+  provider calls, legal certification, or source attachment mutation.
 - Full Operating Loop Demo Smoke on May 25, 2026 passed on a fresh local Next
   dev server with saved contractor and portal auth. The route loop loaded
   `/dashboard`, `/projects`, a Project Workspace with command/timeline signals,

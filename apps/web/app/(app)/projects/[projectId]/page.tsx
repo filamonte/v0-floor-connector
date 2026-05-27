@@ -71,6 +71,10 @@ import {
   deriveProjectPortalEvidenceSharingSummary,
   type ProjectPortalEvidenceSharingSummary
 } from "@/lib/portal-evidence-grants/summary";
+import {
+  deriveSharedEvidenceReceiptRollupFromProjectSharing,
+  type SharedEvidenceReceiptRollup
+} from "@/lib/portal-evidence-grants/receipt-rollup";
 import { deriveFieldTrailSummary } from "@/lib/fieldtrail/summary";
 import { listFieldNotes } from "@/lib/field-notes/data";
 import { getFieldNoteTypeLabel } from "@/lib/field-notes/labels";
@@ -82,7 +86,10 @@ import {
   deriveMessageCenterSummary,
   type MessageCenterTimelineItem
 } from "@/lib/messagecenter/summary";
-import { buildProjectCloseoutPackagePrintHref } from "@/lib/document-engine/print";
+import {
+  buildProjectCloseoutPackagePrintHref,
+  buildProjectEvidenceReceiptPrintHref
+} from "@/lib/document-engine/print";
 import {
   deriveProjectPulseSummary,
   type ProjectPulseSummary,
@@ -1552,10 +1559,12 @@ function getEvidenceTimelineLabel(type: ProjectEvidenceContinuityTimelineType) {
 function ProjectEvidenceContinuitySection({
   summary,
   portalSharing,
+  receiptRollup,
   projectId
 }: {
   summary: ProjectEvidenceContinuitySummary;
   portalSharing: ProjectPortalEvidenceSharingSummary;
+  receiptRollup: SharedEvidenceReceiptRollup;
   projectId: string;
 }) {
   const countTiles = [
@@ -1758,6 +1767,43 @@ function ProjectEvidenceContinuitySection({
               </p>
               <p className="rounded-md border border-[var(--border-warm)] bg-[var(--highlight)] px-3 py-2">
                 Archived: {portalSharing.archivedCount}
+              </p>
+            </div>
+            <div className="mt-4 rounded-lg border border-[var(--border-warm)] bg-[var(--paper)] px-4 py-3">
+              <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                <div className="min-w-0">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--text-tertiary)]">
+                    Customer receipt history
+                  </p>
+                  <h5 className="mt-1 text-sm font-semibold text-[var(--text-primary)]">
+                    {receiptRollup.statusLabel}
+                  </h5>
+                  <p className="mt-1 text-xs leading-5 text-[var(--text-secondary)]">
+                    {receiptRollup.primaryMessage}
+                  </p>
+                </div>
+                <Link
+                  href={buildProjectEvidenceReceiptPrintHref(projectId)}
+                  className={secondaryActionClassName}
+                >
+                  Print Receipt
+                </Link>
+              </div>
+              <div className="mt-3 grid gap-2 text-xs leading-5 text-[var(--text-secondary)] sm:grid-cols-3">
+                <p className="rounded-md border border-[var(--border-warm)] bg-white px-3 py-2">
+                  Viewed or downloaded:{" "}
+                  {receiptRollup.viewedCount + receiptRollup.downloadedCount}
+                </p>
+                <p className="rounded-md border border-[var(--border-warm)] bg-white px-3 py-2">
+                  Acknowledged: {receiptRollup.acknowledgedCount}
+                </p>
+                <p className="rounded-md border border-[var(--border-warm)] bg-white px-3 py-2">
+                  Outstanding acknowledgements:{" "}
+                  {receiptRollup.unacknowledgedSharedCount}
+                </p>
+              </div>
+              <p className="mt-3 text-xs leading-5 text-[var(--text-tertiary)]">
+                {receiptRollup.acknowledgementDisclaimer}
               </p>
             </div>
           </div>
@@ -4940,6 +4986,10 @@ export default async function ProjectDetailPage({
       grants: projectPortalEvidenceGrants,
       deliveryEvents: projectPortalEvidenceDeliveryEvents
     });
+  const projectEvidenceReceiptRollup =
+    deriveSharedEvidenceReceiptRollupFromProjectSharing(
+      projectPortalEvidenceSharing
+    );
   const projectCommandTimeline = deriveProjectCommandTimeline({
     project: {
       id: project.id,
@@ -7204,6 +7254,7 @@ export default async function ProjectDetailPage({
         <ProjectEvidenceContinuitySection
           summary={projectEvidenceContinuity}
           portalSharing={projectPortalEvidenceSharing}
+          receiptRollup={projectEvidenceReceiptRollup}
           projectId={project.id}
         />
 

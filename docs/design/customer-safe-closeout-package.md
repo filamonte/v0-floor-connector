@@ -54,6 +54,14 @@ When Shared Evidence Delivery Proof is available, portal-shared evidence may
 also show customer-safe status derived from `portal_evidence_delivery_events`,
 including viewed, download requested, and acknowledged receipt states.
 
+Shared Evidence Receipt Rollups + Customer Record Export v1 now projects those
+same explicit grants and proof events into a customer-safe receipt status inside
+the portal Closeout Handoff. Customers can print/save a receipt history at
+`/portal/projects/:id/evidence/receipt`; contractors can print the fuller
+project receipt at `/projects/:id/evidence/receipt`. These receipt views are
+current-row renderings only and do not create stored closeout packages, file
+copies, or legal delivery certificates.
+
 It does not show:
 
 - FieldTrail

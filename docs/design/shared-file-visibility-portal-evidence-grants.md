@@ -115,6 +115,17 @@ Acknowledgement means the customer confirmed receipt of access to the shared
 file. It is not a signature, legal delivery certification, scope approval,
 price approval, schedule approval, or payment-term change.
 
+## Receipt Rollup Extension
+
+Shared Evidence Receipt Rollups + Customer Record Export v1 now derives
+project-level receipt status from the same grants and delivery events. The
+rollup reports active shared evidence, viewed/downloaded/acknowledged/revoked
+counts, outstanding acknowledgements, last customer interaction, contractor
+proof rows, and customer-safe receipt rows. Contractor Project Workspace and
+Portal Project Workspace both link to browser print/save receipt views. These
+views are generated from current canonical grant/event rows only; they do not
+store PDFs, copy files, create portal-only records, or certify legal delivery.
+
 ## Non-Goals
 
 - no broad shared document/file system

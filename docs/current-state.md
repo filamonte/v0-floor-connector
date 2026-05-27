@@ -298,6 +298,23 @@ matters now` line from existing list fields only. This does not add portal
   raw storage paths, provider metadata, email/open-pixel tracking, legal
   delivery certification, file copies, duplicate portal records, broad document
   management, storage deletes, AI, or automation.
+- Shared Evidence Receipt Rollups + Customer Record Export v1 adds a no-schema
+  read-model layer in
+  [apps/web/lib/portal-evidence-grants/receipt-rollup.ts](C:/FloorConnector/apps/web/lib/portal-evidence-grants/receipt-rollup.ts).
+  It rolls explicit `portal_evidence_grants` and append-only
+  `portal_evidence_delivery_events` into project-level receipt status,
+  active-shared, viewed, downloaded, acknowledged, revoked, and outstanding
+  acknowledgement counts, plus contractor and customer-safe receipt rows.
+  Contractor Project Workspace now shows a customer receipt history summary in
+  the Project Evidence area and exposes a print/save receipt route at
+  `/projects/:id/evidence/receipt`. Portal Project Workspace and Closeout
+  Handoff now show customer-safe evidence receipt status, acknowledgement
+  progress, and a portal print/save receipt route at
+  `/portal/projects/:id/evidence/receipt`. These print routes are browser
+  renderings of current canonical sharing grants and proof events; they do not
+  create stored PDFs, file artifacts, portal-only records, legal delivery
+  certification, new schema, storage behavior, provider calls, automation, or
+  source attachment mutation.
 - Portal Project Workspace and portal home now use deterministic portal-safe
   customer status explanations derived from canonical project, estimate,
   contract, change-order, invoice/payment, and scoped schedule state. The

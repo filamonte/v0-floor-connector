@@ -85,6 +85,17 @@ attachment project scope, active/unarchived evidence state, and private field
 evidence storage before issuing a short-lived signed URL. The signed URL is not
 persisted.
 
+## Receipt Rollup Extension
+
+Shared Evidence Receipt Rollups + Customer Record Export v1 adds a no-schema
+read-model over `portal_evidence_grants` and
+`portal_evidence_delivery_events`. It derives customer receipt status,
+acknowledgement progress, last customer interaction, revoked history, and
+print-safe receipt rows for contractor and portal surfaces. Contractor and
+portal receipt routes are browser print/save HTML views over current rows only.
+They do not store generated PDFs, create file artifacts, copy files, mutate
+proof events, or claim legal delivery certainty.
+
 ## Non-Goals
 
 - no automatic exposure of unshared evidence

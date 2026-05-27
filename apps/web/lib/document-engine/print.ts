@@ -77,6 +77,22 @@ export function getProjectCloseoutPackageBackHref(projectId: string) {
   return `/projects/${projectId}`;
 }
 
+export function buildProjectEvidenceReceiptPrintHref(projectId: string) {
+  return `/projects/${projectId}/evidence/receipt`;
+}
+
+export function buildPortalProjectEvidenceReceiptPrintHref(projectId: string) {
+  return `/portal/projects/${projectId}/evidence/receipt`;
+}
+
+export function getProjectEvidenceReceiptBackHref(projectId: string) {
+  return `/projects/${projectId}#portal-evidence-sharing`;
+}
+
+export function getPortalProjectEvidenceReceiptBackHref(projectId: string) {
+  return `/portal/projects/${projectId}#shared-project-evidence`;
+}
+
 export function buildCompanyDocumentPrintHref(documentId: string) {
   return `/settings/company-documents/${documentId}/pdf`;
 }
@@ -107,6 +123,10 @@ export function getProjectCloseoutPackageExportNotice() {
 
 export function getProjectCloseoutPackageFooterNote() {
   return "This closeout package is a printable project summary generated from current FloorConnector records. It is not a stored PDF artifact, delivery proof, or a separate project closeout record.";
+}
+
+export function getSharedEvidenceReceiptFooterNote() {
+  return "This shared evidence receipt is a printable summary of explicit portal evidence sharing and customer activity events. It is not a stored PDF artifact, legal delivery certification, signature, or separate evidence record.";
 }
 
 export function getCompanyDocumentExportNotice() {

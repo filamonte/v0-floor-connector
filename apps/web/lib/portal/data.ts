@@ -1507,7 +1507,7 @@ async function createPortalRecordView(
   };
 }
 
-async function getPortalDocumentBrand(
+export async function getPortalDocumentBrand(
   companyId: string
 ): Promise<PortalDocumentBrand> {
   const admin = getSupabaseAdminClient();

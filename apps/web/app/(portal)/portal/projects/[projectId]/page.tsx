@@ -17,12 +17,14 @@ import {
   portalSummaryLabelClassName
 } from "@/components/portal-review-ui";
 import { WorkspaceSummaryBand } from "@/components/workspace-summary-band";
+import { buildPortalProjectEvidenceReceiptPrintHref } from "@/lib/document-engine/print";
 import { derivePortalCloseoutHandoff } from "@/lib/portal/closeout-handoff";
 import { derivePortalProjectStatusWindow } from "@/lib/portal/project-status-window";
 import { derivePortalProjectTimeline } from "@/lib/portal/project-timeline";
 import { derivePortalSharedDocuments } from "@/lib/portal/shared-documents";
 import { acknowledgePortalSharedEvidenceAction } from "@/lib/portal-evidence-grants/actions";
 import { getPortalSharedEvidenceSummary } from "@/lib/portal-evidence-grants/data";
+import { deriveSharedEvidenceReceiptRollupFromPortalSummary } from "@/lib/portal-evidence-grants/receipt-rollup";
 import { derivePortalSafeStatusExplanation } from "@/lib/portal/status-explanation";
 import {
   getPortalProjectDetailSummary,
@@ -354,6 +356,8 @@ export default async function PortalProjectDetailPage({
     changeOrders,
     warrantyDocuments
   });
+  const sharedEvidenceReceipt =
+    deriveSharedEvidenceReceiptRollupFromPortalSummary(sharedEvidence);
   const customerHubCards = [
     {
       key: "next-step",
@@ -761,6 +765,26 @@ export default async function PortalProjectDetailPage({
               <p className="mt-2 text-sm leading-6 text-slate-600">
                 {closeoutHandoff.customerSafeBoundary}
               </p>
+              <div className="mt-4 rounded-lg border border-slate-200 bg-white px-4 py-3">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                  <div className="min-w-0">
+                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+                      Evidence receipt
+                    </p>
+                    <p className="mt-1 text-sm font-semibold text-slate-950">
+                      {sharedEvidenceReceipt.statusLabel}
+                    </p>
+                    <p className="mt-1 text-sm leading-6 text-slate-600">
+                      {sharedEvidenceReceipt.primaryMessage}
+                    </p>
+                  </div>
+                  <PortalSecondaryLink
+                    href={buildPortalProjectEvidenceReceiptPrintHref(projectId)}
+                  >
+                    Print receipt
+                  </PortalSecondaryLink>
+                </div>
+              </div>
             </div>
           </div>
         </DetailPanel>
@@ -890,6 +914,26 @@ export default async function PortalProjectDetailPage({
               </p>
               <p className="mt-2 text-sm leading-6 text-slate-600">
                 {sharedEvidence.storageBoundaryMessage}
+              </p>
+              <div className="mt-4 grid gap-2 text-sm leading-6 text-slate-600 sm:grid-cols-3">
+                <p className="rounded-md border border-slate-200 bg-white px-3 py-2">
+                  Acknowledged: {sharedEvidenceReceipt.acknowledgedCount}
+                </p>
+                <p className="rounded-md border border-slate-200 bg-white px-3 py-2">
+                  Awaiting acknowledgement:{" "}
+                  {sharedEvidenceReceipt.unacknowledgedSharedCount}
+                </p>
+                <p className="rounded-md border border-slate-200 bg-white px-3 py-2">
+                  Last activity:{" "}
+                  {sharedEvidenceReceipt.lastCustomerInteractionAt
+                    ? formatDateTime(
+                        sharedEvidenceReceipt.lastCustomerInteractionAt
+                      )
+                    : "Not yet"}
+                </p>
+              </div>
+              <p className="mt-3 text-xs leading-5 text-slate-500">
+                {sharedEvidenceReceipt.acknowledgementDisclaimer}
               </p>
             </div>
           </div>

@@ -8,12 +8,15 @@ import {
   buildDocumentEngineBrand,
   buildDocumentPrintHref,
   buildProjectCloseoutPackagePrintHref,
+  buildProjectEvidenceReceiptPrintHref,
+  buildPortalProjectEvidenceReceiptPrintHref,
   getCompanyDocumentExportNotice,
   getCompanyDocumentFooterNote,
   getDocumentEngineExportNotice,
   getDocumentEngineFooterNote,
   getProjectCloseoutPackageExportNotice,
-  getProjectCloseoutPackageFooterNote
+  getProjectCloseoutPackageFooterNote,
+  getSharedEvidenceReceiptFooterNote
 } from "./print";
 
 void test("builds contractor and portal print links without route branching in pages", () => {
@@ -84,6 +87,22 @@ void test("builds project closeout package print links and preserves export boun
     /create delivery proof/i
   );
   assert.match(getProjectCloseoutPackageFooterNote(), /not a stored PDF/i);
+});
+
+void test("builds shared evidence receipt print links without stored artifact claims", () => {
+  assert.equal(
+    buildProjectEvidenceReceiptPrintHref("project_123"),
+    "/projects/project_123/evidence/receipt"
+  );
+  assert.equal(
+    buildPortalProjectEvidenceReceiptPrintHref("project_123"),
+    "/portal/projects/project_123/evidence/receipt"
+  );
+  assert.match(getSharedEvidenceReceiptFooterNote(), /not a stored PDF/i);
+  assert.match(
+    getSharedEvidenceReceiptFooterNote(),
+    /legal delivery certification/i
+  );
 });
 
 void test("builds company document print links without mutation semantics", () => {
