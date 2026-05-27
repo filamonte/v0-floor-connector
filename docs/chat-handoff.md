@@ -219,7 +219,13 @@ Current operating-core surfaces include:
   Universal Capture is the entry/resolution pattern above canonical records,
   Work Items are one possible destination, and a narrow `capture_items` table
   should only be added later if unresolved or route-grouping intent cannot be
-  handled cleanly by existing records.
+  handled cleanly by existing records. The planned UX behavior is documented in
+  [docs/design/universal-capture-ui-blueprint.md](C:/FloorConnector/docs/design/universal-capture-ui-blueprint.md):
+  a compact context-aware capture sheet from shell/dashboard/record workspaces,
+  optional route/geographic intent, dashboard queue visibility, Work Item
+  resolution rules, mobile quick-capture direction, and assistant-prepared
+  actions that remain contractor-reviewed before any external send, booking, or
+  workflow mutation.
 - Portal Customer Window with deterministic portal-safe customer status
   explanations, Customer Next Step, Project Status Window, Project Timeline,
   Shared Documents, and existing portal review/print routes. The explanation
