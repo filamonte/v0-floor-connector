@@ -1,6 +1,10 @@
 import { z } from "zod";
 
-const executionAttachmentSubjectTypes = ["daily_log", "field_note"] as const;
+const executionAttachmentSubjectTypes = [
+  "daily_log",
+  "field_note",
+  "work_item"
+] as const;
 const executionAttachmentTypes = ["photo", "file"] as const;
 
 function trimmedString(minLength: number, maxLength: number, message: string) {

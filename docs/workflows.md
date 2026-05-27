@@ -1155,7 +1155,7 @@ How this should be interpreted today:
 
 - Create: Internal contractor work items can be manually created and optionally linked to a canonical source record. The current contractor UI supports explicit creation from a lead workspace against the current opportunity, from an appointment workspace against the current appointment, from a project workspace against the current project or selected project-level human follow-up context such as open blocker field notes, from a job workspace against the current job, and from estimate or invoice workspaces against the current record. Selected deterministic estimate/invoice operational cues can prefill source-locked work-item context, but the user must submit the form.
 
-- Track: Work items store internal ownership, due date, priority, status, assigned person, source link, and safe metadata on `work_items`. Context-Rich Work Items v1 reuses `description` for instructions/job notes and `metadata.measurementNotes` for measurement context, then renders that context from the shared work-item list. Dashboard work-item visibility prefers the current user's linked active `people` record when available and falls back to open company work items when needed.
+- Track: Work items store internal ownership, due date, priority, status, assigned person, source link, and safe metadata on `work_items`. Context-Rich Work Items v1 reuses `description` for instructions/job notes and `metadata.measurementNotes` for measurement context, then renders that context from the shared work-item list. Work Item Photo / Evidence Attachment Support now lets project/job-linked work items carry internal photos/files through `execution_attachments.subject_type = work_item`, the private `documents` bucket, and contractor-only signed preview links. Dashboard work-item visibility prefers the current user's linked active `people` record when available and falls back to open company work items when needed.
 
 - Complete: Open work items can be completed or dismissed from the dashboard, lead workspace, appointment workspace, project workspace, job workspace, estimate workspace, or invoice workspace. Completed/dismissed work items are not reopened in V1.
 
@@ -1168,7 +1168,7 @@ Target direction:
   estimate opportunities, schedule holds, communication drafts, and customer or
   project context should attach to their proper canonical records instead of
   being flattened into generic tasks.
-- Work items can link to jobs, Daily Job Logs, Job Notes, communication threads, portal evidence grants, and other approved source records, but those source records remain the business truth.
+- Work items can link to jobs, Daily Job Logs, Job Notes, communication threads, internal execution attachments, portal evidence grants, and other approved source records, but those source records remain the business truth.
 - Jobs remain execution records/work orders. Work items are assignable actions, checks, tasks, and follow-through within or around those jobs.
 - Future field/mobile work-item depth should let assigned people open instructions, source context, photos/files, and completion actions without replacing Daily Job Logs or Job Notes.
 
@@ -1178,7 +1178,7 @@ Boundary:
 - Work items are internal-only and are not exposed to portal/customer users.
 - No automated work-item generation, reminder delivery, provider send, autonomous AI action, or generic workflow engine is implemented.
 - Internal work-item instructions, comments, and photos must not be exposed to portal users by default. Customer-safe sharing requires explicit future portal evidence grant or review/share behavior.
-- Direct work-item attachments and comments are planned depth, not implemented by the current foundation. Current-condition photos/files should still be captured through Daily Job Logs / Job Notes / `execution_attachments` until an approved work-item evidence subject exists.
+- Direct work-item attachments are now implemented as internal-only `execution_attachments` with `work_item` subjects. Comments, richer completion workflow, and portal-safe sharing remain planned depth. Customer-visible sharing still requires explicit future evidence-grant eligibility and must not expose work-item bodies, internal comments, or unreviewed field proof by default.
 
 ### Operational Intelligence / My Work Cue Workflow
 

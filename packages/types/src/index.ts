@@ -568,7 +568,10 @@ export type FieldNoteType =
   | "punch_list";
 export type FieldNoteStatus = "open" | "noted" | "resolved";
 export type FieldNoteVisibility = "internal";
-export type ExecutionAttachmentSubjectType = "daily_log" | "field_note";
+export type ExecutionAttachmentSubjectType =
+  | "daily_log"
+  | "field_note"
+  | "work_item";
 export type ExecutionAttachmentType = "photo" | "file";
 export type OpportunityAttachmentType = "photo" | "file";
 export type PortalAccessGrantStatus = "invited" | "active" | "revoked";

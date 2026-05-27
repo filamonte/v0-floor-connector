@@ -51,6 +51,19 @@ void test("buildExecutionAttachmentStoragePath nests Job Note evidence under the
   );
 });
 
+void test("buildExecutionAttachmentStoragePath supports internal Work Item evidence", () => {
+  assert.equal(
+    buildExecutionAttachmentStoragePath({
+      companyId: "company-uuid",
+      projectId: "project-uuid",
+      workItemId: "work-item-uuid",
+      attachmentId: "attachment-uuid",
+      fileName: "crack photo.webp"
+    }),
+    "company-uuid/projects/project-uuid/field-evidence/work-items/work-item-uuid/attachment-uuid-crack-photo.webp"
+  );
+});
+
 void test("validateExecutionAttachmentUploadFile accepts images and PDFs", () => {
   const photo = validateExecutionAttachmentUploadFile({
     name: "after-photo.webp",

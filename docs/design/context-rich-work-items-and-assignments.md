@@ -1,6 +1,6 @@
 # Context-Rich Work Items And Assignments
 
-Status: Implemented Foundation / Planned Depth
+Status: Implemented Foundation / Evidence Attachment Support / Planned Depth
 Doc Type: Design
 
 ## Product Problem
@@ -62,8 +62,8 @@ Missing or intentionally shallow today:
 - Context-Rich Work Items v1 now reuses `description` for instructions/job
   notes and `metadata.measurementNotes` for measurement context. Dedicated
   structured measurement tables are not implemented yet.
-- Work items do not yet have direct attachment subjects or completion-evidence
-  attachment groups.
+- Work items now have direct internal attachment support through
+  `execution_attachments.subject_type = work_item`.
 - Work items do not yet have a dedicated comment/discussion stream.
 - Work items do not yet support richer lifecycle states such as blocked,
   in_progress, ready_for_review, or closed.
@@ -92,21 +92,26 @@ Implemented v1 behavior:
 - Job Workspace can create and list job-linked work items using existing
   `source_type = job`, `source_id`, `customer_id`, and `project_id` columns.
 
-V1 attachment behavior:
+Work Item evidence behavior:
 
-- Direct work-item uploads are not implemented.
-- Current-condition photos/files still belong to Daily Job Logs, Job Notes, and
-  `execution_attachments`.
-- Work-item attachment counts are shown only if future trusted metadata exists;
-  the UI does not fake attachment rows or storage references.
-- Portal sharing remains explicit through `portal_evidence_grants` for eligible
-  execution attachments only, not work-item notes or bodies.
+- Direct work-item uploads are implemented for project/job-linked work items.
+- Work-item photos/files reuse `execution_attachments`, the private
+  `documents` bucket, server-generated organization/project storage paths, and
+  attachment-id signed URL previews.
+- Supported uploads follow the existing field-evidence validation: JPG, PNG,
+  WebP, or PDF up to 10 MB.
+- Project Workspace and Job Workspace show evidence counts, internal-only
+  evidence rows, contractor signed preview/open links, and upload controls.
+- Work Item evidence validates same-organization project context; job-linked
+  work items also validate that the job belongs to the same project.
+- Work Item evidence stays internal-only. It is not automatically customer
+  visible, and current `portal_evidence_grants` eligibility remains limited to
+  active Daily Log / Job Note execution attachments.
 
 V1 non-goals:
 
 - no duplicate task table
-- no work-item attachment schema
-- no direct photo/file upload
+- no duplicate work-item attachment schema
 - no structured measurement table
 - no comments/discussion stream
 - no vendor/team assignment
@@ -207,14 +212,15 @@ Recommended path:
 2. Extend the evidence subject model intentionally instead of forcing
    `execution_attachments` to pretend every attachment belongs to a Daily Log or
    Job Note.
-3. If near-term work needs work-item evidence before a broad shared-file model,
-   extend `execution_attachments` only after confirming the subject enum,
-   source validation, RLS, portal-negative tests, and Project Evidence rollups.
+3. Work Item evidence now uses this near-term path: `execution_attachments`
+   supports `work_item` as an internal subject with same-company project/job
+   validation, RLS inherited from the attachment table, portal-negative
+   eligibility checks, and Project/Job work-item panel rollups.
 4. Keep current-condition photos, measurement photos, and completion photos
    internal-only by default.
-5. Use explicit future portal evidence grants for customer sharing; do not leak
-   task body, internal comments, raw storage paths, Daily Log bodies, or Job
-   Note internals.
+5. Use explicit future portal evidence grants or a later explicit sharing
+   policy for any customer sharing; do not leak task body, internal comments,
+   raw storage paths, Daily Log bodies, or Job Note internals.
 6. Keep customer-safe sharing as an explicit grant/review model, not a property
    of the work item itself.
 
@@ -369,11 +375,16 @@ Portal exposure should require a future explicit share/review model:
 
 ### Phase 5 - Attachments / Photos / Evidence Continuity
 
-- Add direct work-item attachment support or approved linked-evidence support.
-- Support current-condition, measurement-reference, blocker, and completion
-  evidence roles.
-- Feed Project Evidence, FieldTrail, Proof Center, and CloseoutTrail only after
-  the evidence relationship is explicit.
+- Implemented first slice: direct internal work-item attachment support through
+  `execution_attachments`, with project/job ownership validation, private
+  storage, signed contractor preview links, and Project/Job work-item evidence
+  panels.
+- Attachment-role taxonomy remains future depth. Captions can identify
+  current-condition, measurement-reference, blocker, or completion context for
+  now.
+- Broader FieldTrail, Proof Center, CloseoutTrail, portal, and closeout package
+  rollups should only include Work Item evidence after explicit eligibility and
+  customer-safe policy are approved.
 
 ### Phase 6 - Communication / Comments
 

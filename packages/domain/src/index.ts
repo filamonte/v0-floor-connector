@@ -504,7 +504,8 @@ export const fieldNoteVisibilities = [
 
 export const executionAttachmentSubjectTypes = [
   "daily_log",
-  "field_note"
+  "field_note",
+  "work_item"
 ] as const satisfies readonly ExecutionAttachmentSubjectType[];
 
 export const executionAttachmentTypes = [

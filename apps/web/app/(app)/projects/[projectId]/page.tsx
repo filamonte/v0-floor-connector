@@ -59,7 +59,10 @@ import {
   listEstimates,
   listProjectEstimateAttachments
 } from "@/lib/estimates/data";
-import { listExecutionAttachmentsBySubjects } from "@/lib/execution-attachments/data";
+import {
+  listExecutionAttachmentsBySubjects,
+  resolveExecutionAttachmentPreviews
+} from "@/lib/execution-attachments/data";
 import {
   revokeExecutionAttachmentPortalShareAction,
   shareExecutionAttachmentToPortalAction
@@ -173,6 +176,7 @@ import { listServiceTicketsByProject } from "@/lib/service-tickets/data";
 import { listWarrantyDocumentsByProject } from "@/lib/warranty-documents/data";
 import {
   completeWorkItemAction,
+  createWorkItemEvidenceAttachmentAction,
   createWorkItemAction,
   dismissWorkItemAction
 } from "@/lib/work-items/actions";
@@ -4473,6 +4477,25 @@ export default async function ProjectDetailPage({
     ),
     getProjectEquipmentReadinessSummary(project.id, `/projects/${projectId}`)
   ]);
+  const projectWorkItemAttachments = await listExecutionAttachmentsBySubjects(
+    linkedWorkItems.map((workItem) => ({
+      subjectType: "work_item" as const,
+      subjectId: workItem.id
+    })),
+    `/projects/${projectId}`
+  );
+  const projectWorkItemAttachmentPreviews =
+    await resolveExecutionAttachmentPreviews(
+      projectWorkItemAttachments,
+      `/projects/${projectId}`
+    );
+  const projectWorkItemEvidenceById = projectWorkItemAttachmentPreviews.reduce<
+    Record<string, typeof projectWorkItemAttachmentPreviews>
+  >((groups, attachment) => {
+    const existing = groups[attachment.subjectId] ?? [];
+    groups[attachment.subjectId] = [...existing, attachment];
+    return groups;
+  }, {});
   const projectExecutionAttachments = await listExecutionAttachmentsBySubjects(
     [
       ...projectDailyLogs.map((dailyLog) => ({
@@ -4903,18 +4926,28 @@ export default async function ProjectDetailPage({
       status: fieldNote.status,
       updatedAt: fieldNote.updatedAt
     })),
-    attachments: projectExecutionAttachments.map((attachment) => ({
-      id: attachment.id,
-      subjectType: attachment.subjectType,
-      subjectId: attachment.subjectId,
-      attachmentType: attachment.attachmentType,
-      fileName: attachment.fileName,
-      mimeType: attachment.mimeType,
-      caption: attachment.caption,
-      createdAt: attachment.createdAt,
-      archivedAt: attachment.archivedAt,
-      restoredAt: attachment.restoredAt
-    })),
+    attachments: projectExecutionAttachments
+      .filter(
+        (
+          attachment
+        ): attachment is typeof attachment & {
+          subjectType: "daily_log" | "field_note";
+        } =>
+          attachment.subjectType === "daily_log" ||
+          attachment.subjectType === "field_note"
+      )
+      .map((attachment) => ({
+        id: attachment.id,
+        subjectType: attachment.subjectType,
+        subjectId: attachment.subjectId,
+        attachmentType: attachment.attachmentType,
+        fileName: attachment.fileName,
+        mimeType: attachment.mimeType,
+        caption: attachment.caption,
+        createdAt: attachment.createdAt,
+        archivedAt: attachment.archivedAt,
+        restoredAt: attachment.restoredAt
+      })),
     estimates: projectEstimates.map((estimate) => ({
       id: estimate.id,
       status: estimate.status,
@@ -6243,8 +6276,8 @@ export default async function ProjectDetailPage({
                   </p>
                   <p className="mt-2 text-sm leading-6 text-slate-600">
                     Internal project actions tied through the canonical project
-                    relationship. Direct photos/files still belong to Daily Job
-                    Logs and Job Notes until work-item upload is approved.
+                    relationship. Work-item photos and files stay internal and
+                    are not visible to the customer portal.
                   </p>
                   <div className="mt-4">
                     <WorkItemList
@@ -6252,6 +6285,10 @@ export default async function ProjectDetailPage({
                       returnTo={`/projects/${project.id}`}
                       completeAction={completeWorkItemAction}
                       dismissAction={dismissWorkItemAction}
+                      evidenceUploadAction={
+                        createWorkItemEvidenceAttachmentAction
+                      }
+                      evidenceByWorkItemId={projectWorkItemEvidenceById}
                       emptyTitle="No work items are linked to this project yet."
                       emptyDescription="Create a manual internal work item when project follow-through needs instructions, measurement notes, an owner, due date, and completion state."
                     />

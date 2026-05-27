@@ -19,6 +19,8 @@ The rollup derives from canonical records only:
 - `portal_evidence_grants`
 - `portal_evidence_delivery_events`
 - `execution_attachments` metadata already eligible for explicit sharing
+  (active Daily Log / Job Note evidence only; internal Work Item evidence is
+  excluded from current portal eligibility)
 - existing project and portal project scope
 
 No schema changed in this pass.

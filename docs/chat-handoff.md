@@ -195,11 +195,17 @@ Current operating-core surfaces include:
   Context-Rich Work Items v1 now reuses existing fields with no migration:
   `description` carries instructions/job notes, `metadata.measurementNotes`
   carries measurement context, shared work-item lists show that context with
-  due/overdue, priority, assignee, and linked project/customer labels, and Job
-  Workspace can create/list `source_type = job` work items. Direct work-item
-  upload, structured measurement tables, comments, richer field statuses,
-  vendor/team assignment, field completion evidence, and portal sharing remain
-  future-only.
+  due/overdue, priority, assignee, linked project/customer labels, and real
+  evidence counts, and Job Workspace can create/list `source_type = job` work
+  items. Work Item Photo / Evidence Attachment Support now extends
+  `execution_attachments.subject_type` with `work_item`, validates same-company
+  project/job ownership, stores files in the private `documents` bucket under
+  project work-item evidence paths, and shows contractor-only signed previews
+  plus upload controls in Project and Job work-item panels. Work Item evidence
+  remains internal-only and is explicitly not eligible for current portal
+  evidence grants. Structured measurement tables, comments, richer field
+  statuses, vendor/team assignment, mobile assignee queues, reminders, and
+  portal-safe sharing remain future-only.
 - Future Universal Capture + Assistant Action Layer planning is now locked into
   the roadmap/workflow docs as planned capability only. The idea is to capture
   callbacks, reminders, follow-ups, site-visit intent, estimate scheduling

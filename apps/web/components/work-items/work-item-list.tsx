@@ -6,6 +6,7 @@ import type {
 } from "@floorconnector/types";
 
 import type { WorkItemListItem } from "@/lib/work-items/data";
+import type { ExecutionAttachmentPreviewListItem } from "@/lib/execution-attachments/data";
 import { buildContextRichWorkItemPreview } from "@/lib/work-items/read-model";
 
 type WorkItemListProps = {
@@ -13,6 +14,8 @@ type WorkItemListProps = {
   returnTo: string;
   completeAction: (formData: FormData) => void | Promise<void>;
   dismissAction: (formData: FormData) => void | Promise<void>;
+  evidenceUploadAction?: (formData: FormData) => void | Promise<void>;
+  evidenceByWorkItemId?: Record<string, ExecutionAttachmentPreviewListItem[]>;
   emptyTitle: string;
   emptyDescription: string;
 };
@@ -122,6 +125,8 @@ export function WorkItemList({
   returnTo,
   completeAction,
   dismissAction,
+  evidenceUploadAction,
+  evidenceByWorkItemId = {},
   emptyTitle,
   emptyDescription
 }: WorkItemListProps) {
@@ -132,6 +137,11 @@ export function WorkItemList({
       {workItems.length > 0 ? (
         workItems.map((workItem) => {
           const preview = buildContextRichWorkItemPreview(workItem, nowIso);
+          const evidenceItems = evidenceByWorkItemId[workItem.id] ?? [];
+          const attachmentCount =
+            evidenceItems.length > 0
+              ? evidenceItems.length
+              : preview.attachmentCount;
 
           return (
             <article
@@ -201,11 +211,103 @@ export function WorkItemList({
                     </div>
                   ) : null}
 
-                  {preview.attachmentCount !== null ? (
+                  {attachmentCount !== null ? (
                     <p className="mt-2 text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
-                      {preview.attachmentCount} attachment
-                      {preview.attachmentCount === 1 ? "" : "s"}
+                      {attachmentCount} attachment
+                      {attachmentCount === 1 ? "" : "s"}
                     </p>
+                  ) : null}
+
+                  {evidenceItems.length > 0 || evidenceUploadAction ? (
+                    <div className="mt-3 rounded-[6px] border border-slate-200 bg-slate-50 px-3 py-3">
+                      <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">
+                        <div>
+                          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                            Current-condition evidence
+                          </p>
+                          <p className="mt-1 text-xs leading-5 text-slate-500">
+                            Internal evidence. Not visible to customer portal.
+                          </p>
+                        </div>
+                        {evidenceItems.length > 0 ? (
+                          <p className="text-xs font-semibold text-slate-700">
+                            {evidenceItems.length} file
+                            {evidenceItems.length === 1 ? "" : "s"}
+                          </p>
+                        ) : null}
+                      </div>
+
+                      {evidenceItems.length > 0 ? (
+                        <ul className="mt-3 space-y-2">
+                          {evidenceItems.map((attachment) => (
+                            <li
+                              key={attachment.id}
+                              className="flex flex-col gap-1 border-t border-slate-200 pt-2 sm:flex-row sm:items-center sm:justify-between"
+                            >
+                              <div className="min-w-0">
+                                <p className="truncate text-sm font-medium text-slate-800">
+                                  {attachment.caption ?? attachment.fileName}
+                                </p>
+                                <p className="text-xs text-slate-500">
+                                  {attachment.preview.statusLabel}
+                                </p>
+                              </div>
+                              {attachment.preview.signedUrl ? (
+                                <a
+                                  href={attachment.preview.signedUrl}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="text-xs font-semibold uppercase tracking-[0.12em] text-[#9b4f16] transition hover:text-[#171717]"
+                                >
+                                  {attachment.preview.actionLabel}
+                                </a>
+                              ) : (
+                                <span className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">
+                                  {attachment.preview.unavailableLabel}
+                                </span>
+                              )}
+                            </li>
+                          ))}
+                        </ul>
+                      ) : null}
+
+                      {evidenceUploadAction && workItem.status === "open" ? (
+                        <form
+                          action={evidenceUploadAction}
+                          className="mt-3 grid gap-2 border-t border-slate-200 pt-3 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]"
+                        >
+                          <input
+                            type="hidden"
+                            name="workItemId"
+                            value={workItem.id}
+                          />
+                          <input
+                            type="hidden"
+                            name="returnTo"
+                            value={returnTo}
+                          />
+                          <input
+                            type="file"
+                            name="evidenceFile"
+                            accept="image/jpeg,image/png,image/webp,application/pdf"
+                            className="min-h-9 border border-[#d6d6d6] bg-white px-2 py-1.5 text-xs text-slate-700 file:mr-3 file:border-0 file:bg-[#2a211c] file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-white"
+                          />
+                          <input
+                            type="text"
+                            name="caption"
+                            maxLength={1000}
+                            placeholder="Optional caption"
+                            className="h-9 border border-[#d6d6d6] bg-white px-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-[#d8731f]"
+                          />
+                          <button
+                            type="submit"
+                            className="inline-flex h-9 items-center justify-center border border-[#2a211c] bg-[#2a211c] px-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-white transition hover:bg-[#3a2d25]"
+                          >
+                            Add evidence
+                          </button>
+                        </form>
+                      ) : null}
+                    </div>
                   ) : null}
                 </div>
 

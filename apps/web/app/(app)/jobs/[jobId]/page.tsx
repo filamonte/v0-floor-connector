@@ -33,7 +33,10 @@ import {
   findDailyLogForJobDate,
   getDailyLogDateKey
 } from "@/lib/daily-logs/links";
-import { listExecutionAttachmentsBySubjects } from "@/lib/execution-attachments/data";
+import {
+  listExecutionAttachmentsBySubjects,
+  resolveExecutionAttachmentPreviews
+} from "@/lib/execution-attachments/data";
 import { deriveFieldTrailSummary } from "@/lib/fieldtrail/summary";
 import { listFieldNotes } from "@/lib/field-notes/data";
 import {
@@ -71,6 +74,7 @@ import { listServiceTicketsByJob } from "@/lib/service-tickets/data";
 import { listWarrantyDocumentsByJob } from "@/lib/warranty-documents/data";
 import {
   completeWorkItemAction,
+  createWorkItemEvidenceAttachmentAction,
   createWorkItemAction,
   dismissWorkItemAction
 } from "@/lib/work-items/actions";
@@ -516,6 +520,25 @@ export default async function JobDetailPage({
     ],
     `/jobs/${jobId}`
   );
+  const jobWorkItemAttachments = await listExecutionAttachmentsBySubjects(
+    linkedWorkItems.map((workItem) => ({
+      subjectType: "work_item" as const,
+      subjectId: workItem.id
+    })),
+    `/jobs/${jobId}`
+  );
+  const jobWorkItemAttachmentPreviews =
+    await resolveExecutionAttachmentPreviews(
+      jobWorkItemAttachments,
+      `/jobs/${jobId}`
+    );
+  const jobWorkItemEvidenceById = jobWorkItemAttachmentPreviews.reduce<
+    Record<string, typeof jobWorkItemAttachmentPreviews>
+  >((groups, attachment) => {
+    const existing = groups[attachment.subjectId] ?? [];
+    groups[attachment.subjectId] = [...existing, attachment];
+    return groups;
+  }, {});
   const jobFieldTrail = deriveFieldTrailSummary({
     projectId: job.projectId,
     dailyLogs: jobDailyLogs,
@@ -1205,7 +1228,7 @@ export default async function JobDetailPage({
                     { value: "manual", label: "Manual" }
                   ]}
                   assignablePeople={assignablePeople}
-                  boundaryCopy="Work items are internal-only. They can carry instructions and measurement notes for the assigned person, but direct photo/file upload remains on Daily Job Logs and Job Notes in this slice."
+                  boundaryCopy="Work items are internal-only. They can carry instructions, measurement notes, and private evidence for the assigned person without exposing notes or files to the portal."
                 />
               </div>
             </div>
@@ -1240,6 +1263,8 @@ export default async function JobDetailPage({
                   returnTo={`/jobs/${job.id}`}
                   completeAction={completeWorkItemAction}
                   dismissAction={dismissWorkItemAction}
+                  evidenceUploadAction={createWorkItemEvidenceAttachmentAction}
+                  evidenceByWorkItemId={jobWorkItemEvidenceById}
                   emptyTitle="No work items are linked to this job yet."
                   emptyDescription="Create a job-linked work item when field follow-through needs instructions, measurements, an assignee, priority, due date, or completion state."
                 />

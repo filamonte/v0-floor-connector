@@ -3,6 +3,9 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
+import { createUploadedExecutionAttachment } from "@/lib/execution-attachments/data";
+import { executionAttachmentUploadInputSchema } from "@/lib/execution-attachments/schemas";
+
 import {
   completeWorkItem,
   createWorkItem,
@@ -85,6 +88,14 @@ function getContextRichMetadata(formData: FormData) {
   delete nextMetadata.measurementNotes;
 
   return nextMetadata;
+}
+
+function parseWorkItemEvidenceInput(formData: FormData) {
+  return executionAttachmentUploadInputSchema.safeParse({
+    subjectType: "work_item",
+    subjectId: getFieldValue(formData, "workItemId"),
+    caption: getFieldValue(formData, "caption")
+  });
 }
 
 export async function createWorkItemAction(formData: FormData) {
@@ -221,4 +232,61 @@ export async function dismissWorkItemAction(formData: FormData) {
   }
 
   redirect(buildRedirect(returnTo, { message: "Work item dismissed." }));
+}
+
+export async function createWorkItemEvidenceAttachmentAction(
+  formData: FormData
+) {
+  const returnTo = getReturnTo(formData);
+  const uploadFile = formData.get("evidenceFile");
+  const result = parseWorkItemEvidenceInput(formData);
+
+  if (!result.success) {
+    redirect(
+      buildRedirect(returnTo, {
+        error:
+          result.error.issues[0]?.message ?? "Unable to add work item evidence."
+      })
+    );
+  }
+
+  if (!(uploadFile instanceof File)) {
+    redirect(
+      buildRedirect(returnTo, {
+        error: "Choose a photo or PDF before adding work item evidence."
+      })
+    );
+  }
+
+  try {
+    const created = await createUploadedExecutionAttachment({
+      ...result.data,
+      file: uploadFile
+    });
+
+    revalidatePath("/dashboard");
+    revalidatePath("/projects");
+    revalidatePath(`/projects/${created.context.projectId}`);
+
+    if (created.context.jobId) {
+      revalidatePath(`/jobs/${created.context.jobId}`);
+    }
+
+    revalidatePath(returnTo);
+  } catch (error) {
+    redirect(
+      buildRedirect(returnTo, {
+        error:
+          error instanceof Error
+            ? error.message
+            : "Unable to add work item evidence."
+      })
+    );
+  }
+
+  redirect(
+    buildRedirect(returnTo, {
+      message: "Work item evidence uploaded successfully."
+    })
+  );
 }

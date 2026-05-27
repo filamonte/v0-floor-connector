@@ -69,8 +69,9 @@ type ExecutionAttachmentSubjectContext = {
   subjectId: string;
   projectId: string;
   jobId: string | null;
-  dailyLogId: string;
+  dailyLogId: string | null;
   fieldNoteId: string | null;
+  workItemId: string | null;
 };
 
 export type ExecutionAttachmentLifecycleResult = {
@@ -206,7 +207,32 @@ async function resolveExecutionAttachmentSubjectContext(
       projectId: dailyLog.projectId,
       jobId: dailyLog.jobId,
       dailyLogId: dailyLog.id,
-      fieldNoteId: null
+      fieldNoteId: null,
+      workItemId: null
+    };
+  }
+
+  if (input.subjectType === "work_item") {
+    const workItem = await getWorkItemAttachmentSubject(
+      organizationId,
+      input.subjectId
+    );
+
+    await assertProjectReadinessGate({
+      organizationId,
+      projectId: workItem.projectId,
+      errorMessage:
+        "Project is not ready for execution workflows yet. Complete contract, financial, and workflow readiness from the project hub before adding work item evidence."
+    });
+
+    return {
+      subjectType: "work_item",
+      subjectId: workItem.id,
+      projectId: workItem.projectId,
+      jobId: workItem.jobId,
+      dailyLogId: null,
+      fieldNoteId: null,
+      workItemId: workItem.id
     };
   }
 
@@ -229,7 +255,71 @@ async function resolveExecutionAttachmentSubjectContext(
     projectId: fieldNote.projectId,
     jobId: fieldNote.jobId,
     dailyLogId: fieldNote.dailyLogId,
-    fieldNoteId: fieldNote.id
+    fieldNoteId: fieldNote.id,
+    workItemId: null
+  };
+}
+
+async function getWorkItemAttachmentSubject(
+  organizationId: string,
+  workItemId: string
+) {
+  const supabase = await getSupabaseServerClient();
+  const response = await supabase
+    .from("work_items")
+    .select("id, company_id, project_id, source_type, source_id, status")
+    .eq("company_id", organizationId)
+    .eq("id", workItemId)
+    .maybeSingle();
+  const row = response.data as {
+    id: string;
+    company_id: string;
+    project_id: string | null;
+    source_type: string | null;
+    source_id: string | null;
+    status: string;
+  } | null;
+
+  if (response.error) {
+    throw new Error(`Unable to validate work item: ${response.error.message}`);
+  }
+
+  if (!row || row.company_id !== organizationId) {
+    throw new Error("Work item not found for this organization.");
+  }
+
+  if (!row.project_id) {
+    throw new Error("Work item evidence requires project context.");
+  }
+
+  let jobId: string | null = null;
+
+  if (row.source_type === "job" && row.source_id) {
+    const jobResponse = await supabase
+      .from("jobs")
+      .select("id, project_id")
+      .eq("company_id", organizationId)
+      .eq("id", row.source_id)
+      .maybeSingle();
+    const job = jobResponse.data as { id: string; project_id: string } | null;
+
+    if (jobResponse.error) {
+      throw new Error(
+        `Unable to validate work item job: ${jobResponse.error.message}`
+      );
+    }
+
+    if (!job || job.project_id !== row.project_id) {
+      throw new Error("Work item job context must belong to the same project.");
+    }
+
+    jobId = job.id;
+  }
+
+  return {
+    id: row.id,
+    projectId: row.project_id,
+    jobId
   };
 }
 
@@ -252,6 +342,11 @@ async function validateExecutionAttachmentPreviewParent(
       throw attachmentNotFoundError();
     }
 
+    return;
+  }
+
+  if (attachment.subjectType === "work_item") {
+    await getWorkItemAttachmentSubject(organizationId, attachment.subjectId);
     return;
   }
 
@@ -297,7 +392,25 @@ async function resolveExecutionAttachmentLifecycleContext(
       projectId: dailyLog.projectId,
       jobId: dailyLog.jobId,
       dailyLogId: dailyLog.id,
-      fieldNoteId: null
+      fieldNoteId: null,
+      workItemId: null
+    };
+  }
+
+  if (attachment.subjectType === "work_item") {
+    const workItem = await getWorkItemAttachmentSubject(
+      organizationId,
+      attachment.subjectId
+    );
+
+    return {
+      subjectType: "work_item",
+      subjectId: workItem.id,
+      projectId: workItem.projectId,
+      jobId: workItem.jobId,
+      dailyLogId: null,
+      fieldNoteId: null,
+      workItemId: workItem.id
     };
   }
 
@@ -323,7 +436,8 @@ async function resolveExecutionAttachmentLifecycleContext(
     projectId: fieldNote.projectId,
     jobId: fieldNote.jobId,
     dailyLogId: fieldNote.dailyLogId,
-    fieldNoteId: fieldNote.id
+    fieldNoteId: fieldNote.id,
+    workItemId: null
   };
 }
 
@@ -414,6 +528,9 @@ export async function listExecutionAttachmentsBySubjects(
   const fieldNoteIds = subjects
     .filter((subject) => subject.subjectType === "field_note")
     .map((subject) => subject.subjectId);
+  const workItemIds = subjects
+    .filter((subject) => subject.subjectType === "work_item")
+    .map((subject) => subject.subjectId);
   const dailyLogQuery =
     dailyLogIds.length > 0
       ? supabase
@@ -432,6 +549,15 @@ export async function listExecutionAttachmentsBySubjects(
           .eq("subject_type", "field_note")
           .in("subject_id", fieldNoteIds)
       : null;
+  const workItemQuery =
+    workItemIds.length > 0
+      ? supabase
+          .from("execution_attachments")
+          .select(executionAttachmentSelect)
+          .eq("company_id", scope.organizationId)
+          .eq("subject_type", "work_item")
+          .in("subject_id", workItemIds)
+      : null;
 
   if (dailyLogQuery && !options.includeArchived) {
     dailyLogQuery.is("archived_at", null);
@@ -441,12 +567,19 @@ export async function listExecutionAttachmentsBySubjects(
     fieldNoteQuery.is("archived_at", null);
   }
 
+  if (workItemQuery && !options.includeArchived) {
+    workItemQuery.is("archived_at", null);
+  }
+
   const responses = await Promise.all([
     dailyLogQuery
       ? dailyLogQuery.order("created_at", { ascending: false })
       : Promise.resolve({ data: [], error: null }),
     fieldNoteQuery
       ? fieldNoteQuery.order("created_at", { ascending: false })
+      : Promise.resolve({ data: [], error: null }),
+    workItemQuery
+      ? workItemQuery.order("created_at", { ascending: false })
       : Promise.resolve({ data: [], error: null })
   ]);
   const error = responses.find((response) => response.error)?.error;
@@ -727,6 +860,7 @@ export async function createUploadedExecutionAttachment(
     projectId: subjectContext.projectId,
     dailyLogId: subjectContext.dailyLogId,
     fieldNoteId: subjectContext.fieldNoteId,
+    workItemId: subjectContext.workItemId,
     attachmentId,
     fileName: fileValidation.safeFileName
   });

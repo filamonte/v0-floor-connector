@@ -403,7 +403,7 @@ export async function createExecutionAttachmentAction(formData: FormData) {
     });
 
     context = {
-      dailyLogId: created.context.dailyLogId,
+      dailyLogId: created.context.dailyLogId ?? dailyLogId,
       projectId: created.context.projectId,
       jobId: created.context.jobId
     };
@@ -468,7 +468,7 @@ export async function archiveExecutionAttachmentAction(formData: FormData) {
     });
 
     context = {
-      dailyLogId: archived.context.dailyLogId,
+      dailyLogId: archived.context.dailyLogId ?? dailyLogId,
       projectId: archived.context.projectId,
       jobId: archived.context.jobId
     };
@@ -534,7 +534,7 @@ export async function restoreExecutionAttachmentAction(formData: FormData) {
     });
 
     context = {
-      dailyLogId: restored.context.dailyLogId,
+      dailyLogId: restored.context.dailyLogId ?? dailyLogId,
       projectId: restored.context.projectId,
       jobId: restored.context.jobId
     };

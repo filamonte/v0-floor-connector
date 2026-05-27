@@ -3,6 +3,7 @@ import test from "node:test";
 
 import type { WorkItem } from "@floorconnector/types";
 
+import { executionAttachmentSubjectTypeSchema } from "../execution-attachments/schemas";
 import {
   buildContextRichWorkItemPreview,
   filterDashboardWorkItems,
@@ -125,6 +126,13 @@ void test("work item create schema accepts context-rich assignment metadata", ()
       "Measure west wall and capture crack lengths."
     );
   }
+});
+
+void test("execution attachment subject schema accepts Work Item evidence subjects", () => {
+  assert.equal(
+    executionAttachmentSubjectTypeSchema.safeParse("work_item").success,
+    true
+  );
 });
 
 void test("work item create schema rejects invalid constrained values", () => {

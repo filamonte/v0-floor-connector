@@ -64,9 +64,12 @@ Roadmap sequencing should account for these future areas without turning them in
 - context-rich Work Items now have a first internal implementation over the
   existing `work_items` foundation: project/job/customer context, instructions,
   measurement notes, assignee, due/overdue, priority, and status render in
-  shared work-item surfaces without a disconnected task app or migration.
-  Evidence/photos, completion proof, comments, richer statuses, mobile
-  assignee queues, and portal-safe sharing remain future depth documented in
+  shared work-item surfaces without a disconnected task app. Work Item Photo /
+  Evidence Attachment Support now extends `execution_attachments` with
+  internal `work_item` subjects so current-condition photos/files and
+  completion evidence can stay attached to the assignment through the private
+  documents bucket and signed contractor previews. Comments, richer statuses,
+  mobile assignee queues, and portal-safe sharing remain future depth documented in
   [docs/design/context-rich-work-items-and-assignments.md](C:/FloorConnector/docs/design/context-rich-work-items-and-assignments.md)
 - Universal Capture + Assistant Action Layer as future operational continuity
   infrastructure: users should eventually capture callbacks, reminders,

@@ -100,6 +100,14 @@ void test("isPrivateFieldEvidenceStoragePath accepts only private field evidence
   assert.equal(
     isPrivateFieldEvidenceStoragePath({
       organizationId: "company-uuid",
+      storagePath:
+        "company-uuid/projects/project-uuid/field-evidence/work-items/work-item-uuid/file.pdf"
+    }),
+    true
+  );
+  assert.equal(
+    isPrivateFieldEvidenceStoragePath({
+      organizationId: "company-uuid",
       storagePath: "https://example.test/file.pdf"
     }),
     false

@@ -83,6 +83,14 @@ continues to stay contractor-facing and count/index proof from source records;
 the portal sees only items with active `portal_evidence_grants` rows and active
 project-scoped portal access.
 
+Work Item Photo / Evidence Attachment Support extends `execution_attachments`
+with internal `work_item` subjects for project/job-linked assignments. Project
+and Job work-item panels show those internal evidence rows and signed
+contractor previews, but Proof Center and portal evidence sharing eligibility
+continue to treat Daily Log / Job Note evidence as the shareable field-proof
+set. Work Item bodies, internal notes, and Work Item evidence are not
+customer-visible by default.
+
 Shared Evidence Delivery Proof + Customer Acknowledgement v1 now adds
 append-only proof events for those explicit grants. Contractor Project
 Workspace can summarize when selected evidence was shared, viewed in the
@@ -173,9 +181,10 @@ proof, receives no new storage behavior here, and stays contractor-only.
   shared-file visibility, stored package policy, and delivery-proof policy are
   approved. The current portal Closeout Handoff is read-only and customer-safe;
   it does not expose field evidence or generate a stored package.
-- The current explicit visibility layer supports selected execution attachments
-  only. Broader shared-file subjects, stored packages, generated closeout
-  package proof, and legal delivery certification remain future work.
+- The current explicit visibility layer supports selected active Daily Log /
+  Job Note execution attachments only. Work Item evidence, broader shared-file
+  subjects, stored packages, generated closeout package proof, and legal
+  delivery certification remain future work.
 - Add richer warranty and service proof indexing after warranty/service portal
   depth is implemented.
 - Consider extracting Project Workspace summary panels if the route continues to

@@ -23,6 +23,7 @@ import {
   derivePortalSharedEvidenceSummary,
   type PortalSharedEvidenceSummary
 } from "./summary";
+import { isPortalEvidenceGrantEligibleAttachment } from "./eligibility";
 import { listPortalAccessGrantsForCurrentUser } from "@/lib/portal-access/data";
 import { requireAuthenticatedUser } from "@/lib/auth/session";
 
@@ -365,6 +366,12 @@ async function validateExecutionAttachmentProject(input: {
     throw new Error("Only private field evidence can be shared to the portal.");
   }
 
+  if (!isPortalEvidenceGrantEligibleAttachment(input.attachment)) {
+    throw new Error(
+      "Work item evidence is internal-only and cannot be shared to the portal yet."
+    );
+  }
+
   if (input.attachment.subjectType === "daily_log") {
     const dailyLog = await getDailyLogById(
       input.attachment.subjectId,
@@ -416,6 +423,10 @@ async function isPortalSharedAttachmentProjectScoped(input: {
   const admin = getSupabaseAdminClient();
 
   if (input.attachment.organizationId !== input.organizationId) {
+    return false;
+  }
+
+  if (!isPortalEvidenceGrantEligibleAttachment(input.attachment)) {
     return false;
   }
 
@@ -803,7 +814,7 @@ export async function getPortalSharedEvidenceSummary(
       if (
         !grant ||
         attachment.organizationId !== grant.organizationId ||
-        attachment.archivedAt ||
+        !isPortalEvidenceGrantEligibleAttachment(attachment) ||
         !isPrivateFieldEvidenceStoragePath(attachment)
       ) {
         return null;

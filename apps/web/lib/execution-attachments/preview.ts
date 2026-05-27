@@ -25,12 +25,13 @@ export function isExternalExecutionAttachmentReference(value: string) {
 export function isPrivateFieldEvidenceStoragePath(
   attachment: Pick<ExecutionAttachmentRecord, "organizationId" | "storagePath">
 ) {
+  const projectEvidencePrefix = `${attachment.organizationId}/projects/`;
+
   return (
     !isExternalExecutionAttachmentReference(attachment.storagePath) &&
-    attachment.storagePath.startsWith(
-      `${attachment.organizationId}/projects/`
-    ) &&
-    attachment.storagePath.includes("/field-evidence/daily-logs/")
+    attachment.storagePath.startsWith(projectEvidencePrefix) &&
+    (attachment.storagePath.includes("/field-evidence/daily-logs/") ||
+      attachment.storagePath.includes("/field-evidence/work-items/"))
   );
 }
 

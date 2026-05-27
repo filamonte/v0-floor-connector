@@ -62,6 +62,9 @@ Portal actions:
 Revoked grants are hidden from the portal and cannot receive new customer
 viewed/downloaded/acknowledged events.
 
+Work Item evidence may now exist as an internal `execution_attachment` subject,
+but it is not eligible for this portal proof flow.
+
 ## Customer-Safe Boundary
 
 Portal users see only customer-safe shared evidence metadata and derived proof
@@ -101,7 +104,8 @@ proof events, or claim legal delivery certainty.
 - no automatic exposure of unshared evidence
 - no archived evidence exposure
 - no file copies or portal-only file records
-- no broader subject types beyond `execution_attachment`
+- no broader share eligibility beyond active Daily Log / Job Note
+  `execution_attachment` evidence
 - no email/open-pixel tracking
 - no provider calls
 - no legal delivery certification

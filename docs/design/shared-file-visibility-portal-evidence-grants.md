@@ -36,11 +36,18 @@ The initial supported subject type is:
 No files are copied. No storage object is duplicated. The grant points back to
 the canonical execution attachment metadata row.
 
+Eligibility note: `execution_attachments` now also supports internal
+`work_item` subjects. Those rows are contractor-only and are not eligible for
+current portal evidence grants. Current sharing remains limited to eligible
+active Daily Log / Job Note field evidence.
+
 ## Visibility Rules
 
 Default state:
 
 - execution attachments are contractor-only
+- Work Item execution attachments are contractor-only and not shareable through
+  this policy layer
 - archived evidence is not eligible for new portal sharing
 - field-note body, Daily Log internals, Job Notes internals, raw storage paths,
   and contractor-only labels remain hidden

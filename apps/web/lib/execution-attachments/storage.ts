@@ -33,8 +33,9 @@ export type ExecutionAttachmentUploadValidationResult =
 export type ExecutionAttachmentStoragePathInput = {
   companyId: string;
   projectId: string;
-  dailyLogId: string;
+  dailyLogId?: string | null;
   fieldNoteId?: string | null;
+  workItemId?: string | null;
   attachmentId: string;
   fileName: string;
 };
@@ -117,7 +118,19 @@ export function buildExecutionAttachmentStoragePath(
   input: ExecutionAttachmentStoragePathInput
 ) {
   const safeFileName = sanitizeExecutionAttachmentFileName(input.fileName);
-  const dailyLogPrefix = `${input.companyId}/projects/${input.projectId}/field-evidence/daily-logs/${input.dailyLogId}`;
+  const projectEvidencePrefix = `${input.companyId}/projects/${input.projectId}/field-evidence`;
+
+  if (input.workItemId) {
+    return `${projectEvidencePrefix}/work-items/${input.workItemId}/${input.attachmentId}-${safeFileName}`;
+  }
+
+  if (!input.dailyLogId) {
+    throw new Error(
+      "Daily Log context is required for field evidence uploads."
+    );
+  }
+
+  const dailyLogPrefix = `${projectEvidencePrefix}/daily-logs/${input.dailyLogId}`;
   const subjectPrefix = input.fieldNoteId
     ? `${dailyLogPrefix}/field-notes/${input.fieldNoteId}`
     : dailyLogPrefix;
