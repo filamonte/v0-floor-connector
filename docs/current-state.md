@@ -126,6 +126,21 @@ blockers, and open change-order review from existing project-linked records.
 It does not create a project-financial subsystem, schedule model, field model,
 portal copy, activity table, fake records, schema, migrations, provider calls,
 autonomous actions, or payment/signature/job/invoice/field-note mutation.
+Project Evidence / Documents / Closeout Continuity v1 adds a shared
+[apps/web/lib/projects/evidence-continuity.ts](C:/FloorConnector/apps/web/lib/projects/evidence-continuity.ts)
+read model and a Project Evidence section in the Project Workspace. The helper
+derives active field evidence, archived evidence metadata, Daily Job Logs, Job
+Notes, customer-safe commercial documents, internal-only proof, warranty/service
+handoff, office-review items, and a lightweight proof trail from existing
+project-linked records. Project Detail now loads archived execution attachment
+metadata for this read model while keeping FieldTrail, Proof Center, and
+CloseoutTrail active-proof counts active-only. Field evidence remains
+contractor-only; customer-safe visibility is limited to existing portal-safe
+estimate, contract, invoice, and change-order records when explicit project
+access exists. This adds no document system, attachment model, portal copies,
+schema, migrations, storage policy changes, destructive storage delete, fake
+files, provider calls, customer-facing field evidence exposure, or source-record
+mutation.
 Accounts Receivable now also uses a deterministic Collections Follow-Up
 Intelligence helper over canonical invoices, payments, and Payment Trail events
 to categorize overdue invoices, unpaid deposits, sent-unpaid balances,

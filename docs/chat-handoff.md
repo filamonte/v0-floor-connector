@@ -69,6 +69,17 @@ Current operating-core surfaces include:
   project-financial model, duplicate schedule model, field subsystem, portal
   copy, fake records, provider calls, autonomous actions, or source-record
   mutation.
+- Project Evidence / Documents / Closeout Continuity v1 adds
+  `apps/web/lib/projects/evidence-continuity.ts` and a Project Evidence section
+  in `/projects/[projectId]`. It derives active evidence, archived evidence
+  metadata, Daily Logs, Job Notes, customer-safe commercial documents,
+  internal-only field proof, warranty/service handoff, office-review items, and
+  a lightweight proof trail from existing records only. Field evidence remains
+  contractor-only; portal/customer visibility remains limited to existing
+  customer-safe records with explicit project access. It adds no schema,
+  migrations, duplicate document/file/attachment model, storage policy change,
+  destructive storage delete, portal-only copy, fake file, provider call, or
+  source-record mutation.
 - AI Operational Copilot Foundation in Project Workspace, deriving review-first
   project intelligence, recommended next actions, draft-assistance text, and
   field summaries from ProjectPulse, Ready Check, FieldTrail, MessageCenter,

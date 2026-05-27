@@ -123,11 +123,19 @@ import {
   type ProjectOperationalWorkspaceSummary
 } from "@/lib/projects/operational-workspace";
 import {
+  deriveProjectEvidenceContinuitySummary,
+  type ProjectEvidenceContinuityDocumentTone,
+  type ProjectEvidenceContinuitySummary,
+  type ProjectEvidenceContinuityTimelineType,
+  type ProjectEvidenceContinuityTone
+} from "@/lib/projects/evidence-continuity";
+import {
   deriveProjectCommandTimeline,
   type ProjectCommandTimeline,
   type ProjectCommandTimelineItem,
   type ProjectCommandTimelineTone
 } from "@/lib/projects/timeline";
+import { filterActiveExecutionAttachments } from "@/lib/execution-attachments/lifecycle";
 import type { ProjectFinancialReadinessSnapshot } from "@/lib/projects/readiness";
 import { getProjectFinancialReadinessSnapshot } from "@/lib/projects/readiness";
 import { financingStatusesList } from "@/lib/projects/schemas";
@@ -1480,6 +1488,277 @@ function ProofCenterSection({ summary }: { summary: ProofCenterSummary }) {
               </p>
             </div>
           ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function getEvidenceContinuityToneClassName(
+  tone: ProjectEvidenceContinuityTone
+) {
+  switch (tone) {
+    case "ready":
+      return "border-emerald-200 bg-emerald-50 text-emerald-950";
+    case "attention":
+      return "border-amber-200 bg-amber-50 text-amber-950";
+    case "blocked":
+      return "border-rose-200 bg-rose-50 text-rose-950";
+    case "neutral":
+      return "border-[var(--border-warm)] bg-white text-[var(--text-primary)]";
+  }
+}
+
+function getEvidenceDocumentToneClassName(
+  tone: ProjectEvidenceContinuityDocumentTone
+) {
+  switch (tone) {
+    case "ready":
+      return "border-emerald-200 bg-emerald-50 text-emerald-950";
+    case "attention":
+      return "border-amber-200 bg-amber-50 text-amber-950";
+    case "missing":
+      return "border-rose-200 bg-rose-50 text-rose-950";
+    case "neutral":
+      return "border-[var(--border-warm)] bg-white text-[var(--text-secondary)]";
+  }
+}
+
+function getEvidenceTimelineLabel(type: ProjectEvidenceContinuityTimelineType) {
+  switch (type) {
+    case "document":
+      return "Document";
+    case "field":
+      return "Field proof";
+    case "archive":
+      return "Archived proof";
+    case "closeout":
+      return "Closeout";
+  }
+}
+
+function ProjectEvidenceContinuitySection({
+  summary
+}: {
+  summary: ProjectEvidenceContinuitySummary;
+}) {
+  const countTiles = [
+    {
+      label: "Active evidence",
+      value: `${summary.counts.activeEvidence} files`,
+      detail: `${summary.counts.photos} photos / ${summary.counts.pdfs} PDFs`
+    },
+    {
+      label: "Archived evidence",
+      value: `${summary.counts.archivedEvidence} items`,
+      detail: "Internal review only"
+    },
+    {
+      label: "Field records",
+      value: `${summary.counts.dailyLogs} logs / ${summary.counts.fieldNotes} notes`,
+      detail: `${summary.counts.unresolvedFieldNotes} unresolved`
+    },
+    {
+      label: "Customer-safe",
+      value: `${summary.counts.customerSafeRecords} records`,
+      detail: "Requires explicit access"
+    },
+    {
+      label: "Closeout docs",
+      value: `${summary.counts.closeoutDocuments} items`,
+      detail: "Warranty/service handoff"
+    }
+  ];
+
+  return (
+    <section id="project-evidence" className={projectWorkspacePanelClassName}>
+      <div
+        className={`${projectWorkspacePanelHeaderClassName} px-4 py-4 sm:px-5`}
+      >
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+          <div className="min-w-0">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--copper)]">
+              Project Evidence
+            </p>
+            <h3 className="mt-2 text-lg font-semibold tracking-tight text-[var(--text-primary)]">
+              Evidence, documents, and closeout continuity
+            </h3>
+            <p className="mt-2 max-w-[72ch] text-sm leading-6 text-[var(--text-secondary)]">
+              {summary.primaryMessage}
+            </p>
+          </div>
+          <div className="flex flex-col gap-2 sm:flex-row lg:flex-col lg:items-end">
+            <span
+              className={[
+                "inline-flex rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em]",
+                getEvidenceContinuityToneClassName(summary.tone)
+              ].join(" ")}
+            >
+              {summary.statusLabel}
+            </span>
+            <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--text-tertiary)]">
+              Evidence Next Move
+            </span>
+            <Link
+              href={summary.nextMove.href}
+              className={primaryActionClassName}
+            >
+              {summary.nextMove.label}
+            </Link>
+          </div>
+        </div>
+
+        <div className="mt-4 grid gap-3 lg:grid-cols-[1.25fr_0.75fr]">
+          <div className="rounded-lg border border-[var(--border-warm)] bg-white px-4 py-3 text-sm leading-6 text-[var(--text-secondary)]">
+            <p className="font-semibold text-[var(--text-primary)]">
+              {summary.nextMove.reason}
+            </p>
+            <div className="mt-3 grid gap-2 sm:grid-cols-3">
+              {[
+                summary.boundary.customerSafeLabel,
+                summary.boundary.internalEvidenceLabel,
+                summary.boundary.archiveLabel
+              ].map((item) => (
+                <p
+                  key={item}
+                  className="rounded-md border border-[var(--border-warm)] bg-[var(--highlight)] px-3 py-2 text-xs leading-5"
+                >
+                  {item}
+                </p>
+              ))}
+            </div>
+          </div>
+
+          <div className="rounded-lg border border-[var(--border-warm)] bg-white px-4 py-3 text-sm leading-6">
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--text-tertiary)]">
+              Office review
+            </p>
+            {summary.officeReviewItems.length > 0 ? (
+              <ul className="mt-3 grid gap-2 text-[var(--text-secondary)]">
+                {summary.officeReviewItems.slice(0, 3).map((item) => (
+                  <li
+                    key={item}
+                    className="rounded-md border border-[var(--border-warm)] bg-[var(--highlight)] px-3 py-2 text-xs leading-5"
+                  >
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="mt-3 text-xs leading-5 text-[var(--text-secondary)]">
+                No evidence or closeout review blockers are showing from the
+                current records.
+              </p>
+            )}
+          </div>
+        </div>
+      </div>
+
+      <div className="grid gap-3 border-t border-[var(--border-warm)] px-4 py-4 sm:px-5 lg:grid-cols-5">
+        {countTiles.map((item) => (
+          <div
+            key={item.label}
+            className="rounded-lg border border-[var(--border-warm)] bg-white px-3 py-3"
+          >
+            <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--text-tertiary)]">
+              {item.label}
+            </p>
+            <p className="mt-2 text-base font-semibold text-[var(--text-primary)]">
+              {item.value}
+            </p>
+            <p className="mt-1 text-xs leading-5 text-[var(--text-secondary)]">
+              {item.detail}
+            </p>
+          </div>
+        ))}
+      </div>
+
+      <div className="grid gap-px bg-[var(--border-warm)] lg:grid-cols-3">
+        {summary.documentGroups.map((group) => (
+          <article key={group.id} className="bg-white px-4 py-4 sm:px-5">
+            <h4 className="text-sm font-semibold text-[var(--text-primary)]">
+              {group.title}
+            </h4>
+            <div className="mt-3 grid gap-3">
+              {group.items.map((item) => (
+                <Link
+                  key={item.id}
+                  href={item.href}
+                  className={[
+                    "rounded-lg border px-3 py-3 text-sm leading-6 transition hover:border-[var(--copper)] hover:bg-white",
+                    getEvidenceDocumentToneClassName(item.tone)
+                  ].join(" ")}
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <p className="font-semibold">{item.label}</p>
+                    <span className="rounded-full border border-current/20 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] opacity-80">
+                      {item.customerSafe ? "Customer-safe" : "Internal"}
+                    </span>
+                  </div>
+                  <p className="mt-1 text-xs font-semibold uppercase tracking-[0.12em] opacity-75">
+                    {item.status}
+                  </p>
+                  <p className="mt-2 text-xs leading-5 opacity-80">
+                    {item.detail}
+                  </p>
+                </Link>
+              ))}
+            </div>
+          </article>
+        ))}
+      </div>
+
+      <div className="border-t border-[var(--border-warm)] px-4 py-4 sm:px-5">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-tertiary)]">
+              Proof Trail
+            </p>
+            <h4 className="mt-1 text-sm font-semibold text-[var(--text-primary)]">
+              Recent evidence and document movement
+            </h4>
+          </div>
+          <Link href="#proofcenter" className={secondaryActionClassName}>
+            Open Proof Center
+          </Link>
+        </div>
+
+        <div className="mt-4 grid gap-3">
+          {summary.timeline.length > 0 ? (
+            summary.timeline.slice(0, 6).map((item) => (
+              <Link
+                key={item.id}
+                href={item.href}
+                className="rounded-lg border border-[var(--border-warm)] bg-white px-4 py-3 text-sm leading-6 transition hover:border-[var(--copper)] hover:bg-[var(--highlight)]"
+              >
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                  <div className="min-w-0">
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--text-tertiary)]">
+                      {getEvidenceTimelineLabel(item.type)} |{" "}
+                      {item.customerSafe ? "Customer-safe" : "Internal"}
+                    </p>
+                    <p className="mt-1 font-semibold text-[var(--text-primary)]">
+                      {item.title}
+                    </p>
+                    <p className="mt-1 text-xs leading-5 text-[var(--text-secondary)]">
+                      {item.detail}
+                    </p>
+                  </div>
+                  <p className="shrink-0 text-xs font-medium uppercase tracking-[0.12em] text-[var(--text-tertiary)]">
+                    {formatDateTime(item.occurredAt)}
+                  </p>
+                </div>
+              </Link>
+            ))
+          ) : (
+            <AppEmptyState
+              eyebrow="No proof trail yet"
+              title="Evidence will appear as real records connect"
+              description="Daily Logs, Job Notes, field evidence, signed contracts, paid invoices, approved change orders, and warranty documents will appear here when they exist."
+              actionHref="#fieldtrail"
+              actionLabel="Review FieldTrail"
+            />
+          )}
         </div>
       </div>
     </section>
@@ -3955,13 +4234,17 @@ export default async function ProjectDetailPage({
         subjectId: fieldNote.id
       }))
     ],
-    `/projects/${projectId}`
+    `/projects/${projectId}`,
+    { includeArchived: true }
+  );
+  const activeProjectExecutionAttachments = filterActiveExecutionAttachments(
+    projectExecutionAttachments
   );
   const fieldTrail = deriveFieldTrailSummary({
     projectId: project.id,
     dailyLogs: projectDailyLogs,
     fieldNotes: projectFieldNotes,
-    attachments: projectExecutionAttachments,
+    attachments: activeProjectExecutionAttachments,
     timeCards: projectTimeCards,
     jobs: projectJobs
   });
@@ -4336,6 +4619,93 @@ export default async function ProjectDetailPage({
     dailyLogsHref: `/daily-logs?projectId=${project.id}`,
     fieldTrailHref: "#fieldtrail",
     messageCenterHref: "#messagecenter",
+    customerAccessHref: `/people?accessCustomerId=${project.customerId}#customer-access`,
+    warrantyServiceHref:
+      projectWarrantyDocuments.length > 0
+        ? `/warranty-documents/${projectWarrantyDocuments[0].id}`
+        : `/service-tickets?projectId=${project.id}`
+  });
+  const projectEvidenceContinuity = deriveProjectEvidenceContinuitySummary({
+    projectId: project.id,
+    dailyLogs: projectDailyLogs.map((dailyLog) => ({
+      id: dailyLog.id,
+      jobId: dailyLog.jobId,
+      logDate: dailyLog.logDate,
+      status: dailyLog.status,
+      summary: dailyLog.summary,
+      updatedAt: dailyLog.updatedAt
+    })),
+    fieldNotes: projectFieldNotes.map((fieldNote) => ({
+      id: fieldNote.id,
+      dailyLogId: fieldNote.dailyLogId,
+      jobId: fieldNote.jobId,
+      noteType: fieldNote.noteType,
+      title: fieldNote.title,
+      status: fieldNote.status,
+      updatedAt: fieldNote.updatedAt
+    })),
+    attachments: projectExecutionAttachments.map((attachment) => ({
+      id: attachment.id,
+      subjectType: attachment.subjectType,
+      subjectId: attachment.subjectId,
+      attachmentType: attachment.attachmentType,
+      fileName: attachment.fileName,
+      mimeType: attachment.mimeType,
+      caption: attachment.caption,
+      createdAt: attachment.createdAt,
+      archivedAt: attachment.archivedAt,
+      restoredAt: attachment.restoredAt
+    })),
+    estimates: projectEstimates.map((estimate) => ({
+      id: estimate.id,
+      status: estimate.status,
+      referenceNumber: estimate.referenceNumber,
+      updatedAt: estimate.updatedAt
+    })),
+    contracts: projectContracts.map((contract) => ({
+      id: contract.id,
+      status: contract.status,
+      referenceNumber: contract.referenceNumber,
+      label: contract.title,
+      updatedAt: contract.updatedAt
+    })),
+    invoices: projectInvoices.map((invoice) => ({
+      id: invoice.id,
+      status: invoice.status,
+      referenceNumber: invoice.referenceNumber,
+      balanceDueAmount: invoice.balanceDueAmount,
+      updatedAt: invoice.updatedAt
+    })),
+    changeOrders: projectChangeOrders.map((changeOrder) => ({
+      id: changeOrder.id,
+      status: changeOrder.status,
+      label: changeOrder.title,
+      updatedAt: changeOrder.updatedAt
+    })),
+    warrantyDocuments: projectWarrantyDocuments.map((document) => ({
+      id: document.id,
+      title: document.title,
+      status: document.status,
+      updatedAt: document.updatedAt
+    })),
+    serviceTicketCount: projectServiceTickets.length,
+    customerAccessCount: projectVisiblePortalGrants.length,
+    closeoutTone: closeoutTrail.closeoutTone,
+    closeoutBlockers: closeoutTrail.blockers,
+    closeoutNextMove: closeoutTrail.nextMove,
+    proofTone: proofCenter.proofTone,
+    proofMissingItems: proofCenter.missingProofItems,
+    proofNextMove: proofCenter.nextMove,
+    fieldTrailNextMove: {
+      label: fieldTrail.nextMove.label,
+      href: fieldTrail.nextMove.href,
+      reason: fieldTrail.nextMove.detail
+    },
+    dailyLogsHref: `/daily-logs?projectId=${project.id}`,
+    fieldTrailHref: "#fieldtrail",
+    proofCenterHref: "#proofcenter",
+    closeoutHref: "#closeouttrail",
+    closeoutPackageHref: buildProjectCloseoutPackagePrintHref(project.id),
     customerAccessHref: `/people?accessCustomerId=${project.customerId}#customer-access`,
     warrantyServiceHref:
       projectWarrantyDocuments.length > 0
@@ -6602,6 +6972,8 @@ export default async function ProjectDetailPage({
         </div>
 
         <ProofCenterSection summary={proofCenter} />
+
+        <ProjectEvidenceContinuitySection summary={projectEvidenceContinuity} />
 
         <DetailPanel
           title="Financial Hub"

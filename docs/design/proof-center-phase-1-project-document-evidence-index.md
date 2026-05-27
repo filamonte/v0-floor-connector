@@ -66,6 +66,17 @@ summary. CloseoutTrail remains the closeout readiness panel. Proof Center is a
 supporting source-record index for proof and evidence, not a second command
 center.
 
+Project Evidence / Documents / Closeout Continuity v1 now adds a companion
+Project Evidence section driven by
+`apps/web/lib/projects/evidence-continuity.ts`. It sits with the existing
+CloseoutTrail and Proof Center stack and answers the higher-level proof-locker
+questions: which active evidence exists, which evidence is archived and hidden
+from active proof counts, which commercial documents are customer-safe, which
+field proof is internal-only, what needs office review, and what recent proof
+movement happened. This section is a read-model layer over existing records; it
+does not replace Proof Center, FieldTrail, CloseoutTrail, Daily Logs, Job Notes,
+or document print/save routes.
+
 ## Proof Categories Implemented
 
 Proof Center groups real records into:
@@ -113,12 +124,20 @@ This slice preserves:
 - Customer Access / portal access behavior
 - auth, tenant boundaries, RLS, settings, and platform-admin logic
 
+The continuity pass also preserves the field-evidence archive boundary:
+Project Detail may load archived `execution_attachments` metadata for internal
+continuity, but FieldTrail, Proof Center, and CloseoutTrail continue to receive
+active-only evidence counts. Archived field evidence remains hidden from active
+proof, receives no new storage behavior here, and stays contractor-only.
+
 ## Intentionally Not Implemented
 
 - full document management
 - new upload manager
 - shared file/evidence table
 - standalone Proof Center route
+- portal/customer field evidence exposure
+- destructive storage delete or storage policy changes
 - customer-facing closeout package generation
 - warranty PDF generation
 - AI proof summaries
