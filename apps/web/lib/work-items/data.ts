@@ -231,7 +231,9 @@ const sourceConfigs: Record<WorkItemSourceType, SourceConfig> = {
   }
 };
 
-async function getWorkItemScope(next = "/dashboard"): Promise<WorkItemScope | null> {
+async function getWorkItemScope(
+  next = "/dashboard"
+): Promise<WorkItemScope | null> {
   const user = await requireAuthenticatedUser(next);
   const organizationContext = await getActiveOrganizationContext(user.id);
 
@@ -319,7 +321,7 @@ function mapWorkItem(row: WorkItemRow): WorkItemListItem {
 }
 
 function unwrapOne<T>(value: T | T[] | null | undefined): T | null {
-  return Array.isArray(value) ? value[0] ?? null : value ?? null;
+  return Array.isArray(value) ? (value[0] ?? null) : (value ?? null);
 }
 
 async function assertRecordBelongsToCompany(input: {
@@ -338,7 +340,9 @@ async function assertRecordBelongsToCompany(input: {
     .maybeSingle();
 
   if (response.error) {
-    throw new Error(`Unable to validate ${input.label}: ${response.error.message}`);
+    throw new Error(
+      `Unable to validate ${input.label}: ${response.error.message}`
+    );
   }
 
   if (!response.data) {
@@ -361,12 +365,16 @@ async function assertScopedActiveAssignablePerson(
     .eq("company_id", organizationId)
     .eq("id", personId)
     .maybeSingle();
-  const person = response.data as
-    | { id?: string; is_active?: boolean; is_assignable?: boolean }
-    | null;
+  const person = response.data as {
+    id?: string;
+    is_active?: boolean;
+    is_assignable?: boolean;
+  } | null;
 
   if (response.error) {
-    throw new Error(`Unable to validate the assigned person: ${response.error.message}`);
+    throw new Error(
+      `Unable to validate the assigned person: ${response.error.message}`
+    );
   }
 
   if (!person?.id) {
@@ -385,7 +393,10 @@ async function validateCommonLinks(input: {
   projectId: string | null;
 }) {
   await Promise.all([
-    assertScopedActiveAssignablePerson(input.organizationId, input.assignedPersonId),
+    assertScopedActiveAssignablePerson(
+      input.organizationId,
+      input.assignedPersonId
+    ),
     input.customerId
       ? assertRecordBelongsToCompany({
           table: "customers",
@@ -484,7 +495,9 @@ export const listWorkItems = cache(
       throw new Error(`Unable to load work items: ${response.error.message}`);
     }
 
-    return sortWorkItemsForQueue(((response.data ?? []) as WorkItemRow[]).map(mapWorkItem));
+    return sortWorkItemsForQueue(
+      ((response.data ?? []) as WorkItemRow[]).map(mapWorkItem)
+    );
   }
 );
 
@@ -528,13 +541,18 @@ export async function listWorkItemsForSource(input: {
     .order("created_at", { ascending: true });
 
   if (response.error) {
-    throw new Error(`Unable to load linked work items: ${response.error.message}`);
+    throw new Error(
+      `Unable to load linked work items: ${response.error.message}`
+    );
   }
 
   return ((response.data ?? []) as WorkItemRow[]).map(mapWorkItem);
 }
 
-export async function listWorkItemsForProject(projectId: string, next = "/dashboard") {
+export async function listWorkItemsForProject(
+  projectId: string,
+  next = "/dashboard"
+) {
   const scope = await requireWorkItemScope(next);
 
   await assertRecordBelongsToCompany({
@@ -556,7 +574,39 @@ export async function listWorkItemsForProject(projectId: string, next = "/dashbo
     .order("created_at", { ascending: true });
 
   if (response.error) {
-    throw new Error(`Unable to load project work items: ${response.error.message}`);
+    throw new Error(
+      `Unable to load project work items: ${response.error.message}`
+    );
+  }
+
+  return ((response.data ?? []) as WorkItemRow[]).map(mapWorkItem);
+}
+
+export async function listWorkItemsForJob(jobId: string, next = "/dashboard") {
+  const scope = await requireWorkItemScope(next);
+  const source = await validateSourceLink({
+    organizationId: scope.organizationId,
+    sourceType: "job",
+    sourceId: jobId
+  });
+
+  if (!source) {
+    return [];
+  }
+
+  const supabase = await getSupabaseServerClient();
+  const response = await supabase
+    .from("work_items")
+    .select(workItemSelect)
+    .eq("company_id", scope.organizationId)
+    .eq("source_type", "job")
+    .eq("source_id", jobId)
+    .order("status", { ascending: true })
+    .order("due_at", { ascending: true, nullsFirst: false })
+    .order("created_at", { ascending: true });
+
+  if (response.error) {
+    throw new Error(`Unable to load job work items: ${response.error.message}`);
   }
 
   return ((response.data ?? []) as WorkItemRow[]).map(mapWorkItem);
@@ -623,7 +673,9 @@ export async function updateWorkItem(input: WorkItemUpdateInput) {
   }
 
   if (existing.status !== "open") {
-    throw new Error("Completed or dismissed work items cannot be edited in V1.");
+    throw new Error(
+      "Completed or dismissed work items cannot be edited in V1."
+    );
   }
 
   await validateCommonLinks({

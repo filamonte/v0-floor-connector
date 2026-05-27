@@ -61,10 +61,12 @@ Roadmap sequencing should account for these future areas without turning them in
 - procurement, materials, POs, bills/expenses, AP, job costing, and budget vs actual after canonical materials/financial inputs mature
 - earned value later, after job costing, progress billing, production tracking, and budget inputs are reliable
 - mobile/offline field UX later, after responsive web field workflows and sync boundaries are stable
-- context-rich Work Items that extend the existing internal `work_items`
-  foundation with project/job/customer context, field instructions,
-  measurements, evidence/photos, completion proof, comments, and assignee
-  visibility without creating a disconnected task app; planning lives in
+- context-rich Work Items now have a first internal implementation over the
+  existing `work_items` foundation: project/job/customer context, instructions,
+  measurement notes, assignee, due/overdue, priority, and status render in
+  shared work-item surfaces without a disconnected task app or migration.
+  Evidence/photos, completion proof, comments, richer statuses, mobile
+  assignee queues, and portal-safe sharing remain future depth documented in
   [docs/design/context-rich-work-items-and-assignments.md](C:/FloorConnector/docs/design/context-rich-work-items-and-assignments.md)
 - QuickBooks/accounting integration later, as sync/export from FloorConnector financial truth
 - AI-assisted takeoff and workflow intelligence later, with human approval and no AI-only records

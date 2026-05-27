@@ -4,8 +4,14 @@ import test from "node:test";
 import type { WorkItem } from "@floorconnector/types";
 
 import {
+  buildContextRichWorkItemPreview,
   filterDashboardWorkItems,
-  selectDashboardWorkItemQueue
+  selectAssignedWorkItems,
+  selectBlockedWorkItems,
+  selectDashboardWorkItemQueue,
+  selectOpenWorkItemsByJob,
+  selectOpenWorkItemsByProject,
+  selectOverdueWorkItems
 } from "./read-model";
 import { workItemCreateSchema } from "./schemas";
 
@@ -86,6 +92,38 @@ void test("work item create schema accepts appointment follow-up source context"
     assert.equal(result.data.kind, "appointment_follow_up");
     assert.equal(result.data.sourceType, "appointment");
     assert.equal(result.data.dueAt, null);
+  }
+});
+
+void test("work item create schema accepts context-rich assignment metadata", () => {
+  const result = workItemCreateSchema.safeParse({
+    title: "Inspect garage coating failure",
+    description:
+      "Confirm moisture issue, photograph cracks through the Daily Job Log, and check current coating failure.",
+    priority: "urgent",
+    kind: "manual",
+    dueAt: "2026-05-08T15:00:00.000Z",
+    assignedPersonId: "33333333-3333-4333-8333-333333333333",
+    sourceType: "job",
+    sourceId: "44444444-4444-4444-8444-444444444444",
+    customerId: "66666666-6666-4666-8666-666666666666",
+    projectId: "77777777-7777-4777-8777-777777777777",
+    linkPath: "/jobs/44444444-4444-4444-8444-444444444444",
+    visibility: "internal",
+    metadata: {
+      measurementNotes: "Measure west wall and capture crack lengths."
+    }
+  });
+
+  assert.equal(result.success, true);
+
+  if (result.success) {
+    assert.equal(result.data.sourceType, "job");
+    assert.equal(result.data.visibility, "internal");
+    assert.equal(
+      result.data.metadata.measurementNotes,
+      "Measure west wall and capture crack lengths."
+    );
   }
 });
 
@@ -217,5 +255,115 @@ void test("dashboard work item selector prefers assigned items when available", 
   assert.deepEqual(
     selected.items.map((item) => item.title),
     ["Assigned follow-up"]
+  );
+});
+
+void test("context-rich work item preview surfaces instructions measurements and due state", () => {
+  const preview = buildContextRichWorkItemPreview(
+    {
+      ...baseWorkItem,
+      title: "Inspect garage coating failure",
+      description: "Confirm moisture issue and photograph cracks.",
+      priority: "urgent",
+      dueAt: "2026-05-08T12:00:00.000Z",
+      assignedPersonId: "person-1",
+      sourceType: "job",
+      sourceId: "job-1",
+      customerId: "customer-1",
+      projectId: "project-1",
+      metadata: {
+        measurementNotes: "Measure west wall and note crack lengths."
+      }
+    },
+    "2026-05-09T12:00:00.000Z"
+  );
+
+  assert.equal(
+    preview.instructionsSummary,
+    "Confirm moisture issue and photograph cracks."
+  );
+  assert.equal(
+    preview.measurementNotes,
+    "Measure west wall and note crack lengths."
+  );
+  assert.equal(preview.dueState, "overdue");
+  assert.equal(preview.attachmentCount, null);
+});
+
+void test("work item read model filters by project job assignee overdue and blocked context", () => {
+  const workItems: WorkItem[] = [
+    {
+      ...baseWorkItem,
+      id: "12121212-1212-4121-8121-121212121212",
+      title: "Project job item",
+      dueAt: "2026-05-08T12:00:00.000Z",
+      assignedPersonId: "person-1",
+      sourceType: "job",
+      sourceId: "job-1",
+      projectId: "project-1"
+    },
+    {
+      ...baseWorkItem,
+      id: "23232323-2323-4232-8232-232323232323",
+      title: "Blocked project item",
+      dueAt: "2026-05-10T12:00:00.000Z",
+      sourceType: "project",
+      sourceId: "project-1",
+      projectId: "project-1",
+      metadata: {
+        blockerReason: "Waiting on moisture reading."
+      }
+    },
+    {
+      ...baseWorkItem,
+      id: "34343434-3434-4343-8343-343434343434",
+      title: "Other project item",
+      dueAt: "2026-05-07T12:00:00.000Z",
+      assignedPersonId: "person-2",
+      sourceType: "project",
+      sourceId: "project-2",
+      projectId: "project-2"
+    },
+    {
+      ...baseWorkItem,
+      id: "45454545-4545-4454-8454-454545454545",
+      title: "Completed project item",
+      status: "completed",
+      dueAt: "2026-05-06T12:00:00.000Z",
+      assignedPersonId: "person-1",
+      sourceType: "job",
+      sourceId: "job-1",
+      projectId: "project-1"
+    }
+  ];
+
+  assert.deepEqual(
+    selectOpenWorkItemsByProject({ workItems, projectId: "project-1" }).map(
+      (item) => item.title
+    ),
+    ["Project job item", "Blocked project item"]
+  );
+  assert.deepEqual(
+    selectOpenWorkItemsByJob({ workItems, jobId: "job-1" }).map(
+      (item) => item.title
+    ),
+    ["Project job item"]
+  );
+  assert.deepEqual(
+    selectAssignedWorkItems({ workItems, assignedPersonId: "person-1" }).map(
+      (item) => item.title
+    ),
+    ["Project job item"]
+  );
+  assert.deepEqual(
+    selectOverdueWorkItems({
+      workItems,
+      nowIso: "2026-05-09T12:00:00.000Z"
+    }).map((item) => item.title),
+    ["Other project item", "Project job item"]
+  );
+  assert.deepEqual(
+    selectBlockedWorkItems({ workItems }).map((item) => item.title),
+    ["Blocked project item"]
   );
 });

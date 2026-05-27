@@ -192,9 +192,14 @@ Current operating-core surfaces include:
   [docs/design/context-rich-work-items-and-assignments.md](C:/FloorConnector/docs/design/context-rich-work-items-and-assignments.md).
   The canonical concept is Work Items, extending the existing internal
   `work_items` foundation rather than creating a disconnected task module.
-  Current implementation remains internal-only and shallow: no direct
-  work-item attachments, structured measurements, comments, richer field
-  statuses, vendor/team assignment, or portal sharing yet.
+  Context-Rich Work Items v1 now reuses existing fields with no migration:
+  `description` carries instructions/job notes, `metadata.measurementNotes`
+  carries measurement context, shared work-item lists show that context with
+  due/overdue, priority, assignee, and linked project/customer labels, and Job
+  Workspace can create/list `source_type = job` work items. Direct work-item
+  upload, structured measurement tables, comments, richer field statuses,
+  vendor/team assignment, field completion evidence, and portal sharing remain
+  future-only.
 - Portal Customer Window with deterministic portal-safe customer status
   explanations, Customer Next Step, Project Status Window, Project Timeline,
   Shared Documents, and existing portal review/print routes. The explanation

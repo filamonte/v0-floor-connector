@@ -1,6 +1,24 @@
 import type { WorkItem, WorkItemPriority } from "@floorconnector/types";
 
 export type WorkItemQueueFilter = "open" | "assigned" | "due" | "all";
+export type WorkItemDueState = "none" | "upcoming" | "overdue";
+
+export type ContextRichWorkItemPreview = {
+  id: string;
+  title: string;
+  instructionsSummary: string | null;
+  measurementNotes: string | null;
+  assignedPersonId: string | null;
+  dueAt: string | null;
+  dueState: WorkItemDueState;
+  priority: WorkItemPriority;
+  status: WorkItem["status"];
+  sourceType: WorkItem["sourceType"];
+  sourceId: string | null;
+  customerId: string | null;
+  projectId: string | null;
+  attachmentCount: number | null;
+};
 
 const priorityRank: Record<WorkItemPriority, number> = {
   urgent: 0,
@@ -21,12 +39,72 @@ export function isDueWorkItem(
   workItem: Pick<WorkItem, "status" | "dueAt">,
   nowIso: string
 ) {
-  return workItem.status === "open" && Boolean(workItem.dueAt && workItem.dueAt <= nowIso);
+  return (
+    workItem.status === "open" &&
+    Boolean(workItem.dueAt && workItem.dueAt <= nowIso)
+  );
 }
 
-export function sortWorkItemsForQueue<T extends Pick<WorkItem, "dueAt" | "priority" | "createdAt" | "title">>(
-  workItems: T[]
+function trimString(value: unknown) {
+  return typeof value === "string" && value.trim().length > 0
+    ? value.trim()
+    : null;
+}
+
+function getMetadataNumber(value: unknown) {
+  return typeof value === "number" && Number.isInteger(value) && value >= 0
+    ? value
+    : null;
+}
+
+export function getWorkItemMeasurementNotes(
+  workItem: Pick<WorkItem, "metadata">
 ) {
+  return trimString(workItem.metadata.measurementNotes);
+}
+
+export function getWorkItemAttachmentCount(
+  workItem: Pick<WorkItem, "metadata">
+) {
+  return getMetadataNumber(workItem.metadata.attachmentCount);
+}
+
+export function getWorkItemDueState(
+  workItem: Pick<WorkItem, "status" | "dueAt">,
+  nowIso: string
+): WorkItemDueState {
+  if (workItem.status !== "open" || !workItem.dueAt) {
+    return "none";
+  }
+
+  return workItem.dueAt < nowIso ? "overdue" : "upcoming";
+}
+
+export function buildContextRichWorkItemPreview(
+  workItem: WorkItem,
+  nowIso: string
+): ContextRichWorkItemPreview {
+  return {
+    id: workItem.id,
+    title: workItem.title,
+    instructionsSummary: trimString(workItem.description),
+    measurementNotes: getWorkItemMeasurementNotes(workItem),
+    assignedPersonId: workItem.assignedPersonId,
+    dueAt: workItem.dueAt,
+    dueState: getWorkItemDueState(workItem, nowIso),
+    priority: workItem.priority,
+    status: workItem.status,
+    sourceType: workItem.sourceType,
+    sourceId: workItem.sourceId,
+    customerId: workItem.customerId,
+    projectId: workItem.projectId,
+    attachmentCount: getWorkItemAttachmentCount(workItem)
+  };
+}
+
+export function sortWorkItemsForQueue<
+  T extends Pick<WorkItem, "dueAt" | "priority" | "createdAt" | "title">
+>(workItems: T[]) {
   return [...workItems].sort((left, right) => {
     const dueComparison = dueSortValue(left.dueAt).localeCompare(
       dueSortValue(right.dueAt)
@@ -36,7 +114,8 @@ export function sortWorkItemsForQueue<T extends Pick<WorkItem, "dueAt" | "priori
       return dueComparison;
     }
 
-    const priorityComparison = priorityRank[left.priority] - priorityRank[right.priority];
+    const priorityComparison =
+      priorityRank[left.priority] - priorityRank[right.priority];
 
     if (priorityComparison !== 0) {
       return priorityComparison;
@@ -59,10 +138,73 @@ export function filterDashboardWorkItems<T extends WorkItem>(input: {
 }) {
   const openItems = input.workItems.filter(isOpenWorkItem);
   const scopedItems = input.assignedPersonId
-    ? openItems.filter((item) => item.assignedPersonId === input.assignedPersonId)
+    ? openItems.filter(
+        (item) => item.assignedPersonId === input.assignedPersonId
+      )
     : openItems;
 
   return sortWorkItemsForQueue(scopedItems).slice(0, input.limit);
+}
+
+export function selectOpenWorkItemsByProject<T extends WorkItem>(input: {
+  workItems: T[];
+  projectId: string;
+}) {
+  return sortWorkItemsForQueue(
+    input.workItems.filter(
+      (workItem) =>
+        isOpenWorkItem(workItem) && workItem.projectId === input.projectId
+    )
+  );
+}
+
+export function selectOpenWorkItemsByJob<T extends WorkItem>(input: {
+  workItems: T[];
+  jobId: string;
+}) {
+  return sortWorkItemsForQueue(
+    input.workItems.filter(
+      (workItem) =>
+        isOpenWorkItem(workItem) &&
+        workItem.sourceType === "job" &&
+        workItem.sourceId === input.jobId
+    )
+  );
+}
+
+export function selectAssignedWorkItems<T extends WorkItem>(input: {
+  workItems: T[];
+  assignedPersonId: string;
+}) {
+  return sortWorkItemsForQueue(
+    input.workItems.filter(
+      (workItem) =>
+        isOpenWorkItem(workItem) &&
+        workItem.assignedPersonId === input.assignedPersonId
+    )
+  );
+}
+
+export function selectOverdueWorkItems<T extends WorkItem>(input: {
+  workItems: T[];
+  nowIso: string;
+}) {
+  return sortWorkItemsForQueue(
+    input.workItems.filter((workItem) => isDueWorkItem(workItem, input.nowIso))
+  );
+}
+
+export function selectBlockedWorkItems<T extends WorkItem>(input: {
+  workItems: T[];
+}) {
+  return sortWorkItemsForQueue(
+    input.workItems.filter(
+      (workItem) =>
+        isOpenWorkItem(workItem) &&
+        (workItem.metadata.blocked === true ||
+          typeof workItem.metadata.blockerReason === "string")
+    )
+  );
 }
 
 export function selectDashboardWorkItemQueue<T extends WorkItem>(input: {

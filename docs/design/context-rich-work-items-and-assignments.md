@@ -1,6 +1,6 @@
 # Context-Rich Work Items And Assignments
 
-Status: Planned
+Status: Implemented Foundation / Planned Depth
 Doc Type: Design
 
 ## Product Problem
@@ -59,7 +59,9 @@ Implemented today:
 Missing or intentionally shallow today:
 
 - Work items do not yet have a dedicated Work Items Manager Page.
-- Work items do not yet support structured measurement fields.
+- Context-Rich Work Items v1 now reuses `description` for instructions/job
+  notes and `metadata.measurementNotes` for measurement context. Dedicated
+  structured measurement tables are not implemented yet.
 - Work items do not yet have direct attachment subjects or completion-evidence
   attachment groups.
 - Work items do not yet have a dedicated comment/discussion stream.
@@ -68,6 +70,51 @@ Missing or intentionally shallow today:
 - Work items do not yet support team/vendor/subcontractor assignment beyond a
   single assignable person.
 - Work items are internal-only and have no portal/customer exposure.
+
+## Context-Rich Work Items V1
+
+Implemented v1 behavior:
+
+- No schema or migration was required.
+- The canonical parent record remains `work_items`.
+- Instructions/job notes are stored in the existing `description` field.
+- Measurement context is stored as safe metadata at
+  `metadata.measurementNotes`.
+- The shared work-item read model now derives context-rich previews with
+  instruction summary, measurement notes, due/overdue state, priority, status,
+  assignee id, project/customer ids, source link, and attachment count only when
+  real metadata is present.
+- The shared work-item list displays instructions, measurement notes, due or
+  overdue state, assignee, priority, linked project/customer context, status,
+  and existing complete/dismiss actions.
+- Project Workspace keeps work items project-scoped and now presents them as
+  instruction/measurement-capable internal assignments.
+- Job Workspace can create and list job-linked work items using existing
+  `source_type = job`, `source_id`, `customer_id`, and `project_id` columns.
+
+V1 attachment behavior:
+
+- Direct work-item uploads are not implemented.
+- Current-condition photos/files still belong to Daily Job Logs, Job Notes, and
+  `execution_attachments`.
+- Work-item attachment counts are shown only if future trusted metadata exists;
+  the UI does not fake attachment rows or storage references.
+- Portal sharing remains explicit through `portal_evidence_grants` for eligible
+  execution attachments only, not work-item notes or bodies.
+
+V1 non-goals:
+
+- no duplicate task table
+- no work-item attachment schema
+- no direct photo/file upload
+- no structured measurement table
+- no comments/discussion stream
+- no vendor/team assignment
+- no mobile employee work queue
+- no notifications/reminders
+- no portal exposure
+- no job, Daily Log, Job Note, invoice, contract, or readiness mutation from
+  work-item completion
 
 ## Canonical Model Proposal
 

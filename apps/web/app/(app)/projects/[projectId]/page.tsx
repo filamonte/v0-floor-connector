@@ -6157,10 +6157,12 @@ export default async function ProjectDetailPage({
                     Project follow-through
                   </h3>
                   <p className="mt-1 max-w-[68ch] text-sm leading-6 text-slate-600">
-                    Create internal contractor work tied to this project or a
-                    selected guidance source. Nothing is created until you
-                    submit, and submission stays separate from readiness,
-                    scheduling, invoices, contracts, jobs, and field notes.
+                    Create internal contractor work with instructions,
+                    measurement notes, assignee, due date, and priority tied to
+                    this project or a selected guidance source. Nothing is
+                    created until you submit, and submission stays separate from
+                    readiness, scheduling, invoices, contracts, jobs, Daily Job
+                    Logs, and Job Notes.
                   </p>
                 </div>
                 <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-600 md:w-56">
@@ -6191,7 +6193,9 @@ export default async function ProjectDetailPage({
                     ) : (
                       <p className="text-sm leading-6 text-slate-600">
                         Use this form for explicit contractor-owned
-                        follow-through on the project.
+                        follow-through on the project, including field
+                        instructions and measurement context for the assigned
+                        person.
                       </p>
                     )}
                   </div>
@@ -6239,7 +6243,8 @@ export default async function ProjectDetailPage({
                   </p>
                   <p className="mt-2 text-sm leading-6 text-slate-600">
                     Internal project actions tied through the canonical project
-                    relationship.
+                    relationship. Direct photos/files still belong to Daily Job
+                    Logs and Job Notes until work-item upload is approved.
                   </p>
                   <div className="mt-4">
                     <WorkItemList
@@ -6248,7 +6253,7 @@ export default async function ProjectDetailPage({
                       completeAction={completeWorkItemAction}
                       dismissAction={dismissWorkItemAction}
                       emptyTitle="No work items are linked to this project yet."
-                      emptyDescription="Create a manual internal work item when project follow-through needs an owner, due date, and completion state."
+                      emptyDescription="Create a manual internal work item when project follow-through needs instructions, measurement notes, an owner, due date, and completion state."
                     />
                   </div>
                 </section>

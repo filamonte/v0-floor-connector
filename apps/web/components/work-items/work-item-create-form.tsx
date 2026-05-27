@@ -31,6 +31,7 @@ type WorkItemCreateFormProps = {
   defaultAssignedPersonId?: string | null;
   defaultTitle?: string | null;
   defaultDescription?: string | null;
+  defaultMeasurementNotes?: string | null;
   defaultDueAt?: string | null;
   defaultPriority?: WorkItemPriority;
   dedupeKey?: string | null;
@@ -39,15 +40,19 @@ type WorkItemCreateFormProps = {
   assignablePeople: AssignablePersonOption[];
 };
 
-const defaultKindOptions: NonNullable<WorkItemCreateFormProps["kindOptions"]> = [
-  { value: "lead_follow_up", label: "Lead follow-up" },
-  { value: "appointment_confirmation_prep", label: "Appointment confirmation prep" },
-  { value: "appointment_follow_up", label: "Appointment follow-up" },
-  { value: "estimate_follow_up", label: "Estimate follow-up" },
-  { value: "invoice_follow_up", label: "Invoice follow-up" },
-  { value: "human_handoff", label: "Human handoff" },
-  { value: "manual", label: "Manual" }
-];
+const defaultKindOptions: NonNullable<WorkItemCreateFormProps["kindOptions"]> =
+  [
+    { value: "lead_follow_up", label: "Lead follow-up" },
+    {
+      value: "appointment_confirmation_prep",
+      label: "Appointment confirmation prep"
+    },
+    { value: "appointment_follow_up", label: "Appointment follow-up" },
+    { value: "estimate_follow_up", label: "Estimate follow-up" },
+    { value: "invoice_follow_up", label: "Invoice follow-up" },
+    { value: "human_handoff", label: "Human handoff" },
+    { value: "manual", label: "Manual" }
+  ];
 
 function toDateTimeLocalValue(value: string | null | undefined) {
   if (!value) {
@@ -60,7 +65,9 @@ function toDateTimeLocalValue(value: string | null | undefined) {
     return "";
   }
 
-  const localDate = new Date(date.getTime() - date.getTimezoneOffset() * 60_000);
+  const localDate = new Date(
+    date.getTime() - date.getTimezoneOffset() * 60_000
+  );
 
   return localDate.toISOString().slice(0, 16);
 }
@@ -78,6 +85,7 @@ export function WorkItemCreateForm({
   defaultAssignedPersonId,
   defaultTitle,
   defaultDescription,
+  defaultMeasurementNotes,
   defaultDueAt,
   defaultPriority = "normal",
   dedupeKey,
@@ -108,7 +116,7 @@ export function WorkItemCreateForm({
 
       <label className="block">
         <span className="mb-2 block text-sm font-medium text-slate-800">
-          Work item title
+          Title
         </span>
         <input
           type="text"
@@ -117,20 +125,33 @@ export function WorkItemCreateForm({
           maxLength={200}
           defaultValue={defaultTitle ?? ""}
           className="h-9 w-full border border-[#d6d6d6] bg-white px-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-[#d8731f]"
-          placeholder="Call back about site visit timing"
+          placeholder="Inspect Smith garage before coating"
         />
       </label>
 
       <label className="block">
         <span className="mb-2 block text-sm font-medium text-slate-800">
-          Description
+          Instructions / job notes
         </span>
         <textarea
           name="description"
           rows={3}
           defaultValue={defaultDescription ?? ""}
           className="w-full border border-[#d6d6d6] bg-white px-3 py-2.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-[#d8731f]"
-          placeholder="Internal context for the contractor team."
+          placeholder="Confirm moisture issue, photograph cracks, and note current coating failure."
+        />
+      </label>
+
+      <label className="block">
+        <span className="mb-2 block text-sm font-medium text-slate-800">
+          Measurement notes
+        </span>
+        <textarea
+          name="measurementNotes"
+          rows={3}
+          defaultValue={defaultMeasurementNotes ?? ""}
+          className="w-full border border-[#d6d6d6] bg-white px-3 py-2.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-[#d8731f]"
+          placeholder="Measure west wall, note crack lengths, and capture moisture readings."
         />
       </label>
 

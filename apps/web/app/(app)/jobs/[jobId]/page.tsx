@@ -24,6 +24,8 @@ import {
   SaveStateSubmitButton
 } from "@/components/save-feedback/save-state-form";
 import { ServiceWarrantyContinuityPanel } from "@/components/service-warranty-continuity-panel";
+import { WorkItemCreateForm } from "@/components/work-items/work-item-create-form";
+import { WorkItemList } from "@/components/work-items/work-item-list";
 import { listDailyLogsByProject } from "@/lib/daily-logs/data";
 import {
   buildDailyLogCaptureHref,
@@ -67,6 +69,12 @@ import { buildScheduleHref } from "@/lib/schedule/links";
 import { listVendors } from "@/lib/vendors/data";
 import { listServiceTicketsByJob } from "@/lib/service-tickets/data";
 import { listWarrantyDocumentsByJob } from "@/lib/warranty-documents/data";
+import {
+  completeWorkItemAction,
+  createWorkItemAction,
+  dismissWorkItemAction
+} from "@/lib/work-items/actions";
+import { listWorkItemsForJob } from "@/lib/work-items/data";
 import {
   ActionBar,
   PrimarySection,
@@ -423,7 +431,8 @@ export default async function JobDetailPage({
     vendors,
     jobPunchlistItems,
     jobServiceTickets,
-    jobWarrantyDocuments
+    jobWarrantyDocuments,
+    linkedWorkItems
   ] = await Promise.all([
     job.estimateId
       ? getEstimateById(job.estimateId, `/jobs/${jobId}`)
@@ -438,7 +447,8 @@ export default async function JobDetailPage({
     listVendors(),
     listPunchlistItemsByJob(job.id, `/jobs/${jobId}`),
     listServiceTicketsByJob(job.id),
-    listWarrantyDocumentsByJob(job.id)
+    listWarrantyDocumentsByJob(job.id),
+    listWorkItemsForJob(job.id, `/jobs/${jobId}`)
   ]);
   const jobAttentionCues = await getOperationalCuesForSubject({
     organizationId: job.organizationId,
@@ -1160,6 +1170,79 @@ export default async function JobDetailPage({
                     </div>
                   )}
                 </div>
+              </div>
+            </div>
+          </div>
+        </PrimarySection>
+
+        <PrimarySection
+          title="Work Items"
+          description="Assign internal job follow-through with instructions, measurement notes, due date, priority, and assignee context on the existing canonical work-item record."
+        >
+          <div className="grid gap-5 xl:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)]">
+            <div className="rounded-2xl border border-slate-200 bg-slate-50/80 px-5 py-5">
+              <p className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-500">
+                Create job-linked work
+              </p>
+              <p className="mt-2 text-sm leading-6 text-slate-600">
+                Add job notes, measurements, and assignment context for the
+                person doing the work. Work items stay internal and do not
+                change schedule, crew, Daily Job Logs, Job Notes, invoice,
+                contract, or portal visibility.
+              </p>
+              <div className="mt-4">
+                <WorkItemCreateForm
+                  action={createWorkItemAction}
+                  returnTo={`/jobs/${job.id}`}
+                  sourceType="job"
+                  sourceId={job.id}
+                  linkPath={`/jobs/${job.id}`}
+                  customerId={job.customerId}
+                  projectId={job.projectId}
+                  defaultKind="manual"
+                  kindOptions={[
+                    { value: "human_handoff", label: "Human handoff" },
+                    { value: "manual", label: "Manual" }
+                  ]}
+                  assignablePeople={assignablePeople}
+                  boundaryCopy="Work items are internal-only. They can carry instructions and measurement notes for the assigned person, but direct photo/file upload remains on Daily Job Logs and Job Notes in this slice."
+                />
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-slate-200 bg-slate-50/80 px-5 py-5">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                  <p className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-500">
+                    Assigned job work
+                  </p>
+                  <p className="mt-2 text-sm leading-6 text-slate-600">
+                    Job-linked work items route back to this Job Workspace and
+                    remain visible from the linked Project Workspace.
+                  </p>
+                </div>
+                <div className="rounded-[6px] border border-slate-200 bg-white px-3 py-2 text-sm text-slate-600">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                    Open
+                  </p>
+                  <p className="mt-1 text-lg font-semibold text-slate-950">
+                    {
+                      linkedWorkItems.filter(
+                        (workItem) => workItem.status === "open"
+                      ).length
+                    }
+                  </p>
+                </div>
+              </div>
+              <div className="mt-4">
+                <WorkItemList
+                  workItems={linkedWorkItems}
+                  returnTo={`/jobs/${job.id}`}
+                  completeAction={completeWorkItemAction}
+                  dismissAction={dismissWorkItemAction}
+                  emptyTitle="No work items are linked to this job yet."
+                  emptyDescription="Create a job-linked work item when field follow-through needs instructions, measurements, an assignee, priority, due date, or completion state."
+                />
               </div>
             </div>
           </div>

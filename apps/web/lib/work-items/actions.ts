@@ -21,7 +21,10 @@ function getFieldValue(formData: FormData, key: string) {
   return typeof value === "string" ? value : "";
 }
 
-function buildRedirect(pathname: string, params: Record<string, string | undefined>) {
+function buildRedirect(
+  pathname: string,
+  params: Record<string, string | undefined>
+) {
   const search = new URLSearchParams();
 
   for (const [key, value] of Object.entries(params)) {
@@ -67,6 +70,23 @@ function getMetadata(formData: FormData): Record<string, unknown> {
   }
 }
 
+function getContextRichMetadata(formData: FormData) {
+  const metadata = getMetadata(formData);
+  const measurementNotes = getFieldValue(formData, "measurementNotes").trim();
+
+  if (measurementNotes) {
+    return {
+      ...metadata,
+      measurementNotes
+    };
+  }
+
+  const nextMetadata = { ...metadata };
+  delete nextMetadata.measurementNotes;
+
+  return nextMetadata;
+}
+
 export async function createWorkItemAction(formData: FormData) {
   const returnTo = getReturnTo(formData);
   const result = workItemCreateSchema.safeParse({
@@ -83,7 +103,7 @@ export async function createWorkItemAction(formData: FormData) {
     linkPath: getFieldValue(formData, "linkPath"),
     visibility: getFieldValue(formData, "visibility") || "internal",
     dedupeKey: getFieldValue(formData, "dedupeKey"),
-    metadata: getMetadata(formData)
+    metadata: getContextRichMetadata(formData)
   });
 
   if (!result.success) {
@@ -100,7 +120,8 @@ export async function createWorkItemAction(formData: FormData) {
   } catch (error) {
     redirect(
       buildRedirect(returnTo, {
-        error: error instanceof Error ? error.message : "Unable to create work item."
+        error:
+          error instanceof Error ? error.message : "Unable to create work item."
       })
     );
   }
@@ -122,7 +143,7 @@ export async function updateWorkItemAction(formData: FormData) {
     projectId: getFieldValue(formData, "projectId"),
     linkPath: getFieldValue(formData, "linkPath"),
     visibility: getFieldValue(formData, "visibility") || "internal",
-    metadata: getMetadata(formData)
+    metadata: getContextRichMetadata(formData)
   });
 
   if (!result.success) {
@@ -139,7 +160,8 @@ export async function updateWorkItemAction(formData: FormData) {
   } catch (error) {
     redirect(
       buildRedirect(returnTo, {
-        error: error instanceof Error ? error.message : "Unable to update work item."
+        error:
+          error instanceof Error ? error.message : "Unable to update work item."
       })
     );
   }
@@ -163,7 +185,10 @@ export async function completeWorkItemAction(formData: FormData) {
   } catch (error) {
     redirect(
       buildRedirect(returnTo, {
-        error: error instanceof Error ? error.message : "Unable to complete work item."
+        error:
+          error instanceof Error
+            ? error.message
+            : "Unable to complete work item."
       })
     );
   }
@@ -187,7 +212,10 @@ export async function dismissWorkItemAction(formData: FormData) {
   } catch (error) {
     redirect(
       buildRedirect(returnTo, {
-        error: error instanceof Error ? error.message : "Unable to dismiss work item."
+        error:
+          error instanceof Error
+            ? error.message
+            : "Unable to dismiss work item."
       })
     );
   }
