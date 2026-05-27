@@ -1,7 +1,17 @@
 import "server-only";
 
 import { cache } from "react";
-import type { CanonicalRecordSubjectType } from "@floorconnector/types";
+import type {
+  CanonicalRecordSubjectType,
+  CommunicationChannelKind,
+  CommunicationMessageVisibility,
+  CommunicationThreadCategory,
+  CommunicationThreadStatus,
+  DocumentDeliveryChannel,
+  DocumentDeliveryEventType,
+  DocumentDeliverySubjectType,
+  PortalEvidenceDeliveryEventType
+} from "@floorconnector/types";
 
 import { requireAuthenticatedUser } from "@/lib/auth/session";
 import { getActiveOrganizationContext } from "@/lib/organizations/active-context";
@@ -16,8 +26,12 @@ type CommunicationThreadRow = {
   subject_type: CanonicalRecordSubjectType;
   subject_id: string;
   created_by_user_id: string | null;
+  thread_category: CommunicationThreadCategory;
+  channel_kind: CommunicationChannelKind;
+  thread_status: CommunicationThreadStatus;
   last_message_at: string | null;
   last_message_preview: string | null;
+  last_message_visibility: CommunicationMessageVisibility;
   created_at: string;
   updated_at: string;
 };
@@ -82,13 +96,11 @@ type PaymentRow = {
 
 type CommunicationNotificationRow = {
   id: string;
-  notification_events?:
-    | Array<{
-        actor_type: "organization_user" | "portal_user" | "provider" | "system";
-        occurred_at: string;
-        payload: Record<string, unknown> | null;
-      }>
-    | null;
+  notification_events?: Array<{
+    actor_type: "organization_user" | "portal_user" | "provider" | "system";
+    occurred_at: string;
+    payload: Record<string, unknown> | null;
+  }> | null;
 };
 
 type ThreadUnreadState = {
@@ -102,10 +114,38 @@ type CommunicationThreadSummaryRow = Pick<
   "id" | "project_id" | "subject_type" | "last_message_at"
 >;
 
+type DocumentDeliveryContextRow = {
+  id: string;
+  subject_type: DocumentDeliverySubjectType;
+  subject_id: string;
+  event_type: DocumentDeliveryEventType;
+  channel: DocumentDeliveryChannel;
+  recipient_name: string | null;
+  recipient_email: string | null;
+  provider: string | null;
+  created_at: string;
+};
+
+type PortalEvidenceDeliveryContextRow = {
+  id: string;
+  project_id: string;
+  portal_evidence_grant_id: string;
+  event_type: PortalEvidenceDeliveryEventType;
+  actor_kind: "contractor" | "portal_customer" | "system";
+  occurred_at: string;
+  created_at: string;
+};
+
 const RECENT_WINDOW_DAYS = 14;
 
-export type ContractorCommunicationThreadView = "all" | "needs_response" | "unread" | "recent";
-export type ContractorCommunicationSourceFilter = "all" | CanonicalRecordSubjectType;
+export type ContractorCommunicationThreadView =
+  | "all"
+  | "needs_response"
+  | "unread"
+  | "recent";
+export type ContractorCommunicationSourceFilter =
+  | "all"
+  | CanonicalRecordSubjectType;
 
 export type ContractorCommunicationThreadListFilters = {
   view?: ContractorCommunicationThreadView;
@@ -114,6 +154,9 @@ export type ContractorCommunicationThreadListFilters = {
 
 export type ContractorCommunicationThreadListItem = {
   id: string;
+  threadCategory: CommunicationThreadCategory;
+  channelKind: CommunicationChannelKind;
+  threadStatus: CommunicationThreadStatus;
   customer: {
     id: string;
     label: string;
@@ -136,6 +179,7 @@ export type ContractorCommunicationThreadListItem = {
   } | null;
   lastMessageAt: string | null;
   lastMessagePreview: string | null;
+  lastMessageVisibility: CommunicationMessageVisibility;
   unreadCount: number;
   needsResponse: boolean;
   lastUnreadAt: string | null;
@@ -153,6 +197,20 @@ export type ContractorCommunicationThreadSummary = {
   sourceCounts: Record<CanonicalRecordSubjectType, number>;
 };
 
+export type ContractorCommunicationContextEvent = {
+  id: string;
+  kind: "document_delivery" | "shared_evidence";
+  sourceType: DocumentDeliverySubjectType | "shared_evidence";
+  sourceId: string;
+  eventType: string;
+  title: string;
+  description: string;
+  href: string;
+  occurredAt: string;
+  tone: "neutral" | "positive" | "warning" | "critical";
+  audience: "customer" | "internal";
+};
+
 type SubjectDescriptor = {
   label: string;
   href: string;
@@ -162,7 +220,10 @@ type SubjectDescriptor = {
   } | null;
 };
 
-function getThreadActivityAt(row: CommunicationThreadRow, lastUnreadAt: string | null) {
+function getThreadActivityAt(
+  row: CommunicationThreadRow,
+  lastUnreadAt: string | null
+) {
   return lastUnreadAt ?? row.last_message_at ?? row.updated_at;
 }
 
@@ -180,16 +241,82 @@ function formatPaymentDate(value: string) {
   }).format(new Date(`${value}T00:00:00`));
 }
 
-function getThreadIdFromPayload(payload: Record<string, unknown> | null | undefined) {
+function formatLabel(value: string) {
+  return value.replaceAll("_", " ");
+}
+
+function getDocumentDeliveryEventTone(
+  eventType: DocumentDeliveryEventType
+): ContractorCommunicationContextEvent["tone"] {
+  if (eventType === "failed" || eventType === "bounced") {
+    return "critical";
+  }
+
+  if (
+    eventType === "opened" ||
+    eventType === "clicked" ||
+    eventType === "viewed"
+  ) {
+    return "positive";
+  }
+
+  return eventType === "send_requested" ? "warning" : "neutral";
+}
+
+function getEvidenceDeliveryEventTone(
+  eventType: PortalEvidenceDeliveryEventType
+): ContractorCommunicationContextEvent["tone"] {
+  if (eventType === "revoked") {
+    return "warning";
+  }
+
+  if (eventType === "acknowledged") {
+    return "positive";
+  }
+
+  return "neutral";
+}
+
+function getDocumentSubjectHref(
+  subjectType: DocumentDeliverySubjectType,
+  subjectId: string
+) {
+  switch (subjectType) {
+    case "estimate":
+      return `/estimates/${subjectId}`;
+    case "contract":
+      return `/contracts/${subjectId}`;
+    case "invoice":
+      return `/invoices/${subjectId}`;
+    case "warranty_document":
+      return `/warranty-documents/${subjectId}`;
+  }
+}
+
+function getDocumentSubjectLabel(subjectType: DocumentDeliverySubjectType) {
+  return subjectType === "warranty_document"
+    ? "Warranty document"
+    : formatLabel(subjectType);
+}
+
+function getThreadIdFromPayload(
+  payload: Record<string, unknown> | null | undefined
+) {
   return typeof payload?.threadId === "string" ? payload.threadId : null;
 }
 
 function getRecentCutoffIso() {
-  return new Date(Date.now() - RECENT_WINDOW_DAYS * 24 * 60 * 60 * 1000).toISOString();
+  return new Date(
+    Date.now() - RECENT_WINDOW_DAYS * 24 * 60 * 60 * 1000
+  ).toISOString();
 }
 
-function isRecentThreadRow(thread: Pick<CommunicationThreadRow, "last_message_at">) {
-  return Boolean(thread.last_message_at && thread.last_message_at >= getRecentCutoffIso());
+function isRecentThreadRow(
+  thread: Pick<CommunicationThreadRow, "last_message_at">
+) {
+  return Boolean(
+    thread.last_message_at && thread.last_message_at >= getRecentCutoffIso()
+  );
 }
 
 function buildUnreadByThreadId(rows: CommunicationNotificationRow[]) {
@@ -212,9 +339,12 @@ function buildUnreadByThreadId(rows: CommunicationNotificationRow[]) {
 
     unreadByThreadId.set(threadId, {
       count: current.count + 1,
-      needsResponse: current.needsResponse || notificationEvent?.actor_type === "portal_user",
+      needsResponse:
+        current.needsResponse ||
+        notificationEvent?.actor_type === "portal_user",
       lastUnreadAt:
-        !current.lastUnreadAt || (occurredAt && occurredAt > current.lastUnreadAt)
+        !current.lastUnreadAt ||
+        (occurredAt && occurredAt > current.lastUnreadAt)
           ? occurredAt
           : current.lastUnreadAt
     });
@@ -246,7 +376,9 @@ async function listUnreadCommunicationNotificationRows(input: {
     .eq("notification_events.category", "communication");
 
   if (response.error) {
-    throw new Error(`Unable to load communication notifications: ${response.error.message}`);
+    throw new Error(
+      `Unable to load communication notifications: ${response.error.message}`
+    );
   }
 
   return (response.data as CommunicationNotificationRow[] | null) ?? [];
@@ -291,7 +423,9 @@ function getSubjectDescriptor(input: {
       const appointment = input.appointmentsById.get(thread.subject_id);
 
       return {
-        label: appointment ? `Appointment - ${appointment.title}` : "Appointment",
+        label: appointment
+          ? `Appointment - ${appointment.title}`
+          : "Appointment",
         href: `/appointments/${thread.subject_id}`
       };
     }
@@ -299,7 +433,9 @@ function getSubjectDescriptor(input: {
       const customer = input.customersById.get(thread.subject_id);
 
       return {
-        label: customer ? `Customer - ${mapCustomerLabel(customer)}` : "Customer",
+        label: customer
+          ? `Customer - ${mapCustomerLabel(customer)}`
+          : "Customer",
         href: `/customers/${thread.subject_id}`
       };
     }
@@ -355,7 +491,7 @@ function getSubjectDescriptor(input: {
         href: "/payments",
         secondaryLink:
           payment?.invoice_id && payment.invoices?.[0]?.reference_number
-          ? {
+            ? {
                 label: `Invoice ${payment.invoices[0].reference_number}`,
                 href: `/invoices/${payment.invoice_id}`
               }
@@ -391,7 +527,7 @@ async function loadSubjectRows<T>(
     throw new Error(`Unable to load ${table}: ${response.error.message}`);
   }
 
-  return ((response.data as T[] | null) ?? []);
+  return (response.data as T[] | null) ?? [];
 }
 
 const listContractorCommunicationThreadSummaryCached = cache(
@@ -422,30 +558,36 @@ const listContractorCommunicationThreadSummaryCached = cache(
 
     const organizationId = organizationContext.organization.id;
     const supabase = await getSupabaseServerClient();
-    const [threadsResponse, unreadCommunicationNotificationRows] = await Promise.all([
-      supabase
-        .from("communication_threads")
-        .select(
-          `
+    const [threadsResponse, unreadCommunicationNotificationRows] =
+      await Promise.all([
+        supabase
+          .from("communication_threads")
+          .select(
+            `
             id,
             project_id,
             subject_type,
             last_message_at
           `
-        )
-        .eq("company_id", organizationId),
-      listUnreadCommunicationNotificationRows({
-        organizationId,
-        userId: user.id
-      })
-    ]);
+          )
+          .eq("company_id", organizationId),
+        listUnreadCommunicationNotificationRows({
+          organizationId,
+          userId: user.id
+        })
+      ]);
 
     if (threadsResponse.error) {
-      throw new Error(`Unable to load communication threads: ${threadsResponse.error.message}`);
+      throw new Error(
+        `Unable to load communication threads: ${threadsResponse.error.message}`
+      );
     }
 
-    const threadRows = (threadsResponse.data as CommunicationThreadSummaryRow[] | null) ?? [];
-    const unreadByThreadId = buildUnreadByThreadId(unreadCommunicationNotificationRows);
+    const threadRows =
+      (threadsResponse.data as CommunicationThreadSummaryRow[] | null) ?? [];
+    const unreadByThreadId = buildUnreadByThreadId(
+      unreadCommunicationNotificationRows
+    );
     const sourceCounts: ContractorCommunicationThreadSummary["sourceCounts"] = {
       opportunity: 0,
       appointment: 0,
@@ -509,11 +651,14 @@ const listContractorCommunicationThreadsCached = cache(
 
     const organizationId = organizationContext.organization.id;
     const supabase = await getSupabaseServerClient();
-    const unreadCommunicationNotificationRows = await listUnreadCommunicationNotificationRows({
-      organizationId,
-      userId: user.id
-    });
-    const unreadByThreadId = buildUnreadByThreadId(unreadCommunicationNotificationRows);
+    const unreadCommunicationNotificationRows =
+      await listUnreadCommunicationNotificationRows({
+        organizationId,
+        userId: user.id
+      });
+    const unreadByThreadId = buildUnreadByThreadId(
+      unreadCommunicationNotificationRows
+    );
     const matchingUnreadThreadIds =
       view === "needs_response"
         ? [...unreadByThreadId.entries()]
@@ -523,7 +668,10 @@ const listContractorCommunicationThreadsCached = cache(
           ? [...unreadByThreadId.keys()]
           : [];
 
-    if ((view === "needs_response" || view === "unread") && matchingUnreadThreadIds.length === 0) {
+    if (
+      (view === "needs_response" || view === "unread") &&
+      matchingUnreadThreadIds.length === 0
+    ) {
       return [];
     }
 
@@ -539,8 +687,12 @@ const listContractorCommunicationThreadsCached = cache(
           subject_type,
           subject_id,
           created_by_user_id,
+          thread_category,
+          channel_kind,
+          thread_status,
           last_message_at,
           last_message_preview,
+          last_message_visibility,
           created_at,
           updated_at
         `
@@ -564,10 +716,13 @@ const listContractorCommunicationThreadsCached = cache(
       .order("updated_at", { ascending: false });
 
     if (threadsResponse.error) {
-      throw new Error(`Unable to load communication threads: ${threadsResponse.error.message}`);
+      throw new Error(
+        `Unable to load communication threads: ${threadsResponse.error.message}`
+      );
     }
 
-    const threadRows = (threadsResponse.data as CommunicationThreadRow[] | null) ?? [];
+    const threadRows =
+      (threadsResponse.data as CommunicationThreadRow[] | null) ?? [];
 
     if (threadRows.length === 0) {
       return [];
@@ -626,10 +781,20 @@ const listContractorCommunicationThreadsCached = cache(
       contractRows,
       invoiceRows,
       changeOrderRows,
-      paymentRows,
+      paymentRows
     ] = await Promise.all([
-      loadSubjectRows<CustomerRow>("customers", "id, name, company_name", customerIds, organizationId),
-      loadSubjectRows<ProjectRow>("projects", "id, name", projectIds, organizationId),
+      loadSubjectRows<CustomerRow>(
+        "customers",
+        "id, name, company_name",
+        customerIds,
+        organizationId
+      ),
+      loadSubjectRows<ProjectRow>(
+        "projects",
+        "id, name",
+        projectIds,
+        organizationId
+      ),
       loadSubjectRows<OpportunityRow>(
         "opportunities",
         "id, title, prospect_name",
@@ -685,7 +850,9 @@ const listContractorCommunicationThreadsCached = cache(
               .in("id", [...new Set(subjectIdsByType.payment)]);
 
             if (response.error) {
-              throw new Error(`Unable to load payments: ${response.error.message}`);
+              throw new Error(
+                `Unable to load payments: ${response.error.message}`
+              );
             }
 
             return (response.data as PaymentRow[] | null) ?? [];
@@ -695,18 +862,28 @@ const listContractorCommunicationThreadsCached = cache(
 
     const customersById = new Map(customerRows.map((row) => [row.id, row]));
     const projectsById = new Map(projectRows.map((row) => [row.id, row]));
-    const opportunitiesById = new Map(opportunityRows.map((row) => [row.id, row]));
-    const appointmentsById = new Map(appointmentRows.map((row) => [row.id, row]));
+    const opportunitiesById = new Map(
+      opportunityRows.map((row) => [row.id, row])
+    );
+    const appointmentsById = new Map(
+      appointmentRows.map((row) => [row.id, row])
+    );
     const estimatesById = new Map(estimateRows.map((row) => [row.id, row]));
     const contractsById = new Map(contractRows.map((row) => [row.id, row]));
     const invoicesById = new Map(invoiceRows.map((row) => [row.id, row]));
-    const changeOrdersById = new Map(changeOrderRows.map((row) => [row.id, row]));
+    const changeOrdersById = new Map(
+      changeOrderRows.map((row) => [row.id, row])
+    );
     const paymentsById = new Map(paymentRows.map((row) => [row.id, row]));
 
     return threadRows
       .map((thread) => {
-        const customer = thread.customer_id ? customersById.get(thread.customer_id) : undefined;
-        const project = thread.project_id ? projectsById.get(thread.project_id) : undefined;
+        const customer = thread.customer_id
+          ? customersById.get(thread.customer_id)
+          : undefined;
+        const project = thread.project_id
+          ? projectsById.get(thread.project_id)
+          : undefined;
         const unreadState = unreadByThreadId.get(thread.id);
         const subject = getSubjectDescriptor({
           thread,
@@ -723,15 +900,22 @@ const listContractorCommunicationThreadsCached = cache(
 
         return {
           id: thread.id,
+          threadCategory: thread.thread_category,
+          channelKind: thread.channel_kind,
+          threadStatus: thread.thread_status,
           customer: {
             id: thread.customer_id ?? "",
             label: mapCustomerLabel(customer),
-            href: thread.customer_id ? `/customers/${thread.customer_id}` : subject.href
+            href: thread.customer_id
+              ? `/customers/${thread.customer_id}`
+              : subject.href
           },
           project: {
             id: thread.project_id ?? "",
             label: project?.name ?? "Unknown project",
-            href: thread.project_id ? `/projects/${thread.project_id}` : subject.href
+            href: thread.project_id
+              ? `/projects/${thread.project_id}`
+              : subject.href
           },
           subject: {
             type: thread.subject_type,
@@ -742,15 +926,21 @@ const listContractorCommunicationThreadsCached = cache(
           subjectSecondaryLink: subject.secondaryLink ?? null,
           lastMessageAt: thread.last_message_at,
           lastMessagePreview: thread.last_message_preview,
+          lastMessageVisibility: thread.last_message_visibility,
           unreadCount: unreadState?.count ?? 0,
           needsResponse: unreadState?.needsResponse ?? false,
           lastUnreadAt: unreadState?.lastUnreadAt ?? null,
-          lastActivityAt: getThreadActivityAt(thread, unreadState?.lastUnreadAt ?? null),
+          lastActivityAt: getThreadActivityAt(
+            thread,
+            unreadState?.lastUnreadAt ?? null
+          ),
           createdAt: thread.created_at,
           updatedAt: thread.updated_at
         } satisfies ContractorCommunicationThreadListItem;
       })
-      .sort((left, right) => right.lastActivityAt.localeCompare(left.lastActivityAt));
+      .sort((left, right) =>
+        right.lastActivityAt.localeCompare(left.lastActivityAt)
+      );
   }
 );
 
@@ -764,5 +954,117 @@ export async function listContractorCommunicationThreads(
   return listContractorCommunicationThreadsCached(
     filters.view ?? "all",
     filters.source ?? "all"
+  );
+}
+
+export async function listContractorCommunicationContextEvents(): Promise<
+  ContractorCommunicationContextEvent[]
+> {
+  const user = await requireAuthenticatedUser("/communications");
+  const organizationContext = await getActiveOrganizationContext(user.id);
+
+  if (!organizationContext) {
+    return [];
+  }
+
+  const organizationId = organizationContext.organization.id;
+  const supabase = await getSupabaseServerClient();
+  const [documentDeliveryResponse, evidenceDeliveryResponse] =
+    await Promise.all([
+      supabase
+        .from("document_delivery_events")
+        .select(
+          `
+            id,
+            subject_type,
+            subject_id,
+            event_type,
+            channel,
+            recipient_name,
+            recipient_email,
+            provider,
+            created_at
+          `
+        )
+        .eq("company_id", organizationId)
+        .order("created_at", { ascending: false })
+        .limit(12),
+      supabase
+        .from("portal_evidence_delivery_events")
+        .select(
+          `
+            id,
+            project_id,
+            portal_evidence_grant_id,
+            event_type,
+            actor_kind,
+            occurred_at,
+            created_at
+          `
+        )
+        .eq("company_id", organizationId)
+        .order("occurred_at", { ascending: false })
+        .limit(12)
+    ]);
+
+  if (documentDeliveryResponse.error) {
+    throw new Error(
+      `Unable to load communication delivery context: ${documentDeliveryResponse.error.message}`
+    );
+  }
+
+  if (evidenceDeliveryResponse.error) {
+    throw new Error(
+      `Unable to load shared evidence communication context: ${evidenceDeliveryResponse.error.message}`
+    );
+  }
+
+  const documentEvents = (
+    (documentDeliveryResponse.data as DocumentDeliveryContextRow[] | null) ?? []
+  ).map((event): ContractorCommunicationContextEvent => {
+    const recipient =
+      event.recipient_name ?? event.recipient_email ?? "customer recipient";
+    const subjectLabel = getDocumentSubjectLabel(event.subject_type);
+
+    return {
+      id: `document:${event.id}`,
+      kind: "document_delivery",
+      sourceType: event.subject_type,
+      sourceId: event.subject_id,
+      eventType: event.event_type,
+      title: `${subjectLabel} ${formatLabel(event.event_type)}`,
+      description: `${formatLabel(event.event_type)} by ${formatLabel(event.channel)} for ${recipient}${event.provider ? ` through ${event.provider}` : ""}.`,
+      href: getDocumentSubjectHref(event.subject_type, event.subject_id),
+      occurredAt: event.created_at,
+      tone: getDocumentDeliveryEventTone(event.event_type),
+      audience: "customer"
+    };
+  });
+
+  const evidenceEvents = (
+    (evidenceDeliveryResponse.data as
+      | PortalEvidenceDeliveryContextRow[]
+      | null) ?? []
+  ).map(
+    (event): ContractorCommunicationContextEvent => ({
+      id: `shared-evidence:${event.id}`,
+      kind: "shared_evidence",
+      sourceType: "shared_evidence",
+      sourceId: event.portal_evidence_grant_id,
+      eventType: event.event_type,
+      title: `Shared evidence ${formatLabel(event.event_type)}`,
+      description:
+        event.actor_kind === "portal_customer"
+          ? `Customer portal ${formatLabel(event.event_type)} activity was recorded for shared evidence.`
+          : `Contractor ${formatLabel(event.event_type)} activity was recorded for shared evidence.`,
+      href: `/projects/${event.project_id}#project-evidence`,
+      occurredAt: event.occurred_at,
+      tone: getEvidenceDeliveryEventTone(event.event_type),
+      audience: event.actor_kind === "portal_customer" ? "customer" : "internal"
+    })
+  );
+
+  return [...documentEvents, ...evidenceEvents].sort((left, right) =>
+    right.occurredAt.localeCompare(left.occurredAt)
   );
 }

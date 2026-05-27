@@ -8,12 +8,14 @@ import { parseAiCopilotCommunicationHandoffSearchParams } from "@/lib/ai-operati
 import { listCommunicationMessages } from "@/lib/communications/data";
 import { deriveCustomerCommunicationSendReadiness } from "@/lib/communications/send-readiness";
 import {
+  listContractorCommunicationContextEvents,
   listContractorCommunicationThreadSummary,
   listContractorCommunicationThreads,
   type ContractorCommunicationSourceFilter,
   type ContractorCommunicationThreadListItem,
   type ContractorCommunicationThreadView
 } from "@/lib/communications/contractor-data";
+import { deriveCommunicationWorkspaceSummary } from "@/lib/communications/workspace-summary";
 import { requireAuthenticatedUser } from "@/lib/auth/session";
 import { listContractorNotifications } from "@/lib/notifications/data";
 import { getActiveOrganizationContext } from "@/lib/organizations/active-context";
@@ -290,13 +292,14 @@ export default async function CommunicationsPage({
   const copilotDraftHandoff =
     parseAiCopilotCommunicationHandoffSearchParams(resolvedSearchParams);
 
-  const [threads, summary, notifications] = await Promise.all([
+  const [threads, summary, notifications, contextEvents] = await Promise.all([
     listContractorCommunicationThreads({
       view,
       source
     }),
     listContractorCommunicationThreadSummary(),
-    listContractorNotifications()
+    listContractorNotifications(),
+    listContractorCommunicationContextEvents()
   ]);
 
   const filteredThreads = unsupportedSource
@@ -372,6 +375,12 @@ export default async function CommunicationsPage({
   const sourceContextSourceLabel =
     unsupportedSource ??
     (source !== "all" ? getCommunicationSourceLabel(source) : null);
+  const workspaceSummary = deriveCommunicationWorkspaceSummary({
+    threads,
+    threadSummary: summary,
+    contextEvents,
+    notificationCount: notifications.totalCount
+  });
 
   return (
     <ContractorWorkspacePage
@@ -382,34 +391,34 @@ export default async function CommunicationsPage({
         <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
           <div className="border border-[#e5e5e5] bg-white px-4 py-3">
             <p className="text-[11px] uppercase tracking-[0.14em] text-[#666666]">
-              Needs response
+              Workspace status
             </p>
-            <p className="mt-1 text-2xl font-semibold tracking-tight text-[#171717]">
-              {summary.needsResponseCount}
-            </p>
-          </div>
-          <div className="border border-[#e5e5e5] bg-white px-4 py-3">
-            <p className="text-[11px] uppercase tracking-[0.14em] text-[#666666]">
-              Unread threads
-            </p>
-            <p className="mt-1 text-2xl font-semibold tracking-tight text-[#171717]">
-              {summary.unreadCount}
+            <p className="mt-1 text-lg font-semibold tracking-tight text-[#171717]">
+              {workspaceSummary.primaryStatus}
             </p>
           </div>
           <div className="border border-[#e5e5e5] bg-white px-4 py-3">
             <p className="text-[11px] uppercase tracking-[0.14em] text-[#666666]">
-              Workflow alerts
+              Follow-up signals
             </p>
             <p className="mt-1 text-2xl font-semibold tracking-tight text-[#171717]">
-              {notifications.totalCount}
+              {workspaceSummary.followUpCount}
             </p>
           </div>
           <div className="border border-[#e5e5e5] bg-white px-4 py-3">
             <p className="text-[11px] uppercase tracking-[0.14em] text-[#666666]">
-              Linked projects
+              Customer-visible
             </p>
             <p className="mt-1 text-2xl font-semibold tracking-tight text-[#171717]">
-              {summary.linkedProjectCount}
+              {workspaceSummary.customerVisibleThreadCount}
+            </p>
+          </div>
+          <div className="border border-[#e5e5e5] bg-white px-4 py-3">
+            <p className="text-[11px] uppercase tracking-[0.14em] text-[#666666]">
+              Closeout/evidence
+            </p>
+            <p className="mt-1 text-2xl font-semibold tracking-tight text-[#171717]">
+              {workspaceSummary.closeoutEvidenceContextCount}
             </p>
           </div>
         </div>
@@ -619,6 +628,146 @@ export default async function CommunicationsPage({
           </section>
         ) : null}
 
+        <section className="border border-[#d6d6d6] bg-white px-5 py-5 sm:px-6">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+            <div className="max-w-3xl">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#666666]">
+                Record-linked communication control room
+              </p>
+              <h2 className="mt-2 text-xl font-semibold tracking-tight text-slate-950">
+                {workspaceSummary.primaryStatus}
+              </h2>
+              <p className="mt-2 text-sm leading-6 text-slate-500">
+                {workspaceSummary.primaryDetail}
+              </p>
+            </div>
+            <div className="grid gap-2 text-sm sm:grid-cols-2 lg:min-w-[360px]">
+              <div className="rounded-[4px] border border-[#e5e5e5] bg-[#f8f8f8] px-3 py-2">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#666666]">
+                  Latest customer activity
+                </p>
+                <p className="mt-1 font-medium text-slate-950">
+                  {formatDateTime(workspaceSummary.latestCustomerActivityAt)}
+                </p>
+              </div>
+              <div className="rounded-[4px] border border-[#e5e5e5] bg-[#f8f8f8] px-3 py-2">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#666666]">
+                  Latest context
+                </p>
+                <p className="mt-1 font-medium text-slate-950">
+                  {formatDateTime(workspaceSummary.latestContextActivityAt)}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+            {workspaceSummary.lanes.map((lane) => (
+              <Link
+                key={lane.key}
+                href={lane.href}
+                className="rounded-[4px] border border-[#e5e5e5] bg-[#f8f8f8] px-4 py-3 transition hover:border-[#ef7d32] hover:bg-white"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#666666]">
+                      {lane.label}
+                    </p>
+                    <p className="mt-2 text-sm leading-6 text-slate-500">
+                      {lane.detail}
+                    </p>
+                  </div>
+                  <div className="shrink-0 text-right">
+                    <p className="text-lg font-semibold text-slate-950">
+                      {lane.count}
+                    </p>
+                    {lane.attentionCount > 0 ? (
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#8f5b32]">
+                        {lane.attentionCount} attention
+                      </p>
+                    ) : null}
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+
+          <div className="mt-5 grid gap-4 lg:grid-cols-2">
+            <div className="rounded-[4px] border border-[#e5e5e5] bg-[#fffcf7] px-4 py-4">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#8f5b32]">
+                Follow-up intelligence
+              </p>
+              {workspaceSummary.attentionItems.length > 0 ? (
+                <div className="mt-3 space-y-2">
+                  {workspaceSummary.attentionItems.slice(0, 4).map((item) => (
+                    <Link
+                      key={item.key}
+                      href={item.href}
+                      className={[
+                        "block rounded-[4px] border bg-white px-3 py-2 transition hover:bg-slate-50",
+                        item.tone === "critical"
+                          ? "border-rose-200"
+                          : "border-amber-200"
+                      ].join(" ")}
+                    >
+                      <div className="flex flex-wrap items-start justify-between gap-2">
+                        <p className="text-sm font-semibold text-slate-950">
+                          {item.label}
+                        </p>
+                        <p className="text-xs text-slate-500">
+                          {formatDateTime(item.occurredAt)}
+                        </p>
+                      </div>
+                      <p className="mt-1 text-sm leading-6 text-slate-500">
+                        {item.detail}
+                      </p>
+                    </Link>
+                  ))}
+                </div>
+              ) : (
+                <p className="mt-3 text-sm leading-6 text-slate-500">
+                  No unanswered customer message, stale thread, or delivery
+                  issue is currently visible in the communications read model.
+                </p>
+              )}
+            </div>
+
+            <div className="rounded-[4px] border border-[#e5e5e5] bg-[#f8f8f8] px-4 py-4">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#666666]">
+                Delivery and evidence context
+              </p>
+              {workspaceSummary.recentContextEvents.length > 0 ? (
+                <div className="mt-3 space-y-2">
+                  {workspaceSummary.recentContextEvents.map((event) => (
+                    <Link
+                      key={event.id}
+                      href={event.href}
+                      className="block rounded-[4px] border border-[#e5e5e5] bg-white px-3 py-2 transition hover:border-[#ef7d32]"
+                    >
+                      <div className="flex flex-wrap items-start justify-between gap-2">
+                        <p className="text-sm font-semibold text-slate-950">
+                          {event.title}
+                        </p>
+                        <p className="text-xs text-slate-500">
+                          {formatDateTime(event.occurredAt)}
+                        </p>
+                      </div>
+                      <p className="mt-1 text-sm leading-6 text-slate-500">
+                        {event.description}
+                      </p>
+                    </Link>
+                  ))}
+                </div>
+              ) : (
+                <p className="mt-3 text-sm leading-6 text-slate-500">
+                  Document sends and shared-evidence proof will appear here when
+                  canonical delivery or portal evidence events exist.
+                </p>
+              )}
+            </div>
+          </div>
+        </section>
+
         {hasSourceContext ? (
           <section className="border border-[#d6d6d6] bg-[#f8f8f8] px-5 py-4 sm:px-6">
             <div className="flex flex-wrap items-start justify-between gap-4">
@@ -784,6 +933,14 @@ export default async function CommunicationsPage({
                             </Link>
                             <span className="inline-flex rounded-full border border-[#e4d7ca] bg-[#fbf5ee] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#8f5b32]">
                               {formatSubjectType(thread.subject.type)}
+                            </span>
+                            <span className="inline-flex rounded-full border border-[#d6d6d6] bg-white px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-600">
+                              {thread.lastMessageVisibility === "internal"
+                                ? "Internal only"
+                                : "Customer-visible"}
+                            </span>
+                            <span className="inline-flex rounded-full border border-[#d6d6d6] bg-white px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-600">
+                              {formatSubjectType(thread.threadStatus)}
                             </span>
                             {thread.needsResponse ? (
                               <span className="inline-flex rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-amber-800">

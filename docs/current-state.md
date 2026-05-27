@@ -2119,10 +2119,13 @@ Implemented:
   - this adapter layer does not call providers, call AI, create webhooks, add credentials, add schema, send communications, or execute suggestions
 - first contractor-side communication review surface at `/communications`
   - review-first queue over canonical threads and unread notifications
+  - Communications v1 now adds a shared record-linked workspace read model in `apps/web/lib/communications/workspace-summary.ts`, deriving lane counts, follow-up signals, customer-visible/internal thread counts, finance context, closeout/evidence context, latest activity, and delivery/evidence attention from existing canonical communication, notification, document-delivery, and portal-evidence proof rows
+  - the `/communications` workspace now opens with a communication control-room summary over customer conversations, project threads, commercial records, finance/collections context, closeout/evidence activity, and internal coordination without creating a disconnected inbox product
+  - document delivery events and explicit portal evidence delivery events appear as context only; they are not copied into message rows, do not send email/SMS, do not create provider calls, and do not mutate source documents, evidence grants, payments, signatures, or closeout state
   - thread preview and continuity links back to canonical customer, project, estimate, contract, invoice, change-order, and payment records where available
   - selected-thread review now renders a clearer chronological history from canonical `communication_messages`, with actor labels, timestamps, empty-state handling, and compact source-record context on the same thread panel
   - direct thread links now stay explicit: if a requested thread is unavailable in the current filters, the page shows unavailable-thread guidance instead of silently selecting another thread
-  - project and customer detail pages now expose compact related-conversation handoff cards derived from canonical thread summaries, with counts, latest-thread preview, and direct links back into `/communications`
+  - project and customer detail pages now expose compact related-conversation handoff cards derived from canonical thread summaries, with customer-visible/internal/open counts, latest-thread preview, and direct links back into `/communications`
   - contract, invoice, change-order, and estimate detail pages now expose the same compact related-conversation handoff pattern from canonical thread summaries, without embedding inbox behavior on those workspaces
   - first safe contractor-side reply composer now exists on existing thread preview/detail only
   - contractor replies reuse the canonical posting helper and write new rows to `communication_messages` on the existing `communication_threads` record
@@ -2176,6 +2179,7 @@ Current design notes:
   - status grouping and source-record filtering now shape the server-side communications loader where safe, using the same canonical `communication_threads` foundation plus per-user communication notifications for unread and needs-response queue state
   - supported source filters are currently limited to lead/opportunity, customer, project, estimate, contract, invoice, change order, and payment; unsupported source queries such as `source=job` now render an explicit help state instead of implying unsupported communication coverage
   - text search currently stays as a client-side fallback over the loaded canonical thread labels and preview text so existing URL search behavior remains unchanged without introducing new indexing, shadow fields, or external search infrastructure
+  - Communications v1 remains contractor-side and read-model first: no schema, migrations, provider sync, real email/SMS sends, automation/reminders engine, portal chat expansion, portal-only message copies, fake messages, or customer-visible internal note exposure were added
 
 ### Shared Templates
 
@@ -2730,6 +2734,16 @@ Implemented UI behavior now:
   explicit "nothing is sent automatically" boundary. It does not send email/SMS,
   call providers, create delivery events, create notifications, create threads,
   add a draft table, mutate source records, or expose the draft to the customer.
+- `/communications` now also has Communications v1 record-linked workspace
+  intelligence. It derives operating lanes, follow-up signals,
+  customer-visible/internal boundaries, finance context, closeout/evidence
+  context, and recent delivery/evidence activity from canonical
+  `communication_threads`, `communication_messages`, per-user communication
+  notifications, `document_delivery_events`, and
+  `portal_evidence_delivery_events`. It is a contractor-side control-room read
+  model only and does not send externally, create provider attempts, create
+  portal messages, duplicate communication rows, expose internal notes to the
+  portal, add schema, or run automation.
 - `/schedule` now presents as CrewBoard on the existing route. CrewBoard uses
   canonical jobs, appointments, job assignments, people, vendors, projects, and
   customers for scheduling visibility, URL-backed date/layout context,

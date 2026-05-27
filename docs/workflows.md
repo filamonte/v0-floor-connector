@@ -218,6 +218,11 @@ Implemented communication and delivery visibility:
   audience/action, selected canonical thread/source record, customer context,
   and document readiness when supplied, and it keeps the boundary explicit that
   no customer send happens automatically.
+- `/communications` now also groups record-linked communication continuity into
+  contractor-side operating lanes for customer, project, commercial, finance,
+  closeout/evidence, and internal coordination context. The read model uses
+  existing communication threads/messages, communication notifications,
+  document delivery events, and explicit portal evidence proof events only.
 - These layers are read-only visibility over current records. They do not add
   provider retry workflow, automated reminders, new message/delivery tables,
   portal-only copies, AI summaries, or customer-facing field sharing.

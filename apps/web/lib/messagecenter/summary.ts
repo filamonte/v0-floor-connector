@@ -27,6 +27,8 @@ export type MessageCenterSummary = {
   latestActivityAt: string | null;
   threadCount: number;
   messageCount: number;
+  customerVisibleMessageCount?: number;
+  internalMessageCount?: number;
   sendTrailCount: number;
   signatureTrailCount: number;
   paymentTrailCount: number;
@@ -35,6 +37,7 @@ export type MessageCenterSummary = {
   latestSendTrail: MessageCenterTimelineItem | null;
   latestSignatureTrail: MessageCenterTimelineItem | null;
   latestPaymentTrail: MessageCenterTimelineItem | null;
+  latestCustomerMessage?: MessageCenterTimelineItem | null;
   nextMove: {
     label: string;
     href: string;
@@ -306,6 +309,12 @@ export function deriveMessageCenterSummary(input: {
     latestActivityAt: timeline[0]?.occurredAt ?? null,
     threadCount: input.threads.length,
     messageCount: input.messages.length,
+    customerVisibleMessageCount: input.messages.filter(
+      (message) => message.visibility === "customer_visible"
+    ).length,
+    internalMessageCount: input.messages.filter(
+      (message) => message.visibility === "internal"
+    ).length,
     sendTrailCount: input.deliveryEvents.length,
     signatureTrailCount: input.signatureEvents.length,
     paymentTrailCount: input.paymentEvents.length,
@@ -314,6 +323,7 @@ export function deriveMessageCenterSummary(input: {
     latestSendTrail: latest(timeline, "send"),
     latestSignatureTrail: latest(timeline, "signature"),
     latestPaymentTrail: latest(timeline, "payment"),
+    latestCustomerMessage,
     nextMove: buildNextMove({
       timeline,
       attentionCount,

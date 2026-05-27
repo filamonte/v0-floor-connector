@@ -131,6 +131,8 @@ void test("messagecenter summary counts project communication trails", () => {
 
   assert.equal(summary.threadCount, 1);
   assert.equal(summary.messageCount, 1);
+  assert.equal(summary.customerVisibleMessageCount, 1);
+  assert.equal(summary.internalMessageCount, 0);
   assert.equal(summary.sendTrailCount, 1);
   assert.equal(summary.signatureTrailCount, 1);
   assert.equal(summary.paymentTrailCount, 1);

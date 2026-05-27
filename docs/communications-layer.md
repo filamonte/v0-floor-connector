@@ -9,10 +9,14 @@ canonical communication threads/messages, notification foundations, the
 contractor-side `/communications` review workspace, and the first review-first
 Copilot draft handoff into that workspace. The current branch also has a
 deterministic customer send-readiness review summary for Copilot handoffs in
-`/communications`; it is preparation/readiness copy only. It does not imply
-broad unified inbox depth, autonomous communication workflows, provider-backed
-send behavior, AI message generation, new communication schema, or customer
-portal messaging beyond what
+`/communications`; it is preparation/readiness copy only. Communications v1
+now adds a record-linked workspace read model that turns canonical
+communication threads, unread communication notifications, document delivery
+events, and explicit shared-evidence proof events into contractor-side
+operating lanes and follow-up context. It does not imply broad unified inbox
+depth, autonomous communication workflows, provider-backed send behavior, AI
+message generation, new communication schema, or customer portal messaging
+beyond what
 [docs/current-state.md](C:/FloorConnector/docs/current-state.md) explicitly
 records.
 
@@ -215,6 +219,13 @@ Current Copilot draft handoff:
   including intended audience, related canonical record, readiness status,
   missing requirements, safe subject/framing suggestions, and the explicit
   reminder that nothing is sent automatically.
+- `/communications` also derives a record-linked communications control room
+  from canonical `communication_threads`, `communication_messages`, per-user
+  communication notifications, `document_delivery_events`, and explicit
+  `portal_evidence_delivery_events`. It groups customer conversations, project
+  threads, commercial records, finance/collections context, closeout/evidence
+  context, and internal coordination without copying events into messages or
+  creating a separate inbox.
 - Estimate, contract, and invoice communication readiness can reuse document
   readiness output when supplied and otherwise prompts review of the canonical
   document workspace before any future customer send.

@@ -7143,7 +7143,7 @@ export default async function ProjectDetailPage({
                     label: "Messages",
                     value: messageCenter.messageCount,
                     detail: messageCenter.latestActivityAt
-                      ? `Latest ${formatDateTime(messageCenter.latestActivityAt)}`
+                      ? `${messageCenter.customerVisibleMessageCount ?? 0} customer-visible / ${messageCenter.internalMessageCount ?? 0} internal`
                       : "No customer replies found yet"
                   },
                   {

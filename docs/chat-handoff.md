@@ -112,6 +112,17 @@ Current operating-core surfaces include:
   document-readiness blockers when supplied. It is review/preparation copy only:
   no provider send, notification, thread creation, delivery event, portal-only
   message, or autonomous action is introduced.
+- Communications v1 now makes `/communications` a record-linked communication
+  workspace rather than only a thread queue. The shared
+  `apps/web/lib/communications/workspace-summary.ts` read model derives
+  customer, project, commercial, finance, closeout/evidence, and internal
+  lanes from canonical threads plus existing document-delivery and portal
+  evidence proof events. The workspace shows follow-up signals, customer-visible
+  versus internal counts, delivery/evidence context, and source-record handoffs
+  without schema changes, provider sends, portal chat expansion, automation,
+  fake messages, or message copies. Related-conversation cards and Project
+  MessageCenter now surface clearer internal/customer-visible counts while
+  replies still stay inside `/communications`.
 - Collections Follow-Up Intelligence now deepens `/financials/accounts-receivable`
   with deterministic categories over canonical invoices, payments, and Payment
   Trail events: overdue invoices, unpaid deposits, sent-unpaid balances,
