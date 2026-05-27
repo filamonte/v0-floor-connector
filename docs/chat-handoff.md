@@ -226,6 +226,13 @@ Current operating-core surfaces include:
   resolution rules, mobile quick-capture direction, and assistant-prepared
   actions that remain contractor-reviewed before any external send, booking, or
   workflow mutation.
+  Implementation readiness is documented in
+  [docs/design/universal-capture-implementation-readiness.md](C:/FloorConnector/docs/design/universal-capture-implementation-readiness.md):
+  the first safe manual slice should use Work Items for clear internal actions
+  and existing Quick-Create/workspace handoffs for canonical destinations.
+  Defer a `capture_items` table, route/geographic grouping persistence,
+  assistant action staging, notifications, mobile capture, and portal-safe
+  sharing until real usage proves those needs.
 - Portal Customer Window with deterministic portal-safe customer status
   explanations, Customer Next Step, Project Status Window, Project Timeline,
   Shared Documents, and existing portal review/print routes. The explanation
