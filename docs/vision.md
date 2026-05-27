@@ -97,6 +97,15 @@ completion evidence, and internal discussion in one place. The durable product
 concept should be context-rich Work Items connected to canonical records, not a
 side checklist or portal-only task system.
 
+Another practical example is future Universal Capture. A contractor should be
+able to capture a callback, reminder, follow-up, site-visit need, estimate
+scheduling request, or "next time I am near this area" routing preference from
+anywhere in the product. That capture layer should become operational
+continuity infrastructure over canonical records, not a detached task app. When
+AI assists, it should find or propose the right customer, opportunity, project,
+work item, communication, appointment, or schedule handoff and then ask for
+contractor approval before any customer-facing action.
+
 The durable rule is still one system of record:
 
 `opportunity -> customer -> project -> estimate -> contract -> change order -> job -> invoice -> payment`
@@ -315,6 +324,12 @@ The long-term AI direction is to reduce friction across both contractor operatio
 AI should be an operating layer over the shared system, not a parallel product with duplicate records. It may draft, suggest, summarize, prepare, classify, and orchestrate work, but customer commitments, pricing, contracts, billing, scheduling readiness, permissions, and compliance must continue to flow through canonical FloorConnector workflows with human confirmation where risk exists.
 
 The value of AI comes from the connected operational graph. AI can be useful in public acquisition, website content generation, intake qualification, communication drafting, scheduling suggestions, estimating support, and operational summaries because those activities are tied to canonical records. It should not become a disconnected assistant layer with its own lead list, content knowledge base, project memory, communication log, or workflow truth.
+
+Future Universal Capture + Assistant Action behavior belongs in this operating
+layer: the assistant may help turn plain-language intent into record-linked
+callbacks, follow-ups, Work Items, site-visit suggestions, grouped estimate
+routes, or communication drafts, but the accepted action still belongs to the
+canonical workflow and the contractor remains the approval boundary.
 
 Two audiences matter:
 

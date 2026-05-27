@@ -128,6 +128,25 @@ Future AI intake direction:
 - AI may help generate or maintain contractor-owned service/location/landing-page content later, but accepted intake and customer commitments must still flow through canonical records
 - AI should not create AI-only lead/customer/project records, separate marketing knowledge stores, disconnected website content truth, or customer-facing commitments without human confirmation and validated workflows
 
+Future Universal Capture + Assistant Action intake:
+
+- a contractor should eventually be able to capture lightweight operational
+  intent from anywhere, especially when an existing customer calls about new
+  work, a callback, a site visit, an estimate opportunity, or a scheduling
+  preference
+- manual capture should link to the known customer, opportunity, project, job,
+  appointment, or Work Item where that context already exists
+- assistant-assisted capture may find/link the existing customer, suggest an
+  opportunity or project when needed, record region/geography or route-grouping
+  intent, suggest grouped estimate-visit windows, and draft customer follow-up
+  copy
+- any customer-facing communication, appointment booking, opportunity/project
+  creation, or schedule commitment must remain contractor-confirmed and routed
+  through canonical workflows
+- this layer is planned only; it must not become a separate task app, AI-only
+  scheduler, duplicate CRM/project model, or autonomous customer-facing booking
+  system
+
 ### 2. Qualification And Customer Creation
 
 Qualified leads become:
@@ -307,6 +326,10 @@ Target appointment scheduling from lead/opportunity:
 - lead or opportunity intake should support scheduling a sales appointment or site assessment before a full project exists
 - the appointment should attach to the canonical opportunity and later preserve customer/project links when the workflow advances
 - AI may suggest appointment windows based on availability, location, external busy blocks, and contractor preferences, but the committed appointment should be confirmed through canonical scheduling workflows
+- future Universal Capture may add route/geographic grouping intent such as
+  "schedule this estimate when we are near Westfield"; that intent should remain
+  an internal scheduling aid until the contractor confirms a real appointment or
+  customer communication
 
 ### 10. Job Execution
 

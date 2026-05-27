@@ -68,6 +68,14 @@ Roadmap sequencing should account for these future areas without turning them in
   Evidence/photos, completion proof, comments, richer statuses, mobile
   assignee queues, and portal-safe sharing remain future depth documented in
   [docs/design/context-rich-work-items-and-assignments.md](C:/FloorConnector/docs/design/context-rich-work-items-and-assignments.md)
+- Universal Capture + Assistant Action Layer as future operational continuity
+  infrastructure: users should eventually capture callbacks, reminders,
+  follow-ups, site-visit intent, estimate scheduling needs, and route/geographic
+  grouping intent from anywhere, then attach that intent to canonical
+  customers, opportunities, projects, jobs, work items, communications, and
+  schedule context where possible. This is not implemented and must not become
+  a disconnected task app, duplicate customer/project/opportunity model, or
+  autonomous customer-facing assistant.
 - QuickBooks/accounting integration later, as sync/export from FloorConnector financial truth
 - AI-assisted takeoff and workflow intelligence later, with human approval and no AI-only records
 
@@ -261,6 +269,13 @@ Deferred:
 
 Future depth:
 
+- Universal Capture + Assistant Action Layer over Quick-Create, Work Items,
+  communications, scheduling, and project/customer/opportunity continuity. The
+  manual path should create or prepare canonical records from lightweight
+  intent; the assistant path may find/link records, suggest site visits or
+  grouped estimate windows, draft communication, and prepare actions, but it
+  must require contractor confirmation before external sends, bookings, or
+  customer-facing commitments.
 - GateKeeper operational memory foundation: communication timelines, transcript/summary linkage, task extraction, workflow extraction, and human review queues over canonical records
 - provider-backed customer messaging and delivery proof
 - broader unified communications across website, email, SMS, portal, app, manual logs, calls, and voice where scoped

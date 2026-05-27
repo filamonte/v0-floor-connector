@@ -33,6 +33,13 @@ FloorConnector's implemented backbone already covers the core canonical chain fr
 
 Planned deeper contractor operations include equipment management, real time-card/clocking depth, bid/RFP management, subcontractor management, document/submittal/spec-sheet workflows, service/warranty, weather-aware schedule guidance, inspections/checklists, punchlists, takeoff/plans, procurement/materials/POs, bills/AP, job costing, budget vs actual, reporting, mobile field depth, and accounting integrations.
 
+Another planned layer is Universal Capture + Assistant Action: an operating
+surface for capturing callbacks, reminders, follow-ups, site-visit intent,
+estimate scheduling needs, and route/geographic grouping intent from anywhere,
+then resolving that intent into canonical records or approved handoffs. It is
+not implemented today and must not become a duplicate task app, AI-only
+scheduler, or second customer/project/opportunity system.
+
 Future platform expansion may also include a trusted cross-contractor
 collaboration layer where vetted or certified FloorConnector contractors can be
 granted explicit project/job-scoped access for execution support. That direction
@@ -517,6 +524,14 @@ AI should become an operating layer around the current core, not a parallel syst
 Future communications should extend the current communication foundations into website forms, website AI chat, SMS, email, calls, voicemail, missed-call text-back, AI receptionist, portal messages, app messages, and manual logs. Website and campaign context should resolve into canonical opportunities and source attribution instead of a separate marketing contact database. FloorConnector communication records remain the business source of truth; providers deliver or enrich messages.
 
 Future scheduling should extend the current `/schedule`, job, appointment, and job-assignment foundations into company calendars, user calendars, crew/resource calendars, PTO/holidays, equipment reservations, external busy-block import, conflict detection, and AI schedule suggestions. FloorConnector owns the canonical schedule; Google Calendar and Outlook/Microsoft 365 are adapters.
+
+Future Universal Capture should connect these layers by letting a contractor or
+assistant prepare record-linked callbacks, reminders, follow-ups, site visits,
+estimate scheduling needs, route/geographic grouping intent, and customer
+communication drafts from any context. The prepared action should resolve to
+canonical Work Items, opportunities, projects, appointments, communications, or
+schedule handoffs where possible, and should require contractor confirmation
+before any external send, booking, or customer-facing commitment.
 
 Future AI must preserve:
 

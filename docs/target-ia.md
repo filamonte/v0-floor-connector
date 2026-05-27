@@ -87,6 +87,10 @@ The target IA should leave room for future contractor operating depth without cr
 - Equipment may deserve its own operational area or may live under Field/Resources depending on product design. The registry foundation now exists at `/equipment`; assignment/readiness, maintenance, utilization, and job-costing inputs remain future depth. Equipment must connect to jobs, projects, schedule, people, vendors, documents, maintenance, time, warranty, and job costing; see [docs/equipment-management-plan.md](C:/FloorConnector/docs/equipment-management-plan.md).
 - Weather should appear as dashboard, schedule, job, and daily-log context; it does not need to begin as a standalone module.
 - Generic to-dos should not become a top-level disconnected module. Work items, follow-ups, reminders, and cue-driven tasks should remain tied to records, modules, or business functions.
+- Future Universal Capture should appear as a global/contextual capture affordance
+  and assistant action handoff, not as a standalone task module. Captured intent
+  should resolve into canonical customers, opportunities, projects, jobs, Work
+  Items, communications, appointments, or schedule actions wherever possible.
 - Future Contractor Collaboration Network capabilities should embed into
   existing IA areas before becoming any standalone navigation area: Settings for
   approved partners, People/Vendors for external partner identity, Projects for
@@ -348,6 +352,10 @@ Current implementation note: `/gatekeeper` now exists as a contractor-side GateK
 Target IA direction:
 
 - contextual AI inside Record Workspaces should help draft, summarize, explain blockers, prepare next actions, and answer record-specific questions
+- Universal Capture + Assistant Action behavior should let a contractor describe
+  intent such as a callback, site visit, estimate scheduling need, or geographic
+  grouping preference, then prepare a canonical handoff for review instead of
+  storing that request in an AI-only inbox.
 - a top-level AI Assistant may later provide cross-record operating questions such as "what should I do next?", approval queues, and operational intelligence
 - AI approval queues should link back to canonical records and approved server-side actions
 - AI should not replace Manager Pages, Record Workspaces, Settings, Communications, Schedule, or the canonical lifecycle

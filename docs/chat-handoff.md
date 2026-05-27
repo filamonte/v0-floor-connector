@@ -200,6 +200,14 @@ Current operating-core surfaces include:
   upload, structured measurement tables, comments, richer field statuses,
   vendor/team assignment, field completion evidence, and portal sharing remain
   future-only.
+- Future Universal Capture + Assistant Action Layer planning is now locked into
+  the roadmap/workflow docs as planned capability only. The idea is to capture
+  callbacks, reminders, follow-ups, site-visit intent, estimate scheduling
+  needs, and route/geographic grouping intent from anywhere, then resolve that
+  intent into canonical customers, opportunities, projects, jobs, Work Items,
+  communications, appointments, or schedule handoffs where possible. It is not
+  implemented and must not become a disconnected task app, duplicate CRM/project
+  model, AI-only scheduler, or autonomous customer-facing booking/sending layer.
 - Portal Customer Window with deterministic portal-safe customer status
   explanations, Customer Next Step, Project Status Window, Project Timeline,
   Shared Documents, and existing portal review/print routes. The explanation

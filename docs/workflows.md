@@ -82,6 +82,29 @@ payment controls, tenant isolation, or event/audit requirements. AI suggestions
 and approved AI-prepared actions should be treated as workflow participants, not
 as separate workflows. See [docs/agentic-operations-layer.md](C:/FloorConnector/docs/agentic-operations-layer.md).
 
+Future Universal Capture + Assistant Action Layer note: FloorConnector should
+eventually let users capture lightweight operational intent from anywhere,
+including callbacks, reminders, follow-ups, site-visit intent, estimate
+scheduling needs, and "schedule this when I am near that area" route/geographic
+grouping intent. This layer should sit above Universal Create / Quick-Create,
+Work Items, communications, scheduling, opportunities, customers, projects, and
+jobs rather than becoming a standalone task app.
+
+Manual capture should create or prepare the right canonical record whenever the
+intent is clear: a linked Work Item, opportunity follow-up, appointment/site
+visit, customer/project note, communication draft, or scheduling handoff.
+Assistant-assisted capture may find and link the existing customer, propose an
+opportunity or project when one is missing, attach region/geography/scheduling
+intent, suggest grouped estimate-visit windows, and draft customer copy. It
+must ask for contractor confirmation before any external/customer-facing send,
+booking, project/opportunity creation, or scheduling commitment.
+
+This is future planning only. The current app has canonical Quick-Create,
+context-aware creation, Work Items, deterministic cue prefill, and
+communications handoff foundations, but not a universal capture inbox, route
+grouping engine, autonomous assistant executor, or customer-facing booking
+assistant.
+
 ## Canonical Records Vs Supporting Workflow Stages
 
 Canonical system records:
@@ -106,6 +129,9 @@ Supporting workflow stages:
 - contact and qualification work
 - future pre-lead visual/product/finish selection
 - site assessment or inspection
+- future universal capture intent for callbacks, reminders, follow-ups,
+  site-visit needs, estimate scheduling, and route/geographic grouping when it
+  resolves into canonical records or approved work-item/scheduling handoff
 - Scope Intake for structured measurements, observations, requested finish, current conditions, files, logistics, and notes
 - customer-provided measurements, photos, and requirements
 - future project-scoped takeoff and scope intelligence
@@ -1137,6 +1163,11 @@ Target direction:
 
 - Work Items are the canonical task/assignment concept. "Task" can remain user-facing shorthand, but future implementation should extend `work_items` rather than add a disconnected task model.
 - Context-rich work items should be able to carry instructions, measurement context, current-condition photos, completion evidence, linked customer/project/job context, due date, priority, assignee, status, and internal discussion.
+- Universal Capture should use Work Items only when the captured intent is
+  actually a contractor-owned action or follow-through item. Site visits,
+  estimate opportunities, schedule holds, communication drafts, and customer or
+  project context should attach to their proper canonical records instead of
+  being flattened into generic tasks.
 - Work items can link to jobs, Daily Job Logs, Job Notes, communication threads, portal evidence grants, and other approved source records, but those source records remain the business truth.
 - Jobs remain execution records/work orders. Work items are assignable actions, checks, tasks, and follow-through within or around those jobs.
 - Future field/mobile work-item depth should let assigned people open instructions, source context, photos/files, and completion actions without replacing Daily Job Logs or Job Notes.
@@ -1336,5 +1367,8 @@ This applies to:
 - Estimates
 - Invoices
 - Jobs
+- Future Universal Capture / Assistant Action Layer handoffs when they prepare
+  canonical records, work items, communications, appointments, or schedule
+  actions
 
 This is required to maintain data integrity and workflow continuity
