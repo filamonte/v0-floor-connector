@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import {
+  acknowledgePortalSharedEvidence,
   revokeExecutionAttachmentPortalShare,
   shareExecutionAttachmentToPortal
 } from "./data";
@@ -114,6 +115,46 @@ export async function revokeExecutionAttachmentPortalShareAction(
         message: "Evidence sharing revoked. The item is hidden from the portal."
       }),
       "portal-evidence-sharing"
+    )
+  );
+}
+
+export async function acknowledgePortalSharedEvidenceAction(
+  formData: FormData
+) {
+  const projectId = getFieldValue(formData, "projectId");
+  const grantId = getFieldValue(formData, "grantId");
+  const next = `/portal/projects/${projectId}`;
+
+  try {
+    await acknowledgePortalSharedEvidence({
+      projectId,
+      grantId,
+      next
+    });
+  } catch (error) {
+    redirect(
+      appendHash(
+        buildRedirect(next, {
+          error:
+            error instanceof Error
+              ? error.message
+              : "Unable to acknowledge the shared evidence."
+        }),
+        "shared-project-evidence"
+      )
+    );
+  }
+
+  revalidatePath(next);
+  revalidatePath(`/projects/${projectId}`);
+
+  redirect(
+    appendHash(
+      buildRedirect(next, {
+        message: "Shared evidence receipt acknowledged."
+      }),
+      "shared-project-evidence"
     )
   );
 }

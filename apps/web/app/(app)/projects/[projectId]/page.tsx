@@ -63,7 +63,10 @@ import {
   revokeExecutionAttachmentPortalShareAction,
   shareExecutionAttachmentToPortalAction
 } from "@/lib/portal-evidence-grants/actions";
-import { listPortalEvidenceGrantsByProject } from "@/lib/portal-evidence-grants/data";
+import {
+  listPortalEvidenceDeliveryEventsByProject,
+  listPortalEvidenceGrantsByProject
+} from "@/lib/portal-evidence-grants/data";
 import {
   deriveProjectPortalEvidenceSharingSummary,
   type ProjectPortalEvidenceSharingSummary
@@ -1794,6 +1797,39 @@ function ProjectEvidenceContinuitySection({
                     <p className="mt-3 rounded-md border border-[var(--border-warm)] bg-[var(--highlight)] px-3 py-2 text-xs leading-5 text-[var(--text-secondary)]">
                       Customer note: {item.customerNote}
                     </p>
+                  ) : null}
+
+                  {item.status !== "internal" ? (
+                    <div className="mt-3 grid gap-2 rounded-md border border-[var(--border-warm)] bg-[var(--highlight)] px-3 py-3 text-xs leading-5 text-[var(--text-secondary)] sm:grid-cols-2">
+                      <p>
+                        Shared:{" "}
+                        {formatDateTime(item.deliveryProof.firstSharedAt)}
+                      </p>
+                      <p>
+                        Viewed in portal:{" "}
+                        {item.deliveryProof.viewCount > 0
+                          ? `${item.deliveryProof.viewCount} time${item.deliveryProof.viewCount === 1 ? "" : "s"}`
+                          : "Not yet"}
+                      </p>
+                      <p>
+                        Download requested:{" "}
+                        {item.deliveryProof.downloadCount > 0
+                          ? `${item.deliveryProof.downloadCount} time${item.deliveryProof.downloadCount === 1 ? "" : "s"}`
+                          : "Not yet"}
+                      </p>
+                      <p>
+                        Customer acknowledged receipt:{" "}
+                        {item.deliveryProof.acknowledgedAt
+                          ? formatDateTime(item.deliveryProof.acknowledgedAt)
+                          : "Not yet"}
+                      </p>
+                      {item.deliveryProof.revokedAt ? (
+                        <p className="sm:col-span-2">
+                          Revoked:{" "}
+                          {formatDateTime(item.deliveryProof.revokedAt)}
+                        </p>
+                      ) : null}
+                    </div>
                   ) : null}
 
                   <div className="mt-4">
@@ -4408,6 +4444,11 @@ export default async function ProjectDetailPage({
     project.id,
     `/projects/${projectId}`
   );
+  const projectPortalEvidenceDeliveryEvents =
+    await listPortalEvidenceDeliveryEventsByProject(
+      project.id,
+      `/projects/${projectId}`
+    );
   const activeProjectExecutionAttachments = filterActiveExecutionAttachments(
     projectExecutionAttachments
   );
@@ -4896,7 +4937,8 @@ export default async function ProjectDetailPage({
         archivedAt: attachment.archivedAt,
         createdAt: attachment.createdAt
       })),
-      grants: projectPortalEvidenceGrants
+      grants: projectPortalEvidenceGrants,
+      deliveryEvents: projectPortalEvidenceDeliveryEvents
     });
   const projectCommandTimeline = deriveProjectCommandTimeline({
     project: {

@@ -280,6 +280,24 @@ matters now` line from existing list fields only. This does not add portal
   Proof Center, Daily Log bodies, Job Notes, internal field-note contents,
   archived evidence, unshared evidence counts/details, portal-only file copies,
   broad document management, storage deletes, provider calls, AI, or automation.
+- Shared Evidence Delivery Proof + Customer Acknowledgement v1 adds an
+  append-only proof layer on top of active portal evidence grants. The new
+  `portal_evidence_delivery_events` table records `shared`, `viewed`,
+  `downloaded`, `acknowledged`, and `revoked` events for explicit
+  `execution_attachment` grants only, with tenant/project scope, active portal
+  access validation, forced RLS, immutable update/delete triggers, and
+  customer-safe metadata. Contractor Project Workspace now summarizes shared
+  evidence proof with shared/revoked timing, portal view counts, download
+  request counts, and customer acknowledgement state. Portal Project Workspace
+  now routes shared file opens through a project/grant-scoped download route
+  that records a `downloaded` event only after access validation and signed URL
+  issuance, and it offers an explicit acknowledgement action with copy that
+  receipt acknowledgement is not a signature and does not change scope, price,
+  schedule, or payment terms. The slice does not expose unshared or archived
+  evidence, FieldTrail, Proof Center internals, Daily Log bodies, Job Notes,
+  raw storage paths, provider metadata, email/open-pixel tracking, legal
+  delivery certification, file copies, duplicate portal records, broad document
+  management, storage deletes, AI, or automation.
 - Portal Project Workspace and portal home now use deterministic portal-safe
   customer status explanations derived from canonical project, estimate,
   contract, change-order, invoice/payment, and scoped schedule state. The

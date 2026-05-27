@@ -21,6 +21,7 @@ import { derivePortalCloseoutHandoff } from "@/lib/portal/closeout-handoff";
 import { derivePortalProjectStatusWindow } from "@/lib/portal/project-status-window";
 import { derivePortalProjectTimeline } from "@/lib/portal/project-timeline";
 import { derivePortalSharedDocuments } from "@/lib/portal/shared-documents";
+import { acknowledgePortalSharedEvidenceAction } from "@/lib/portal-evidence-grants/actions";
 import { getPortalSharedEvidenceSummary } from "@/lib/portal-evidence-grants/data";
 import { derivePortalSafeStatusExplanation } from "@/lib/portal/status-explanation";
 import {
@@ -768,7 +769,7 @@ export default async function PortalProjectDetailPage({
           title="Shared Project Evidence"
           description="Selected photos and files the contractor explicitly shared for this project."
         >
-          <div className="grid gap-5">
+          <div id="shared-project-evidence" className="grid gap-5">
             <section className={portalStatePanelClassName}>
               <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                 <div className="min-w-0">
@@ -822,12 +823,56 @@ export default async function PortalProjectDetailPage({
                       </PortalStatusBadge>
                     </div>
                     {item.href ? (
-                      <div className="mt-4">
+                      <div className="mt-4 flex flex-wrap items-center gap-2">
                         <PortalSecondaryLink href={item.href}>
                           Open shared file
                         </PortalSecondaryLink>
+                        {item.acknowledgementAllowed ? (
+                          <form action={acknowledgePortalSharedEvidenceAction}>
+                            <input
+                              type="hidden"
+                              name="projectId"
+                              value={projectId}
+                            />
+                            <input
+                              type="hidden"
+                              name="grantId"
+                              value={item.grantId}
+                            />
+                            <button
+                              type="submit"
+                              className="inline-flex min-h-10 items-center justify-center rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:bg-slate-50"
+                            >
+                              Acknowledge receipt
+                            </button>
+                          </form>
+                        ) : null}
                       </div>
                     ) : null}
+                    <div className="mt-4 grid gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-3 text-xs leading-5 text-slate-600 sm:grid-cols-2">
+                      <p>
+                        Viewed in portal:{" "}
+                        {item.deliveryProof.viewCount > 0
+                          ? `${item.deliveryProof.viewCount} time${item.deliveryProof.viewCount === 1 ? "" : "s"}`
+                          : "Not yet"}
+                      </p>
+                      <p>
+                        Download requested:{" "}
+                        {item.deliveryProof.downloadCount > 0
+                          ? `${item.deliveryProof.downloadCount} time${item.deliveryProof.downloadCount === 1 ? "" : "s"}`
+                          : "Not yet"}
+                      </p>
+                      <p>
+                        Acknowledgement:{" "}
+                        {item.deliveryProof.acknowledgedAt
+                          ? formatDateTime(item.deliveryProof.acknowledgedAt)
+                          : "Not acknowledged"}
+                      </p>
+                      <p>
+                        Receipt note: access acknowledgement is not a scope,
+                        price, schedule, or payment approval.
+                      </p>
+                    </div>
                   </div>
                 ))}
               </section>

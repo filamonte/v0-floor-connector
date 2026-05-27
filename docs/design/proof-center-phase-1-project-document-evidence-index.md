@@ -83,6 +83,13 @@ continues to stay contractor-facing and count/index proof from source records;
 the portal sees only items with active `portal_evidence_grants` rows and active
 project-scoped portal access.
 
+Shared Evidence Delivery Proof + Customer Acknowledgement v1 now adds
+append-only proof events for those explicit grants. Contractor Project
+Workspace can summarize when selected evidence was shared, viewed in the
+portal, opened through the safe signed URL route, acknowledged by the customer,
+or revoked. Proof Center remains the contractor-side index; the portal receives
+only customer-safe shared-evidence status and acknowledgement controls.
+
 ## Proof Categories Implemented
 
 Proof Center groups real records into:
@@ -161,8 +168,8 @@ proof, receives no new storage behavior here, and stays contractor-only.
   approved. The current portal Closeout Handoff is read-only and customer-safe;
   it does not expose field evidence or generate a stored package.
 - The current explicit visibility layer supports selected execution attachments
-  only. Broader shared-file subjects, stored packages, delivery proof, and
-  customer acknowledgement remain future work.
+  only. Broader shared-file subjects, stored packages, generated closeout
+  package proof, and legal delivery certification remain future work.
 - Add richer warranty and service proof indexing after warranty/service portal
   depth is implemented.
 - Consider extracting Project Workspace summary panels if the route continues to

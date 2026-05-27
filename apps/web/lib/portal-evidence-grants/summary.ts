@@ -1,5 +1,6 @@
 import type {
   ExecutionAttachment,
+  PortalEvidenceDeliveryEvent,
   PortalEvidenceGrant
 } from "@floorconnector/types";
 
@@ -30,6 +31,7 @@ export type PortalEvidenceSharingItem = {
   customerNote: string | null;
   sharedAt: string | null;
   revokedAt: string | null;
+  deliveryProof: PortalEvidenceDeliveryProofSummary;
   canShare: boolean;
   canRevoke: boolean;
   reason: string;
@@ -49,6 +51,7 @@ export type ProjectPortalEvidenceSharingSummary = {
 export type PortalSharedEvidenceItem = {
   key: string;
   id: string;
+  grantId: string;
   title: string;
   fileName: string;
   caption: string | null;
@@ -58,6 +61,8 @@ export type PortalSharedEvidenceItem = {
   sharedAt: string;
   href: string | null;
   statusLabel: string;
+  acknowledgementAllowed: boolean;
+  deliveryProof: PortalEvidenceDeliveryProofSummary;
 };
 
 export type PortalSharedEvidenceSummary = {
@@ -68,9 +73,141 @@ export type PortalSharedEvidenceSummary = {
   storageBoundaryMessage: string;
 };
 
+export type PortalEvidenceDeliveryProofSummary = {
+  firstSharedAt: string | null;
+  lastViewedAt: string | null;
+  viewCount: number;
+  lastDownloadedAt: string | null;
+  downloadCount: number;
+  acknowledgedAt: string | null;
+  acknowledgedByLabel: string | null;
+  revokedAt: string | null;
+  currentStatus:
+    | "available"
+    | "viewed"
+    | "downloaded"
+    | "acknowledged"
+    | "revoked";
+  statusLabel: string;
+};
+
+function emptyDeliveryProof(
+  fallback: Partial<PortalEvidenceDeliveryProofSummary> = {}
+): PortalEvidenceDeliveryProofSummary {
+  return {
+    firstSharedAt: null,
+    lastViewedAt: null,
+    viewCount: 0,
+    lastDownloadedAt: null,
+    downloadCount: 0,
+    acknowledgedAt: null,
+    acknowledgedByLabel: null,
+    revokedAt: null,
+    currentStatus: "available",
+    statusLabel: "Available",
+    ...fallback
+  };
+}
+
+function getActorLabel(event: Pick<PortalEvidenceDeliveryEvent, "actorKind">) {
+  switch (event.actorKind) {
+    case "contractor":
+      return "Contractor";
+    case "portal_customer":
+      return "Customer";
+    default:
+      return "System";
+  }
+}
+
+export function derivePortalEvidenceDeliveryProofSummary(input: {
+  events: PortalEvidenceDeliveryEvent[];
+  grant?: Pick<PortalEvidenceGrant, "status" | "sharedAt" | "revokedAt"> | null;
+}): PortalEvidenceDeliveryProofSummary {
+  const events = [...input.events].sort((left, right) =>
+    left.occurredAt.localeCompare(right.occurredAt)
+  );
+  const sharedEvents = events.filter((event) => event.eventType === "shared");
+  const viewedEvents = events.filter((event) => event.eventType === "viewed");
+  const downloadedEvents = events.filter(
+    (event) => event.eventType === "downloaded"
+  );
+  const acknowledgedEvents = events.filter(
+    (event) => event.eventType === "acknowledged"
+  );
+  const revokedEvents = events.filter((event) => event.eventType === "revoked");
+  const latestViewed = viewedEvents.at(-1) ?? null;
+  const latestDownloaded = downloadedEvents.at(-1) ?? null;
+  const latestAcknowledged = acknowledgedEvents.at(-1) ?? null;
+  const latestRevoked = revokedEvents.at(-1) ?? null;
+  const revokedAt = latestRevoked?.occurredAt ?? input.grant?.revokedAt ?? null;
+
+  if (input.grant?.status === "revoked" || revokedAt) {
+    return emptyDeliveryProof({
+      firstSharedAt:
+        sharedEvents[0]?.occurredAt ?? input.grant?.sharedAt ?? null,
+      lastViewedAt: latestViewed?.occurredAt ?? null,
+      viewCount: viewedEvents.length,
+      lastDownloadedAt: latestDownloaded?.occurredAt ?? null,
+      downloadCount: downloadedEvents.length,
+      acknowledgedAt: latestAcknowledged?.occurredAt ?? null,
+      acknowledgedByLabel: latestAcknowledged
+        ? getActorLabel(latestAcknowledged)
+        : null,
+      revokedAt,
+      currentStatus: "revoked",
+      statusLabel: "Revoked"
+    });
+  }
+
+  if (latestAcknowledged) {
+    return emptyDeliveryProof({
+      firstSharedAt:
+        sharedEvents[0]?.occurredAt ?? input.grant?.sharedAt ?? null,
+      lastViewedAt: latestViewed?.occurredAt ?? null,
+      viewCount: viewedEvents.length,
+      lastDownloadedAt: latestDownloaded?.occurredAt ?? null,
+      downloadCount: downloadedEvents.length,
+      acknowledgedAt: latestAcknowledged.occurredAt,
+      acknowledgedByLabel: getActorLabel(latestAcknowledged),
+      currentStatus: "acknowledged",
+      statusLabel: "Acknowledged"
+    });
+  }
+
+  if (latestDownloaded) {
+    return emptyDeliveryProof({
+      firstSharedAt:
+        sharedEvents[0]?.occurredAt ?? input.grant?.sharedAt ?? null,
+      lastViewedAt: latestViewed?.occurredAt ?? null,
+      viewCount: viewedEvents.length,
+      lastDownloadedAt: latestDownloaded.occurredAt,
+      downloadCount: downloadedEvents.length,
+      currentStatus: "downloaded",
+      statusLabel: "Download requested"
+    });
+  }
+
+  if (latestViewed) {
+    return emptyDeliveryProof({
+      firstSharedAt:
+        sharedEvents[0]?.occurredAt ?? input.grant?.sharedAt ?? null,
+      lastViewedAt: latestViewed.occurredAt,
+      viewCount: viewedEvents.length,
+      currentStatus: "viewed",
+      statusLabel: "Viewed in portal"
+    });
+  }
+
+  return emptyDeliveryProof({
+    firstSharedAt: sharedEvents[0]?.occurredAt ?? input.grant?.sharedAt ?? null
+  });
+}
+
 function getGrantForAttachment(
   grants: Pick<
     PortalEvidenceGrant,
+    | "id"
     | "subjectType"
     | "subjectId"
     | "status"
@@ -110,11 +247,20 @@ function getSourceCategory(
 export function deriveProjectPortalEvidenceSharingSummary(input: {
   attachments: ShareableEvidenceSource[];
   grants: PortalEvidenceGrant[];
+  deliveryEvents?: PortalEvidenceDeliveryEvent[];
 }): ProjectPortalEvidenceSharingSummary {
   const items = input.attachments
     .map((attachment): PortalEvidenceSharingItem => {
       const grant = getGrantForAttachment(input.grants, attachment.id);
       const isArchived = Boolean(attachment.archivedAt);
+      const deliveryProof = derivePortalEvidenceDeliveryProofSummary({
+        events: grant
+          ? (input.deliveryEvents ?? []).filter(
+              (event) => event.portalEvidenceGrantId === grant.id
+            )
+          : [],
+        grant
+      });
       const status: PortalEvidenceSharingState = isArchived
         ? "internal"
         : grant?.status === "shared"
@@ -142,6 +288,7 @@ export function deriveProjectPortalEvidenceSharingSummary(input: {
         customerNote: grant?.customerNote ?? null,
         sharedAt: grant?.sharedAt ?? null,
         revokedAt: grant?.revokedAt ?? null,
+        deliveryProof,
         canShare: !isArchived && status !== "shared",
         canRevoke: !isArchived && status === "shared",
         reason: isArchived
@@ -187,11 +334,17 @@ export function deriveProjectPortalEvidenceSharingSummary(input: {
 export function derivePortalSharedEvidenceSummary(input: {
   attachments: Array<
     ShareableEvidenceSource & {
-      signedUrl: string | null;
+      downloadHref: string | null;
       grant: Pick<
         PortalEvidenceGrant,
-        "titleOverride" | "customerNote" | "sharedAt" | "status"
+        | "id"
+        | "titleOverride"
+        | "customerNote"
+        | "sharedAt"
+        | "status"
+        | "revokedAt"
       >;
+      deliveryEvents?: PortalEvidenceDeliveryEvent[];
     }
   >;
 }): PortalSharedEvidenceSummary {
@@ -202,10 +355,16 @@ export function derivePortalSharedEvidenceSummary(input: {
         Boolean(attachment.grant.sharedAt) &&
         !attachment.archivedAt
     )
-    .map(
-      (attachment): PortalSharedEvidenceItem => ({
+    .map((attachment): PortalSharedEvidenceItem => {
+      const deliveryProof = derivePortalEvidenceDeliveryProofSummary({
+        events: attachment.deliveryEvents ?? [],
+        grant: attachment.grant
+      });
+
+      return {
         key: `execution-attachment:${attachment.id}`,
         id: attachment.id,
+        grantId: attachment.grant.id,
         title: getAttachmentTitle(attachment, attachment.grant.titleOverride),
         fileName: attachment.fileName,
         caption: attachment.caption,
@@ -213,10 +372,14 @@ export function derivePortalSharedEvidenceSummary(input: {
         sourceCategory: getSourceCategory(attachment),
         mimeType: attachment.mimeType,
         sharedAt: attachment.grant.sharedAt ?? attachment.createdAt,
-        href: attachment.signedUrl,
-        statusLabel: attachment.signedUrl ? "Ready to view" : "Shared metadata"
-      })
-    )
+        href: attachment.downloadHref,
+        statusLabel: deliveryProof.statusLabel,
+        acknowledgementAllowed:
+          deliveryProof.currentStatus !== "acknowledged" &&
+          deliveryProof.currentStatus !== "revoked",
+        deliveryProof
+      };
+    })
     .sort((left, right) => right.sharedAt.localeCompare(left.sharedAt));
 
   return {

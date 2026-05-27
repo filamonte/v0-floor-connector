@@ -77,6 +77,7 @@ export type DailyLogId = string;
 export type FieldNoteId = string;
 export type ExecutionAttachmentId = string;
 export type PortalEvidenceGrantId = string;
+export type PortalEvidenceDeliveryEventId = string;
 export type EstimateAttachmentId = string;
 export type PunchlistItemId = string;
 export type AppointmentId = string;
@@ -574,6 +575,16 @@ export type PortalAccessGrantStatus = "invited" | "active" | "revoked";
 export type PortalProjectAccessStatus = "active" | "revoked";
 export type PortalEvidenceGrantSubjectType = "execution_attachment";
 export type PortalEvidenceGrantStatus = "shared" | "revoked";
+export type PortalEvidenceDeliveryActorKind =
+  | "contractor"
+  | "portal_customer"
+  | "system";
+export type PortalEvidenceDeliveryEventType =
+  | "shared"
+  | "viewed"
+  | "downloaded"
+  | "acknowledged"
+  | "revoked";
 export type PortalRecordViewSubjectType =
   | "project"
   | "estimate"
@@ -2801,6 +2812,20 @@ export interface PortalEvidenceGrant {
   revokedAt: string | null;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface PortalEvidenceDeliveryEvent {
+  id: PortalEvidenceDeliveryEventId;
+  organizationId: OrganizationId;
+  projectId: ProjectId;
+  portalEvidenceGrantId: PortalEvidenceGrantId;
+  portalAccessGrantId: PortalAccessGrantId | null;
+  actorUserId: ProfileId | null;
+  actorKind: PortalEvidenceDeliveryActorKind;
+  eventType: PortalEvidenceDeliveryEventType;
+  occurredAt: string;
+  metadata: Record<string, unknown>;
+  createdAt: string;
 }
 
 export interface PortalRecordView {

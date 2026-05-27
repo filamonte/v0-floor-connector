@@ -90,6 +90,31 @@ Portal Project Workspace:
 - customer copy avoids internal contractor terminology
 - empty state explains that unshared proof stays hidden
 
+## Delivery Proof Extension
+
+Shared Evidence Delivery Proof + Customer Acknowledgement v1 extends active
+portal evidence grants with an append-only proof table:
+`portal_evidence_delivery_events`.
+
+Supported event types are:
+
+- `shared`
+- `viewed`
+- `downloaded`
+- `acknowledged`
+- `revoked`
+
+The proof table does not copy files or mutate source `execution_attachments`.
+It records contractor share/revoke events, a portal viewed event when active
+shared evidence is shown in a scoped portal project, a downloaded event when
+the safe signed URL route successfully issues a short-lived URL, and an
+idempotent customer acknowledgement event. Revoked grants cannot receive new
+customer viewed/downloaded/acknowledged events.
+
+Acknowledgement means the customer confirmed receipt of access to the shared
+file. It is not a signature, legal delivery certification, scope approval,
+price approval, schedule approval, or payment-term change.
+
 ## Non-Goals
 
 - no broad shared document/file system
@@ -104,6 +129,7 @@ Portal Project Workspace:
 - no AI summaries or automation
 - no support for estimate/contract/invoice/change-order subjects because those
   are already portal-visible through their canonical review routes
+- no email/open-pixel tracking or claim of legal delivery certainty
 
 ## Future Work
 
@@ -112,8 +138,8 @@ Future slices can consider:
 - a broader shared file/evidence subject model after versioning and storage
   policy are approved
 - shared file thumbnails or previews
-- delivery proof for shared evidence
-- customer acknowledgement of shared evidence
+- richer delivery proof reporting and export once legal/product requirements
+  are approved
 - stored closeout package versions
 - explicit sharing for future shared document records when that canonical model
   exists

@@ -4,6 +4,9 @@ import { STORAGE_BUCKET_NAMES } from "@floorconnector/config";
 import type {
   ExecutionAttachment,
   MembershipRole,
+  PortalEvidenceDeliveryActorKind,
+  PortalEvidenceDeliveryEvent,
+  PortalEvidenceDeliveryEventType,
   PortalEvidenceGrant
 } from "@floorconnector/types";
 
@@ -21,6 +24,7 @@ import {
   type PortalSharedEvidenceSummary
 } from "./summary";
 import { listPortalAccessGrantsForCurrentUser } from "@/lib/portal-access/data";
+import { requireAuthenticatedUser } from "@/lib/auth/session";
 
 type PortalEvidenceGrantRow = {
   id: string;
@@ -58,6 +62,20 @@ type ExecutionAttachmentRow = {
   restore_reason: string | null;
   created_at: string;
   updated_at: string;
+};
+
+type PortalEvidenceDeliveryEventRow = {
+  id: string;
+  company_id: string;
+  project_id: string;
+  portal_evidence_grant_id: string;
+  portal_access_grant_id: string | null;
+  actor_user_id: string | null;
+  actor_kind: PortalEvidenceDeliveryActorKind;
+  event_type: PortalEvidenceDeliveryEventType;
+  occurred_at: string;
+  metadata: Record<string, unknown>;
+  created_at: string;
 };
 
 const mutationRoles = new Set<MembershipRole>(["owner", "admin", "manager"]);
@@ -98,6 +116,20 @@ const executionAttachmentSelect = `
   restore_reason,
   created_at,
   updated_at
+`;
+
+const portalEvidenceDeliveryEventSelect = `
+  id,
+  company_id,
+  project_id,
+  portal_evidence_grant_id,
+  portal_access_grant_id,
+  actor_user_id,
+  actor_kind,
+  event_type,
+  occurred_at,
+  metadata,
+  created_at
 `;
 
 function mapGrant(row: PortalEvidenceGrantRow): PortalEvidenceGrant {
@@ -142,10 +174,122 @@ function mapAttachment(row: ExecutionAttachmentRow): ExecutionAttachment {
   };
 }
 
+function mapDeliveryEvent(
+  row: PortalEvidenceDeliveryEventRow
+): PortalEvidenceDeliveryEvent {
+  return {
+    id: row.id,
+    organizationId: row.company_id,
+    projectId: row.project_id,
+    portalEvidenceGrantId: row.portal_evidence_grant_id,
+    portalAccessGrantId: row.portal_access_grant_id,
+    actorUserId: row.actor_user_id,
+    actorKind: row.actor_kind,
+    eventType: row.event_type,
+    occurredAt: row.occurred_at,
+    metadata: row.metadata,
+    createdAt: row.created_at
+  };
+}
+
 function normalizeOptionalText(value: string | null | undefined, max = 500) {
   const trimmed = value?.trim();
 
   return trimmed ? trimmed.slice(0, max) : null;
+}
+
+async function listPortalEvidenceDeliveryEventsByGrantIds(input: {
+  organizationId?: string;
+  projectId: string;
+  grantIds: string[];
+}) {
+  if (input.grantIds.length === 0) {
+    return [];
+  }
+
+  let query = getSupabaseAdminClient()
+    .from("portal_evidence_delivery_events")
+    .select(portalEvidenceDeliveryEventSelect)
+    .eq("project_id", input.projectId)
+    .in("portal_evidence_grant_id", input.grantIds)
+    .order("occurred_at", { ascending: false });
+
+  if (input.organizationId) {
+    query = query.eq("company_id", input.organizationId);
+  }
+
+  const response = await query;
+
+  if (response.error) {
+    throw new Error(
+      `Unable to load portal evidence delivery proof: ${response.error.message}`
+    );
+  }
+
+  return ((response.data as PortalEvidenceDeliveryEventRow[] | null) ?? []).map(
+    mapDeliveryEvent
+  );
+}
+
+async function insertPortalEvidenceDeliveryEvent(input: {
+  organizationId: string;
+  projectId: string;
+  grantId: string;
+  portalAccessGrantId?: string | null;
+  actorUserId?: string | null;
+  actorKind: PortalEvidenceDeliveryActorKind;
+  eventType: PortalEvidenceDeliveryEventType;
+  metadata?: Record<string, unknown>;
+}) {
+  const response = await getSupabaseAdminClient()
+    .from("portal_evidence_delivery_events")
+    .insert({
+      company_id: input.organizationId,
+      project_id: input.projectId,
+      portal_evidence_grant_id: input.grantId,
+      portal_access_grant_id: input.portalAccessGrantId ?? null,
+      actor_user_id: input.actorUserId ?? null,
+      actor_kind: input.actorKind,
+      event_type: input.eventType,
+      metadata: input.metadata ?? {}
+    })
+    .select(portalEvidenceDeliveryEventSelect)
+    .single();
+
+  if (response.error) {
+    throw new Error(
+      `Unable to record portal evidence proof: ${response.error.message}`
+    );
+  }
+
+  return mapDeliveryEvent(response.data as PortalEvidenceDeliveryEventRow);
+}
+
+async function hasPortalEvidenceEvent(input: {
+  grantId: string;
+  eventType: PortalEvidenceDeliveryEventType;
+  portalAccessGrantId?: string | null;
+}) {
+  let query = getSupabaseAdminClient()
+    .from("portal_evidence_delivery_events")
+    .select("id")
+    .eq("portal_evidence_grant_id", input.grantId)
+    .eq("event_type", input.eventType)
+    .limit(1);
+
+  if (input.portalAccessGrantId) {
+    query = query.eq("portal_access_grant_id", input.portalAccessGrantId);
+  }
+
+  const response = await query.maybeSingle();
+
+  if (response.error) {
+    throw new Error(
+      `Unable to verify portal evidence proof: ${response.error.message}`
+    );
+  }
+
+  return Boolean(response.data);
 }
 
 function assertCanManagePortalEvidence(role: MembershipRole) {
@@ -173,6 +317,31 @@ async function loadExecutionAttachmentForGrant(
 
   if (!row) {
     throw new Error("Field evidence was not found for this organization.");
+  }
+
+  return mapAttachment(row);
+}
+
+async function loadExecutionAttachmentForPortalGrant(
+  organizationId: string,
+  attachmentId: string
+) {
+  const response = await getSupabaseAdminClient()
+    .from("execution_attachments")
+    .select(executionAttachmentSelect)
+    .eq("company_id", organizationId)
+    .eq("id", attachmentId)
+    .maybeSingle();
+  const row = response.data as ExecutionAttachmentRow | null;
+
+  if (response.error) {
+    throw new Error(
+      `Unable to load shared evidence: ${response.error.message}`
+    );
+  }
+
+  if (!row) {
+    throw new Error("Shared evidence was not found for this project.");
   }
 
   return mapAttachment(row);
@@ -312,6 +481,20 @@ export async function listPortalEvidenceGrantsByProject(
   return rows.map(mapGrant);
 }
 
+export async function listPortalEvidenceDeliveryEventsByProject(
+  projectId: string,
+  next = `/projects/${projectId}`
+): Promise<PortalEvidenceDeliveryEvent[]> {
+  const scope = await requireDailyLogScope(next);
+  const grants = await listPortalEvidenceGrantsByProject(projectId, next);
+
+  return listPortalEvidenceDeliveryEventsByGrantIds({
+    organizationId: scope.organizationId,
+    projectId,
+    grantIds: grants.map((grant) => grant.id)
+  });
+}
+
 export async function shareExecutionAttachmentToPortal(input: {
   projectId: string;
   attachmentId: string;
@@ -335,6 +518,24 @@ export async function shareExecutionAttachmentToPortal(input: {
     attachment,
     next
   });
+
+  const existingGrantResponse = await (await getSupabaseServerClient())
+    .from("portal_evidence_grants")
+    .select(portalEvidenceGrantSelect)
+    .eq("company_id", scope.organizationId)
+    .eq("project_id", input.projectId)
+    .eq("subject_type", "execution_attachment")
+    .eq("subject_id", input.attachmentId)
+    .maybeSingle();
+  const existingGrant = existingGrantResponse.data
+    ? mapGrant(existingGrantResponse.data as PortalEvidenceGrantRow)
+    : null;
+
+  if (existingGrantResponse.error) {
+    throw new Error(
+      `Unable to load existing portal evidence grant: ${existingGrantResponse.error.message}`
+    );
+  }
 
   const now = new Date().toISOString();
   const supabase = await getSupabaseServerClient();
@@ -367,7 +568,24 @@ export async function shareExecutionAttachmentToPortal(input: {
     );
   }
 
-  return mapGrant(response.data as PortalEvidenceGrantRow);
+  const grant = mapGrant(response.data as PortalEvidenceGrantRow);
+
+  if (existingGrant?.status !== "shared") {
+    await insertPortalEvidenceDeliveryEvent({
+      organizationId: scope.organizationId,
+      projectId: input.projectId,
+      grantId: grant.id,
+      actorUserId: scope.userId,
+      actorKind: "contractor",
+      eventType: "shared",
+      metadata: {
+        evidenceOnly: true,
+        subjectType: "execution_attachment"
+      }
+    });
+  }
+
+  return grant;
 }
 
 export async function revokeExecutionAttachmentPortalShare(input: {
@@ -392,6 +610,24 @@ export async function revokeExecutionAttachmentPortalShare(input: {
     next
   });
 
+  const existingGrantResponse = await (await getSupabaseServerClient())
+    .from("portal_evidence_grants")
+    .select(portalEvidenceGrantSelect)
+    .eq("company_id", scope.organizationId)
+    .eq("project_id", input.projectId)
+    .eq("subject_type", "execution_attachment")
+    .eq("subject_id", input.attachmentId)
+    .maybeSingle();
+  const existingGrant = existingGrantResponse.data
+    ? mapGrant(existingGrantResponse.data as PortalEvidenceGrantRow)
+    : null;
+
+  if (existingGrantResponse.error) {
+    throw new Error(
+      `Unable to load existing portal evidence grant: ${existingGrantResponse.error.message}`
+    );
+  }
+
   const response = await (
     await getSupabaseServerClient()
   )
@@ -414,16 +650,44 @@ export async function revokeExecutionAttachmentPortalShare(input: {
     );
   }
 
-  return mapGrant(response.data as PortalEvidenceGrantRow);
+  const grant = mapGrant(response.data as PortalEvidenceGrantRow);
+
+  if (existingGrant?.status === "shared") {
+    await insertPortalEvidenceDeliveryEvent({
+      organizationId: scope.organizationId,
+      projectId: input.projectId,
+      grantId: grant.id,
+      actorUserId: scope.userId,
+      actorKind: "contractor",
+      eventType: "revoked",
+      metadata: {
+        evidenceOnly: true,
+        subjectType: "execution_attachment"
+      }
+    });
+  }
+
+  return grant;
 }
 
-async function getPortalProjectScope(next = "/portal") {
+async function getPortalProjectScope(next = "/portal"): Promise<{
+  userId: string;
+  projectAccessRows: Array<{
+    project_id?: string;
+    portal_access_grant_id?: string;
+  }>;
+  activeGrantIds: string[];
+  accessibleProjectIds: string[];
+}> {
+  const user = await requireAuthenticatedUser(next);
   const activeGrants = (
     await listPortalAccessGrantsForCurrentUser(next)
   ).filter((grant) => grant.status === "active");
 
   if (activeGrants.length === 0) {
     return {
+      userId: user.id,
+      projectAccessRows: [],
       activeGrantIds: [],
       accessibleProjectIds: []
     };
@@ -432,7 +696,7 @@ async function getPortalProjectScope(next = "/portal") {
   const supabase = await getSupabaseServerClient();
   const response = await supabase
     .from("portal_project_access")
-    .select("project_id")
+    .select("project_id, portal_access_grant_id")
     .in(
       "portal_access_grant_id",
       activeGrants.map((grant) => grant.id)
@@ -445,11 +709,19 @@ async function getPortalProjectScope(next = "/portal") {
     );
   }
 
+  const projectAccessRows =
+    (response.data as Array<{
+      project_id?: string;
+      portal_access_grant_id?: string;
+    }> | null) ?? [];
+
   return {
+    userId: user.id,
+    projectAccessRows,
     activeGrantIds: activeGrants.map((grant) => grant.id),
     accessibleProjectIds: [
       ...new Set(
-        ((response.data as Array<{ project_id?: string }> | null) ?? [])
+        projectAccessRows
           .map((row) => row.project_id)
           .filter((value): value is string => typeof value === "string")
       )
@@ -457,13 +729,30 @@ async function getPortalProjectScope(next = "/portal") {
   };
 }
 
+function getPortalAccessGrantIdForProject(input: {
+  projectId: string;
+  rows: Array<{ project_id?: string; portal_access_grant_id?: string }>;
+}) {
+  return (
+    input.rows.find(
+      (row) =>
+        row.project_id === input.projectId &&
+        typeof row.portal_access_grant_id === "string"
+    )?.portal_access_grant_id ?? null
+  );
+}
+
 export async function getPortalSharedEvidenceSummary(
   projectId: string,
   next = `/portal/projects/${projectId}`
 ): Promise<PortalSharedEvidenceSummary> {
   const scope = await getPortalProjectScope(next);
+  const portalAccessGrantId = getPortalAccessGrantIdForProject({
+    projectId,
+    rows: scope.projectAccessRows
+  });
 
-  if (!scope.accessibleProjectIds.includes(projectId)) {
+  if (!scope.accessibleProjectIds.includes(projectId) || !portalAccessGrantId) {
     return derivePortalSharedEvidenceSummary({ attachments: [] });
   }
 
@@ -529,37 +818,234 @@ export async function getPortalSharedEvidenceSummary(
       return isProjectScoped ? attachment : null;
     })
   );
-  const signedAttachments = await Promise.all(
-    eligibleAttachments
-      .filter(
-        (attachment): attachment is ExecutionAttachment => attachment !== null
-      )
-      .map(async (attachment) => {
-        const grant = grantsBySubjectId.get(attachment.id);
-
-        if (!grant) {
-          return null;
-        }
-
-        const response = await admin.storage
-          .from(STORAGE_BUCKET_NAMES.documents)
-          .createSignedUrl(
-            attachment.storagePath,
-            EXECUTION_ATTACHMENT_SIGNED_URL_EXPIRES_IN_SECONDS
-          );
-
-        return {
-          ...attachment,
-          signedUrl: response.data?.signedUrl ?? null,
-          grant
-        };
-      })
+  const visibleAttachments = eligibleAttachments.filter(
+    (attachment): attachment is ExecutionAttachment => attachment !== null
   );
+
+  await Promise.all(
+    visibleAttachments.map(async (attachment) => {
+      const grant = grantsBySubjectId.get(attachment.id);
+
+      if (
+        !grant ||
+        (await hasPortalEvidenceEvent({
+          grantId: grant.id,
+          eventType: "viewed",
+          portalAccessGrantId
+        }))
+      ) {
+        return;
+      }
+
+      await insertPortalEvidenceDeliveryEvent({
+        organizationId: grant.organizationId,
+        projectId,
+        grantId: grant.id,
+        portalAccessGrantId,
+        actorUserId: scope.userId,
+        actorKind: "portal_customer",
+        eventType: "viewed",
+        metadata: {
+          evidenceOnly: true,
+          observedFrom: "portal_project_workspace"
+        }
+      });
+    })
+  );
+
+  const refreshedEvents = await listPortalEvidenceDeliveryEventsByGrantIds({
+    projectId,
+    grantIds: grantRows.map((grant) => grant.id)
+  });
+  const refreshedEventsByGrantId = new Map<
+    string,
+    PortalEvidenceDeliveryEvent[]
+  >();
+
+  for (const event of refreshedEvents) {
+    const existing = refreshedEventsByGrantId.get(event.portalEvidenceGrantId);
+
+    if (existing) {
+      existing.push(event);
+    } else {
+      refreshedEventsByGrantId.set(event.portalEvidenceGrantId, [event]);
+    }
+  }
+
+  const signedAttachments = visibleAttachments.map((attachment) => {
+    const grant = grantsBySubjectId.get(attachment.id);
+
+    if (!grant) {
+      return null;
+    }
+
+    return {
+      ...attachment,
+      downloadHref: `/portal/projects/${projectId}/evidence/${grant.id}/download`,
+      grant,
+      deliveryEvents: refreshedEventsByGrantId.get(grant.id) ?? []
+    };
+  });
 
   return derivePortalSharedEvidenceSummary({
     attachments: signedAttachments.filter(
       (attachment): attachment is NonNullable<typeof attachment> =>
         Boolean(attachment)
     )
+  });
+}
+
+export async function getPortalSharedEvidenceDownloadUrl(input: {
+  projectId: string;
+  grantId: string;
+  next?: string;
+}) {
+  const next = input.next ?? `/portal/projects/${input.projectId}`;
+  const scope = await getPortalProjectScope(next);
+  const portalAccessGrantId = getPortalAccessGrantIdForProject({
+    projectId: input.projectId,
+    rows: scope.projectAccessRows
+  });
+
+  if (
+    !scope.accessibleProjectIds.includes(input.projectId) ||
+    !portalAccessGrantId
+  ) {
+    throw new Error(
+      "Shared evidence is not available for this portal project."
+    );
+  }
+
+  const admin = getSupabaseAdminClient();
+  const grantResponse = await admin
+    .from("portal_evidence_grants")
+    .select(portalEvidenceGrantSelect)
+    .eq("id", input.grantId)
+    .eq("project_id", input.projectId)
+    .eq("status", "shared")
+    .maybeSingle();
+  const grantRow = grantResponse.data as PortalEvidenceGrantRow | null;
+
+  if (grantResponse.error) {
+    throw new Error(
+      `Unable to load shared evidence grant: ${grantResponse.error.message}`
+    );
+  }
+
+  if (!grantRow) {
+    throw new Error("Shared evidence is not available.");
+  }
+
+  const grant = mapGrant(grantRow);
+  const attachment = await loadExecutionAttachmentForPortalGrant(
+    grant.organizationId,
+    grant.subjectId
+  );
+
+  if (
+    attachment.archivedAt ||
+    !isPrivateFieldEvidenceStoragePath(attachment) ||
+    !(await isPortalSharedAttachmentProjectScoped({
+      organizationId: grant.organizationId,
+      projectId: input.projectId,
+      attachment
+    }))
+  ) {
+    throw new Error("Shared evidence is no longer available.");
+  }
+
+  const signedUrlResponse = await admin.storage
+    .from(STORAGE_BUCKET_NAMES.documents)
+    .createSignedUrl(
+      attachment.storagePath,
+      EXECUTION_ATTACHMENT_SIGNED_URL_EXPIRES_IN_SECONDS
+    );
+
+  const signedUrl = signedUrlResponse.data?.signedUrl ?? null;
+
+  if (!signedUrl || signedUrlResponse.error) {
+    throw new Error("Unable to prepare the shared evidence file.");
+  }
+
+  await insertPortalEvidenceDeliveryEvent({
+    organizationId: grant.organizationId,
+    projectId: input.projectId,
+    grantId: grant.id,
+    portalAccessGrantId,
+    actorUserId: scope.userId,
+    actorKind: "portal_customer",
+    eventType: "downloaded",
+    metadata: {
+      evidenceOnly: true,
+      issuedSignedUrl: true
+    }
+  });
+
+  return signedUrl;
+}
+
+export async function acknowledgePortalSharedEvidence(input: {
+  projectId: string;
+  grantId: string;
+  next?: string;
+}) {
+  const next = input.next ?? `/portal/projects/${input.projectId}`;
+  const scope = await getPortalProjectScope(next);
+  const portalAccessGrantId = getPortalAccessGrantIdForProject({
+    projectId: input.projectId,
+    rows: scope.projectAccessRows
+  });
+
+  if (
+    !scope.accessibleProjectIds.includes(input.projectId) ||
+    !portalAccessGrantId
+  ) {
+    throw new Error("Shared evidence is not available for acknowledgement.");
+  }
+
+  const grantResponse = await getSupabaseAdminClient()
+    .from("portal_evidence_grants")
+    .select(portalEvidenceGrantSelect)
+    .eq("id", input.grantId)
+    .eq("project_id", input.projectId)
+    .eq("status", "shared")
+    .maybeSingle();
+  const grantRow = grantResponse.data as PortalEvidenceGrantRow | null;
+
+  if (grantResponse.error) {
+    throw new Error(
+      `Unable to load shared evidence grant: ${grantResponse.error.message}`
+    );
+  }
+
+  if (!grantRow) {
+    throw new Error("Shared evidence is no longer available.");
+  }
+
+  const grant = mapGrant(grantRow);
+
+  if (
+    await hasPortalEvidenceEvent({
+      grantId: grant.id,
+      eventType: "acknowledged",
+      portalAccessGrantId
+    })
+  ) {
+    return null;
+  }
+
+  return insertPortalEvidenceDeliveryEvent({
+    organizationId: grant.organizationId,
+    projectId: input.projectId,
+    grantId: grant.id,
+    portalAccessGrantId,
+    actorUserId: scope.userId,
+    actorKind: "portal_customer",
+    eventType: "acknowledged",
+    metadata: {
+      evidenceOnly: true,
+      acknowledgementMeaning:
+        "Customer confirmed receipt of access to this shared file. This is not a signature and does not change scope, price, schedule, or payment terms."
+    }
   });
 }

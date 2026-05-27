@@ -192,6 +192,20 @@ Current operating-core surfaces include:
   signed URLs without raw storage paths and does not expose FieldTrail, Proof
   Center, Daily Log/Job Note internals, unshared evidence counts/details,
   portal-only file copies, provider behavior, AI, or automation.
+- Shared Evidence Delivery Proof + Customer Acknowledgement v1 adds
+  `portal_evidence_delivery_events` as an append-only evidence-grant proof
+  table. It is scoped to explicit `execution_attachment` portal evidence grants
+  and records shared, viewed, downloaded, acknowledged, and revoked proof events
+  without mutating source attachments or creating portal file copies. The server
+  utilities now record shared/revoked events from contractor share/revoke
+  actions, record a one-time portal viewed event when active shared evidence is
+  loaded for a scoped portal project, record downloaded events only when the
+  safe signed URL route successfully issues a short-lived URL, and record
+  idempotent portal customer acknowledgement events. Contractor Project
+  Workspace summarizes proof counts/timestamps; portal shared evidence shows
+  status and an acknowledgement action with non-signature/non-scope-changing
+  copy. The migration must be applied through the normal Supabase flow before
+  remote/protected browser QA can exercise the new table.
 - Full Operating Loop Demo Smoke on May 25, 2026 passed on a fresh local Next
   dev server with saved contractor and portal auth. The route loop loaded
   `/dashboard`, `/projects`, a Project Workspace with command/timeline signals,

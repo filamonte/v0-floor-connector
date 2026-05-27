@@ -50,6 +50,9 @@ The portal closeout handoff may show customer-safe commercial records, payment
 state, scoped schedule context, and issued portal-visible warranty documents.
 It may also show field evidence only when a contractor explicitly shares an
 eligible `execution_attachment` through `portal_evidence_grants`.
+When Shared Evidence Delivery Proof is available, portal-shared evidence may
+also show customer-safe status derived from `portal_evidence_delivery_events`,
+including viewed, download requested, and acknowledged receipt states.
 
 It does not show:
 
@@ -73,7 +76,8 @@ grant and project-scoped portal access before selected files appear.
 - no automatic sharing of execution attachments
 - no stored PDFs or generated package artifacts
 - no closeout package download route
-- no delivery proof mutation
+- no broad closeout-package delivery proof mutation; evidence-specific proof is
+  limited to explicit portal evidence grants
 - no provider calls
 - the closeout handoff itself still adds no schema, storage policy changes, or
   auth changes; explicit evidence sharing now lives in the separate
@@ -90,6 +94,7 @@ around:
 - broader shared-file visibility beyond selected execution attachments
 - stored package/version policy
 - delivery proof for generated closeout packages
+- customer acknowledgement rollups for assembled closeout packages
 - portal-safe warranty/service status beyond warranty documents
 - service request intake without creating portal-only support records
 - customer-visible package assembly from intentionally shared field evidence
