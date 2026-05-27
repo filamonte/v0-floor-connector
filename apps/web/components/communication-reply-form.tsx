@@ -30,7 +30,7 @@ export function CommunicationReplyForm({
   copilotHandoff,
   sendReadiness
 }: CommunicationReplyFormProps) {
-  const submitLabel = copilotHandoff ? "Save reviewed draft" : "Send reply";
+  const submitLabel = copilotHandoff ? "Save reviewed draft" : "Post reply";
   const pendingLabel = copilotHandoff ? "Saving draft..." : "Sending reply...";
   const readinessToneClass =
     sendReadiness?.tone === "ready"
@@ -162,6 +162,47 @@ export function CommunicationReplyForm({
       ) : null}
 
       <div className="space-y-2">
+        {!copilotHandoff ? (
+          <fieldset className="grid gap-2 sm:grid-cols-2">
+            <legend className="sr-only">Reply visibility</legend>
+            <label className="flex cursor-pointer gap-3 rounded-[4px] border border-[#d6d6d6] bg-white px-3 py-3 text-sm leading-5 text-slate-700">
+              <input
+                type="radio"
+                name="visibility"
+                value="internal"
+                defaultChecked
+                className="mt-1"
+              />
+              <span>
+                <span className="block font-semibold text-slate-950">
+                  Add internal note
+                </span>
+                <span className="text-xs text-slate-500">
+                  Contractor-only. Never visible in the portal.
+                </span>
+              </span>
+            </label>
+            <label className="flex cursor-pointer gap-3 rounded-[4px] border border-[#d6d6d6] bg-white px-3 py-3 text-sm leading-5 text-slate-700">
+              <input
+                type="radio"
+                name="visibility"
+                value="customer_visible"
+                className="mt-1"
+              />
+              <span>
+                <span className="block font-semibold text-slate-950">
+                  Add customer-visible message
+                </span>
+                <span className="text-xs text-slate-500">
+                  Portal-safe history only. No email or SMS is sent.
+                </span>
+              </span>
+            </label>
+          </fieldset>
+        ) : (
+          <input type="hidden" name="visibility" value="internal" />
+        )}
+
         <label
           htmlFor={`communication-reply-${threadId}`}
           className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#666666]"
@@ -185,7 +226,7 @@ export function CommunicationReplyForm({
         <p className="text-xs leading-5 text-slate-500">
           {copilotHandoff
             ? "This saves the reviewed draft as one internal communication message on the selected canonical thread. It does not create notifications, send email or SMS, or create automation."
-            : "This posts one internal reply to the selected communication thread. It does not send email or SMS and does not create automation."}
+            : "This posts one message to the selected communication thread. Customer-visible means portal-safe history only; it does not send email or SMS and does not create automation."}
         </p>
       </div>
 

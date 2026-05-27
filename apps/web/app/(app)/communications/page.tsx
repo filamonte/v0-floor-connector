@@ -148,6 +148,10 @@ function getMessageSenderLabel(
   }
 }
 
+function getMessageVisibilityLabel(value: "internal" | "customer_visible") {
+  return value === "customer_visible" ? "Customer-visible" : "Internal only";
+}
+
 function getMessageSenderTone(
   senderType: "organization_user" | "portal_user" | "system"
 ) {
@@ -1172,6 +1176,11 @@ export default async function CommunicationsPage({
                                         <span className="text-xs text-slate-400">
                                           Message {index + 1}
                                         </span>
+                                        <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">
+                                          {getMessageVisibilityLabel(
+                                            message.visibility
+                                          )}
+                                        </span>
                                       </div>
                                       <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-slate-700">
                                         {message.body}
@@ -1222,12 +1231,12 @@ export default async function CommunicationsPage({
                         </h4>
                         <p className="mt-1 text-sm leading-6 text-slate-500">
                           Replies are only available from /communications. This
-                          sends one new message into the current
+                          saves one new message into the current
                           <code className="mx-1 rounded bg-white px-1.5 py-0.5">
                             communication_messages
                           </code>
-                          chain without creating a second inbox, portal copy,
-                          provider send, automation run, or new thread record.
+                          chain without creating a second inbox, provider send,
+                          email/SMS, automation run, or new thread record.
                         </p>
                       </div>
                     </div>
@@ -1295,7 +1304,7 @@ export default async function CommunicationsPage({
                         disabled
                         className="inline-flex h-9 items-center justify-center rounded-[4px] border border-[#d6d6d6] bg-white px-4 text-sm font-medium text-slate-400"
                       >
-                        Send reply
+                        Post reply
                       </button>
                     </div>
                   </section>

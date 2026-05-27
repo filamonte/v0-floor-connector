@@ -2127,8 +2127,9 @@ Implemented:
   - direct thread links now stay explicit: if a requested thread is unavailable in the current filters, the page shows unavailable-thread guidance instead of silently selecting another thread
   - project and customer detail pages now expose compact related-conversation handoff cards derived from canonical thread summaries, with customer-visible/internal/open counts, latest-thread preview, and direct links back into `/communications`
   - contract, invoice, change-order, and estimate detail pages now expose the same compact related-conversation handoff pattern from canonical thread summaries, without embedding inbox behavior on those workspaces
-  - first safe contractor-side reply composer now exists on existing thread preview/detail only
+  - first safe contractor-side reply composer now exists on existing thread preview/detail and supports explicit internal-note versus customer-visible message visibility
   - contractor replies reuse the canonical posting helper and write new rows to `communication_messages` on the existing `communication_threads` record
+  - project and customer workspaces now include a compact record-linked composer that creates or reuses the canonical project/customer thread, then saves an internal note or customer-visible portal-history message without external delivery
   - reply and triage forms now preserve the all-sources filter safely and explain that replies do not send email/SMS or execute automation
   - first safe contractor-side notification triage now exists for communication unread state
   - contractor users can mark selected-thread or all communication notifications read by updating canonical per-user `notifications` records only
@@ -2172,14 +2173,14 @@ Current design notes:
 - dashboard now shows a compact internal work-item card. It prefers open work items assigned to the current user's linked active `people` record when that mapping exists and has work, and safely falls back to open company work items with assignee context when no linked-person queue is available.
 - lead workspaces now show opportunity-linked internal work items, allow explicit manual or lead-follow-up work-item creation against the current opportunity, and allow open linked work items to be completed or dismissed. Completing or dismissing a work item does not mutate `opportunities.next_follow_up_at`, lead status, communication visibility, or appointment state.
 - appointment workspaces now show appointment-linked internal work items, allow explicit manual appointment prep/follow-up work-item creation against the current appointment, and allow open linked work items to be completed or dismissed. Completing or dismissing a work item does not mutate appointment status, schedule fields, customer-visible appointment notes, reminders, portal visibility, or external calendar sync.
-- the contractor communication surface still stays on the same canonical review queue, but selected existing threads can now accept safe contractor replies without introducing a second inbox, portal-specific copy, or new message model
+- the contractor communication surface still stays on the same canonical review queue, but selected existing threads and project/customer record composers can now accept safe contractor-authored messages without introducing a second inbox, portal-specific copy, or new message model
 - communication triage on the contractor surface updates only the user's canonical `notifications.is_read` and `read_at` fields for communication-category records; it does not mutate `notification_events`, messages, or add message-local read state
 - communication baseline hardening is limited to queue clarity, selected-thread handling, unsupported-source copy, reply validation, and read-state feedback; provider sends and automation execution remain intentionally off
 - `/communications` now also supports compact URL-driven queue filtering by status grouping and supported source record type, plus text search across loaded customer, project, source-record, and preview labels from the same canonical thread list
   - status grouping and source-record filtering now shape the server-side communications loader where safe, using the same canonical `communication_threads` foundation plus per-user communication notifications for unread and needs-response queue state
   - supported source filters are currently limited to lead/opportunity, customer, project, estimate, contract, invoice, change order, and payment; unsupported source queries such as `source=job` now render an explicit help state instead of implying unsupported communication coverage
   - text search currently stays as a client-side fallback over the loaded canonical thread labels and preview text so existing URL search behavior remains unchanged without introducing new indexing, shadow fields, or external search infrastructure
-  - Communications v1 remains contractor-side and read-model first: no schema, migrations, provider sync, real email/SMS sends, automation/reminders engine, portal chat expansion, portal-only message copies, fake messages, or customer-visible internal note exposure were added
+  - Communications v1 remains contractor-side and canonical-table first: no schema, migrations, provider sync, real email/SMS sends, automation/reminders engine, portal chat expansion, portal-only message copies, fake messages, or customer-visible internal note exposure were added
 
 ### Shared Templates
 
@@ -2741,9 +2742,13 @@ Implemented UI behavior now:
   `communication_threads`, `communication_messages`, per-user communication
   notifications, `document_delivery_events`, and
   `portal_evidence_delivery_events`. It is a contractor-side control-room read
-  model only and does not send externally, create provider attempts, create
-  portal messages, duplicate communication rows, expose internal notes to the
-  portal, add schema, or run automation.
+  model with a conservative contractor write path. Existing thread replies and
+  project/customer record composers can now save explicit internal notes or
+  customer-visible portal-history messages to canonical
+  `communication_messages`. Customer-visible means stored FloorConnector
+  history only in this slice; it does not send email/SMS, create provider
+  attempts, create delivery proof, create portal-only message copies, expose
+  internal notes to the portal, add schema, or run automation.
 - `/schedule` now presents as CrewBoard on the existing route. CrewBoard uses
   canonical jobs, appointments, job assignments, people, vendors, projects, and
   customers for scheduling visibility, URL-backed date/layout context,

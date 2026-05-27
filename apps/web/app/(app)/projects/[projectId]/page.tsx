@@ -34,6 +34,7 @@ import { CueStateControls } from "@/components/cue-states/cue-state-controls";
 import { ProjectForm } from "@/components/project-form";
 import { RelatedConversationsCard } from "@/components/related-conversations-card";
 import { ReadyToScheduleActionPanel } from "@/components/ready-to-schedule-action-panel";
+import { RecordLinkedCommunicationComposer } from "@/components/record-linked-communication-composer";
 import {
   ScheduleContextActions,
   ScheduleContextFocusCard,
@@ -7196,6 +7197,14 @@ export default async function ProjectDetailPage({
               </div>
 
               <div className="mt-6 grid gap-4">
+                <RecordLinkedCommunicationComposer
+                  subjectType="project"
+                  subjectId={project.id}
+                  returnTo={`/projects/${project.id}#messagecenter`}
+                  title="Add project communication"
+                  description="Create or reuse this project's canonical communication thread, then save an internal note or customer-visible portal-history message without sending email or SMS."
+                />
+
                 {messageCenter.timeline.slice(0, 6).length > 0 ? (
                   messageCenter.timeline.slice(0, 6).map((item) => (
                     <Link

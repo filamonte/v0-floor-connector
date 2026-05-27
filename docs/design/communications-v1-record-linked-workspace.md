@@ -50,8 +50,18 @@ It derives:
 - operating lanes back to filtered communication queues
 - follow-up intelligence
 - delivery and shared-evidence context
-- existing thread queue, selected-thread detail, reply form, and notification
-  triage
+- existing thread queue, selected-thread detail, visibility-aware reply form,
+  and notification triage
+
+Project Workspace MessageCenter and Customer Workspace now include a compact
+record-linked composer. The composer creates or reuses the canonical
+project/customer thread and appends one message to `communication_messages`.
+
+Supported contractor-authored message types:
+
+- internal note: contractor-only, never portal-visible
+- customer-visible message: portal-safe history only; no email/SMS or provider
+  delivery is triggered
 
 Project MessageCenter now shows customer-visible/internal message counts.
 Related conversation cards on record workspaces now show customer-visible,
@@ -72,8 +82,10 @@ record through its own rules.
 ## Send / Provider Boundary
 
 This pass does not send email or SMS. It does not call Postmark, Stripe, AI, or
-any provider. Document delivery events and portal evidence delivery events are
-shown as communication context only; they are not converted into message rows.
+any provider. Contractor-authored customer-visible messages are saved in
+FloorConnector communication history only. Document delivery events and portal
+evidence delivery events are shown as communication context only; they are not
+converted into message rows.
 
 ## Non-Goals
 
@@ -83,7 +95,8 @@ shown as communication context only; they are not converted into message rows.
 - no provider sync or real outbound sends
 - no fake messages or demo data
 - no automation/reminders engine
-- no portal chat or customer reply expansion
+- no portal chat or customer reply expansion beyond the existing schema/RLS
+  boundary
 - no internal note exposure to portal users
 - no mutation of contracts, invoices, payments, evidence grants, or closeout
   records

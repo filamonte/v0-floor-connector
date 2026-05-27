@@ -15,8 +15,12 @@ communication threads, unread communication notifications, document delivery
 events, and explicit shared-evidence proof events into contractor-side
 operating lanes and follow-up context. It does not imply broad unified inbox
 depth, autonomous communication workflows, provider-backed send behavior, AI
-message generation, new communication schema, or customer portal messaging
-beyond what
+message generation, new communication schema, or customer portal messaging.
+The first write path is deliberately narrow: contractor users can save internal
+notes or customer-visible portal-history messages to canonical threads from the
+communications, project, and customer workspaces, with copy that no email/SMS is
+sent. It does not imply broader portal chat or provider-backed messaging beyond
+what
 [docs/current-state.md](C:/FloorConnector/docs/current-state.md) explicitly
 records.
 
@@ -226,6 +230,11 @@ Current Copilot draft handoff:
   threads, commercial records, finance/collections context, closeout/evidence
   context, and internal coordination without copying events into messages or
   creating a separate inbox.
+- Contractor users can explicitly add internal notes or customer-visible
+  messages to canonical project/customer threads and existing selected threads.
+  Customer-visible messages are saved as FloorConnector history only in this
+  slice; they do not send email/SMS, create provider attempts, create delivery
+  proof, or expose internal notes to portal users.
 - Estimate, contract, and invoice communication readiness can reuse document
   readiness output when supplied and otherwise prompts review of the canonical
   document workspace before any future customer send.

@@ -20,7 +20,10 @@ import {
   createNotificationEvent
 } from "@/lib/notifications/system";
 import { getActiveOrganizationContext } from "@/lib/organizations/active-context";
+import { getCustomerById } from "@/lib/customers/data";
+import { getProjectById } from "@/lib/projects/data";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
+import { deriveCommunicationWriteFields } from "./write-policy";
 
 type CommunicationThreadRow = {
   id: string;
@@ -87,6 +90,13 @@ type PostCommunicationMessageInput = {
   deliveryStatus?: CommunicationMessageDeliveryStatus;
   payload?: Record<string, unknown> | null;
   createNotification?: boolean;
+};
+
+type CreateRecordLinkedCommunicationMessageInput = {
+  subjectType: "customer" | "project";
+  subjectId: string;
+  body: string;
+  visibility: CommunicationMessageVisibility;
 };
 
 function mapThread(row: CommunicationThreadRow): CommunicationThread {
@@ -468,6 +478,77 @@ export async function createOpportunityManualCommunicationMessage(
   );
 }
 
+export async function createRecordLinkedCommunicationMessage(
+  input: CreateRecordLinkedCommunicationMessageInput,
+  next = "/communications"
+) {
+  if (input.subjectType === "project") {
+    const project = await getProjectById(input.subjectId, next);
+
+    if (!project) {
+      throw new Error("Project not found for this organization.");
+    }
+
+    const thread = await getOrCreateCommunicationThread(
+      {
+        organizationId: project.organizationId,
+        customerId: project.customerId,
+        projectId: project.id,
+        subjectType: "project",
+        subjectId: project.id
+      },
+      next
+    );
+
+    return postCommunicationMessage(
+      {
+        threadId: thread.id,
+        body: input.body,
+        visibility: input.visibility,
+        createNotification: false,
+        payload: {
+          source: "record_linked_composer",
+          subjectType: "project",
+          subjectId: project.id
+        }
+      },
+      next
+    );
+  }
+
+  const customer = await getCustomerById(input.subjectId, next);
+
+  if (!customer) {
+    throw new Error("Customer not found for this organization.");
+  }
+
+  const thread = await getOrCreateCommunicationThread(
+    {
+      organizationId: customer.organizationId,
+      customerId: customer.id,
+      projectId: null,
+      subjectType: "customer",
+      subjectId: customer.id
+    },
+    next
+  );
+
+  return postCommunicationMessage(
+    {
+      threadId: thread.id,
+      body: input.body,
+      visibility: input.visibility,
+      createNotification: false,
+      payload: {
+        source: "record_linked_composer",
+        subjectType: "customer",
+        subjectId: customer.id
+      }
+    },
+    next
+  );
+}
+
 export async function postCommunicationMessage(
   input: PostCommunicationMessageInput,
   next = "/dashboard"
@@ -512,12 +593,12 @@ export async function postCommunicationMessage(
 
   const actor = await resolveCommunicationActorContext(threadRow, next);
   const trimmedBody = input.body.trim();
-  const messageKind = input.messageKind ?? "customer_message";
-  const visibility =
-    actor.senderType === "portal_user"
-      ? "customer_visible"
-      : (input.visibility ?? "internal");
-  const deliveryStatus = input.deliveryStatus ?? "logged";
+  const writeFields = deriveCommunicationWriteFields({
+    actorKind: actor.senderType,
+    audience: input.visibility,
+    messageKind: input.messageKind,
+    deliveryStatus: input.deliveryStatus
+  });
 
   if (trimmedBody.length === 0) {
     throw new Error("Communication messages cannot be empty.");
@@ -534,14 +615,12 @@ export async function postCommunicationMessage(
       project_id: threadRow.project_id,
       sender_type: actor.senderType,
       sender_user_id: actor.userId,
-      direction: actor.senderType === "portal_user" ? "inbound" : "internal",
+      direction: writeFields.direction,
       source_kind: "human",
-      channel_kind:
-        visibility === "customer_visible" ? "portal" : "internal_note",
-      message_kind:
-        actor.senderType === "portal_user" ? "customer_message" : messageKind,
-      visibility,
-      delivery_status: deliveryStatus,
+      channel_kind: writeFields.channelKind,
+      message_kind: writeFields.messageKind,
+      visibility: writeFields.visibility,
+      delivery_status: writeFields.deliveryStatus,
       body: trimmedBody,
       payload: input.payload ?? null
     })
@@ -585,7 +664,9 @@ export async function postCommunicationMessage(
     .update({
       last_message_at: nowIso,
       last_message_preview: preview,
-      last_message_visibility: visibility
+      last_message_visibility: writeFields.visibility,
+      thread_status: writeFields.nextThreadStatus,
+      channel_kind: writeFields.channelKind
     })
     .eq("id", threadRow.id);
 

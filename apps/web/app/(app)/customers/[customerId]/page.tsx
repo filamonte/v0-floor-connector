@@ -15,6 +15,7 @@ import { PortalAccessGrantForm } from "@/components/portal-access-grant-form";
 import { PortalInviteEmailStatus } from "@/components/portal-invite-email-status";
 import { PortalProjectAccessForm } from "@/components/portal-project-access-form";
 import { RelatedConversationsCard } from "@/components/related-conversations-card";
+import { RecordLinkedCommunicationComposer } from "@/components/record-linked-communication-composer";
 import { TemporaryPortalCredentialForm } from "@/components/temporary-portal-credential-form";
 import {
   ScheduleContextActions,
@@ -1813,14 +1814,23 @@ export default async function CustomerDetailPage({
           </div>
         </DetailPanel>
 
-        <RelatedConversationsCard
-          source="customer"
-          description="Customer-scoped communication stays on shared threads and routes back into the communications review workspace when this relationship needs follow-through."
-          countLabel="Customer threads"
-          emptyMessage="No customer-scoped communication threads are attached to this customer yet."
-          actionClassName="inline-flex items-center rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:bg-slate-50"
-          threads={communicationThreads}
-        />
+        <div id="communication-history" className="space-y-4">
+          <RelatedConversationsCard
+            source="customer"
+            description="Customer-scoped communication stays on shared threads and routes back into the communications review workspace when this relationship needs follow-through."
+            countLabel="Customer threads"
+            emptyMessage="No customer-scoped communication threads are attached to this customer yet."
+            actionClassName="inline-flex items-center rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:bg-slate-50"
+            threads={communicationThreads}
+          />
+          <RecordLinkedCommunicationComposer
+            subjectType="customer"
+            subjectId={customer.id}
+            returnTo={`/customers/${customer.id}#communication-history`}
+            title="Add customer communication"
+            description="Create or reuse this customer's canonical communication thread, then save an internal note or customer-visible portal-history message without sending email or SMS."
+          />
+        </div>
 
         <GateKeeperSubjectMemoryPanel memory={gateKeeperMemory} />
 

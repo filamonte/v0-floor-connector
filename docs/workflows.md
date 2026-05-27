@@ -223,9 +223,13 @@ Implemented communication and delivery visibility:
   closeout/evidence, and internal coordination context. The read model uses
   existing communication threads/messages, communication notifications,
   document delivery events, and explicit portal evidence proof events only.
-- These layers are read-only visibility over current records. They do not add
+- Contractor users can now deliberately add internal notes or
+  customer-visible portal-history messages to existing communication threads and
+  project/customer record threads. These writes stay on canonical
+  `communication_threads` / `communication_messages` only. They do not add
   provider retry workflow, automated reminders, new message/delivery tables,
-  portal-only copies, AI summaries, or customer-facing field sharing.
+  portal-only copies, AI summaries, customer-facing field sharing, email, or
+  SMS.
 
 Future Activity Timeline:
 

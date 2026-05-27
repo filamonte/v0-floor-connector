@@ -14,6 +14,7 @@ import {
 } from "@/lib/notifications/system";
 
 import {
+  createRecordLinkedCommunicationMessage,
   createOpportunityManualCommunicationMessage,
   postCommunicationMessage
 } from "./data";
@@ -84,6 +85,7 @@ const customerAppointmentReminderPreferenceActionSchema =
 
 const communicationReplyInputSchema = z.object({
   threadId: z.string().uuid("A valid communication thread is required."),
+  visibility: z.enum(["internal", "customer_visible"]).default("internal"),
   body: z
     .string()
     .trim()
@@ -130,6 +132,39 @@ const communicationReplyInputSchema = z.object({
   copilotProjectName: z.string().trim().optional(),
   copilotCustomerId: z.string().trim().optional(),
   copilotCustomerName: z.string().trim().optional()
+});
+
+const recordLinkedCommunicationMessageInputSchema = z.object({
+  subjectType: z.enum(["customer", "project"], {
+    required_error: "A customer or project communication context is required.",
+    invalid_type_error:
+      "A customer or project communication context is required."
+  }),
+  subjectId: z.string().uuid("A valid customer or project is required."),
+  visibility: z.enum(["internal", "customer_visible"], {
+    required_error: "Select message visibility.",
+    invalid_type_error: "Select message visibility."
+  }),
+  body: z
+    .string()
+    .trim()
+    .min(1, "Communication message cannot be empty.")
+    .max(5_000, "Communication messages must stay under 5,000 characters."),
+  returnTo: z
+    .string()
+    .trim()
+    .optional()
+    .transform((value) => {
+      if (!value) {
+        return undefined;
+      }
+
+      return value.startsWith("/projects/") ||
+        value.startsWith("/customers/") ||
+        value.startsWith("/communications")
+        ? value
+        : undefined;
+    })
 });
 
 const communicationTriageInputSchema = z.object({
@@ -581,6 +616,7 @@ export async function replyToCommunicationThreadAction(formData: FormData) {
   const body = getFieldValue(formData, "body");
   const result = communicationReplyInputSchema.safeParse({
     threadId,
+    visibility: getFieldValue(formData, "visibility") || "internal",
     body,
     q: q || undefined,
     view: view || undefined,
@@ -619,10 +655,11 @@ export async function replyToCommunicationThreadAction(formData: FormData) {
       {
         threadId: result.data.threadId,
         body: result.data.body,
+        visibility: copilotHandoff ? "internal" : result.data.visibility,
         payload: copilotHandoff
           ? buildAiCopilotCommunicationPayload(copilotHandoff)
           : null,
-        createNotification: copilotHandoff ? false : undefined
+        createNotification: false
       },
       "/communications"
     );
@@ -648,9 +685,90 @@ export async function replyToCommunicationThreadAction(formData: FormData) {
       source: result.data.source,
       message: buildCopilotHandoffFromReplyInput(result.data)
         ? "Reviewed Copilot draft saved on the canonical communication thread. No notification, email, or SMS was sent."
-        : "Reply sent on the canonical communication thread."
+        : result.data.visibility === "customer_visible"
+          ? "Customer-visible message saved to the canonical thread. No email or SMS was sent."
+          : "Internal note saved to the canonical communication thread."
     })
   );
+}
+
+export async function createRecordLinkedCommunicationMessageAction(
+  formData: FormData
+) {
+  const subjectType = getFieldValue(formData, "subjectType");
+  const subjectId = getFieldValue(formData, "subjectId");
+  const result = recordLinkedCommunicationMessageInputSchema.safeParse({
+    subjectType,
+    subjectId,
+    visibility: getFieldValue(formData, "visibility") || "internal",
+    body: getFieldValue(formData, "body"),
+    returnTo: getFieldValue(formData, "returnTo") || undefined
+  });
+  const fallback =
+    subjectType === "project" && subjectId
+      ? `/projects/${subjectId}#messagecenter`
+      : subjectType === "customer" && subjectId
+        ? `/customers/${subjectId}#communication-history`
+        : "/communications";
+  const returnTo = result.success
+    ? (result.data.returnTo ?? fallback)
+    : fallback;
+
+  if (!result.success) {
+    const destination = new URL(returnTo, "http://floorconnector.local");
+
+    destination.searchParams.set(
+      "error",
+      result.error.issues[0]?.message ?? "Unable to save communication message."
+    );
+
+    redirect(`${destination.pathname}${destination.search}${destination.hash}`);
+  }
+
+  try {
+    await createRecordLinkedCommunicationMessage(
+      {
+        subjectType: result.data.subjectType,
+        subjectId: result.data.subjectId,
+        body: result.data.body,
+        visibility: result.data.visibility
+      },
+      returnTo
+    );
+  } catch (error) {
+    const destination = new URL(returnTo, "http://floorconnector.local");
+
+    destination.searchParams.set(
+      "error",
+      error instanceof Error
+        ? error.message
+        : "Unable to save communication message."
+    );
+
+    redirect(`${destination.pathname}${destination.search}${destination.hash}`);
+  }
+
+  if (result.data.subjectType === "project") {
+    revalidatePath(`/projects/${result.data.subjectId}`);
+  }
+
+  if (result.data.subjectType === "customer") {
+    revalidatePath(`/customers/${result.data.subjectId}`);
+  }
+
+  revalidatePath("/communications");
+  revalidatePath("/dashboard");
+
+  const destination = new URL(returnTo, "http://floorconnector.local");
+
+  destination.searchParams.set(
+    "message",
+    result.data.visibility === "customer_visible"
+      ? "Customer-visible message saved to FloorConnector history. No email or SMS was sent."
+      : "Internal note saved to FloorConnector communication history."
+  );
+
+  redirect(`${destination.pathname}${destination.search}${destination.hash}`);
 }
 
 export async function markCommunicationThreadNotificationsReadAction(
