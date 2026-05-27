@@ -59,6 +59,15 @@ import {
   listProjectEstimateAttachments
 } from "@/lib/estimates/data";
 import { listExecutionAttachmentsBySubjects } from "@/lib/execution-attachments/data";
+import {
+  revokeExecutionAttachmentPortalShareAction,
+  shareExecutionAttachmentToPortalAction
+} from "@/lib/portal-evidence-grants/actions";
+import { listPortalEvidenceGrantsByProject } from "@/lib/portal-evidence-grants/data";
+import {
+  deriveProjectPortalEvidenceSharingSummary,
+  type ProjectPortalEvidenceSharingSummary
+} from "@/lib/portal-evidence-grants/summary";
 import { deriveFieldTrailSummary } from "@/lib/fieldtrail/summary";
 import { listFieldNotes } from "@/lib/field-notes/data";
 import { getFieldNoteTypeLabel } from "@/lib/field-notes/labels";
@@ -1538,9 +1547,13 @@ function getEvidenceTimelineLabel(type: ProjectEvidenceContinuityTimelineType) {
 }
 
 function ProjectEvidenceContinuitySection({
-  summary
+  summary,
+  portalSharing,
+  projectId
 }: {
   summary: ProjectEvidenceContinuitySummary;
+  portalSharing: ProjectPortalEvidenceSharingSummary;
+  projectId: string;
 }) {
   const countTiles = [
     {
@@ -1706,6 +1719,160 @@ function ProjectEvidenceContinuitySection({
             </div>
           </article>
         ))}
+      </div>
+
+      <div className="border-t border-[var(--border-warm)] px-4 py-4 sm:px-5">
+        <section
+          id="portal-evidence-sharing"
+          className="rounded-lg border border-[var(--border-warm)] bg-white"
+        >
+          <div className="border-b border-[var(--border-warm)] px-4 py-4">
+            <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+              <div className="min-w-0">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--copper)]">
+                  Portal evidence sharing
+                </p>
+                <h4 className="mt-1 text-sm font-semibold text-[var(--text-primary)]">
+                  Explicit customer visibility grants
+                </h4>
+                <p className="mt-2 max-w-[72ch] text-sm leading-6 text-[var(--text-secondary)]">
+                  {portalSharing.primaryMessage}
+                </p>
+              </div>
+              <span className="rounded-full border border-[var(--border-warm)] bg-[var(--highlight)] px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-[var(--text-secondary)]">
+                {portalSharing.statusLabel}
+              </span>
+            </div>
+            <div className="mt-3 grid gap-2 text-xs leading-5 text-[var(--text-secondary)] sm:grid-cols-4">
+              <p className="rounded-md border border-[var(--border-warm)] bg-[var(--highlight)] px-3 py-2">
+                Shared: {portalSharing.sharedCount}
+              </p>
+              <p className="rounded-md border border-[var(--border-warm)] bg-[var(--highlight)] px-3 py-2">
+                Internal only: {portalSharing.internalCount}
+              </p>
+              <p className="rounded-md border border-[var(--border-warm)] bg-[var(--highlight)] px-3 py-2">
+                Revoked: {portalSharing.revokedCount}
+              </p>
+              <p className="rounded-md border border-[var(--border-warm)] bg-[var(--highlight)] px-3 py-2">
+                Archived: {portalSharing.archivedCount}
+              </p>
+            </div>
+          </div>
+
+          {portalSharing.items.length > 0 ? (
+            <div className="grid gap-px bg-[var(--border-warm)] lg:grid-cols-2">
+              {portalSharing.items.slice(0, 6).map((item) => (
+                <article key={item.id} className="bg-white px-4 py-4">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                    <div className="min-w-0">
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--text-tertiary)]">
+                        {item.attachmentType === "photo" ? "Photo" : "File"} /
+                        {item.statusLabel}
+                      </p>
+                      <h5 className="mt-1 text-sm font-semibold text-[var(--text-primary)]">
+                        {item.title}
+                      </h5>
+                      <p className="mt-1 text-xs leading-5 text-[var(--text-secondary)]">
+                        {item.reason}
+                      </p>
+                    </div>
+                    <span
+                      className={[
+                        "shrink-0 rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em]",
+                        item.status === "shared"
+                          ? "border-emerald-200 bg-emerald-50 text-emerald-800"
+                          : item.status === "revoked"
+                            ? "border-amber-200 bg-amber-50 text-amber-800"
+                            : "border-[var(--border-warm)] bg-[var(--highlight)] text-[var(--text-secondary)]"
+                      ].join(" ")}
+                    >
+                      {item.statusLabel}
+                    </span>
+                  </div>
+
+                  {item.customerNote ? (
+                    <p className="mt-3 rounded-md border border-[var(--border-warm)] bg-[var(--highlight)] px-3 py-2 text-xs leading-5 text-[var(--text-secondary)]">
+                      Customer note: {item.customerNote}
+                    </p>
+                  ) : null}
+
+                  <div className="mt-4">
+                    {item.canShare ? (
+                      <form
+                        action={shareExecutionAttachmentToPortalAction}
+                        className="grid gap-2"
+                      >
+                        <input
+                          type="hidden"
+                          name="projectId"
+                          value={projectId}
+                        />
+                        <input
+                          type="hidden"
+                          name="attachmentId"
+                          value={item.id}
+                        />
+                        <label className="grid gap-1 text-xs font-semibold uppercase tracking-[0.12em] text-[var(--text-tertiary)]">
+                          Customer title
+                          <input
+                            name="titleOverride"
+                            defaultValue={item.title}
+                            className="rounded-md border border-[var(--border-warm)] px-3 py-2 text-sm normal-case tracking-normal text-[var(--text-primary)]"
+                          />
+                        </label>
+                        <label className="grid gap-1 text-xs font-semibold uppercase tracking-[0.12em] text-[var(--text-tertiary)]">
+                          Customer note
+                          <input
+                            name="customerNote"
+                            placeholder="Optional customer-safe context"
+                            className="rounded-md border border-[var(--border-warm)] px-3 py-2 text-sm normal-case tracking-normal text-[var(--text-primary)]"
+                          />
+                        </label>
+                        <button
+                          type="submit"
+                          className={secondaryActionClassName}
+                        >
+                          Share with customer
+                        </button>
+                      </form>
+                    ) : item.canRevoke ? (
+                      <form action={revokeExecutionAttachmentPortalShareAction}>
+                        <input
+                          type="hidden"
+                          name="projectId"
+                          value={projectId}
+                        />
+                        <input
+                          type="hidden"
+                          name="attachmentId"
+                          value={item.id}
+                        />
+                        <button
+                          type="submit"
+                          className={secondaryActionClassName}
+                        >
+                          Revoke customer sharing
+                        </button>
+                      </form>
+                    ) : (
+                      <p className="text-xs leading-5 text-[var(--text-secondary)]">
+                        No portal action is available for this item.
+                      </p>
+                    )}
+                  </div>
+                </article>
+              ))}
+            </div>
+          ) : (
+            <div className="px-4 py-4">
+              <AppEmptyState
+                eyebrow="Portal evidence"
+                title="No field evidence is eligible for sharing yet"
+                description="Upload field evidence through Daily Logs or Job Notes first. Sharing remains explicit and customer-safe."
+              />
+            </div>
+          )}
+        </section>
       </div>
 
       <div className="border-t border-[var(--border-warm)] px-4 py-4 sm:px-5">
@@ -4237,6 +4404,10 @@ export default async function ProjectDetailPage({
     `/projects/${projectId}`,
     { includeArchived: true }
   );
+  const projectPortalEvidenceGrants = await listPortalEvidenceGrantsByProject(
+    project.id,
+    `/projects/${projectId}`
+  );
   const activeProjectExecutionAttachments = filterActiveExecutionAttachments(
     projectExecutionAttachments
   );
@@ -4712,6 +4883,21 @@ export default async function ProjectDetailPage({
         ? `/warranty-documents/${projectWarrantyDocuments[0].id}`
         : `/service-tickets?projectId=${project.id}`
   });
+  const projectPortalEvidenceSharing =
+    deriveProjectPortalEvidenceSharingSummary({
+      attachments: projectExecutionAttachments.map((attachment) => ({
+        id: attachment.id,
+        subjectType: attachment.subjectType,
+        subjectId: attachment.subjectId,
+        attachmentType: attachment.attachmentType,
+        fileName: attachment.fileName,
+        mimeType: attachment.mimeType,
+        caption: attachment.caption,
+        archivedAt: attachment.archivedAt,
+        createdAt: attachment.createdAt
+      })),
+      grants: projectPortalEvidenceGrants
+    });
   const projectCommandTimeline = deriveProjectCommandTimeline({
     project: {
       id: project.id,
@@ -6973,7 +7159,11 @@ export default async function ProjectDetailPage({
 
         <ProofCenterSection summary={proofCenter} />
 
-        <ProjectEvidenceContinuitySection summary={projectEvidenceContinuity} />
+        <ProjectEvidenceContinuitySection
+          summary={projectEvidenceContinuity}
+          portalSharing={projectPortalEvidenceSharing}
+          projectId={project.id}
+        />
 
         <DetailPanel
           title="Financial Hub"

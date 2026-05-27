@@ -21,6 +21,7 @@ import { derivePortalCloseoutHandoff } from "@/lib/portal/closeout-handoff";
 import { derivePortalProjectStatusWindow } from "@/lib/portal/project-status-window";
 import { derivePortalProjectTimeline } from "@/lib/portal/project-timeline";
 import { derivePortalSharedDocuments } from "@/lib/portal/shared-documents";
+import { getPortalSharedEvidenceSummary } from "@/lib/portal-evidence-grants/data";
 import { derivePortalSafeStatusExplanation } from "@/lib/portal/status-explanation";
 import {
   getPortalProjectDetailSummary,
@@ -270,7 +271,8 @@ export default async function PortalProjectDetailPage({
     contracts,
     invoices,
     changeOrders,
-    warrantyDocuments
+    warrantyDocuments,
+    sharedEvidence
   ] = await Promise.all([
     getPortalProjectDetailSummary(projectId, `/portal/projects/${projectId}`),
     listPortalProjectAppointments(projectId, `/portal/projects/${projectId}`),
@@ -281,7 +283,8 @@ export default async function PortalProjectDetailPage({
     listPortalProjectWarrantyDocuments(
       projectId,
       `/portal/projects/${projectId}`
-    )
+    ),
+    getPortalSharedEvidenceSummary(projectId, `/portal/projects/${projectId}`)
   ]);
 
   if (!project) {
@@ -756,6 +759,92 @@ export default async function PortalProjectDetailPage({
               </p>
               <p className="mt-2 text-sm leading-6 text-slate-600">
                 {closeoutHandoff.customerSafeBoundary}
+              </p>
+            </div>
+          </div>
+        </DetailPanel>
+
+        <DetailPanel
+          title="Shared Project Evidence"
+          description="Selected photos and files the contractor explicitly shared for this project."
+        >
+          <div className="grid gap-5">
+            <section className={portalStatePanelClassName}>
+              <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                <div className="min-w-0">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.26em] text-slate-500">
+                    Shared evidence
+                  </p>
+                  <h2 className="mt-2 text-lg font-semibold tracking-tight text-slate-950">
+                    {sharedEvidence.statusLabel}
+                  </h2>
+                  <p className="mt-2 text-sm leading-6 text-slate-600">
+                    {sharedEvidence.primaryMessage}
+                  </p>
+                </div>
+                <PortalStatusBadge
+                  status={
+                    sharedEvidence.items.length > 0 ? "complete" : "neutral"
+                  }
+                  className="shrink-0"
+                >
+                  Explicitly shared
+                </PortalStatusBadge>
+              </div>
+            </section>
+
+            {sharedEvidence.items.length > 0 ? (
+              <section className="grid gap-4 lg:grid-cols-2">
+                {sharedEvidence.items.map((item) => (
+                  <div key={item.key} className={portalReviewCardClassName}>
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                      <div className="min-w-0">
+                        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+                          {item.sourceCategory}
+                        </p>
+                        <h3 className="mt-2 text-base font-semibold text-slate-950">
+                          {item.title}
+                        </h3>
+                        <p className="mt-2 text-sm leading-6 text-slate-600">
+                          {item.customerNote ??
+                            item.caption ??
+                            "Shared as customer-safe project evidence."}
+                        </p>
+                        <p className="mt-2 text-xs leading-5 text-slate-500">
+                          Shared {formatDateTime(item.sharedAt)} /{" "}
+                          {item.fileName}
+                        </p>
+                      </div>
+                      <PortalStatusBadge
+                        status={item.href ? "complete" : "neutral"}
+                      >
+                        {item.statusLabel}
+                      </PortalStatusBadge>
+                    </div>
+                    {item.href ? (
+                      <div className="mt-4">
+                        <PortalSecondaryLink href={item.href}>
+                          Open shared file
+                        </PortalSecondaryLink>
+                      </div>
+                    ) : null}
+                  </div>
+                ))}
+              </section>
+            ) : (
+              <AppEmptyState
+                eyebrow="Shared proof"
+                title="No project evidence has been shared yet"
+                description={sharedEvidence.emptyStateMessage}
+              />
+            )}
+
+            <div className={portalInsetPanelClassName}>
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+                Visibility boundary
+              </p>
+              <p className="mt-2 text-sm leading-6 text-slate-600">
+                {sharedEvidence.storageBoundaryMessage}
               </p>
             </div>
           </div>

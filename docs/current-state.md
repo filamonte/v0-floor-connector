@@ -265,6 +265,21 @@ matters now` line from existing list fields only. This does not add portal
   provider metadata, service-ticket internals, stored PDFs, delivery proof,
   schema, migrations, server actions, access rules, payment/signature mutation,
   provider calls, automation, AI, or customer-facing field evidence.
+- Explicit Shared File Visibility + Portal Evidence Grants v1 adds the first
+  contractor-controlled sharing policy layer for selected field evidence. The
+  canonical `portal_evidence_grants` table is tenant-scoped, project-scoped,
+  constrained to `execution_attachment` subjects, and records shared/revoked
+  state with actor and timestamp metadata plus optional customer-safe title/note.
+  Contractor Project Workspace now labels field evidence as internal-only,
+  shared, revoked, or archived-ineligible and lets owner/admin/manager users
+  explicitly share or revoke eligible active evidence. Portal Project Workspace
+  now shows a Shared Project Evidence section that lists only active, explicitly
+  shared evidence for projects already visible through active
+  `portal_project_access`; it resolves short-lived signed URLs server-side
+  without exposing raw storage paths. The slice does not expose FieldTrail,
+  Proof Center, Daily Log bodies, Job Notes, internal field-note contents,
+  archived evidence, unshared evidence counts/details, portal-only file copies,
+  broad document management, storage deletes, provider calls, AI, or automation.
 - Portal Project Workspace and portal home now use deterministic portal-safe
   customer status explanations derived from canonical project, estimate,
   contract, change-order, invoice/payment, and scoped schedule state. The

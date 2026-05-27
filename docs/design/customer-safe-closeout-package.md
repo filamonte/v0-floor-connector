@@ -48,6 +48,8 @@ Focused tests live in
 
 The portal closeout handoff may show customer-safe commercial records, payment
 state, scoped schedule context, and issued portal-visible warranty documents.
+It may also show field evidence only when a contractor explicitly shares an
+eligible `execution_attachment` through `portal_evidence_grants`.
 
 It does not show:
 
@@ -55,15 +57,15 @@ It does not show:
 - Proof Center
 - Daily Job Log details
 - Job Notes
-- execution attachments or field photos
+- unshared execution attachments or field photos
 - internal blockers/readiness notes
 - contractor-only proof trails
 - service-ticket internal notes, labor, billing, or crew details
 - raw provider metadata or diagnostics
 
 Field proof remains richer on the contractor Project Workspace than in the
-portal. Customer-facing field evidence needs a future explicit visibility model
-before any file/photo sharing is added.
+portal. Customer-facing field evidence now requires an explicit active sharing
+grant and project-scoped portal access before selected files appear.
 
 ## Non-Goals
 
@@ -73,7 +75,9 @@ before any file/photo sharing is added.
 - no closeout package download route
 - no delivery proof mutation
 - no provider calls
-- no schema, migrations, storage policy changes, or auth changes
+- the closeout handoff itself still adds no schema, storage policy changes, or
+  auth changes; explicit evidence sharing now lives in the separate
+  `portal_evidence_grants` policy layer
 - no payment, signature, estimate, invoice, change-order, warranty, service, or
   schedule mutation
 - no portal service request workflow
@@ -83,9 +87,9 @@ before any file/photo sharing is added.
 Future closeout depth should wait for explicit product and security decisions
 around:
 
-- shared-file visibility and customer-safe file grants
+- broader shared-file visibility beyond selected execution attachments
 - stored package/version policy
 - delivery proof for generated closeout packages
 - portal-safe warranty/service status beyond warranty documents
 - service request intake without creating portal-only support records
-- customer-visible field evidence where specific files are intentionally shared
+- customer-visible package assembly from intentionally shared field evidence

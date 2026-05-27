@@ -76,6 +76,7 @@ export type DocumentDeliveryEventId = string;
 export type DailyLogId = string;
 export type FieldNoteId = string;
 export type ExecutionAttachmentId = string;
+export type PortalEvidenceGrantId = string;
 export type EstimateAttachmentId = string;
 export type PunchlistItemId = string;
 export type AppointmentId = string;
@@ -571,6 +572,8 @@ export type ExecutionAttachmentType = "photo" | "file";
 export type OpportunityAttachmentType = "photo" | "file";
 export type PortalAccessGrantStatus = "invited" | "active" | "revoked";
 export type PortalProjectAccessStatus = "active" | "revoked";
+export type PortalEvidenceGrantSubjectType = "execution_attachment";
+export type PortalEvidenceGrantStatus = "shared" | "revoked";
 export type PortalRecordViewSubjectType =
   | "project"
   | "estimate"
@@ -2778,6 +2781,23 @@ export interface PortalProjectAccess {
   portalAccessGrantId: PortalAccessGrantId;
   projectId: ProjectId;
   status: PortalProjectAccessStatus;
+  revokedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface PortalEvidenceGrant {
+  id: PortalEvidenceGrantId;
+  organizationId: OrganizationId;
+  projectId: ProjectId;
+  subjectType: PortalEvidenceGrantSubjectType;
+  subjectId: string;
+  status: PortalEvidenceGrantStatus;
+  titleOverride: string | null;
+  customerNote: string | null;
+  sharedByUserId: ProfileId | null;
+  sharedAt: string | null;
+  revokedByUserId: ProfileId | null;
   revokedAt: string | null;
   createdAt: string;
   updatedAt: string;

@@ -77,6 +77,12 @@ movement happened. This section is a read-model layer over existing records; it
 does not replace Proof Center, FieldTrail, CloseoutTrail, Daily Logs, Job Notes,
 or document print/save routes.
 
+Explicit Shared File Visibility + Portal Evidence Grants v1 now adds a narrow
+sharing policy layer for selected `execution_attachment` rows. Proof Center
+continues to stay contractor-facing and count/index proof from source records;
+the portal sees only items with active `portal_evidence_grants` rows and active
+project-scoped portal access.
+
 ## Proof Categories Implemented
 
 Proof Center groups real records into:
@@ -138,7 +144,7 @@ proof, receives no new storage behavior here, and stays contractor-only.
 - standalone Proof Center route
 - portal/customer field evidence exposure
 - destructive storage delete or storage policy changes
-- customer-facing field-evidence sharing
+- automatic customer-facing field-evidence sharing
 - warranty PDF generation
 - AI proof summaries
 - automated reminders
@@ -154,6 +160,9 @@ proof, receives no new storage behavior here, and stays contractor-only.
   shared-file visibility, stored package policy, and delivery-proof policy are
   approved. The current portal Closeout Handoff is read-only and customer-safe;
   it does not expose field evidence or generate a stored package.
+- The current explicit visibility layer supports selected execution attachments
+  only. Broader shared-file subjects, stored packages, delivery proof, and
+  customer acknowledgement remain future work.
 - Add richer warranty and service proof indexing after warranty/service portal
   depth is implemented.
 - Consider extracting Project Workspace summary panels if the route continues to

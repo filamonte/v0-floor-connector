@@ -180,6 +180,18 @@ Current operating-core surfaces include:
   Log details, Job Notes, execution attachments, provider diagnostics, service
   ticket internals, stored PDFs, portal-only records, schema, provider calls,
   payment/signature mutation, automation, or AI behavior.
+- Explicit Shared File Visibility + Portal Evidence Grants v1 adds
+  `portal_evidence_grants` plus
+  `apps/web/lib/portal-evidence-grants/*` as the first explicit sharing policy
+  layer for selected project evidence. The supported subject type is
+  `execution_attachment`; evidence remains internal by default, archived
+  evidence cannot be newly shared, owner/admin/manager users can share or revoke
+  eligible active evidence from Project Workspace, and Portal Project Workspace
+  shows only active explicitly shared evidence for projects already visible via
+  `portal_project_access`. Portal file access uses server-resolved short-lived
+  signed URLs without raw storage paths and does not expose FieldTrail, Proof
+  Center, Daily Log/Job Note internals, unshared evidence counts/details,
+  portal-only file copies, provider behavior, AI, or automation.
 - Full Operating Loop Demo Smoke on May 25, 2026 passed on a fresh local Next
   dev server with saved contractor and portal auth. The route loop loaded
   `/dashboard`, `/projects`, a Project Workspace with command/timeline signals,
