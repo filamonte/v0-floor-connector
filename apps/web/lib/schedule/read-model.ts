@@ -87,10 +87,37 @@ export type ScheduleBoardTimingGroup<TJob extends ScheduleBoardJobSource> = {
   jobs: TJob[];
 };
 
+export type ScheduleDispatchAttentionKind =
+  | "blocked_readiness"
+  | "past_scheduled"
+  | "missing_crew"
+  | "capacity_warning"
+  | "unscheduled_aging"
+  | "in_progress";
+
+export type ScheduleDispatchAttentionTone =
+  | "blocked"
+  | "warning"
+  | "ready"
+  | "neutral";
+
+export type ScheduleDispatchAttentionItem<TJob extends ScheduleBoardJobSource> =
+  {
+    id: string;
+    kind: ScheduleDispatchAttentionKind;
+    tone: ScheduleDispatchAttentionTone;
+    priority: number;
+    job: TJob;
+    label: string;
+    detail: string;
+  };
+
 export type ScheduleBoardReadModel<TJob extends ScheduleBoardJobSource> = {
   unscheduledReadyJobs: TJob[];
   unscheduledBlockedJobs: TJob[];
   overdueSchedulingJobs: TJob[];
+  agingUnscheduledReadyJobs: TJob[];
+  pastScheduledIncompleteJobs: TJob[];
   scheduledTodayJobs: TJob[];
   tomorrowJobs: TJob[];
   thisWeekJobs: TJob[];
@@ -104,6 +131,8 @@ export type ScheduleBoardReadModel<TJob extends ScheduleBoardJobSource> = {
   activeTodayJobs: TJob[];
   scheduledJobs: TJob[];
   latestScheduledJobs: TJob[];
+  capacityWarningJobs: TJob[];
+  dispatchAttentionItems: ScheduleDispatchAttentionItem<TJob>[];
   needsReadinessReviewJobs: TJob[];
   readinessReviewJobs: TJob[];
   timingGroups: ScheduleBoardTimingGroup<TJob>[];
@@ -203,6 +232,138 @@ function sortByUpdatedAtDesc<TJob extends ScheduleBoardJobSource>(
   );
 }
 
+function getWarningsForJob(
+  warningSummariesByJobId: Map<string, ScheduleWarningSummary[]>,
+  jobId: string
+) {
+  return warningSummariesByJobId.get(jobId) ?? [];
+}
+
+function buildDispatchAttentionItems<
+  TJob extends ScheduleBoardJobSource
+>(input: {
+  todayDateKey: string;
+  unscheduledReadyJobs: TJob[];
+  unscheduledBlockedJobs: TJob[];
+  pastScheduledIncompleteJobs: TJob[];
+  crewAssignmentGaps: TJob[];
+  capacityWarningJobs: TJob[];
+  inProgressJobs: TJob[];
+  warningSummariesByJobId: Map<string, ScheduleWarningSummary[]>;
+}): ScheduleDispatchAttentionItem<TJob>[] {
+  const items: ScheduleDispatchAttentionItem<TJob>[] = [];
+  const seen = new Set<string>();
+
+  const addItem = (item: ScheduleDispatchAttentionItem<TJob>) => {
+    const key = `${item.kind}:${item.job.id}`;
+
+    if (seen.has(key)) {
+      return;
+    }
+
+    seen.add(key);
+    items.push(item);
+  };
+
+  for (const job of input.unscheduledBlockedJobs) {
+    addItem({
+      id: `blocked-readiness:${job.id}`,
+      kind: "blocked_readiness",
+      tone: "blocked",
+      priority: 10,
+      job,
+      label: "Readiness blocker",
+      detail:
+        "Job exists, but project readiness says scheduling should wait for upstream resolution."
+    });
+  }
+
+  for (const job of input.pastScheduledIncompleteJobs) {
+    addItem({
+      id: `past-scheduled:${job.id}`,
+      kind: "past_scheduled",
+      tone: "blocked",
+      priority: 20,
+      job,
+      label: "Past scheduled",
+      detail: "Scheduled date is in the past and the job is not completed."
+    });
+  }
+
+  for (const job of input.crewAssignmentGaps) {
+    addItem({
+      id: `missing-crew:${job.id}`,
+      kind: "missing_crew",
+      tone: "warning",
+      priority: job.scheduledDate === input.todayDateKey ? 30 : 40,
+      job,
+      label: "Missing crew",
+      detail:
+        "Scheduled or active job has no person or labor-provider assignment."
+    });
+  }
+
+  for (const job of input.capacityWarningJobs) {
+    const warnings = getWarningsForJob(input.warningSummariesByJobId, job.id);
+    const warning = warnings.find(
+      (summary) =>
+        summary.kind === "overlap" || summary.kind === "same_day_capacity"
+    );
+
+    addItem({
+      id: `capacity-warning:${job.id}`,
+      kind: "capacity_warning",
+      tone: "warning",
+      priority: warning?.kind === "overlap" ? 35 : 45,
+      job,
+      label:
+        warning?.kind === "overlap" ? "Crew overlap" : "Same-day crew load",
+      detail:
+        warning?.detail ??
+        "Crew appears on more than one scheduled job for the same day."
+    });
+  }
+
+  for (const job of input.unscheduledReadyJobs) {
+    if (job.updatedAt.slice(0, 10) >= input.todayDateKey) {
+      continue;
+    }
+
+    addItem({
+      id: `unscheduled-aging:${job.id}`,
+      kind: "unscheduled_aging",
+      tone: "ready",
+      priority: 50,
+      job,
+      label: "Ready queue aging",
+      detail: "Ready-to-schedule job has been waiting since before today."
+    });
+  }
+
+  for (const job of input.inProgressJobs) {
+    addItem({
+      id: `in-progress:${job.id}`,
+      kind: "in_progress",
+      tone: "neutral",
+      priority: 70,
+      job,
+      label: "In progress",
+      detail:
+        "Field execution is active; keep schedule and daily-log continuity visible."
+    });
+  }
+
+  return items.sort((left, right) => {
+    const priorityComparison = left.priority - right.priority;
+
+    if (priorityComparison !== 0) {
+      return priorityComparison;
+    }
+
+    return getScheduledSortTime(left.job) - getScheduledSortTime(right.job);
+  });
+}
+
 export function buildScheduleBoardReadModel<
   TJob extends ScheduleBoardJobSource
 >(input: {
@@ -230,6 +391,12 @@ export function buildScheduleBoardReadModel<
       .filter((summary) => summary.warnings.length > 0)
       .map((summary) => summary.jobId)
   );
+  const warningSummariesByJobId = new Map(
+    (input.warningSummaries ?? []).map((summary) => [
+      summary.jobId,
+      summary.warnings
+    ])
+  );
   const readinessByProjectId = new Map(
     [...(input.readinessByProjectId?.entries() ?? [])].filter(
       (entry): entry is [string, { isReadyToSchedule: boolean }] =>
@@ -253,8 +420,20 @@ export function buildScheduleBoardReadModel<
   const overdueSchedulingJobs = unscheduledReadyJobs.filter(
     (job) => job.updatedAt.slice(0, 10) < todayDateKey
   );
+  const agingUnscheduledReadyJobs = overdueSchedulingJobs;
   const scheduledTodayJobs = sortBySchedule(
     input.jobs.filter((job) => job.scheduledDate === todayDateKey)
+  );
+  const pastScheduledIncompleteJobs = sortBySchedule(
+    input.jobs.filter((job) => {
+      const scheduledDate = parseDateKey(job.scheduledDate);
+
+      return (
+        scheduledDate !== null &&
+        scheduledDate < today &&
+        job.dispatchStatus !== "completed"
+      );
+    })
   );
   const inProgressJobs = sortBySchedule(
     input.jobs.filter((job) => job.dispatchStatus === "in_progress")
@@ -308,6 +487,24 @@ export function buildScheduleBoardReadModel<
   const latestScheduledJobs = sortBySchedule(scheduledJobs)
     .reverse()
     .slice(0, input.latestScheduledLimit ?? 3);
+  const capacityWarningJobs = sortBySchedule(
+    input.jobs.filter((job) =>
+      getWarningsForJob(warningSummariesByJobId, job.id).some(
+        (warning) =>
+          warning.kind === "overlap" || warning.kind === "same_day_capacity"
+      )
+    )
+  );
+  const dispatchAttentionItems = buildDispatchAttentionItems({
+    todayDateKey,
+    unscheduledReadyJobs,
+    unscheduledBlockedJobs,
+    pastScheduledIncompleteJobs,
+    crewAssignmentGaps,
+    capacityWarningJobs,
+    inProgressJobs,
+    warningSummariesByJobId
+  });
   const scheduledJobsByDate = new Map<string, TJob[]>();
 
   for (const job of sortBySchedule(scheduledJobs)) {
@@ -369,6 +566,8 @@ export function buildScheduleBoardReadModel<
     unscheduledReadyJobs,
     unscheduledBlockedJobs,
     overdueSchedulingJobs,
+    agingUnscheduledReadyJobs,
+    pastScheduledIncompleteJobs,
     scheduledTodayJobs,
     tomorrowJobs,
     thisWeekJobs,
@@ -382,6 +581,8 @@ export function buildScheduleBoardReadModel<
     activeTodayJobs,
     scheduledJobs,
     latestScheduledJobs,
+    capacityWarningJobs,
+    dispatchAttentionItems,
     needsReadinessReviewJobs,
     readinessReviewJobs: needsReadinessReviewJobs,
     scheduledJobsByDate,

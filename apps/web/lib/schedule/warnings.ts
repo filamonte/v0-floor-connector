@@ -3,7 +3,8 @@ import type { JobStatus } from "@floorconnector/types";
 export type ScheduleWarningKind =
   | "missing_crew"
   | "missing_end_time"
-  | "overlap";
+  | "overlap"
+  | "same_day_capacity";
 
 export type ScheduleWarningAssignment = {
   personId: string | null;
@@ -119,6 +120,10 @@ function hasOverlap(
   );
 }
 
+function hasComparableScheduleWindow(job: ScheduledJobWithResources) {
+  return job.startTime !== null && job.endTime !== null;
+}
+
 export function deriveScheduleWarningSummaries(jobs: ScheduleWarningJob[]) {
   const warningsByJobId = new Map<string, ScheduleWarningSummary[]>();
   const scheduledJobs = jobs
@@ -165,10 +170,7 @@ export function deriveScheduleWarningSummaries(jobs: ScheduleWarningJob[]) {
     ) {
       const rightJob = scheduledJobs[rightIndex];
 
-      if (
-        leftJob.scheduledDate !== rightJob.scheduledDate ||
-        !hasOverlap(leftJob, rightJob)
-      ) {
+      if (leftJob.scheduledDate !== rightJob.scheduledDate) {
         continue;
       }
 
@@ -187,22 +189,48 @@ export function deriveScheduleWarningSummaries(jobs: ScheduleWarningJob[]) {
         .map((resource) => resource.label)
         .join(", ");
 
-      addWarning(warningsByJobId, {
-        id: `${leftJob.id}:overlap:${rightJob.id}`,
-        jobId: leftJob.id,
-        kind: "overlap",
-        label: "Schedule overlap",
-        detail: `${sharedCrewLabel} also appears on ${rightJob.title} during this time window.`,
-        relatedJobIds: [rightJob.id]
-      });
-      addWarning(warningsByJobId, {
-        id: `${rightJob.id}:overlap:${leftJob.id}`,
-        jobId: rightJob.id,
-        kind: "overlap",
-        label: "Schedule overlap",
-        detail: `${sharedCrewLabel} also appears on ${leftJob.title} during this time window.`,
-        relatedJobIds: [leftJob.id]
-      });
+      if (hasOverlap(leftJob, rightJob)) {
+        addWarning(warningsByJobId, {
+          id: `${leftJob.id}:overlap:${rightJob.id}`,
+          jobId: leftJob.id,
+          kind: "overlap",
+          label: "Schedule overlap",
+          detail: `${sharedCrewLabel} also appears on ${rightJob.title} during this time window.`,
+          relatedJobIds: [rightJob.id]
+        });
+        addWarning(warningsByJobId, {
+          id: `${rightJob.id}:overlap:${leftJob.id}`,
+          jobId: rightJob.id,
+          kind: "overlap",
+          label: "Schedule overlap",
+          detail: `${sharedCrewLabel} also appears on ${leftJob.title} during this time window.`,
+          relatedJobIds: [leftJob.id]
+        });
+
+        continue;
+      }
+
+      if (
+        !hasComparableScheduleWindow(leftJob) ||
+        !hasComparableScheduleWindow(rightJob)
+      ) {
+        addWarning(warningsByJobId, {
+          id: `${leftJob.id}:same-day-capacity:${rightJob.id}`,
+          jobId: leftJob.id,
+          kind: "same_day_capacity",
+          label: "Same-day capacity",
+          detail: `${sharedCrewLabel} is also assigned to ${rightJob.title} on this date. Confirm timing and travel manually.`,
+          relatedJobIds: [rightJob.id]
+        });
+        addWarning(warningsByJobId, {
+          id: `${rightJob.id}:same-day-capacity:${leftJob.id}`,
+          jobId: rightJob.id,
+          kind: "same_day_capacity",
+          label: "Same-day capacity",
+          detail: `${sharedCrewLabel} is also assigned to ${leftJob.title} on this date. Confirm timing and travel manually.`,
+          relatedJobIds: [leftJob.id]
+        });
+      }
     }
   }
 

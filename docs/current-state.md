@@ -712,6 +712,7 @@ Current shell behavior:
 - CrewBoard Phase 3B-B adds pointer drag/drop preview with `@dnd-kit/core` as a progressive enhancement on `/schedule`: dragging a job card to a CrewBoard date or time-bucket target prepares the existing Move schedule confirmation flow through URL-backed proposed-move state. Dropping does not save, call a server action, or mutate schedule data; confirmation still runs through the existing schedule action and Ready Check / GateKeeper enforcement. Manual Move schedule controls remain the fallback. This does not add schema, migrations, route paths, dispatch tables, new schedule write paths, route optimization, calendar sync, notifications, automation, auth/RLS changes, tenant-boundary changes, payment/signature behavior, estimate math, invoice math, portal grants, settings behavior, or platform-admin behavior.
 - Scheduling Board Depth v2 deepens `/schedule` as a daily/weekly operating board on the same canonical job/job-assignment foundation. The reusable read model now separates Today, Tomorrow, This week, Later scheduled, Ready to schedule, Needs readiness review, Missing Crew, In progress, and recently done lanes; `/schedule` surfaces clearer readiness badges, crew-assignment copy, project/job links, and mobile-wrapping action hierarchy while preserving the existing selected-job action panel and confirmation-first Move schedule flow. It does not add schema, migrations, dispatch tables, duplicate schedule records, new server actions, route optimization, autonomous scheduling, external calendar sync, notifications, provider integrations, fake/demo data, Project Command Timeline mutation, payment/signature/document mutation, or new readiness enforcement.
 - Scheduling Board v1 maturity now makes CrewBoard readiness-aware without creating a dispatch subsystem. `/schedule` loads existing project commercial readiness snapshots for visible jobs, separates ready unscheduled jobs from blocked/not-ready unscheduled jobs, adds blocked and overdue-scheduling metrics, shows blocker indicators linking back to the canonical estimate, contract, deposit invoice, opportunity/site assessment, or Project Workspace where possible, and keeps Daily Job Log, missing-crew, warning, project, and job handoffs on the same board cards and selected-job panel. Scheduling and crew mutations still use the existing canonical job and `job_assignments` actions with Ready Check / GateKeeper server enforcement.
+- Scheduling + Dispatch v1 adds an ordered Attention Desk to `/schedule` from the same reusable read model. It prioritizes readiness-blocked jobs, past scheduled jobs not completed, scheduled or active jobs missing crew, crew overlap or same-day capacity warnings, aging ready-to-schedule jobs, and in-progress jobs. Same-day capacity warnings are derived from existing `jobs`, `job_assignments`, people, and vendor assignments when a shared crew resource appears on multiple jobs for the same date and timing is not precise enough to prove a clean window. These signals are advisory and link back to existing Job Workspace, Project Workspace, schedule, and crew-assignment actions; they do not create dispatch records, capacity tables, route optimization, map integrations, notifications, automation, portal schedule promises, new server actions, schema, migrations, or new readiness enforcement.
 - schedule views can filter between all items, jobs, and appointments, and appointment entries link to appointment detail plus lead/customer/project context where present
 - dashboard appointment visibility now uses the existing `people.membership_user_id` linkage to show `My upcoming appointments` when the current user has an active person record, with a safe company-upcoming fallback when that mapping is unavailable or has no assigned upcoming appointments
 - dashboard now includes an internal lead follow-up queue derived from canonical `opportunities.next_follow_up_at`, recent opportunity communication thread timestamps, and existing lead status; it prioritizes overdue and due-today follow-ups without sending reminders or creating a task/reminder table
@@ -2640,15 +2641,18 @@ Implemented UI behavior now:
 - `/schedule` now presents as CrewBoard on the existing route. CrewBoard uses
   canonical jobs, appointments, job assignments, people, vendors, projects, and
   customers for scheduling visibility, URL-backed date/layout context,
-  advisory schedule warnings, daily/weekly readiness grouping, and project/job
-  handoffs. The selected-job panel
-  now includes a confirmation-first `Move schedule` flow backed by pure move
-  summary helpers and the existing schedule action, so keyboard/manual movement
-  is available before pointer drag/drop. Phase 3B-A also adds proposed-move
-  target helpers, URL-backed prepared move state, inert drop-target metadata on
-  board sections, and a compact `Prepare move` preview that fills the same
-  `Move schedule` form. It does not implement drag/drop scheduling, automated
-  dispatch, route optimization, notifications, external calendar sync, or new
+  advisory schedule warnings, daily/weekly readiness grouping, a dispatch
+  Attention Desk, and project/job handoffs. The selected-job panel now includes
+  a confirmation-first `Move schedule` flow backed by pure move summary helpers
+  and the existing schedule action, so keyboard/manual movement is available
+  before pointer drag/drop. The reusable schedule read model now also orders
+  readiness-blocked jobs, past scheduled incomplete jobs, missing-crew jobs,
+  same-day capacity or overlap warnings, aging ready jobs, and in-progress jobs
+  for dispatch review. Phase 3B-A also adds proposed-move target helpers,
+  URL-backed prepared move state, inert drop-target metadata on board sections,
+  and a compact `Prepare move` preview that fills the same `Move schedule`
+  form. It does not implement automated dispatch, route optimization,
+  notifications, external calendar sync, portal schedule sharing, or new
   schedule/dispatch records.
 - `/reports` now includes Reports Phase 1, a read-only operations and
   collections visibility workspace over existing projects, jobs, schedule

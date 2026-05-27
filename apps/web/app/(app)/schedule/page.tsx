@@ -43,6 +43,7 @@ import {
 import {
   buildScheduleBoardReadModel,
   buildScheduleItems,
+  type ScheduleDispatchAttentionTone,
   type ScheduleItem
 } from "@/lib/schedule/read-model";
 import {
@@ -1001,6 +1002,21 @@ function getIndicatorClassName(tone: ScheduleOperationalIndicator["tone"]) {
   }
 }
 
+function getDispatchAttentionToneClassName(
+  tone: ScheduleDispatchAttentionTone
+) {
+  switch (tone) {
+    case "blocked":
+      return "border-rose-200 bg-rose-50 text-rose-700";
+    case "warning":
+      return "border-amber-200 bg-amber-50 text-amber-800";
+    case "ready":
+      return "border-emerald-200 bg-emerald-50 text-emerald-700";
+    default:
+      return "border-[var(--border-warm)] bg-white text-[var(--text-secondary)]";
+  }
+}
+
 function buildScheduleOperationalIndicators(input: {
   job: {
     id: string;
@@ -1632,6 +1648,10 @@ export default async function SchedulePage({
   const needsReadinessReviewJobs = scheduleBoard.needsReadinessReviewJobs;
   const recentlyCompletedJobs = scheduleBoard.recentlyCompletedJobs;
   const todayWithoutCrewJobs = scheduleBoard.todayWithoutCrewJobs;
+  const pastScheduledIncompleteJobs = scheduleBoard.pastScheduledIncompleteJobs;
+  const capacityWarningJobs = scheduleBoard.capacityWarningJobs;
+  const agingUnscheduledReadyJobs = scheduleBoard.agingUnscheduledReadyJobs;
+  const dispatchAttentionItems = scheduleBoard.dispatchAttentionItems;
   const activeTodayJobs = scheduleBoard.activeTodayJobs;
   const scheduledJobs = scheduleBoard.scheduledJobs;
   const scheduledAppointments = appointments.filter(
@@ -2490,6 +2510,50 @@ export default async function SchedulePage({
       empty: todayWithoutCrewJobs.length === 0
     },
     {
+      key: "past-scheduled",
+      eyebrow: "Past scheduled",
+      title: getActionDescription(
+        pastScheduledIncompleteJobs.length,
+        "1 scheduled job is past due and not completed.",
+        `${pastScheduledIncompleteJobs.length} scheduled jobs are past due and not completed.`
+      ),
+      description:
+        "Confirm whether the work needs status update, reschedule, crew review, or project follow-through before it disappears into the calendar.",
+      href: buildScheduleHref({
+        q: query,
+        projectId: projectFilterId ?? undefined,
+        view: "scheduled",
+        crew: crewFilter,
+        layout: scheduleLayout,
+        date: plannerDateKey
+      }),
+      ctaLabel: "Review past work",
+      jobs: pastScheduledIncompleteJobs.slice(0, 2),
+      empty: pastScheduledIncompleteJobs.length === 0
+    },
+    {
+      key: "capacity-review",
+      eyebrow: "Capacity review",
+      title: getActionDescription(
+        capacityWarningJobs.length,
+        "1 job has crew capacity or overlap warnings.",
+        `${capacityWarningJobs.length} jobs have crew capacity or overlap warnings.`
+      ),
+      description:
+        "These warnings are advisory only. Confirm same-day crew load, timing, and travel manually before committing the field plan.",
+      href: buildScheduleHref({
+        q: query,
+        projectId: projectFilterId ?? undefined,
+        view: "scheduled",
+        crew: crewFilter,
+        layout: scheduleLayout,
+        date: plannerDateKey
+      }),
+      ctaLabel: "Review capacity",
+      jobs: capacityWarningJobs.slice(0, 2),
+      empty: capacityWarningJobs.length === 0
+    },
+    {
       key: "blocked-unscheduled",
       eyebrow: "Blocked handoffs",
       title: getActionDescription(
@@ -2919,6 +2983,119 @@ export default async function SchedulePage({
 
           <section className={schedulePanelClassName}>
             <div className={schedulePanelHeaderClassName}>
+              <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                <div className="min-w-0">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
+                    Dispatch priority
+                  </p>
+                  <h2 className="mt-1 text-lg font-semibold tracking-tight text-[var(--text-primary)]">
+                    Attention desk
+                  </h2>
+                  <p className="mt-1 text-sm leading-6 text-[var(--text-secondary)]">
+                    A single ordered queue for readiness blockers, past-due
+                    scheduled work, missing crew, same-day crew load, aging
+                    ready jobs, and active execution.
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-2 lg:justify-end">
+                  <span className="inline-flex items-center rounded-full border border-rose-200 bg-rose-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-rose-700">
+                    {pastScheduledIncompleteJobs.length} past scheduled
+                  </span>
+                  <span className="inline-flex items-center rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-amber-800">
+                    {capacityWarningJobs.length} capacity
+                  </span>
+                  <span className="inline-flex items-center rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-emerald-700">
+                    {agingUnscheduledReadyJobs.length} aging ready
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {dispatchAttentionItems.length > 0 ? (
+              <div className="divide-y divide-[var(--border-warm)]">
+                {dispatchAttentionItems.slice(0, 8).map((item) => {
+                  const primaryAction = getPrimaryScheduleAction(item.job);
+
+                  return (
+                    <div key={item.id} className="px-5 py-4 sm:px-6">
+                      <div className="grid gap-4 lg:grid-cols-[180px_minmax(0,1fr)_220px] lg:items-start">
+                        <div>
+                          <span
+                            className={[
+                              "inline-flex items-center rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em]",
+                              getDispatchAttentionToneClassName(item.tone)
+                            ].join(" ")}
+                          >
+                            {item.label}
+                          </span>
+                          <p className="mt-2 text-xs font-semibold uppercase tracking-[0.14em] text-[var(--text-tertiary)]">
+                            Priority {item.priority}
+                          </p>
+                        </div>
+
+                        <div className="min-w-0">
+                          <Link
+                            href={`/jobs/${item.job.id}`}
+                            className="text-base font-semibold text-[var(--text-primary)] transition hover:text-[var(--copper)]"
+                          >
+                            {getScheduleJobTitle(item.job)}
+                          </Link>
+                          <p className="mt-1 text-sm leading-6 text-[var(--text-secondary)]">
+                            {item.job.customer?.name ?? "Unknown customer"} ·{" "}
+                            {item.job.project?.name ?? "Project"} ·{" "}
+                            {formatDate(item.job.scheduledDate)}
+                          </p>
+                          <p className="mt-2 text-sm leading-6 text-[var(--text-secondary)]">
+                            {item.detail}
+                          </p>
+                        </div>
+
+                        <div className="flex flex-wrap gap-2 lg:justify-end">
+                          <Link
+                            href={
+                              buildCurrentScheduleHref({
+                                action: primaryAction.action,
+                                jobId: item.job.id
+                              }) + "#schedule-action"
+                            }
+                            className={[
+                              "inline-flex items-center rounded-[4px] border px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] transition",
+                              primaryAction.toneClass
+                            ].join(" ")}
+                          >
+                            {primaryAction.label}
+                          </Link>
+                          <Link
+                            href={`/projects/${item.job.projectId}`}
+                            className={scheduleCompactLinkClassName}
+                          >
+                            Project Workspace
+                          </Link>
+                          <Link
+                            href={`/jobs/${item.job.id}`}
+                            className={scheduleCompactLinkClassName}
+                          >
+                            Job Workspace
+                          </Link>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="px-6 py-8 sm:px-8">
+                <AppEmptyState
+                  eyebrow="No dispatch attention"
+                  title="No priority dispatch items found."
+                  description="CrewBoard did not find readiness blockers, past scheduled jobs, missing crew, capacity warnings, aging ready jobs, or active work requiring special attention."
+                />
+              </div>
+            )}
+          </section>
+
+          <section className={schedulePanelClassName}>
+            <div className={schedulePanelHeaderClassName}>
               <div className="flex items-center justify-between gap-4">
                 <div>
                   <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
@@ -3155,6 +3332,31 @@ export default async function SchedulePage({
               })}
               emptyTitle="No jobs need scheduling right now."
               emptyDescription="Jobs surface here after the Project Workspace clears the Ready Check and a job exists without timing."
+            />
+
+            <ManagerDashboardCard
+              eyebrow="Queue age"
+              title="Aging ready jobs"
+              description="Ready-to-schedule jobs that have waited since before today stay visible so dispatch can commit timing or reopen project context."
+              actionHref={buildCurrentScheduleHref({ view: "unscheduled" })}
+              actionLabel="Review aging"
+              items={agingUnscheduledReadyJobs.slice(0, 4).map((job) => {
+                const primaryAction = getPrimaryScheduleAction(job);
+
+                return {
+                  href: buildCurrentScheduleHref({
+                    action: primaryAction.action,
+                    jobId: job.id
+                  }),
+                  title: getScheduleJobTitle(job),
+                  subtitle: getScheduleJobSubtitle(job),
+                  meta: `Waiting since ${formatDate(job.updatedAt.slice(0, 10))}`,
+                  badge: "Aging ready",
+                  trailing: primaryAction.label
+                };
+              })}
+              emptyTitle="No aging ready jobs."
+              emptyDescription="Ready unscheduled jobs updated today stay out of this queue until they need dispatch follow-up."
             />
 
             <ManagerDashboardCard

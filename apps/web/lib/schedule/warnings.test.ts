@@ -68,6 +68,56 @@ void test("schedule warnings flag overlapping work for the same person", () => {
   assert.match(summaries[0].warnings[0].detail, /Jordan Crew/);
 });
 
+void test("schedule warnings flag same-day crew load when timing is incomplete", () => {
+  const summaries = deriveScheduleWarningSummaries([
+    {
+      ...baseJob,
+      scheduledStartAt: "2026-05-21T08:00:00.000Z",
+      scheduledEndAt: null
+    },
+    {
+      ...baseJob,
+      id: "33333333-3333-4333-8333-333333333333",
+      title: "Garage coating",
+      scheduledStartAt: "2026-05-21T14:00:00.000Z",
+      scheduledEndAt: "2026-05-21T16:00:00.000Z"
+    }
+  ]);
+
+  assert.equal(summaries.length, 2);
+  assert.equal(
+    summaries[0].warnings.some(
+      (warning) => warning.kind === "same_day_capacity"
+    ),
+    true
+  );
+  assert.match(
+    summaries[0].warnings.find(
+      (warning) => warning.kind === "same_day_capacity"
+    )?.detail ?? "",
+    /Confirm timing and travel manually/
+  );
+});
+
+void test("schedule warnings do not flag same-day load when windows do not overlap", () => {
+  const warningsByJobId = buildScheduleWarningsByJobId([
+    {
+      ...baseJob,
+      scheduledStartAt: "2026-05-21T08:00:00.000Z",
+      scheduledEndAt: "2026-05-21T10:00:00.000Z"
+    },
+    {
+      ...baseJob,
+      id: "33333333-3333-4333-8333-333333333333",
+      title: "Garage coating",
+      scheduledStartAt: "2026-05-21T14:00:00.000Z",
+      scheduledEndAt: "2026-05-21T16:00:00.000Z"
+    }
+  ]);
+
+  assert.equal(warningsByJobId.size, 0);
+});
+
 void test("schedule warnings do not flag different crews or completed jobs", () => {
   const warningsByJobId = buildScheduleWarningsByJobId([
     baseJob,

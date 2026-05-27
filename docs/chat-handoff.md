@@ -410,6 +410,13 @@ file` actions without exposing raw storage paths. This remains contractor-only
   instead of hiding them, links the first blocker to the canonical source record
   where possible, and keeps date/crew changes on the existing schedule and
   assignment action paths.
+- Scheduling + Dispatch v1 extends the same read model and `/schedule` UI with
+  an ordered dispatch Attention Desk for readiness-blocked jobs, past scheduled
+  incomplete jobs, missing crew, crew overlap or same-day capacity warnings,
+  aging ready-to-schedule jobs, and in-progress jobs. Same-day capacity warnings
+  come from existing job assignment people/vendors and remain advisory only.
+  The slice adds no dispatch model, schema, route optimization, map integration,
+  notification automation, portal sharing, or new schedule write path.
 - Scheduling Board Depth v2 post-commit smoke on May 25, 2026 loaded
   `/schedule` on desktop and 390px mobile with saved contractor auth, opened a
   canonical Job Workspace, opened the linked Project Workspace, and opened the

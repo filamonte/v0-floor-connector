@@ -440,3 +440,105 @@ void test("schedule board read model separates blocked unscheduled jobs from rea
     [blockedUnscheduled.id]
   );
 });
+
+void test("schedule board read model orders dispatch attention signals", () => {
+  const blockedUnscheduled = {
+    ...baseJob,
+    id: "11111111-bbbb-4bbb-8bbb-111111111111",
+    dispatchStatus: "unscheduled" as const,
+    projectId: "project-blocked",
+    scheduledDate: null,
+    scheduledStartAt: null,
+    scheduledEndAt: null,
+    updatedAt: "2026-05-07T12:00:00.000Z"
+  };
+  const pastScheduled = {
+    ...baseJob,
+    id: "22222222-bbbb-4bbb-8bbb-222222222222",
+    dispatchStatus: "scheduled" as const,
+    scheduledDate: "2026-05-06",
+    scheduledStartAt: "2026-05-06T08:00:00.000Z",
+    assignmentCount: 1,
+    crewSummary: ["Jordan Crew"]
+  };
+  const todayMissingCrew = {
+    ...baseJob,
+    id: "33333333-bbbb-4bbb-8bbb-333333333333",
+    dispatchStatus: "scheduled" as const,
+    scheduledDate: "2026-05-08",
+    scheduledStartAt: "2026-05-08T09:00:00.000Z",
+    assignmentCount: 0,
+    assignments: [],
+    crewSummary: []
+  };
+  const capacityWarning = {
+    ...baseJob,
+    id: "44444444-bbbb-4bbb-8bbb-444444444444",
+    dispatchStatus: "scheduled" as const,
+    scheduledDate: "2026-05-09",
+    scheduledStartAt: "2026-05-09T09:00:00.000Z",
+    assignmentCount: 1,
+    crewSummary: ["Jordan Crew"]
+  };
+  const agingReady = {
+    ...baseJob,
+    id: "55555555-bbbb-4bbb-8bbb-555555555555",
+    dispatchStatus: "unscheduled" as const,
+    scheduledDate: null,
+    scheduledStartAt: null,
+    scheduledEndAt: null,
+    updatedAt: "2026-05-06T12:00:00.000Z"
+  };
+
+  const board = buildScheduleBoardReadModel({
+    jobs: [
+      agingReady,
+      capacityWarning,
+      todayMissingCrew,
+      pastScheduled,
+      blockedUnscheduled
+    ],
+    today: new Date(2026, 4, 8),
+    readinessByProjectId: new Map([
+      ["project-blocked", { isReadyToSchedule: false }]
+    ]),
+    warningSummaries: [
+      {
+        jobId: capacityWarning.id,
+        warnings: [
+          {
+            id: `${capacityWarning.id}:same-day-capacity`,
+            jobId: capacityWarning.id,
+            kind: "same_day_capacity",
+            label: "Same-day capacity",
+            detail: "Jordan Crew is also assigned to another job.",
+            relatedJobIds: []
+          }
+        ]
+      }
+    ]
+  });
+
+  assert.deepEqual(
+    board.dispatchAttentionItems.map((item) => item.kind),
+    [
+      "blocked_readiness",
+      "past_scheduled",
+      "missing_crew",
+      "capacity_warning",
+      "unscheduled_aging"
+    ]
+  );
+  assert.deepEqual(
+    board.pastScheduledIncompleteJobs.map((job) => job.id),
+    [pastScheduled.id]
+  );
+  assert.deepEqual(
+    board.capacityWarningJobs.map((job) => job.id),
+    [capacityWarning.id]
+  );
+  assert.deepEqual(
+    board.agingUnscheduledReadyJobs.map((job) => job.id),
+    [agingReady.id]
+  );
+});
