@@ -25,6 +25,9 @@ const migrationPath = repoPath(
 const deliveryEventsMigrationPath = repoPath(
   "supabase/migrations/20260527173000_portal_evidence_delivery_events.sql"
 );
+const deliveryEventsHardeningMigrationPath = repoPath(
+  "supabase/migrations/20260527174500_harden_portal_evidence_delivery_event_functions.sql"
+);
 
 const baseAttachment = {
   id: "attachment-1",
@@ -262,6 +265,25 @@ void test("portal evidence delivery migration creates append-only proof events",
   assert.doesNotMatch(migration, /for update/i);
   assert.doesNotMatch(migration, /for delete/i);
   assert.doesNotMatch(migration, /storage_path\s/);
+});
+
+void test("portal evidence delivery hardening migration locks trigger functions", () => {
+  const migration = readFileSync(deliveryEventsHardeningMigrationPath, "utf8");
+
+  assert.match(
+    migration,
+    /alter function public\.prevent_portal_evidence_delivery_event_mutation\(\)\s+set search_path = public/i
+  );
+  assert.match(
+    migration,
+    /revoke execute on function public\.validate_portal_evidence_delivery_event\(\)\s+from public, anon, authenticated/i
+  );
+  assert.match(
+    migration,
+    /revoke execute on function public\.prevent_portal_evidence_delivery_event_mutation\(\)\s+from public, anon, authenticated/i
+  );
+  assert.doesNotMatch(migration, /grant execute/i);
+  assert.doesNotMatch(migration, /alter table/i);
 });
 
 void test("portal evidence grants migration keeps sharing scoped and revocable", () => {
