@@ -114,6 +114,18 @@ interpretation and draft preparation. This is presentation-only over existing
 read models and routes, with no schema, migrations, provider calls, autonomous
 actions, fake/demo data, duplicate activity storage, or payment, signature,
 job, invoice, or document mutation.
+Project Workspace Maturity v2 adds a shared operational workspace summary in
+[apps/web/lib/projects/operational-workspace.ts](C:/FloorConnector/apps/web/lib/projects/operational-workspace.ts).
+The Project Workspace now shows one derived Operational Intelligence section
+for high-signal attention, financial continuity, dispatch/schedule continuity,
+execution continuity, and change-order impact. The helper derives contract
+value, approved change-order impact, invoiced amount, paid amount, outstanding
+balance, overdue exposure, unpaid deposits, retainage held, progress-billing
+exposure, ready-unscheduled jobs, missing crew, latest Daily Log, open field
+blockers, and open change-order review from existing project-linked records.
+It does not create a project-financial subsystem, schedule model, field model,
+portal copy, activity table, fake records, schema, migrations, provider calls,
+autonomous actions, or payment/signature/job/invoice/field-note mutation.
 Accounts Receivable now also uses a deterministic Collections Follow-Up
 Intelligence helper over canonical invoices, payments, and Payment Trail events
 to categorize overdue invoices, unpaid deposits, sent-unpaid balances,

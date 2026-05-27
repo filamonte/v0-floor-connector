@@ -118,6 +118,11 @@ import { updateProjectAction } from "@/lib/projects/actions";
 import { buildProjectCues, type ProjectCue } from "@/lib/projects/cues";
 import { getProjectById } from "@/lib/projects/data";
 import {
+  deriveProjectOperationalWorkspaceSummary,
+  type ProjectOperationalSeverity,
+  type ProjectOperationalWorkspaceSummary
+} from "@/lib/projects/operational-workspace";
+import {
   deriveProjectCommandTimeline,
   type ProjectCommandTimeline,
   type ProjectCommandTimelineItem,
@@ -1944,6 +1949,243 @@ function ProjectReadinessBlockersPanel({
           canonical job and schedule chain.
         </div>
       )}
+    </section>
+  );
+}
+
+function getOperationalSeverityClassName(severity: ProjectOperationalSeverity) {
+  switch (severity) {
+    case "critical":
+      return "border-rose-200 bg-rose-50 text-rose-950";
+    case "warning":
+      return "border-amber-200 bg-amber-50 text-amber-950";
+    case "ready":
+      return "border-emerald-200 bg-emerald-50 text-emerald-950";
+    default:
+      return "border-[var(--border-warm)] bg-white text-[var(--text-secondary)]";
+  }
+}
+
+function ProjectOperationalIntelligenceSection({
+  summary
+}: {
+  summary: ProjectOperationalWorkspaceSummary;
+}) {
+  const hasAttention = summary.attentionSignals.length > 0;
+  const financeFacts = [
+    {
+      label: "Contract value",
+      value: formatMoney(summary.financial.contractValue),
+      detail: "Approved estimate value"
+    },
+    {
+      label: "Approved CO impact",
+      value: formatMoney(summary.financial.approvedChangeOrderImpact),
+      detail: `${summary.changeOrders.openReviewCount} open review`
+    },
+    {
+      label: "Invoiced",
+      value: formatMoney(summary.financial.invoicedAmount),
+      detail: `${formatMoney(summary.financial.outstandingBalance)} outstanding`
+    },
+    {
+      label: "Paid",
+      value: formatMoney(summary.financial.paidAmount),
+      detail: summary.financial.paymentRiskLabel
+    },
+    {
+      label: "Overdue",
+      value: formatMoney(summary.financial.overdueExposure),
+      detail: `${formatMoney(summary.financial.unpaidDepositAmount)} unpaid deposit`
+    },
+    {
+      label: "Retainage / SOV",
+      value: formatMoney(summary.financial.retainageHeldAmount),
+      detail: `${formatMoney(summary.financial.progressBillingExposure)} billable progress`
+    }
+  ];
+  const operatingFacts = [
+    {
+      label: "Schedule",
+      value: `${summary.schedule.scheduledJobCount} scheduled / ${summary.schedule.unscheduledJobCount} unscheduled`,
+      detail: `${summary.schedule.missingCrewJobCount} missing crew`
+    },
+    {
+      label: "Execution",
+      value: `${summary.execution.dailyLogCount} Daily Logs`,
+      detail: `${summary.execution.openBlockerCount} open field blockers`
+    },
+    {
+      label: "Labor",
+      value: formatDuration(summary.execution.totalWorkedMinutes),
+      detail: `${summary.execution.unresolvedFieldNoteCount} open field notes`
+    },
+    {
+      label: "Change orders",
+      value: `${summary.changeOrders.openReviewCount} open`,
+      detail: `${formatMoney(summary.changeOrders.pendingImpact)} pending impact`
+    }
+  ];
+
+  return (
+    <section
+      id="project-operational-intelligence"
+      aria-labelledby="project-operational-intelligence-title"
+      className={projectWorkspacePanelClassName}
+    >
+      <div
+        className={[
+          "flex flex-col gap-3 px-4 py-4 md:flex-row md:items-start md:justify-between sm:px-5",
+          projectWorkspacePanelHeaderClassName
+        ].join(" ")}
+      >
+        <div>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--text-secondary)]">
+            Operational intelligence
+          </p>
+          <h2
+            id="project-operational-intelligence-title"
+            className="mt-1 text-lg font-semibold text-[var(--text-primary)]"
+          >
+            What needs action, what is at risk, and what is moving
+          </h2>
+          <p className="mt-1 max-w-[76ch] text-sm leading-6 text-[var(--text-secondary)]">
+            Derived from the same project readiness, invoice/payment, job, Daily
+            Log, field note, change-order, and timeline records already powering
+            the focused workspaces.
+          </p>
+        </div>
+        <Link
+          href={summary.schedule.nextActionHref}
+          className={getWorkspaceActionLinkClassName(
+            hasAttention ? "warning" : "secondary"
+          )}
+        >
+          {summary.schedule.nextActionLabel}
+        </Link>
+      </div>
+
+      <div className="grid gap-px bg-[var(--border-warm)] xl:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
+        <div className="bg-white px-4 py-4 sm:px-5">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
+                Attention system
+              </p>
+              <h3 className="mt-1 text-base font-semibold text-[var(--text-primary)]">
+                {hasAttention
+                  ? `${summary.attentionSignals.length} signal${
+                      summary.attentionSignals.length === 1 ? "" : "s"
+                    } to resolve`
+                  : "No active operational attention signals"}
+              </h3>
+            </div>
+            <span className="rounded-full border border-[var(--border-warm)] bg-[var(--highlight)] px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-[var(--text-secondary)]">
+              Project-owned view
+            </span>
+          </div>
+
+          <div className="mt-4 space-y-3">
+            {hasAttention ? (
+              summary.attentionSignals.map((signal) => (
+                <article
+                  key={signal.id}
+                  className={[
+                    "rounded-lg border px-4 py-3 text-sm leading-6",
+                    getOperationalSeverityClassName(signal.severity)
+                  ].join(" ")}
+                >
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.18em] opacity-75">
+                        {signal.source}
+                      </p>
+                      <h4 className="mt-1 text-sm font-semibold">
+                        {signal.title}
+                      </h4>
+                      <p className="mt-1 opacity-85">{signal.detail}</p>
+                    </div>
+                    <Link
+                      href={signal.href}
+                      className={getWorkspaceActionLinkClassName(
+                        signal.severity === "critical" ||
+                          signal.severity === "warning"
+                          ? "warning"
+                          : "secondary"
+                      )}
+                    >
+                      {signal.actionLabel}
+                    </Link>
+                  </div>
+                </article>
+              ))
+            ) : (
+              <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm leading-6 text-emerald-950">
+                Readiness, billing, schedule, field, and change-order attention
+                are clear in the current project read.
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="grid gap-px bg-[var(--border-warm)] md:grid-cols-2">
+          <div className="bg-white px-4 py-4 sm:px-5">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
+              Financial continuity
+            </p>
+            <div className="mt-4 grid gap-3">
+              {financeFacts.map((fact) => (
+                <div
+                  key={fact.label}
+                  className="rounded-lg border border-[var(--border-warm)] bg-[var(--highlight)] px-3 py-2 text-sm leading-6"
+                >
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--text-secondary)]">
+                    {fact.label}
+                  </p>
+                  <p className="mt-1 font-semibold text-[var(--text-primary)]">
+                    {fact.value}
+                  </p>
+                  <p className="text-xs leading-5 text-[var(--text-secondary)]">
+                    {fact.detail}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="bg-white px-4 py-4 sm:px-5">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
+              Dispatch + execution continuity
+            </p>
+            <div className="mt-4 grid gap-3">
+              {operatingFacts.map((fact) => (
+                <div
+                  key={fact.label}
+                  className="rounded-lg border border-[var(--border-warm)] bg-[var(--highlight)] px-3 py-2 text-sm leading-6"
+                >
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--text-secondary)]">
+                    {fact.label}
+                  </p>
+                  <p className="mt-1 font-semibold text-[var(--text-primary)]">
+                    {fact.value}
+                  </p>
+                  <p className="text-xs leading-5 text-[var(--text-secondary)]">
+                    {fact.detail}
+                  </p>
+                </div>
+              ))}
+            </div>
+            {summary.execution.latestDailyLogHref ? (
+              <Link
+                href={summary.execution.latestDailyLogHref}
+                className={`${getWorkspaceActionLinkClassName("secondary")} mt-4`}
+              >
+                Open latest Daily Log
+              </Link>
+            ) : null}
+          </div>
+        </div>
+      </div>
     </section>
   );
 }
@@ -4194,6 +4436,70 @@ export default async function ProjectDetailPage({
     currentBillableValue > 0 &&
     projectInvoices.filter((invoice) => invoice.billingModel === "aia_progress")
       .length === 0;
+  const projectOperationalSummary = deriveProjectOperationalWorkspaceSummary({
+    projectId: project.id,
+    todayIsoDate: new Date().toISOString().slice(0, 10),
+    readiness: readinessSnapshot
+      ? {
+          isReadyToSchedule: readinessSnapshot.isReadyToSchedule,
+          blockers: readinessSnapshot.blockers,
+          depositRequired: readinessSnapshot.depositRequired,
+          depositSatisfied: readinessSnapshot.depositSatisfied,
+          contractStatus: readinessSnapshot.contractStatus
+        }
+      : null,
+    approvedEstimateTotalAmount: approvedEstimate?.totalAmount ?? null,
+    invoices: projectInvoices.map((invoice) => ({
+      id: invoice.id,
+      status: invoice.status,
+      workflowRole: invoice.workflowRole,
+      totalAmount: invoice.totalAmount,
+      balanceDueAmount: invoice.balanceDueAmount,
+      retainageHeldAmount: invoice.retainageHeldAmount,
+      dueDate: invoice.dueDate
+    })),
+    jobs: projectJobs.map((job) => ({
+      id: job.id,
+      dispatchStatus: job.dispatchStatus,
+      scheduledDate: job.scheduledDate
+    })),
+    jobAssignmentCountsByJobId: new Map(
+      projectJobs.map((job) => [
+        job.id,
+        projectJobAssignments.get(job.id)?.length ?? 0
+      ])
+    ),
+    changeOrders: projectChangeOrders.map((changeOrder) => ({
+      id: changeOrder.id,
+      status: changeOrder.status,
+      priceAdjustment: changeOrder.priceAdjustment
+    })),
+    dailyLogs: projectDailyLogs.map((dailyLog) => ({
+      id: dailyLog.id,
+      status: dailyLog.status,
+      logDate: dailyLog.logDate,
+      summary: dailyLog.summary
+    })),
+    fieldNotes: projectFieldNotes.map((fieldNote) => ({
+      id: fieldNote.id,
+      dailyLogId: fieldNote.dailyLogId,
+      noteType: fieldNote.noteType,
+      status: fieldNote.status,
+      title: fieldNote.title
+    })),
+    totalWorkedMinutes: fieldTrail.totalWorkedMinutes,
+    progressBillingExposureAmount: currentBillableValue,
+    latestPaymentEventType: paymentFocusLatestEventType,
+    timelineAttentionItems: projectCommandTimeline.needsAttention.map(
+      (item) => ({
+        id: item.id,
+        title: item.title,
+        summary: item.summary,
+        href: item.href,
+        needsAttention: item.needsAttention
+      })
+    )
+  });
   const workspaceBlockers = [
     ...activeBlockers.map((blocker) => formatBlockerLabel(blocker)),
     ...(unscheduledJobs.length > 0
@@ -5088,6 +5394,10 @@ export default async function ProjectDetailPage({
               }
               readyToScheduleAt={readyToScheduleAt}
               blockers={readinessBlockerItems}
+            />
+
+            <ProjectOperationalIntelligenceSection
+              summary={projectOperationalSummary}
             />
 
             <ProjectCommandCenterMap

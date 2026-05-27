@@ -60,6 +60,15 @@ Current operating-core surfaces include:
   and connected lanes split invoices, payments, field/Daily Logs, and
   time/labor while staying read-only over existing project, readiness, payment,
   job, Daily Log, field-note, and time-card records.
+- Project Workspace Maturity v2 adds a shared
+  `apps/web/lib/projects/operational-workspace.ts` read model and a project
+  Operational Intelligence section. It derives one attention/continuity view
+  over canonical readiness, invoices/payments, retainage, progress billing,
+  CrewBoard jobs/assignments, Daily Logs, field blockers, change orders, and
+  Project Command Timeline signals. It adds no schema, migrations, duplicate
+  project-financial model, duplicate schedule model, field subsystem, portal
+  copy, fake records, provider calls, autonomous actions, or source-record
+  mutation.
 - AI Operational Copilot Foundation in Project Workspace, deriving review-first
   project intelligence, recommended next actions, draft-assistance text, and
   field summaries from ProjectPulse, Ready Check, FieldTrail, MessageCenter,
