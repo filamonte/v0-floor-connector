@@ -250,6 +250,21 @@ matters now` line from existing list fields only. This does not add portal
   customer messaging, provider integrations, notifications, payment/signature
   mutation beyond existing explicit portal actions, or contractor-only
   intelligence exposure.
+- Customer-Safe Closeout Package + Portal Handoff v1 adds a shared portal
+  closeout handoff read model in
+  [apps/web/lib/portal/closeout-handoff.ts](C:/FloorConnector/apps/web/lib/portal/closeout-handoff.ts).
+  The portal Project Workspace now shows a customer-safe Closeout Handoff
+  section that derives closeout status, next customer action, contract/change
+  order/payment/warranty progress, a document package summary, payment status,
+  warranty handoff status, and a clear internal-evidence boundary from the
+  same portal-scoped canonical records already visible to the customer:
+  estimates, contracts, change orders, invoices/payment events, project
+  summary, schedule context, and portal-visible warranty documents. It does not
+  create portal-only closeout records, expose FieldTrail, Proof Center, Daily
+  Job Log details, Job Notes, execution attachments, internal blockers, raw
+  provider metadata, service-ticket internals, stored PDFs, delivery proof,
+  schema, migrations, server actions, access rules, payment/signature mutation,
+  provider calls, automation, AI, or customer-facing field evidence.
 - Portal Project Workspace and portal home now use deterministic portal-safe
   customer status explanations derived from canonical project, estimate,
   contract, change-order, invoice/payment, and scoped schedule state. The

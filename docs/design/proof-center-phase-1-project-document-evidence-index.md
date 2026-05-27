@@ -138,7 +138,7 @@ proof, receives no new storage behavior here, and stays contractor-only.
 - standalone Proof Center route
 - portal/customer field evidence exposure
 - destructive storage delete or storage policy changes
-- customer-facing closeout package generation
+- customer-facing field-evidence sharing
 - warranty PDF generation
 - AI proof summaries
 - automated reminders
@@ -150,8 +150,10 @@ proof, receives no new storage behavior here, and stays contractor-only.
 
 - Add a dedicated documents/files area only after the shared file/evidence model
   is approved.
-- Add customer-facing closeout package generation only after Proof Center and
-  CloseoutTrail have stable source-record coverage.
+- Deepen the customer-facing closeout package only after versioning, explicit
+  shared-file visibility, stored package policy, and delivery-proof policy are
+  approved. The current portal Closeout Handoff is read-only and customer-safe;
+  it does not expose field evidence or generate a stored package.
 - Add richer warranty and service proof indexing after warranty/service portal
   depth is implemented.
 - Consider extracting Project Workspace summary panels if the route continues to

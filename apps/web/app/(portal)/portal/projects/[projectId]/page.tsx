@@ -17,6 +17,7 @@ import {
   portalSummaryLabelClassName
 } from "@/components/portal-review-ui";
 import { WorkspaceSummaryBand } from "@/components/workspace-summary-band";
+import { derivePortalCloseoutHandoff } from "@/lib/portal/closeout-handoff";
 import { derivePortalProjectStatusWindow } from "@/lib/portal/project-status-window";
 import { derivePortalProjectTimeline } from "@/lib/portal/project-timeline";
 import { derivePortalSharedDocuments } from "@/lib/portal/shared-documents";
@@ -339,6 +340,16 @@ export default async function PortalProjectDetailPage({
     invoices,
     changeOrders
   });
+  const closeoutHandoff = derivePortalCloseoutHandoff({
+    projectId: project.id,
+    projectName: project.name,
+    projectStatus: project.status,
+    estimates,
+    contracts,
+    invoices,
+    changeOrders,
+    warrantyDocuments
+  });
   const customerHubCards = [
     {
       key: "next-step",
@@ -622,6 +633,132 @@ export default async function PortalProjectDetailPage({
               description={statusWindow.emptyStateMessage}
             />
           )}
+        </DetailPanel>
+
+        <DetailPanel
+          title="Closeout Handoff"
+          description="Customer-safe records for project wrap-up, payment status, and warranty handoff."
+        >
+          <div className="grid gap-5">
+            <section className={portalStatePanelClassName}>
+              <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                <div className="min-w-0">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.26em] text-slate-500">
+                    Closeout package
+                  </p>
+                  <h2 className="mt-2 text-lg font-semibold tracking-tight text-slate-950">
+                    {closeoutHandoff.statusLabel}
+                  </h2>
+                  <p className="mt-2 text-sm leading-6 text-slate-600">
+                    {closeoutHandoff.primaryMessage}
+                  </p>
+                </div>
+                <PortalStatusBadge
+                  status={closeoutHandoff.statusTone}
+                  className="shrink-0"
+                >
+                  {closeoutHandoff.statusLabel}
+                </PortalStatusBadge>
+              </div>
+
+              <div className="mt-5">
+                <NextActionCard
+                  eyebrow="Next closeout step"
+                  title={closeoutHandoff.nextAction.label}
+                  description={closeoutHandoff.nextAction.description}
+                  primaryAction={
+                    <PortalSecondaryLink href={closeoutHandoff.nextAction.href}>
+                      {closeoutHandoff.nextAction.label}
+                    </PortalSecondaryLink>
+                  }
+                />
+              </div>
+            </section>
+
+            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+              {closeoutHandoff.progressItems.map((item) => (
+                <div key={item.key} className={portalReviewCardClassName}>
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+                        {item.label}
+                      </p>
+                      <p className="mt-2 text-lg font-semibold text-slate-950">
+                        {item.value}
+                      </p>
+                    </div>
+                    <PortalStatusBadge status={item.tone}>
+                      {item.tone === "attention"
+                        ? "Review"
+                        : item.tone === "complete"
+                          ? "Current"
+                          : item.tone}
+                    </PortalStatusBadge>
+                  </div>
+                  <p className="mt-3 text-sm leading-6 text-slate-600">
+                    {item.detail}
+                  </p>
+                </div>
+              ))}
+            </div>
+
+            {closeoutHandoff.documentPackageItems.length > 0 ? (
+              <section className="grid gap-4 lg:grid-cols-2">
+                {closeoutHandoff.documentPackageItems
+                  .slice(0, 6)
+                  .map((document) => (
+                    <div
+                      key={document.key}
+                      className={portalReviewCardClassName}
+                    >
+                      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                        <div className="min-w-0">
+                          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+                            {document.label}
+                          </p>
+                          <h3 className="mt-2 text-base font-semibold text-slate-950">
+                            {document.reference}
+                          </h3>
+                          <p className="mt-2 text-sm leading-6 text-slate-600">
+                            {document.helperText}
+                          </p>
+                        </div>
+                        <PortalStatusBadge status={document.tone}>
+                          {document.customerActionRequired
+                            ? "Needs review"
+                            : document.statusLabel}
+                        </PortalStatusBadge>
+                      </div>
+                      <div className="mt-4 flex flex-wrap gap-3">
+                        <PortalSecondaryLink href={document.href}>
+                          Open
+                        </PortalSecondaryLink>
+                        {document.printHref ? (
+                          <PortalSecondaryLink href={document.printHref}>
+                            Print / Save PDF
+                          </PortalSecondaryLink>
+                        ) : null}
+                      </div>
+                    </div>
+                  ))}
+              </section>
+            ) : (
+              <AppEmptyState
+                eyebrow="Closeout records"
+                title="No closeout records shared yet"
+                description={closeoutHandoff.emptyStateMessage}
+              />
+            )}
+
+            <div className={portalInsetPanelClassName}>
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+                Customer-safe boundary
+              </p>
+              <p className="mt-2 text-sm leading-6 text-slate-600">
+                {closeoutHandoff.customerSafeBoundary}
+              </p>
+            </div>
+          </div>
         </DetailPanel>
 
         <DetailPanel

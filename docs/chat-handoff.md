@@ -170,6 +170,16 @@ Current operating-core surfaces include:
   home/project views with saved portal auth and no page errors or horizontal
   overflow; local Next dev navigation still logged route-chunk 404/abort noise
   during transitions while the pages rendered successfully.
+- Customer-Safe Closeout Package + Portal Handoff v1 adds
+  apps/web/lib/portal/closeout-handoff.ts and a Closeout Handoff section to
+  the portal Project Workspace. It derives customer-safe closeout status, next
+  customer action, document package rows, contract/change-order/payment/warranty
+  progress, payment status, warranty handoff status, and internal-evidence
+  boundary copy from existing portal-scoped canonical records. It does not
+  expose contractor-only field evidence, FieldTrail, Proof Center, Daily Job
+  Log details, Job Notes, execution attachments, provider diagnostics, service
+  ticket internals, stored PDFs, portal-only records, schema, provider calls,
+  payment/signature mutation, automation, or AI behavior.
 - Full Operating Loop Demo Smoke on May 25, 2026 passed on a fresh local Next
   dev server with saved contractor and portal auth. The route loop loaded
   `/dashboard`, `/projects`, a Project Workspace with command/timeline signals,
