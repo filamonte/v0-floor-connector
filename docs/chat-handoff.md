@@ -208,6 +208,12 @@ Current operating-core surfaces include:
   communications, appointments, or schedule handoffs where possible. It is not
   implemented and must not become a disconnected task app, duplicate CRM/project
   model, AI-only scheduler, or autonomous customer-facing booking/sending layer.
+  Manual V1 model design is documented in
+  [docs/design/universal-capture-model-design.md](C:/FloorConnector/docs/design/universal-capture-model-design.md):
+  Universal Capture is the entry/resolution pattern above canonical records,
+  Work Items are one possible destination, and a narrow `capture_items` table
+  should only be added later if unresolved or route-grouping intent cannot be
+  handled cleanly by existing records.
 - Portal Customer Window with deterministic portal-safe customer status
   explanations, Customer Next Step, Project Status Window, Project Timeline,
   Shared Documents, and existing portal review/print routes. The explanation
