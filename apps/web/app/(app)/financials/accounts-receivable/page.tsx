@@ -38,6 +38,26 @@ function formatDateTime(value: string) {
   }).format(new Date(value));
 }
 
+function formatOptionalDate(value: string | null) {
+  return value ? formatDate(value) : "No due date";
+}
+
+function formatOptionalDateTime(value: string) {
+  return value ? formatDateTime(value) : "No activity";
+}
+
+function toneBadgeClass(tone: "neutral" | "attention" | "warning") {
+  if (tone === "warning") {
+    return "border-[#f2c7aa] bg-[#fff7ed] text-[#9a3412]";
+  }
+
+  if (tone === "attention") {
+    return "border-[#e4d7ca] bg-[#fffcf7] text-[#8f5b32]";
+  }
+
+  return "border-[#d6d6d6] bg-[#f8f8f8] text-slate-600";
+}
+
 export default async function AccountsReceivablePage() {
   const user = await requireAuthenticatedUser(
     "/financials/accounts-receivable"
@@ -66,6 +86,7 @@ export default async function AccountsReceivablePage() {
     workflowSettings.workflowGuidancePreferences
   );
   const showAiDraftActions = shouldShowAiDraftActions(guidancePreferences);
+  const collectionsDesk = readModel.collectionsCommandCenter;
   const invoiceAttentionById = new Map(
     financialControl.invoicesNeedingAttention.map((invoice) => [
       invoice.id,
@@ -80,39 +101,26 @@ export default async function AccountsReceivablePage() {
       description="Review open balances, overdue invoices, pending checkout activity, and the next collection move."
       summary={
         <div className="grid gap-px border border-[#d6d6d6] bg-[#d6d6d6] sm:grid-cols-2 xl:grid-cols-4">
-          <div className="bg-white px-3 py-2.5">
-            <p className="text-[11px] uppercase tracking-[0.14em] text-[#666666]">
-              Open balance
-            </p>
-            <p className="mt-1 text-lg font-semibold tracking-tight text-[#171717]">
-              {formatMoney(financialControl.openReceivablesAmount)}
-            </p>
-          </div>
-          <div className="bg-white px-3 py-2.5">
-            <p className="text-[11px] uppercase tracking-[0.14em] text-[#666666]">
-              Overdue
-            </p>
-            <p className="mt-1 text-lg font-semibold tracking-tight text-[#171717]">
-              {formatMoney(financialControl.overdueAmount)}
-            </p>
-          </div>
-          <div className="bg-white px-3 py-2.5">
-            <p className="text-[11px] uppercase tracking-[0.14em] text-[#666666]">
-              Partially paid
-            </p>
-            <p className="mt-1 text-lg font-semibold tracking-tight text-[#171717]">
-              {financialControl.partiallyPaidCount}
-            </p>
-          </div>
-          <div className="bg-white px-3 py-2.5">
-            <p className="text-[11px] uppercase tracking-[0.14em] text-[#666666]">
-              Payment attention
-            </p>
-            <p className="mt-1 text-lg font-semibold tracking-tight text-[#171717]">
-              {financialControl.failedPaymentCount +
-                financialControl.paymentRequestedCount}
-            </p>
-          </div>
+          {collectionsDesk.summaryCards.map((card) => (
+            <div key={card.id} className="bg-white px-3 py-2.5">
+              <div className="flex items-start justify-between gap-3">
+                <p className="text-[11px] uppercase tracking-[0.14em] text-[#666666]">
+                  {card.label}
+                </p>
+                <span
+                  className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] ${toneBadgeClass(card.tone)}`}
+                >
+                  {card.tone}
+                </span>
+              </div>
+              <p className="mt-1 text-lg font-semibold tracking-tight text-[#171717]">
+                {card.value}
+              </p>
+              <p className="mt-1 text-xs leading-5 text-slate-500">
+                {card.detail}
+              </p>
+            </div>
+          ))}
         </div>
       }
       commandBar={{
@@ -148,6 +156,169 @@ export default async function AccountsReceivablePage() {
       }}
     >
       <div className="space-y-4">
+        <section className="grid min-w-0 gap-4 xl:grid-cols-[minmax(0,1.5fr)_minmax(340px,1fr)]">
+          <section className="min-w-0 border border-[#d6d6d6] bg-white">
+            <div className="border-b border-[#e5e5e5] px-5 py-4">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#8f5b32]">
+                Priority engine
+              </p>
+              <h2 className="mt-2 text-xl font-semibold tracking-tight text-slate-950">
+                Needs attention first
+              </h2>
+              <p className="mt-1 max-w-[78ch] text-sm leading-6 text-slate-500">
+                Ranked from canonical invoice balances, due dates, workflow
+                role, Payment Trail state, pending payments, retainage,
+                progress-billing markers, stale activity, and customer exposure.
+              </p>
+            </div>
+
+            {collectionsDesk.priorityItems.length > 0 ? (
+              <div className="divide-y divide-[#e5e5e5]">
+                {collectionsDesk.priorityItems.slice(0, 5).map((item) => (
+                  <article key={item.id} className="px-5 py-4">
+                    <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(220px,0.55fr)_auto] lg:items-start">
+                      <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <Link
+                            href={item.invoiceHref}
+                            className="text-sm font-semibold text-slate-950 transition hover:text-brand-700"
+                          >
+                            {item.invoiceReference}
+                          </Link>
+                          <span
+                            className={`rounded-full border px-2 py-0.5 text-[11px] font-semibold uppercase tracking-[0.12em] ${toneBadgeClass(item.tone)}`}
+                          >
+                            score {item.priorityScore}
+                          </span>
+                          {item.latestPaymentEventType ? (
+                            <span className="rounded-full border border-[#d6d6d6] bg-[#f8f8f8] px-2 py-0.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-600">
+                              {item.latestPaymentEventType.replaceAll("_", " ")}
+                            </span>
+                          ) : null}
+                        </div>
+                        <p className="mt-2 text-sm leading-6 text-slate-600">
+                          {item.reason}
+                        </p>
+                        <p className="mt-1 text-xs leading-5 text-slate-500">
+                          {item.customerHref ? (
+                            <Link
+                              href={item.customerHref}
+                              className="font-medium text-brand-700 transition hover:text-brand-800"
+                            >
+                              {item.customerName}
+                            </Link>
+                          ) : (
+                            item.customerName
+                          )}{" "}
+                          /{" "}
+                          {item.projectHref ? (
+                            <Link
+                              href={item.projectHref}
+                              className="font-medium text-brand-700 transition hover:text-brand-800"
+                            >
+                              {item.projectName}
+                            </Link>
+                          ) : (
+                            item.projectName
+                          )}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#666666]">
+                          Continuity
+                        </p>
+                        <p className="mt-1 text-sm font-semibold text-slate-950">
+                          {formatMoney(item.balanceDueAmount)}
+                        </p>
+                        <p className="mt-1 text-sm leading-5 text-slate-500">
+                          {item.dueSignal}. Last activity{" "}
+                          {formatOptionalDateTime(item.lastActivityAt)}.
+                        </p>
+                      </div>
+                      <Link
+                        href={item.invoiceHref}
+                        className="inline-flex shrink-0 items-center justify-center rounded-[4px] border border-[#171717] bg-[#171717] px-3 py-2 text-sm font-medium text-white transition hover:bg-[#2a2a2a]"
+                      >
+                        {item.nextAction}
+                      </Link>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            ) : (
+              <div className="px-6 py-8">
+                <AppEmptyState
+                  eyebrow="No priority items"
+                  title="No collections priorities are active"
+                  description="Open receivables, failed payment events, unpaid deposits, and stale pending payment activity will rank here when they need review."
+                />
+              </div>
+            )}
+          </section>
+
+          <section className="min-w-0 border border-[#d6d6d6] bg-white">
+            <div className="border-b border-[#e5e5e5] px-5 py-4">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#666666]">
+                Customer continuity
+              </p>
+              <h3 className="mt-2 text-xl font-semibold tracking-tight text-slate-950">
+                Customer exposure
+              </h3>
+            </div>
+            <div className="divide-y divide-[#e5e5e5]">
+              {collectionsDesk.customerContinuity.length > 0 ? (
+                collectionsDesk.customerContinuity
+                  .slice(0, 5)
+                  .map((customer) => (
+                    <div key={customer.id} className="px-5 py-4">
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="min-w-0">
+                          {customer.customerHref ? (
+                            <Link
+                              href={customer.customerHref}
+                              className="text-sm font-semibold text-[#171717] transition hover:text-brand-700"
+                            >
+                              {customer.customerName}
+                            </Link>
+                          ) : (
+                            <p className="text-sm font-semibold text-[#171717]">
+                              {customer.customerName}
+                            </p>
+                          )}
+                          <p className="mt-1 text-sm leading-5 text-slate-600">
+                            {customer.openInvoiceCount} open /{" "}
+                            {customer.overdueInvoiceCount} overdue /{" "}
+                            {customer.linkedProjectCount} project
+                            {customer.linkedProjectCount === 1 ? "" : "s"}
+                          </p>
+                          <p className="mt-1 text-xs uppercase tracking-[0.12em] text-slate-500">
+                            Oldest unpaid{" "}
+                            {formatOptionalDate(customer.oldestUnpaidDueDate)} /{" "}
+                            {customer.nextAction}
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-sm font-semibold text-slate-950">
+                            {formatMoney(customer.outstandingAmount)}
+                          </p>
+                          <p className="mt-1 text-xs text-slate-500">
+                            {customer.activePaymentIssueCount} issue /{" "}
+                            {customer.pendingDepositCount} deposit /{" "}
+                            {customer.partiallyPaidCount} partial
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+              ) : (
+                <div className="px-5 py-6 text-sm leading-6 text-slate-500">
+                  No customer-level collections exposure is active.
+                </div>
+              )}
+            </div>
+          </section>
+        </section>
+
         <section className="border border-[#d6d6d6] bg-white">
           <div className="flex flex-col gap-3 border-b border-[#e5e5e5] px-5 py-4 lg:flex-row lg:items-start lg:justify-between">
             <div>
@@ -543,15 +714,15 @@ export default async function AccountsReceivablePage() {
                 Payment attention
               </p>
               <h3 className="mt-2 text-xl font-semibold tracking-tight text-slate-950">
-                Payment Trail items
+                Payment Trail continuity
               </h3>
             </div>
             <div className="divide-y divide-[#e5e5e5]">
-              {financialControl.paymentEventsNeedingReview.length > 0 ? (
-                financialControl.paymentEventsNeedingReview.map((event) => (
+              {collectionsDesk.paymentTrailAttention.length > 0 ? (
+                collectionsDesk.paymentTrailAttention.map((event) => (
                   <Link
                     key={event.id}
-                    href={event.href}
+                    href={event.invoiceHref}
                     className="block px-5 py-4 transition hover:bg-[#f8f8f8]"
                   >
                     <div className="flex items-start justify-between gap-4">
@@ -563,14 +734,22 @@ export default async function AccountsReceivablePage() {
                           {event.customerName} - {event.projectName}
                         </p>
                         <p className="mt-1 text-xs uppercase tracking-[0.12em] text-slate-500">
-                          {formatDateTime(event.occurredAt)}
+                          {formatOptionalDateTime(event.occurredAt)} /{" "}
+                          {event.providerLabel}
                         </p>
                         <p className="mt-2 text-sm leading-5 text-slate-500">
                           {event.reason}
                         </p>
+                        {event.amount ? (
+                          <p className="mt-1 text-sm font-semibold text-slate-950">
+                            {formatMoney(event.amount)}
+                          </p>
+                        ) : null}
                       </div>
-                      <span className="rounded-[4px] border border-[#d6d6d6] bg-[#f8f8f8] px-2 py-1 text-xs font-semibold uppercase tracking-[0.12em] text-slate-700">
-                        {event.nextMoveLabel}
+                      <span
+                        className={`rounded-[4px] border px-2 py-1 text-xs font-semibold uppercase tracking-[0.12em] ${toneBadgeClass(event.tone)}`}
+                      >
+                        {event.nextAction}
                       </span>
                     </div>
                   </Link>

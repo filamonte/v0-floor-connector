@@ -101,6 +101,13 @@ Current operating-core surfaces include:
   handoffs when AI drafting controls allow them. It does not send reminders,
   create threads, create notification events, call providers, or mutate invoice
   or payment state.
+- Accounts Receivable now adds a read-only Collections Command Center layer on
+  top of the same canonical records. `/financials/accounts-receivable` shows
+  command-center cards, a scored "needs attention first" queue, customer
+  exposure rollups, stale pending-payment attention, recent recorded-payment
+  continuity, and deeper Payment Trail continuity while still avoiding ledgers,
+  customer-financial models, collection-task tables, retries, provider sync,
+  reminders, accounting workflows, and financial mutation.
 - Product Stack Audit after the AI, scheduling, communications, and collections
   slices is documented in
   [docs/operational-intelligence-stack-audit.md](C:/FloorConnector/docs/operational-intelligence-stack-audit.md).

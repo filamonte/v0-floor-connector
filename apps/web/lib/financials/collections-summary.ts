@@ -41,6 +41,8 @@ export type FinancialControlPaymentInput = {
   status: "pending" | "recorded" | "void";
   paymentDate?: string | null;
   createdAt?: string | null;
+  gatewayProvider?: string | null;
+  paymentMethod?: string | null;
   invoice?: {
     id: string;
     referenceNumber: string;
