@@ -29,6 +29,12 @@ Contractor users can now:
 - create or reuse a customer-scoped thread from Customer Workspace
 - save one canonical `communication_messages` row per submitted message
 
+Portal customers can now:
+
+- view customer-visible project conversations on the portal Project Workspace
+- reply only to existing customer-visible, project-scoped threads
+- save one canonical portal-originated `communication_messages` row per reply
+
 The write policy lives in
 [apps/web/lib/communications/write-policy.ts](C:/FloorConnector/apps/web/lib/communications/write-policy.ts).
 It maps contractor internal notes to `direction = internal`,
@@ -46,12 +52,20 @@ loaders.
 
 ## Portal Reply Boundary
 
-The existing database/RLS model supports portal users inserting
-customer-visible project-scoped messages on eligible non-opportunity,
-non-appointment threads, but this slice does not add a portal reply UI. Portal
-chat expansion remains future work so the customer-facing experience can be
-designed around explicit project access, customer-safe copy, unread handling,
-and notification expectations.
+The portal reply path is intentionally narrow. It uses the existing
+database/RLS model plus server-side validation to require:
+
+- authenticated portal user
+- active portal access grant for the thread customer
+- active project visibility for the thread project
+- non-opportunity, non-appointment project/customer thread
+- existing customer-visible messages before a reply form appears
+- non-empty bounded body text
+
+Portal users cannot choose visibility, direction, channel, message kind, or
+delivery status. Server policy maps their replies to customer-visible inbound
+portal messages with logged delivery status. The action suppresses provider
+sends, notification events, document-delivery events, and portal-only copies.
 
 ## Non-Goals
 
@@ -63,6 +77,7 @@ and notification expectations.
 - no automation or reminders
 - no AI-generated message sending
 - no internal-note exposure in portal
+- no generic portal inbox
 
 ## Future Work
 

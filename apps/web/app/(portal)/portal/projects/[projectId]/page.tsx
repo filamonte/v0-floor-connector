@@ -17,6 +17,8 @@ import {
   portalSummaryLabelClassName
 } from "@/components/portal-review-ui";
 import { WorkspaceSummaryBand } from "@/components/workspace-summary-band";
+import { replyToPortalProjectCommunicationThreadAction } from "@/lib/communications/actions";
+import { listPortalProjectCommunicationSummary } from "@/lib/communications/portal-project-data";
 import { buildPortalProjectEvidenceReceiptPrintHref } from "@/lib/document-engine/print";
 import { derivePortalCloseoutHandoff } from "@/lib/portal/closeout-handoff";
 import { derivePortalProjectStatusWindow } from "@/lib/portal/project-status-window";
@@ -39,6 +41,10 @@ import {
 type PortalProjectDetailPageProps = {
   params: Promise<{
     projectId: string;
+  }>;
+  searchParams?: Promise<{
+    message?: string;
+    error?: string;
   }>;
 };
 
@@ -224,6 +230,17 @@ function getPortalWarrantyDocumentSummary(warrantyDocument: {
   )}`;
 }
 
+function getPortalMessageSenderLabel(input: {
+  senderType: string;
+  direction: string;
+}) {
+  if (input.senderType === "portal_user" || input.direction === "inbound") {
+    return "You";
+  }
+
+  return "Contractor";
+}
+
 function RecordSummaryCard({
   eyebrow,
   title,
@@ -264,9 +281,11 @@ function RecordSummaryCard({
 }
 
 export default async function PortalProjectDetailPage({
-  params
+  params,
+  searchParams
 }: PortalProjectDetailPageProps) {
   const { projectId } = await params;
+  const resolvedSearchParams = searchParams ? await searchParams : {};
   const [
     project,
     appointments,
@@ -275,7 +294,8 @@ export default async function PortalProjectDetailPage({
     invoices,
     changeOrders,
     warrantyDocuments,
-    sharedEvidence
+    sharedEvidence,
+    projectCommunication
   ] = await Promise.all([
     getPortalProjectDetailSummary(projectId, `/portal/projects/${projectId}`),
     listPortalProjectAppointments(projectId, `/portal/projects/${projectId}`),
@@ -287,7 +307,11 @@ export default async function PortalProjectDetailPage({
       projectId,
       `/portal/projects/${projectId}`
     ),
-    getPortalSharedEvidenceSummary(projectId, `/portal/projects/${projectId}`)
+    getPortalSharedEvidenceSummary(projectId, `/portal/projects/${projectId}`),
+    listPortalProjectCommunicationSummary(
+      projectId,
+      `/portal/projects/${projectId}`
+    )
   ]);
 
   if (!project) {
@@ -538,6 +562,24 @@ export default async function PortalProjectDetailPage({
           </div>
         </div>
 
+        {resolvedSearchParams.message ? (
+          <div
+            role="status"
+            className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm leading-6 text-emerald-800"
+          >
+            {resolvedSearchParams.message}
+          </div>
+        ) : null}
+
+        {resolvedSearchParams.error ? (
+          <div
+            role="alert"
+            className="rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm leading-6 text-rose-800"
+          >
+            {resolvedSearchParams.error}
+          </div>
+        ) : null}
+
         <DetailPanel
           title="Customer Action Hub"
           description="The clearest customer-safe path through the project records currently shared with you."
@@ -786,6 +828,115 @@ export default async function PortalProjectDetailPage({
                 </div>
               </div>
             </div>
+          </div>
+        </DetailPanel>
+
+        <DetailPanel
+          title="Project Communication"
+          description="Customer-visible project conversation history shared through this portal."
+        >
+          <div id="project-communication" className="grid gap-5">
+            {projectCommunication.conversations.length > 0 ? (
+              projectCommunication.conversations.map((conversation) => (
+                <section
+                  key={conversation.thread.id}
+                  className={portalReviewCardClassName}
+                >
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                    <div className="min-w-0">
+                      <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+                        Project conversation
+                      </p>
+                      <h2 className="mt-2 text-base font-semibold text-slate-950">
+                        {conversation.latestMessage
+                          ? `Latest reply ${formatDateTime(conversation.latestMessage.occurredAt)}`
+                          : "Customer-visible conversation"}
+                      </h2>
+                      <p className="mt-2 text-sm leading-6 text-slate-600">
+                        Replies are saved to your project communication history.
+                        This does not send a separate email or SMS.
+                      </p>
+                    </div>
+                    <PortalStatusBadge status="neutral">
+                      {conversation.messages.length} message
+                      {conversation.messages.length === 1 ? "" : "s"}
+                    </PortalStatusBadge>
+                  </div>
+
+                  <div className="mt-5 space-y-3">
+                    {conversation.messages.slice(-4).map((message) => (
+                      <article
+                        key={message.id}
+                        className="rounded-lg border border-slate-200 bg-white px-4 py-3"
+                      >
+                        <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                          <p className="text-sm font-semibold text-slate-950">
+                            {getPortalMessageSenderLabel(message)}
+                          </p>
+                          <p className="text-xs text-slate-500">
+                            {formatDateTime(message.occurredAt)}
+                          </p>
+                        </div>
+                        <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-slate-600">
+                          {message.body}
+                        </p>
+                      </article>
+                    ))}
+                  </div>
+
+                  {conversation.replyAllowed ? (
+                    <form
+                      action={replyToPortalProjectCommunicationThreadAction}
+                      className="mt-5 rounded-lg border border-slate-200 bg-slate-50 p-4"
+                    >
+                      <input
+                        type="hidden"
+                        name="projectId"
+                        value={project.id}
+                      />
+                      <input
+                        type="hidden"
+                        name="threadId"
+                        value={conversation.thread.id}
+                      />
+                      <label
+                        htmlFor={`portal-reply-${conversation.thread.id}`}
+                        className="text-sm font-semibold text-slate-950"
+                      >
+                        Reply to this project conversation
+                      </label>
+                      <textarea
+                        id={`portal-reply-${conversation.thread.id}`}
+                        name="body"
+                        rows={4}
+                        maxLength={5000}
+                        required
+                        className="mt-2 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm leading-6 text-slate-900 shadow-sm outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20"
+                        placeholder="Write a customer-visible reply..."
+                      />
+                      <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                        <p className="text-xs leading-5 text-slate-500">
+                          Saved in FloorConnector only. It does not send email
+                          or SMS.
+                        </p>
+                        <button
+                          type="submit"
+                          className="inline-flex min-h-10 items-center justify-center rounded-md bg-brand-700 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-800 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2"
+                        >
+                          Post reply
+                        </button>
+                      </div>
+                    </form>
+                  ) : null}
+                </section>
+              ))
+            ) : (
+              <AppEmptyState
+                eyebrow="Project communication"
+                title="No shared conversation yet"
+                description={projectCommunication.emptyStateMessage}
+              />
+            )}
           </div>
         </DetailPanel>
 

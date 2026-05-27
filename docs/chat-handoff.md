@@ -126,9 +126,16 @@ Current operating-core surfaces include:
   Customer Workspace. These writes create or reuse canonical
   `communication_threads` and append immutable `communication_messages`; they do
   not email, text, create delivery proof, create provider attempts, or expose
-  internal notes to the portal. Related-conversation cards and Project
-  MessageCenter now surface clearer internal/customer-visible counts while
-  deeper review still stays inside `/communications`.
+  internal notes to the portal. Portal-Safe Replies v1 now adds a bounded portal
+  Project Workspace reply path for existing customer-visible project threads:
+  portal customers can post customer-visible inbound replies when active portal
+  grant and project visibility checks pass, and those replies appear through
+  the same canonical contractor communications and Project MessageCenter read
+  models. It still does not add a generic portal inbox, provider sends,
+  notification/delivery events, automation, or internal-note exposure. Related
+  conversation cards and Project MessageCenter now surface clearer
+  internal/customer-visible counts while deeper review still stays inside
+  `/communications`.
 - Collections Follow-Up Intelligence now deepens `/financials/accounts-receivable`
   with deterministic categories over canonical invoices, payments, and Payment
   Trail events: overdue invoices, unpaid deposits, sent-unpaid balances,

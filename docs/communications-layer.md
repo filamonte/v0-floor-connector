@@ -16,10 +16,13 @@ events, and explicit shared-evidence proof events into contractor-side
 operating lanes and follow-up context. It does not imply broad unified inbox
 depth, autonomous communication workflows, provider-backed send behavior, AI
 message generation, new communication schema, or customer portal messaging.
-The first write path is deliberately narrow: contractor users can save internal
-notes or customer-visible portal-history messages to canonical threads from the
-communications, project, and customer workspaces, with copy that no email/SMS is
-sent. It does not imply broader portal chat or provider-backed messaging beyond
+The first write paths are deliberately narrow: contractor users can save
+internal notes or customer-visible portal-history messages to canonical threads
+from the communications, project, and customer workspaces, and portal customers
+can reply only to existing customer-visible project-scoped threads from the
+portal Project Workspace. Both paths use canonical `communication_threads` /
+`communication_messages`, with copy that no email/SMS is sent. They do not imply
+broader portal chat, a generic portal inbox, or provider-backed messaging beyond
 what
 [docs/current-state.md](C:/FloorConnector/docs/current-state.md) explicitly
 records.
@@ -235,6 +238,14 @@ Current Copilot draft handoff:
   Customer-visible messages are saved as FloorConnector history only in this
   slice; they do not send email/SMS, create provider attempts, create delivery
   proof, or expose internal notes to portal users.
+- Portal customers can now reply to existing customer-visible project-scoped
+  threads from a portal Project Workspace section. The reply is stored as a
+  canonical portal-originated `communication_messages` row and is visible to the
+  contractor in Communications and Project MessageCenter through existing read
+  models. Portal replies require active customer portal access and project
+  visibility, show only customer-visible messages, and do not create provider
+  sends, delivery events, notification events, portal-only copies, or internal
+  note exposure.
 - Estimate, contract, and invoice communication readiness can reuse document
   readiness output when supplied and otherwise prompts review of the canonical
   document workspace before any future customer send.

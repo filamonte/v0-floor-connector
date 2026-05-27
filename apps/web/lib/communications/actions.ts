@@ -18,6 +18,7 @@ import {
   createOpportunityManualCommunicationMessage,
   postCommunicationMessage
 } from "./data";
+import { assertPortalProjectCommunicationThreadCanReceiveReply } from "./portal-project-data";
 import {
   createAppointmentConfirmationLog as logAppointmentConfirmation,
   sendAppointmentConfirmationEmail
@@ -165,6 +166,16 @@ const recordLinkedCommunicationMessageInputSchema = z.object({
         ? value
         : undefined;
     })
+});
+
+const portalProjectCommunicationReplyInputSchema = z.object({
+  projectId: z.string().uuid("A valid portal project is required."),
+  threadId: z.string().uuid("A valid project conversation is required."),
+  body: z
+    .string()
+    .trim()
+    .min(1, "Reply message cannot be empty.")
+    .max(5_000, "Reply messages must stay under 5,000 characters.")
 });
 
 const communicationTriageInputSchema = z.object({
@@ -766,6 +777,76 @@ export async function createRecordLinkedCommunicationMessageAction(
     result.data.visibility === "customer_visible"
       ? "Customer-visible message saved to FloorConnector history. No email or SMS was sent."
       : "Internal note saved to FloorConnector communication history."
+  );
+
+  redirect(`${destination.pathname}${destination.search}${destination.hash}`);
+}
+
+export async function replyToPortalProjectCommunicationThreadAction(
+  formData: FormData
+) {
+  const projectId = getFieldValue(formData, "projectId");
+  const result = portalProjectCommunicationReplyInputSchema.safeParse({
+    projectId,
+    threadId: getFieldValue(formData, "threadId"),
+    body: getFieldValue(formData, "body")
+  });
+  const returnTo = projectId
+    ? `/portal/projects/${projectId}#project-communication`
+    : "/portal";
+
+  if (!result.success) {
+    const destination = new URL(returnTo, "http://floorconnector.local");
+
+    destination.searchParams.set(
+      "error",
+      result.error.issues[0]?.message ?? "Unable to save portal reply."
+    );
+
+    redirect(`${destination.pathname}${destination.search}${destination.hash}`);
+  }
+
+  try {
+    await assertPortalProjectCommunicationThreadCanReceiveReply(
+      {
+        projectId: result.data.projectId,
+        threadId: result.data.threadId
+      },
+      `/portal/projects/${result.data.projectId}`
+    );
+    await postCommunicationMessage(
+      {
+        threadId: result.data.threadId,
+        body: result.data.body,
+        visibility: "customer_visible",
+        createNotification: false,
+        payload: {
+          source: "portal_project_reply",
+          projectId: result.data.projectId
+        }
+      },
+      `/portal/projects/${result.data.projectId}`
+    );
+  } catch (error) {
+    const destination = new URL(returnTo, "http://floorconnector.local");
+
+    destination.searchParams.set(
+      "error",
+      error instanceof Error ? error.message : "Unable to save portal reply."
+    );
+
+    redirect(`${destination.pathname}${destination.search}${destination.hash}`);
+  }
+
+  revalidatePath(`/portal/projects/${result.data.projectId}`);
+  revalidatePath(`/projects/${result.data.projectId}`);
+  revalidatePath("/communications");
+
+  const destination = new URL(returnTo, "http://floorconnector.local");
+
+  destination.searchParams.set(
+    "message",
+    "Reply saved to your project communication history. No separate email or SMS was sent."
   );
 
   redirect(`${destination.pathname}${destination.search}${destination.hash}`);
