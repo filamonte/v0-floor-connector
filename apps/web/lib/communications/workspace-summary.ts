@@ -18,6 +18,8 @@ export type CommunicationWorkspaceLane = {
   count: number;
   attentionCount: number;
   href: string;
+  actionLabel: string;
+  boundaryLabel: string;
   detail: string;
 };
 
@@ -33,6 +35,15 @@ export type CommunicationWorkspaceAttentionItem = {
 export type CommunicationWorkspaceSummary = {
   primaryStatus: string;
   primaryDetail: string;
+  workflowCoverageCount: number;
+  workflowCoverageLabel: string;
+  workflowCoverageDetail: string;
+  customerBoundaryLabel: string;
+  customerBoundaryDetail: string;
+  notificationReviewLabel: string;
+  notificationReviewDetail: string;
+  deliveryProofLabel: string;
+  deliveryProofDetail: string;
   customerVisibleThreadCount: number;
   internalThreadCount: number;
   followUpCount: number;
@@ -46,6 +57,16 @@ export type CommunicationWorkspaceSummary = {
 };
 
 const STALE_OPEN_THREAD_DAYS = 7;
+const OPERATIONAL_WORKFLOW_SUBJECTS = [
+  "opportunity",
+  "customer",
+  "project",
+  "estimate",
+  "contract",
+  "change_order",
+  "invoice",
+  "payment"
+] as const;
 
 function latest(values: Array<string | null | undefined>) {
   return (
@@ -131,6 +152,38 @@ function getLaneDetail(key: CommunicationWorkspaceLaneKey, count: number) {
     case "internal":
       return "Internal-only coordination that stays out of the portal.";
   }
+}
+
+function getLaneActionLabel(key: CommunicationWorkspaceLaneKey) {
+  switch (key) {
+    case "customer":
+      return "Review relationship handoff";
+    case "project":
+      return "Review project continuity";
+    case "commercial":
+      return "Review commercial decisions";
+    case "finance":
+      return "Review payment pressure";
+    case "closeout":
+      return "Review proof context";
+    case "internal":
+      return "Review internal notes";
+  }
+}
+
+function getLaneBoundaryLabel(key: CommunicationWorkspaceLaneKey) {
+  switch (key) {
+    case "internal":
+      return "Internal-only";
+    case "closeout":
+      return "Proof visibility";
+    default:
+      return "Customer workflow";
+  }
+}
+
+function formatWorkflowCoverage(count: number) {
+  return `${count}/${OPERATIONAL_WORKFLOW_SUBJECTS.length} workflow stages linked`;
 }
 
 function isStaleOpenThread(
@@ -244,6 +297,21 @@ export function deriveCommunicationWorkspaceSummary(input: {
       event.kind === "shared_evidence" ||
       event.sourceType === "warranty_document"
   );
+  const workflowCoverageCount = new Set(
+    input.threads
+      .map((thread) => thread.subject.type)
+      .filter((type) =>
+        OPERATIONAL_WORKFLOW_SUBJECTS.includes(
+          type as (typeof OPERATIONAL_WORKFLOW_SUBJECTS)[number]
+        )
+      )
+  ).size;
+  const criticalContextCount = input.contextEvents.filter(
+    (event) => event.tone === "critical"
+  ).length;
+  const reviewContextCount = input.contextEvents.filter(
+    (event) => event.tone === "critical" || event.tone === "warning"
+  ).length;
   const laneKeys: CommunicationWorkspaceLaneKey[] = [
     "customer",
     "project",
@@ -290,13 +358,14 @@ export function deriveCommunicationWorkspaceSummary(input: {
       count,
       attentionCount,
       href: getLaneHref(key),
+      actionLabel: getLaneActionLabel(key),
+      boundaryLabel: getLaneBoundaryLabel(key),
       detail: getLaneDetail(key, count)
     };
   });
 
   const followUpCount =
-    input.threadSummary.needsResponseCount +
-    input.contextEvents.filter((event) => event.tone === "critical").length;
+    input.threadSummary.needsResponseCount + criticalContextCount;
   const customerReplyCount = input.threads.filter(
     (thread) => thread.customerReplyNeedsResponse
   ).length;
@@ -317,6 +386,40 @@ export function deriveCommunicationWorkspaceSummary(input: {
         : followUpCount > 0
           ? `Customer replies, unread items, or delivery issues need review before the workflow can be treated as quiet. ${input.notificationCount} unread communication notification${input.notificationCount === 1 ? "" : "s"} are currently open.`
           : "Threads, document delivery proof, and shared-evidence activity are connected back to source records without sending anything from this workspace.",
+    workflowCoverageCount,
+    workflowCoverageLabel: formatWorkflowCoverage(workflowCoverageCount),
+    workflowCoverageDetail:
+      workflowCoverageCount > 0
+        ? "Coverage is derived from existing communication thread source records across opportunity, customer, project, estimate, contract, change order, invoice, and payment."
+        : "No canonical workflow source records have communication threads yet.",
+    customerBoundaryLabel:
+      customerVisibleThreads.length > 0
+        ? `${customerVisibleThreads.length} customer-visible / ${internalThreads.length} internal`
+        : internalThreads.length > 0
+          ? `${internalThreads.length} internal-only`
+          : "No boundary signals yet",
+    customerBoundaryDetail:
+      "Customer-visible and internal-only labels come from stored message visibility; portal-owned copies are not created here.",
+    notificationReviewLabel:
+      input.notificationCount > 0
+        ? `${input.notificationCount} unread review signal${
+            input.notificationCount === 1 ? "" : "s"
+          }`
+        : "No unread review signals",
+    notificationReviewDetail:
+      "Notification review reflects per-user read state only and stays separate from derived reply triage.",
+    deliveryProofLabel:
+      input.contextEvents.length > 0
+        ? `${input.contextEvents.length} proof event${
+            input.contextEvents.length === 1 ? "" : "s"
+          }`
+        : "No proof events yet",
+    deliveryProofDetail:
+      reviewContextCount > 0
+        ? `${reviewContextCount} delivery or evidence item${
+            reviewContextCount === 1 ? "" : "s"
+          } need review.`
+        : "Document delivery and shared-evidence context is quiet.",
     customerVisibleThreadCount: customerVisibleThreads.length,
     internalThreadCount: internalThreads.length,
     followUpCount,

@@ -389,8 +389,8 @@ export default async function CommunicationsPage({
   return (
     <ContractorWorkspacePage
       eyebrow="Communications"
-      title={`Communication review for ${organizationContext.organization.displayName}`}
-      description="Review canonical message threads, replies, and unread workflow alerts from one contractor-side queue without creating a second inbox, provider integration, or portal-only copy."
+      title={`Record-linked communications for ${organizationContext.organization.displayName}`}
+      description="Review operational memory across opportunity, customer, project, estimate, contract, change order, invoice, and payment records without creating a second inbox, provider integration, or portal-only copy."
       summary={
         <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
           <div className="border border-[#e5e5e5] bg-white px-4 py-3">
@@ -400,29 +400,41 @@ export default async function CommunicationsPage({
             <p className="mt-1 text-lg font-semibold tracking-tight text-[#171717]">
               {workspaceSummary.primaryStatus}
             </p>
+            <p className="mt-1 text-xs leading-5 text-slate-500">
+              {workspaceSummary.workflowCoverageLabel}
+            </p>
           </div>
           <div className="border border-[#e5e5e5] bg-white px-4 py-3">
             <p className="text-[11px] uppercase tracking-[0.14em] text-[#666666]">
-              Follow-up signals
+              Reply / review
             </p>
             <p className="mt-1 text-2xl font-semibold tracking-tight text-[#171717]">
               {workspaceSummary.followUpCount}
             </p>
-          </div>
-          <div className="border border-[#e5e5e5] bg-white px-4 py-3">
-            <p className="text-[11px] uppercase tracking-[0.14em] text-[#666666]">
-              Customer-visible
-            </p>
-            <p className="mt-1 text-2xl font-semibold tracking-tight text-[#171717]">
-              {workspaceSummary.customerVisibleThreadCount}
+            <p className="mt-1 text-xs leading-5 text-slate-500">
+              {workspaceSummary.notificationReviewDetail}
             </p>
           </div>
           <div className="border border-[#e5e5e5] bg-white px-4 py-3">
             <p className="text-[11px] uppercase tracking-[0.14em] text-[#666666]">
-              Closeout/evidence
+              Customer boundary
             </p>
-            <p className="mt-1 text-2xl font-semibold tracking-tight text-[#171717]">
-              {workspaceSummary.closeoutEvidenceContextCount}
+            <p className="mt-1 text-lg font-semibold tracking-tight text-[#171717]">
+              {workspaceSummary.customerBoundaryLabel}
+            </p>
+            <p className="mt-1 text-xs leading-5 text-slate-500">
+              {workspaceSummary.customerBoundaryDetail}
+            </p>
+          </div>
+          <div className="border border-[#e5e5e5] bg-white px-4 py-3">
+            <p className="text-[11px] uppercase tracking-[0.14em] text-[#666666]">
+              Delivery proof
+            </p>
+            <p className="mt-1 text-lg font-semibold tracking-tight text-[#171717]">
+              {workspaceSummary.deliveryProofLabel}
+            </p>
+            <p className="mt-1 text-xs leading-5 text-slate-500">
+              {workspaceSummary.deliveryProofDetail}
             </p>
           </div>
         </div>
@@ -644,6 +656,9 @@ export default async function CommunicationsPage({
               <p className="mt-2 text-sm leading-6 text-slate-500">
                 {workspaceSummary.primaryDetail}
               </p>
+              <p className="mt-2 text-sm leading-6 text-slate-500">
+                {workspaceSummary.workflowCoverageDetail}
+              </p>
             </div>
             <div className="grid gap-2 text-sm sm:grid-cols-2 lg:min-w-[360px]">
               <div className="rounded-[4px] border border-[#e5e5e5] bg-[#f8f8f8] px-3 py-2">
@@ -677,6 +692,14 @@ export default async function CommunicationsPage({
                     <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#666666]">
                       {lane.label}
                     </p>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      <span className="inline-flex rounded-full border border-[#d6d6d6] bg-white px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-600">
+                        {lane.boundaryLabel}
+                      </span>
+                      <span className="inline-flex rounded-full border border-[#e4d7ca] bg-[#fbf5ee] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#8f5b32]">
+                        {lane.actionLabel}
+                      </span>
+                    </div>
                     <p className="mt-2 text-sm leading-6 text-slate-500">
                       {lane.detail}
                     </p>
@@ -732,6 +755,7 @@ export default async function CommunicationsPage({
                 <p className="mt-3 text-sm leading-6 text-slate-500">
                   No unanswered customer message, stale thread, or delivery
                   issue is currently visible in the communications read model.
+                  Notification read state remains separate from reply triage.
                 </p>
               )}
             </div>
@@ -838,15 +862,16 @@ export default async function CommunicationsPage({
             <div className="flex items-end justify-between gap-4 border-b border-[#e5e5e5] px-5 py-4 sm:px-6">
               <div>
                 <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#666666]">
-                  Thread queue
+                  Record-linked queue
                 </p>
                 <h3 className="mt-2 text-2xl font-semibold tracking-tight text-slate-950">
-                  Review conversation summaries and handoff threads
+                  Review workflow conversations, not a detached inbox
                 </h3>
                 <p className="mt-2 text-sm leading-6 text-slate-500">
                   Detail pages summarize related conversations only. Full
-                  history, replies, and notification triage stay in this
-                  workspace for supported sources.
+                  history, replies, notification triage, and customer-safe
+                  boundaries stay in this workspace for supported canonical
+                  sources.
                 </p>
               </div>
               <p className="text-sm leading-6 text-slate-500">

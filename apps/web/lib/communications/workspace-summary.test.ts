@@ -127,6 +127,16 @@ void test("communication workspace groups canonical threads into operating lanes
   assert.equal(summary.lanes.find((lane) => lane.key === "customer")?.count, 1);
   assert.equal(summary.lanes.find((lane) => lane.key === "finance")?.count, 1);
   assert.equal(summary.internalThreadCount, 1);
+  assert.equal(summary.workflowCoverageCount, 3);
+  assert.equal(summary.workflowCoverageLabel, "3/8 workflow stages linked");
+  assert.equal(
+    summary.lanes.find((lane) => lane.key === "finance")?.actionLabel,
+    "Review payment pressure"
+  );
+  assert.equal(
+    summary.lanes.find((lane) => lane.key === "internal")?.boundaryLabel,
+    "Internal-only"
+  );
 });
 
 void test("communication workspace derives follow-up attention without creating tasks", () => {
@@ -171,6 +181,9 @@ void test("communication workspace derives follow-up attention without creating 
     /Customer response waiting/
   );
   assert.match(summary.primaryDetail, /portal customer reply/);
+  assert.equal(summary.notificationReviewLabel, "1 unread review signal");
+  assert.equal(summary.deliveryProofLabel, "1 proof event");
+  assert.match(summary.deliveryProofDetail, /1 delivery or evidence item/);
 });
 
 void test("communication workspace treats shared evidence as closeout context", () => {
@@ -199,4 +212,6 @@ void test("communication workspace treats shared evidence as closeout context", 
   assert.equal(summary.closeoutEvidenceContextCount, 2);
   assert.equal(summary.lanes.find((lane) => lane.key === "closeout")?.count, 2);
   assert.equal(summary.recentContextEvents.length, 2);
+  assert.equal(summary.customerBoundaryLabel, "No boundary signals yet");
+  assert.match(summary.customerBoundaryDetail, /portal-owned copies/);
 });
