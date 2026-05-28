@@ -593,11 +593,16 @@ file` actions without exposing raw storage paths. This remains contractor-only
   files during transitions, but the protected pages rendered successfully.
 - Operational Capability Waves v1 planning is now reconciled in
   [docs/design/operational-capability-waves-v1-coordination.md](C:/FloorConnector/docs/design/operational-capability-waves-v1-coordination.md)
-  with sibling planning docs for Project Workspace, Scheduling, Field/Mobile,
-  and Portal. These are planning-only coordination docs, not implemented-status
-  updates. The sequence is Project Workspace first, then Scheduling, then
-  Field/Mobile, then Portal, so downstream surfaces do not create duplicate
-  project, schedule, field, portal, or business-state models.
+  with sibling planning docs for
+  [Project Workspace](C:/FloorConnector/docs/design/project-workspace-capability-wave-v1.md),
+  [Scheduling](C:/FloorConnector/docs/design/scheduling-capability-wave-v1.md),
+  [Field/Mobile](C:/FloorConnector/docs/design/field-mobile-capability-wave-v1.md),
+  and
+  [Portal](C:/FloorConnector/docs/design/portal-capability-wave-v1.md). These
+  are planning-only coordination docs, not implemented-status updates. The
+  sequence is Project Workspace first, then Scheduling, then Field/Mobile, then
+  Portal, so downstream surfaces do not create duplicate project, schedule,
+  field, portal, or business-state models.
 - Global search hardening for tenant-scoped canonical records.
 
 These layers are summaries, source-record handoffs, copy/hierarchy

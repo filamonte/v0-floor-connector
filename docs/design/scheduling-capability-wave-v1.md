@@ -23,7 +23,8 @@ calendar subsystem.
 - [docs/design/crewboard-phase-3b-b-pointer-drag-drop-preview.md](C:/FloorConnector/docs/design/crewboard-phase-3b-b-pointer-drag-drop-preview.md)
 - [docs/design/crewboard-phase-3b-b-qa-checkpoint.md](C:/FloorConnector/docs/design/crewboard-phase-3b-b-qa-checkpoint.md)
 
-Requested but not present in this worktree:
+Requested but not present in this stream worktree during the original planning
+pass:
 
 - `docs/ai-native-development-architecture.md`
 - `docs/floorconnector-build-list-and-completion-timeline.md`
@@ -31,6 +32,10 @@ Requested but not present in this worktree:
 Searches for `ai-native`, `development-architecture`, `build-list`,
 `completion-timeline`, and related phrases did not find renamed equivalents in
 `docs/`.
+
+Reconciled-docs note: both docs are now present in the main docs set. The
+missing-doc note above is preserved as historical stream-planning context, not
+current missing-doc status.
 
 ## Files Inspected
 
