@@ -11,13 +11,24 @@ Use [docs/feature-build-status.md](C:/FloorConnector/docs/feature-build-status.m
 as an important planning reference when a task needs investor/demo/dev-friendly
 feature inventory, status categories, or built-versus-planned boundaries.
 
+Use [docs/floorconnector-build-list-and-completion-timeline.md](C:/FloorConnector/docs/floorconnector-build-list-and-completion-timeline.md)
+when a task needs the founder/product-owner build list, realistic completion
+horizons, next build order, or Core Complete definition. It is planning
+guidance over current truth, not a replacement for `docs/current-state.md`.
+
+Use [docs/ai-native-development-architecture.md](C:/FloorConnector/docs/ai-native-development-architecture.md)
+when a task involves parallel agents, worktrees, stream ownership, capability
+waves, hotspot governance, merge sequencing, or QA/verification coordination.
+
 ## Required First Reads
 
 Read these before implementation or documentation work:
 
 - [docs/developer-source-of-truth.md](C:/FloorConnector/docs/developer-source-of-truth.md)
 - [docs/current-state.md](C:/FloorConnector/docs/current-state.md)
+- [docs/ai-native-development-architecture.md](C:/FloorConnector/docs/ai-native-development-architecture.md)
 - [docs/feature-build-status.md](C:/FloorConnector/docs/feature-build-status.md)
+- [docs/floorconnector-build-list-and-completion-timeline.md](C:/FloorConnector/docs/floorconnector-build-list-and-completion-timeline.md)
 - [docs/workflows.md](C:/FloorConnector/docs/workflows.md)
 - [docs/system-overview.md](C:/FloorConnector/docs/system-overview.md)
 - [docs/Roadmap.md](C:/FloorConnector/docs/Roadmap.md)

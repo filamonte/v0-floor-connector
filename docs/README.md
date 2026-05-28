@@ -26,6 +26,9 @@ Use these first for most implementation or documentation tasks:
   product and engineering synthesis
 - [docs/chat-handoff.md](C:/FloorConnector/docs/chat-handoff.md): compact
   current-session handoff
+- [docs/ai-native-development-architecture.md](C:/FloorConnector/docs/ai-native-development-architecture.md):
+  parallel worktree, stream, capability-wave, governance, and QA operating
+  manual for AI-native development
 - [docs/local-auth-qa-recovery.md](C:/FloorConnector/docs/local-auth-qa-recovery.md):
   protected-route browser QA recovery
 
@@ -43,6 +46,7 @@ For most future work, treat this as the required active documentation set:
   [docs/module-status.md](C:/FloorConnector/docs/module-status.md), and
   [docs/known-gaps.md](C:/FloorConnector/docs/known-gaps.md)
 - Current operating handoff: [docs/chat-handoff.md](C:/FloorConnector/docs/chat-handoff.md)
+- AI-native development operating model: [docs/ai-native-development-architecture.md](C:/FloorConnector/docs/ai-native-development-architecture.md)
 - Documentation rules: [docs/documentation-governance.md](C:/FloorConnector/docs/documentation-governance.md)
   and [docs/documentation-standards.md](C:/FloorConnector/docs/documentation-standards.md)
 
@@ -93,6 +97,13 @@ be archived or removed when they stop serving one of those jobs.
   terminology audit history
 - [docs/floorconnector-full-capability-audit.md](C:/FloorConnector/docs/floorconnector-full-capability-audit.md):
   repo-truth capability audit
+- [docs/floorconnector-build-list-and-completion-timeline.md](C:/FloorConnector/docs/floorconnector-build-list-and-completion-timeline.md):
+  founder/product-owner build list, completion horizons, immediate build order,
+  Core Complete definition, and risk guardrails
+- [docs/ai-native-development-architecture.md](C:/FloorConnector/docs/ai-native-development-architecture.md):
+  AI-native multi-agent development operating manual covering worktrees, build
+  streams, capability waves, merge governance, hotspot ownership, and
+  QA/verification coordination
 - [docs/future-feature-coverage-map.md](C:/FloorConnector/docs/future-feature-coverage-map.md):
   broad future coverage map
 - [docs/contractor-foreman-gap-decision-list.md](C:/FloorConnector/docs/contractor-foreman-gap-decision-list.md):
