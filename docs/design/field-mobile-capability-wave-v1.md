@@ -47,17 +47,22 @@ Relevant field/mobile/scheduling/project docs read:
 - `docs/design/crewboard-phase-2-dispatch-usability.md`
 - `docs/design/context-rich-work-items-and-assignments.md`
 
-Requested docs missing from this worktree:
+Requested docs missing from this stream worktree during the original planning
+pass:
 
 - `docs/design/project-workspace-capability-wave-v1.md`
 - `docs/design/scheduling-capability-wave-v1.md`
 
-Because those two cross-stream planning docs are missing in this worktree, this
-plan uses the current branch docs plus the prompt's cross-stream guidance:
-Project Workspace stays the readiness/continuity hub, Scheduling extends
-canonical jobs and `job_assignments`, and Field/Mobile continues through the
-existing field execution records rather than creating a separate field app
-model.
+Because those two cross-stream planning docs were missing in that stream
+worktree, this plan used the current branch docs plus the prompt's
+cross-stream guidance: Project Workspace stays the readiness/continuity hub,
+Scheduling extends canonical jobs and `job_assignments`, and Field/Mobile
+continues through the existing field execution records rather than creating a
+separate field app model.
+
+Reconciled-docs note: both sibling docs are now present in the main docs set.
+The missing-doc note above is preserved as historical stream-planning context,
+not current missing-doc status.
 
 ## 3. Current Implemented Baseline
 

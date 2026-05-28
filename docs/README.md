@@ -114,12 +114,21 @@ High-signal operating-core docs:
 - [docs/design/next-build-priority-checkpoint.md](C:/FloorConnector/docs/design/next-build-priority-checkpoint.md):
   current next-build priority ranking after operating-core, staging, and Company
   Documents work
+- [docs/design/operational-capability-waves-v1-coordination.md](C:/FloorConnector/docs/design/operational-capability-waves-v1-coordination.md):
+  planning-only coordination index for Project Workspace, Scheduling,
+  Field/Mobile, and Portal Capability Wave v1 sequencing and shared hotspots
+- [docs/design/project-workspace-capability-wave-v1.md](C:/FloorConnector/docs/design/project-workspace-capability-wave-v1.md):
+  planning-only Project Workspace Capability Wave v1 maturity plan
 - [docs/operating-core-validation-checklist.md](C:/FloorConnector/docs/operating-core-validation-checklist.md):
   focused helper and route validation inventory
 - [docs/design/crewboard-phase-1.md](C:/FloorConnector/docs/design/crewboard-phase-1.md)
   and
   [docs/design/crewboard-phase-2-dispatch-usability.md](C:/FloorConnector/docs/design/crewboard-phase-2-dispatch-usability.md):
   CrewBoard on `/schedule`
+- [docs/design/scheduling-capability-wave-v1.md](C:/FloorConnector/docs/design/scheduling-capability-wave-v1.md):
+  planning-only Scheduling Capability Wave v1 assessment for CrewBoard
+  maturity, derived queues, resource-load visibility, conflict depth, mobile
+  queue polish, and QA hardening without new scheduling or dispatch tables
 - [docs/design/crewboard-phase-3-drag-drop-dispatch-spec.md](C:/FloorConnector/docs/design/crewboard-phase-3-drag-drop-dispatch-spec.md):
   planning-only drag/drop scheduling and dispatch interaction spec for
   CrewBoard
@@ -191,6 +200,10 @@ High-signal operating-core docs:
   note, recording metadata archive/restore as implemented while deferring
   storage hard-delete and cleanup jobs until retention, audit, and owner/admin
   delete rules are approved
+- [docs/design/field-mobile-capability-wave-v1.md](C:/FloorConnector/docs/design/field-mobile-capability-wave-v1.md):
+  planning-only Field/Mobile Capability Wave v1 plan for mobile-first execution
+  usability over existing jobs, Daily Logs, Field Notes, execution attachments,
+  people, vendors, and time records
 - [docs/design/supabase-field-evidence-storage-verification.md](C:/FloorConnector/docs/design/supabase-field-evidence-storage-verification.md):
   read-only Supabase storage readiness verification for field evidence,
   confirming the intended FloorConnector project, relevant remote migrations,
@@ -228,6 +241,10 @@ High-signal operating-core docs:
   customer window QA checkpoint
 - [docs/design/portal-customer-next-step-qa-checkpoint.md](C:/FloorConnector/docs/design/portal-customer-next-step-qa-checkpoint.md):
   Customer Next Step QA
+- [docs/design/portal-capability-wave-v1.md](C:/FloorConnector/docs/design/portal-capability-wave-v1.md):
+  planning-only Portal Capability Wave v1 plan for customer-safe project,
+  commercial, payment, evidence, and next-action continuity over canonical
+  records
 
 ## Financial And Reporting Docs
 
