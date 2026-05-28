@@ -76,7 +76,10 @@ async function expectAuthenticatedPortalPage(page, headingPattern) {
 async function expectNoHorizontalPageOverflow(page, label) {
   const metrics = await page.evaluate(() => ({
     clientWidth: document.documentElement.clientWidth,
-    scrollWidth: Math.max(document.documentElement.scrollWidth, document.body.scrollWidth)
+    scrollWidth: Math.max(
+      document.documentElement.scrollWidth,
+      document.body.scrollWidth
+    )
   }));
 
   expect(
@@ -260,7 +263,9 @@ test.describe("portal golden workflow smoke", () => {
 
       await page.goto(invoicePath);
       await expectAuthenticatedPortalPage(page, /Invoice Review/i);
-      await expect(page.getByText(/Payment Actions/i)).toBeVisible();
+      await expect(
+        page.getByRole("heading", { name: "Payment Actions" })
+      ).toBeVisible();
     } finally {
       await context.close();
     }
@@ -349,14 +354,21 @@ test.describe("portal golden workflow smoke", () => {
         const response = await page.goto(`${record.path}/pdf`, {
           waitUntil: "domcontentloaded"
         });
-        expect(response?.status(), `${record.path}/pdf should load`).toBeLessThan(400);
-        await expect(page.getByRole("main", { name: /customer document/i })).toBeVisible();
-        await expect(page.getByRole("button", { name: /print|save pdf/i })).toBeVisible();
+        expect(
+          response?.status(),
+          `${record.path}/pdf should load`
+        ).toBeLessThan(400);
+        await expect(
+          page.getByRole("main", { name: /customer document/i })
+        ).toBeVisible();
+        await expect(
+          page.getByRole("button", { name: /print|save pdf/i })
+        ).toBeVisible();
         const printView = page.getByTestId("customer-document-print-view");
         await expect(printView).toContainText(/Customer document/i);
-        await expect(page.getByTestId("customer-document-brand-name")).not.toHaveText(
-          "Your contractor"
-        );
+        await expect(
+          page.getByTestId("customer-document-brand-name")
+        ).not.toHaveText("Your contractor");
       }
     } finally {
       await context.close();
@@ -382,7 +394,10 @@ test.describe("portal golden workflow smoke", () => {
       const projectPath = await getGrantedProjectPath(page);
       await page.goto(projectPath);
       await expectAuthenticatedPortalPage(page, /Shared Project Workspace/i);
-      await expectNoHorizontalPageOverflow(page, "Portal project mobile layout");
+      await expectNoHorizontalPageOverflow(
+        page,
+        "Portal project mobile layout"
+      );
 
       const estimatePath = await getProjectRecordPath(
         page,
@@ -393,7 +408,10 @@ test.describe("portal golden workflow smoke", () => {
       );
       await page.goto(estimatePath);
       await expectAuthenticatedPortalPage(page, /Estimate Review/i);
-      await expectNoHorizontalPageOverflow(page, "Portal estimate mobile layout");
+      await expectNoHorizontalPageOverflow(
+        page,
+        "Portal estimate mobile layout"
+      );
 
       const contractPath = await getProjectRecordPath(
         page,
@@ -404,7 +422,10 @@ test.describe("portal golden workflow smoke", () => {
       );
       await page.goto(contractPath);
       await expectAuthenticatedPortalPage(page, /Contract Review/i);
-      await expectNoHorizontalPageOverflow(page, "Portal contract mobile layout");
+      await expectNoHorizontalPageOverflow(
+        page,
+        "Portal contract mobile layout"
+      );
 
       const invoicePath = await getProjectRecordPath(
         page,
@@ -415,7 +436,10 @@ test.describe("portal golden workflow smoke", () => {
       );
       await page.goto(invoicePath);
       await expectAuthenticatedPortalPage(page, /Invoice Review/i);
-      await expectNoHorizontalPageOverflow(page, "Portal invoice mobile layout");
+      await expectNoHorizontalPageOverflow(
+        page,
+        "Portal invoice mobile layout"
+      );
 
       const changeOrderPath = await getProjectRecordPath(
         page,

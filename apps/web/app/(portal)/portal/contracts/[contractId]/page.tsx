@@ -65,8 +65,8 @@ function getNextAction(status: string, projectId: string) {
       title: "Review the contract and complete signature",
       description:
         "This contract is already out for signature. Review the agreement, then use the shared signature action if it is assigned to you.",
-      label: "Return to project workspace",
-      href: `/portal/projects/${projectId}`
+      label: "Go to signature actions",
+      href: "#signature-actions"
     };
   }
 
@@ -339,64 +339,77 @@ export default async function PortalContractReviewPage({
       </section>
 
       <aside className="space-y-6">
-        <DetailPanel
-          title="Signature Actions"
-          description="Customer actions on this shared contract record."
-        >
-          <div className="space-y-4 text-sm leading-6 text-slate-600">
-            <p className="max-w-[34ch]">{signatureGuidance}</p>
+        <div id="signature-actions" className="scroll-mt-24">
+          <DetailPanel
+            title="Signature Actions"
+            description="Customer actions on this shared contract record."
+          >
+            <div className="space-y-4 text-sm leading-6 text-slate-600">
+              <p className="max-w-[34ch]">{signatureGuidance}</p>
 
-            {contract.currentUserCanSign ? (
-              <div className={portalActionBoxClassName}>
-                <form action={customerSignContractAction} className="space-y-3">
-                  <input type="hidden" name="contractId" value={contract.id} />
-                  <button
-                    type="submit"
-                    className="inline-flex w-full items-center justify-center rounded-full bg-brand-700 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-brand-900"
+              {contract.currentUserCanSign ? (
+                <div className={portalActionBoxClassName}>
+                  <form
+                    action={customerSignContractAction}
+                    className="space-y-3"
                   >
-                    Sign contract
-                  </button>
-                </form>
-
-                <form
-                  action={customerDeclineContractAction}
-                  className="space-y-3"
-                >
-                  <input type="hidden" name="contractId" value={contract.id} />
-                  <label className="block space-y-2">
-                    <span className="text-sm font-medium text-slate-950">
-                      Optional decline note
-                    </span>
-                    <textarea
-                      name="declineReason"
-                      rows={3}
-                      maxLength={500}
-                      className="w-full rounded-2xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 shadow-sm focus:border-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-200"
-                      placeholder="Share a short note if you need the contractor to revisit the agreement."
+                    <input
+                      type="hidden"
+                      name="contractId"
+                      value={contract.id}
                     />
-                  </label>
-                  <button
-                    type="submit"
-                    className="inline-flex w-full items-center justify-center rounded-full border border-rose-300 bg-white px-4 py-2.5 text-sm font-medium text-rose-900 transition hover:border-rose-400 hover:bg-rose-50"
+                    <button
+                      type="submit"
+                      className="inline-flex w-full items-center justify-center rounded-full bg-brand-700 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-brand-900"
+                    >
+                      Sign contract
+                    </button>
+                  </form>
+
+                  <form
+                    action={customerDeclineContractAction}
+                    className="space-y-3"
                   >
-                    Decline contract
-                  </button>
-                </form>
-              </div>
-            ) : (
-              <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
-                {contract.currentUserSignerStatus === "signed"
-                  ? "Your customer signature has already been recorded on this contract."
-                  : contract.currentUserSignerStatus === "declined"
-                    ? "A decline was already recorded from your signer assignment on this contract."
-                    : contract.signatureSummary.requiresCountersign &&
-                        contract.signatureSummary.allCustomerSignersSigned
-                      ? "Customer signing is complete. The contractor countersigner is the remaining step."
-                      : "This page remains available for review even when no customer signature action is currently open to you."}
-              </div>
-            )}
-          </div>
-        </DetailPanel>
+                    <input
+                      type="hidden"
+                      name="contractId"
+                      value={contract.id}
+                    />
+                    <label className="block space-y-2">
+                      <span className="text-sm font-medium text-slate-950">
+                        Optional decline note
+                      </span>
+                      <textarea
+                        name="declineReason"
+                        rows={3}
+                        maxLength={500}
+                        className="w-full rounded-2xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 shadow-sm focus:border-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-200"
+                        placeholder="Share a short note if you need the contractor to revisit the agreement."
+                      />
+                    </label>
+                    <button
+                      type="submit"
+                      className="inline-flex w-full items-center justify-center rounded-full border border-rose-300 bg-white px-4 py-2.5 text-sm font-medium text-rose-900 transition hover:border-rose-400 hover:bg-rose-50"
+                    >
+                      Decline contract
+                    </button>
+                  </form>
+                </div>
+              ) : (
+                <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
+                  {contract.currentUserSignerStatus === "signed"
+                    ? "Your customer signature has already been recorded on this contract."
+                    : contract.currentUserSignerStatus === "declined"
+                      ? "A decline was already recorded from your signer assignment on this contract."
+                      : contract.signatureSummary.requiresCountersign &&
+                          contract.signatureSummary.allCustomerSignersSigned
+                        ? "Customer signing is complete. The contractor countersigner is the remaining step."
+                        : "This page remains available for review even when no customer signature action is currently open to you."}
+                </div>
+              )}
+            </div>
+          </DetailPanel>
+        </div>
 
         <DetailPanel
           title="Contract Context"

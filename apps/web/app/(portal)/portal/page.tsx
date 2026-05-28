@@ -491,7 +491,7 @@ export default async function PortalHomePage() {
               {
                 label: "What is not here",
                 value:
-                  "Messaging and broad project self-service are still outside this customer workspace."
+                  "Broad project self-service stays outside this workspace. Customer-visible replies appear only inside project conversations your contractor has shared."
               }
             ]}
           />

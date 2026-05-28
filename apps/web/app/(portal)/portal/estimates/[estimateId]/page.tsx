@@ -92,9 +92,9 @@ function getNextAction(status: string, projectId: string) {
     return {
       title: "Review this proposal with your contractor",
       description:
-        "This estimate is shared for review. Contract and signature steps can build on this same approved scope later.",
-      label: "Return to project workspace",
-      href: `/portal/projects/${projectId}`
+        "This estimate is shared for review. Use the decision actions on this page when you are ready to approve, reject, or comment.",
+      label: "Go to decision actions",
+      href: "#decision-actions"
     };
   }
 
@@ -111,7 +111,7 @@ function getNextAction(status: string, projectId: string) {
   return {
     title: "Review the shared scope",
     description:
-      "This page shows the currently shared proposal details for the project, while later approval or signature tooling stays outside this first portal pass.",
+      "This page shows the currently shared proposal details for the project. Available decision actions appear here when this estimate is sent for customer review.",
     label: "Return to project workspace",
     href: `/portal/projects/${projectId}`
   };
@@ -548,105 +548,119 @@ export default async function PortalEstimateReviewPage({
       </section>
 
       <aside className="space-y-6">
-        <DetailPanel
-          title="Decision Actions"
-          description="Approve, reject, or comment on this same shared estimate record."
-        >
-          <div className="space-y-4 text-sm leading-6 text-slate-600">
-            {estimate.status === "sent" ? (
-              <div className={portalActionBoxClassName}>
-                <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm leading-6 text-emerald-900">
-                  Approval creates the approved commercial snapshot used later
-                  for contract, SOV, and invoice lineage. Do not approve here
-                  unless this shared estimate is ready to become the downstream
-                  baseline.
+        <div id="decision-actions" className="scroll-mt-24">
+          <DetailPanel
+            title="Decision Actions"
+            description="Approve, reject, or comment on this same shared estimate record."
+          >
+            <div className="space-y-4 text-sm leading-6 text-slate-600">
+              {estimate.status === "sent" ? (
+                <div className={portalActionBoxClassName}>
+                  <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm leading-6 text-emerald-900">
+                    Approval creates the approved commercial snapshot used later
+                    for contract and invoice lineage. Do not approve here unless
+                    this shared estimate is ready to become the downstream
+                    baseline.
+                  </div>
+                  <form
+                    action={customerApproveEstimateAction}
+                    className="space-y-3"
+                  >
+                    <input
+                      type="hidden"
+                      name="estimateId"
+                      value={estimate.id}
+                    />
+                    <label className="block space-y-2">
+                      <span className="text-sm font-medium text-slate-950">
+                        Optional approval note
+                      </span>
+                      <textarea
+                        name="decisionNote"
+                        rows={3}
+                        maxLength={1000}
+                        className="w-full rounded-2xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 shadow-sm focus:border-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-200"
+                        placeholder="Share a short note if you want the contractor to see approval context."
+                      />
+                    </label>
+                    <button
+                      type="submit"
+                      className="inline-flex w-full items-center justify-center rounded-full bg-brand-700 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-brand-900"
+                    >
+                      Approve estimate
+                    </button>
+                  </form>
+
+                  <form
+                    action={customerRejectEstimateAction}
+                    className="space-y-3"
+                  >
+                    <input
+                      type="hidden"
+                      name="estimateId"
+                      value={estimate.id}
+                    />
+                    <label className="block space-y-2">
+                      <span className="text-sm font-medium text-slate-950">
+                        Rejection or revision note
+                      </span>
+                      <textarea
+                        name="decisionNote"
+                        rows={3}
+                        maxLength={1000}
+                        className="w-full rounded-2xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 shadow-sm focus:border-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-200"
+                        placeholder="Let the contractor know what needs to change."
+                      />
+                    </label>
+                    <button
+                      type="submit"
+                      className="inline-flex w-full items-center justify-center rounded-full border border-rose-300 bg-white px-4 py-2.5 text-sm font-medium text-rose-900 transition hover:border-rose-400 hover:bg-rose-50"
+                    >
+                      Reject or request changes
+                    </button>
+                  </form>
+
+                  <form
+                    action={customerAddEstimateCommentAction}
+                    className="space-y-3"
+                  >
+                    <input
+                      type="hidden"
+                      name="estimateId"
+                      value={estimate.id}
+                    />
+                    <label className="block space-y-2">
+                      <span className="text-sm font-medium text-slate-950">
+                        Add a note
+                      </span>
+                      <textarea
+                        name="comment"
+                        rows={3}
+                        maxLength={1000}
+                        className="w-full rounded-2xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 shadow-sm focus:border-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-200"
+                        placeholder="Send a note without making a final approval decision yet."
+                      />
+                    </label>
+                    <button
+                      type="submit"
+                      className="inline-flex w-full items-center justify-center rounded-full border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:bg-slate-50"
+                    >
+                      Save comment
+                    </button>
+                  </form>
                 </div>
-                <form
-                  action={customerApproveEstimateAction}
-                  className="space-y-3"
-                >
-                  <input type="hidden" name="estimateId" value={estimate.id} />
-                  <label className="block space-y-2">
-                    <span className="text-sm font-medium text-slate-950">
-                      Optional approval note
-                    </span>
-                    <textarea
-                      name="decisionNote"
-                      rows={3}
-                      maxLength={1000}
-                      className="w-full rounded-2xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 shadow-sm focus:border-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-200"
-                      placeholder="Share a short note if you want the contractor to see approval context."
-                    />
-                  </label>
-                  <button
-                    type="submit"
-                    className="inline-flex w-full items-center justify-center rounded-full bg-brand-700 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-brand-900"
-                  >
-                    Approve estimate
-                  </button>
-                </form>
-
-                <form
-                  action={customerRejectEstimateAction}
-                  className="space-y-3"
-                >
-                  <input type="hidden" name="estimateId" value={estimate.id} />
-                  <label className="block space-y-2">
-                    <span className="text-sm font-medium text-slate-950">
-                      Rejection or revision note
-                    </span>
-                    <textarea
-                      name="decisionNote"
-                      rows={3}
-                      maxLength={1000}
-                      className="w-full rounded-2xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 shadow-sm focus:border-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-200"
-                      placeholder="Let the contractor know what needs to change."
-                    />
-                  </label>
-                  <button
-                    type="submit"
-                    className="inline-flex w-full items-center justify-center rounded-full border border-rose-300 bg-white px-4 py-2.5 text-sm font-medium text-rose-900 transition hover:border-rose-400 hover:bg-rose-50"
-                  >
-                    Reject or request changes
-                  </button>
-                </form>
-
-                <form
-                  action={customerAddEstimateCommentAction}
-                  className="space-y-3"
-                >
-                  <input type="hidden" name="estimateId" value={estimate.id} />
-                  <label className="block space-y-2">
-                    <span className="text-sm font-medium text-slate-950">
-                      Add a note
-                    </span>
-                    <textarea
-                      name="comment"
-                      rows={3}
-                      maxLength={1000}
-                      className="w-full rounded-2xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 shadow-sm focus:border-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-200"
-                      placeholder="Send a note without making a final approval decision yet."
-                    />
-                  </label>
-                  <button
-                    type="submit"
-                    className="inline-flex w-full items-center justify-center rounded-full border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:bg-slate-50"
-                  >
-                    Save comment
-                  </button>
-                </form>
-              </div>
-            ) : (
-              <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
-                {estimate.status === "approved"
-                  ? "This estimate is already approved on the shared project chain."
-                  : estimate.status === "rejected"
-                    ? "This estimate is already marked as needing contractor revision."
-                    : "This page remains available for review even when no customer decision is currently open."}
-              </div>
-            )}
-          </div>
-        </DetailPanel>
+              ) : (
+                <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
+                  {estimate.status === "approved"
+                    ? "This estimate is already approved on the shared project chain."
+                    : estimate.status === "rejected"
+                      ? "This estimate is already marked as needing contractor revision."
+                      : "This page remains available for review even when no customer decision is currently open."}
+                </div>
+              )}
+            </div>
+          </DetailPanel>
+        </div>
 
         <DetailPanel
           title="Proposal Context"

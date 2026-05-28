@@ -223,8 +223,12 @@ function getNextAction(input: {
       title: "Review the failed payment attempt",
       description:
         "A recent payment attempt failed, so this invoice still needs attention before the shared billing step is complete.",
-      label: "Return to project workspace",
-      href: `/portal/projects/${input.projectId}`
+      label: input.canRequestPayment
+        ? "Go to payment actions"
+        : "Return to project workspace",
+      href: input.canRequestPayment
+        ? "#payment-actions"
+        : `/portal/projects/${input.projectId}`
     };
   }
 
@@ -257,8 +261,8 @@ function getNextAction(input: {
     return {
       title: "Continue to secure checkout",
       description: "This page can now open secure checkout for this invoice.",
-      label: "Return to project workspace",
-      href: `/portal/projects/${input.projectId}`
+      label: "Go to payment actions",
+      href: "#payment-actions"
     };
   }
 
@@ -652,73 +656,75 @@ export default async function PortalInvoiceReviewPage({
       </section>
 
       <aside className="min-w-0 space-y-6">
-        <DetailPanel
-          title="Payment Actions"
-          description="Continue to secure checkout when payment is available."
-        >
-          <div className="space-y-4 text-sm leading-6 text-slate-600">
-            <p className="max-w-[34ch]">
-              {isProductionActionLocked
-                ? "Checkout is locked during early access. You can still review this invoice and its payment state."
-                : invoice.paymentWorkflow.canRequestPayment
-                  ? "Continue to secure checkout for this invoice."
-                  : invoice.paymentWorkflow.requestBlockers[0]
-                    ? formatPaymentBlocker(
-                        invoice.paymentWorkflow.requestBlockers[0]
-                      )
-                    : "Customer payment is not currently available from this invoice."}
-            </p>
-            <p>
-              {getPaymentProgressSummary({
-                status: invoice.status,
-                workflowRole: invoice.workflowRole,
-                balanceDueAmount: invoice.balanceDueAmount,
-                latestPaymentEventType:
-                  invoice.paymentEvents[0]?.eventType ?? null
-              })}
-            </p>
+        <div id="payment-actions" className="scroll-mt-24">
+          <DetailPanel
+            title="Payment Actions"
+            description="Continue to secure checkout when payment is available."
+          >
+            <div className="space-y-4 text-sm leading-6 text-slate-600">
+              <p className="max-w-[34ch]">
+                {isProductionActionLocked
+                  ? "Checkout is locked during early access. You can still review this invoice and its payment state."
+                  : invoice.paymentWorkflow.canRequestPayment
+                    ? "Continue to secure checkout for this invoice."
+                    : invoice.paymentWorkflow.requestBlockers[0]
+                      ? formatPaymentBlocker(
+                          invoice.paymentWorkflow.requestBlockers[0]
+                        )
+                      : "Customer payment is not currently available from this invoice."}
+              </p>
+              <p>
+                {getPaymentProgressSummary({
+                  status: invoice.status,
+                  workflowRole: invoice.workflowRole,
+                  balanceDueAmount: invoice.balanceDueAmount,
+                  latestPaymentEventType:
+                    invoice.paymentEvents[0]?.eventType ?? null
+                })}
+              </p>
 
-            {invoice.paymentWorkflow.canRequestPayment &&
-            !isProductionActionLocked ? (
-              <form
-                action={requestPortalInvoicePaymentAction}
-                className={portalActionBoxClassName}
-              >
-                <input type="hidden" name="invoiceId" value={invoice.id} />
-                <input
-                  type="hidden"
-                  name="amount"
-                  value={invoice.balanceDueAmount}
-                />
-                <label className="block space-y-2">
-                  <span className="text-sm font-medium text-slate-950">
-                    Optional payment note
-                  </span>
-                  <textarea
-                    name="notes"
-                    rows={3}
-                    maxLength={1000}
-                    className="w-full rounded-2xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 shadow-sm focus:border-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-200"
-                    placeholder="Add a short note if it helps clarify this checkout."
-                  />
-                </label>
-                <button
-                  type="submit"
-                  className="inline-flex w-full items-center justify-center rounded-full bg-brand-700 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-brand-900"
+              {invoice.paymentWorkflow.canRequestPayment &&
+              !isProductionActionLocked ? (
+                <form
+                  action={requestPortalInvoicePaymentAction}
+                  className={portalActionBoxClassName}
                 >
-                  Continue to checkout for{" "}
-                  {formatMoney(invoice.balanceDueAmount)}
-                </button>
-              </form>
-            ) : isProductionActionLocked ? (
-              <EarlyAccessLockNotice showLink={false} />
-            ) : (
-              <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
-                Payment is currently blocked by this invoice's current state.
-              </div>
-            )}
-          </div>
-        </DetailPanel>
+                  <input type="hidden" name="invoiceId" value={invoice.id} />
+                  <input
+                    type="hidden"
+                    name="amount"
+                    value={invoice.balanceDueAmount}
+                  />
+                  <label className="block space-y-2">
+                    <span className="text-sm font-medium text-slate-950">
+                      Optional payment note
+                    </span>
+                    <textarea
+                      name="notes"
+                      rows={3}
+                      maxLength={1000}
+                      className="w-full rounded-2xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 shadow-sm focus:border-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-200"
+                      placeholder="Add a short note if it helps clarify this checkout."
+                    />
+                  </label>
+                  <button
+                    type="submit"
+                    className="inline-flex w-full items-center justify-center rounded-full bg-brand-700 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-brand-900"
+                  >
+                    Continue to checkout for{" "}
+                    {formatMoney(invoice.balanceDueAmount)}
+                  </button>
+                </form>
+              ) : isProductionActionLocked ? (
+                <EarlyAccessLockNotice showLink={false} />
+              ) : (
+                <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
+                  Payment is currently blocked by this invoice's current state.
+                </div>
+              )}
+            </div>
+          </DetailPanel>
+        </div>
 
         <DetailPanel
           title="Invoice Context"

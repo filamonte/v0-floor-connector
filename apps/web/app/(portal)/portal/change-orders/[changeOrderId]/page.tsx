@@ -82,8 +82,14 @@ function getNextAction(input: {
     title: "Review and decide on the scope change",
     description:
       "This page keeps the scope update, approval decision, and any linked billing effect tied to the same shared project chain.",
-    label: "Return to project workspace",
-    href: `/portal/projects/${input.projectId}`
+    label:
+      input.status === "sent"
+        ? "Go to decision actions"
+        : "Return to project workspace",
+    href:
+      input.status === "sent"
+        ? "#change-order-actions"
+        : `/portal/projects/${input.projectId}`
   };
 }
 
@@ -282,82 +288,84 @@ export default async function PortalChangeOrderReviewPage({
       </section>
 
       <aside className="space-y-6">
-        <DetailPanel
-          title="Decision Actions"
-          description="Approve or reject this same shared change-order record."
-        >
-          <div className="space-y-4 text-sm leading-6 text-slate-600">
-            {changeOrder.status === "sent" ? (
-              <div className={portalActionBoxClassName}>
-                <form
-                  action={customerApproveChangeOrderAction}
-                  className="space-y-3"
-                >
-                  <input
-                    type="hidden"
-                    name="changeOrderId"
-                    value={changeOrder.id}
-                  />
-                  <label className="block space-y-2">
-                    <span className="text-sm font-medium text-slate-950">
-                      Optional approval note
-                    </span>
-                    <textarea
-                      name="decisionNote"
-                      rows={3}
-                      maxLength={1000}
-                      className="w-full rounded-2xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 shadow-sm focus:border-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-200"
-                      placeholder="Share a short note if you want the contractor to see approval context."
-                    />
-                  </label>
-                  <button
-                    type="submit"
-                    className="inline-flex w-full items-center justify-center rounded-full bg-brand-700 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-brand-900"
+        <div id="change-order-actions" className="scroll-mt-24">
+          <DetailPanel
+            title="Decision Actions"
+            description="Approve or reject this same shared change-order record."
+          >
+            <div className="space-y-4 text-sm leading-6 text-slate-600">
+              {changeOrder.status === "sent" ? (
+                <div className={portalActionBoxClassName}>
+                  <form
+                    action={customerApproveChangeOrderAction}
+                    className="space-y-3"
                   >
-                    Approve change order
-                  </button>
-                </form>
+                    <input
+                      type="hidden"
+                      name="changeOrderId"
+                      value={changeOrder.id}
+                    />
+                    <label className="block space-y-2">
+                      <span className="text-sm font-medium text-slate-950">
+                        Optional approval note
+                      </span>
+                      <textarea
+                        name="decisionNote"
+                        rows={3}
+                        maxLength={1000}
+                        className="w-full rounded-2xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 shadow-sm focus:border-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-200"
+                        placeholder="Share a short note if you want the contractor to see approval context."
+                      />
+                    </label>
+                    <button
+                      type="submit"
+                      className="inline-flex w-full items-center justify-center rounded-full bg-brand-700 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-brand-900"
+                    >
+                      Approve change order
+                    </button>
+                  </form>
 
-                <form
-                  action={customerRejectChangeOrderAction}
-                  className="space-y-3"
-                >
-                  <input
-                    type="hidden"
-                    name="changeOrderId"
-                    value={changeOrder.id}
-                  />
-                  <label className="block space-y-2">
-                    <span className="text-sm font-medium text-slate-950">
-                      Optional rejection note
-                    </span>
-                    <textarea
-                      name="decisionNote"
-                      rows={3}
-                      maxLength={1000}
-                      className="w-full rounded-2xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 shadow-sm focus:border-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-200"
-                      placeholder="Share a short note if the scope or pricing needs revision."
-                    />
-                  </label>
-                  <button
-                    type="submit"
-                    className="inline-flex w-full items-center justify-center rounded-full border border-rose-300 bg-white px-4 py-2.5 text-sm font-medium text-rose-900 transition hover:border-rose-400 hover:bg-rose-50"
+                  <form
+                    action={customerRejectChangeOrderAction}
+                    className="space-y-3"
                   >
-                    Reject change order
-                  </button>
-                </form>
-              </div>
-            ) : (
-              <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
-                {changeOrder.status === "approved"
-                  ? "This change order is already approved on the shared project chain."
-                  : changeOrder.status === "rejected"
-                    ? "This change order is already rejected. The contractor can revise and resend it if needed."
-                    : "This page remains available for review even when no decision is currently open."}
-              </div>
-            )}
-          </div>
-        </DetailPanel>
+                    <input
+                      type="hidden"
+                      name="changeOrderId"
+                      value={changeOrder.id}
+                    />
+                    <label className="block space-y-2">
+                      <span className="text-sm font-medium text-slate-950">
+                        Optional rejection note
+                      </span>
+                      <textarea
+                        name="decisionNote"
+                        rows={3}
+                        maxLength={1000}
+                        className="w-full rounded-2xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 shadow-sm focus:border-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-200"
+                        placeholder="Share a short note if the scope or pricing needs revision."
+                      />
+                    </label>
+                    <button
+                      type="submit"
+                      className="inline-flex w-full items-center justify-center rounded-full border border-rose-300 bg-white px-4 py-2.5 text-sm font-medium text-rose-900 transition hover:border-rose-400 hover:bg-rose-50"
+                    >
+                      Reject change order
+                    </button>
+                  </form>
+                </div>
+              ) : (
+                <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
+                  {changeOrder.status === "approved"
+                    ? "This change order is already approved on the shared project chain."
+                    : changeOrder.status === "rejected"
+                      ? "This change order is already rejected. The contractor can revise and resend it if needed."
+                      : "This page remains available for review even when no decision is currently open."}
+                </div>
+              )}
+            </div>
+          </DetailPanel>
+        </div>
 
         <DetailPanel
           title="Connected Records"

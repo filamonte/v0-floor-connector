@@ -570,7 +570,7 @@ export function derivePortalCloseoutHandoff(
     paymentSummary,
     warrantySummary,
     customerSafeBoundary:
-      "This closeout handoff shows customer-safe commercial records, payment status, schedule context, and warranty documents. Contractor-only field notes, Daily Job Log details, execution attachments, internal blockers, provider diagnostics, and private proof remain internal.",
+      "This closeout handoff shows customer-safe commercial records, payment status, schedule context, and warranty documents. Internal field notes, crew logs, unshared photos or files, private review details, and contractor-only proof remain internal.",
     emptyStateMessage:
       "No closeout records are shared yet. Contracts, approved changes, invoices, receipts, and warranty documents will appear here when they are available in your portal."
   };
