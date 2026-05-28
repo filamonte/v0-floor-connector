@@ -5,7 +5,7 @@ Doc Type: Roadmap
 
 This roadmap frames FloorConnector around platform maturity, not early startup build timing. It is sequencing guidance only.
 
-For implemented truth, use [docs/current-state.md](C:/FloorConnector/docs/current-state.md). For concise maturity status, use [docs/platform-maturity.md](C:/FloorConnector/docs/platform-maturity.md), [docs/module-status.md](C:/FloorConnector/docs/module-status.md), and [docs/known-gaps.md](C:/FloorConnector/docs/known-gaps.md). For strategic sequencing, use [docs/platform-build-registry.md](C:/FloorConnector/docs/platform-build-registry.md) and [docs/platform-maturity-model.md](C:/FloorConnector/docs/platform-maturity-model.md). For strategic layer doctrine, use [docs/communications-layer.md](C:/FloorConnector/docs/communications-layer.md), [docs/reporting-and-metrics.md](C:/FloorConnector/docs/reporting-and-metrics.md), [docs/automation-layer.md](C:/FloorConnector/docs/automation-layer.md), [docs/intelligence-layer.md](C:/FloorConnector/docs/intelligence-layer.md), and [docs/agentic-operations-layer.md](C:/FloorConnector/docs/agentic-operations-layer.md).
+For implemented truth, use [docs/current-state.md](C:/FloorConnector/docs/current-state.md). For the founder/product-owner build list, immediate build order, and horizon-based completion timeline, use [docs/floorconnector-build-list-and-completion-timeline.md](C:/FloorConnector/docs/floorconnector-build-list-and-completion-timeline.md). For concise maturity status, use [docs/platform-maturity.md](C:/FloorConnector/docs/platform-maturity.md), [docs/module-status.md](C:/FloorConnector/docs/module-status.md), and [docs/known-gaps.md](C:/FloorConnector/docs/known-gaps.md). For strategic sequencing, use [docs/platform-build-registry.md](C:/FloorConnector/docs/platform-build-registry.md) and [docs/platform-maturity-model.md](C:/FloorConnector/docs/platform-maturity-model.md). For strategic layer doctrine, use [docs/communications-layer.md](C:/FloorConnector/docs/communications-layer.md), [docs/reporting-and-metrics.md](C:/FloorConnector/docs/reporting-and-metrics.md), [docs/automation-layer.md](C:/FloorConnector/docs/automation-layer.md), [docs/intelligence-layer.md](C:/FloorConnector/docs/intelligence-layer.md), and [docs/agentic-operations-layer.md](C:/FloorConnector/docs/agentic-operations-layer.md).
 
 ## Roadmap Principles
 
@@ -37,6 +37,14 @@ Current recommended build-order discipline:
 | Tier 6 | Governed Autonomy, Ecosystem, And Marketplace |
 
 Use [docs/platform-build-registry.md](C:/FloorConnector/docs/platform-build-registry.md) as the living strategic coordination map for major planned systems, priorities, dependencies, maturity, status, and rationale. Use [docs/platform-maturity-model.md](C:/FloorConnector/docs/platform-maturity-model.md) to prevent foundation-level systems from being treated as ready for intelligence, predictive, or autonomous behavior too early.
+
+Use [docs/floorconnector-build-list-and-completion-timeline.md](C:/FloorConnector/docs/floorconnector-build-list-and-completion-timeline.md)
+when a prompt needs the complete product-area build list, realistic completion
+horizons, and next 10-15 build slices. Its current sequencing keeps Phase 0 as
+source-of-truth cleanup, Phase 1 as operational core completion, Phase 2 as
+scheduling/communications/reporting density, Phase 3 as portal/mobile/financial
+depth, Phase 4 as integrations and automation maturity, Phase 5 as AI/growth
+platform work, and Phase 6 as ecosystem/network planning.
 
 ## Feature Coverage Direction
 
