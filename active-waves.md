@@ -24,6 +24,17 @@ as the coordination source for the four operational waves:
 Project Workspace is the first implementation slice. The sequence above should
 not be read as permission to implement all four waves at the same time.
 
+## Parallel Financials Planning Stream
+
+Use
+[docs/design/financials-capability-wave-v1.md](C:/FloorConnector/docs/design/financials-capability-wave-v1.md)
+as the planning-only source for the Financials stream. Financials is a planned
+parallel market-readiness stream over canonical invoices, payments, payment
+events, project financial readiness, and customer-safe portal payment
+continuity. It does not change the operational wave order above and does not
+authorize payment provider changes, webhooks, accounting integrations, schema,
+or duplicate financial models.
+
 Shared guardrails:
 
 - preserve the canonical lifecycle:
@@ -33,3 +44,6 @@ Shared guardrails:
 - keep Scheduling on canonical `jobs` and `job_assignments`
 - keep Field/Mobile on canonical execution records
 - keep Portal as a scoped customer read/action surface over canonical records
+- keep Financials on canonical invoices, payments, payment events, and
+  source-record financial readiness without duplicate ledgers or portal-owned
+  billing state
