@@ -418,3 +418,16 @@ If code is approved afterward, the safest first implementation is:
 
 This first slice improves market-readiness clarity while keeping the financial
 source of truth unchanged.
+
+## 13. Implementation Note - AR Continuity Snapshot
+
+The first read-only implementation slice now extends the existing
+`/financials/accounts-receivable` command-center helper with an operational
+continuity snapshot. The snapshot derives invoice status counts and review lanes
+for open balances, collection attention, deposit readiness, payment in progress,
+payment-event review, and recently settled continuity from the already loaded
+canonical invoices, payments, and payment events.
+
+This implementation does not add schema, migrations, payment provider behavior,
+webhook behavior, invoice/payment mutations, accounting integrations, tax logic,
+portal-owned billing state, duplicate AR models, or collection-task records.

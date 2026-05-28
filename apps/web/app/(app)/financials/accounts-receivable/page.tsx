@@ -87,6 +87,34 @@ export default async function AccountsReceivablePage() {
   );
   const showAiDraftActions = shouldShowAiDraftActions(guidancePreferences);
   const collectionsDesk = readModel.collectionsCommandCenter;
+  const continuitySnapshot = collectionsDesk.continuitySnapshot;
+  const invoiceStatusCounts = [
+    {
+      label: "Draft",
+      value: continuitySnapshot.invoiceStatusCounts.draft,
+      href: "/invoices?status=draft"
+    },
+    {
+      label: "Sent",
+      value: continuitySnapshot.invoiceStatusCounts.sent,
+      href: "/invoices?status=sent"
+    },
+    {
+      label: "Partial",
+      value: continuitySnapshot.invoiceStatusCounts.partiallyPaid,
+      href: "/invoices?status=open"
+    },
+    {
+      label: "Paid",
+      value: continuitySnapshot.invoiceStatusCounts.paid,
+      href: "/invoices?status=paid"
+    },
+    {
+      label: "Void",
+      value: continuitySnapshot.invoiceStatusCounts.void,
+      href: "/invoices?status=void"
+    }
+  ];
   const invoiceAttentionById = new Map(
     financialControl.invoicesNeedingAttention.map((invoice) => [
       invoice.id,
@@ -156,6 +184,72 @@ export default async function AccountsReceivablePage() {
       }}
     >
       <div className="space-y-4">
+        <section className="border border-[#d6d6d6] bg-white">
+          <div className="flex flex-col gap-3 border-b border-[#e5e5e5] px-5 py-4 xl:flex-row xl:items-start xl:justify-between">
+            <div>
+              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#8f5b32]">
+                Operational continuity
+              </p>
+              <h2 className="mt-2 text-xl font-semibold tracking-tight text-slate-950">
+                AR status and review lanes
+              </h2>
+              <p className="mt-1 max-w-[78ch] text-sm leading-6 text-slate-500">
+                Read-only invoice status, collections, deposit, and Payment
+                Trail lanes derived from existing canonical invoices, payments,
+                and payment events.
+              </p>
+            </div>
+            <div className="grid min-w-0 grid-cols-2 gap-2 sm:grid-cols-5">
+              {invoiceStatusCounts.map((status) => (
+                <Link
+                  key={status.label}
+                  href={status.href}
+                  className="border border-[#e5e5e5] bg-[#f8f8f8] px-3 py-2 text-center transition hover:bg-white"
+                >
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#666666]">
+                    {status.label}
+                  </p>
+                  <p className="mt-1 text-lg font-semibold text-slate-950">
+                    {status.value}
+                  </p>
+                </Link>
+              ))}
+            </div>
+          </div>
+
+          <div className="grid gap-px bg-[#e5e5e5] md:grid-cols-2 xl:grid-cols-3">
+            {continuitySnapshot.operationalQueues.map((queue) => (
+              <Link
+                key={queue.id}
+                href={queue.href}
+                className="min-w-0 bg-white px-5 py-4 transition hover:bg-[#f8f8f8]"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#666666]">
+                    {queue.label}
+                  </p>
+                  <span
+                    className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] ${toneBadgeClass(queue.tone)}`}
+                  >
+                    {queue.tone}
+                  </span>
+                </div>
+                <p className="mt-2 text-xl font-semibold tracking-tight text-[#171717]">
+                  {queue.amount ? formatMoney(queue.amount) : queue.count}
+                </p>
+                {queue.amount ? (
+                  <p className="mt-1 text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
+                    {queue.count} item{queue.count === 1 ? "" : "s"}
+                  </p>
+                ) : null}
+                <p className="mt-2 text-sm leading-5 text-slate-500">
+                  {queue.detail}
+                </p>
+              </Link>
+            ))}
+          </div>
+        </section>
+
         <section className="grid min-w-0 gap-4 xl:grid-cols-[minmax(0,1.5fr)_minmax(340px,1fr)]">
           <section className="min-w-0 border border-[#d6d6d6] bg-white">
             <div className="border-b border-[#e5e5e5] px-5 py-4">
