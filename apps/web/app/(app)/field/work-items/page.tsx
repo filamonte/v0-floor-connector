@@ -1,10 +1,10 @@
 import Link from "next/link";
 
+import { AssignedJobContextCard } from "@/components/field/assigned-job-context-card";
 import { listExecutionAttachmentsBySubjects } from "@/lib/execution-attachments/data";
 import { listAssignedFieldWorkForCurrentUser } from "@/lib/field/assigned-work-data";
 import {
   buildFieldAssignedWorkQueue,
-  summarizeFieldAssignedWorkJob,
   type FieldAssignedWorkGroupKey
 } from "@/lib/field/assigned-work-read-model";
 import { listAssignedWorkItemsForCurrentUser } from "@/lib/work-items/data";
@@ -211,64 +211,14 @@ export default async function FieldWorkItemsPage() {
 
                     {jobs.length > 0 ? (
                       <ul className="mt-3 space-y-2">
-                        {jobs.map((job) => {
-                          const summary = summarizeFieldAssignedWorkJob(job);
-
-                          return (
-                            <li key={job.id}>
-                              <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-3">
-                                <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-                                  <div className="min-w-0">
-                                    <p className="text-sm font-semibold text-slate-950">
-                                      {summary.title}
-                                    </p>
-                                    <p className="mt-1 text-xs leading-5 text-slate-500">
-                                      {summary.customerLabel} ·{" "}
-                                      {summary.scheduleLabel} ·{" "}
-                                      {labelize(job.dispatchStatus)}
-                                    </p>
-                                    <p className="mt-1 text-xs leading-5 text-slate-500">
-                                      {summary.crewLabel}
-                                    </p>
-                                  </div>
-                                  <div className="flex shrink-0 flex-wrap gap-2">
-                                    <Link
-                                      href={`/jobs/${job.id}`}
-                                      className="rounded-[6px] border border-slate-300 bg-white px-2 py-1 text-xs font-semibold text-slate-700 transition hover:border-[#d8731f] hover:text-slate-950"
-                                    >
-                                      Job
-                                    </Link>
-                                    {job.project ? (
-                                      <Link
-                                        href={`/projects/${job.project.id}`}
-                                        className="rounded-[6px] border border-slate-300 bg-white px-2 py-1 text-xs font-semibold text-slate-700 transition hover:border-[#d8731f] hover:text-slate-950"
-                                      >
-                                        Project
-                                      </Link>
-                                    ) : null}
-                                  </div>
-                                </div>
-                                <div className="mt-3 flex flex-wrap gap-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">
-                                  <span>
-                                    {job.dailyLogCount} Daily Log
-                                    {job.dailyLogCount === 1 ? "" : "s"}
-                                  </span>
-                                  <span>
-                                    {job.fieldNoteCount} Field Note
-                                    {job.fieldNoteCount === 1 ? "" : "s"}
-                                  </span>
-                                  <span>
-                                    {job.timeCardCount} Time Card
-                                    {job.timeCardCount === 1 ? "" : "s"}
-                                  </span>
-                                  {job.openTimeCardCount > 0 ? (
-                                    <span>{job.openTimeCardCount} open</span>
-                                  ) : null}
-                                </div>
-                              </div>
-                            </li>
-                          );
-                        })}
+                        {jobs.map((job) => (
+                          <li key={job.id}>
+                            <AssignedJobContextCard
+                              job={job}
+                              currentPersonId={currentPerson.id}
+                            />
+                          </li>
+                        ))}
                       </ul>
                     ) : (
                       <p className="mt-3 rounded-lg border border-dashed border-slate-300 bg-slate-50 px-3 py-3 text-sm text-slate-500">

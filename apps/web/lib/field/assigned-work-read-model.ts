@@ -7,6 +7,12 @@ export type FieldAssignedWorkAssignee = {
   role: string;
 };
 
+export type FieldAssignedWorkDailyLogState = {
+  id: string;
+  logDate: string;
+  status: string;
+};
+
 export type FieldAssignedWorkJob = {
   id: string;
   dispatchStatus: JobStatus;
@@ -26,7 +32,10 @@ export type FieldAssignedWorkJob = {
   } | null;
   assignments: FieldAssignedWorkAssignee[];
   dailyLogCount: number;
+  todayDailyLog: FieldAssignedWorkDailyLogState | null;
+  latestDailyLog: FieldAssignedWorkDailyLogState | null;
   fieldNoteCount: number;
+  openBlockerCount: number;
   timeCardCount: number;
   openTimeCardCount: number;
 };
@@ -151,6 +160,8 @@ export function buildFieldAssignedWorkQueue(input: {
 
 export function summarizeFieldAssignedWorkJob(job: FieldAssignedWorkJob) {
   const crewLabels = job.assignments.map((assignment) => assignment.label);
+  const hasOpenBlockers = job.openBlockerCount > 0;
+  const hasTodayDailyLog = Boolean(job.todayDailyLog);
 
   return {
     title: job.project?.name ?? `Job ${job.id.slice(0, 8)}`,
@@ -169,6 +180,19 @@ export function summarizeFieldAssignedWorkJob(job: FieldAssignedWorkJob) {
             day: "numeric"
           }).format(new Date(`${job.scheduledDate}T00:00:00`))
         : "Unscheduled",
-    crewLabel: crewLabels.length > 0 ? crewLabels.join(", ") : "No crew listed"
+    crewLabel: crewLabels.length > 0 ? crewLabels.join(", ") : "No crew listed",
+    dailyLogLabel: hasTodayDailyLog
+      ? `Today's Daily Log is ${job.todayDailyLog?.status.replaceAll("_", " ")}`
+      : job.latestDailyLog
+        ? `Latest Daily Log ${new Intl.DateTimeFormat("en-US", {
+            month: "short",
+            day: "numeric"
+          }).format(new Date(`${job.latestDailyLog.logDate}T00:00:00`))}`
+        : "No Daily Job Log yet",
+    blockerLabel: hasOpenBlockers
+      ? `${job.openBlockerCount} open blocker${
+          job.openBlockerCount === 1 ? "" : "s"
+        }`
+      : "No open blockers"
   };
 }

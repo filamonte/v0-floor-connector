@@ -33,7 +33,10 @@ const baseJob = {
     }
   ],
   dailyLogCount: 0,
+  todayDailyLog: null,
+  latestDailyLog: null,
   fieldNoteCount: 0,
+  openBlockerCount: 0,
   timeCardCount: 0,
   openTimeCardCount: 0
 } satisfies FieldAssignedWorkJob;
@@ -137,7 +140,18 @@ void test("field assigned work summary keeps canonical job context labels", () =
     ...baseJob,
     scheduledStartAt: "2026-05-28T14:30:00.000",
     dailyLogCount: 1,
+    todayDailyLog: {
+      id: "55555555-5555-4555-8555-555555555555",
+      logDate: "2026-05-28",
+      status: "draft"
+    },
+    latestDailyLog: {
+      id: "55555555-5555-4555-8555-555555555555",
+      logDate: "2026-05-28",
+      status: "draft"
+    },
     fieldNoteCount: 2,
+    openBlockerCount: 1,
     timeCardCount: 3,
     openTimeCardCount: 1
   });
@@ -146,4 +160,6 @@ void test("field assigned work summary keeps canonical job context labels", () =
   assert.equal(summary.customerLabel, "Avery Home");
   assert.equal(summary.scheduleLabel, "May 28, 2:30 PM");
   assert.equal(summary.crewLabel, "Jordan Crew");
+  assert.equal(summary.dailyLogLabel, "Today's Daily Log is draft");
+  assert.equal(summary.blockerLabel, "1 open blocker");
 });

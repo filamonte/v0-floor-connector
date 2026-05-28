@@ -2,6 +2,7 @@ import "server-only";
 
 import { cache } from "react";
 
+import { getDailyLogDateKey } from "@/lib/daily-logs/links";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 import {
   getCurrentUserWorkItemPerson,
@@ -80,6 +81,16 @@ type FieldAssignedJobAssignmentRow = {
 type CountRow = {
   id: string;
   job_id: string | null;
+};
+
+type DailyLogCountRow = CountRow & {
+  log_date: string;
+  status: string;
+};
+
+type FieldNoteCountRow = CountRow & {
+  note_type: string;
+  status: string;
 };
 
 type TimeCardCountRow = CountRow & {
@@ -188,6 +199,34 @@ function isTimeCardCountRow(value: unknown): value is TimeCardCountRow {
   return isCountRow(value) && typeof row.status === "string";
 }
 
+function isDailyLogCountRow(value: unknown): value is DailyLogCountRow {
+  if (!value || typeof value !== "object") {
+    return false;
+  }
+
+  const row = value as Partial<DailyLogCountRow>;
+
+  return (
+    isCountRow(value) &&
+    typeof row.log_date === "string" &&
+    typeof row.status === "string"
+  );
+}
+
+function isFieldNoteCountRow(value: unknown): value is FieldNoteCountRow {
+  if (!value || typeof value !== "object") {
+    return false;
+  }
+
+  const row = value as Partial<FieldNoteCountRow>;
+
+  return (
+    isCountRow(value) &&
+    typeof row.note_type === "string" &&
+    typeof row.status === "string"
+  );
+}
+
 function countByJobId(rows: CountRow[]) {
   const counts = new Map<string, number>();
 
@@ -200,6 +239,47 @@ function countByJobId(rows: CountRow[]) {
   }
 
   return counts;
+}
+
+function mapDailyLogStateByJobId(
+  rows: DailyLogCountRow[],
+  selector: (rows: DailyLogCountRow[]) => DailyLogCountRow | null
+) {
+  const rowsByJobId = new Map<string, DailyLogCountRow[]>();
+  const statesByJobId = new Map<
+    string,
+    NonNullable<FieldAssignedWorkJob["latestDailyLog"]>
+  >();
+
+  for (const row of rows) {
+    if (!row.job_id) {
+      continue;
+    }
+
+    const existing = rowsByJobId.get(row.job_id);
+
+    if (existing) {
+      existing.push(row);
+    } else {
+      rowsByJobId.set(row.job_id, [row]);
+    }
+  }
+
+  for (const [jobId, jobRows] of rowsByJobId) {
+    const selected = selector(jobRows);
+
+    if (!selected) {
+      continue;
+    }
+
+    statesByJobId.set(jobId, {
+      id: selected.id,
+      logDate: selected.log_date,
+      status: selected.status
+    });
+  }
+
+  return statesByJobId;
 }
 
 function unwrapOne<T>(value: T | T[] | null | undefined): T | null {
@@ -248,7 +328,10 @@ function mapFieldAssignedWorkJob(input: {
   row: FieldAssignedJobRow;
   assignments: FieldAssignedWorkAssignee[];
   dailyLogCount: number;
+  todayDailyLog: FieldAssignedWorkJob["todayDailyLog"];
+  latestDailyLog: FieldAssignedWorkJob["latestDailyLog"];
   fieldNoteCount: number;
+  openBlockerCount: number;
   timeCardCount: number;
   openTimeCardCount: number;
 }): FieldAssignedWorkJob {
@@ -278,7 +361,10 @@ function mapFieldAssignedWorkJob(input: {
       : null,
     assignments: input.assignments,
     dailyLogCount: input.dailyLogCount,
+    todayDailyLog: input.todayDailyLog,
+    latestDailyLog: input.latestDailyLog,
     fieldNoteCount: input.fieldNoteCount,
+    openBlockerCount: input.openBlockerCount,
     timeCardCount: input.timeCardCount,
     openTimeCardCount: input.openTimeCardCount
   };
@@ -340,6 +426,7 @@ export const listAssignedFieldWorkForCurrentUser = cache(
     }
 
     const supabase = await getSupabaseServerClient();
+    const todayKey = getDailyLogDateKey();
     const [
       jobsResponse,
       assignmentsResponse,
@@ -361,12 +448,12 @@ export const listAssignedFieldWorkForCurrentUser = cache(
         .order("created_at", { ascending: true }),
       supabase
         .from("daily_logs")
-        .select("id, job_id")
+        .select("id, job_id, log_date, status")
         .eq("company_id", scope.organizationId)
         .in("job_id", jobIds),
       supabase
         .from("field_notes")
-        .select("id, job_id")
+        .select("id, job_id, note_type, status")
         .eq("company_id", scope.organizationId)
         .in("job_id", jobIds),
       supabase
@@ -426,8 +513,28 @@ export const listAssignedFieldWorkForCurrentUser = cache(
     const assignmentsByJobId = mapAssignmentsByJobId(
       rawAssignmentRows.filter(isFieldAssignedJobAssignmentRow)
     );
-    const dailyLogCounts = countByJobId(rawDailyLogRows.filter(isCountRow));
-    const fieldNoteCounts = countByJobId(rawFieldNoteRows.filter(isCountRow));
+    const dailyLogRows = rawDailyLogRows.filter(isDailyLogCountRow);
+    const fieldNoteRows = rawFieldNoteRows.filter(isFieldNoteCountRow);
+    const dailyLogCounts = countByJobId(dailyLogRows);
+    const todayDailyLogs = mapDailyLogStateByJobId(
+      dailyLogRows,
+      (rows) => rows.find((row) => row.log_date === todayKey) ?? null
+    );
+    const latestDailyLogs = mapDailyLogStateByJobId(
+      dailyLogRows,
+      (rows) =>
+        [...rows].sort((left, right) =>
+          right.log_date.localeCompare(left.log_date)
+        )[0] ?? null
+    );
+    const fieldNoteCounts = countByJobId(fieldNoteRows);
+    const openBlockerCounts = countByJobId(
+      fieldNoteRows.filter(
+        (row) =>
+          row.status === "open" &&
+          (row.note_type === "blocker" || row.note_type === "issue")
+      )
+    );
     const timeCardRows = rawTimeCardRows.filter(isTimeCardCountRow);
     const timeCardCounts = countByJobId(timeCardRows);
     const openTimeCardCounts = countByJobId(
@@ -441,7 +548,10 @@ export const listAssignedFieldWorkForCurrentUser = cache(
           row,
           assignments: assignmentsByJobId.get(row.id) ?? [],
           dailyLogCount: dailyLogCounts.get(row.id) ?? 0,
+          todayDailyLog: todayDailyLogs.get(row.id) ?? null,
+          latestDailyLog: latestDailyLogs.get(row.id) ?? null,
           fieldNoteCount: fieldNoteCounts.get(row.id) ?? 0,
+          openBlockerCount: openBlockerCounts.get(row.id) ?? 0,
           timeCardCount: timeCardCounts.get(row.id) ?? 0,
           openTimeCardCount: openTimeCardCounts.get(row.id) ?? 0
         })
