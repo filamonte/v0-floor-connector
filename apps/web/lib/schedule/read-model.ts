@@ -139,6 +139,30 @@ export type ScheduleBoardReadModel<TJob extends ScheduleBoardJobSource> = {
   scheduledJobsByDate: Map<string, TJob[]>;
 };
 
+export type ScheduleBoardQueues<TJob extends ScheduleBoardJobSource> = {
+  unscheduledReadyJobs: TJob[];
+  unscheduledBlockedJobs: TJob[];
+  overdueSchedulingJobs: TJob[];
+  agingUnscheduledReadyJobs: TJob[];
+  pastScheduledIncompleteJobs: TJob[];
+  scheduledTodayJobs: TJob[];
+  tomorrowJobs: TJob[];
+  thisWeekJobs: TJob[];
+  laterScheduledJobs: TJob[];
+  upcomingJobs: TJob[];
+  inProgressJobs: TJob[];
+  assignedJobs: TJob[];
+  crewAssignmentGaps: TJob[];
+  recentlyCompletedJobs: TJob[];
+  todayWithoutCrewJobs: TJob[];
+  activeTodayJobs: TJob[];
+  scheduledJobs: TJob[];
+  latestScheduledJobs: TJob[];
+  capacityWarningJobs: TJob[];
+  dispatchAttentionItems: ScheduleDispatchAttentionItem<TJob>[];
+  needsReadinessReviewJobs: TJob[];
+};
+
 function formatDateKeyFromIso(value: string) {
   return new Date(value).toISOString().slice(0, 10);
 }
@@ -364,7 +388,7 @@ function buildDispatchAttentionItems<
   });
 }
 
-export function buildScheduleBoardReadModel<
+export function deriveScheduleBoardQueues<
   TJob extends ScheduleBoardJobSource
 >(input: {
   jobs: TJob[];
@@ -377,7 +401,7 @@ export function buildScheduleBoardReadModel<
   upcomingHorizonDays?: number;
   recentCompletedLimit?: number;
   latestScheduledLimit?: number;
-}): ScheduleBoardReadModel<TJob> {
+}): ScheduleBoardQueues<TJob> {
   const today = new Date(input.today);
   today.setHours(0, 0, 0, 0);
 
@@ -505,45 +529,6 @@ export function buildScheduleBoardReadModel<
     inProgressJobs,
     warningSummariesByJobId
   });
-  const scheduledJobsByDate = new Map<string, TJob[]>();
-
-  for (const job of sortBySchedule(scheduledJobs)) {
-    if (!job.scheduledDate) {
-      continue;
-    }
-
-    const existing = scheduledJobsByDate.get(job.scheduledDate);
-
-    if (existing) {
-      existing.push(job);
-    } else {
-      scheduledJobsByDate.set(job.scheduledDate, [job]);
-    }
-  }
-
-  const boardTimingJobs = input.jobs.filter(
-    (job) => job.dispatchStatus !== "in_progress"
-  );
-  const todayBoardJobs = boardTimingJobs.filter(
-    (job) => job.scheduledDate === todayDateKey
-  );
-  const tomorrowBoardJobs = boardTimingJobs.filter(
-    (job) => job.scheduledDate === tomorrowDateKey
-  );
-  const nextSevenDaysBoardJobs = boardTimingJobs.filter((job) => {
-    const scheduledDate = parseDateKey(job.scheduledDate);
-
-    return (
-      scheduledDate !== null &&
-      scheduledDate > tomorrow &&
-      scheduledDate <= nextSevenDaysEnd
-    );
-  });
-  const laterScheduledBoardJobs = boardTimingJobs.filter((job) => {
-    const scheduledDate = parseDateKey(job.scheduledDate);
-
-    return scheduledDate !== null && scheduledDate > nextSevenDaysEnd;
-  });
   const needsReadinessReviewJobs = sortBySchedule(
     input.jobs.filter((job) => {
       if (job.dispatchStatus === "completed") {
@@ -583,8 +568,84 @@ export function buildScheduleBoardReadModel<
     latestScheduledJobs,
     capacityWarningJobs,
     dispatchAttentionItems,
-    needsReadinessReviewJobs,
-    readinessReviewJobs: needsReadinessReviewJobs,
+    needsReadinessReviewJobs
+  };
+}
+
+export function buildScheduleBoardReadModel<
+  TJob extends ScheduleBoardJobSource
+>(input: {
+  jobs: TJob[];
+  today: Date;
+  readinessByProjectId?: Map<string, { isReadyToSchedule: boolean } | null>;
+  warningSummaries?: Array<{
+    jobId: string;
+    warnings: ScheduleWarningSummary[];
+  }>;
+  upcomingHorizonDays?: number;
+  recentCompletedLimit?: number;
+  latestScheduledLimit?: number;
+}): ScheduleBoardReadModel<TJob> {
+  const today = new Date(input.today);
+  today.setHours(0, 0, 0, 0);
+
+  const tomorrow = addDays(today, 1);
+  const nextSevenDaysEnd = addDays(today, 7);
+  const todayDateKey = getDateKey(today);
+  const tomorrowDateKey = getDateKey(tomorrow);
+  const queues = deriveScheduleBoardQueues(input);
+  const {
+    scheduledJobs,
+    unscheduledReadyJobs,
+    unscheduledBlockedJobs,
+    inProgressJobs,
+    crewAssignmentGaps,
+    recentlyCompletedJobs
+  } = queues;
+
+  const scheduledJobsByDate = new Map<string, TJob[]>();
+
+  for (const job of sortBySchedule(scheduledJobs)) {
+    if (!job.scheduledDate) {
+      continue;
+    }
+
+    const existing = scheduledJobsByDate.get(job.scheduledDate);
+
+    if (existing) {
+      existing.push(job);
+    } else {
+      scheduledJobsByDate.set(job.scheduledDate, [job]);
+    }
+  }
+
+  const boardTimingJobs = input.jobs.filter(
+    (job) => job.dispatchStatus !== "in_progress"
+  );
+  const todayBoardJobs = boardTimingJobs.filter(
+    (job) => job.scheduledDate === todayDateKey
+  );
+  const tomorrowBoardJobs = boardTimingJobs.filter(
+    (job) => job.scheduledDate === tomorrowDateKey
+  );
+  const nextSevenDaysBoardJobs = boardTimingJobs.filter((job) => {
+    const scheduledDate = parseDateKey(job.scheduledDate);
+
+    return (
+      scheduledDate !== null &&
+      scheduledDate > tomorrow &&
+      scheduledDate <= nextSevenDaysEnd
+    );
+  });
+  const laterScheduledBoardJobs = boardTimingJobs.filter((job) => {
+    const scheduledDate = parseDateKey(job.scheduledDate);
+
+    return scheduledDate !== null && scheduledDate > nextSevenDaysEnd;
+  });
+
+  return {
+    ...queues,
+    readinessReviewJobs: queues.needsReadinessReviewJobs,
     scheduledJobsByDate,
     timingGroups: [
       { key: "unscheduled-ready", jobs: unscheduledReadyJobs },

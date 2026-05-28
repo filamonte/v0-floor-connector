@@ -585,6 +585,14 @@ file` actions without exposing raw storage paths. This remains contractor-only
   come from existing job assignment people/vendors and remain advisory only.
   The slice adds no dispatch model, schema, route optimization, map integration,
   notification automation, portal sharing, or new schedule write path.
+- Scheduling Capability Wave v1 planning is documented in
+  [docs/design/scheduling-capability-wave-v1.md](C:/FloorConnector/docs/design/scheduling-capability-wave-v1.md).
+  It recommends CrewBoard maturity work over the existing canonical
+  `jobs`/`job_assignments` foundation: read-model decomposition,
+  resource-load/conflict depth, CrewBoard UI componentization, queue/action
+  panel polish, equipment readiness integration, and E2E fixture hardening. It
+  is planning-only and does not authorize new scheduling tables, dispatch
+  tables, detached appointment/job models, or feature implementation by itself.
 - Scheduling Board Depth v2 post-commit smoke on May 25, 2026 loaded
   `/schedule` on desktop and 390px mobile with saved contractor auth, opened a
   canonical Job Workspace, opened the linked Project Workspace, and opened the
