@@ -580,6 +580,13 @@ file` actions without exposing raw storage paths. This remains contractor-only
   selected schedule action panel with no page errors or horizontal overflow.
   Local Next dev navigation still logged 404/aborted requests for route chunk
   files during transitions, but the protected pages rendered successfully.
+- Operational Capability Waves v1 planning is now reconciled in
+  [docs/design/operational-capability-waves-v1-coordination.md](C:/FloorConnector/docs/design/operational-capability-waves-v1-coordination.md)
+  with sibling planning docs for Project Workspace, Scheduling, Field/Mobile,
+  and Portal. These are planning-only coordination docs, not implemented-status
+  updates. The sequence is Project Workspace first, then Scheduling, then
+  Field/Mobile, then Portal, so downstream surfaces do not create duplicate
+  project, schedule, field, portal, or business-state models.
 - Global search hardening for tenant-scoped canonical records.
 
 These layers are summaries, source-record handoffs, copy/hierarchy
@@ -725,6 +732,10 @@ Good next moves:
   [docs/design/next-build-priority-checkpoint.md](C:/FloorConnector/docs/design/next-build-priority-checkpoint.md)
   to decide between product momentum, demo/staging credibility, and mobile field
   stickiness.
+- If choosing among the capability-wave streams, use
+  [docs/design/operational-capability-waves-v1-coordination.md](C:/FloorConnector/docs/design/operational-capability-waves-v1-coordination.md)
+  and start with the Project Workspace readiness/next-action slice before
+  Scheduling, Field/Mobile, or Portal expansion.
 - If continuing CrewBoard, checkpoint Phase 3B-B with browser QA when protected
   auth is healthy, then decide whether to add stable Playwright drag/drop
   coverage, refine a drag handle, or keep drag-to-unscheduled manual-only.
