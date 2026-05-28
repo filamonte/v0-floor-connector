@@ -187,3 +187,104 @@ void test("surfaces stale pending payments and recent recorded continuity", () =
   assert.equal(commandCenter.paymentTrailAttention[1]?.kind, "recent_success");
   assert.equal(commandCenter.paymentTrailAttention[1]?.tone, "neutral");
 });
+
+void test("summarizes invoice status counts and operational continuity queues", () => {
+  const commandCenter = build({
+    invoices: [
+      invoice({
+        id: "draft",
+        referenceNumber: "INV-DRAFT",
+        status: "draft",
+        balanceDueAmount: "0.00"
+      }),
+      invoice({
+        id: "sent",
+        referenceNumber: "INV-SENT",
+        status: "sent",
+        balanceDueAmount: "200.00"
+      }),
+      invoice({
+        id: "partial",
+        referenceNumber: "INV-PARTIAL",
+        status: "partially_paid",
+        balanceDueAmount: "150.00"
+      }),
+      invoice({
+        id: "paid",
+        referenceNumber: "INV-PAID",
+        status: "paid",
+        balanceDueAmount: "0.00"
+      }),
+      invoice({
+        id: "void",
+        referenceNumber: "INV-VOID",
+        status: "void",
+        balanceDueAmount: "0.00"
+      }),
+      invoice({
+        id: "deposit",
+        referenceNumber: "INV-DEPOSIT",
+        workflowRole: "deposit",
+        status: "sent",
+        balanceDueAmount: "500.00"
+      })
+    ],
+    payments: [
+      payment({
+        id: "pending",
+        invoiceId: "sent",
+        status: "pending"
+      }),
+      payment({
+        id: "recorded",
+        invoiceId: "paid",
+        status: "recorded"
+      })
+    ],
+    paymentEvents: [
+      event({
+        id: "checkout",
+        invoiceId: "sent",
+        eventType: "checkout_started"
+      }),
+      event({
+        id: "failed",
+        invoiceId: "partial",
+        eventType: "payment_failed"
+      })
+    ]
+  });
+
+  assert.deepEqual(commandCenter.continuitySnapshot.invoiceStatusCounts, {
+    draft: 1,
+    sent: 2,
+    partiallyPaid: 1,
+    paid: 1,
+    void: 1
+  });
+
+  const openBalances =
+    commandCenter.continuitySnapshot.operationalQueues.find(
+      (queue) => queue.id === "open-balances"
+    );
+  const depositReadiness =
+    commandCenter.continuitySnapshot.operationalQueues.find(
+      (queue) => queue.id === "deposit-readiness"
+    );
+  const paymentEventReview =
+    commandCenter.continuitySnapshot.operationalQueues.find(
+      (queue) => queue.id === "payment-event-review"
+    );
+  const paymentInProgress =
+    commandCenter.continuitySnapshot.operationalQueues.find(
+      (queue) => queue.id === "payment-in-progress"
+    );
+
+  assert.equal(openBalances?.count, 3);
+  assert.equal(openBalances?.amount, "850.00");
+  assert.equal(depositReadiness?.count, 1);
+  assert.equal(depositReadiness?.amount, "500.00");
+  assert.equal(paymentEventReview?.count, 1);
+  assert.equal(paymentEventReview?.tone, "warning");
+  assert.equal(paymentInProgress?.count, 2);
+});

@@ -92,8 +92,32 @@ export type CollectionsCommandCenterSummaryCard = {
   tone: CollectionsCommandCenterTone;
 };
 
+export type CollectionsInvoiceStatusCounts = {
+  draft: number;
+  sent: number;
+  partiallyPaid: number;
+  paid: number;
+  void: number;
+};
+
+export type CollectionsOperationalQueue = {
+  id: string;
+  label: string;
+  count: number;
+  amount: string | null;
+  detail: string;
+  href: string;
+  tone: CollectionsCommandCenterTone;
+};
+
+export type CollectionsContinuitySnapshot = {
+  invoiceStatusCounts: CollectionsInvoiceStatusCounts;
+  operationalQueues: CollectionsOperationalQueue[];
+};
+
 export type CollectionsCommandCenter = {
   summaryCards: CollectionsCommandCenterSummaryCard[];
+  continuitySnapshot: CollectionsContinuitySnapshot;
   priorityItems: CollectionsPriorityItem[];
   customerContinuity: CollectionsCustomerContinuity[];
   paymentTrailAttention: CollectionsPaymentTrailAttention[];
@@ -826,6 +850,144 @@ function buildSummaryCards(input: {
   ] satisfies CollectionsCommandCenterSummaryCard[];
 }
 
+function buildContinuitySnapshot(input: {
+  invoices: FinancialControlInvoiceInput[];
+  payments: FinancialControlPaymentInput[];
+  paymentEvents: FinancialControlPaymentEventInput[];
+  priorityItems: CollectionsPriorityItem[];
+}): CollectionsContinuitySnapshot {
+  const invoiceStatusCounts = input.invoices.reduce(
+    (counts, invoice) => {
+      if (invoice.status === "draft") {
+        counts.draft += 1;
+      } else if (invoice.status === "sent") {
+        counts.sent += 1;
+      } else if (invoice.status === "partially_paid") {
+        counts.partiallyPaid += 1;
+      } else if (invoice.status === "paid") {
+        counts.paid += 1;
+      } else if (invoice.status === "void") {
+        counts.void += 1;
+      }
+
+      return counts;
+    },
+    {
+      draft: 0,
+      sent: 0,
+      partiallyPaid: 0,
+      paid: 0,
+      void: 0
+    }
+  );
+  const openInvoices = input.invoices.filter(isOpenReceivable);
+  const openBalanceAmount = money(
+    openInvoices.reduce(
+      (sum, invoice) => sum + Number(invoice.balanceDueAmount),
+      0
+    )
+  );
+  const openDepositInvoices = openInvoices.filter(
+    (invoice) => invoice.workflowRole === "deposit"
+  );
+  const openDepositAmount = money(
+    openDepositInvoices.reduce(
+      (sum, invoice) => sum + Number(invoice.balanceDueAmount),
+      0
+    )
+  );
+  const pendingPayments = input.payments.filter(
+    (payment) => payment.status === "pending"
+  );
+  const failedOrVoidedEvents = input.paymentEvents.filter((event) =>
+    criticalEventTypes.some((eventType) => eventType === event.eventType)
+  );
+  const paymentInProgressEvents = input.paymentEvents.filter((event) =>
+    pendingEventTypes.some((eventType) => eventType === event.eventType)
+  );
+  const overduePriorityItems = input.priorityItems.filter((item) =>
+    item.signals.includes("overdue")
+  );
+  const partiallyPaidPriorityItems = input.priorityItems.filter((item) =>
+    item.signals.includes("partially_paid")
+  );
+  const collectionAttentionCount = new Set([
+    ...overduePriorityItems.map((item) => item.invoiceId),
+    ...partiallyPaidPriorityItems.map((item) => item.invoiceId)
+  ]).size;
+  const recordedPayments = input.payments.filter(
+    (payment) => payment.status === "recorded"
+  );
+
+  return {
+    invoiceStatusCounts,
+    operationalQueues: [
+      {
+        id: "open-balances",
+        label: "Open balances",
+        count: openInvoices.length,
+        amount: openBalanceAmount,
+        detail: "Canonical invoices with balance still due.",
+        href: "/invoices?status=open",
+        tone: openInvoices.length > 0 ? "attention" : "neutral"
+      },
+      {
+        id: "collection-attention",
+        label: "Collection attention",
+        count: collectionAttentionCount,
+        amount: null,
+        detail: "Overdue and partially paid invoices needing follow-up.",
+        href: "/financials/accounts-receivable",
+        tone:
+          overduePriorityItems.length > 0
+            ? "warning"
+            : partiallyPaidPriorityItems.length > 0
+              ? "attention"
+              : "neutral"
+      },
+      {
+        id: "deposit-readiness",
+        label: "Deposit readiness",
+        count: openDepositInvoices.length,
+        amount: openDepositAmount,
+        detail: "Open deposit invoices tied to financial readiness.",
+        href: "/financials/accounts-receivable",
+        tone: openDepositInvoices.length > 0 ? "attention" : "neutral"
+      },
+      {
+        id: "payment-in-progress",
+        label: "Payment in progress",
+        count: pendingPayments.length + paymentInProgressEvents.length,
+        amount: null,
+        detail: "Pending payments, payment requests, and checkout starts.",
+        href: "/payments?status=pending",
+        tone:
+          pendingPayments.length + paymentInProgressEvents.length > 0
+            ? "attention"
+            : "neutral"
+      },
+      {
+        id: "payment-event-review",
+        label: "Payment-event review",
+        count: failedOrVoidedEvents.length,
+        amount: null,
+        detail: "Failed or voided Payment Trail evidence to inspect.",
+        href: "/payments",
+        tone: failedOrVoidedEvents.length > 0 ? "warning" : "neutral"
+      },
+      {
+        id: "recently-settled",
+        label: "Recently settled",
+        count: invoiceStatusCounts.paid + recordedPayments.length,
+        amount: null,
+        detail: "Paid invoices and recorded payment continuity.",
+        href: "/payments?status=recorded",
+        tone: "neutral"
+      }
+    ]
+  };
+}
+
 export function buildCollectionsCommandCenter(input: {
   invoices: FinancialControlInvoiceInput[];
   payments: FinancialControlPaymentInput[];
@@ -857,6 +1019,12 @@ export function buildCollectionsCommandCenter(input: {
       priorityItems,
       customerContinuity,
       paymentTrailAttention
+    }),
+    continuitySnapshot: buildContinuitySnapshot({
+      invoices: input.invoices,
+      payments: input.payments,
+      paymentEvents: input.paymentEvents,
+      priorityItems
     }),
     priorityItems: priorityItems.slice(0, 12),
     customerContinuity: customerContinuity.slice(0, 8),
