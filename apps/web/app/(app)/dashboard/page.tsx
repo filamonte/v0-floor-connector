@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 
 import { ContractorDashboardSurface } from "@/components/dashboard/contractor-dashboard-surface";
 import type { OperationalGuidanceBucket } from "@/components/operational-guidance-section";
+import { UniversalCaptureWorkItemForm } from "@/components/work-items/universal-capture-work-item-form";
 import {
   deriveAiOperationalDashboardDigest,
   type AiOperationalDigestPriority,
@@ -29,6 +30,7 @@ import {
 } from "@/lib/operational-cues/my-work-queues";
 import type { OperationalCue } from "@/lib/operational-cues/types";
 import { listDashboardRecentPayments } from "@/lib/payments/data";
+import { listPeople } from "@/lib/people/data";
 import { countOpenPunchlistItemsForDashboard } from "@/lib/punchlists/data";
 import {
   getDashboardOperationalCockpitReadModel,
@@ -48,6 +50,7 @@ import {
   shouldShowAiDashboardDigest
 } from "@/lib/workflow-guidance/preferences";
 import {
+  createWorkItemAction,
   completeWorkItemAction,
   dismissWorkItemAction
 } from "@/lib/work-items/actions";
@@ -306,6 +309,7 @@ function buildMyWorkDashboardWidgets(cues: OperationalCue[]) {
 
 type DashboardPageProps = {
   searchParams?: Promise<{
+    capture?: string;
     fresh?: string;
     myWork?: string;
   }>;
@@ -343,6 +347,7 @@ export default async function DashboardPage({
     operationalCockpitReadModel,
     dashboardOverviewReadModel,
     dashboardProjectCueInputReadModel,
+    people,
     workflowSettings
   ] = await Promise.all([
     listLeadFollowUpQueue({ upcomingDays: 7 }),
@@ -376,6 +381,7 @@ export default async function DashboardPage({
       organizationId: organizationContext.organization.id,
       today
     }),
+    listPeople(),
     getOrganizationWorkflowSettings(organizationContext.organization.id)
   ]);
   const guidancePreferences = normalizeWorkflowGuidancePreferences(
@@ -458,6 +464,13 @@ export default async function DashboardPage({
   const jobsTodayOrInProgress =
     dashboardProjectCueInputReadModel.jobsTodayOrInProgress;
   const currentUserPerson = dashboardOverviewReadModel.currentUserPerson;
+  const showUniversalCapture = resolvedSearchParams.capture === "1";
+  const assignablePeople = people
+    .filter((person) => person.isActive && person.isAssignable)
+    .map((person) => ({
+      id: person.id,
+      displayName: person.displayName
+    }));
   const myWorkQueueModes = buildMyWorkQueueModes({
     cues: operationalCueDashboard.cues,
     currentUserId: user.id,
@@ -1278,6 +1291,16 @@ export default async function DashboardPage({
                   status: "complete"
                 }
       ]}
+      universalCapture={
+        showUniversalCapture ? (
+          <UniversalCaptureWorkItemForm
+            action={createWorkItemAction}
+            returnTo="/dashboard?capture=1#universal-capture"
+            defaultAssignedPersonId={currentUserPerson?.id ?? null}
+            assignablePeople={assignablePeople}
+          />
+        ) : null
+      }
       metrics={[
         {
           key: "leads-follow-up",

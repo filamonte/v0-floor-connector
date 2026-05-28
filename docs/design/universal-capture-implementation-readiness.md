@@ -17,6 +17,14 @@ manual Phase 0 only. They are not strong enough for unresolved capture
 persistence, route/geographic grouping, assistant execution, autonomous
 scheduling, or customer-facing actions.
 
+Post-audit implementation note: Manual Universal Capture Phase 0 now exists as
+a shell/dashboard handoff into `/dashboard?capture=1#universal-capture`. The
+dashboard composer creates an internal Work Item through the existing Work Item
+server action for clear follow-up/action intent only. It does not add
+`capture_items`, route/geographic metadata, assistant staging, reminders,
+customer-facing sends/bookings, portal visibility, schema, migrations, or
+source-record mutations.
+
 ## Sources Reviewed
 
 Primary docs:

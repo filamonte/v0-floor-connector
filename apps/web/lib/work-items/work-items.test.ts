@@ -132,6 +132,44 @@ void test("work item create schema accepts context-rich assignment metadata", ()
   }
 });
 
+void test("work item create schema accepts manual universal capture input without a source record", () => {
+  const result = workItemCreateSchema.safeParse({
+    title: "Call Sue Friday about garage coating",
+    description:
+      "Existing customer asked about new garage coating. Capture context first, then decide whether this becomes an opportunity or appointment.",
+    priority: "normal",
+    kind: "manual",
+    dueAt: "2026-05-29T15:00:00.000Z",
+    assignedPersonId: "",
+    sourceType: null,
+    sourceId: "",
+    customerId: "",
+    projectId: "",
+    linkPath: "",
+    visibility: "internal",
+    dedupeKey: "",
+    metadata: {
+      captureSource: "manual_universal_capture",
+      captureDestination: "work_item",
+      captureVersion: 1
+    }
+  });
+
+  assert.equal(result.success, true);
+
+  if (result.success) {
+    assert.equal(result.data.sourceType, null);
+    assert.equal(result.data.sourceId, null);
+    assert.equal(result.data.customerId, null);
+    assert.equal(result.data.projectId, null);
+    assert.equal(result.data.linkPath, null);
+    assert.equal(
+      result.data.metadata.captureSource,
+      "manual_universal_capture"
+    );
+  }
+});
+
 void test("execution attachment subject schema accepts Work Item evidence subjects", () => {
   assert.equal(
     executionAttachmentSubjectTypeSchema.safeParse("work_item").success,

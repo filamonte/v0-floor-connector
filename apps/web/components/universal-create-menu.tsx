@@ -23,6 +23,17 @@ type UniversalCreateGroup = {
 
 const universalCreateGroups: UniversalCreateGroup[] = [
   {
+    title: "Capture",
+    items: [
+      {
+        label: "Universal Capture",
+        description:
+          "Save a fast internal follow-up as a Work Item, then organize from the dashboard.",
+        href: "/dashboard?capture=1#universal-capture"
+      }
+    ]
+  },
+  {
     title: "Revenue workflow",
     items: [
       {
@@ -32,7 +43,8 @@ const universalCreateGroups: UniversalCreateGroup[] = [
       },
       {
         label: "Customer",
-        description: "Create the shared customer recipient account for projects, estimates, and billing.",
+        description:
+          "Create the shared customer recipient account for projects, estimates, and billing.",
         href: "/customers?compose=1#customer-create"
       },
       {
@@ -57,7 +69,8 @@ const universalCreateGroups: UniversalCreateGroup[] = [
     items: [
       {
         label: "Appointment",
-        description: "Create a visit or meeting block on the shared record chain.",
+        description:
+          "Create a visit or meeting block on the shared record chain.",
         href: "/appointments?compose=1#appointment-create"
       },
       {
@@ -67,7 +80,8 @@ const universalCreateGroups: UniversalCreateGroup[] = [
       },
       {
         label: "Invoice",
-        description: "Create the billing record before opening the full workspace.",
+        description:
+          "Create the billing record before opening the full workspace.",
         href: "/invoices?compose=1#invoice-create"
       }
     ]
@@ -183,14 +197,17 @@ export function UniversalCreateMenu({
               Universal create
             </p>
             <p className="mt-1 text-sm leading-6 text-[#4b5563]">
-              Start a canonical record, then finish the work inside its full manager
-              workspace.
+              Start a canonical record, then finish the work inside its full
+              manager workspace.
             </p>
           </div>
 
           <div className="grid gap-0 md:grid-cols-2">
             {universalCreateGroups.map((group) => (
-              <section key={group.title} className="border-b border-[#e2e5e9] p-4 md:border-b-0 md:border-r md:border-[#e2e5e9] last:md:border-r-0">
+              <section
+                key={group.title}
+                className="border-b border-[#e2e5e9] p-4 md:border-b-0 md:border-r md:border-[#e2e5e9] last:md:border-r-0"
+              >
                 <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#6b7280]">
                   {group.title}
                 </p>
@@ -202,7 +219,9 @@ export function UniversalCreateMenu({
                       onClick={() => setOpen(false)}
                       className="block rounded-md border border-[#e2e5e9] bg-white px-3 py-3 transition hover:border-[#cbd5e1] hover:bg-[#f8fafc]"
                     >
-                      <p className="text-sm font-semibold text-[#171717]">{item.label}</p>
+                      <p className="text-sm font-semibold text-[#171717]">
+                        {item.label}
+                      </p>
                       <p className="mt-1 text-sm leading-5 text-[#4b5563]">
                         {item.description}
                       </p>

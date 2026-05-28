@@ -126,6 +126,7 @@ export type ContractorDashboardSurfaceProps = {
     billingStatusLabel?: string;
   };
   priorityItems: DashboardPriorityItem[];
+  universalCapture?: ReactNode;
   metrics: DashboardMetric[];
   lifecycleSteps: DashboardLifecycleStep[];
   aiOperationalDigest?: AiOperationalDashboardDigest | null;
@@ -674,6 +675,7 @@ function AiOperationalDigestPanel({
 export function ContractorDashboardSurface({
   earlyAccess,
   priorityItems,
+  universalCapture,
   metrics,
   lifecycleSteps,
   aiOperationalDigest,
@@ -838,6 +840,8 @@ export function ContractorDashboardSurface({
         ) : null}
 
         <PriorityStrip items={priorityItems} />
+
+        {universalCapture ? universalCapture : null}
 
         <div className="grid gap-4 2xl:grid-cols-[minmax(0,1.05fr)_minmax(360px,0.95fr)]">
           <LifecycleRail steps={lifecycleSteps} />
