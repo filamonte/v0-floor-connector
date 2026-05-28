@@ -25,6 +25,8 @@
     "demo:data:inventory": "node scripts/demo-data-inventory.mjs",
     "demo:data:seed:dry-run": "node scripts/seed-staging-demo-data.mjs --dry-run",
     "demo:data:seed:validate-target": "node scripts/seed-staging-demo-data.mjs --validate-target",
+    "devtools:link": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/link-worktree-dev-tools.ps1",
+    "devtools:link:fix": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/link-worktree-dev-tools.ps1 -Fix",
     "platform-admin": "node scripts/platform-admin.mjs",
     "staging:preflight": "node scripts/staging-preflight.mjs",
     "typecheck": "turbo run typecheck",

@@ -32,6 +32,31 @@ Use these first for most implementation or documentation tasks:
 - [docs/local-auth-qa-recovery.md](C:/FloorConnector/docs/local-auth-qa-recovery.md):
   protected-route browser QA recovery
 
+## Local Worktree Dev Tools
+
+`C:\FloorConnector` is the canonical local development source for ignored
+tooling state. Active stream worktrees under `C:\FC-worktrees` should link back
+to the main repo for `.env.local`, `node_modules`, `.turbo` when present, and
+`playwright\.auth` when present. Do not copy `.env.local` or duplicate
+`node_modules` per worktree.
+
+Use:
+
+```powershell
+pnpm devtools:link
+```
+
+to verify or create missing links. If a worktree already has an incorrect
+ignored local tool directory, use the explicit repair mode:
+
+```powershell
+pnpm devtools:link:fix
+```
+
+The script intentionally does not share build outputs such as `.next`, `dist`,
+`coverage`, or `test-results`, and it does not replace existing real
+`.env.local` files.
+
 ## Required Active Docs
 
 For most future work, treat this as the required active documentation set:
