@@ -440,6 +440,13 @@ pnpm e2e:portal-auth
 
 That run validated the canonical portal fixture and created `playwright/.auth/portal-user.json` from real portal E2E credentials. Do not fake the storage state; when credentials, grants, or shared records are absent, document the missing prerequisite instead.
 
+The portal stream reconciliation and QA hardening pass later ran the focused
+env-loaded portal E2E path after selector/copy hardening and reported 9 passed
+and 1 skipped. Treat that result as proof of the local portal fixture/auth path
+and customer-safe continuity checks in that stream, not proof of staging
+deployment, live provider delivery, live payment completion, or any new
+portal-owned business state.
+
 Run the portal golden-path smoke:
 
 ```bash

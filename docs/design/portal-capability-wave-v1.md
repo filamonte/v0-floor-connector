@@ -392,8 +392,14 @@ Prettier check for this document.
 
 ## 12. Recommended First Implementation Slice
 
-Recommended first code slice: portal read-model/access audit plus customer-safe
-copy/next-action polish over existing loaded data.
+Original recommended first code slice: portal read-model/access audit plus
+customer-safe copy/next-action polish over existing loaded data.
+
+Post-reconciliation note: that first small slice and a follow-up portal QA
+hardening pass have landed on `stream/portal`. They clarified portal
+summary/next-action presentation and customer-safe continuity over existing
+scoped loaders only. They did not add portal-owned project, schedule, field,
+billing, contract, invoice, change-order, payment, document, or message state.
 
 Keep the slice small:
 
@@ -405,6 +411,8 @@ Keep the slice small:
 - adjust only customer-safe wording or existing card hierarchy if needed
 - add or update focused helper tests if a helper output changes
 
-Do not start with schedule or field visibility. Those areas have the highest
-cross-stream conflict risk and should wait until Project Workspace, Scheduling,
-and Field/Mobile wave docs are merged or reconciled.
+Recommended next portal work after the stream reconciliation is QA/staging
+hardening over the same customer-safe paths, not new portal feature scope. Do
+not start schedule or field visibility until Project Workspace, Scheduling, and
+Field/Mobile truth is reconciled and an explicit customer-safe read model is
+approved.

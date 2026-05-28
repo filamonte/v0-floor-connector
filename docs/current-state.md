@@ -2802,6 +2802,18 @@ Implemented UI behavior now:
 - Projects, Estimates, Invoices, Jobs, Contracts, and Customers Manager Pages use the shared Manager Page rhythm with clearer status scanning, primary create actions, and compact continuity cues.
 - Portal and super-admin received only safe consistency cleanup; they do not copy contractor operational patterns wholesale.
 - Portal/customer smoke coverage is test infrastructure only. It does not create portal-only records, fake payments, fake signatures, new portal access rules, or duplicate customer/project/commercial records.
+- Portal project summary and next-action polish now clarifies customer-facing
+  project guidance over existing scoped portal loaders. The follow-up portal
+  QA hardening pass reconciled the stream, kept canonical action links for
+  estimate review, contract review/sign/decline, invoice/payment handoff,
+  change-order review, payment continuity, project guidance, and shared action
+  hubs, and removed or avoided customer-facing wording that implied contractor
+  internals, provider/tool details, customer-owned scheduling, or portal-local
+  operational state. The focused env-loaded portal E2E run reported 9 passed
+  and 1 skipped. This remains read-only/presentational and QA hardening over
+  canonical records; it does not add schema, routes, portal-owned records,
+  schedule ownership, field ownership, billing ownership, payment completion,
+  signature mutation changes, or change-order model changes.
 - The enterprise UX consolidation pass records the customer/contact/access/review ownership map in [docs/enterprise-ux-consolidation.md](C:/FloorConnector/docs/enterprise-ux-consolidation.md). Current implementation now uses summary-first Customer Workspace framing, People-owned access administration, compact project-specific contact visibility, collapsed secondary management forms, and customer-safe portal review copy without changing schema, RLS, financial calculations, payment state, signature state, or portal access rules.
 - Customer Workspace portal access now shows a recommended portal contact from the existing primary customer contact when an email is available, summarizes no-invite/pending/active/revoked grant state plus shared project counts, preselects the recommended contact for explicit portal invites, and requires confirmation before revoking grant or project visibility. This is UI/read-model cleanup over existing `portal_access_grants` and `portal_project_access`; it does not add a contractor default-access setting, customer-admin portal management, schema, RLS, auth identity creation, or new access rules.
 - The second enterprise UX consolidation pass narrows the record-workspace right rails: Project, Estimate, Contract, and Invoice Workspaces keep primary context visible while extra linked records, revision history, invoice editing, payment recording, metadata, and lower-frequency activity use progressive disclosure. Portal copy was further simplified for customer review without changing checkout, signature, payment, billing, access, schema, RLS, or tenant behavior.

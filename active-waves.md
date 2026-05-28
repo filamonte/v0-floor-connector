@@ -21,8 +21,15 @@ as the coordination source for the four operational waves:
 3. [Field/Mobile Capability Wave v1](C:/FloorConnector/docs/design/field-mobile-capability-wave-v1.md)
 4. [Portal Capability Wave v1](C:/FloorConnector/docs/design/portal-capability-wave-v1.md)
 
-Project Workspace is the first implementation slice. The sequence above should
-not be read as permission to implement all four waves at the same time.
+Project Workspace was the first planned implementation slice. The sequence
+above should not be read as permission to implement all four waves at the same
+time.
+
+Portal stream reconciliation note: the portal stream has completed the first
+small read-model/customer-safe next-action polish plus QA hardening over
+existing scoped canonical loaders. Treat that as stream evidence to reconcile,
+not as new permission for portal-owned schedule, field, project, billing,
+document, message, contract, invoice, change-order, or payment state.
 
 Shared guardrails:
 

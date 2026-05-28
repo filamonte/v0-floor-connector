@@ -130,6 +130,12 @@ Phase 1.1 adds an opt-in portal/customer Playwright auth and smoke path, and Pha
 - Payment smoke stops at the invoice review/payment-action surface and does not click checkout or attempt an external charge.
 - Missing portal credentials, missing canonical customer/contact state, missing active portal grants, missing project visibility, missing linked shared records, or missing storage state are skipped with explicit prerequisites rather than treated as successful QA. `pnpm e2e:portal-fixture` reports missing env var names only and never prints passwords, service-role keys, tokens, or invite secrets.
 
+Latest portal stream QA note: the focused env-loaded portal golden-path run
+after portal reconciliation and QA hardening reported 9 passed and 1 skipped.
+That result supports the portal fixture/auth and customer-safe continuity path
+for local stream QA; it does not authorize live checkout, live external
+signature replay, staging deployment claims, or portal-owned workflow state.
+
 ## Intentionally Excluded
 
 - No one-off/direct invoice shortcut is implemented in Phase 1.

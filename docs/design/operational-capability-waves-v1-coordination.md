@@ -167,6 +167,13 @@ E2E specs:
 
 These are sequential starts, not parallel implementation permission.
 
+Post-reconciliation note: the portal stream has now completed its first
+read-model/customer-safe next-action polish and a follow-up QA hardening pass.
+Further portal work should wait for merge/reconcile review and focused QA
+unless a later slice is explicitly scoped. This does not change the planning
+status of this coordination doc or authorize schedule, field, billing,
+document, message, or payment state ownership inside the portal.
+
 ## Combined Validation Plan
 
 For docs-only reconciliation:
