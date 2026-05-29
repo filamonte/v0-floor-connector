@@ -1041,15 +1041,19 @@ Implemented now:
   - deterministic Financial Control Next Move
   - command-center signals for overdue AR, unpaid deposits, Payment Trail review,
     retained amounts, and open progress-billing balances
+  - continuity-map links into Accounts Receivable, Payments, Invoices,
+    Projects, Customers, and Progress Billing using the same read-only
+    Financial Control and Collections Command Center signals
   - overdue invoices, pending checkout activity, project collection attention,
     and Payment Trail attention
   - collection-opportunity links into canonical Invoice Workspaces
 - Financials Home now uses the shared Financial Control read model to surface a
   contractor finance command-center layer across AR, deposits, retained amounts,
   SOV/progress-billing invoices, pending payment activity, failed/voided payment
-  events, and customer-facing collection signals. These are read-only derived
-  signals over canonical invoices, payments, and payment events; each route
-  returns the user to the owning Invoice, Payments, Progress Billing, AR, or
+  events, project collection pressure, customer exposure, and customer-facing
+  collection signals. These are read-only derived signals over canonical
+  invoices, payments, and payment events; each route returns the user to the
+  owning Invoice, Payments, Progress Billing, AR, Project, Customer, or
   Accounting Readiness workspace.
 - `/financials/accounts-receivable` is now a read-only AR workspace over canonical invoices, payments, and immutable payment events, with command-center summary cards, invoice status counts, operational continuity lanes for open balances, collection attention, deposit readiness, payment-in-progress, payment-event review, and recently settled continuity, a scored "needs attention first" priority queue with derived urgent/attention/monitoring priority labels and compact latest Payment Trail signal context, customer exposure rollups, aging buckets, collection queues, invoice-level Next Move labels, project links, pending checkout visibility, stale pending-payment visibility, recent recorded-payment continuity, and failed/voided/in-progress Payment Trail review
 - Collections Follow-Up Intelligence now deepens `/financials/accounts-receivable` with a deterministic read model over those same canonical invoices, payments, and payment events. It categorizes overdue invoices, unpaid deposits, sent-unpaid balances, partially paid balances, payment-in-progress states, failed/voided payment attempts, and internal-review cases; shows source-record reasons, payment state, amount due, recommended next step, and canonical invoice/project/customer links; and exposes review-first Copilot draft handoffs only when AI drafting controls allow them.
