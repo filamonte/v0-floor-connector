@@ -2,6 +2,30 @@
 
 Repository automation and maintenance scripts will live here.
 
+## Worktree Developer Platform
+
+- `link-worktree-dev-tools.ps1`: links shared local tool state from
+  `C:\FloorConnector` into active worktrees under `C:\FC-worktrees`.
+- `worktree-doctor.ps1`: verifies Node, pnpm, Corepack, shared tool links,
+  developer tools, git branch state, and origin configuration.
+- `worktree-status.ps1`: fetches origin and summarizes branch, ahead/behind,
+  clean/dirty, and detached-head status across worktrees.
+- `create-worktree.ps1`: creates `stream/<name>` in `C:\FC-worktrees\<name>`,
+  links shared dev tools, and runs the doctor.
+- `refresh-playwright-auth.ps1`: reruns shared Playwright auth setup from the
+  canonical repo and relinks auth state into worktrees.
+
+Package scripts:
+
+```powershell
+pnpm devtools:link
+pnpm devtools:link:fix
+pnpm worktree:doctor
+pnpm worktree:status
+pnpm worktree:create <name>
+pnpm auth:refresh
+```
+
 ## Read-Only Reports
 
 - `catalog-items-duplicate-normalized-name-report.sql`: reports duplicate `catalog_items.normalized_name` rows by organization. It is read-only and does not delete, archive, or merge records.
