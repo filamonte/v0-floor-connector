@@ -1,0 +1,16 @@
+#!/bin/sh
+set -eu
+
+message_file="$1"
+subject="$(head -n 1 "$message_file")"
+
+case "$subject" in
+  Merge\ *|Revert\ *|feat:\ *|fix:\ *|docs:\ *|chore:\ *|refactor:\ *|test:\ *|build:\ *|ci:\ *|perf:\ *|style:\ *)
+    exit 0
+    ;;
+esac
+
+echo "Commit message must use a conventional prefix, for example:"
+echo "  docs: update worktree platform guidance"
+echo "Allowed prefixes: feat, fix, docs, chore, refactor, test, build, ci, perf, style."
+exit 1
