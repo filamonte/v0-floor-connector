@@ -87,7 +87,12 @@ function buildEvent(
     href: overrides.href ?? "/projects/project-1#project-evidence",
     occurredAt: overrides.occurredAt ?? "2026-05-26T15:00:00.000Z",
     tone: overrides.tone ?? "positive",
-    audience: overrides.audience ?? "customer"
+    audience: overrides.audience ?? "customer",
+    proofStateLabel: overrides.proofStateLabel ?? "Customer activity",
+    proofBoundaryLabel:
+      overrides.proofBoundaryLabel ?? "Read-only evidence proof",
+    proofSourceLabel: overrides.proofSourceLabel ?? "Customer-facing",
+    needsReview: overrides.needsReview ?? false
   };
 }
 
@@ -166,7 +171,11 @@ void test("communication workspace derives follow-up attention without creating 
         sourceType: "invoice",
         eventType: "failed",
         title: "Invoice failed",
-        tone: "critical"
+        tone: "critical",
+        proofStateLabel: "Needs review",
+        proofBoundaryLabel: "Read-only delivery proof",
+        proofSourceLabel: "Provider-derived",
+        needsReview: true
       })
     ],
     notificationCount: 1,
@@ -183,7 +192,9 @@ void test("communication workspace derives follow-up attention without creating 
   assert.match(summary.primaryDetail, /portal customer reply/);
   assert.equal(summary.notificationReviewLabel, "1 unread review signal");
   assert.equal(summary.deliveryProofLabel, "1 proof event");
-  assert.match(summary.deliveryProofDetail, /1 delivery or evidence item/);
+  assert.match(summary.deliveryProofDetail, /1 delivery proof item/);
+  assert.equal(summary.deliveryProofReviewCount, 1);
+  assert.equal(summary.latestDeliveryProof?.id, "failed-send");
 });
 
 void test("communication workspace treats shared evidence as closeout context", () => {
@@ -214,4 +225,55 @@ void test("communication workspace treats shared evidence as closeout context", 
   assert.equal(summary.recentContextEvents.length, 2);
   assert.equal(summary.customerBoundaryLabel, "No boundary signals yet");
   assert.match(summary.customerBoundaryDetail, /portal-owned copies/);
+  assert.equal(summary.deliveryProofReviewCount, 0);
+  assert.match(summary.deliveryProofDetail, /Customer activity/);
+});
+
+void test("communication workspace keeps missing delivery proof read-only", () => {
+  const summary = deriveCommunicationWorkspaceSummary({
+    threads: [],
+    threadSummary: baseSummary,
+    contextEvents: [],
+    notificationCount: 0,
+    now: new Date("2026-05-27T00:00:00.000Z")
+  });
+
+  assert.equal(summary.deliveryProofLabel, "No proof events yet");
+  assert.equal(summary.deliveryProofReviewCount, 0);
+  assert.equal(summary.latestDeliveryProof, null);
+  assert.match(summary.deliveryProofDetail, /No delivery proof yet/);
+});
+
+void test("communication workspace preserves provider-derived delivery proof labels", () => {
+  const summary = deriveCommunicationWorkspaceSummary({
+    threads: [],
+    threadSummary: baseSummary,
+    contextEvents: [
+      buildEvent({
+        id: "provider-send",
+        kind: "document_delivery",
+        sourceType: "invoice",
+        eventType: "sent",
+        title: "Invoice sent",
+        description: "Sent by email for Avery Customer through postmark.",
+        proofStateLabel: "Delivery proof available",
+        proofBoundaryLabel: "Read-only delivery proof",
+        proofSourceLabel: "Provider-derived",
+        occurredAt: "2026-05-27T16:00:00.000Z",
+        tone: "neutral"
+      })
+    ],
+    notificationCount: 0,
+    now: new Date("2026-05-27T00:00:00.000Z")
+  });
+
+  assert.equal(
+    summary.latestDeliveryProof?.proofSourceLabel,
+    "Provider-derived"
+  );
+  assert.equal(
+    summary.latestDeliveryProof?.proofBoundaryLabel,
+    "Read-only delivery proof"
+  );
+  assert.match(summary.deliveryProofDetail, /Delivery proof available/);
 });

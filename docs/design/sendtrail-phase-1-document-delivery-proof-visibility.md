@@ -115,6 +115,18 @@ The helper uses deterministic rules:
 
 These rules do not mutate any record or mark delivery complete.
 
+## Communications Delivery Proof V1
+
+`/communications` now clarifies the existing document-delivery and
+shared-evidence context with deterministic read-only labels for proof state,
+proof source, and boundary. The workspace can show whether the latest visible
+evidence is customer-facing, provider-derived, internal evidence, delivery proof
+available, customer activity, send requested, or needs review.
+
+This is a presentation/read-model refinement only. It does not add a route,
+schema, provider send, webhook behavior, notification mutation, portal-owned
+copy, retry action, or standalone delivery center.
+
 ## Behavior Preserved
 
 This slice preserves:

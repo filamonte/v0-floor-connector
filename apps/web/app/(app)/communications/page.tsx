@@ -764,6 +764,30 @@ export default async function CommunicationsPage({
               <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#666666]">
                 Delivery and evidence context
               </p>
+              <div className="mt-2 rounded-[4px] border border-[#e5e5e5] bg-white px-3 py-2">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-semibold text-slate-950">
+                      {workspaceSummary.deliveryProofLabel}
+                    </p>
+                    <p className="mt-1 text-sm leading-6 text-slate-500">
+                      {workspaceSummary.deliveryProofDetail}
+                    </p>
+                  </div>
+                  <span
+                    className={[
+                      "inline-flex rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em]",
+                      workspaceSummary.deliveryProofReviewCount > 0
+                        ? "border-rose-200 bg-rose-50 text-rose-700"
+                        : "border-[#d6e6d9] bg-[#f4fbf5] text-[#2f6b3b]"
+                    ].join(" ")}
+                  >
+                    {workspaceSummary.deliveryProofReviewCount > 0
+                      ? "Needs review"
+                      : "Read-only proof"}
+                  </span>
+                </div>
+              </div>
               {workspaceSummary.recentContextEvents.length > 0 ? (
                 <div className="mt-3 space-y-2">
                   {workspaceSummary.recentContextEvents.map((event) => (
@@ -783,13 +807,35 @@ export default async function CommunicationsPage({
                       <p className="mt-1 text-sm leading-6 text-slate-500">
                         {event.description}
                       </p>
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        <span
+                          className={[
+                            "inline-flex rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em]",
+                            event.needsReview
+                              ? "border-rose-200 bg-rose-50 text-rose-700"
+                              : event.tone === "positive"
+                                ? "border-[#d6e6d9] bg-[#f4fbf5] text-[#2f6b3b]"
+                                : "border-[#d6d6d6] bg-slate-50 text-slate-600"
+                          ].join(" ")}
+                        >
+                          {event.proofStateLabel}
+                        </span>
+                        <span className="inline-flex rounded-full border border-[#d6d6d6] bg-white px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-600">
+                          {event.proofSourceLabel}
+                        </span>
+                        <span className="inline-flex rounded-full border border-[#e4d7ca] bg-[#fbf5ee] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#8f5b32]">
+                          {event.proofBoundaryLabel}
+                        </span>
+                      </div>
                     </Link>
                   ))}
                 </div>
               ) : (
                 <p className="mt-3 text-sm leading-6 text-slate-500">
-                  Document sends and shared-evidence proof will appear here when
-                  canonical delivery or portal evidence events exist.
+                  No delivery proof yet. Document sends and shared-evidence
+                  proof will appear here when canonical delivery or portal
+                  evidence events exist; this panel does not send, resend, or
+                  mutate delivery state.
                 </p>
               )}
             </div>

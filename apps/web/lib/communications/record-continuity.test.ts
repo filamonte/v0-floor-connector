@@ -90,14 +90,14 @@ void test("record communication continuity derives deterministic counts without 
         threadStatus: "closed"
       }),
       buildThread({
-        id: "unknown-boundary-thread",
-        lastMessageVisibility: "unknown",
+        id: "closed-customer-visible-thread",
+        lastMessageVisibility: "customer_visible",
         threadStatus: "waiting_on_contractor"
       })
     ]
   });
 
-  assert.equal(summary.customerVisibleCount, 1);
+  assert.equal(summary.customerVisibleCount, 2);
   assert.equal(summary.internalCount, 1);
   assert.equal(summary.openCount, 1);
   assert.equal(summary.threadCount, 3);

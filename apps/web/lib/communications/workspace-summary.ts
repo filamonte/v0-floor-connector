@@ -44,6 +44,8 @@ export type CommunicationWorkspaceSummary = {
   notificationReviewDetail: string;
   deliveryProofLabel: string;
   deliveryProofDetail: string;
+  deliveryProofReviewCount: number;
+  latestDeliveryProof: ContractorCommunicationContextEvent | null;
   customerVisibleThreadCount: number;
   internalThreadCount: number;
   followUpCount: number;
@@ -309,9 +311,13 @@ export function deriveCommunicationWorkspaceSummary(input: {
   const criticalContextCount = input.contextEvents.filter(
     (event) => event.tone === "critical"
   ).length;
-  const reviewContextCount = input.contextEvents.filter(
-    (event) => event.tone === "critical" || event.tone === "warning"
+  const deliveryProofReviewCount = input.contextEvents.filter(
+    (event) => event.needsReview
   ).length;
+  const latestDeliveryProof =
+    [...input.contextEvents].sort((left, right) =>
+      right.occurredAt.localeCompare(left.occurredAt)
+    )[0] ?? null;
   const laneKeys: CommunicationWorkspaceLaneKey[] = [
     "customer",
     "project",
@@ -415,11 +421,15 @@ export function deriveCommunicationWorkspaceSummary(input: {
           }`
         : "No proof events yet",
     deliveryProofDetail:
-      reviewContextCount > 0
-        ? `${reviewContextCount} delivery or evidence item${
-            reviewContextCount === 1 ? "" : "s"
+      deliveryProofReviewCount > 0
+        ? `${deliveryProofReviewCount} delivery proof item${
+            deliveryProofReviewCount === 1 ? "" : "s"
           } need review.`
-        : "Document delivery and shared-evidence context is quiet.",
+        : latestDeliveryProof
+          ? `${latestDeliveryProof.proofStateLabel} on ${latestDeliveryProof.title.toLowerCase()}.`
+          : "No delivery proof yet. Evidence appears here only after existing send, delivery, or shared-evidence records are present.",
+    deliveryProofReviewCount,
+    latestDeliveryProof,
     customerVisibleThreadCount: customerVisibleThreads.length,
     internalThreadCount: internalThreads.length,
     followUpCount,

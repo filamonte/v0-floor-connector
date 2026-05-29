@@ -236,6 +236,10 @@ export type ContractorCommunicationContextEvent = {
   occurredAt: string;
   tone: "neutral" | "positive" | "warning" | "critical";
   audience: "customer" | "internal";
+  proofStateLabel: string;
+  proofBoundaryLabel: string;
+  proofSourceLabel: string;
+  needsReview: boolean;
 };
 
 type SubjectDescriptor = {
@@ -290,6 +294,39 @@ function getDocumentDeliveryEventTone(
   return eventType === "send_requested" ? "warning" : "neutral";
 }
 
+function getDocumentDeliveryProofStateLabel(
+  eventType: DocumentDeliveryEventType
+) {
+  switch (eventType) {
+    case "failed":
+    case "bounced":
+      return "Needs review";
+    case "opened":
+    case "clicked":
+    case "viewed":
+      return "Customer activity";
+    case "sent":
+    case "delivery_recorded":
+      return "Delivery proof available";
+    case "send_requested":
+      return "Send requested";
+    default:
+      return "Proof status unknown";
+  }
+}
+
+function getDocumentDeliveryProofSourceLabel(
+  event: Pick<DocumentDeliveryContextRow, "provider" | "channel">
+) {
+  if (event.provider) {
+    return "Provider-derived";
+  }
+
+  return event.channel === "email" || event.channel === "portal"
+    ? "Customer-facing"
+    : "Internal evidence";
+}
+
 function getEvidenceDeliveryEventTone(
   eventType: PortalEvidenceDeliveryEventType
 ): ContractorCommunicationContextEvent["tone"] {
@@ -302,6 +339,19 @@ function getEvidenceDeliveryEventTone(
   }
 
   return "neutral";
+}
+
+function getEvidenceDeliveryProofStateLabel(
+  eventType: PortalEvidenceDeliveryEventType
+) {
+  switch (eventType) {
+    case "acknowledged":
+      return "Customer activity";
+    case "revoked":
+      return "Needs review";
+    default:
+      return "Proof available";
+  }
 }
 
 function getDocumentSubjectHref(
@@ -1170,7 +1220,12 @@ export async function listContractorCommunicationContextEvents(): Promise<
       href: getDocumentSubjectHref(event.subject_type, event.subject_id),
       occurredAt: event.created_at,
       tone: getDocumentDeliveryEventTone(event.event_type),
-      audience: "customer"
+      audience: "customer",
+      proofStateLabel: getDocumentDeliveryProofStateLabel(event.event_type),
+      proofBoundaryLabel: "Read-only delivery proof",
+      proofSourceLabel: getDocumentDeliveryProofSourceLabel(event),
+      needsReview:
+        event.event_type === "failed" || event.event_type === "bounced"
     };
   });
 
@@ -1193,7 +1248,15 @@ export async function listContractorCommunicationContextEvents(): Promise<
       href: `/projects/${event.project_id}#project-evidence`,
       occurredAt: event.occurred_at,
       tone: getEvidenceDeliveryEventTone(event.event_type),
-      audience: event.actor_kind === "portal_customer" ? "customer" : "internal"
+      audience:
+        event.actor_kind === "portal_customer" ? "customer" : "internal",
+      proofStateLabel: getEvidenceDeliveryProofStateLabel(event.event_type),
+      proofBoundaryLabel: "Read-only evidence proof",
+      proofSourceLabel:
+        event.actor_kind === "portal_customer"
+          ? "Customer-facing"
+          : "Internal evidence",
+      needsReview: event.event_type === "revoked"
     })
   );
 
