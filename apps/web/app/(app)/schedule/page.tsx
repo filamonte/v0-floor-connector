@@ -15,8 +15,9 @@ import {
 import { ManagerDashboardCard } from "@/components/manager-dashboard-card";
 import { ScheduleCrewAssignmentForm } from "@/components/schedule-crew-assignment-form";
 import {
-  ScheduleJobActionLinks,
+  ScheduleDispatchBoardShell,
   ScheduleFieldHandoffPanel,
+  ScheduleJobActionLinks,
   ScheduleNotesPreview,
   ScheduleOperationalIndicators,
   ScheduleSelectedJobPanelSummary,
@@ -3426,109 +3427,52 @@ export default async function SchedulePage({
             />
           </section>
 
-          <section className={schedulePanelClassName}>
-            <div className={schedulePanelHeaderClassName}>
-              <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-                <div className="min-w-0">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
-                    CrewBoard planner
-                  </p>
-                  <h2 className="mt-1 text-lg font-semibold tracking-tight text-[var(--text-primary)]">
-                    Schedule board
-                  </h2>
-                  <p className="mt-1 text-sm leading-6 text-[var(--text-secondary)]">
-                    Run CrewBoard as a bounded planner on top of jobs. Keep
-                    Needs Scheduling work separate, review dated work by day or
-                    week, and reschedule through the same job action path.
-                  </p>
-                </div>
-                <div className="flex flex-wrap items-center gap-2 lg:justify-end">
-                  {SCHEDULE_LAYOUT_OPTIONS.map((option) => {
-                    const isActive = scheduleLayout === option.value;
-
-                    return (
-                      <Link
-                        key={option.value}
-                        href={buildScheduleHref({
-                          q: query,
-                          projectId: projectFilterId ?? undefined,
-                          view,
-                          crew: crewFilter,
-                          layout: option.value,
-                          date: plannerDateKey
-                        })}
-                        className={[
-                          scheduleFilterChipClassName,
-                          isActive
-                            ? "bg-[var(--graphite)] text-white"
-                            : `border ${scheduleSecondaryActionToneClassName}`
-                        ].join(" ")}
-                      >
-                        {option.label}
-                      </Link>
-                    );
-                  })}
-                </div>
-              </div>
-
-              <div className="mt-4 flex flex-col gap-3 border-t border-[var(--border-warm)] pt-4 lg:flex-row lg:items-center lg:justify-between">
-                <div className="flex flex-wrap items-center gap-3">
-                  <span className="inline-flex items-center rounded-full border border-[var(--border-warm)] bg-white px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--text-primary)]">
-                    {scheduleLayout === "board"
-                      ? visibleJobs.length
-                      : plannerItemCount}{" "}
-                    {scheduleLayout === "board"
-                      ? "visible jobs"
-                      : "scheduled items"}
-                  </span>
-                  <span className="inline-flex items-center rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-amber-800">
-                    {scheduleLayout === "board"
-                      ? visibleJobs.filter((job) => job.assignmentCount === 0)
-                          .length
-                      : plannerNeedsCrewCount}{" "}
-                    need crew
-                  </span>
-                  <p className="text-sm leading-6 text-[var(--text-secondary)]">
-                    {scheduleLayout === "board"
-                      ? "Grouped by operational timing"
-                      : plannerRangeLabel}
-                  </p>
-                </div>
-
-                <div className="flex flex-col gap-2 lg:items-end">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <Link
-                      href={plannerPrevHref}
-                      className={`inline-flex items-center rounded-[4px] border px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] transition ${scheduleSecondaryActionToneClassName}`}
-                    >
-                      {scheduleLayout === "day"
-                        ? "Previous day"
-                        : "Previous week"}
-                    </Link>
-                    <Link
-                      href={plannerTodayHref}
-                      className={`inline-flex items-center rounded-[4px] border px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] transition ${scheduleSecondaryActionToneClassName}`}
-                    >
-                      Today
-                    </Link>
-                    <Link
-                      href={plannerNextHref}
-                      className={`inline-flex items-center rounded-[4px] border px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] transition ${scheduleSecondaryActionToneClassName}`}
-                    >
-                      {scheduleLayout === "day" ? "Next day" : "Next week"}
-                    </Link>
-                  </div>
-                  {scheduleLayout === "board" ? (
-                    <p className="max-w-xl text-sm leading-6 text-[var(--text-secondary)] lg:text-right">
-                      Board mode uses this selected date to preserve handoff
-                      context while grouping the filtered jobs by operational
-                      timing.
-                    </p>
-                  ) : null}
-                </div>
-              </div>
-            </div>
-
+          <ScheduleDispatchBoardShell
+            eyebrow="CrewBoard planner"
+            title="Dispatch board"
+            description="Run CrewBoard as a bounded planner on top of jobs. Keep Needs Scheduling work separate, review dated work by day or week, and reschedule through the same job action path."
+            layoutOptions={SCHEDULE_LAYOUT_OPTIONS.map((option) => ({
+              key: option.value,
+              label: option.label,
+              href: buildScheduleHref({
+                q: query,
+                projectId: projectFilterId ?? undefined,
+                view,
+                crew: crewFilter,
+                layout: option.value,
+                date: plannerDateKey
+              }),
+              active: scheduleLayout === option.value
+            }))}
+            primaryCount={
+              scheduleLayout === "board" ? visibleJobs.length : plannerItemCount
+            }
+            primaryLabel={
+              scheduleLayout === "board" ? "visible jobs" : "scheduled items"
+            }
+            crewAttentionCount={
+              scheduleLayout === "board"
+                ? visibleJobs.filter((job) => job.assignmentCount === 0).length
+                : plannerNeedsCrewCount
+            }
+            rangeLabel={
+              scheduleLayout === "board"
+                ? "Grouped by operational timing"
+                : plannerRangeLabel
+            }
+            previousHref={plannerPrevHref}
+            previousLabel={
+              scheduleLayout === "day" ? "Previous day" : "Previous week"
+            }
+            todayHref={plannerTodayHref}
+            nextHref={plannerNextHref}
+            nextLabel={scheduleLayout === "day" ? "Next day" : "Next week"}
+            boardModeDescription={
+              scheduleLayout === "board"
+                ? "Board mode uses this selected date to preserve handoff context while grouping the filtered jobs by operational timing."
+                : undefined
+            }
+          >
             <CrewBoardDragDropLayer>
               {boardItemCount > 0 ? (
                 scheduleLayout === "day" ? (
@@ -4231,7 +4175,7 @@ export default async function SchedulePage({
                 </div>
               )}
             </CrewBoardDragDropLayer>
-          </section>
+          </ScheduleDispatchBoardShell>
 
           {resolvedSearchParams.error ? (
             <div className="rounded-[6px] border border-rose-200 bg-rose-50 px-5 py-4 text-sm leading-6 text-rose-800">

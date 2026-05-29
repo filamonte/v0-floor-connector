@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { ReactNode } from "react";
 
 import type { ScheduleFieldHandoffSummary } from "@/lib/schedule/field-handoff-read-model";
 import type { ScheduleWarningSummary } from "@/lib/schedule/warnings";
@@ -14,6 +15,13 @@ export type ScheduleOperationalIndicator = {
   tone: "ready" | "warning" | "blocked" | "neutral";
 };
 
+export type ScheduleDispatchBoardLayoutOption = {
+  key: string;
+  label: string;
+  href: string;
+  active: boolean;
+};
+
 function getIndicatorClassName(tone: ScheduleOperationalIndicator["tone"]) {
   switch (tone) {
     case "ready":
@@ -25,6 +33,104 @@ function getIndicatorClassName(tone: ScheduleOperationalIndicator["tone"]) {
     default:
       return "border-[var(--border-warm)] bg-white text-[var(--text-secondary)]";
   }
+}
+
+export function ScheduleDispatchBoardShell(input: {
+  eyebrow: string;
+  title: string;
+  description: string;
+  layoutOptions: ScheduleDispatchBoardLayoutOption[];
+  primaryCount: number;
+  primaryLabel: string;
+  crewAttentionCount: number;
+  rangeLabel: string;
+  previousHref: string;
+  previousLabel: string;
+  todayHref: string;
+  nextHref: string;
+  nextLabel: string;
+  boardModeDescription?: string;
+  children: ReactNode;
+}) {
+  return (
+    <section className="overflow-hidden rounded-[6px] border border-[var(--border-warm)] bg-white shadow-sm">
+      <div className="border-b border-[var(--border-warm)] bg-[var(--highlight)] px-5 py-4 sm:px-6">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+          <div className="min-w-0">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
+              {input.eyebrow}
+            </p>
+            <h2 className="mt-1 text-lg font-semibold tracking-tight text-[var(--text-primary)]">
+              {input.title}
+            </h2>
+            <p className="mt-1 text-sm leading-6 text-[var(--text-secondary)]">
+              {input.description}
+            </p>
+          </div>
+          <div className="flex flex-wrap items-center gap-2 lg:justify-end">
+            {input.layoutOptions.map((option) => (
+              <Link
+                key={option.key}
+                href={option.href}
+                className={[
+                  "inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] transition",
+                  option.active
+                    ? "bg-[var(--graphite)] text-white"
+                    : `border ${scheduleSecondaryActionToneClassName}`
+                ].join(" ")}
+              >
+                {option.label}
+              </Link>
+            ))}
+          </div>
+        </div>
+
+        <div className="mt-4 flex flex-col gap-3 border-t border-[var(--border-warm)] pt-4 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex flex-wrap items-center gap-3">
+            <span className="inline-flex items-center rounded-full border border-[var(--border-warm)] bg-white px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--text-primary)]">
+              {input.primaryCount} {input.primaryLabel}
+            </span>
+            <span className="inline-flex items-center rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-amber-800">
+              {input.crewAttentionCount} need crew
+            </span>
+            <p className="text-sm leading-6 text-[var(--text-secondary)]">
+              {input.rangeLabel}
+            </p>
+          </div>
+
+          <div className="flex flex-col gap-2 lg:items-end">
+            <div className="flex flex-wrap items-center gap-2">
+              <Link
+                href={input.previousHref}
+                className={`inline-flex items-center rounded-[4px] border px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] transition ${scheduleSecondaryActionToneClassName}`}
+              >
+                {input.previousLabel}
+              </Link>
+              <Link
+                href={input.todayHref}
+                className={`inline-flex items-center rounded-[4px] border px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] transition ${scheduleSecondaryActionToneClassName}`}
+              >
+                Today
+              </Link>
+              <Link
+                href={input.nextHref}
+                className={`inline-flex items-center rounded-[4px] border px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] transition ${scheduleSecondaryActionToneClassName}`}
+              >
+                {input.nextLabel}
+              </Link>
+            </div>
+            {input.boardModeDescription ? (
+              <p className="max-w-xl text-sm leading-6 text-[var(--text-secondary)] lg:text-right">
+                {input.boardModeDescription}
+              </p>
+            ) : null}
+          </div>
+        </div>
+      </div>
+
+      {input.children}
+    </section>
+  );
 }
 
 export function ScheduleWarningBadges(input: {
