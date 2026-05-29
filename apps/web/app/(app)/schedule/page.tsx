@@ -18,7 +18,9 @@ import {
   ScheduleJobActionLinks,
   ScheduleNotesPreview,
   ScheduleOperationalIndicators,
+  ScheduleSelectedJobPanelSummary,
   ScheduleWarningBadges,
+  ScheduleWarningDetails,
   type ScheduleOperationalIndicator
 } from "@/components/schedule-crewboard-presentational";
 import { ScheduleJobForm } from "@/components/schedule-job-form";
@@ -4546,61 +4548,27 @@ export default async function SchedulePage({
                   Selected job action panel
                 </h2>
               </div>
-              <div className={scheduleInsetPanelClassName}>
-                <p className="font-semibold text-[var(--text-primary)]">
-                  {getScheduleJobTitle(selectedJob)}
-                </p>
-                <p className="mt-1">
-                  {selectedJob.customer?.name ?? "Unknown customer"} ·{" "}
-                  <span className="capitalize">
-                    {formatStatusLabel(selectedJob.dispatchStatus)}
-                  </span>
-                </p>
-                {selectedJob.serviceTicket ? (
-                  <p className="mt-1">
-                    Service ticket:{" "}
-                    <Link
-                      href={`/service-tickets/${selectedJob.serviceTicket.id}`}
-                      className="font-medium text-[var(--copper)] transition hover:text-[var(--copper-light)]"
-                    >
-                      {selectedJob.serviceTicket.title}
-                    </Link>
-                  </p>
-                ) : null}
-                <p className="mt-1">
-                  {selectedJobAssignments.length > 0
+              <ScheduleSelectedJobPanelSummary
+                title={getScheduleJobTitle(selectedJob)}
+                customerName={selectedJob.customer?.name ?? "Unknown customer"}
+                dispatchStatusLabel={formatStatusLabel(
+                  selectedJob.dispatchStatus
+                )}
+                serviceTicket={selectedJob.serviceTicket}
+                assignmentSummary={
+                  selectedJobAssignments.length > 0
                     ? `${formatAssignmentLabel(selectedJobAssignments.length)} already attached`
-                    : "Crew not assigned yet"}
-                </p>
-                <ScheduleOperationalIndicators
-                  indicators={selectedJobOperationalIndicators}
-                />
-              </div>
-
-              <div className="flex flex-wrap gap-2">
-                <Link
-                  href={`/projects/${selectedJob.projectId}`}
-                  className={`inline-flex items-center rounded-[4px] border px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] transition ${scheduleSecondaryActionToneClassName}`}
-                >
-                  Open Project Workspace
-                </Link>
-                <Link
-                  href={`/jobs/${selectedJob.id}`}
-                  className={`inline-flex items-center rounded-[4px] border px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] transition ${scheduleSecondaryActionToneClassName}`}
-                >
-                  Open job
-                </Link>
-                <Link
-                  href={buildDailyLogCaptureHref({
-                    projectId: selectedJob.projectId,
-                    jobId: selectedJob.id,
-                    logDate: selectedJob.scheduledDate
-                  })}
-                  className={`inline-flex items-center rounded-[4px] border px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] transition ${scheduleSecondaryActionToneClassName}`}
-                >
-                  Start Daily Job Log
-                </Link>
-              </div>
+                    : "Crew not assigned yet"
+                }
+                indicators={selectedJobOperationalIndicators}
+                projectHref={`/projects/${selectedJob.projectId}`}
+                jobHref={`/jobs/${selectedJob.id}`}
+                dailyLogHref={buildDailyLogCaptureHref({
+                  projectId: selectedJob.projectId,
+                  jobId: selectedJob.id,
+                  logDate: selectedJob.scheduledDate
+                })}
+              />
               {selectedJobCrewState ? (
                 <div className="rounded-[6px] border border-[var(--border-warm)] bg-white px-4 py-3 text-sm leading-6 text-[var(--text-secondary)]">
                   <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--text-secondary)]">
@@ -4619,25 +4587,7 @@ export default async function SchedulePage({
 
               <ScheduleNotesPreview notes={selectedJob.scheduleNotes} />
 
-              {selectedJobScheduleWarnings.length > 0 ? (
-                <div className="rounded-[6px] border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-900">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.16em]">
-                    Schedule warnings
-                  </p>
-                  <ul className="mt-2 space-y-2">
-                    {selectedJobScheduleWarnings.map((warning) => (
-                      <li key={warning.id}>
-                        <span className="font-semibold">{warning.label}:</span>{" "}
-                        {warning.detail}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              ) : (
-                <div className="rounded-[6px] border border-[var(--border-warm)] bg-white px-4 py-3 text-sm leading-6 text-[var(--text-secondary)]">
-                  No schedule warnings found for this job.
-                </div>
-              )}
+              <ScheduleWarningDetails warnings={selectedJobScheduleWarnings} />
 
               {selectedJobEquipmentReadiness ? (
                 <div className="rounded-[6px] border border-[var(--border-warm)] bg-white px-4 py-3 text-sm leading-6 text-[var(--text-secondary)]">

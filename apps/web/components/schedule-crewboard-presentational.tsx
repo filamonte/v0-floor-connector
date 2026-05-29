@@ -124,6 +124,94 @@ export function ScheduleNotesPreview(input: { notes: string | null }) {
   );
 }
 
+export function ScheduleSelectedJobPanelSummary(input: {
+  title: string;
+  customerName: string;
+  dispatchStatusLabel: string;
+  serviceTicket?: { id: string; title: string } | null;
+  assignmentSummary: string;
+  indicators: ScheduleOperationalIndicator[];
+  projectHref: string;
+  jobHref: string;
+  dailyLogHref: string;
+}) {
+  return (
+    <>
+      <div className="rounded-[6px] border border-[var(--border-warm)] bg-white px-4 py-3 text-sm leading-6 text-[var(--text-secondary)]">
+        <p className="font-semibold text-[var(--text-primary)]">
+          {input.title}
+        </p>
+        <p className="mt-1">
+          {input.customerName} ·{" "}
+          <span className="capitalize">{input.dispatchStatusLabel}</span>
+        </p>
+        {input.serviceTicket ? (
+          <p className="mt-1">
+            Service ticket:{" "}
+            <Link
+              href={`/service-tickets/${input.serviceTicket.id}`}
+              className="font-medium text-[var(--copper)] transition hover:text-[var(--copper-light)]"
+            >
+              {input.serviceTicket.title}
+            </Link>
+          </p>
+        ) : null}
+        <p className="mt-1">{input.assignmentSummary}</p>
+        <ScheduleOperationalIndicators indicators={input.indicators} />
+      </div>
+
+      <div className="flex flex-wrap gap-2">
+        <Link
+          href={input.projectHref}
+          className={`inline-flex items-center rounded-[4px] border px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] transition ${scheduleSecondaryActionToneClassName}`}
+        >
+          Open Project Workspace
+        </Link>
+        <Link
+          href={input.jobHref}
+          className={`inline-flex items-center rounded-[4px] border px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] transition ${scheduleSecondaryActionToneClassName}`}
+        >
+          Open job
+        </Link>
+        <Link
+          href={input.dailyLogHref}
+          className={`inline-flex items-center rounded-[4px] border px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] transition ${scheduleSecondaryActionToneClassName}`}
+        >
+          Start Daily Job Log
+        </Link>
+      </div>
+    </>
+  );
+}
+
+export function ScheduleWarningDetails(input: {
+  warnings: ScheduleWarningSummary[];
+}) {
+  if (input.warnings.length === 0) {
+    return (
+      <div className="rounded-[6px] border border-[var(--border-warm)] bg-white px-4 py-3 text-sm leading-6 text-[var(--text-secondary)]">
+        No schedule warnings found for this job.
+      </div>
+    );
+  }
+
+  return (
+    <div className="rounded-[6px] border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-900">
+      <p className="text-[11px] font-semibold uppercase tracking-[0.16em]">
+        Schedule warnings
+      </p>
+      <ul className="mt-2 space-y-2">
+        {input.warnings.map((warning) => (
+          <li key={warning.id}>
+            <span className="font-semibold">{warning.label}:</span>{" "}
+            {warning.detail}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
 export function ScheduleJobActionLinks(input: {
   actionHref: string;
   actionLabel: string;
