@@ -2,12 +2,15 @@ import type { CommunicationThread } from "@floorconnector/types";
 import Link from "next/link";
 
 import { DetailPanel } from "@/components/detail-panel";
-
-type RelatedConversationSource = CommunicationThread["subjectType"];
+import {
+  deriveRecordCommunicationContinuitySummary,
+  type RecordCommunicationContinuitySource
+} from "@/lib/communications/record-continuity";
 
 type RelatedConversationThread = Pick<
   CommunicationThread,
   | "id"
+  | "projectId"
   | "subjectType"
   | "lastMessageAt"
   | "lastMessagePreview"
@@ -17,26 +20,13 @@ type RelatedConversationThread = Pick<
 >;
 
 type RelatedConversationsCardProps = {
-  source: RelatedConversationSource;
+  source: RecordCommunicationContinuitySource;
   description: string;
   countLabel: string;
   emptyMessage: string;
   actionClassName: string;
   threads: ReadonlyArray<RelatedConversationThread>;
 };
-
-function buildCommunicationsHref(input: {
-  source: RelatedConversationSource;
-  threadId?: string;
-}) {
-  const searchParams = new URLSearchParams({ source: input.source });
-
-  if (input.threadId) {
-    searchParams.set("threadId", input.threadId);
-  }
-
-  return `/communications?${searchParams.toString()}`;
-}
 
 export function RelatedConversationsCard({
   source,
@@ -46,23 +36,16 @@ export function RelatedConversationsCard({
   actionClassName,
   threads
 }: RelatedConversationsCardProps) {
-  const latestThread =
-    threads.find((thread) => thread.lastMessageAt) ?? threads[0] ?? null;
-  const customerVisibleCount = threads.filter(
-    (thread) => thread.lastMessageVisibility === "customer_visible"
-  ).length;
-  const internalCount = threads.filter(
-    (thread) => thread.lastMessageVisibility === "internal"
-  ).length;
-  const openCount = threads.filter(
-    (thread) => thread.threadStatus === "open"
-  ).length;
+  const summary = deriveRecordCommunicationContinuitySummary({
+    source,
+    threads
+  });
 
   return (
     <DetailPanel title="Communication Continuity" description={description}>
       <div className="space-y-3 text-sm leading-6 text-slate-600">
         <p>
-          {countLabel}: {threads.length}
+          {countLabel}: {summary.threadCount}
         </p>
         <div className="grid gap-2 sm:grid-cols-3">
           <div className="rounded-[4px] border border-slate-200 bg-slate-50 px-3 py-2">
@@ -70,20 +53,24 @@ export function RelatedConversationsCard({
               Customer-visible
             </p>
             <p className="mt-1 font-semibold text-slate-950">
-              {customerVisibleCount}
+              {summary.customerVisibleCount}
             </p>
           </div>
           <div className="rounded-[4px] border border-slate-200 bg-slate-50 px-3 py-2">
             <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">
               Internal only
             </p>
-            <p className="mt-1 font-semibold text-slate-950">{internalCount}</p>
+            <p className="mt-1 font-semibold text-slate-950">
+              {summary.internalCount}
+            </p>
           </div>
           <div className="rounded-[4px] border border-slate-200 bg-slate-50 px-3 py-2">
             <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">
               Open
             </p>
-            <p className="mt-1 font-semibold text-slate-950">{openCount}</p>
+            <p className="mt-1 font-semibold text-slate-950">
+              {summary.openCount}
+            </p>
           </div>
         </div>
         <p>
@@ -91,31 +78,28 @@ export function RelatedConversationsCard({
           history, reply state, delivery context, and unread notification triage
           from the shared communications workspace.
         </p>
-        {latestThread ? (
+        {summary.latestThread ? (
           <>
             <p>
               Latest activity:{" "}
               <span className="font-medium text-slate-950">
-                {new Date(
-                  latestThread.lastMessageAt ?? latestThread.updatedAt
-                ).toLocaleString()}
+                {summary.latestActivityAt
+                  ? new Date(summary.latestActivityAt).toLocaleString()
+                  : "No activity timestamp stored yet."}
               </span>
             </p>
             <p>
               Latest thread summary:{" "}
               <span className="font-medium text-slate-950">
-                {latestThread.lastMessagePreview ?? "No preview stored yet."}
+                {summary.latestPreview}
               </span>
             </p>
             <div className="pt-1">
               <Link
-                href={buildCommunicationsHref({
-                  source: latestThread.subjectType,
-                  threadId: latestThread.id
-                })}
+                href={summary.communicationsHref}
                 className={actionClassName}
               >
-                Open thread in communications
+                View communication activity
               </Link>
             </div>
           </>
@@ -124,10 +108,10 @@ export function RelatedConversationsCard({
             <p>{emptyMessage}</p>
             <div className="pt-1">
               <Link
-                href={buildCommunicationsHref({ source })}
+                href={summary.communicationsHref}
                 className={actionClassName}
               >
-                Open communications queue
+                View communication activity
               </Link>
             </div>
           </>
