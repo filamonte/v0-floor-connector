@@ -49,6 +49,7 @@ import {
   ProjectEvidenceContinuitySection,
   ProjectProofCenterSection
 } from "@/components/project-proof-evidence-sections";
+import { ProjectFinancialContinuitySection } from "@/components/project-financial-continuity-section";
 import {
   ProjectProductionHubSection,
   ProjectProductionScheduleContinuityPanel
@@ -4415,6 +4416,114 @@ export default async function ProjectDetailPage({
     currentBillableValue > 0 &&
     projectInvoices.filter((invoice) => invoice.billingModel === "aia_progress")
       .length === 0;
+  const projectFinancialContinuity = {
+    overview: {
+      eyebrow: "Invoices / Payments / Progress Billing",
+      title: "Financial state is visible without leaving the project hub",
+      description:
+        "Use this section to see what is billable, what has been invoiced, and what still needs collection before you move into the deeper billing workspaces.",
+      href: openInvoices.length > 0 ? "/payments" : "/invoices",
+      linkLabel: openInvoices.length > 0 ? "Open payments" : "Open invoices",
+      stat: `${projectInvoices.length} invoices / ${formatMoney(
+        openInvoices.reduce(
+          (sum, invoice) => sum + Number(invoice.balanceDueAmount),
+          0
+        )
+      )} open`
+    },
+    changeOrders: {
+      title: "Change orders",
+      items: projectChangeOrders.slice(0, 2).map((changeOrder) => ({
+        id: changeOrder.id,
+        href: `/change-orders/${changeOrder.id}`,
+        title: changeOrder.title,
+        subtitle:
+          changeOrder.customer?.name ??
+          project.customer?.name ??
+          "Unknown customer",
+        meta: joinMetaParts([
+          formatMoney(changeOrder.priceAdjustment),
+          changeOrder.invoice
+            ? `Invoice ${changeOrder.invoice.referenceNumber}`
+            : "Project scope change",
+          formatUpdatedActivity(changeOrder.updatedAt)
+        ]),
+        statusLabel: formatStatusLabel(changeOrder.status)
+      })),
+      emptyState: {
+        eyebrow: "No change orders",
+        title: "Track scope changes here",
+        description:
+          "When scope or price shifts after contract approval, keep the adjustment on the same project chain with a connected change order.",
+        actionHref: `/change-orders?projectId=${project.id}&compose=1`,
+        actionLabel: "Create change order"
+      }
+    },
+    progressBilling: {
+      title: "Progress billing / SOV",
+      items: projectProgressBilling.slice(0, 2).map((workspace) => ({
+        id: workspace.id,
+        href: `/progress-billing/${workspace.id}`,
+        title: workspace.estimate?.referenceNumber ?? "Schedule of values",
+        subtitle:
+          workspace.customer?.name ??
+          project.customer?.name ??
+          "Unknown customer",
+        meta: `Current ${formatMoney(workspace.currentBillableTotal)} / Balance ${formatMoney(workspace.balanceToFinishTotal)} / ${workspace.weightedPercentComplete}% complete`,
+        statusLabel: formatStatusLabel(workspace.status)
+      })),
+      emptyState: {
+        eyebrow: "No progress billing",
+        title: "Open progress billing after approved scope seeds here",
+        description:
+          "Once approved estimate items seed a schedule of values on this project, progress billing stays tied to the same estimate, project, and invoice chain."
+      }
+    },
+    invoices: {
+      title: "Invoices",
+      items: projectInvoices.slice(0, 3).map((invoice) => ({
+        id: invoice.id,
+        href: `/invoices/${invoice.id}`,
+        title: invoice.referenceNumber,
+        subtitle:
+          invoice.customer?.name ??
+          project.customer?.name ??
+          "Unknown customer",
+        meta: joinMetaParts([
+          getProjectInvoiceSummary(invoice),
+          formatUpdatedActivity(invoice.updatedAt)
+        ]),
+        statusLabel: formatStatusLabel(invoice.status)
+      })),
+      emptyState: {
+        eyebrow: "No invoices",
+        title: "Create invoice from the connected workflow",
+        description:
+          "Billing should continue from the same project and downstream work context, with deposit readiness staying on canonical invoices instead of a side model."
+      }
+    },
+    payments: {
+      title: "Payments",
+      items: recentPayments.slice(0, 3).map((payment) => ({
+        id: payment.id,
+        href: paymentFocusInvoice
+          ? `/invoices/${paymentFocusInvoice.id}`
+          : "/payments",
+        title: formatMoney(payment.amount),
+        subtitle: paymentFocusInvoice
+          ? `On ${paymentFocusInvoice.referenceNumber}`
+          : "Recent payment",
+        meta: getPaymentRecordSummary(payment),
+        statusLabel: formatStatusLabel(payment.status)
+      })),
+      emptyState: {
+        eyebrow: "No payments",
+        title: "Payment activity will show up here",
+        description:
+          "Recorded payments remain attached to canonical invoices, so this workspace surfaces them through the same billing chain."
+      }
+    }
+  };
   const projectOperationalSummary = deriveProjectOperationalWorkspaceSummary({
     projectId: project.id,
     todayIsoDate: new Date().toISOString().slice(0, 10),
@@ -6165,177 +6274,13 @@ export default async function ProjectDetailPage({
           title="Financial Hub"
           description="Billing continuity stays visible here from scope change through progress billing, invoicing, and payment, while the project hub remains a summary-first surface."
         >
-          <div className="space-y-6">
-            <SectionOverview
-              eyebrow="Invoices / Payments / Progress Billing"
-              title="Financial state is visible without leaving the project hub"
-              description="Use this section to see what is billable, what has been invoiced, and what still needs collection before you move into the deeper billing workspaces."
-              href={openInvoices.length > 0 ? "/payments" : "/invoices"}
-              linkLabel={
-                openInvoices.length > 0 ? "Open payments" : "Open invoices"
-              }
-              stat={`${projectInvoices.length} invoices / ${formatMoney(openInvoices.reduce((sum, invoice) => sum + Number(invoice.balanceDueAmount), 0))} open`}
-            />
-            <div className="grid gap-8 xl:grid-cols-4">
-              <section className="space-y-4">
-                <div>
-                  <p className="text-sm font-medium text-slate-950">
-                    Change orders
-                  </p>
-                </div>
-                <div className="grid gap-4">
-                  {projectChangeOrders.length > 0 ? (
-                    projectChangeOrders
-                      .slice(0, 2)
-                      .map((changeOrder) => (
-                        <LinkedRecordCard
-                          key={changeOrder.id}
-                          href={`/change-orders/${changeOrder.id}`}
-                          title={changeOrder.title}
-                          subtitle={
-                            changeOrder.customer?.name ??
-                            project.customer?.name ??
-                            "Unknown customer"
-                          }
-                          meta={joinMetaParts([
-                            formatMoney(changeOrder.priceAdjustment),
-                            changeOrder.invoice
-                              ? `Invoice ${changeOrder.invoice.referenceNumber}`
-                              : "Project scope change",
-                            formatUpdatedActivity(changeOrder.updatedAt)
-                          ])}
-                          badge={renderStatusBadge(
-                            formatStatusLabel(changeOrder.status)
-                          )}
-                        />
-                      ))
-                  ) : (
-                    <AppEmptyState
-                      eyebrow="No change orders"
-                      title="Track scope changes here"
-                      description="When scope or price shifts after contract approval, keep the adjustment on the same project chain with a connected change order."
-                      actionHref={`/change-orders?projectId=${project.id}&compose=1`}
-                      actionLabel="Create change order"
-                    />
-                  )}
-                </div>
-              </section>
-
-              <section className="space-y-4">
-                <div>
-                  <p className="text-sm font-medium text-slate-950">
-                    Progress billing / SOV
-                  </p>
-                </div>
-                <div className="grid gap-4">
-                  {projectProgressBilling.length > 0 ? (
-                    projectProgressBilling
-                      .slice(0, 2)
-                      .map((workspace) => (
-                        <LinkedRecordCard
-                          key={workspace.id}
-                          href={`/progress-billing/${workspace.id}`}
-                          title={
-                            workspace.estimate?.referenceNumber ??
-                            "Schedule of values"
-                          }
-                          subtitle={
-                            workspace.customer?.name ??
-                            project.customer?.name ??
-                            "Unknown customer"
-                          }
-                          meta={`Current ${formatMoney(workspace.currentBillableTotal)} / Balance ${formatMoney(workspace.balanceToFinishTotal)} / ${workspace.weightedPercentComplete}% complete`}
-                          badge={renderStatusBadge(
-                            formatStatusLabel(workspace.status)
-                          )}
-                        />
-                      ))
-                  ) : (
-                    <AppEmptyState
-                      eyebrow="No progress billing"
-                      title="Open progress billing after approved scope seeds here"
-                      description="Once approved estimate items seed a schedule of values on this project, progress billing stays tied to the same estimate, project, and invoice chain."
-                    />
-                  )}
-                </div>
-              </section>
-
-              <section className="space-y-4">
-                <div>
-                  <p className="text-sm font-medium text-slate-950">Invoices</p>
-                </div>
-                <div className="grid gap-4">
-                  {projectInvoices.length > 0 ? (
-                    projectInvoices
-                      .slice(0, 3)
-                      .map((invoice) => (
-                        <LinkedRecordCard
-                          key={invoice.id}
-                          href={`/invoices/${invoice.id}`}
-                          title={invoice.referenceNumber}
-                          subtitle={
-                            invoice.customer?.name ??
-                            project.customer?.name ??
-                            "Unknown customer"
-                          }
-                          meta={joinMetaParts([
-                            getProjectInvoiceSummary(invoice),
-                            formatUpdatedActivity(invoice.updatedAt)
-                          ])}
-                          badge={renderStatusBadge(
-                            formatStatusLabel(invoice.status)
-                          )}
-                        />
-                      ))
-                  ) : (
-                    <AppEmptyState
-                      eyebrow="No invoices"
-                      title="Create invoice from the connected workflow"
-                      description="Billing should continue from the same project and downstream work context, with deposit readiness staying on canonical invoices instead of a side model."
-                    />
-                  )}
-                </div>
-              </section>
-
-              <section className="space-y-4">
-                <div>
-                  <p className="text-sm font-medium text-slate-950">Payments</p>
-                </div>
-                <div className="grid gap-4">
-                  {recentPayments.length > 0 ? (
-                    recentPayments
-                      .slice(0, 3)
-                      .map((payment) => (
-                        <LinkedRecordCard
-                          key={payment.id}
-                          href={
-                            paymentFocusInvoice
-                              ? `/invoices/${paymentFocusInvoice.id}`
-                              : "/payments"
-                          }
-                          title={formatMoney(payment.amount)}
-                          subtitle={
-                            paymentFocusInvoice
-                              ? `On ${paymentFocusInvoice.referenceNumber}`
-                              : "Recent payment"
-                          }
-                          meta={getPaymentRecordSummary(payment)}
-                          badge={renderStatusBadge(
-                            formatStatusLabel(payment.status)
-                          )}
-                        />
-                      ))
-                  ) : (
-                    <AppEmptyState
-                      eyebrow="No payments"
-                      title="Payment activity will show up here"
-                      description="Recorded payments remain attached to canonical invoices, so this workspace surfaces them through the same billing chain."
-                    />
-                  )}
-                </div>
-              </section>
-            </div>
-          </div>
+          <ProjectFinancialContinuitySection
+            overview={projectFinancialContinuity.overview}
+            changeOrders={projectFinancialContinuity.changeOrders}
+            progressBilling={projectFinancialContinuity.progressBilling}
+            invoices={projectFinancialContinuity.invoices}
+            payments={projectFinancialContinuity.payments}
+          />
         </DetailPanel>
 
         <DetailPanel
