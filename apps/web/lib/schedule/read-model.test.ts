@@ -4,6 +4,7 @@ import test from "node:test";
 import {
   buildScheduleBoardReadModel,
   buildScheduleItems,
+  deriveScheduleBoardQueues,
   filterUpcomingAssignedAppointments
 } from "./read-model";
 
@@ -540,5 +541,52 @@ void test("schedule board read model orders dispatch attention signals", () => {
   assert.deepEqual(
     board.agingUnscheduledReadyJobs.map((job) => job.id),
     [agingReady.id]
+  );
+});
+
+void test("schedule board queue helper exposes the derived queues without board presentation groups", () => {
+  const blockedUnscheduled = {
+    ...baseJob,
+    id: "66666666-bbbb-4bbb-8bbb-666666666666",
+    dispatchStatus: "unscheduled" as const,
+    projectId: "project-blocked",
+    scheduledDate: null,
+    scheduledStartAt: null,
+    scheduledEndAt: null,
+    updatedAt: "2026-05-07T12:00:00.000Z"
+  };
+  const todayMissingCrew = {
+    ...baseJob,
+    id: "77777777-bbbb-4bbb-8bbb-777777777777",
+    dispatchStatus: "scheduled" as const,
+    scheduledDate: "2026-05-08",
+    scheduledStartAt: "2026-05-08T09:00:00.000Z",
+    assignmentCount: 0,
+    assignments: [],
+    crewSummary: []
+  };
+  const queues = deriveScheduleBoardQueues({
+    jobs: [todayMissingCrew, blockedUnscheduled],
+    today: new Date(2026, 4, 8),
+    readinessByProjectId: new Map([
+      ["project-blocked", { isReadyToSchedule: false }]
+    ])
+  });
+
+  assert.deepEqual(
+    queues.unscheduledBlockedJobs.map((job) => job.id),
+    [blockedUnscheduled.id]
+  );
+  assert.deepEqual(
+    queues.crewAssignmentGaps.map((job) => job.id),
+    [todayMissingCrew.id]
+  );
+  assert.deepEqual(
+    queues.dispatchAttentionItems.map((item) => item.kind),
+    ["blocked_readiness", "missing_crew"]
+  );
+  assert.deepEqual(
+    queues.needsReadinessReviewJobs.map((job) => job.id),
+    [blockedUnscheduled.id, todayMissingCrew.id]
   );
 });
