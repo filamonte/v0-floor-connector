@@ -49,14 +49,12 @@ import {
   ProjectEvidenceContinuitySection,
   ProjectProofCenterSection
 } from "@/components/project-proof-evidence-sections";
+import {
+  ProjectProductionHubSection,
+  ProjectProductionScheduleContinuityPanel
+} from "@/components/project-production-hub-section";
 import { ReadyToScheduleActionPanel } from "@/components/ready-to-schedule-action-panel";
 import { RecordLinkedCommunicationComposer } from "@/components/record-linked-communication-composer";
-import {
-  ScheduleContextActions,
-  ScheduleContextFocusCard,
-  ScheduleContextMetrics,
-  ScheduleContextNotice
-} from "@/components/schedule-context-card";
 import { ServiceWarrantyContinuityPanel } from "@/components/service-warranty-continuity-panel";
 import { WorkItemCreateForm } from "@/components/work-items/work-item-create-form";
 import { WorkItemList } from "@/components/work-items/work-item-list";
@@ -3846,6 +3844,215 @@ export default async function ProjectDetailPage({
     action: unscheduledJobs.length > 0 ? "schedule" : undefined,
     jobId: unscheduledJobs.length === 1 ? unscheduledJobs[0].id : undefined
   });
+  const projectProductionHub = {
+    overview: {
+      eyebrow: "Jobs / Scheduling / Punchlists",
+      title: "Execution pressure is summarized here first",
+      description:
+        "Use this section to see whether the project is ready for the field, what is unscheduled, what still needs crew attention, and what closeout work is still open.",
+      href: unscheduledJobs.length > 0 ? "/schedule?view=unscheduled" : "/jobs",
+      linkLabel: unscheduledJobs.length > 0 ? "Open schedule" : "Open jobs",
+      stat: `${projectJobs.length} jobs / ${jobsWithoutCrew.length} missing crew / ${unresolvedPunchlistItems.length} unresolved punchlists`
+    },
+    jobs: {
+      title: "Jobs",
+      items: projectJobs.slice(0, 3).map((job) => ({
+        id: job.id,
+        href: `/jobs/${job.id}`,
+        title: job.project?.name ?? project.name,
+        subtitle:
+          job.customer?.name ?? project.customer?.name ?? "Unknown customer",
+        meta: joinMetaParts([
+          job.scheduledDate
+            ? `${job.crewVendor?.name ?? "Crew not assigned"} / Scheduled ${new Date(`${job.scheduledDate}T00:00:00`).toLocaleDateString()}`
+            : `${job.crewVendor?.name ?? "Crew not assigned"} / Unscheduled`,
+          formatUpdatedActivity(job.updatedAt)
+        ]),
+        statusLabel: formatStatusLabel(job.dispatchStatus)
+      })),
+      emptyState: {
+        eyebrow: "No jobs",
+        title: "Hold operations until the handoff is clear",
+        description:
+          "Jobs should stay downstream of the commercial readiness chain instead of becoming a parallel scheduling system."
+      }
+    },
+    punchlists: {
+      title: "Punchlists",
+      items: projectPunchlistItems.slice(0, 3).map((item) => ({
+        id: item.id,
+        href: `/punchlists/${item.id}`,
+        title: item.title,
+        subtitle: item.assignee?.displayName ?? "Unassigned",
+        meta: item.job
+          ? `Job ${item.job.id.slice(0, 8)} / ${item.dueDate ? `Due ${new Date(`${item.dueDate}T00:00:00`).toLocaleDateString()}` : "No due date"}`
+          : item.dueDate
+            ? `Due ${new Date(`${item.dueDate}T00:00:00`).toLocaleDateString()}`
+            : "Project-level closeout item",
+        statusLabel: formatStatusLabel(item.status)
+      })),
+      emptyState: {
+        eyebrow: "No punchlists",
+        title: "Track closeout work here",
+        description:
+          "When corrective or closeout work needs to survive beyond one project day, keep it on the canonical punchlist chain.",
+        actionHref: `/punchlists?projectId=${project.id}&compose=1`,
+        actionLabel: "Create punchlist item"
+      }
+    },
+    dailyExecution: {
+      title: "Daily execution",
+      items: projectDailyLogs.slice(0, 2).map((dailyLog) => ({
+        id: dailyLog.id,
+        href: `/daily-logs/${dailyLog.id}`,
+        title:
+          dailyLog.summary?.trim() ||
+          new Date(`${dailyLog.logDate}T00:00:00`).toLocaleDateString(),
+        subtitle: new Date(`${dailyLog.logDate}T00:00:00`).toLocaleDateString(),
+        meta: joinMetaParts([
+          dailyLog.job
+            ? `Job ${dailyLog.job.id.slice(0, 8)} / ${dailyLog.weatherSummary ?? "No weather summary"}`
+            : (dailyLog.weatherSummary ?? "Project-day execution record"),
+          formatUpdatedActivity(dailyLog.updatedAt)
+        ]),
+        statusLabel: formatStatusLabel(dailyLog.status)
+      })),
+      emptyState: {
+        eyebrow: "No daily logs",
+        title: "Capture the first project day",
+        description:
+          "Daily execution records stay connected to the same project and job chain once field work begins.",
+        actionHref: buildDailyLogCaptureHref({
+          projectId: project.id
+        }),
+        actionLabel: "Start Daily Job Log"
+      }
+    }
+  };
+  const projectProductionScheduleContinuity = {
+    metrics: [
+      { label: "Scheduled", value: scheduledJobs.length },
+      { label: "Unscheduled", value: unscheduledJobs.length },
+      { label: "In progress", value: activeJobs.length },
+      {
+        label: "Equipment warnings",
+        value: projectEquipmentReadiness.jobsWithEquipmentWarnings
+      }
+    ],
+    focus: scheduleFocusJob
+      ? {
+          eyebrow:
+            scheduleFocusJob.dispatchStatus === "in_progress"
+              ? "Work in progress"
+              : scheduleFocusLabel,
+          title: project.name,
+          titleHref: `/jobs/${scheduleFocusJob.id}`,
+          statusLabel: formatStatusLabel(scheduleFocusJob.dispatchStatus),
+          summary: formatScheduleSummaryWindow({
+            scheduledDate: scheduleFocusJob.scheduledDate,
+            scheduledStartAt: scheduleFocusJob.scheduledStartAt,
+            scheduledEndAt: scheduleFocusJob.scheduledEndAt
+          }),
+          crewSummary:
+            scheduleFocusAssignments.length > 0
+              ? scheduleFocusSummary
+              : scheduleFocusJob.dispatchStatus === "scheduled"
+                ? "Scheduled, but crew assignment still needs to be confirmed"
+                : scheduleFocusSummary
+        }
+      : null,
+    notice: scheduleFocusJob
+      ? null
+      : {
+          eyebrow:
+            projectJobs.length > 0 ? "Ready for scheduling" : "No jobs yet",
+          title:
+            projectJobs.length > 0
+              ? "Project jobs exist, but no calendar commitment is set yet"
+              : "Production work has not been created yet",
+          detail:
+            projectJobs.length > 0
+              ? "The project has canonical jobs, but they are still unscheduled. Once a real date is attached, the next production commitment will show here."
+              : "Create downstream project jobs first. Schedule continuity will appear here once production work exists on the canonical job chain."
+        },
+    facts: [
+      {
+        label: "Crew assignment state",
+        value:
+          jobsWithoutAssignments.length > 0
+            ? `${jobsWithoutAssignments.length} job${
+                jobsWithoutAssignments.length === 1 ? "" : "s"
+              } still need crew assignment rows`
+            : projectJobs.length > 0
+              ? "Crew coverage is already attached where needed"
+              : "No project jobs yet"
+      },
+      {
+        label: "Equipment readiness",
+        value:
+          projectEquipmentReadiness.warningCount > 0
+            ? `${projectEquipmentReadiness.warningCount} advisory warning${
+                projectEquipmentReadiness.warningCount === 1 ? "" : "s"
+              }`
+            : projectJobs.length > 0
+              ? "No equipment warnings"
+              : "No project jobs yet",
+        detail:
+          projectEquipmentReadiness.warningCount > 0
+            ? projectEquipmentReadiness.jobsWithMissingRequiredEquipment > 0
+              ? `${projectEquipmentReadiness.jobsWithMissingRequiredEquipment} job${
+                  projectEquipmentReadiness.jobsWithMissingRequiredEquipment ===
+                  1
+                    ? ""
+                    : "s"
+                } missing required equipment`
+              : "Warning-only; GateKeeper checks are unchanged"
+            : undefined
+      },
+      {
+        label: "Current handoff",
+        value:
+          scheduleFocusJob?.dispatchStatus === "in_progress"
+            ? "Field work is already active on this project"
+            : readinessSnapshot?.isReadyToSchedule
+              ? unscheduledJobs.length > 0
+                ? "Commercial handoff is clear and production can now be placed on the calendar"
+                : "Commercial handoff is clear for schedule follow-through"
+              : "Project is still upstream of operational scheduling"
+      }
+    ],
+    actions: [
+      {
+        href: buildProjectScheduleHref({
+          projectId: project.id,
+          view:
+            unscheduledJobs.length > 0
+              ? "unscheduled"
+              : activeJobs.length > 0
+                ? "in_progress"
+                : "all",
+          crew: jobsWithoutAssignments.length > 0 ? "unassigned" : "all"
+        }),
+        label: "Open schedule"
+      },
+      ...(scheduleFocusJob
+        ? [
+            {
+              href: buildProjectScheduleHref({
+                projectId: project.id,
+                jobId: scheduleFocusJob.id,
+                action:
+                  scheduleFocusAssignments.length > 0 ||
+                  scheduleFocusJob.dispatchStatus === "unscheduled"
+                    ? "schedule"
+                    : "assign"
+              }),
+              label: "Open focused job in schedule"
+            }
+          ]
+        : [])
+    ]
+  };
   const projectPulse = deriveProjectPulseSummary({
     projectId: project.id,
     readinessSnapshot,
@@ -5861,149 +6068,7 @@ export default async function ProjectDetailPage({
           description="Project stays the operating summary for jobs, scheduling pressure, and closeout work while real execution still happens on canonical job and punchlist records."
         >
           <div className="space-y-6">
-            <SectionOverview
-              eyebrow="Jobs / Scheduling / Punchlists"
-              title="Execution pressure is summarized here first"
-              description="Use this section to see whether the project is ready for the field, what is unscheduled, what still needs crew attention, and what closeout work is still open."
-              href={
-                unscheduledJobs.length > 0
-                  ? "/schedule?view=unscheduled"
-                  : "/jobs"
-              }
-              linkLabel={
-                unscheduledJobs.length > 0 ? "Open schedule" : "Open jobs"
-              }
-              stat={`${projectJobs.length} jobs / ${jobsWithoutCrew.length} missing crew / ${unresolvedPunchlistItems.length} unresolved punchlists`}
-            />
-            <div className="grid gap-8 xl:grid-cols-3">
-              <section className="space-y-4">
-                <div>
-                  <p className="text-sm font-medium text-slate-950">Jobs</p>
-                </div>
-                <div className="grid gap-4">
-                  {projectJobs.length > 0 ? (
-                    projectJobs
-                      .slice(0, 3)
-                      .map((job) => (
-                        <LinkedRecordCard
-                          key={job.id}
-                          href={`/jobs/${job.id}`}
-                          title={job.project?.name ?? project.name}
-                          subtitle={
-                            job.customer?.name ??
-                            project.customer?.name ??
-                            "Unknown customer"
-                          }
-                          meta={joinMetaParts([
-                            job.scheduledDate
-                              ? `${job.crewVendor?.name ?? "Crew not assigned"} / Scheduled ${new Date(`${job.scheduledDate}T00:00:00`).toLocaleDateString()}`
-                              : `${job.crewVendor?.name ?? "Crew not assigned"} / Unscheduled`,
-                            formatUpdatedActivity(job.updatedAt)
-                          ])}
-                          badge={renderStatusBadge(
-                            formatStatusLabel(job.dispatchStatus)
-                          )}
-                        />
-                      ))
-                  ) : (
-                    <AppEmptyState
-                      eyebrow="No jobs"
-                      title="Hold operations until the handoff is clear"
-                      description="Jobs should stay downstream of the commercial readiness chain instead of becoming a parallel scheduling system."
-                    />
-                  )}
-                </div>
-              </section>
-
-              <section className="space-y-4">
-                <div>
-                  <p className="text-sm font-medium text-slate-950">
-                    Punchlists
-                  </p>
-                </div>
-                <div className="grid gap-4">
-                  {projectPunchlistItems.length > 0 ? (
-                    projectPunchlistItems
-                      .slice(0, 3)
-                      .map((item) => (
-                        <LinkedRecordCard
-                          key={item.id}
-                          href={`/punchlists/${item.id}`}
-                          title={item.title}
-                          subtitle={item.assignee?.displayName ?? "Unassigned"}
-                          meta={
-                            item.job
-                              ? `Job ${item.job.id.slice(0, 8)} / ${item.dueDate ? `Due ${new Date(`${item.dueDate}T00:00:00`).toLocaleDateString()}` : "No due date"}`
-                              : item.dueDate
-                                ? `Due ${new Date(`${item.dueDate}T00:00:00`).toLocaleDateString()}`
-                                : "Project-level closeout item"
-                          }
-                          badge={renderStatusBadge(
-                            formatStatusLabel(item.status)
-                          )}
-                        />
-                      ))
-                  ) : (
-                    <AppEmptyState
-                      eyebrow="No punchlists"
-                      title="Track closeout work here"
-                      description="When corrective or closeout work needs to survive beyond one project day, keep it on the canonical punchlist chain."
-                      actionHref={`/punchlists?projectId=${project.id}&compose=1`}
-                      actionLabel="Create punchlist item"
-                    />
-                  )}
-                </div>
-              </section>
-
-              <section className="space-y-4">
-                <div>
-                  <p className="text-sm font-medium text-slate-950">
-                    Daily execution
-                  </p>
-                </div>
-                <div className="grid gap-4">
-                  {projectDailyLogs.slice(0, 2).length > 0 ? (
-                    projectDailyLogs
-                      .slice(0, 2)
-                      .map((dailyLog) => (
-                        <LinkedRecordCard
-                          key={dailyLog.id}
-                          href={`/daily-logs/${dailyLog.id}`}
-                          title={
-                            dailyLog.summary?.trim() ||
-                            new Date(
-                              `${dailyLog.logDate}T00:00:00`
-                            ).toLocaleDateString()
-                          }
-                          subtitle={new Date(
-                            `${dailyLog.logDate}T00:00:00`
-                          ).toLocaleDateString()}
-                          meta={joinMetaParts([
-                            dailyLog.job
-                              ? `Job ${dailyLog.job.id.slice(0, 8)} / ${dailyLog.weatherSummary ?? "No weather summary"}`
-                              : (dailyLog.weatherSummary ??
-                                "Project-day execution record"),
-                            formatUpdatedActivity(dailyLog.updatedAt)
-                          ])}
-                          badge={renderStatusBadge(
-                            formatStatusLabel(dailyLog.status)
-                          )}
-                        />
-                      ))
-                  ) : (
-                    <AppEmptyState
-                      eyebrow="No daily logs"
-                      title="Capture the first project day"
-                      description="Daily execution records stay connected to the same project and job chain once field work begins."
-                      actionHref={buildDailyLogCaptureHref({
-                        projectId: project.id
-                      })}
-                      actionLabel="Start Daily Job Log"
-                    />
-                  )}
-                </div>
-              </section>
-            </div>
+            <ProjectProductionHubSection {...projectProductionHub} />
 
             <ProjectFieldTrailSection
               summary={fieldTrail}
@@ -6855,157 +6920,9 @@ export default async function ProjectDetailPage({
           title="Production Schedule"
           description="Compact schedule continuity from canonical jobs and job assignments, with calendar work still handed off to the shared schedule workspace."
         >
-          <div className="space-y-4 text-sm leading-6 text-slate-600">
-            <ScheduleContextMetrics
-              items={[
-                { label: "Scheduled", value: scheduledJobs.length },
-                { label: "Unscheduled", value: unscheduledJobs.length },
-                { label: "In progress", value: activeJobs.length },
-                {
-                  label: "Equipment warnings",
-                  value: projectEquipmentReadiness.jobsWithEquipmentWarnings
-                }
-              ]}
-            />
-
-            {scheduleFocusJob ? (
-              <ScheduleContextFocusCard
-                eyebrow={
-                  scheduleFocusJob.dispatchStatus === "in_progress"
-                    ? "Work in progress"
-                    : scheduleFocusLabel
-                }
-                title={project.name}
-                titleHref={`/jobs/${scheduleFocusJob.id}`}
-                statusLabel={formatStatusLabel(scheduleFocusJob.dispatchStatus)}
-                summary={formatScheduleSummaryWindow({
-                  scheduledDate: scheduleFocusJob.scheduledDate,
-                  scheduledStartAt: scheduleFocusJob.scheduledStartAt,
-                  scheduledEndAt: scheduleFocusJob.scheduledEndAt
-                })}
-                detailRows={[
-                  {
-                    label: "Crew",
-                    value:
-                      scheduleFocusAssignments.length > 0
-                        ? scheduleFocusSummary
-                        : scheduleFocusJob.dispatchStatus === "scheduled"
-                          ? "Scheduled, but crew assignment still needs to be confirmed"
-                          : scheduleFocusSummary
-                  }
-                ]}
-              />
-            ) : (
-              <ScheduleContextNotice
-                eyebrow={
-                  projectJobs.length > 0
-                    ? "Ready for scheduling"
-                    : "No jobs yet"
-                }
-                title={
-                  projectJobs.length > 0
-                    ? "Project jobs exist, but no calendar commitment is set yet"
-                    : "Production work has not been created yet"
-                }
-              >
-                {projectJobs.length > 0
-                  ? "The project has canonical jobs, but they are still unscheduled. Once a real date is attached, the next production commitment will show here."
-                  : "Create downstream project jobs first. Schedule continuity will appear here once production work exists on the canonical job chain."}
-              </ScheduleContextNotice>
-            )}
-
-            <ContextFactsList
-              items={[
-                {
-                  label: "Crew assignment state",
-                  value:
-                    jobsWithoutAssignments.length > 0
-                      ? `${jobsWithoutAssignments.length} job${
-                          jobsWithoutAssignments.length === 1 ? "" : "s"
-                        } still need crew assignment rows`
-                      : projectJobs.length > 0
-                        ? "Crew coverage is already attached where needed"
-                        : "No project jobs yet"
-                },
-                {
-                  label: "Equipment readiness",
-                  value:
-                    projectEquipmentReadiness.warningCount > 0 ? (
-                      <>
-                        {projectEquipmentReadiness.warningCount} advisory
-                        warning
-                        {projectEquipmentReadiness.warningCount === 1
-                          ? ""
-                          : "s"}
-                        <span className="mt-1 block text-xs text-slate-500">
-                          {projectEquipmentReadiness.jobsWithMissingRequiredEquipment >
-                          0
-                            ? `${projectEquipmentReadiness.jobsWithMissingRequiredEquipment} job${
-                                projectEquipmentReadiness.jobsWithMissingRequiredEquipment ===
-                                1
-                                  ? ""
-                                  : "s"
-                              } missing required equipment`
-                            : "Warning-only; GateKeeper checks are unchanged"}
-                        </span>
-                      </>
-                    ) : projectJobs.length > 0 ? (
-                      "No equipment warnings"
-                    ) : (
-                      "No project jobs yet"
-                    )
-                },
-                {
-                  label: "Current handoff",
-                  value:
-                    scheduleFocusJob?.dispatchStatus === "in_progress"
-                      ? "Field work is already active on this project"
-                      : readinessSnapshot?.isReadyToSchedule
-                        ? unscheduledJobs.length > 0
-                          ? "Commercial handoff is clear and production can now be placed on the calendar"
-                          : "Commercial handoff is clear for schedule follow-through"
-                        : "Project is still upstream of operational scheduling"
-                }
-              ]}
-            />
-
-            <ScheduleContextActions
-              actions={[
-                {
-                  href: buildProjectScheduleHref({
-                    projectId: project.id,
-                    view:
-                      unscheduledJobs.length > 0
-                        ? "unscheduled"
-                        : activeJobs.length > 0
-                          ? "in_progress"
-                          : "all",
-                    crew:
-                      jobsWithoutAssignments.length > 0 ? "unassigned" : "all"
-                  }),
-                  label: "Open schedule",
-                  variant: "subtle"
-                },
-                ...(scheduleFocusJob
-                  ? [
-                      {
-                        href: buildProjectScheduleHref({
-                          projectId: project.id,
-                          jobId: scheduleFocusJob.id,
-                          action:
-                            scheduleFocusAssignments.length > 0 ||
-                            scheduleFocusJob.dispatchStatus === "unscheduled"
-                              ? "schedule"
-                              : "assign"
-                        }),
-                        label: "Open focused job in schedule",
-                        variant: "subtle" as const
-                      }
-                    ]
-                  : [])
-              ]}
-            />
-          </div>
+          <ProjectProductionScheduleContinuityPanel
+            schedule={projectProductionScheduleContinuity}
+          />
         </DetailPanel>
 
         <RelatedConversationsCard
