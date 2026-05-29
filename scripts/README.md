@@ -20,6 +20,10 @@ Repository automation and maintenance scripts will live here.
   upstreams, doctor checks, and shared build-output mistakes.
 - `refresh-playwright-auth.ps1`: reruns shared Playwright auth setup from the
   canonical repo and relinks auth state into worktrees.
+- `codex-streams.ps1`: prints the active six-stream operating model, paused or
+  legacy streams, and the recommended next prompt order.
+- `codex-next.ps1`: prints the recommended next implementation prompt order
+  from `.codex/active-stream-plan.md`.
 
 Package scripts:
 
@@ -33,6 +37,8 @@ pnpm worktree:audit
 pnpm worktree:create <name>
 pnpm worktree:finish <name>
 pnpm auth:refresh
+pnpm codex:streams
+pnpm codex:next
 ```
 
 ## Read-Only Reports

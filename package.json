@@ -34,6 +34,8 @@
     "worktree:finish": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/finish-worktree.ps1",
     "worktree:audit": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/worktree-audit.ps1",
     "auth:refresh": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/refresh-playwright-auth.ps1",
+    "codex:streams": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/codex-streams.ps1",
+    "codex:next": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/codex-next.ps1",
     "platform-admin": "node scripts/platform-admin.mjs",
     "staging:preflight": "node scripts/staging-preflight.mjs",
     "typecheck": "turbo run typecheck",

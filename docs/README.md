@@ -37,8 +37,9 @@ Use these first for most implementation or documentation tasks:
 `C:\FloorConnector` is the canonical local development source for ignored
 tooling state. Active stream worktrees under `C:\FC-worktrees` should link back
 to the main repo for `.env.local`, `node_modules`, `.turbo` when present, and
-`playwright\.auth` when present. Do not copy `.env.local` or duplicate
-`node_modules` per worktree.
+`playwright\.auth` when present. Workspace package `node_modules` folders under
+`apps/*` and `packages/*` are also linked when they exist in the canonical repo.
+Do not copy `.env.local` or duplicate `node_modules` per worktree.
 
 Use:
 
@@ -67,6 +68,8 @@ pnpm worktree:audit
 pnpm worktree:create <name>
 pnpm worktree:finish <name>
 pnpm auth:refresh
+pnpm codex:streams
+pnpm codex:next
 ```
 
 `pnpm worktree:doctor` verifies Node, pnpm, Corepack, shared links, developer
@@ -85,7 +88,9 @@ registry for active parallel streams. Use
 [.codex/worktree-rules.md](C:/FloorConnector/.codex/worktree-rules.md) as the
 shared Codex operating standard for worktree sessions. Use
 [.codex/parallel-development.md](C:/FloorConnector/.codex/parallel-development.md)
-for branch, merge, conflict, and daily operating rhythm.
+for branch, merge, conflict, and daily operating rhythm. Use
+[.codex/active-stream-plan.md](C:/FloorConnector/.codex/active-stream-plan.md)
+for the current six-stream production-acceleration model and next prompt order.
 
 Node is standardized through `package.json` `engines.node`, `packageManager`,
 and `.node-version`. Use Node 20+ and Corepack so every worktree resolves the
