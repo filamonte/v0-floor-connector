@@ -2,7 +2,6 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
 import {
-  ActionBar,
   ProjectStateSummary,
   WorkflowBar,
   getStatusBadgeClassName,
@@ -26,6 +25,15 @@ import { DetailPanel } from "@/components/detail-panel";
 import { GateKeeperSubjectMemoryPanel } from "@/components/gatekeeper-subject-memory-panel";
 import { LinkedRecordCard } from "@/components/linked-record-card";
 import { NeedsAttentionPanel } from "@/components/operational-cues/needs-attention-panel";
+import {
+  ProjectConnectedRecordLanes,
+  type ProjectConnectedRecordLane
+} from "@/components/project-connected-record-lanes";
+import {
+  ProjectReadinessNextActionPanel,
+  type ProjectReadinessBlockerItem,
+  type ProjectReadinessNextAction
+} from "@/components/project-readiness-next-action-panel";
 import {
   OperationalGuidanceSection,
   type OperationalGuidanceBucket
@@ -207,16 +215,6 @@ type ReadinessStageView = {
   state: "complete" | "current" | "blocked" | "upcoming";
 };
 
-type NextAction = {
-  title: string;
-  description: string;
-  primaryLabel?: string;
-  primaryHref?: string;
-  secondaryLabel?: string;
-  secondaryHref?: string;
-  blockerCopy?: string;
-};
-
 type ProjectEstimateListItem = Awaited<
   ReturnType<typeof listEstimates>
 >[number];
@@ -251,29 +249,12 @@ type CommandSummaryItem = {
   detail: string;
   tone?: WorkspaceStateTone;
 };
-type ConnectedRecordLane = {
-  title: string;
-  status: string;
-  keyFact: string;
-  href?: string;
-  actionLabel?: string;
-  note?: string;
-  blocker?: string;
-};
 type LifecycleStepId =
   | "opportunity"
   | "customer-project"
   | "estimate-contract"
   | "job-schedule"
   | "invoice-payment";
-type ReadinessBlockerItem = {
-  id: string;
-  title: string;
-  detail: string;
-  href?: string;
-  actionLabel?: string;
-  tone: "blocked" | "warning" | "ready";
-};
 
 const projectWorkspacePanelClassName =
   "rounded-lg border border-[var(--border-warm)] bg-white shadow-[0_18px_44px_-38px_rgba(31,41,55,0.42)]";
@@ -2030,7 +2011,7 @@ function OperationalCommandCenter({
 }: {
   customerName: string;
   projectLocation: string;
-  nextAction: NextAction;
+  nextAction: ProjectReadinessNextAction;
   blockerCount: number;
   readinessLabel: string;
   readinessDetail: string;
@@ -2163,14 +2144,14 @@ function ProjectCommandCenterMap({
   draftActionCount,
   connectedRecordLanes
 }: {
-  nextAction: NextAction;
+  nextAction: ProjectReadinessNextAction;
   readinessLabel: string;
   readinessDetail: string;
   blockerCount: number;
   timeline: ProjectCommandTimeline;
   aiSummary: AiProjectOperationalSummary | null;
   draftActionCount: number;
-  connectedRecordLanes: ConnectedRecordLane[];
+  connectedRecordLanes: ProjectConnectedRecordLane[];
 }) {
   const blockedLaneCount = connectedRecordLanes.filter(
     (lane) => lane.blocker
@@ -2297,191 +2278,6 @@ function ProjectCommandCenterMap({
           </a>
         ))}
       </div>
-    </section>
-  );
-}
-
-function ProjectConnectedRecordLanes({
-  lanes
-}: {
-  lanes: ConnectedRecordLane[];
-}) {
-  return (
-    <section
-      id="connected-record-lanes"
-      aria-labelledby="connected-record-lanes-title"
-      className={projectWorkspacePanelClassName}
-    >
-      <div
-        className={[
-          "flex flex-col gap-3 px-4 py-4 md:flex-row md:items-start md:justify-between sm:px-5",
-          projectWorkspacePanelHeaderClassName
-        ].join(" ")}
-      >
-        <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--text-secondary)]">
-            Connected records
-          </p>
-          <h2
-            id="connected-record-lanes-title"
-            className="mt-1 text-lg font-semibold text-[var(--text-primary)]"
-          >
-            Connected record lanes
-          </h2>
-          <p className="mt-1 max-w-[72ch] text-sm leading-6 text-[var(--text-secondary)]">
-            Each lane shows where this project sits in the lifecycle and sends
-            full editing back to the focused canonical workspace.
-          </p>
-        </div>
-        <span className="rounded-full border border-[var(--border-warm)] bg-[var(--highlight)] px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-[var(--text-secondary)]">
-          {lanes.length} lanes
-        </span>
-      </div>
-
-      <div className="grid gap-px bg-[var(--border-warm)] md:grid-cols-2 xl:grid-cols-3">
-        {lanes.map((lane) => (
-          <article
-            key={lane.title}
-            className="flex min-h-[176px] flex-col bg-white px-4 py-3 text-sm leading-6"
-          >
-            <div className="flex flex-wrap items-start justify-between gap-2">
-              <div className="min-w-0">
-                <h3 className="text-sm font-semibold text-[var(--text-primary)]">
-                  {lane.title}
-                </h3>
-                <p className="mt-1 text-[var(--text-secondary)]">
-                  {lane.keyFact}
-                </p>
-              </div>
-              {renderStatusBadge(lane.status)}
-            </div>
-            {lane.blocker ? (
-              <p className="mt-3 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-medium leading-5 text-amber-950">
-                {lane.blocker}
-              </p>
-            ) : null}
-            {lane.note ? (
-              <p className="mt-3 text-xs leading-5 text-[var(--text-secondary)]">
-                {lane.note}
-              </p>
-            ) : null}
-            <div className="mt-auto pt-4">
-              {lane.href && lane.actionLabel ? (
-                <Link
-                  href={lane.href}
-                  className={getWorkspaceActionLinkClassName("secondary")}
-                >
-                  {lane.actionLabel}
-                </Link>
-              ) : (
-                <span className="inline-flex h-9 items-center justify-center rounded-[4px] border border-[var(--border-warm)] bg-white px-3 text-sm font-medium text-[var(--text-secondary)]">
-                  No action yet
-                </span>
-              )}
-            </div>
-          </article>
-        ))}
-      </div>
-    </section>
-  );
-}
-
-function ProjectReadinessBlockersPanel({
-  readinessLabel,
-  readinessDetail,
-  readyToScheduleAt,
-  blockers
-}: {
-  readinessLabel: string;
-  readinessDetail: string;
-  readyToScheduleAt: string | null;
-  blockers: ReadinessBlockerItem[];
-}) {
-  const hasBlockers = blockers.length > 0;
-
-  return (
-    <section
-      id="project-readiness-blockers"
-      aria-labelledby="project-readiness-blockers-title"
-      className={projectWorkspacePanelClassName}
-    >
-      <div
-        className={[
-          "flex flex-col gap-3 px-4 py-4 md:flex-row md:items-start md:justify-between sm:px-5",
-          projectWorkspacePanelHeaderClassName
-        ].join(" ")}
-      >
-        <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--text-secondary)]">
-            Readiness + blockers
-          </p>
-          <h2
-            id="project-readiness-blockers-title"
-            className="mt-1 text-lg font-semibold text-[var(--text-primary)]"
-          >
-            {readinessLabel}
-          </h2>
-          <p className="mt-1 max-w-[72ch] text-sm leading-6 text-[var(--text-secondary)]">
-            {readinessDetail}
-          </p>
-        </div>
-        <span
-          className={[
-            "rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em]",
-            hasBlockers
-              ? "border-amber-200 bg-amber-50 text-amber-900"
-              : "border-emerald-200 bg-emerald-50 text-emerald-900"
-          ].join(" ")}
-        >
-          {hasBlockers
-            ? `${blockers.length} ${blockers.length === 1 ? "blocker" : "blockers"}`
-            : readyToScheduleAt
-              ? `Ready ${formatDateTime(readyToScheduleAt)}`
-              : "Clear"}
-        </span>
-      </div>
-
-      {hasBlockers ? (
-        <div className="grid gap-px bg-[var(--border-warm)] md:grid-cols-2">
-          {blockers.map((blocker) => (
-            <article
-              key={blocker.id}
-              className={[
-                "flex min-h-[156px] flex-col px-4 py-4 text-sm leading-6",
-                blocker.tone === "blocked"
-                  ? "bg-rose-50 text-rose-950"
-                  : "bg-amber-50 text-amber-950"
-              ].join(" ")}
-            >
-              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] opacity-75">
-                {blocker.tone === "blocked" ? "Blocked" : "Needs review"}
-              </p>
-              <h3 className="mt-2 text-sm font-semibold">{blocker.title}</h3>
-              <p className="mt-2 opacity-85">{blocker.detail}</p>
-              <div className="mt-auto pt-4">
-                {blocker.href && blocker.actionLabel ? (
-                  <Link
-                    href={blocker.href}
-                    className={getWorkspaceActionLinkClassName("secondary")}
-                  >
-                    {blocker.actionLabel}
-                  </Link>
-                ) : (
-                  <span className="inline-flex h-9 items-center justify-center rounded-[4px] border border-current/20 bg-white/70 px-3 text-sm font-medium">
-                    Resolve in project
-                  </span>
-                )}
-              </div>
-            </article>
-          ))}
-        </div>
-      ) : (
-        <div className="border-t border-[var(--border-warm)] bg-emerald-50 px-4 py-4 text-sm leading-6 text-emerald-950 sm:px-5">
-          Commercial, scheduling, billing, and closeout blockers are currently
-          clear in the Project Workspace. Scheduling still happens through the
-          canonical job and schedule chain.
-        </div>
-      )}
     </section>
   );
 }
@@ -2978,7 +2774,7 @@ function getProjectInvoiceSummary(invoice: ProjectInvoiceListItem) {
 }
 
 function getDrivingRecordKey(input: {
-  nextAction: NextAction;
+  nextAction: ProjectReadinessNextAction;
   approvedEstimate: ProjectEstimateListItem | null;
   latestEstimate: ProjectEstimateListItem | null;
   latestContract: ProjectContractListItem | null;
@@ -3029,7 +2825,7 @@ function getDrivingRecordKey(input: {
 }
 
 function getProjectWorkflowDriverLabel(input: {
-  nextAction: NextAction;
+  nextAction: ProjectReadinessNextAction;
   approvedEstimate: ProjectEstimateListItem | null;
   latestEstimate: ProjectEstimateListItem | null;
   latestContract: ProjectContractListItem | null;
@@ -3608,7 +3404,7 @@ function getNextAction(input: {
   completedJobWithoutInvoiceId: string | null;
   depositInvoice: ProjectInvoiceListItem | null;
   depositLatestPaymentEventType: string | null;
-}): NextAction {
+}): ProjectReadinessNextAction {
   const {
     projectId,
     customerId,
@@ -3973,7 +3769,7 @@ function getNextAction(input: {
 }
 
 function buildWorkspaceActions(input: {
-  primaryAction: NextAction;
+  primaryAction: ProjectReadinessNextAction;
   projectId: string;
   approvedEstimateId: string | null;
   projectJobsCount: number;
@@ -4129,8 +3925,8 @@ function buildReadinessBlockerItems(input: {
   hasProgressBillingInvoiceGap: boolean;
   openFieldBlocker: ProjectFieldNoteListItem | null;
 }) {
-  const items: ReadinessBlockerItem[] = [];
-  const pushUnique = (item: ReadinessBlockerItem) => {
+  const items: ProjectReadinessBlockerItem[] = [];
+  const pushUnique = (item: ProjectReadinessBlockerItem) => {
     if (items.some((existing) => existing.id === item.id)) {
       return;
     }
@@ -5539,7 +5335,7 @@ export default async function ProjectDetailPage({
           : "neutral"
     }
   ];
-  const connectedRecordLanes: ConnectedRecordLane[] = [
+  const connectedRecordLanes: ProjectConnectedRecordLane[] = [
     {
       title: "Sales / Estimate",
       status: latestEstimate
@@ -5970,66 +5766,32 @@ export default async function ProjectDetailPage({
           ) : null}
 
           <div className="mt-6 space-y-4">
-            {showNextBestActionGuidance ? (
-              <ActionBar
-                title={nextAction.title}
-                description={
-                  <div className="space-y-2">
-                    <p>{nextAction.description}</p>
-                    {nextAction.blockerCopy ? (
-                      <p className="font-medium text-amber-900">
-                        {nextAction.blockerCopy}
-                      </p>
-                    ) : null}
-                  </div>
-                }
-                statusLabel={
-                  readinessSnapshot?.isReadyToSchedule
-                    ? "Ready to schedule"
-                    : formatStatusLabel(readinessStatus)
-                }
-                statusTone={
-                  readinessSnapshot?.isReadyToSchedule
-                    ? "success"
-                    : workspaceBlockers.length > 0
-                      ? "warning"
-                      : "neutral"
-                }
-                nextActionLabel="Next step"
-                primaryAction={
-                  nextAction.primaryLabel && nextAction.primaryHref ? (
-                    <Link
-                      href={nextAction.primaryHref}
-                      className={getWorkspaceActionLinkClassName("primary")}
-                    >
-                      {nextAction.primaryLabel}
-                    </Link>
-                  ) : undefined
-                }
-                secondaryActions={
-                  nextAction.secondaryLabel && nextAction.secondaryHref ? (
-                    <Link
-                      href={nextAction.secondaryHref}
-                      className={getWorkspaceActionLinkClassName("secondary")}
-                    >
-                      {nextAction.secondaryLabel}
-                    </Link>
-                  ) : nextAction.secondaryLabel ? (
-                    <span className="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-medium text-slate-600">
-                      {nextAction.secondaryLabel}
-                    </span>
-                  ) : undefined
-                }
-                meta={`${project.customer?.name ?? "Unknown customer"} / ${formatLocation(
-                  [
-                    project.addressLine1,
-                    project.city,
-                    project.stateRegion,
-                    project.postalCode
-                  ]
-                )}`}
-              />
-            ) : null}
+            <ProjectReadinessNextActionPanel
+              showNextBestActionGuidance={showNextBestActionGuidance}
+              nextAction={nextAction}
+              readinessLabel={
+                readinessSnapshot?.isReadyToSchedule
+                  ? "Ready to schedule"
+                  : formatStatusLabel(readinessStatus)
+              }
+              readinessDetail={
+                readinessSnapshot?.isReadyToSchedule
+                  ? "Commercial handoff is complete. The next move should stay on the canonical job and schedule chain."
+                  : "Readiness blockers are linked to the canonical record that can resolve them where the current data makes that link available."
+              }
+              isReadyToSchedule={Boolean(readinessSnapshot?.isReadyToSchedule)}
+              readyToScheduleAt={readyToScheduleAt}
+              blockers={readinessBlockerItems}
+              hasActiveBlockers={workspaceBlockers.length > 0}
+              meta={`${project.customer?.name ?? "Unknown customer"} / ${formatLocation(
+                [
+                  project.addressLine1,
+                  project.city,
+                  project.stateRegion,
+                  project.postalCode
+                ]
+              )}`}
+            />
 
             {showReadinessGuidancePanel ? (
               <WorkflowBar title="Project workflow" steps={workflowSteps} />
@@ -6061,21 +5823,6 @@ export default async function ProjectDetailPage({
                   : "Clear the current gate before operations moves forward."
               }
               summaryItems={commandSummaryItems}
-            />
-
-            <ProjectReadinessBlockersPanel
-              readinessLabel={
-                readinessSnapshot?.isReadyToSchedule
-                  ? "Ready to schedule"
-                  : formatStatusLabel(readinessStatus)
-              }
-              readinessDetail={
-                readinessSnapshot?.isReadyToSchedule
-                  ? "Commercial handoff is complete. The next move should stay on the canonical job and schedule chain."
-                  : "Readiness blockers are linked to the canonical record that can resolve them where the current data makes that link available."
-              }
-              readyToScheduleAt={readyToScheduleAt}
-              blockers={readinessBlockerItems}
             />
 
             <ProjectOperationalIntelligenceSection

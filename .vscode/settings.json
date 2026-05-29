@@ -1,0 +1,13 @@
+{
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.formatOnSave": false,
+  "eslint.workingDirectories": [
+    {
+      "mode": "auto"
+    }
+  ],
+  "files.eol": "\n",
+  "prettier.requireConfig": true,
+  "terminal.integrated.defaultProfile.windows": "PowerShell",
+  "typescript.tsdk": "node_modules/typescript/lib"
+}
