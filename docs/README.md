@@ -32,6 +32,56 @@ Use these first for most implementation or documentation tasks:
 - [docs/local-auth-qa-recovery.md](C:/FloorConnector/docs/local-auth-qa-recovery.md):
   protected-route browser QA recovery
 
+## Local Worktree Dev Tools
+
+`C:\FloorConnector` is the canonical local development source for ignored
+tooling state. Active stream worktrees under `C:\FC-worktrees` should link back
+to the main repo for `.env.local`, `node_modules`, `.turbo` when present, and
+`playwright\.auth` when present. Do not copy `.env.local` or duplicate
+`node_modules` per worktree.
+
+Use:
+
+```powershell
+pnpm devtools:link
+```
+
+to verify or create missing links. If a worktree already has an incorrect
+ignored local tool directory, use the explicit repair mode:
+
+```powershell
+pnpm devtools:link:fix
+```
+
+The script intentionally does not share build outputs such as `.next`, `dist`,
+`coverage`, or `test-results`, and it does not replace existing real
+`.env.local` files.
+
+Use these shared worktree platform commands:
+
+```powershell
+pnpm worktree:doctor
+pnpm worktree:status
+pnpm worktree:create <name>
+pnpm auth:refresh
+```
+
+`pnpm worktree:doctor` verifies Node, pnpm, Corepack, shared links, developer
+tools, and branch health from the current worktree. `pnpm worktree:status`
+fetches origin and summarizes all active worktrees. `pnpm worktree:create
+<name>` creates `stream/<name>` at `C:\FC-worktrees\<name>`, links shared
+tools, and runs the doctor. `pnpm auth:refresh` reruns the shared Playwright
+auth setup and relinks the resulting auth state.
+
+Use [active-worktrees.md](C:/FloorConnector/active-worktrees.md) as the local
+registry for active parallel streams. Use
+[.codex/worktree-rules.md](C:/FloorConnector/.codex/worktree-rules.md) as the
+shared Codex operating standard for worktree sessions.
+
+Node is standardized through `package.json` `engines.node`, `packageManager`,
+and `.node-version`. Use Node 20+ and Corepack so every worktree resolves the
+same pnpm version.
+
 ## Required Active Docs
 
 For most future work, treat this as the required active documentation set:

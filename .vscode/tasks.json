@@ -1,0 +1,41 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Worktree: Doctor",
+      "type": "shell",
+      "command": "pnpm worktree:doctor",
+      "problemMatcher": []
+    },
+    {
+      "label": "Worktree: Status",
+      "type": "shell",
+      "command": "pnpm worktree:status",
+      "problemMatcher": []
+    },
+    {
+      "label": "Dev Tools: Link",
+      "type": "shell",
+      "command": "pnpm devtools:link",
+      "problemMatcher": []
+    },
+    {
+      "label": "Format: Check",
+      "type": "shell",
+      "command": "pnpm format",
+      "problemMatcher": []
+    },
+    {
+      "label": "Typecheck",
+      "type": "shell",
+      "command": "pnpm typecheck",
+      "problemMatcher": []
+    },
+    {
+      "label": "Lint",
+      "type": "shell",
+      "command": "pnpm lint",
+      "problemMatcher": []
+    }
+  ]
+}
