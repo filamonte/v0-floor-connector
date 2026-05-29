@@ -10,6 +10,14 @@ wave implemented truth.
 For implemented status, use
 [docs/current-state.md](C:/FloorConnector/docs/current-state.md).
 
+For active stream status, use
+[active-worktrees.md](C:/FloorConnector/active-worktrees.md) and
+[.codex/active-stream-plan.md](C:/FloorConnector/.codex/active-stream-plan.md).
+The current production-acceleration model has exactly six active streams:
+`architecture-coordination`, `verification`, `project-workspace`, `scheduling`,
+`communications`, and `financials-reporting`. Field/Mobile and Portal remain
+planning/downstream wave docs until the active registry says otherwise.
+
 ## Operational Capability Waves v1
 
 Use

@@ -91,6 +91,8 @@ shared Codex operating standard for worktree sessions. Use
 for branch, merge, conflict, and daily operating rhythm. Use
 [.codex/active-stream-plan.md](C:/FloorConnector/.codex/active-stream-plan.md)
 for the current six-stream production-acceleration model and next prompt order.
+Use [docs/architecture-coordination-drift-cleanup.md](C:/FloorConnector/docs/architecture-coordination-drift-cleanup.md)
+for the May 29, 2026 registry-drift cleanup checkpoint and merge-risk guardrail.
 
 Node is standardized through `package.json` `engines.node`, `packageManager`,
 and `.node-version`. Use Node 20+ and Corepack so every worktree resolves the
@@ -203,6 +205,9 @@ High-signal operating-core docs:
 - [docs/architecture-coordination-health-report.md](C:/FloorConnector/docs/architecture-coordination-health-report.md):
   architecture coordination audit for active production-acceleration streams,
   canonical workflow health, drift findings, and merge-readiness backlog
+- [docs/architecture-coordination-drift-cleanup.md](C:/FloorConnector/docs/architecture-coordination-drift-cleanup.md):
+  docs/governance cleanup checkpoint that pins the six active streams,
+  paused/legacy stream handling, and registry/tooling merge-risk guardrails
 - [docs/design/project-workspace-capability-wave-v1.md](C:/FloorConnector/docs/design/project-workspace-capability-wave-v1.md):
   planning-only Project Workspace Capability Wave v1 maturity plan
 - [docs/operating-core-validation-checklist.md](C:/FloorConnector/docs/operating-core-validation-checklist.md):

@@ -41,6 +41,13 @@ Expectations:
 - The current production-acceleration model has exactly six active streams:
   `architecture-coordination`, `verification`, `project-workspace`,
   `scheduling`, `communications`, and `financials-reporting`.
+- Treat this registry and `.codex/active-stream-plan.md` as the canonical
+  active-stream truth. Older capability-wave inventories are reference topology
+  only when they name paused or legacy streams.
+- Architecture Coordination owns registry/tooling changes. Feature streams
+  should not modify or delete active-stream registry files, prompt templates,
+  worktree scripts, or package scripts unless that governance work is
+  explicitly assigned.
 
 | Worktree                    | Branch                             | Purpose                                       | Owner       | Status                 | Created    | Last Updated | Notes                                                     | Current Wave                               | Merge Priority |
 | --------------------------- | ---------------------------------- | --------------------------------------------- | ----------- | ---------------------- | ---------- | ------------ | --------------------------------------------------------- | ------------------------------------------ | -------------- |

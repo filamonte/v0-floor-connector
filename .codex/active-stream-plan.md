@@ -7,6 +7,11 @@ This plan defines the current six-stream production-acceleration model for
 FloorConnector. It is coordination guidance only. It does not implement product
 features and does not replace `docs/current-state.md` as implemented truth.
 
+This file and `active-worktrees.md` are the canonical active-stream registry for
+the current production-acceleration cycle. Broader stream inventories in
+planning docs are reference topology only when they conflict with this six-stream
+model.
+
 ## Active Streams
 
 ### architecture-coordination
@@ -90,10 +95,35 @@ must lead portal invoice/payment UX.
   customer-safe status and message boundaries.
 - `field-mobile`: paused until Project Workspace and Scheduling waves clarify
   execution handoff and crew context.
+- `financials`: legacy/superseded by `financials-reporting`; preserve useful
+  work only through explicit reconciliation.
+- `qa-verification`: legacy/superseded by `verification`; preserve useful work
+  only through explicit reconciliation.
+- `project-readiness-panel`: legacy/review-needed; reconcile into
+  `project-workspace` or retire deliberately.
 - workflow automation: paused beyond deterministic/read-only cue reliability.
 - universal capture: paused beyond context hardening.
 - AI/provider automation: paused until communications, scheduling, financials,
   and approval queues are production-grade.
+
+## Governance File Ownership
+
+Architecture Coordination owns changes to the active stream registry,
+coordination prompt templates, worktree scripts, and related package scripts.
+Feature streams should not modify or delete these files as incidental branch
+drift:
+
+- `active-worktrees.md`
+- `active-waves.md`
+- `.codex/active-stream-plan.md`
+- `.codex/prompt-templates/**`
+- `scripts/codex-streams.ps1`
+- `scripts/codex-next.ps1`
+- worktree platform scripts
+- package scripts for `codex:*`, `worktree:*`, and shared devtools
+
+If a feature stream needs one of these changes, it should call that out as an
+Architecture Coordination dependency before editing.
 
 ## Daily Cadence
 
