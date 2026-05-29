@@ -127,6 +127,20 @@ This is a presentation/read-model refinement only. It does not add a route,
 schema, provider send, webhook behavior, notification mutation, portal-owned
 copy, retry action, or standalone delivery center.
 
+## Communications Delivery Proof V2
+
+`/communications` now groups the same read-only proof context by canonical
+source record where existing data safely identifies one. The record grouping
+shows compact source-record proof rows with source links, communications review
+links, latest proof state, proof counts, proof source and boundary labels,
+customer/internal labels, and deterministic review-needed ordering for failed,
+bounced, or revoked evidence.
+
+This is still a read-model and presentation slice only. It does not add source
+record support beyond existing evidence, create send or resend behavior, change
+provider adapters or webhooks, mutate notification events, create portal-owned
+state, or add a standalone tracking system.
+
 ## Behavior Preserved
 
 This slice preserves:

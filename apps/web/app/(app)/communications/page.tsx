@@ -788,6 +788,105 @@ export default async function CommunicationsPage({
                   </span>
                 </div>
               </div>
+              <div className="mt-3">
+                <div className="flex flex-wrap items-end justify-between gap-3">
+                  <div>
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#666666]">
+                      Delivery Proof by Record
+                    </p>
+                    <p className="mt-1 text-xs leading-5 text-slate-500">
+                      Grouped read-only evidence by canonical source record.
+                    </p>
+                  </div>
+                  <span className="text-xs font-medium text-slate-500">
+                    {workspaceSummary.deliveryProofRecordGroups.length} record
+                    {workspaceSummary.deliveryProofRecordGroups.length === 1
+                      ? ""
+                      : "s"}
+                  </span>
+                </div>
+                {workspaceSummary.deliveryProofRecordGroups.length > 0 ? (
+                  <div className="mt-3 space-y-2">
+                    {workspaceSummary.deliveryProofRecordGroups
+                      .slice(0, 5)
+                      .map((group) => (
+                        <article
+                          key={group.key}
+                          className="rounded-[4px] border border-[#e5e5e5] bg-white px-3 py-3"
+                        >
+                          <div className="flex flex-wrap items-start justify-between gap-3">
+                            <div className="min-w-0">
+                              <Link
+                                href={group.sourceHref}
+                                className="text-sm font-semibold text-slate-950 transition hover:text-brand-700"
+                              >
+                                {group.sourceLabel}
+                              </Link>
+                              <p className="mt-1 text-sm leading-6 text-slate-500">
+                                {group.latestDescription}
+                              </p>
+                            </div>
+                            <div className="shrink-0 text-left sm:text-right">
+                              <p className="text-xs font-semibold text-slate-900">
+                                {group.proofCount} proof{" "}
+                                {group.proofCount === 1 ? "event" : "events"}
+                              </p>
+                              <p className="mt-1 text-xs text-slate-500">
+                                {formatDateTime(group.latestEventAt)}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="mt-2 flex flex-wrap gap-2">
+                            <span
+                              className={[
+                                "inline-flex rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em]",
+                                group.needsReview
+                                  ? "border-rose-200 bg-rose-50 text-rose-700"
+                                  : "border-[#d6e6d9] bg-[#f4fbf5] text-[#2f6b3b]"
+                              ].join(" ")}
+                            >
+                              {group.needsReview
+                                ? "Needs review"
+                                : group.latestProofStateLabel}
+                            </span>
+                            {[
+                              ...group.proofSourceLabels,
+                              ...group.proofBoundaryLabels,
+                              ...group.audienceLabels
+                            ].map((label) => (
+                              <span
+                                key={`${group.key}:${label}`}
+                                className="inline-flex rounded-full border border-[#d6d6d6] bg-slate-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-600"
+                              >
+                                {label}
+                              </span>
+                            ))}
+                          </div>
+                          <div className="mt-3 flex flex-wrap gap-2">
+                            <Link
+                              href={group.sourceHref}
+                              className="inline-flex items-center rounded-[4px] border border-[#d6d6d6] bg-white px-2.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#3f3f3f] transition hover:bg-slate-50"
+                            >
+                              Open source record
+                            </Link>
+                            <Link
+                              href={group.communicationsHref}
+                              className="inline-flex items-center rounded-[4px] px-2.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500 transition hover:text-slate-900"
+                            >
+                              Review communication activity
+                            </Link>
+                          </div>
+                        </article>
+                      ))}
+                  </div>
+                ) : (
+                  <p className="mt-3 rounded-[4px] border border-dashed border-[#d6d6d6] bg-white px-3 py-3 text-sm leading-6 text-slate-500">
+                    No delivery proof has been recorded yet. That does not mean
+                    a send failed; it means no proof evidence exists in the
+                    current communications read model.
+                  </p>
+                )}
+              </div>
               {workspaceSummary.recentContextEvents.length > 0 ? (
                 <div className="mt-3 space-y-2">
                   {workspaceSummary.recentContextEvents.map((event) => (

@@ -32,6 +32,24 @@ export type CommunicationWorkspaceAttentionItem = {
   tone: "warning" | "critical";
 };
 
+export type CommunicationDeliveryProofRecordGroup = {
+  key: string;
+  sourceType: ContractorCommunicationContextEvent["sourceRecord"]["type"];
+  sourceId: string;
+  sourceLabel: string;
+  sourceHref: string;
+  communicationsHref: string;
+  proofCount: number;
+  reviewCount: number;
+  needsReview: boolean;
+  latestEventAt: string;
+  latestProofStateLabel: string;
+  latestDescription: string;
+  proofSourceLabels: string[];
+  proofBoundaryLabels: string[];
+  audienceLabels: string[];
+};
+
 export type CommunicationWorkspaceSummary = {
   primaryStatus: string;
   primaryDetail: string;
@@ -56,6 +74,7 @@ export type CommunicationWorkspaceSummary = {
   lanes: CommunicationWorkspaceLane[];
   attentionItems: CommunicationWorkspaceAttentionItem[];
   recentContextEvents: ContractorCommunicationContextEvent[];
+  deliveryProofRecordGroups: CommunicationDeliveryProofRecordGroup[];
 };
 
 const STALE_OPEN_THREAD_DAYS = 7;
@@ -276,6 +295,93 @@ function buildEventAttentionItems(
     }));
 }
 
+function unique(values: string[]) {
+  return [...new Set(values.filter((value) => value.trim().length > 0))];
+}
+
+function formatPlural(count: number, singular: string) {
+  return `${count} ${singular}${count === 1 ? "" : "s"}`;
+}
+
+function getDeliveryProofCommunicationHref(
+  sourceType: CommunicationDeliveryProofRecordGroup["sourceType"]
+) {
+  if (sourceType === "warranty_document") {
+    return "/communications";
+  }
+
+  return `/communications?source=${sourceType}`;
+}
+
+export function deriveDeliveryProofRecordGroups(
+  events: ReadonlyArray<ContractorCommunicationContextEvent>
+): CommunicationDeliveryProofRecordGroup[] {
+  const eventsByRecordKey = new Map<
+    string,
+    ContractorCommunicationContextEvent[]
+  >();
+
+  for (const event of events) {
+    const key = `${event.sourceRecord.type}:${event.sourceRecord.id}`;
+    eventsByRecordKey.set(key, [...(eventsByRecordKey.get(key) ?? []), event]);
+  }
+
+  return [...eventsByRecordKey.entries()]
+    .map(([key, groupEvents]) => {
+      const sortedEvents = [...groupEvents].sort((left, right) =>
+        right.occurredAt.localeCompare(left.occurredAt)
+      );
+      const latestEvent = sortedEvents[0];
+      const reviewCount = sortedEvents.filter(
+        (event) => event.needsReview
+      ).length;
+
+      return {
+        key,
+        sourceType: latestEvent.sourceRecord.type,
+        sourceId: latestEvent.sourceRecord.id,
+        sourceLabel: latestEvent.sourceRecord.label,
+        sourceHref: latestEvent.sourceRecord.href,
+        communicationsHref: getDeliveryProofCommunicationHref(
+          latestEvent.sourceRecord.type
+        ),
+        proofCount: sortedEvents.length,
+        reviewCount,
+        needsReview: reviewCount > 0,
+        latestEventAt: latestEvent.occurredAt,
+        latestProofStateLabel: latestEvent.proofStateLabel,
+        latestDescription:
+          reviewCount > 0
+            ? `${latestEvent.sourceRecord.label} has ${formatPlural(
+                reviewCount,
+                "proof item"
+              )} that need review.`
+            : `${latestEvent.proofStateLabel} across ${formatPlural(
+                sortedEvents.length,
+                "proof event"
+              )}.`,
+        proofSourceLabels: unique(
+          sortedEvents.map((event) => event.proofSourceLabel)
+        ),
+        proofBoundaryLabels: unique(
+          sortedEvents.map((event) => event.proofBoundaryLabel)
+        ),
+        audienceLabels: unique(
+          sortedEvents.map((event) =>
+            event.audience === "customer" ? "Customer-facing" : "Internal"
+          )
+        )
+      } satisfies CommunicationDeliveryProofRecordGroup;
+    })
+    .sort((left, right) => {
+      if (left.needsReview !== right.needsReview) {
+        return left.needsReview ? -1 : 1;
+      }
+
+      return right.latestEventAt.localeCompare(left.latestEventAt);
+    });
+}
+
 export function deriveCommunicationWorkspaceSummary(input: {
   threads: ContractorCommunicationThreadListItem[];
   threadSummary: ContractorCommunicationThreadSummary;
@@ -314,6 +420,9 @@ export function deriveCommunicationWorkspaceSummary(input: {
   const deliveryProofReviewCount = input.contextEvents.filter(
     (event) => event.needsReview
   ).length;
+  const deliveryProofRecordGroups = deriveDeliveryProofRecordGroups(
+    input.contextEvents
+  );
   const latestDeliveryProof =
     [...input.contextEvents].sort((left, right) =>
       right.occurredAt.localeCompare(left.occurredAt)
@@ -444,6 +553,7 @@ export function deriveCommunicationWorkspaceSummary(input: {
     ]),
     lanes,
     attentionItems,
-    recentContextEvents: input.contextEvents.slice(0, 6)
+    recentContextEvents: input.contextEvents.slice(0, 6),
+    deliveryProofRecordGroups
   };
 }

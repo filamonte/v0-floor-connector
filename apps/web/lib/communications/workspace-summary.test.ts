@@ -1,7 +1,10 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { deriveCommunicationWorkspaceSummary } from "./workspace-summary";
+import {
+  deriveCommunicationWorkspaceSummary,
+  deriveDeliveryProofRecordGroups
+} from "./workspace-summary";
 import type {
   ContractorCommunicationContextEvent,
   ContractorCommunicationThreadListItem,
@@ -79,6 +82,12 @@ function buildEvent(
     kind: overrides.kind ?? "shared_evidence",
     sourceType: overrides.sourceType ?? "shared_evidence",
     sourceId: overrides.sourceId ?? "grant-1",
+    sourceRecord: overrides.sourceRecord ?? {
+      type: "project",
+      id: "project-1",
+      label: "Project - Main floor",
+      href: "/projects/project-1#project-evidence"
+    },
     eventType: overrides.eventType ?? "acknowledged",
     title: overrides.title ?? "Shared evidence acknowledged",
     description:
@@ -195,6 +204,8 @@ void test("communication workspace derives follow-up attention without creating 
   assert.match(summary.deliveryProofDetail, /1 delivery proof item/);
   assert.equal(summary.deliveryProofReviewCount, 1);
   assert.equal(summary.latestDeliveryProof?.id, "failed-send");
+  assert.equal(summary.deliveryProofRecordGroups.length, 1);
+  assert.equal(summary.deliveryProofRecordGroups[0]?.needsReview, true);
 });
 
 void test("communication workspace treats shared evidence as closeout context", () => {
@@ -212,6 +223,12 @@ void test("communication workspace treats shared evidence as closeout context", 
         id: "warranty-send",
         kind: "document_delivery",
         sourceType: "warranty_document",
+        sourceRecord: {
+          type: "warranty_document",
+          id: "warranty-1",
+          label: "Warranty document",
+          href: "/warranty-documents/warranty-1"
+        },
         eventType: "sent",
         tone: "neutral"
       })
@@ -227,6 +244,7 @@ void test("communication workspace treats shared evidence as closeout context", 
   assert.match(summary.customerBoundaryDetail, /portal-owned copies/);
   assert.equal(summary.deliveryProofReviewCount, 0);
   assert.match(summary.deliveryProofDetail, /Customer activity/);
+  assert.equal(summary.deliveryProofRecordGroups.length, 2);
 });
 
 void test("communication workspace keeps missing delivery proof read-only", () => {
@@ -241,6 +259,7 @@ void test("communication workspace keeps missing delivery proof read-only", () =
   assert.equal(summary.deliveryProofLabel, "No proof events yet");
   assert.equal(summary.deliveryProofReviewCount, 0);
   assert.equal(summary.latestDeliveryProof, null);
+  assert.equal(summary.deliveryProofRecordGroups.length, 0);
   assert.match(summary.deliveryProofDetail, /No delivery proof yet/);
 });
 
@@ -276,4 +295,129 @@ void test("communication workspace preserves provider-derived delivery proof lab
     "Read-only delivery proof"
   );
   assert.match(summary.deliveryProofDetail, /Delivery proof available/);
+});
+
+void test("delivery proof grouping keeps events under the canonical source record", () => {
+  const groups = deriveDeliveryProofRecordGroups([
+    buildEvent({
+      id: "invoice-sent",
+      kind: "document_delivery",
+      sourceType: "invoice",
+      sourceId: "invoice-1",
+      sourceRecord: {
+        type: "invoice",
+        id: "invoice-1",
+        label: "Invoice I-1001",
+        href: "/invoices/invoice-1"
+      },
+      eventType: "sent",
+      title: "Invoice I-1001 sent",
+      proofStateLabel: "Delivery proof available",
+      proofBoundaryLabel: "Read-only delivery proof",
+      proofSourceLabel: "Provider-derived",
+      occurredAt: "2026-05-27T15:00:00.000Z",
+      tone: "neutral"
+    }),
+    buildEvent({
+      id: "invoice-opened",
+      kind: "document_delivery",
+      sourceType: "invoice",
+      sourceId: "invoice-1",
+      sourceRecord: {
+        type: "invoice",
+        id: "invoice-1",
+        label: "Invoice I-1001",
+        href: "/invoices/invoice-1"
+      },
+      eventType: "opened",
+      title: "Invoice I-1001 opened",
+      proofStateLabel: "Customer activity",
+      proofBoundaryLabel: "Read-only delivery proof",
+      proofSourceLabel: "Provider-derived",
+      occurredAt: "2026-05-27T16:00:00.000Z",
+      tone: "positive"
+    })
+  ]);
+
+  assert.equal(groups.length, 1);
+  assert.equal(groups[0]?.sourceType, "invoice");
+  assert.equal(groups[0]?.sourceId, "invoice-1");
+  assert.equal(groups[0]?.sourceHref, "/invoices/invoice-1");
+  assert.equal(groups[0]?.communicationsHref, "/communications?source=invoice");
+  assert.equal(groups[0]?.proofCount, 2);
+  assert.equal(groups[0]?.latestProofStateLabel, "Customer activity");
+  assert.deepEqual(groups[0]?.proofSourceLabels, ["Provider-derived"]);
+});
+
+void test("delivery proof grouping sorts review-needed records first", () => {
+  const groups = deriveDeliveryProofRecordGroups([
+    buildEvent({
+      id: "contract-viewed",
+      kind: "document_delivery",
+      sourceType: "contract",
+      sourceId: "contract-1",
+      sourceRecord: {
+        type: "contract",
+        id: "contract-1",
+        label: "Contract C-1001",
+        href: "/contracts/contract-1"
+      },
+      eventType: "viewed",
+      proofStateLabel: "Customer activity",
+      proofBoundaryLabel: "Read-only delivery proof",
+      proofSourceLabel: "Customer-facing",
+      occurredAt: "2026-05-27T18:00:00.000Z",
+      tone: "positive"
+    }),
+    buildEvent({
+      id: "estimate-bounced",
+      kind: "document_delivery",
+      sourceType: "estimate",
+      sourceId: "estimate-1",
+      sourceRecord: {
+        type: "estimate",
+        id: "estimate-1",
+        label: "Estimate E-1001",
+        href: "/estimates/estimate-1"
+      },
+      eventType: "bounced",
+      proofStateLabel: "Needs review",
+      proofBoundaryLabel: "Read-only delivery proof",
+      proofSourceLabel: "Provider-derived",
+      needsReview: true,
+      occurredAt: "2026-05-27T17:00:00.000Z",
+      tone: "critical"
+    })
+  ]);
+
+  assert.equal(groups[0]?.sourceLabel, "Estimate E-1001");
+  assert.equal(groups[0]?.needsReview, true);
+  assert.equal(groups[0]?.reviewCount, 1);
+  assert.match(groups[0]?.latestDescription ?? "", /need review/);
+});
+
+void test("delivery proof grouping keeps warranty documents out of unsupported source filters", () => {
+  const groups = deriveDeliveryProofRecordGroups([
+    buildEvent({
+      id: "warranty-recorded",
+      kind: "document_delivery",
+      sourceType: "warranty_document",
+      sourceId: "warranty-1",
+      sourceRecord: {
+        type: "warranty_document",
+        id: "warranty-1",
+        label: "Warranty document",
+        href: "/warranty-documents/warranty-1"
+      },
+      eventType: "delivery_recorded",
+      proofStateLabel: "Delivery proof available",
+      proofBoundaryLabel: "Read-only delivery proof",
+      proofSourceLabel: "Internal evidence",
+      occurredAt: "2026-05-27T17:00:00.000Z",
+      tone: "neutral"
+    })
+  ]);
+
+  assert.equal(groups[0]?.sourceHref, "/warranty-documents/warranty-1");
+  assert.equal(groups[0]?.communicationsHref, "/communications");
 });
