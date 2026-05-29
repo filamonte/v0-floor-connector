@@ -200,6 +200,9 @@ High-signal operating-core docs:
 - [docs/design/operational-capability-waves-v1-coordination.md](C:/FloorConnector/docs/design/operational-capability-waves-v1-coordination.md):
   planning-only coordination index for Project Workspace, Scheduling,
   Field/Mobile, and Portal Capability Wave v1 sequencing and shared hotspots
+- [docs/architecture-coordination-health-report.md](C:/FloorConnector/docs/architecture-coordination-health-report.md):
+  architecture coordination audit for active production-acceleration streams,
+  canonical workflow health, drift findings, and merge-readiness backlog
 - [docs/design/project-workspace-capability-wave-v1.md](C:/FloorConnector/docs/design/project-workspace-capability-wave-v1.md):
   planning-only Project Workspace Capability Wave v1 maturity plan
 - [docs/operating-core-validation-checklist.md](C:/FloorConnector/docs/operating-core-validation-checklist.md):
