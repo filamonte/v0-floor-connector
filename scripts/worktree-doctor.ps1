@@ -213,6 +213,7 @@ if ($corepack.Code -eq 0) { Add-Result "PASS" "Corepack" $corepack.Output } else
 
 foreach ($spec in @(
   @{ RelativePath = "node_modules"; Kind = "Directory" },
+  @{ RelativePath = "apps\web\node_modules"; Kind = "Directory" },
   @{ RelativePath = ".env.local"; Kind = "File" },
   @{ RelativePath = ".turbo"; Kind = "Directory" },
   @{ RelativePath = "playwright\.auth"; Kind = "Directory" }

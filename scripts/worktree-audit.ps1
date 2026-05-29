@@ -95,8 +95,11 @@ foreach ($requiredPath in @(
   "scripts\worktree-reconcile.ps1",
   "scripts\finish-worktree.ps1",
   "scripts\worktree-audit.ps1",
+  "scripts\codex-streams.ps1",
+  "scripts\codex-next.ps1",
   ".codex\worktree-rules.md",
   ".codex\parallel-development.md",
+  ".codex\active-stream-plan.md",
   ".vscode\settings.json",
   ".vscode\extensions.json",
   ".vscode\tasks.json"
