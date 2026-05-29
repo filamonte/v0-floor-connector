@@ -62,7 +62,10 @@ Use these shared worktree platform commands:
 ```powershell
 pnpm worktree:doctor
 pnpm worktree:status
+pnpm worktree:reconcile
+pnpm worktree:audit
 pnpm worktree:create <name>
+pnpm worktree:finish <name>
 pnpm auth:refresh
 ```
 
@@ -70,17 +73,31 @@ pnpm auth:refresh
 tools, and branch health from the current worktree. `pnpm worktree:status`
 fetches origin and summarizes all active worktrees. `pnpm worktree:create
 <name>` creates `stream/<name>` at `C:\FC-worktrees\<name>`, links shared
-tools, and runs the doctor. `pnpm auth:refresh` reruns the shared Playwright
-auth setup and relinks the resulting auth state.
+tools, and runs the doctor. `pnpm worktree:reconcile` is the standard morning
+health check for upstream state, dirty worktrees, missing upstreams, and
+branches behind main. `pnpm worktree:audit` verifies the registry and platform
+files. `pnpm worktree:finish <name>` safely retires a completed worktree with
+interactive confirmation. `pnpm auth:refresh` reruns the shared Playwright auth
+setup and relinks the resulting auth state.
 
 Use [active-worktrees.md](C:/FloorConnector/active-worktrees.md) as the local
 registry for active parallel streams. Use
 [.codex/worktree-rules.md](C:/FloorConnector/.codex/worktree-rules.md) as the
-shared Codex operating standard for worktree sessions.
+shared Codex operating standard for worktree sessions. Use
+[.codex/parallel-development.md](C:/FloorConnector/.codex/parallel-development.md)
+for branch, merge, conflict, and daily operating rhythm.
 
 Node is standardized through `package.json` `engines.node`, `packageManager`,
 and `.node-version`. Use Node 20+ and Corepack so every worktree resolves the
 same pnpm version.
+
+Daily worktree rhythm:
+
+- Morning: `pnpm worktree:reconcile`
+- Before work: `pnpm worktree:doctor`
+- After work: `git status --short --branch`, then commit completed slices
+- Before merge: `pnpm worktree:doctor` and `pnpm worktree:reconcile`
+- After merge: `pnpm worktree:finish <name>` when the stream is retired
 
 ## Required Active Docs
 
