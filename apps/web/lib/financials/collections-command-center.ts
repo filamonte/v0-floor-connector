@@ -28,11 +28,36 @@ export type CollectionsLatestPaymentSignal = {
   historyCount: number;
 };
 
+export type CollectionsDepositStatus =
+  | "open"
+  | "in_progress"
+  | "settled"
+  | "void";
+
+export type CollectionsDepositContinuity = {
+  id: string;
+  invoiceId: string;
+  invoiceReference: string;
+  invoiceHref: string;
+  customerName: string;
+  customerHref: string | null;
+  projectName: string;
+  projectHref: string | null;
+  balanceDueAmount: string;
+  status: CollectionsDepositStatus;
+  invoiceStatus: string;
+  latestPaymentSignal: CollectionsLatestPaymentSignal | null;
+  reason: string;
+  tone: CollectionsCommandCenterTone;
+};
+
 export type CollectionsPriorityItem = {
   id: string;
   invoiceId: string;
   invoiceReference: string;
   invoiceHref: string;
+  invoiceStatus: string;
+  workflowRole: string;
   customerId: string | null;
   customerName: string;
   customerHref: string | null;
@@ -86,9 +111,12 @@ export type CollectionsPaymentTrailAttention = {
   invoiceReference: string;
   invoiceHref: string;
   customerName: string;
+  customerHref: string | null;
   projectName: string;
+  projectHref: string | null;
   amount: string | null;
   occurredAt: string;
+  historyCount: number;
   providerLabel: string;
   reason: string;
   nextAction: string;
@@ -130,6 +158,7 @@ export type CollectionsCommandCenter = {
   summaryCards: CollectionsCommandCenterSummaryCard[];
   continuitySnapshot: CollectionsContinuitySnapshot;
   priorityItems: CollectionsPriorityItem[];
+  depositContinuity: CollectionsDepositContinuity[];
   customerContinuity: CollectionsCustomerContinuity[];
   paymentTrailAttention: CollectionsPaymentTrailAttention[];
 };
@@ -216,6 +245,8 @@ function paymentEventLabel(
       return "Payment requested";
     case "checkout_started":
       return "Checkout started";
+    case "payment_succeeded":
+      return "Payment succeeded";
     case "payment_failed":
       return "Payment failed";
     case "payment_voided":
@@ -580,6 +611,8 @@ function buildPriorityItems(input: {
         invoiceId: invoice.id,
         invoiceReference: invoice.referenceNumber,
         invoiceHref: `/invoices/${invoice.id}`,
+        invoiceStatus: invoice.status,
+        workflowRole: invoice.workflowRole,
         customerId,
         customerName,
         customerHref: customerId ? `/customers/${customerId}` : null,
@@ -693,6 +726,8 @@ function eventKind(
       return "checkout_pending";
     case "payment_requested":
       return "payment_requested";
+    case "payment_succeeded":
+      return "recent_success";
     case "provider_sync":
       return null;
   }
@@ -742,6 +777,15 @@ function buildPaymentTrailAttention(input: {
   const invoicesById = new Map(
     input.invoices.map((invoice) => [invoice.id, invoice])
   );
+  const historyCountByInvoiceId = new Map<string, number>();
+
+  for (const event of input.paymentEvents) {
+    historyCountByInvoiceId.set(
+      event.invoiceId,
+      (historyCountByInvoiceId.get(event.invoiceId) ?? 0) + 1
+    );
+  }
+
   const eventAttention = input.paymentEvents.flatMap(
     (event): CollectionsPaymentTrailAttention[] => {
       const kind = eventKind(event.eventType);
@@ -767,14 +811,28 @@ function buildPaymentTrailAttention(input: {
             event.customer?.name ??
             invoice?.customer?.name ??
             "Unknown customer",
+          customerHref:
+            (invoice?.customerId ?? invoice?.customer?.id)
+              ? `/customers/${invoice?.customerId ?? invoice?.customer?.id}`
+              : null,
           projectName:
             event.project?.name ?? invoice?.project?.name ?? "No project",
+          projectHref:
+            (invoice?.projectId ?? invoice?.project?.id)
+              ? `/projects/${invoice?.projectId ?? invoice?.project?.id}`
+              : null,
           amount: null,
           occurredAt: event.occurredAt,
+          historyCount: historyCountByInvoiceId.get(event.invoiceId) ?? 1,
           providerLabel: event.gatewayProvider ?? "Payment Trail",
           reason: paymentEventReason(kind, invoiceReference),
           nextAction: paymentEventNextAction(kind),
-          tone: kind === "failed" || kind === "voided" ? "warning" : "attention"
+          tone:
+            kind === "failed" || kind === "voided"
+              ? "warning"
+              : kind === "recent_success"
+                ? "neutral"
+                : "attention"
         }
       ];
     }
@@ -809,10 +867,21 @@ function buildPaymentTrailAttention(input: {
           payment.customer?.name ??
           invoice?.customer?.name ??
           "Unknown customer",
+        customerHref:
+          (invoice?.customerId ?? invoice?.customer?.id)
+            ? `/customers/${invoice?.customerId ?? invoice?.customer?.id}`
+            : null,
         projectName:
           payment.project?.name ?? invoice?.project?.name ?? "No project",
+        projectHref:
+          (invoice?.projectId ?? invoice?.project?.id)
+            ? `/projects/${invoice?.projectId ?? invoice?.project?.id}`
+            : null,
         amount: money(payment.amount),
         occurredAt: payment.createdAt ?? payment.paymentDate ?? "",
+        historyCount: payment.invoiceId
+          ? (historyCountByInvoiceId.get(payment.invoiceId) ?? 0)
+          : 0,
         providerLabel: payment.gatewayProvider ?? "Pending payment",
         reason: paymentEventReason("stale_pending_payment", invoiceReference),
         nextAction: paymentEventNextAction("stale_pending_payment"),
@@ -843,10 +912,21 @@ function buildPaymentTrailAttention(input: {
           payment.customer?.name ??
           invoice?.customer?.name ??
           "Unknown customer",
+        customerHref:
+          (invoice?.customerId ?? invoice?.customer?.id)
+            ? `/customers/${invoice?.customerId ?? invoice?.customer?.id}`
+            : null,
         projectName:
           payment.project?.name ?? invoice?.project?.name ?? "No project",
+        projectHref:
+          (invoice?.projectId ?? invoice?.project?.id)
+            ? `/projects/${invoice?.projectId ?? invoice?.project?.id}`
+            : null,
         amount: money(payment.amount),
         occurredAt: payment.createdAt ?? payment.paymentDate ?? "",
+        historyCount: payment.invoiceId
+          ? (historyCountByInvoiceId.get(payment.invoiceId) ?? 0)
+          : 0,
         providerLabel:
           payment.gatewayProvider ??
           payment.paymentMethod ??
@@ -873,64 +953,205 @@ function buildPaymentTrailAttention(input: {
   });
 }
 
+function classifyDepositStatus(input: {
+  invoice: FinancialControlInvoiceInput;
+  payments: FinancialControlPaymentInput[];
+  latestPaymentSignal: CollectionsLatestPaymentSignal | null;
+}): CollectionsDepositStatus {
+  if (input.invoice.status === "void") {
+    return "void";
+  }
+
+  if (
+    input.invoice.status === "paid" ||
+    Number(input.invoice.balanceDueAmount) <= 0 ||
+    input.latestPaymentSignal?.eventType === "payment_succeeded" ||
+    input.payments.some(
+      (payment) =>
+        payment.invoiceId === input.invoice.id && payment.status === "recorded"
+    )
+  ) {
+    return "settled";
+  }
+
+  if (
+    input.latestPaymentSignal?.eventType === "payment_requested" ||
+    input.latestPaymentSignal?.eventType === "checkout_started" ||
+    input.payments.some(
+      (payment) =>
+        payment.invoiceId === input.invoice.id && payment.status === "pending"
+    )
+  ) {
+    return "in_progress";
+  }
+
+  return "open";
+}
+
+function depositReason(status: CollectionsDepositStatus) {
+  switch (status) {
+    case "open":
+      return "Deposit invoice has an open balance and no current payment-in-progress signal.";
+    case "in_progress":
+      return "Deposit invoice has a payment request, checkout, or pending payment signal in progress.";
+    case "settled":
+      return "Deposit invoice is settled from canonical invoice or payment evidence.";
+    case "void":
+      return "Deposit invoice is void and preserved for billing history.";
+  }
+}
+
+function buildDepositContinuity(input: {
+  invoices: FinancialControlInvoiceInput[];
+  payments: FinancialControlPaymentInput[];
+  paymentEvents: FinancialControlPaymentEventInput[];
+}): CollectionsDepositContinuity[] {
+  return input.invoices
+    .filter((invoice) => invoice.workflowRole === "deposit")
+    .map((invoice) => {
+      const latestPaymentSignal = buildLatestPaymentSignal({
+        invoiceId: invoice.id,
+        paymentEvents: input.paymentEvents
+      });
+      const status = classifyDepositStatus({
+        invoice,
+        payments: input.payments,
+        latestPaymentSignal
+      });
+
+      return {
+        id: `deposit-continuity-${invoice.id}`,
+        invoiceId: invoice.id,
+        invoiceReference: invoice.referenceNumber,
+        invoiceHref: `/invoices/${invoice.id}`,
+        customerName: invoice.customer?.name ?? "Unknown customer",
+        customerHref:
+          (invoice.customerId ?? invoice.customer?.id)
+            ? `/customers/${invoice.customerId ?? invoice.customer?.id}`
+            : null,
+        projectName: invoice.project?.name ?? "No project",
+        projectHref:
+          (invoice.projectId ?? invoice.project?.id)
+            ? `/projects/${invoice.projectId ?? invoice.project?.id}`
+            : null,
+        balanceDueAmount: money(invoice.balanceDueAmount),
+        status,
+        invoiceStatus: invoice.status,
+        latestPaymentSignal,
+        reason: depositReason(status),
+        tone:
+          status === "open"
+            ? "attention"
+            : status === "in_progress"
+              ? "attention"
+              : "neutral"
+      } satisfies CollectionsDepositContinuity;
+    })
+    .sort((left, right) => {
+      const statusRank: Record<CollectionsDepositStatus, number> = {
+        open: 0,
+        in_progress: 1,
+        settled: 2,
+        void: 3
+      };
+      const statusComparison =
+        statusRank[left.status] - statusRank[right.status];
+
+      if (statusComparison !== 0) {
+        return statusComparison;
+      }
+
+      return Number(right.balanceDueAmount) - Number(left.balanceDueAmount);
+    });
+}
+
 function buildSummaryCards(input: {
   priorityItems: CollectionsPriorityItem[];
+  depositContinuity: CollectionsDepositContinuity[];
   customerContinuity: CollectionsCustomerContinuity[];
   paymentTrailAttention: CollectionsPaymentTrailAttention[];
 }) {
+  const openBalanceAmount = money(
+    input.priorityItems.reduce(
+      (sum, item) => sum + Number(item.balanceDueAmount),
+      0
+    )
+  );
   const urgentItems = input.priorityItems.filter(
-    (item) => item.tone === "warning"
+    (item) => item.priorityBand === "urgent"
   );
-  const customerAtRisk = input.customerContinuity.filter(
-    (customer) => customer.tone === "warning"
+  const attentionItems = input.priorityItems.filter(
+    (item) => item.priorityBand === "attention"
   );
-  const depositBlockers = input.priorityItems.filter((item) =>
-    item.signals.includes("unpaid_deposit")
+  const activeDeposits = input.depositContinuity.filter(
+    (deposit) => deposit.status === "open" || deposit.status === "in_progress"
   );
   const trailWarnings = input.paymentTrailAttention.filter(
     (item) => item.tone === "warning"
   );
+  const trailAttention = input.paymentTrailAttention.filter(
+    (item) => item.tone === "attention"
+  );
+  const recentSuccess = input.paymentTrailAttention.filter(
+    (item) => item.kind === "recent_success"
+  );
 
   return [
     {
-      id: "needs-attention-first",
-      label: "Needs attention first",
-      value: String(urgentItems.length),
+      id: "open-ar-balance",
+      label: "Open AR balance",
+      value: openBalanceAmount,
+      detail:
+        input.priorityItems.length > 0
+          ? `${input.priorityItems.length} open invoice${input.priorityItems.length === 1 ? "" : "s"} with balance due.`
+          : "No canonical invoices currently carry an open AR balance.",
+      tone: input.priorityItems.length > 0 ? "attention" : "neutral"
+    },
+    {
+      id: "attention-count",
+      label: "Urgent / attention",
+      value: `${urgentItems.length} / ${attentionItems.length}`,
       detail:
         urgentItems.length > 0
           ? `${urgentItems.length} invoice${urgentItems.length === 1 ? "" : "s"} have critical collection signals.`
-          : "No critical collections signals are active.",
+          : attentionItems.length > 0
+            ? `${attentionItems.length} invoice${attentionItems.length === 1 ? "" : "s"} need collection attention.`
+            : "No urgent or attention collection bands are active.",
       tone: urgentItems.length > 0 ? "warning" : "neutral"
     },
     {
-      id: "customer-exposure",
-      label: "Customer exposure",
-      value: String(customerAtRisk.length),
-      detail:
-        customerAtRisk.length > 0
-          ? `${customerAtRisk.length} customer${customerAtRisk.length === 1 ? "" : "s"} have overdue or failed-payment exposure.`
-          : "No customer-level overdue exposure is active.",
-      tone: customerAtRisk.length > 0 ? "warning" : "neutral"
-    },
-    {
       id: "deposit-readiness",
-      label: "Deposit blockers",
-      value: String(depositBlockers.length),
+      label: "Deposits active",
+      value: String(activeDeposits.length),
       detail:
-        depositBlockers.length > 0
-          ? `${depositBlockers.length} deposit invoice${depositBlockers.length === 1 ? "" : "s"} still need financial follow-through.`
-          : "No open deposit invoices are blocking readiness.",
-      tone: depositBlockers.length > 0 ? "attention" : "neutral"
+        activeDeposits.length > 0
+          ? `${activeDeposits.length} deposit invoice${activeDeposits.length === 1 ? "" : "s"} are open or in progress.`
+          : input.depositContinuity.length > 0
+            ? "Deposit-role invoices are currently settled or void."
+            : "No deposit-role invoices are available in the current canonical data.",
+      tone: activeDeposits.length > 0 ? "attention" : "neutral"
     },
     {
       id: "payment-trail-review",
-      label: "Payment Trail review",
-      value: String(trailWarnings.length),
+      label: "Trail issues",
+      value: String(trailWarnings.length + trailAttention.length),
       detail:
         trailWarnings.length > 0
           ? `${trailWarnings.length} failed or voided payment event${trailWarnings.length === 1 ? "" : "s"} need review.`
-          : "No failed or voided payment events need collections review.",
+          : trailAttention.length > 0
+            ? `${trailAttention.length} payment request, checkout, or stale pending signal${trailAttention.length === 1 ? "" : "s"} need outcome review.`
+            : "No failed, voided, requested, or checkout Payment Trail issues are active.",
       tone: trailWarnings.length > 0 ? "warning" : "neutral"
+    },
+    {
+      id: "recent-success",
+      label: "Recent success",
+      value: String(recentSuccess.length),
+      detail:
+        recentSuccess.length > 0
+          ? `${recentSuccess.length} recent successful payment signal${recentSuccess.length === 1 ? "" : "s"} are available for balance confirmation.`
+          : "No recent successful payment activity is visible in the current read model.",
+      tone: "neutral"
     }
   ] satisfies CollectionsCommandCenterSummaryCard[];
 }
@@ -1098,10 +1319,16 @@ export function buildCollectionsCommandCenter(input: {
     paymentEvents: input.paymentEvents,
     todayIso: input.todayIso
   });
+  const depositContinuity = buildDepositContinuity({
+    invoices: input.invoices,
+    payments: input.payments,
+    paymentEvents: input.paymentEvents
+  });
 
   return {
     summaryCards: buildSummaryCards({
       priorityItems,
+      depositContinuity,
       customerContinuity,
       paymentTrailAttention
     }),
@@ -1112,6 +1339,7 @@ export function buildCollectionsCommandCenter(input: {
       priorityItems
     }),
     priorityItems: priorityItems.slice(0, 12),
+    depositContinuity: depositContinuity.slice(0, 8),
     customerContinuity: customerContinuity.slice(0, 8),
     paymentTrailAttention: paymentTrailAttention.slice(0, 12)
   };
