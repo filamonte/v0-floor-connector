@@ -133,6 +133,23 @@ export default async function AccountsReceivablePage() {
       invoice
     ])
   );
+  const priorityGroups = [
+    {
+      key: "urgent",
+      label: "Urgent",
+      empty: "No urgent invoices are active."
+    },
+    {
+      key: "attention",
+      label: "Attention",
+      empty: "No attention-band invoices are active."
+    },
+    {
+      key: "monitoring",
+      label: "Monitoring",
+      empty: "No monitoring-band invoices are active."
+    }
+  ] as const;
 
   return (
     <ContractorWorkspacePage
@@ -140,7 +157,7 @@ export default async function AccountsReceivablePage() {
       title="Accounts Receivable"
       description="Review open balances, overdue invoices, pending checkout activity, and the next collection move."
       summary={
-        <div className="grid gap-px border border-[#d6d6d6] bg-[#d6d6d6] sm:grid-cols-2 xl:grid-cols-4">
+        <div className="grid gap-px border border-[#d6d6d6] bg-[#d6d6d6] sm:grid-cols-2 xl:grid-cols-5">
           {collectionsDesk.summaryCards.map((card) => (
             <div key={card.id} className="bg-white px-3 py-2.5">
               <div className="flex items-start justify-between gap-3">
@@ -154,7 +171,9 @@ export default async function AccountsReceivablePage() {
                 </span>
               </div>
               <p className="mt-1 text-lg font-semibold tracking-tight text-[#171717]">
-                {card.value}
+                {card.id === "open-ar-balance"
+                  ? formatMoney(card.value)
+                  : card.value}
               </p>
               <p className="mt-1 text-xs leading-5 text-slate-500">
                 {card.detail}
@@ -281,104 +300,137 @@ export default async function AccountsReceivablePage() {
 
             {collectionsDesk.priorityItems.length > 0 ? (
               <div className="divide-y divide-[#e5e5e5]">
-                {collectionsDesk.priorityItems.slice(0, 5).map((item) => (
-                  <article key={item.id} className="px-5 py-4">
-                    <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(220px,0.55fr)_auto] lg:items-start">
-                      <div className="min-w-0">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <Link
-                            href={item.invoiceHref}
-                            className="text-sm font-semibold text-slate-950 transition hover:text-brand-700"
-                          >
-                            {item.invoiceReference}
-                          </Link>
-                          <span
-                            className={`rounded-full border px-2 py-0.5 text-[11px] font-semibold uppercase tracking-[0.12em] ${toneBadgeClass(item.tone)}`}
-                          >
-                            score {item.priorityScore}
-                          </span>
-                          <span
-                            className={`rounded-full border px-2 py-0.5 text-[11px] font-semibold uppercase tracking-[0.12em] ${priorityBandClass(item.priorityBand)}`}
-                          >
-                            {item.priorityBand}
-                          </span>
-                          {item.latestPaymentSignal ? (
-                            <span className="rounded-full border border-[#d6d6d6] bg-[#f8f8f8] px-2 py-0.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-600">
-                              {item.latestPaymentSignal.label}
-                            </span>
-                          ) : null}
+                {priorityGroups.map((group) => {
+                  const items = collectionsDesk.priorityItems.filter(
+                    (item) => item.priorityBand === group.key
+                  );
+
+                  return (
+                    <section key={group.key} className="px-5 py-4">
+                      <div className="mb-3 flex items-center justify-between gap-3">
+                        <h3 className="text-sm font-semibold uppercase tracking-[0.16em] text-slate-700">
+                          {group.label}
+                        </h3>
+                        <span
+                          className={`rounded-full border px-2 py-0.5 text-[11px] font-semibold uppercase tracking-[0.12em] ${priorityBandClass(group.key)}`}
+                        >
+                          {items.length}
+                        </span>
+                      </div>
+                      {items.length > 0 ? (
+                        <div className="divide-y divide-[#e5e5e5] border border-[#e5e5e5]">
+                          {items.map((item) => (
+                            <article key={item.id} className="px-4 py-3">
+                              <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(220px,0.55fr)_auto] lg:items-start">
+                                <div className="min-w-0">
+                                  <div className="flex flex-wrap items-center gap-2">
+                                    <Link
+                                      href={item.invoiceHref}
+                                      className="text-sm font-semibold text-slate-950 transition hover:text-brand-700"
+                                    >
+                                      {item.invoiceReference}
+                                    </Link>
+                                    <span
+                                      className={`rounded-full border px-2 py-0.5 text-[11px] font-semibold uppercase tracking-[0.12em] ${toneBadgeClass(item.tone)}`}
+                                    >
+                                      score {item.priorityScore}
+                                    </span>
+                                    <span className="rounded-full border border-[#d6d6d6] bg-[#f8f8f8] px-2 py-0.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-600">
+                                      {formatStatusLabel(item.workflowRole)}
+                                    </span>
+                                    <span className="rounded-full border border-[#d6d6d6] bg-[#f8f8f8] px-2 py-0.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-600">
+                                      {formatStatusLabel(item.invoiceStatus)}
+                                    </span>
+                                    {item.latestPaymentSignal ? (
+                                      <span className="rounded-full border border-[#d6d6d6] bg-[#f8f8f8] px-2 py-0.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-600">
+                                        {item.latestPaymentSignal.label}
+                                      </span>
+                                    ) : null}
+                                  </div>
+                                  <p className="mt-2 text-sm leading-6 text-slate-600">
+                                    {item.reason}
+                                  </p>
+                                  <p className="mt-1 text-xs leading-5 text-slate-500">
+                                    {item.customerHref ? (
+                                      <Link
+                                        href={item.customerHref}
+                                        className="font-medium text-brand-700 transition hover:text-brand-800"
+                                      >
+                                        {item.customerName}
+                                      </Link>
+                                    ) : (
+                                      item.customerName
+                                    )}{" "}
+                                    /{" "}
+                                    {item.projectHref ? (
+                                      <Link
+                                        href={item.projectHref}
+                                        className="font-medium text-brand-700 transition hover:text-brand-800"
+                                      >
+                                        {item.projectName}
+                                      </Link>
+                                    ) : (
+                                      item.projectName
+                                    )}
+                                  </p>
+                                </div>
+                                <div>
+                                  <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#666666]">
+                                    Continuity
+                                  </p>
+                                  <p className="mt-1 text-sm font-semibold text-slate-950">
+                                    {formatMoney(item.balanceDueAmount)}
+                                  </p>
+                                  <p className="mt-1 text-sm leading-5 text-slate-500">
+                                    {item.dueSignal}. Last activity{" "}
+                                    {formatOptionalDateTime(
+                                      item.lastActivityAt
+                                    )}
+                                    .
+                                  </p>
+                                  {item.latestPaymentSignal ? (
+                                    <p className="mt-1 text-xs leading-5 text-slate-500">
+                                      Latest signal{" "}
+                                      <span className="font-semibold text-slate-700">
+                                        {item.latestPaymentSignal.label}
+                                      </span>{" "}
+                                      on{" "}
+                                      {formatOptionalDateTime(
+                                        item.latestPaymentSignal.occurredAt
+                                      )}
+                                      . {item.latestPaymentSignal.historyCount}{" "}
+                                      Payment Trail event
+                                      {item.latestPaymentSignal.historyCount ===
+                                      1
+                                        ? ""
+                                        : "s"}
+                                      .
+                                    </p>
+                                  ) : (
+                                    <p className="mt-1 text-xs leading-5 text-slate-500">
+                                      No Payment Trail events are attached to
+                                      this open invoice yet.
+                                    </p>
+                                  )}
+                                </div>
+                                <Link
+                                  href={item.invoiceHref}
+                                  className="inline-flex shrink-0 items-center justify-center rounded-[4px] border border-[#171717] bg-[#171717] px-3 py-2 text-sm font-medium text-white transition hover:bg-[#2a2a2a]"
+                                >
+                                  {item.nextAction}
+                                </Link>
+                              </div>
+                            </article>
+                          ))}
                         </div>
-                        <p className="mt-2 text-sm leading-6 text-slate-600">
-                          {item.reason}
+                      ) : (
+                        <p className="border border-[#e5e5e5] bg-[#f8f8f8] px-4 py-3 text-sm leading-6 text-slate-500">
+                          {group.empty}
                         </p>
-                        <p className="mt-1 text-xs leading-5 text-slate-500">
-                          {item.customerHref ? (
-                            <Link
-                              href={item.customerHref}
-                              className="font-medium text-brand-700 transition hover:text-brand-800"
-                            >
-                              {item.customerName}
-                            </Link>
-                          ) : (
-                            item.customerName
-                          )}{" "}
-                          /{" "}
-                          {item.projectHref ? (
-                            <Link
-                              href={item.projectHref}
-                              className="font-medium text-brand-700 transition hover:text-brand-800"
-                            >
-                              {item.projectName}
-                            </Link>
-                          ) : (
-                            item.projectName
-                          )}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#666666]">
-                          Continuity
-                        </p>
-                        <p className="mt-1 text-sm font-semibold text-slate-950">
-                          {formatMoney(item.balanceDueAmount)}
-                        </p>
-                        <p className="mt-1 text-sm leading-5 text-slate-500">
-                          {item.dueSignal}. Last activity{" "}
-                          {formatOptionalDateTime(item.lastActivityAt)}.
-                        </p>
-                        {item.latestPaymentSignal ? (
-                          <p className="mt-1 text-xs leading-5 text-slate-500">
-                            Latest signal{" "}
-                            <span className="font-semibold text-slate-700">
-                              {item.latestPaymentSignal.label}
-                            </span>{" "}
-                            on{" "}
-                            {formatOptionalDateTime(
-                              item.latestPaymentSignal.occurredAt
-                            )}
-                            . {item.latestPaymentSignal.historyCount} Payment
-                            Trail event
-                            {item.latestPaymentSignal.historyCount === 1
-                              ? ""
-                              : "s"}
-                            .
-                          </p>
-                        ) : (
-                          <p className="mt-1 text-xs leading-5 text-slate-500">
-                            No Payment Trail events are attached to this open
-                            invoice yet.
-                          </p>
-                        )}
-                      </div>
-                      <Link
-                        href={item.invoiceHref}
-                        className="inline-flex shrink-0 items-center justify-center rounded-[4px] border border-[#171717] bg-[#171717] px-3 py-2 text-sm font-medium text-white transition hover:bg-[#2a2a2a]"
-                      >
-                        {item.nextAction}
-                      </Link>
-                    </div>
-                  </article>
-                ))}
+                      )}
+                    </section>
+                  );
+                })}
               </div>
             ) : (
               <div className="px-6 py-8">
@@ -452,6 +504,96 @@ export default async function AccountsReceivablePage() {
               )}
             </div>
           </section>
+        </section>
+
+        <section className="border border-[#d6d6d6] bg-white">
+          <div className="flex flex-col gap-2 border-b border-[#e5e5e5] px-5 py-4 lg:flex-row lg:items-start lg:justify-between">
+            <div>
+              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#8f5b32]">
+                Deposit lane
+              </p>
+              <h2 className="mt-2 text-xl font-semibold tracking-tight text-slate-950">
+                Deposit invoice continuity
+              </h2>
+              <p className="mt-1 max-w-[78ch] text-sm leading-6 text-slate-500">
+                Deposit visibility stays on canonical invoices with
+                <span className="font-semibold"> workflow_role=deposit</span>.
+                The lane distinguishes open, in-progress, settled, and void
+                deposit invoices without creating a separate deposit model or
+                action workflow.
+              </p>
+            </div>
+            <Link
+              href="/invoices?workflowRole=deposit"
+              className="inline-flex shrink-0 items-center justify-center rounded-[4px] border border-[#d6d6d6] bg-white px-3 py-2 text-sm font-medium text-[#334155] transition hover:bg-slate-50"
+            >
+              Open deposit invoices
+            </Link>
+          </div>
+          {collectionsDesk.depositContinuity.length > 0 ? (
+            <div className="grid gap-px bg-[#e5e5e5] md:grid-cols-2 xl:grid-cols-4">
+              {collectionsDesk.depositContinuity.map((deposit) => (
+                <div key={deposit.id} className="min-w-0 bg-white px-5 py-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <Link
+                      href={deposit.invoiceHref}
+                      className="text-sm font-semibold text-[#171717] transition hover:text-brand-700"
+                    >
+                      {deposit.invoiceReference}
+                    </Link>
+                    <span
+                      className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] ${toneBadgeClass(deposit.tone)}`}
+                    >
+                      {deposit.status.replaceAll("_", " ")}
+                    </span>
+                  </div>
+                  <p className="mt-2 text-lg font-semibold tracking-tight text-slate-950">
+                    {formatMoney(deposit.balanceDueAmount)}
+                  </p>
+                  <p className="mt-2 text-sm leading-5 text-slate-600">
+                    {deposit.reason}
+                  </p>
+                  <p className="mt-2 text-xs leading-5 text-slate-500">
+                    {deposit.customerHref ? (
+                      <Link
+                        href={deposit.customerHref}
+                        className="font-medium text-brand-700 transition hover:text-brand-800"
+                      >
+                        {deposit.customerName}
+                      </Link>
+                    ) : (
+                      deposit.customerName
+                    )}{" "}
+                    /{" "}
+                    {deposit.projectHref ? (
+                      <Link
+                        href={deposit.projectHref}
+                        className="font-medium text-brand-700 transition hover:text-brand-800"
+                      >
+                        {deposit.projectName}
+                      </Link>
+                    ) : (
+                      deposit.projectName
+                    )}
+                  </p>
+                  <p className="mt-2 text-xs uppercase tracking-[0.12em] text-slate-400">
+                    Invoice {formatStatusLabel(deposit.invoiceStatus)}
+                    {deposit.latestPaymentSignal
+                      ? ` / ${deposit.latestPaymentSignal.label}`
+                      : " / no Payment Trail signal"}
+                  </p>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="px-6 py-8">
+              <AppEmptyState
+                eyebrow="No deposit invoices"
+                title="No deposit-role invoices are visible"
+                description="Deposit rows will appear here only when existing canonical invoices carry the deposit workflow role."
+              />
+            </div>
+          )}
         </section>
 
         <section className="border border-[#d6d6d6] bg-white">
@@ -855,18 +997,40 @@ export default async function AccountsReceivablePage() {
             <div className="divide-y divide-[#e5e5e5]">
               {collectionsDesk.paymentTrailAttention.length > 0 ? (
                 collectionsDesk.paymentTrailAttention.map((event) => (
-                  <Link
+                  <article
                     key={event.id}
-                    href={event.invoiceHref}
-                    className="block px-5 py-4 transition hover:bg-[#f8f8f8]"
+                    className="px-5 py-4 transition hover:bg-[#f8f8f8]"
                   >
                     <div className="flex items-start justify-between gap-4">
                       <div>
-                        <p className="text-sm font-semibold text-[#171717]">
+                        <Link
+                          href={event.invoiceHref}
+                          className="text-sm font-semibold text-[#171717] transition hover:text-brand-700"
+                        >
                           {event.invoiceReference}
-                        </p>
+                        </Link>
                         <p className="mt-1 text-sm leading-5 text-slate-600">
-                          {event.customerName} - {event.projectName}
+                          {event.customerHref ? (
+                            <Link
+                              href={event.customerHref}
+                              className="font-medium text-brand-700 transition hover:text-brand-800"
+                            >
+                              {event.customerName}
+                            </Link>
+                          ) : (
+                            event.customerName
+                          )}{" "}
+                          -{" "}
+                          {event.projectHref ? (
+                            <Link
+                              href={event.projectHref}
+                              className="font-medium text-brand-700 transition hover:text-brand-800"
+                            >
+                              {event.projectName}
+                            </Link>
+                          ) : (
+                            event.projectName
+                          )}
                         </p>
                         <p className="mt-1 text-xs uppercase tracking-[0.12em] text-slate-500">
                           {formatOptionalDateTime(event.occurredAt)} /{" "}
@@ -880,6 +1044,11 @@ export default async function AccountsReceivablePage() {
                             {formatMoney(event.amount)}
                           </p>
                         ) : null}
+                        <p className="mt-1 text-xs leading-5 text-slate-500">
+                          {event.historyCount} Payment Trail event
+                          {event.historyCount === 1 ? "" : "s"} linked to this
+                          invoice.
+                        </p>
                       </div>
                       <span
                         className={`rounded-[4px] border px-2 py-1 text-xs font-semibold uppercase tracking-[0.12em] ${toneBadgeClass(event.tone)}`}
@@ -887,7 +1056,7 @@ export default async function AccountsReceivablePage() {
                         {event.nextAction}
                       </span>
                     </div>
-                  </Link>
+                  </article>
                 ))
               ) : (
                 <div className="px-5 py-6 text-sm leading-6 text-slate-500">

@@ -366,3 +366,144 @@ void test("keeps paid and void invoices out of priority collections rows", () =>
     ["open"]
   );
 });
+
+void test("classifies deposit invoices without creating a separate deposit model", () => {
+  const commandCenter = build({
+    invoices: [
+      invoice({
+        id: "deposit-open",
+        referenceNumber: "INV-DEPOSIT-OPEN",
+        workflowRole: "deposit",
+        status: "sent",
+        balanceDueAmount: "500.00"
+      }),
+      invoice({
+        id: "deposit-progress",
+        referenceNumber: "INV-DEPOSIT-PROGRESS",
+        workflowRole: "deposit",
+        status: "sent",
+        balanceDueAmount: "250.00"
+      }),
+      invoice({
+        id: "deposit-settled",
+        referenceNumber: "INV-DEPOSIT-SETTLED",
+        workflowRole: "deposit",
+        status: "paid",
+        balanceDueAmount: "0.00"
+      }),
+      invoice({
+        id: "standard",
+        referenceNumber: "INV-STANDARD",
+        workflowRole: "standard",
+        status: "sent",
+        balanceDueAmount: "100.00"
+      })
+    ],
+    payments: [
+      payment({
+        id: "pending-deposit-payment",
+        invoiceId: "deposit-progress",
+        status: "pending"
+      }),
+      payment({
+        id: "recorded-deposit-payment",
+        invoiceId: "deposit-settled",
+        status: "recorded"
+      })
+    ]
+  });
+
+  assert.deepEqual(
+    commandCenter.depositContinuity.map((deposit) => [
+      deposit.invoiceId,
+      deposit.status
+    ]),
+    [
+      ["deposit-open", "open"],
+      ["deposit-progress", "in_progress"],
+      ["deposit-settled", "settled"]
+    ]
+  );
+});
+
+void test("selects payment succeeded as the latest payment trail signal", () => {
+  const commandCenter = build({
+    invoices: [
+      invoice({
+        id: "succeeded",
+        referenceNumber: "INV-SUCCEEDED",
+        status: "paid",
+        balanceDueAmount: "0.00"
+      })
+    ],
+    paymentEvents: [
+      event({
+        id: "checkout",
+        invoiceId: "succeeded",
+        eventType: "checkout_started",
+        occurredAt: "2026-05-18T12:00:00.000Z"
+      }),
+      event({
+        id: "success",
+        invoiceId: "succeeded",
+        eventType: "payment_succeeded",
+        occurredAt: "2026-05-19T12:00:00.000Z"
+      })
+    ]
+  });
+  const success = commandCenter.paymentTrailAttention.find(
+    (item) => item.kind === "recent_success"
+  );
+
+  assert.equal(success?.invoiceId, "succeeded");
+  assert.equal(success?.tone, "neutral");
+  assert.equal(success?.historyCount, 2);
+});
+
+void test("summarizes control room open ar, trail issues, deposits, and recent success", () => {
+  const commandCenter = build({
+    invoices: [
+      invoice({
+        id: "failed",
+        referenceNumber: "INV-FAILED",
+        balanceDueAmount: "300.00"
+      }),
+      invoice({
+        id: "deposit",
+        referenceNumber: "INV-DEPOSIT",
+        workflowRole: "deposit",
+        balanceDueAmount: "200.00"
+      }),
+      invoice({
+        id: "paid",
+        referenceNumber: "INV-PAID",
+        status: "paid",
+        balanceDueAmount: "0.00"
+      })
+    ],
+    payments: [
+      payment({
+        id: "recorded",
+        invoiceId: "paid",
+        status: "recorded",
+        amount: "100.00"
+      })
+    ],
+    paymentEvents: [
+      event({
+        id: "failed-event",
+        invoiceId: "failed",
+        eventType: "payment_failed"
+      })
+    ]
+  });
+  const cardsById = new Map(
+    commandCenter.summaryCards.map((card) => [card.id, card])
+  );
+
+  assert.equal(cardsById.get("open-ar-balance")?.value, "500.00");
+  assert.equal(cardsById.get("attention-count")?.value, "1 / 1");
+  assert.equal(cardsById.get("deposit-readiness")?.value, "1");
+  assert.equal(cardsById.get("payment-trail-review")?.value, "1");
+  assert.equal(cardsById.get("recent-success")?.value, "1");
+});

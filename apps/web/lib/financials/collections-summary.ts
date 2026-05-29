@@ -212,6 +212,8 @@ function getEventLabel(eventType: FinancialCollectionsEventType) {
       return "Payment requested";
     case "checkout_started":
       return "Checkout started";
+    case "payment_succeeded":
+      return "Payment succeeded";
     case "payment_failed":
       return "Payment failed";
     case "payment_voided":
@@ -231,6 +233,8 @@ function getEventReason(eventType: FinancialCollectionsEventType) {
       return "A customer payment request is pending.";
     case "checkout_started":
       return "Checkout started and is waiting for a completed outcome.";
+    case "payment_succeeded":
+      return "Payment succeeded and was recorded as payment evidence.";
     case "provider_sync":
       return "Payment activity was updated for review.";
   }
@@ -241,6 +245,10 @@ function getEventNextMove(eventType: FinancialCollectionsEventType) {
     return "Review Payment Trail";
   }
 
+  if (eventType === "payment_succeeded") {
+    return "Confirm balance";
+  }
+
   return "Follow up on payment";
 }
 
@@ -249,6 +257,10 @@ function getEventTone(
 ): FinancialControlTone {
   if (eventType === "payment_failed" || eventType === "payment_voided") {
     return "warning";
+  }
+
+  if (eventType === "payment_succeeded") {
+    return "neutral";
   }
 
   return "attention";

@@ -463,3 +463,24 @@ payment actions, checkout creation, provider calls, webhook behavior, invoice
 lifecycle changes, portal-owned billing state, accounting integration, tax
 behavior, readiness enforcement, duplicate ledgers, customer-financial records,
 or AR-specific financial state.
+
+## 16. Implementation Note - AR Control Room V1
+
+The fourth read-only implementation slice upgrades
+`/financials/accounts-receivable` into an AR Control Room over the same canonical
+invoices, payments, and immutable `payment_events` read model. The control room
+adds summary visibility for open AR balance, urgent/attention counts, active
+deposit invoices, Payment Trail issues, and recent successful payment activity;
+groups the priority queue into urgent, attention, and monitoring bands; and adds
+a deposit continuity lane that labels deposit-role invoices as open,
+in-progress, settled, or void from existing invoice, payment, and payment-event
+evidence.
+
+Payment Trail continuity now includes `payment_succeeded` event evidence where
+it is already present, history counts per invoice, and invoice/customer/project
+handoffs. This is review and navigation clarity only. It does not add schema,
+migrations, payment creation/finalization, checkout creation, provider calls,
+webhook behavior, invoice lifecycle changes, portal billing behavior,
+accounting integration, tax behavior, readiness enforcement, payment automation,
+collection reminders, duplicate deposit records, duplicate receivable records,
+or AR-specific financial state.
