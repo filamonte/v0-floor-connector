@@ -431,3 +431,20 @@ canonical invoices, payments, and payment events.
 This implementation does not add schema, migrations, payment provider behavior,
 webhook behavior, invoice/payment mutations, accounting integrations, tax logic,
 portal-owned billing state, duplicate AR models, or collection-task records.
+
+## 14. Implementation Note - Collections Priority Depth
+
+The second read-only implementation slice refines the same
+`/financials/accounts-receivable` command-center helper with derived collection
+priority bands and compact latest Payment Trail signal context. Priority bands
+are presentation labels only: urgent, attention, or monitoring, based on
+existing invoice status, balance due, due date, workflow role, payment state,
+Payment Trail events, retainage, progress-billing markers, stale activity, and
+customer exposure.
+
+The AR page now shows the latest Payment Trail signal label, timestamp, and
+event count where existing immutable payment events are already loaded. This is
+read-only continuity visibility. It does not add schema, payment actions,
+provider calls, webhook behavior, invoice lifecycle changes, portal billing
+state, accounting integration, tax behavior, reminder automation, or duplicate
+financial models.

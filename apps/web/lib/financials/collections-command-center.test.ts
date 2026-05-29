@@ -109,6 +109,7 @@ void test("orders failed payment invoices ahead of regular overdue balances", ()
 
   assert.equal(commandCenter.priorityItems[0]?.invoiceId, "failed");
   assert.equal(commandCenter.priorityItems[0]?.tone, "warning");
+  assert.equal(commandCenter.priorityItems[0]?.priorityBand, "urgent");
   assert.equal(
     commandCenter.priorityItems[0]?.nextAction,
     "Review Payment Trail"
@@ -263,10 +264,9 @@ void test("summarizes invoice status counts and operational continuity queues", 
     void: 1
   });
 
-  const openBalances =
-    commandCenter.continuitySnapshot.operationalQueues.find(
-      (queue) => queue.id === "open-balances"
-    );
+  const openBalances = commandCenter.continuitySnapshot.operationalQueues.find(
+    (queue) => queue.id === "open-balances"
+  );
   const depositReadiness =
     commandCenter.continuitySnapshot.operationalQueues.find(
       (queue) => queue.id === "deposit-readiness"
@@ -287,4 +287,82 @@ void test("summarizes invoice status counts and operational continuity queues", 
   assert.equal(paymentEventReview?.count, 1);
   assert.equal(paymentEventReview?.tone, "warning");
   assert.equal(paymentInProgress?.count, 2);
+});
+
+void test("derives collection priority bands and compact latest payment signal", () => {
+  const commandCenter = build({
+    invoices: [
+      invoice({
+        id: "monitoring",
+        referenceNumber: "INV-MONITORING",
+        dueDate: "2026-06-10",
+        balanceDueAmount: "125.00",
+        updatedAt: "2026-05-20T12:00:00.000Z"
+      }),
+      invoice({
+        id: "failed",
+        referenceNumber: "INV-FAILED-SIGNAL",
+        dueDate: "2026-05-30",
+        balanceDueAmount: "300.00"
+      })
+    ],
+    paymentEvents: [
+      event({
+        id: "failed-requested",
+        invoiceId: "failed",
+        eventType: "payment_requested",
+        occurredAt: "2026-05-18T12:00:00.000Z"
+      }),
+      event({
+        id: "failed-signal",
+        invoiceId: "failed",
+        eventType: "payment_failed",
+        occurredAt: "2026-05-19T12:00:00.000Z"
+      })
+    ]
+  });
+
+  const failed = commandCenter.priorityItems.find(
+    (item) => item.invoiceId === "failed"
+  );
+  const monitoring = commandCenter.priorityItems.find(
+    (item) => item.invoiceId === "monitoring"
+  );
+
+  assert.equal(failed?.priorityBand, "urgent");
+  assert.equal(failed?.latestPaymentSignal?.eventType, "payment_failed");
+  assert.equal(failed?.latestPaymentSignal?.label, "Payment failed");
+  assert.equal(failed?.latestPaymentSignal?.historyCount, 2);
+  assert.equal(monitoring?.priorityBand, "monitoring");
+  assert.equal(monitoring?.latestPaymentSignal, null);
+});
+
+void test("keeps paid and void invoices out of priority collections rows", () => {
+  const commandCenter = build({
+    invoices: [
+      invoice({
+        id: "open",
+        referenceNumber: "INV-OPEN",
+        status: "sent",
+        balanceDueAmount: "100.00"
+      }),
+      invoice({
+        id: "paid",
+        referenceNumber: "INV-PAID",
+        status: "paid",
+        balanceDueAmount: "0.00"
+      }),
+      invoice({
+        id: "void",
+        referenceNumber: "INV-VOID",
+        status: "void",
+        balanceDueAmount: "500.00"
+      })
+    ]
+  });
+
+  assert.deepEqual(
+    commandCenter.priorityItems.map((item) => item.invoiceId),
+    ["open"]
+  );
 });

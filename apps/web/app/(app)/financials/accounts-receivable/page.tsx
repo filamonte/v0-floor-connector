@@ -58,6 +58,18 @@ function toneBadgeClass(tone: "neutral" | "attention" | "warning") {
   return "border-[#d6d6d6] bg-[#f8f8f8] text-slate-600";
 }
 
+function priorityBandClass(band: "urgent" | "attention" | "monitoring") {
+  if (band === "urgent") {
+    return "border-[#f2c7aa] bg-[#fff7ed] text-[#9a3412]";
+  }
+
+  if (band === "attention") {
+    return "border-[#e4d7ca] bg-[#fffcf7] text-[#8f5b32]";
+  }
+
+  return "border-[#d6d6d6] bg-[#f8f8f8] text-slate-600";
+}
+
 export default async function AccountsReceivablePage() {
   const user = await requireAuthenticatedUser(
     "/financials/accounts-receivable"
@@ -263,6 +275,7 @@ export default async function AccountsReceivablePage() {
                 Ranked from canonical invoice balances, due dates, workflow
                 role, Payment Trail state, pending payments, retainage,
                 progress-billing markers, stale activity, and customer exposure.
+                Priority labels are derived from those records only.
               </p>
             </div>
 
@@ -284,9 +297,14 @@ export default async function AccountsReceivablePage() {
                           >
                             score {item.priorityScore}
                           </span>
-                          {item.latestPaymentEventType ? (
+                          <span
+                            className={`rounded-full border px-2 py-0.5 text-[11px] font-semibold uppercase tracking-[0.12em] ${priorityBandClass(item.priorityBand)}`}
+                          >
+                            {item.priorityBand}
+                          </span>
+                          {item.latestPaymentSignal ? (
                             <span className="rounded-full border border-[#d6d6d6] bg-[#f8f8f8] px-2 py-0.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-600">
-                              {item.latestPaymentEventType.replaceAll("_", " ")}
+                              {item.latestPaymentSignal.label}
                             </span>
                           ) : null}
                         </div>
@@ -328,6 +346,29 @@ export default async function AccountsReceivablePage() {
                           {item.dueSignal}. Last activity{" "}
                           {formatOptionalDateTime(item.lastActivityAt)}.
                         </p>
+                        {item.latestPaymentSignal ? (
+                          <p className="mt-1 text-xs leading-5 text-slate-500">
+                            Latest signal{" "}
+                            <span className="font-semibold text-slate-700">
+                              {item.latestPaymentSignal.label}
+                            </span>{" "}
+                            on{" "}
+                            {formatOptionalDateTime(
+                              item.latestPaymentSignal.occurredAt
+                            )}
+                            . {item.latestPaymentSignal.historyCount} Payment
+                            Trail event
+                            {item.latestPaymentSignal.historyCount === 1
+                              ? ""
+                              : "s"}
+                            .
+                          </p>
+                        ) : (
+                          <p className="mt-1 text-xs leading-5 text-slate-500">
+                            No Payment Trail events are attached to this open
+                            invoice yet.
+                          </p>
+                        )}
                       </div>
                       <Link
                         href={item.invoiceHref}
