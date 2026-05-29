@@ -10,8 +10,14 @@ Repository automation and maintenance scripts will live here.
   developer tools, git branch state, and origin configuration.
 - `worktree-status.ps1`: fetches origin and summarizes branch, ahead/behind,
   clean/dirty, and detached-head status across worktrees.
+- `worktree-reconcile.ps1`: morning health check for upstream state, dirty
+  worktrees, missing upstreams, behind-main drift, and recommended actions.
 - `create-worktree.ps1`: creates `stream/<name>` in `C:\FC-worktrees\<name>`,
   links shared dev tools, and runs the doctor.
+- `finish-worktree.ps1`: interactive retire flow for clean completed
+  worktrees, with optional local branch deletion and registry update.
+- `worktree-audit.ps1`: platform audit for registry accuracy, required files,
+  upstreams, doctor checks, and shared build-output mistakes.
 - `refresh-playwright-auth.ps1`: reruns shared Playwright auth setup from the
   canonical repo and relinks auth state into worktrees.
 
@@ -22,7 +28,10 @@ pnpm devtools:link
 pnpm devtools:link:fix
 pnpm worktree:doctor
 pnpm worktree:status
+pnpm worktree:reconcile
+pnpm worktree:audit
 pnpm worktree:create <name>
+pnpm worktree:finish <name>
 pnpm auth:refresh
 ```
 
