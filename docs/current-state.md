@@ -2125,8 +2125,9 @@ Implemented:
   - thread preview and continuity links back to canonical customer, project, estimate, contract, invoice, change-order, and payment records where available
   - selected-thread review now renders a clearer chronological history from canonical `communication_messages`, with actor labels, timestamps, empty-state handling, and compact source-record context on the same thread panel
   - direct thread links now stay explicit: if a requested thread is unavailable in the current filters, the page shows unavailable-thread guidance instead of silently selecting another thread
-  - project and customer detail pages now expose compact related-conversation handoff cards derived from canonical thread summaries, with customer-visible/internal/open counts, latest-thread preview, and direct links back into `/communications`
-  - contract, invoice, change-order, and estimate detail pages now expose the same compact related-conversation handoff pattern from canonical thread summaries, without embedding inbox behavior on those workspaces
+  - project and customer detail pages now expose compact communication-continuity handoff cards derived from canonical thread summaries, with customer-visible/internal/open counts, latest-thread preview, and direct links back into `/communications`
+  - contract, invoice, change-order, and estimate detail pages now expose the same compact communication-continuity handoff pattern from canonical thread summaries, without embedding inbox behavior on those workspaces
+  - Job Workspace now exposes a compact project-linked communication-continuity panel that points to the existing `/communications` workspace for full project/thread context; jobs still do not create job-owned message state or a job-local inbox
   - first safe contractor-side reply composer now exists on existing thread preview/detail and supports explicit internal-note versus customer-visible message visibility
   - contractor replies reuse the canonical posting helper and write new rows to `communication_messages` on the existing `communication_threads` record
   - project and customer workspaces now include a compact record-linked composer that creates or reuses the canonical project/customer thread, then saves an internal note or customer-visible portal-history message without external delivery

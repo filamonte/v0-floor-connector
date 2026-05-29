@@ -3,17 +3,12 @@ import Link from "next/link";
 
 import { DetailPanel } from "@/components/detail-panel";
 
-type RelatedConversationSource =
-  | "project"
-  | "customer"
-  | "contract"
-  | "invoice"
-  | "change_order"
-  | "estimate";
+type RelatedConversationSource = CommunicationThread["subjectType"];
 
 type RelatedConversationThread = Pick<
   CommunicationThread,
   | "id"
+  | "subjectType"
   | "lastMessageAt"
   | "lastMessagePreview"
   | "lastMessageVisibility"
@@ -64,7 +59,7 @@ export function RelatedConversationsCard({
   ).length;
 
   return (
-    <DetailPanel title="Related Conversations" description={description}>
+    <DetailPanel title="Communication Continuity" description={description}>
       <div className="space-y-3 text-sm leading-6 text-slate-600">
         <p>
           {countLabel}: {threads.length}
@@ -92,9 +87,9 @@ export function RelatedConversationsCard({
           </div>
         </div>
         <p>
-          Detail pages show conversation summaries only. Review message history,
-          reply, and triage unread notifications from the shared communications
-          workspace.
+          This record shows communication continuity only. Review full message
+          history, reply state, delivery context, and unread notification triage
+          from the shared communications workspace.
         </p>
         {latestThread ? (
           <>
@@ -115,7 +110,7 @@ export function RelatedConversationsCard({
             <div className="pt-1">
               <Link
                 href={buildCommunicationsHref({
-                  source,
+                  source: latestThread.subjectType,
                   threadId: latestThread.id
                 })}
                 className={actionClassName}

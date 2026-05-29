@@ -108,6 +108,11 @@ Current behavior confirmed by docs/code:
 - Existing notification read-state is separate from derived reply triage.
 - Communication workspace lanes currently group customer, project, commercial,
   finance, closeout/evidence, and internal context from existing records.
+- Project, customer, estimate, contract, change-order, invoice, and job
+  workspaces now expose compact communication-continuity handoffs back into
+  `/communications` where existing project or subject-linked thread summaries
+  support that context. These panels do not create record-local inboxes or new
+  write paths.
 - Some bounded provider-backed email paths already exist elsewhere for document
   and appointment workflows, with provider attempt evidence handled through the
   notification/delivery boundary. This plan does not change or expand those
