@@ -112,7 +112,7 @@ function Assert-SafeLocalToolPath {
     "playwright\.auth"
   )
 
-  if ($allowed -notcontains $RelativePath) {
+  if (($allowed -notcontains $RelativePath) -and ($RelativePath -notmatch "(^|\\)node_modules$")) {
     throw "Refusing to replace '$RelativePath'. Only ignored local tool directories can be replaced with -Fix."
   }
 
@@ -289,6 +289,27 @@ $linkSpecs = @(
   @{ RelativePath = ".turbo"; SourcePath = Join-Path $canonicalRoot ".turbo"; Kind = "Directory" },
   @{ RelativePath = "playwright\.auth"; SourcePath = Join-Path $canonicalRoot "playwright\.auth"; Kind = "Directory" }
 )
+
+foreach ($workspaceRoot in @("apps", "packages")) {
+  $workspaceRootPath = Join-Path $canonicalRoot $workspaceRoot
+  if (-not (Test-Path -LiteralPath $workspaceRootPath)) {
+    continue
+  }
+
+  foreach ($workspace in Get-ChildItem -LiteralPath $workspaceRootPath -Directory -Force) {
+    $workspaceNodeModules = Join-Path $workspace.FullName "node_modules"
+    if (-not (Test-Path -LiteralPath $workspaceNodeModules)) {
+      continue
+    }
+
+    $relativePath = Join-Path $workspaceRoot (Join-Path $workspace.Name "node_modules")
+    $linkSpecs += @{
+      RelativePath = $relativePath
+      SourcePath = $workspaceNodeModules
+      Kind = "Directory"
+    }
+  }
+}
 
 $worktrees = @(Get-WorktreePaths -CanonicalRepo $canonicalRoot -WorktreeRoot $worktreeRootPath)
 
