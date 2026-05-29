@@ -448,3 +448,18 @@ read-only continuity visibility. It does not add schema, payment actions,
 provider calls, webhook behavior, invoice lifecycle changes, portal billing
 state, accounting integration, tax behavior, reminder automation, or duplicate
 financial models.
+
+## 15. Implementation Note - Financials Command Center Continuity
+
+The third read-only implementation slice hardens `/financials` as the Financials
+Home command center by adding a compact continuity map over the already loaded
+Financial Control and Collections Command Center read models. The map routes
+users into Accounts Receivable, Payments, Invoices, Projects, Customers, and
+Progress Billing with open balance, priority, Payment Trail, project handoff,
+customer exposure, retained amount, and progress-billing snippets.
+
+This is navigation and review clarity only. It does not add financial schema,
+payment actions, checkout creation, provider calls, webhook behavior, invoice
+lifecycle changes, portal-owned billing state, accounting integration, tax
+behavior, readiness enforcement, duplicate ledgers, customer-financial records,
+or AR-specific financial state.
