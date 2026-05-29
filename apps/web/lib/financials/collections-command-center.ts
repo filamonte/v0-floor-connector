@@ -6,6 +6,8 @@ import type {
 
 export type CollectionsCommandCenterTone = "neutral" | "attention" | "warning";
 
+export type CollectionsPriorityBand = "urgent" | "attention" | "monitoring";
+
 export type CollectionsPrioritySignal =
   | "failed_payment"
   | "voided_payment"
@@ -18,6 +20,13 @@ export type CollectionsPrioritySignal =
   | "progress_billing"
   | "customer_exposure"
   | "stale_activity";
+
+export type CollectionsLatestPaymentSignal = {
+  eventType: FinancialControlPaymentEventInput["eventType"];
+  label: string;
+  occurredAt: string;
+  historyCount: number;
+};
 
 export type CollectionsPriorityItem = {
   id: string;
@@ -32,12 +41,14 @@ export type CollectionsPriorityItem = {
   projectHref: string | null;
   balanceDueAmount: string;
   priorityScore: number;
+  priorityBand: CollectionsPriorityBand;
   tone: CollectionsCommandCenterTone;
   reason: string;
   nextAction: string;
   dueSignal: string;
   lastActivityAt: string;
   latestPaymentEventType: string | null;
+  latestPaymentSignal: CollectionsLatestPaymentSignal | null;
   signals: CollectionsPrioritySignal[];
 };
 
@@ -195,6 +206,51 @@ function latestForInvoice<T extends { invoiceId?: string | null }>(
 
       return rightDate.localeCompare(leftDate);
     })[0];
+}
+
+function paymentEventLabel(
+  eventType: FinancialControlPaymentEventInput["eventType"]
+) {
+  switch (eventType) {
+    case "payment_requested":
+      return "Payment requested";
+    case "checkout_started":
+      return "Checkout started";
+    case "payment_failed":
+      return "Payment failed";
+    case "payment_voided":
+      return "Payment voided";
+    case "provider_sync":
+      return "Provider sync";
+  }
+}
+
+function listPaymentSignalsForInvoice(input: {
+  invoiceId: string;
+  paymentEvents: FinancialControlPaymentEventInput[];
+}) {
+  return input.paymentEvents
+    .filter((event) => event.invoiceId === input.invoiceId)
+    .sort((left, right) => right.occurredAt.localeCompare(left.occurredAt));
+}
+
+function buildLatestPaymentSignal(input: {
+  invoiceId: string;
+  paymentEvents: FinancialControlPaymentEventInput[];
+}): CollectionsLatestPaymentSignal | null {
+  const events = listPaymentSignalsForInvoice(input);
+  const latestEvent = events[0];
+
+  if (!latestEvent) {
+    return null;
+  }
+
+  return {
+    eventType: latestEvent.eventType,
+    label: paymentEventLabel(latestEvent.eventType),
+    occurredAt: latestEvent.occurredAt,
+    historyCount: events.length
+  };
 }
 
 function getLatestActivity(input: {
@@ -394,6 +450,32 @@ function getNextAction(signals: CollectionsPrioritySignal[]) {
   return "Review invoice";
 }
 
+function getPriorityBand(input: {
+  priorityScore: number;
+  signals: CollectionsPrioritySignal[];
+}): CollectionsPriorityBand {
+  if (
+    input.signals.includes("failed_payment") ||
+    input.signals.includes("voided_payment") ||
+    input.priorityScore >= 85
+  ) {
+    return "urgent";
+  }
+
+  if (
+    input.signals.includes("overdue") ||
+    input.signals.includes("pending_checkout") ||
+    input.signals.includes("pending_payment") ||
+    input.signals.includes("unpaid_deposit") ||
+    input.signals.includes("partially_paid") ||
+    input.priorityScore >= 35
+  ) {
+    return "attention";
+  }
+
+  return "monitoring";
+}
+
 function buildPriorityItems(input: {
   invoices: FinancialControlInvoiceInput[];
   payments: FinancialControlPaymentInput[];
@@ -404,11 +486,10 @@ function buildPriorityItems(input: {
   return input.invoices
     .filter(isOpenReceivable)
     .map((invoice) => {
-      const latestEvent = latestForInvoice(
-        invoice.id,
-        input.paymentEvents,
-        (event) => event.occurredAt
-      );
+      const latestPaymentSignal = buildLatestPaymentSignal({
+        invoiceId: invoice.id,
+        paymentEvents: input.paymentEvents
+      });
       const latestPayment = latestForInvoice(
         invoice.id,
         input.payments,
@@ -431,20 +512,20 @@ function buildPriorityItems(input: {
       const signals: CollectionsPrioritySignal[] = [];
       let priorityScore = 0;
 
-      if (latestEvent?.eventType === "payment_failed") {
+      if (latestPaymentSignal?.eventType === "payment_failed") {
         signals.push("failed_payment");
         priorityScore += 90;
       }
 
-      if (latestEvent?.eventType === "payment_voided") {
+      if (latestPaymentSignal?.eventType === "payment_voided") {
         signals.push("voided_payment");
         priorityScore += 85;
       }
 
       if (
-        latestEvent &&
+        latestPaymentSignal &&
         pendingEventTypes.some(
-          (eventType) => eventType === latestEvent.eventType
+          (eventType) => eventType === latestPaymentSignal.eventType
         )
       ) {
         signals.push("pending_checkout");
@@ -492,6 +573,8 @@ function buildPriorityItems(input: {
         priorityScore += 12;
       }
 
+      const priorityBand = getPriorityBand({ priorityScore, signals });
+
       return {
         id: `collections-priority-${invoice.id}`,
         invoiceId: invoice.id,
@@ -508,6 +591,7 @@ function buildPriorityItems(input: {
             : null,
         balanceDueAmount: money(invoice.balanceDueAmount),
         priorityScore,
+        priorityBand,
         tone:
           priorityScore >= 85
             ? "warning"
@@ -518,7 +602,8 @@ function buildPriorityItems(input: {
         nextAction: getNextAction(signals),
         dueSignal: getDueSignal(invoice, input.todayIso),
         lastActivityAt: lastActivityAt || invoice.updatedAt,
-        latestPaymentEventType: latestEvent?.eventType ?? null,
+        latestPaymentEventType: latestPaymentSignal?.eventType ?? null,
+        latestPaymentSignal,
         signals
       } satisfies CollectionsPriorityItem;
     })
