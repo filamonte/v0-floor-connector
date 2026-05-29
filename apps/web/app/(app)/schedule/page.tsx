@@ -16,6 +16,7 @@ import { ManagerDashboardCard } from "@/components/manager-dashboard-card";
 import { ScheduleCrewAssignmentForm } from "@/components/schedule-crew-assignment-form";
 import {
   ScheduleJobActionLinks,
+  ScheduleFieldHandoffPanel,
   ScheduleNotesPreview,
   ScheduleOperationalIndicators,
   ScheduleSelectedJobPanelSummary,
@@ -49,6 +50,7 @@ import {
   type ScheduleLayoutKey,
   type ScheduleViewKey
 } from "@/lib/schedule/links";
+import { listScheduleFieldHandoffsByJobIds } from "@/lib/schedule/field-handoff-data";
 import {
   buildScheduleBoardReadModel,
   buildScheduleItems,
@@ -1411,6 +1413,16 @@ export default async function SchedulePage({
       isUpcoming
     };
   });
+  const fieldHandoffsByJobId = await listScheduleFieldHandoffsByJobIds({
+    jobs: jobsWithAssignments.map((job) => ({
+      id: job.id,
+      projectId: job.projectId,
+      scheduledDate: job.scheduledDate,
+      dispatchStatus: job.dispatchStatus,
+      assignmentCount: job.assignmentCount
+    })),
+    todayDateKey
+  });
   const projectReadinessByProjectId =
     await getDashboardProjectFinancialReadinessSummaries({
       organizationId: organizationContext.organization.id,
@@ -1558,6 +1570,9 @@ export default async function SchedulePage({
         todayDateKey
       })
     : [];
+  const selectedJobFieldHandoff = selectedJob
+    ? (fieldHandoffsByJobId.get(selectedJob.id) ?? null)
+    : null;
   const selectedJobNeedsScheduleBeforeCrew =
     selectedAction === "assign" &&
     selectedJob?.dispatchStatus === "unscheduled";
@@ -4370,6 +4385,7 @@ export default async function SchedulePage({
                       warnings: jobWarnings,
                       todayDateKey
                     });
+                  const fieldHandoff = fieldHandoffsByJobId.get(job.id);
 
                   return (
                     <div key={job.id} className="px-5 py-4 sm:px-6">
@@ -4421,6 +4437,14 @@ export default async function SchedulePage({
                           <ScheduleOperationalIndicators
                             indicators={operationalIndicators}
                           />
+                          {fieldHandoff ? (
+                            <div className="mt-3">
+                              <ScheduleFieldHandoffPanel
+                                handoff={fieldHandoff}
+                                compact
+                              />
+                            </div>
+                          ) : null}
                           <ScheduleNotesPreview notes={job.scheduleNotes} />
                           <ScheduleWarningBadges warnings={jobWarnings} />
                         </div>
@@ -4569,6 +4593,9 @@ export default async function SchedulePage({
                   logDate: selectedJob.scheduledDate
                 })}
               />
+              {selectedJobFieldHandoff ? (
+                <ScheduleFieldHandoffPanel handoff={selectedJobFieldHandoff} />
+              ) : null}
               {selectedJobCrewState ? (
                 <div className="rounded-[6px] border border-[var(--border-warm)] bg-white px-4 py-3 text-sm leading-6 text-[var(--text-secondary)]">
                   <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--text-secondary)]">

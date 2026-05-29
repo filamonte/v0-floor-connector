@@ -585,6 +585,13 @@ file` actions without exposing raw storage paths. This remains contractor-only
   come from existing job assignment people/vendors and remain advisory only.
   The slice adds no dispatch model, schema, route optimization, map integration,
   notification automation, portal sharing, or new schedule write path.
+- Scheduling / Field handoff visibility now adds a read-only Field handoff
+  layer to `/schedule`. It derives scheduled-day Daily Log presence, open
+  blocker/issue counts, field-note totals, same-day and open time-card counts,
+  latest field activity, crew presence, and Job / Project / Daily Log / Field
+  queue links from existing canonical records. It does not create dispatch
+  state, field tasks, issue tables, mobile-only records, server actions, schema,
+  notifications, portal exposure, or schedule/field mutations.
 - Scheduling Capability Wave v1 planning is documented in
   [docs/design/scheduling-capability-wave-v1.md](C:/FloorConnector/docs/design/scheduling-capability-wave-v1.md).
   It recommends CrewBoard maturity work over the existing canonical

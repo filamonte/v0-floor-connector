@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import type { ScheduleFieldHandoffSummary } from "@/lib/schedule/field-handoff-read-model";
 import type { ScheduleWarningSummary } from "@/lib/schedule/warnings";
 
 const scheduleSecondaryActionToneClassName =
@@ -121,6 +122,125 @@ export function ScheduleNotesPreview(input: { notes: string | null }) {
     <p className="mt-2 line-clamp-2 text-sm leading-6 text-[var(--text-secondary)]">
       Schedule notes: {notes}
     </p>
+  );
+}
+
+function formatStatusLabel(value: string) {
+  return value.replaceAll("_", " ");
+}
+
+function formatFieldActivityDate(value: string | null) {
+  if (!value) {
+    return "No field activity yet";
+  }
+
+  return new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit"
+  }).format(new Date(value));
+}
+
+export function ScheduleFieldHandoffPanel(input: {
+  handoff: ScheduleFieldHandoffSummary;
+  compact?: boolean;
+}) {
+  const statClassName =
+    "rounded-[4px] border border-[var(--border-warm)] bg-white px-3 py-2";
+  const actionClassName =
+    "inline-flex items-center rounded-[4px] border px-2.5 py-1.5 text-xs font-semibold uppercase tracking-[0.14em] transition";
+
+  return (
+    <div
+      className={[
+        "rounded-[6px] border px-3 py-3 text-sm leading-6",
+        getIndicatorClassName(input.handoff.tone)
+      ].join(" ")}
+    >
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.16em]">
+            Field handoff
+          </p>
+          <p className="mt-1 font-semibold">{input.handoff.label}</p>
+          <p className="mt-1">{input.handoff.detail}</p>
+        </div>
+        <Link
+          href={input.handoff.dailyLogHref}
+          className={`${actionClassName} ${scheduleSecondaryActionToneClassName}`}
+        >
+          {input.handoff.dailyLog ? "Open Daily Log" : "Start Daily Log"}
+        </Link>
+      </div>
+
+      <div
+        className={[
+          "mt-3 grid gap-2",
+          input.compact ? "sm:grid-cols-2" : "sm:grid-cols-4"
+        ].join(" ")}
+      >
+        <div className={statClassName}>
+          <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--text-tertiary)]">
+            Crew
+          </p>
+          <p className="mt-1 font-semibold text-[var(--text-primary)]">
+            {input.handoff.hasCrewAssigned ? "Assigned" : "Missing"}
+          </p>
+        </div>
+        <div className={statClassName}>
+          <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--text-tertiary)]">
+            Daily Log
+          </p>
+          <p className="mt-1 font-semibold text-[var(--text-primary)]">
+            {input.handoff.dailyLog
+              ? formatStatusLabel(input.handoff.dailyLog.status)
+              : "Not started"}
+          </p>
+        </div>
+        <div className={statClassName}>
+          <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--text-tertiary)]">
+            Blockers
+          </p>
+          <p className="mt-1 font-semibold text-[var(--text-primary)]">
+            {input.handoff.openBlockerCount} open
+          </p>
+        </div>
+        <div className={statClassName}>
+          <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--text-tertiary)]">
+            Time
+          </p>
+          <p className="mt-1 font-semibold text-[var(--text-primary)]">
+            {input.handoff.targetDateTimeCardCount} card
+            {input.handoff.targetDateTimeCardCount === 1 ? "" : "s"}
+            {input.handoff.openTimeCardCount > 0
+              ? ` / ${input.handoff.openTimeCardCount} open`
+              : ""}
+          </p>
+        </div>
+      </div>
+
+      <div className="mt-3 flex flex-wrap items-center gap-2">
+        <span className="text-xs font-medium text-[var(--text-secondary)]">
+          Latest activity:{" "}
+          {formatFieldActivityDate(input.handoff.latestFieldActivityAt)}
+        </span>
+        <Link href={input.handoff.jobHref} className={actionClassName}>
+          Job
+        </Link>
+        <Link href={input.handoff.projectHref} className={actionClassName}>
+          Project
+        </Link>
+        <Link href={input.handoff.fieldWorkHref} className={actionClassName}>
+          Field queue
+        </Link>
+        {input.handoff.openBlockerCount > 0 ? (
+          <Link href={input.handoff.blockerHref} className={actionClassName}>
+            Blockers
+          </Link>
+        ) : null}
+      </div>
+    </div>
   );
 }
 
