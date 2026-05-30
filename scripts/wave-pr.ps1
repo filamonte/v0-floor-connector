@@ -7,10 +7,13 @@ param(
   [string]$Rollback = "",
   [switch]$Ready,
   [switch]$SkipLabels,
+  [switch]$AllowUpdateExistingPr,
   [string]$Base = "main"
 )
 
 $ErrorActionPreference = "Stop"
+. (Join-Path $PSScriptRoot "lib\wave-pr-guards.ps1")
+
 $repo = (git rev-parse --show-toplevel).Trim()
 $branch = (git -C $repo branch --show-current).Trim()
 
@@ -39,10 +42,40 @@ if ($dirty) {
   }
 }
 
+$prDrift = Get-WavePullRequestDrift -Repo $repo -Branch $branch
+if ($prDrift.HasPullRequest) {
+  if ($prDrift.Status -eq "ok") {
+    Write-Host "Open PR already exists and local HEAD matches the PR head:"
+    Write-Host ("  PR #{0}: {1}" -f $prDrift.PullRequestNumber, $prDrift.PullRequestUrl)
+    Write-Host "No duplicate PR was created. No merge, auto-merge, ready-for-review transition, branch deletion, or worktree deletion was performed."
+    exit 0
+  }
+
+  if (-not $AllowUpdateExistingPr) {
+    Write-WavePullRequestDriftWarning -Drift $prDrift
+    Write-Host ""
+    Write-Host "Refusing to push or update the existing PR by default." -ForegroundColor Yellow
+    Write-Host "Next steps:"
+    Write-Host "  - Leave the draft PR untouched if these local commits are unrelated."
+    Write-Host "  - Create a new branch/PR for later work."
+    Write-Host "  - Re-run with -AllowUpdateExistingPr only when intentionally updating this PR."
+    Write-Host "  - Reconcile/reset carefully after the current PR is merged if needed."
+    exit 0
+  }
+
+  Write-WavePullRequestDriftWarning -Drift $prDrift
+  Write-Host ""
+  Write-Host "AllowUpdateExistingPr was supplied; pushing current branch to update existing PR #$($prDrift.PullRequestNumber)." -ForegroundColor Yellow
+}
+
 $upstream = git -C $repo rev-parse --abbrev-ref --symbolic-full-name "@{upstream}" 2>$null
 if ($LASTEXITCODE -ne 0 -or -not $upstream) {
   Write-Host "No upstream configured for $branch." -ForegroundColor Yellow
-  $push = Read-Host "Push with -u origin $branch before opening the PR? Type YES to push"
+  $push = if ($prDrift.HasPullRequest -and $AllowUpdateExistingPr) {
+    "YES"
+  } else {
+    Read-Host "Push with -u origin $branch before opening the PR? Type YES to push"
+  }
   if ($push -eq "YES") {
     git -C $repo push -u origin $branch
     if ($LASTEXITCODE -ne 0) {
@@ -53,6 +86,19 @@ if ($LASTEXITCODE -ne 0 -or -not $upstream) {
     Write-Host "Manual PR setup required because the branch has no upstream:"
     Write-Host "  git push -u origin $branch"
   }
+}
+
+if ($prDrift.HasPullRequest -and $AllowUpdateExistingPr) {
+  git -C $repo push
+  if ($LASTEXITCODE -ne 0) {
+    throw "git push failed while updating PR #$($prDrift.PullRequestNumber)."
+  }
+
+  Write-Host ""
+  Write-Host "Existing PR updated:"
+  Write-Host ("  PR #{0}: {1}" -f $prDrift.PullRequestNumber, $prDrift.PullRequestUrl)
+  Write-Host "No duplicate PR was created. No ready-for-review transition, merge, auto-merge, branch deletion, or worktree deletion was performed."
+  exit 0
 }
 
 $filesChanged = git -C $repo diff --name-only "$Base...HEAD" 2>$null

@@ -11,10 +11,13 @@ Paste this into a GitHub PR comment when requesting Codex review:
 1. Open the PR as a draft unless a human has explicitly confirmed readiness.
 2. Add the review request text above as a PR comment or include it in the PR
    body.
-3. Read Codex comments as advisory findings, not merge approval.
-4. Ask Codex to fix specific review comments only after a human decides the
+3. Verify the open PR diff matches the intended wave. Watch for local branch
+   drift where follow-up commits exist locally but are not yet in the draft PR
+   head.
+4. Read Codex comments as advisory findings, not merge approval.
+5. Ask Codex to fix specific review comments only after a human decides the
    requested fixes are in scope.
-5. Keep the PR in draft until validation and human confirmation are complete.
+6. Keep the PR in draft until validation and human confirmation are complete.
 
 Human review remains the final gate. Codex review is advisory and must not be
 treated as approval to merge.
