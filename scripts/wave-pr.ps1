@@ -6,10 +6,15 @@ param(
   [string]$Risks = "",
   [string]$Rollback = "",
   [switch]$Ready,
+  [switch]$SkipLabels,
+  [switch]$AllowUpdateExistingPr,
   [string]$Base = "main"
 )
 
 $ErrorActionPreference = "Stop"
+. (Join-Path $PSScriptRoot "lib\wave-pr-guards.ps1")
+. (Join-Path $PSScriptRoot "lib\dev-tool-paths.ps1")
+
 $repo = (git rev-parse --show-toplevel).Trim()
 $branch = (git -C $repo branch --show-current).Trim()
 
@@ -38,10 +43,40 @@ if ($dirty) {
   }
 }
 
+$prDrift = Get-WavePullRequestDrift -Repo $repo -Branch $branch
+if ($prDrift.HasPullRequest) {
+  if ($prDrift.Status -eq "ok") {
+    Write-Host "Open PR already exists and local HEAD matches the PR head:"
+    Write-Host ("  PR #{0}: {1}" -f $prDrift.PullRequestNumber, $prDrift.PullRequestUrl)
+    Write-Host "No duplicate PR was created. No merge, auto-merge, ready-for-review transition, branch deletion, or worktree deletion was performed."
+    exit 0
+  }
+
+  if (-not $AllowUpdateExistingPr) {
+    Write-WavePullRequestDriftWarning -Drift $prDrift
+    Write-Host ""
+    Write-Host "Refusing to push or update the existing PR by default." -ForegroundColor Yellow
+    Write-Host "Next steps:"
+    Write-Host "  - Leave the draft PR untouched if these local commits are unrelated."
+    Write-Host "  - Create a new branch/PR for later work."
+    Write-Host "  - Re-run with -AllowUpdateExistingPr only when intentionally updating this PR."
+    Write-Host "  - Reconcile/reset carefully after the current PR is merged if needed."
+    exit 0
+  }
+
+  Write-WavePullRequestDriftWarning -Drift $prDrift
+  Write-Host ""
+  Write-Host "AllowUpdateExistingPr was supplied; pushing current branch to update existing PR #$($prDrift.PullRequestNumber)." -ForegroundColor Yellow
+}
+
 $upstream = git -C $repo rev-parse --abbrev-ref --symbolic-full-name "@{upstream}" 2>$null
 if ($LASTEXITCODE -ne 0 -or -not $upstream) {
   Write-Host "No upstream configured for $branch." -ForegroundColor Yellow
-  $push = Read-Host "Push with -u origin $branch before opening the PR? Type YES to push"
+  $push = if ($prDrift.HasPullRequest -and $AllowUpdateExistingPr) {
+    "YES"
+  } else {
+    Read-Host "Push with -u origin $branch before opening the PR? Type YES to push"
+  }
   if ($push -eq "YES") {
     git -C $repo push -u origin $branch
     if ($LASTEXITCODE -ne 0) {
@@ -52,6 +87,19 @@ if ($LASTEXITCODE -ne 0 -or -not $upstream) {
     Write-Host "Manual PR setup required because the branch has no upstream:"
     Write-Host "  git push -u origin $branch"
   }
+}
+
+if ($prDrift.HasPullRequest -and $AllowUpdateExistingPr) {
+  git -C $repo push
+  if ($LASTEXITCODE -ne 0) {
+    throw "git push failed while updating PR #$($prDrift.PullRequestNumber)."
+  }
+
+  Write-Host ""
+  Write-Host "Existing PR updated:"
+  Write-Host ("  PR #{0}: {1}" -f $prDrift.PullRequestNumber, $prDrift.PullRequestUrl)
+  Write-Host "No duplicate PR was created. No ready-for-review transition, merge, auto-merge, branch deletion, or worktree deletion was performed."
+  exit 0
 }
 
 $filesChanged = git -C $repo diff --name-only "$Base...HEAD" 2>$null
@@ -110,9 +158,10 @@ $draftNote
 No automatic merge, auto-merge, ready-for-review transition, branch deletion, or worktree deletion is authorized by this PR.
 "@
 
-$gh = Get-Command gh -ErrorAction SilentlyContinue
-if (-not $gh) {
+$ghPath = Resolve-DevToolCommand -Name "gh"
+if (-not $ghPath) {
   Write-Host "GitHub CLI is not installed or not on PATH." -ForegroundColor Yellow
+  Get-GitHubCliInstallGuidance | ForEach-Object { Write-Host $_ }
   Write-Host ""
   Write-Host "Create this PR manually in GitHub:"
   Write-Host "- Base: $Base"
@@ -124,7 +173,7 @@ if (-not $gh) {
   exit 0
 }
 
-gh auth status 1>$null 2>$null
+& $ghPath auth status 1>$null 2>$null
 if ($LASTEXITCODE -ne 0) {
   Write-Host "GitHub CLI is not authenticated." -ForegroundColor Yellow
   Write-Host ""
@@ -147,7 +196,7 @@ try {
     $args += "--draft"
   }
 
-  $prUrl = gh @args
+  $prUrl = & $ghPath @args
   if ($LASTEXITCODE -ne 0) {
     throw "gh pr create failed."
   }
@@ -155,14 +204,34 @@ try {
   Write-Host ""
   Write-Host "PR created:"
   Write-Host $prUrl
-  Write-Host ""
-  Write-Host "Labels are best-effort:"
-  foreach ($label in @("codex", "wave", "needs-verification")) {
-    gh pr edit $prUrl --add-label $label 1>$null 2>$null
-    if ($LASTEXITCODE -eq 0) {
-      Write-Host "  added $label"
-    } else {
-      Write-Host "  could not add $label" -ForegroundColor Yellow
+
+  if ($SkipLabels) {
+    Write-Host ""
+    Write-Host "Skipping label application by request."
+  } else {
+    Write-Host ""
+    Write-Host "Labels are best-effort:"
+    foreach ($label in @("codex", "wave", "needs-verification")) {
+      $labelOutput = $null
+      $labelExitCode = 0
+
+      try {
+        $labelOutput = & $ghPath pr edit $prUrl --add-label $label 2>&1
+        $labelExitCode = $LASTEXITCODE
+      } catch {
+        $labelExitCode = 1
+        $labelOutput = $_.Exception.Message
+      }
+
+      if ($labelExitCode -eq 0) {
+        Write-Host "  added $label"
+      } else {
+        $labelMessage = ($labelOutput | Out-String).Trim()
+        if (-not $labelMessage) {
+          $labelMessage = "gh pr edit exited with code $labelExitCode"
+        }
+        Write-Host "  warning: could not add $label - $labelMessage" -ForegroundColor Yellow
+      }
     }
   }
 
@@ -173,4 +242,3 @@ try {
 } finally {
   Remove-Item -LiteralPath $bodyFile -Force -ErrorAction SilentlyContinue
 }
-
