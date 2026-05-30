@@ -20,10 +20,12 @@ import {
   ScheduleJobActionLinks,
   ScheduleNotesPreview,
   ScheduleOperationalIndicators,
+  ScheduleResourceLoadPanel,
   ScheduleSelectedJobPanelSummary,
   ScheduleWarningBadges,
   ScheduleWarningDetails,
-  type ScheduleOperationalIndicator
+  type ScheduleOperationalIndicator,
+  type ScheduleResourceLoadPanelItem
 } from "@/components/schedule-crewboard-presentational";
 import { ScheduleJobForm } from "@/components/schedule-job-form";
 import { WorkspaceComposerSheet } from "@/components/workspace-composer-sheet";
@@ -66,6 +68,7 @@ import {
   formatDropTargetLabel
 } from "@/lib/schedule/proposed-move";
 import {
+  deriveScheduleResourceLoadSummaries,
   deriveScheduleWarningSummaries,
   type ScheduleWarningSummary
 } from "@/lib/schedule/warnings";
@@ -1429,26 +1432,28 @@ export default async function SchedulePage({
       organizationId: organizationContext.organization.id,
       projectIds: jobsWithAssignments.map((job) => job.projectId)
     });
-  const scheduleWarningSummaries = deriveScheduleWarningSummaries(
-    jobsWithAssignments.map((job) => ({
-      id: job.id,
-      title: getScheduleJobTitle(job),
-      dispatchStatus: job.dispatchStatus,
-      scheduledDate: job.scheduledDate,
-      scheduledStartAt: job.scheduledStartAt,
-      scheduledEndAt: job.scheduledEndAt,
-      crewVendorId: job.crewVendorId,
-      crewVendor: job.crewVendor,
-      assignments: job.assignments.map((assignment) => ({
-        personId: assignment.personId,
-        vendorId: assignment.vendorId,
-        person: assignment.person
-          ? { displayName: assignment.person.displayName }
-          : null,
-        vendor: assignment.vendor ? { name: assignment.vendor.name } : null
-      }))
+  const scheduleWarningJobs = jobsWithAssignments.map((job) => ({
+    id: job.id,
+    title: getScheduleJobTitle(job),
+    dispatchStatus: job.dispatchStatus,
+    scheduledDate: job.scheduledDate,
+    scheduledStartAt: job.scheduledStartAt,
+    scheduledEndAt: job.scheduledEndAt,
+    crewVendorId: job.crewVendorId,
+    crewVendor: job.crewVendor,
+    assignments: job.assignments.map((assignment) => ({
+      personId: assignment.personId,
+      vendorId: assignment.vendorId,
+      person: assignment.person
+        ? { displayName: assignment.person.displayName }
+        : null,
+      vendor: assignment.vendor ? { name: assignment.vendor.name } : null
     }))
-  );
+  }));
+  const scheduleWarningSummaries =
+    deriveScheduleWarningSummaries(scheduleWarningJobs);
+  const scheduleResourceLoadSummaries =
+    deriveScheduleResourceLoadSummaries(scheduleWarningJobs);
   const scheduleWarningsByJobId = new Map(
     scheduleWarningSummaries.map((summary) => [summary.jobId, summary.warnings])
   );
@@ -1665,6 +1670,43 @@ export default async function SchedulePage({
     (total, summary) => total + summary.warnings.length,
     0
   );
+  const visibleScheduleResourceLoadItems = scheduleResourceLoadSummaries
+    .map((load) => {
+      const loadJobs = load.jobIds
+        .map((jobId) => visibleJobsById.get(jobId))
+        .filter((job): job is NonNullable<typeof job> => Boolean(job));
+
+      if (loadJobs.length < 2) {
+        return null;
+      }
+
+      const tone: ScheduleResourceLoadPanelItem["tone"] =
+        load.hasOverlap || load.hasIncompleteTiming ? "warning" : "neutral";
+
+      return {
+        id: load.id,
+        dateLabel: formatDate(load.dateKey),
+        resourceLabel: load.resourceLabel,
+        jobCount: load.jobCount,
+        detail: load.hasOverlap
+          ? "This person or labor-provider vendor has overlapping scheduled windows."
+          : load.hasIncompleteTiming
+            ? "This person or labor-provider vendor appears on multiple jobs and at least one job needs complete timing."
+            : "This person or labor-provider vendor appears on multiple jobs for the same day.",
+        tone,
+        jobs: loadJobs.map((job) => ({
+          id: job.id,
+          title: getScheduleJobTitle(job),
+          href:
+            buildCurrentScheduleHref({
+              action: getPrimaryScheduleAction(job).action,
+              jobId: job.id
+            }) + "#schedule-action"
+        }))
+      };
+    })
+    .filter((item): item is NonNullable<typeof item> => item !== null)
+    .slice(0, 6);
   const visibleAppointments = appointments.filter((appointment) => {
     const appointmentDateKey = new Date(appointment.startsAt)
       .toISOString()
@@ -3145,6 +3187,34 @@ export default async function SchedulePage({
                 />
               </div>
             )}
+          </section>
+
+          <section className={schedulePanelClassName}>
+            <div className={schedulePanelHeaderClassName}>
+              <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                <div className="min-w-0">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
+                    Resource load
+                  </p>
+                  <h2 className="mt-1 text-lg font-semibold tracking-tight text-[var(--text-primary)]">
+                    Crew load review
+                  </h2>
+                  <p className="mt-1 text-sm leading-6 text-[var(--text-secondary)]">
+                    Review repeated person and labor-provider assignments from
+                    the current filtered jobs. These are advisory signals only;
+                    crew changes still use the existing job assignment action.
+                  </p>
+                </div>
+                <span className="inline-flex items-center rounded-full border border-[var(--border-warm)] bg-white px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--text-primary)]">
+                  {visibleScheduleResourceLoadItems.length} load signals
+                </span>
+              </div>
+            </div>
+            <div className="px-5 py-4 sm:px-6">
+              <ScheduleResourceLoadPanel
+                items={visibleScheduleResourceLoadItems}
+              />
+            </div>
           </section>
 
           <section className="grid gap-4 xl:auto-rows-fr xl:grid-cols-2">

@@ -22,6 +22,20 @@ export type ScheduleDispatchBoardLayoutOption = {
   active: boolean;
 };
 
+export type ScheduleResourceLoadPanelItem = {
+  id: string;
+  dateLabel: string;
+  resourceLabel: string;
+  jobCount: number;
+  detail: string;
+  tone: "warning" | "neutral";
+  jobs: Array<{
+    id: string;
+    title: string;
+    href: string;
+  }>;
+};
+
 function getIndicatorClassName(tone: ScheduleOperationalIndicator["tone"]) {
   switch (tone) {
     case "ready":
@@ -228,6 +242,60 @@ export function ScheduleNotesPreview(input: { notes: string | null }) {
     <p className="mt-2 line-clamp-2 text-sm leading-6 text-[var(--text-secondary)]">
       Schedule notes: {notes}
     </p>
+  );
+}
+
+export function ScheduleResourceLoadPanel(input: {
+  items: ScheduleResourceLoadPanelItem[];
+}) {
+  if (input.items.length === 0) {
+    return (
+      <div className="rounded-[6px] border border-[var(--border-warm)] bg-white px-4 py-3 text-sm leading-6 text-[var(--text-secondary)]">
+        No repeated person or labor-provider load found in the current filtered
+        schedule.
+      </div>
+    );
+  }
+
+  return (
+    <div className="grid gap-3 lg:grid-cols-2">
+      {input.items.map((item) => (
+        <div
+          key={item.id}
+          className={[
+            "rounded-[6px] border px-4 py-3 text-sm leading-6",
+            item.tone === "warning"
+              ? "border-amber-200 bg-amber-50 text-amber-900"
+              : "border-[var(--border-warm)] bg-white text-[var(--text-secondary)]"
+          ].join(" ")}
+        >
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+            <div className="min-w-0">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.16em]">
+                {item.dateLabel}
+              </p>
+              <p className="mt-1 font-semibold">{item.resourceLabel}</p>
+              <p className="mt-1">{item.detail}</p>
+            </div>
+            <span className="inline-flex shrink-0 items-center rounded-full border border-current px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em]">
+              {item.jobCount} jobs
+            </span>
+          </div>
+
+          <div className="mt-3 flex flex-wrap gap-2">
+            {item.jobs.map((job) => (
+              <Link
+                key={job.id}
+                href={job.href}
+                className="inline-flex items-center rounded-[4px] border border-current px-2.5 py-1.5 text-xs font-semibold uppercase tracking-[0.14em] transition hover:opacity-80"
+              >
+                {job.title}
+              </Link>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
   );
 }
 
