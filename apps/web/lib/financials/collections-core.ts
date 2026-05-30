@@ -3,6 +3,7 @@ import type { InvoiceStatus, InvoiceWorkflowRole } from "@floorconnector/types";
 export type FinancialCollectionsEventType =
   | "payment_requested"
   | "checkout_started"
+  | "payment_succeeded"
   | "payment_failed"
   | "payment_voided"
   | "provider_sync";
@@ -205,4 +206,3 @@ export function buildFinancialCollectionsSummary(input: {
     })
   };
 }
-

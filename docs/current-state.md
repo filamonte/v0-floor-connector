@@ -1042,17 +1042,21 @@ Implemented now:
   - deterministic Financial Control Next Move
   - command-center signals for overdue AR, unpaid deposits, Payment Trail review,
     retained amounts, and open progress-billing balances
+  - continuity-map links into Accounts Receivable, Payments, Invoices,
+    Projects, Customers, and Progress Billing using the same read-only
+    Financial Control and Collections Command Center signals
   - overdue invoices, pending checkout activity, project collection attention,
     and Payment Trail attention
   - collection-opportunity links into canonical Invoice Workspaces
 - Financials Home now uses the shared Financial Control read model to surface a
   contractor finance command-center layer across AR, deposits, retained amounts,
   SOV/progress-billing invoices, pending payment activity, failed/voided payment
-  events, and customer-facing collection signals. These are read-only derived
-  signals over canonical invoices, payments, and payment events; each route
-  returns the user to the owning Invoice, Payments, Progress Billing, AR, or
+  events, project collection pressure, customer exposure, and customer-facing
+  collection signals. These are read-only derived signals over canonical
+  invoices, payments, and payment events; each route returns the user to the
+  owning Invoice, Payments, Progress Billing, AR, Project, Customer, or
   Accounting Readiness workspace.
-- `/financials/accounts-receivable` is now a read-only AR workspace over canonical invoices, payments, and immutable payment events, with command-center summary cards, a scored "needs attention first" priority queue, customer exposure rollups, aging buckets, collection queues, invoice-level Next Move labels, project links, pending checkout visibility, stale pending-payment visibility, recent recorded-payment continuity, and failed/voided/in-progress Payment Trail review
+- `/financials/accounts-receivable` is now a read-only AR Control Room over canonical invoices, payments, and immutable payment events, with command-center summary cards for open AR balance, urgent/attention count, active deposits, Payment Trail issues, and recent successful payment activity; invoice status counts; operational continuity lanes for open balances, collection attention, deposit readiness, payment-in-progress, payment-event review, and recently settled continuity; a scored priority queue grouped into urgent, attention, and monitoring bands with invoice status, workflow role, due/balance context, customer/project links, and compact latest Payment Trail signal context; a deposit continuity lane that distinguishes open, in-progress, settled, and void deposit-role invoices without creating a separate deposit model; customer exposure rollups; aging buckets; collection queues; invoice-level Next Move labels; project links; pending checkout visibility; stale pending-payment visibility; recent recorded-payment continuity; and failed/voided/in-progress/success Payment Trail review
 - Collections Follow-Up Intelligence now deepens `/financials/accounts-receivable` with a deterministic read model over those same canonical invoices, payments, and payment events. It categorizes overdue invoices, unpaid deposits, sent-unpaid balances, partially paid balances, payment-in-progress states, failed/voided payment attempts, and internal-review cases; shows source-record reasons, payment state, amount due, recommended next step, and canonical invoice/project/customer links; and exposes review-first Copilot draft handoffs only when AI drafting controls allow them.
 - The AR Collections Command Center priority engine is derived only from canonical receivable balances, due dates, workflow roles, Payment Trail events, pending/recorded payments, retainage snapshots, progress-billing markers, stale activity, and customer-level outstanding totals. It does not create a customer financial model, AR ledger, collection task table, payment retry, provider sync, reminder automation, or accounting workflow.
 - `/financials/accounting-readiness` is now a read-only Accounting Readiness workspace over canonical invoices, payments, payment events, customers, projects, invoice tax reporting entries, and invoice retainage snapshots, with accounting review rows, payment review rows, reconciliation attention, tax/retainage snapshot totals, export-ready column mapping, and in-browser Copy CSV / Download CSV export prep generated from the already loaded accounting review rows
@@ -2037,7 +2041,7 @@ Implemented:
 - project and invoice continuity links back into the same progress-billing workspace so approved scope, billing review, and invoice continuity stay connected
 - Financials Home at `/financials` now serves as the section control panel for cross-project billing, collections, pending-payment, and payment-event visibility without replacing the invoice, payment, or progress-billing managers
 - Financial Control Phase 1 adds a pure collections/payment-attention helper for open receivables, overdue invoices, pending payment count, failed/payment-request attention, project collection attention, invoice attention, and deterministic owner Next Move routing from existing invoices, payments, and payment events
-- Accounts Receivable at `/financials/accounts-receivable` is now a real read-only collections workspace over canonical invoice balances, payments, and immutable payment events; Accounts Payable remains a placeholder only
+- Accounts Receivable at `/financials/accounts-receivable` is now a real read-only collections workspace over canonical invoice balances, invoice status counts, payments, and immutable payment events; Accounts Payable remains a placeholder only
 - Invoice Workspace and Payments Manager now deepen read-only reconciliation visibility over the same immutable payment-event stream without adding a reconciliation table, provider sync execution, or new payment state
 
 Current design notes:
