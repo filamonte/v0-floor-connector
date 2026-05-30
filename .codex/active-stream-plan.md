@@ -146,6 +146,8 @@ After every completed slice:
 - inspect `git status`
 - stage only intended files
 - commit the completed slice
+- run `pnpm wave:review`
+- run `pnpm wave:pr` when a draft PR should be opened
 - report changed files, validation, final status, and commit hash
 
 Every 48 hours:
@@ -153,6 +155,28 @@ Every 48 hours:
 - reconcile active streams with `main`
 - review hotspot overlap before merging
 - retire or pause streams that no longer create parallel value
+
+## Human-Reviewed PR Conveyor Belt
+
+The standard stream flow is:
+
+1. ChatGPT writes or updates `.codex/waves/<wave>.md`.
+2. Codex runs that wave in the correct stream worktree.
+3. Codex commits the completed slice.
+4. Run `pnpm wave:review`.
+5. Run `pnpm wave:pr`.
+6. The PR opens as draft by default.
+7. Request `@codex` review using `.codex/pr-review-instructions.md`.
+8. The verification stream performs merge-readiness review.
+9. Human reviewer checks the PR.
+10. Human marks the PR ready only after validation is complete.
+11. Human merges.
+12. Run `pnpm worktree:finish <name>` when the stream is complete.
+
+This is human-approved automation, not autonomous merging. The conveyor belt has
+no automatic merge, no automatic ready-for-review transition, no automatic
+branch deletion, no automatic worktree deletion, and no automatic destructive
+cleanup.
 
 ## Quality Bar
 

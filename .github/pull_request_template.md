@@ -1,23 +1,48 @@
-# FloorConnector PR Checklist
+# Summary
 
-## Summary
+-
 
-- 
+## Wave / Stream
 
-## Workflow / Lifecycle / Creation Guardrail
+- Wave:
+- Stream:
 
-If this PR changes workflows, lifecycle, record creation logic, or relationships between project / estimate / contract / change order / job / invoice / payment, all relevant docs must be updated in the same change set.
+## Scope
 
-Relevant docs include:
-- `docs/developer-source-of-truth.md`
-- `docs/current-state.md`
-- `docs/workflows.md`
+-
 
-Checklist:
-- [ ] Docs updated: I updated all relevant workflow / lifecycle / creation docs in this PR.
-- [ ] Not applicable: this PR does not change workflows, lifecycle, record creation logic, or canonical record relationships.
+## Out of Scope
 
-## Notes
+-
 
-- What changed:
-- Docs updated or why not applicable:
+## Validation
+
+-
+
+## Architecture Guardrails
+
+-
+
+## Risk Areas
+
+-
+
+## Screenshots / Notes
+
+-
+
+## Rollback
+
+-
+
+## Reviewer Checklist
+
+- [ ] No duplicate models.
+- [ ] No portal-only records.
+- [ ] No financial math drift.
+- [ ] No readiness bypass.
+- [ ] No tenant/RLS/access regression.
+- [ ] Docs updated if behavior changed.
+- [ ] Targeted validation run.
+- [ ] PR opened as draft unless human explicitly marked ready.
+- [ ] No automatic merge enabled.

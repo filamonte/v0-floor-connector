@@ -65,6 +65,9 @@ pnpm worktree:doctor
 pnpm worktree:status
 pnpm worktree:reconcile
 pnpm worktree:audit
+pnpm wave:status
+pnpm wave:review
+pnpm wave:pr
 pnpm worktree:create <name>
 pnpm worktree:finish <name>
 pnpm auth:refresh
@@ -105,6 +108,38 @@ Daily worktree rhythm:
 - After work: `git status --short --branch`, then commit completed slices
 - Before merge: `pnpm worktree:doctor` and `pnpm worktree:reconcile`
 - After merge: `pnpm worktree:finish <name>` when the stream is retired
+
+## Human-Reviewed Wave Conveyor Belt
+
+FloorConnector uses a human-approved conveyor belt for ChatGPT planning, Codex
+implementation, local review, draft PR creation, Codex PR review, verification,
+and human merge:
+
+1. ChatGPT writes or updates `.codex/waves/<wave>.md`.
+2. Codex runs that wave in the correct stream worktree.
+3. Codex commits the completed slice.
+4. Run `pnpm wave:review`.
+5. Run `pnpm wave:pr`.
+6. The PR opens as draft by default.
+7. Request `@codex` review with the text in
+   `.codex/pr-review-instructions.md`.
+8. The verification stream performs merge-readiness review.
+9. A human reviews.
+10. A human marks the PR ready only after validation is complete.
+11. A human merges.
+12. Run `pnpm worktree:finish <name>` when the stream is complete.
+
+This is not autonomous merging. No script should automatically merge, enable
+auto-merge, mark a draft PR ready for review, delete a branch, delete a
+worktree, or perform destructive cleanup.
+
+The safe post-slice rhythm is:
+
+```powershell
+pnpm codex:next
+pnpm wave:review
+pnpm wave:pr
+```
 
 ## Required Active Docs
 
