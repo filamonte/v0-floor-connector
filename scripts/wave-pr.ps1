@@ -1,0 +1,176 @@
+param(
+  [string]$Wave = "",
+  [string]$Stream = "",
+  [string]$Summary = "",
+  [string]$Validation = "",
+  [string]$Risks = "",
+  [string]$Rollback = "",
+  [switch]$Ready,
+  [string]$Base = "main"
+)
+
+$ErrorActionPreference = "Stop"
+$repo = (git rev-parse --show-toplevel).Trim()
+$branch = (git -C $repo branch --show-current).Trim()
+
+if (-not $branch) {
+  throw "Detached HEAD or no current branch. Create or switch to a named stream branch before opening a PR."
+}
+
+if ($branch -eq $Base) {
+  throw "Refusing to open a PR from $Base. Use a stream branch."
+}
+
+if (-not $Wave) { $Wave = $branch -replace "^stream/", "" }
+if (-not $Stream) { $Stream = $branch -replace "^stream/", "" }
+if (-not $Summary) { $Summary = "Wave implementation for $Wave." }
+if (-not $Validation) { $Validation = "Not reported yet. Run pnpm wave:review and targeted validation before marking ready." }
+if (-not $Risks) { $Risks = "Requires human review for FloorConnector architecture guardrails." }
+if (-not $Rollback) { $Rollback = "Revert this PR before merge, or revert the merge commit after merge if needed." }
+
+$dirty = (git -C $repo status --porcelain)
+if ($dirty) {
+  Write-Host "Warning: working tree has uncommitted changes." -ForegroundColor Yellow
+  git -C $repo status --short
+  $continue = Read-Host "Continue opening a PR from committed branch state only? Type YES to continue"
+  if ($continue -ne "YES") {
+    throw "Aborted because working tree is dirty."
+  }
+}
+
+$upstream = git -C $repo rev-parse --abbrev-ref --symbolic-full-name "@{upstream}" 2>$null
+if ($LASTEXITCODE -ne 0 -or -not $upstream) {
+  Write-Host "No upstream configured for $branch." -ForegroundColor Yellow
+  $push = Read-Host "Push with -u origin $branch before opening the PR? Type YES to push"
+  if ($push -eq "YES") {
+    git -C $repo push -u origin $branch
+    if ($LASTEXITCODE -ne 0) {
+      throw "git push -u origin $branch failed."
+    }
+  } else {
+    Write-Host ""
+    Write-Host "Manual PR setup required because the branch has no upstream:"
+    Write-Host "  git push -u origin $branch"
+  }
+}
+
+$filesChanged = git -C $repo diff --name-only "$Base...HEAD" 2>$null
+if ($LASTEXITCODE -ne 0 -or -not $filesChanged) {
+  $filesChanged = git -C $repo diff-tree --no-commit-id --name-only -r HEAD
+}
+
+$fileList = if ($filesChanged) {
+  ($filesChanged | ForEach-Object { "- $_" }) -join "`n"
+} else {
+  "- No changed files detected from $Base...HEAD."
+}
+
+$codexReviewText = "@codex review this PR for FloorConnector architecture drift, tenant/security regressions, readiness workflow bypasses, duplicate canonical models, financial/payment-state issues, missing tests, and missing docs updates."
+$draftNote = if ($Ready) {
+  "Human explicitly requested non-draft PR creation with --ready. Do not merge until review and validation are complete."
+} else {
+  "Draft by default. Do not mark ready until pnpm wave:review, pnpm worktree:audit, targeted validation, and human confirmation are complete."
+}
+
+$title = "[$Stream] $Wave"
+$body = @"
+## Wave / Stream
+
+- Wave: $Wave
+- Stream: $Stream
+
+## Summary
+
+$Summary
+
+## Files Changed
+
+$fileList
+
+## Validation Run
+
+$Validation
+
+## Risks
+
+$Risks
+
+## Rollback Notes
+
+$Rollback
+
+## Codex Review Request
+
+$codexReviewText
+
+## Draft PR Safety
+
+$draftNote
+
+No automatic merge, auto-merge, ready-for-review transition, branch deletion, or worktree deletion is authorized by this PR.
+"@
+
+$gh = Get-Command gh -ErrorAction SilentlyContinue
+if (-not $gh) {
+  Write-Host "GitHub CLI is not installed or not on PATH." -ForegroundColor Yellow
+  Write-Host ""
+  Write-Host "Create this PR manually in GitHub:"
+  Write-Host "- Base: $Base"
+  Write-Host "- Compare: $branch"
+  Write-Host "- State: Draft"
+  Write-Host "- Title: $title"
+  Write-Host ""
+  Write-Host $body
+  exit 0
+}
+
+gh auth status 1>$null 2>$null
+if ($LASTEXITCODE -ne 0) {
+  Write-Host "GitHub CLI is not authenticated." -ForegroundColor Yellow
+  Write-Host ""
+  Write-Host "Create this PR manually in GitHub:"
+  Write-Host "- Base: $Base"
+  Write-Host "- Compare: $branch"
+  Write-Host "- State: Draft"
+  Write-Host "- Title: $title"
+  Write-Host ""
+  Write-Host $body
+  exit 0
+}
+
+$bodyFile = Join-Path ([System.IO.Path]::GetTempPath()) ("floorconnector-wave-pr-{0}.md" -f ([guid]::NewGuid()))
+Set-Content -LiteralPath $bodyFile -Value $body -Encoding UTF8
+
+try {
+  $args = @("pr", "create", "--base", $Base, "--head", $branch, "--title", $title, "--body-file", $bodyFile)
+  if (-not $Ready) {
+    $args += "--draft"
+  }
+
+  $prUrl = gh @args
+  if ($LASTEXITCODE -ne 0) {
+    throw "gh pr create failed."
+  }
+
+  Write-Host ""
+  Write-Host "PR created:"
+  Write-Host $prUrl
+  Write-Host ""
+  Write-Host "Labels are best-effort:"
+  foreach ($label in @("codex", "wave", "needs-verification")) {
+    gh pr edit $prUrl --add-label $label 1>$null 2>$null
+    if ($LASTEXITCODE -eq 0) {
+      Write-Host "  added $label"
+    } else {
+      Write-Host "  could not add $label" -ForegroundColor Yellow
+    }
+  }
+
+  if (-not $Ready) {
+    Write-Host ""
+    Write-Host "Draft PR created by default. No ready-for-review transition, merge, auto-merge, branch deletion, or worktree deletion was performed."
+  }
+} finally {
+  Remove-Item -LiteralPath $bodyFile -Force -ErrorAction SilentlyContinue
+}
+

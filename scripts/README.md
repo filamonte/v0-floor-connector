@@ -24,6 +24,15 @@ Repository automation and maintenance scripts will live here.
   legacy streams, and the recommended next prompt order.
 - `codex-next.ps1`: prints the recommended next implementation prompt order
   from `.codex/active-stream-plan.md`.
+- `wave-review.ps1`: runs local worktree review checks, changed-file Prettier,
+  and merge-readiness reminders without marking PRs ready, merging, or deleting
+  branches/worktrees.
+- `wave-pr.ps1`: opens a standard GitHub draft PR against `main` when `gh` is
+  available and authenticated, or prints exact manual draft-PR steps when it is
+  not. It never merges, enables auto-merge, marks a draft ready, or deletes
+  branches/worktrees.
+- `wave-status.ps1`: shows active wave files, stream branch status, unpushed
+  commit status, and PR draft/ready metadata when `gh` can read it.
 
 Package scripts:
 
@@ -34,12 +43,36 @@ pnpm worktree:doctor
 pnpm worktree:status
 pnpm worktree:reconcile
 pnpm worktree:audit
+pnpm wave:review
+pnpm wave:pr
+pnpm wave:status
 pnpm worktree:create <name>
 pnpm worktree:finish <name>
 pnpm auth:refresh
 pnpm codex:streams
 pnpm codex:next
 ```
+
+## Wave And Draft PR Conveyor Belt
+
+The human-reviewed conveyor belt is:
+
+1. ChatGPT writes or updates `.codex/waves/<wave>.md`.
+2. Codex runs that wave in the correct stream worktree.
+3. Codex commits the completed slice.
+4. Run `pnpm wave:review`.
+5. Run `pnpm wave:pr`.
+6. The PR opens as draft by default.
+7. Request `@codex` review using `.codex/pr-review-instructions.md`.
+8. The verification stream performs merge-readiness review.
+9. A human reviews.
+10. A human marks the PR ready only after validation is complete.
+11. A human merges.
+12. Run `pnpm worktree:finish <name>` when the stream is complete.
+
+This is human-approved automation, not autonomous merging. The wave scripts do
+not automatically merge, mark ready for review, delete branches, delete
+worktrees, enable auto-merge, or perform destructive cleanup.
 
 ## Read-Only Reports
 
