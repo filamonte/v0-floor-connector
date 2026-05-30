@@ -50,6 +50,15 @@ export type CommunicationDeliveryProofRecordGroup = {
   audienceLabels: string[];
 };
 
+export type CommunicationDeliveryProofReviewSummary = {
+  label: string;
+  detail: string;
+  recordCount: number;
+  proofItemCount: number;
+  href: string;
+  sourceLabels: string[];
+};
+
 export type CommunicationWorkspaceSummary = {
   primaryStatus: string;
   primaryDetail: string;
@@ -75,6 +84,7 @@ export type CommunicationWorkspaceSummary = {
   attentionItems: CommunicationWorkspaceAttentionItem[];
   recentContextEvents: ContractorCommunicationContextEvent[];
   deliveryProofRecordGroups: CommunicationDeliveryProofRecordGroup[];
+  deliveryProofReviewSummary: CommunicationDeliveryProofReviewSummary;
 };
 
 const STALE_OPEN_THREAD_DAYS = 7;
@@ -382,6 +392,57 @@ export function deriveDeliveryProofRecordGroups(
     });
 }
 
+export function deriveDeliveryProofReviewSummary(
+  groups: ReadonlyArray<CommunicationDeliveryProofRecordGroup>
+): CommunicationDeliveryProofReviewSummary {
+  const reviewGroups = groups.filter((group) => group.needsReview);
+  const proofItemCount = reviewGroups.reduce(
+    (total, group) => total + group.reviewCount,
+    0
+  );
+  const sourceLabels = reviewGroups
+    .slice(0, 3)
+    .map((group) => group.sourceLabel);
+
+  if (reviewGroups.length > 0) {
+    return {
+      label: `${formatPlural(reviewGroups.length, "record")} ${
+        reviewGroups.length === 1 ? "needs" : "need"
+      } proof review`,
+      detail: `${formatPlural(
+        proofItemCount,
+        "failed, bounced, revoked, or review-needed proof item"
+      )} across ${sourceLabels.join(", ")}. Review the source record before treating the workflow as quiet.`,
+      recordCount: reviewGroups.length,
+      proofItemCount,
+      href: reviewGroups[0]?.communicationsHref ?? "/communications",
+      sourceLabels
+    };
+  }
+
+  if (groups.length > 0) {
+    return {
+      label: "No proof review needed",
+      detail:
+        "Existing delivery proof groups are read-only and have no failed, bounced, revoked, or review-needed evidence in this read model.",
+      recordCount: 0,
+      proofItemCount: 0,
+      href: "/communications",
+      sourceLabels: []
+    };
+  }
+
+  return {
+    label: "No proof review items",
+    detail:
+      "No delivery proof has been recorded yet; this does not mean a send failed.",
+    recordCount: 0,
+    proofItemCount: 0,
+    href: "/communications",
+    sourceLabels: []
+  };
+}
+
 export function deriveCommunicationWorkspaceSummary(input: {
   threads: ContractorCommunicationThreadListItem[];
   threadSummary: ContractorCommunicationThreadSummary;
@@ -422,6 +483,9 @@ export function deriveCommunicationWorkspaceSummary(input: {
   ).length;
   const deliveryProofRecordGroups = deriveDeliveryProofRecordGroups(
     input.contextEvents
+  );
+  const deliveryProofReviewSummary = deriveDeliveryProofReviewSummary(
+    deliveryProofRecordGroups
   );
   const latestDeliveryProof =
     [...input.contextEvents].sort((left, right) =>
@@ -554,6 +618,7 @@ export function deriveCommunicationWorkspaceSummary(input: {
     lanes,
     attentionItems,
     recentContextEvents: input.contextEvents.slice(0, 6),
-    deliveryProofRecordGroups
+    deliveryProofRecordGroups,
+    deliveryProofReviewSummary
   };
 }

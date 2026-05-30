@@ -3,7 +3,8 @@ import test from "node:test";
 
 import {
   deriveCommunicationWorkspaceSummary,
-  deriveDeliveryProofRecordGroups
+  deriveDeliveryProofRecordGroups,
+  deriveDeliveryProofReviewSummary
 } from "./workspace-summary";
 import type {
   ContractorCommunicationContextEvent,
@@ -206,6 +207,14 @@ void test("communication workspace derives follow-up attention without creating 
   assert.equal(summary.latestDeliveryProof?.id, "failed-send");
   assert.equal(summary.deliveryProofRecordGroups.length, 1);
   assert.equal(summary.deliveryProofRecordGroups[0]?.needsReview, true);
+  assert.equal(
+    summary.deliveryProofReviewSummary.label,
+    "1 record needs proof review"
+  );
+  assert.match(
+    summary.deliveryProofReviewSummary.detail,
+    /1 failed, bounced, revoked, or review-needed proof item/
+  );
 });
 
 void test("communication workspace treats shared evidence as closeout context", () => {
@@ -245,6 +254,10 @@ void test("communication workspace treats shared evidence as closeout context", 
   assert.equal(summary.deliveryProofReviewCount, 0);
   assert.match(summary.deliveryProofDetail, /Customer activity/);
   assert.equal(summary.deliveryProofRecordGroups.length, 2);
+  assert.equal(
+    summary.deliveryProofReviewSummary.label,
+    "No proof review needed"
+  );
 });
 
 void test("communication workspace keeps missing delivery proof read-only", () => {
@@ -260,6 +273,10 @@ void test("communication workspace keeps missing delivery proof read-only", () =
   assert.equal(summary.deliveryProofReviewCount, 0);
   assert.equal(summary.latestDeliveryProof, null);
   assert.equal(summary.deliveryProofRecordGroups.length, 0);
+  assert.equal(
+    summary.deliveryProofReviewSummary.label,
+    "No proof review items"
+  );
   assert.match(summary.deliveryProofDetail, /No delivery proof yet/);
 });
 
@@ -420,4 +437,73 @@ void test("delivery proof grouping keeps warranty documents out of unsupported s
 
   assert.equal(groups[0]?.sourceHref, "/warranty-documents/warranty-1");
   assert.equal(groups[0]?.communicationsHref, "/communications");
+});
+
+void test("delivery proof review summary keeps review scope read-only and record-linked", () => {
+  const groups = deriveDeliveryProofRecordGroups([
+    buildEvent({
+      id: "invoice-failed",
+      kind: "document_delivery",
+      sourceType: "invoice",
+      sourceId: "invoice-1",
+      sourceRecord: {
+        type: "invoice",
+        id: "invoice-1",
+        label: "Invoice I-1001",
+        href: "/invoices/invoice-1"
+      },
+      eventType: "failed",
+      proofStateLabel: "Needs review",
+      proofBoundaryLabel: "Read-only delivery proof",
+      proofSourceLabel: "Provider-derived",
+      needsReview: true,
+      occurredAt: "2026-05-27T17:00:00.000Z",
+      tone: "critical"
+    }),
+    buildEvent({
+      id: "estimate-bounced",
+      kind: "document_delivery",
+      sourceType: "estimate",
+      sourceId: "estimate-1",
+      sourceRecord: {
+        type: "estimate",
+        id: "estimate-1",
+        label: "Estimate E-1001",
+        href: "/estimates/estimate-1"
+      },
+      eventType: "bounced",
+      proofStateLabel: "Needs review",
+      proofBoundaryLabel: "Read-only delivery proof",
+      proofSourceLabel: "Provider-derived",
+      needsReview: true,
+      occurredAt: "2026-05-27T16:00:00.000Z",
+      tone: "critical"
+    }),
+    buildEvent({
+      id: "contract-viewed",
+      kind: "document_delivery",
+      sourceType: "contract",
+      sourceId: "contract-1",
+      sourceRecord: {
+        type: "contract",
+        id: "contract-1",
+        label: "Contract C-1001",
+        href: "/contracts/contract-1"
+      },
+      eventType: "viewed",
+      proofStateLabel: "Customer activity",
+      proofBoundaryLabel: "Read-only delivery proof",
+      proofSourceLabel: "Customer-facing",
+      occurredAt: "2026-05-27T18:00:00.000Z",
+      tone: "positive"
+    })
+  ]);
+  const summary = deriveDeliveryProofReviewSummary(groups);
+
+  assert.equal(summary.recordCount, 2);
+  assert.equal(summary.proofItemCount, 2);
+  assert.equal(summary.href, "/communications?source=invoice");
+  assert.deepEqual(summary.sourceLabels, ["Invoice I-1001", "Estimate E-1001"]);
+  assert.match(summary.label, /2 records need proof review/);
+  assert.match(summary.detail, /Review the source record/);
 });

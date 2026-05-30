@@ -141,6 +141,19 @@ record support beyond existing evidence, create send or resend behavior, change
 provider adapters or webhooks, mutate notification events, create portal-owned
 state, or add a standalone tracking system.
 
+## Communications Delivery Proof Review V1
+
+`/communications` now derives a compact proof-review summary from the grouped
+source-record proof rows. The summary distinguishes no proof recorded, proof
+recorded with no current review items, and source records with failed, bounced,
+revoked, or otherwise review-needed proof. It links back into the existing
+communications review context and keeps the source record as the place to
+resolve the underlying business question.
+
+This does not add delivery state, a retry queue, provider callbacks,
+notification mutations, portal-owned proof, or a separate delivery-review
+workflow.
+
 ## Behavior Preserved
 
 This slice preserves:

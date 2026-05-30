@@ -788,6 +788,24 @@ export default async function CommunicationsPage({
                   </span>
                 </div>
               </div>
+              <div className="mt-2 rounded-[4px] border border-[#e5e5e5] bg-white px-3 py-2">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-semibold text-slate-950">
+                      {workspaceSummary.deliveryProofReviewSummary.label}
+                    </p>
+                    <p className="mt-1 text-sm leading-6 text-slate-500">
+                      {workspaceSummary.deliveryProofReviewSummary.detail}
+                    </p>
+                  </div>
+                  <Link
+                    href={workspaceSummary.deliveryProofReviewSummary.href}
+                    className="inline-flex shrink-0 items-center rounded-[4px] border border-[#d6d6d6] bg-white px-2.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#3f3f3f] transition hover:bg-slate-50"
+                  >
+                    Review proof
+                  </Link>
+                </div>
+              </div>
               <div className="mt-3">
                 <div className="flex flex-wrap items-end justify-between gap-3">
                   <div>
