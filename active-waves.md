@@ -34,6 +34,17 @@ This does not change the four-wave operational sequence above. Communications
 planning should stay record-linked and provider-dark until a separately
 approved implementation slice is selected.
 
+Financials is also tracked as a planned parallel stream:
+
+- [Financials Capability Wave v1](C:/FloorConnector/docs/design/financials-capability-wave-v1.md)
+
+Financials is a planned
+parallel market-readiness stream over canonical invoices, payments, payment
+events, project financial readiness, and customer-safe portal payment
+continuity. It does not change the operational wave order above and does not
+authorize payment provider changes, webhooks, accounting integrations, schema,
+or duplicate financial models.
+
 Shared guardrails:
 
 - preserve the canonical lifecycle:
@@ -46,3 +57,6 @@ Shared guardrails:
 - keep Communications on canonical `communication_threads`,
   `communication_messages`, notifications, and source-record context without
   duplicate message models or provider-send expansion
+- keep Financials on canonical invoices, payments, payment events, and
+  source-record financial readiness without duplicate ledgers or portal-owned
+  billing state

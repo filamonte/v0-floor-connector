@@ -475,9 +475,6 @@ export function deriveCommunicationWorkspaceSummary(input: {
         )
       )
   ).size;
-  const criticalContextCount = input.contextEvents.filter(
-    (event) => event.tone === "critical"
-  ).length;
   const deliveryProofReviewCount = input.contextEvents.filter(
     (event) => event.needsReview
   ).length;
@@ -544,7 +541,7 @@ export function deriveCommunicationWorkspaceSummary(input: {
   });
 
   const followUpCount =
-    input.threadSummary.needsResponseCount + criticalContextCount;
+    input.threadSummary.needsResponseCount + deliveryProofReviewCount;
   const customerReplyCount = input.threads.filter(
     (thread) => thread.customerReplyNeedsResponse
   ).length;
@@ -563,7 +560,7 @@ export function deriveCommunicationWorkspaceSummary(input: {
             customerReplyCount === 1 ? "y is" : "ies are"
           } waiting for contractor follow-up. Existing notification read-state remains separate from this derived reply triage.`
         : followUpCount > 0
-          ? `Customer replies, unread items, or delivery issues need review before the workflow can be treated as quiet. ${input.notificationCount} unread communication notification${input.notificationCount === 1 ? "" : "s"} are currently open.`
+          ? `Customer replies, unread items, or delivery proof issues need review before the workflow can be treated as quiet. ${input.notificationCount} unread communication notification${input.notificationCount === 1 ? "" : "s"} are currently open.`
           : "Threads, document delivery proof, and shared-evidence activity are connected back to source records without sending anything from this workspace.",
     workflowCoverageCount,
     workflowCoverageLabel: formatWorkflowCoverage(workflowCoverageCount),

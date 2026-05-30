@@ -280,6 +280,35 @@ void test("communication workspace keeps missing delivery proof read-only", () =
   assert.match(summary.deliveryProofDetail, /No delivery proof yet/);
 });
 
+void test("communication workspace counts warning-level proof review as follow-up", () => {
+  const summary = deriveCommunicationWorkspaceSummary({
+    threads: [],
+    threadSummary: baseSummary,
+    contextEvents: [
+      buildEvent({
+        id: "shared-evidence-revoked",
+        kind: "shared_evidence",
+        sourceType: "shared_evidence",
+        eventType: "revoked",
+        title: "Shared evidence revoked",
+        description: "Shared evidence access was revoked.",
+        proofStateLabel: "Needs review",
+        proofBoundaryLabel: "Read-only evidence proof",
+        proofSourceLabel: "Internal evidence",
+        tone: "warning",
+        needsReview: true
+      })
+    ],
+    notificationCount: 0,
+    now: new Date("2026-05-27T00:00:00.000Z")
+  });
+
+  assert.equal(summary.primaryStatus, "Follow-up needed");
+  assert.equal(summary.followUpCount, 1);
+  assert.equal(summary.deliveryProofReviewCount, 1);
+  assert.match(summary.primaryDetail, /delivery proof issues/);
+});
+
 void test("communication workspace preserves provider-derived delivery proof labels", () => {
   const summary = deriveCommunicationWorkspaceSummary({
     threads: [],
