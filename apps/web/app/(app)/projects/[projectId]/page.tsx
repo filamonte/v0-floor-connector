@@ -49,14 +49,18 @@ import {
   ProjectEvidenceContinuitySection,
   ProjectProofCenterSection
 } from "@/components/project-proof-evidence-sections";
+import {
+  ProjectAiOperationalCopilotSection,
+  ProjectCommandCenterMapSection,
+  type ProjectCommandCenterMapItem
+} from "@/components/project-ai-copilot-command-sections";
+import { ProjectFinancialContinuitySection } from "@/components/project-financial-continuity-section";
+import {
+  ProjectProductionHubSection,
+  ProjectProductionScheduleContinuityPanel
+} from "@/components/project-production-hub-section";
 import { ReadyToScheduleActionPanel } from "@/components/ready-to-schedule-action-panel";
 import { RecordLinkedCommunicationComposer } from "@/components/record-linked-communication-composer";
-import {
-  ScheduleContextActions,
-  ScheduleContextFocusCard,
-  ScheduleContextMetrics,
-  ScheduleContextNotice
-} from "@/components/schedule-context-card";
 import { ServiceWarrantyContinuityPanel } from "@/components/service-warranty-continuity-panel";
 import { WorkItemCreateForm } from "@/components/work-items/work-item-create-form";
 import { WorkItemList } from "@/components/work-items/work-item-list";
@@ -110,11 +114,7 @@ import {
   deriveAiCopilotDraftActions,
   deriveAiCommunicationAssistance,
   deriveAiFieldSummary,
-  deriveAiProjectOperationalSummary,
-  type AiCopilotDraftAction,
-  type AiProjectOperationalSummary,
-  type AiFieldSummary,
-  type AiOperationalCopilotTone
+  deriveAiProjectOperationalSummary
 } from "@/lib/ai-operational-copilot/summary";
 import { buildAiCopilotCommunicationHandoffHref } from "@/lib/ai-operational-copilot/communication-handoff";
 import { getAiProviderAvailability } from "@/lib/ai-operational-copilot/provider";
@@ -895,241 +895,6 @@ function ProjectPulseSection({ summary }: { summary: ProjectPulseSummary }) {
   );
 }
 
-function getAiOperationalCopilotToneClassName(tone: AiOperationalCopilotTone) {
-  switch (tone) {
-    case "ready":
-      return "border-emerald-200 bg-emerald-50 text-emerald-950";
-    case "attention":
-      return "border-amber-200 bg-amber-50 text-amber-950";
-    case "blocked":
-      return "border-rose-200 bg-rose-50 text-rose-950";
-    case "neutral":
-      return "border-[var(--border-warm)] bg-white text-[var(--text-primary)]";
-  }
-}
-
-function AiOperationalCopilotSection({
-  summary,
-  fieldSummary,
-  draftActions,
-  providerEnhancementNote,
-  projectId,
-  projectName,
-  customerId,
-  customerName,
-  communicationThreadId
-}: {
-  summary: AiProjectOperationalSummary | null;
-  fieldSummary: AiFieldSummary | null;
-  draftActions: AiCopilotDraftAction[];
-  providerEnhancementNote: string;
-  projectId: string;
-  projectName: string;
-  customerId: string | null;
-  customerName: string | null;
-  communicationThreadId: string | null;
-}) {
-  if (!summary || !fieldSummary) {
-    return (
-      <section
-        id="ai-operational-copilot"
-        className={projectWorkspacePanelClassName}
-      >
-        <div
-          className={`${projectWorkspacePanelHeaderClassName} px-4 py-4 sm:px-5`}
-        >
-          <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--copper)]">
-            AI Operational Copilot
-          </p>
-          <h3 className="mt-2 text-lg font-semibold tracking-tight text-[var(--text-primary)]">
-            Copilot summaries are disabled
-          </h3>
-          <p className="mt-2 max-w-[74ch] text-sm leading-6 text-[var(--text-secondary)]">
-            Organization workflow settings are keeping Copilot summaries quiet
-            for this workspace. ProjectPulse, readiness gates, workflow cues,
-            and connected records remain available from canonical project data.
-          </p>
-        </div>
-      </section>
-    );
-  }
-
-  return (
-    <section
-      id="ai-operational-copilot"
-      className={projectWorkspacePanelClassName}
-    >
-      <div
-        className={`${projectWorkspacePanelHeaderClassName} px-4 py-4 sm:px-5`}
-      >
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-          <div className="min-w-0">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--copper)]">
-              AI Operational Copilot
-            </p>
-            <h3 className="mt-2 text-lg font-semibold tracking-tight text-[var(--text-primary)]">
-              Project guidance
-            </h3>
-            <p className="mt-2 max-w-[74ch] text-sm leading-6 text-[var(--text-secondary)]">
-              Copilot explains what the timeline and readiness signals mean,
-              then prepares review-first next moves. {summary.executiveSummary}
-            </p>
-          </div>
-          <span
-            className={[
-              "inline-flex rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em]",
-              getAiOperationalCopilotToneClassName(summary.tone)
-            ].join(" ")}
-          >
-            {summary.stage}
-          </span>
-        </div>
-        <p className="mt-3 text-xs leading-5 text-[var(--text-secondary)]">
-          {providerEnhancementNote}
-        </p>
-      </div>
-
-      <div className="grid gap-px bg-[var(--border-warm)] lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
-        <div className="bg-white px-4 py-4 sm:px-5">
-          <div className="grid gap-3 md:grid-cols-2">
-            {[
-              ["Readiness", summary.readinessState],
-              ["Financials", summary.financialState],
-              ["Schedule", summary.scheduleState],
-              ["Execution", summary.executionState]
-            ].map(([label, value]) => (
-              <div
-                key={label}
-                className="rounded-lg border border-[var(--border-warm)] bg-[var(--highlight)] px-3 py-3"
-              >
-                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
-                  {label}
-                </p>
-                <p className="mt-1 text-sm leading-5 text-[var(--text-primary)]">
-                  {value}
-                </p>
-              </div>
-            ))}
-          </div>
-
-          <div className="mt-4">
-            <p className="text-sm font-semibold text-[var(--text-primary)]">
-              Recommended next actions
-            </p>
-            <div className="mt-3 space-y-3">
-              {summary.recommendedNextActions.map((action) => (
-                <div
-                  key={action.id}
-                  className="rounded-lg border border-slate-200 bg-white px-3 py-3 text-sm leading-5"
-                >
-                  <div className="flex flex-wrap items-start justify-between gap-2">
-                    <p className="font-semibold text-slate-950">
-                      {action.title}
-                    </p>
-                    <span className="rounded-md border border-slate-200 bg-slate-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-600">
-                      {action.priority}
-                    </span>
-                  </div>
-                  <p className="mt-1 text-slate-600">{action.detail}</p>
-                  <p className="mt-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">
-                    Why: {action.reason}
-                  </p>
-                  <Link
-                    href={action.href}
-                    className="mt-3 inline-flex h-8 items-center rounded-full border border-slate-200 bg-slate-50 px-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-700 transition hover:bg-white"
-                  >
-                    {action.label}
-                  </Link>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        <div className="space-y-px bg-[var(--border-warm)]">
-          <div className="bg-white px-4 py-4 sm:px-5">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--text-secondary)]">
-              Review-first draft composer
-            </p>
-            {draftActions.length > 0 ? (
-              <div className="mt-3 space-y-3">
-                {draftActions.slice(0, 3).map((action) => (
-                  <div
-                    key={action.id}
-                    className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-3 text-sm leading-5"
-                  >
-                    <div className="flex flex-wrap items-start justify-between gap-2">
-                      <p className="font-semibold text-slate-950">
-                        {action.title}
-                      </p>
-                      <span className="rounded-md border border-slate-200 bg-white px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-600">
-                        {action.audience}
-                      </span>
-                    </div>
-                    <p className="mt-2 text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
-                      {action.subject}
-                    </p>
-                    <p className="mt-2 whitespace-pre-line text-sm leading-6 text-[var(--text-primary)]">
-                      {action.draftBody}
-                    </p>
-                    <p className="mt-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">
-                      Why: {action.operationalReason}
-                    </p>
-                    <p className="mt-2 text-xs leading-5 text-slate-500">
-                      {action.reviewSafetyNote}
-                    </p>
-                    <Link
-                      href={buildAiCopilotCommunicationHandoffHref({
-                        action,
-                        projectId,
-                        projectName,
-                        customerId,
-                        customerName,
-                        threadId: communicationThreadId
-                      })}
-                      className="mt-3 inline-flex h-8 items-center rounded-full border border-[#e4d7ca] bg-white px-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-[#8f5b32] transition hover:bg-[#fbf5ee]"
-                    >
-                      Review draft
-                    </Link>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="mt-3 rounded-lg border border-dashed border-[var(--border-warm)] bg-[var(--highlight)] px-3 py-3">
-                <p className="text-sm font-semibold text-[var(--text-primary)]">
-                  Draft actions are disabled
-                </p>
-                <p className="mt-1 text-xs leading-5 text-[var(--text-secondary)]">
-                  Summaries can stay visible while organization settings keep
-                  Copilot draft text out of the workspace.
-                </p>
-              </div>
-            )}
-          </div>
-          <div className="bg-white px-4 py-4 sm:px-5">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--text-secondary)]">
-              Field summary
-            </p>
-            <p className="mt-2 text-sm leading-6 text-[var(--text-primary)]">
-              {fieldSummary.pmSummary}
-            </p>
-            {fieldSummary.riskIndicators.length > 0 ? (
-              <ul className="mt-3 space-y-2 text-sm leading-5 text-slate-600">
-                {fieldSummary.riskIndicators.map((risk) => (
-                  <li key={risk}>- {risk}</li>
-                ))}
-              </ul>
-            ) : null}
-          </div>
-          <div className="bg-slate-50 px-4 py-3 text-xs leading-5 text-slate-600 sm:px-5">
-            {summary.reviewBoundary}
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
-
 function getCloseoutTrailToneClassName(tone: CloseoutTrailTone) {
   switch (tone) {
     case "ready":
@@ -1422,154 +1187,6 @@ function OperationalCommandCenter({
             <p className="mt-1 font-semibold">{item.value}</p>
             <p className="mt-1 opacity-80">{item.detail}</p>
           </div>
-        ))}
-      </div>
-    </section>
-  );
-}
-
-function ProjectCommandCenterMap({
-  nextAction,
-  readinessLabel,
-  readinessDetail,
-  blockerCount,
-  timeline,
-  aiSummary,
-  draftActionCount,
-  connectedRecordLanes
-}: {
-  nextAction: ProjectReadinessNextAction;
-  readinessLabel: string;
-  readinessDetail: string;
-  blockerCount: number;
-  timeline: ProjectCommandTimeline;
-  aiSummary: AiProjectOperationalSummary | null;
-  draftActionCount: number;
-  connectedRecordLanes: ProjectConnectedRecordLane[];
-}) {
-  const blockedLaneCount = connectedRecordLanes.filter(
-    (lane) => lane.blocker
-  ).length;
-  const mapItems = [
-    {
-      eyebrow: "Current status",
-      title: readinessLabel,
-      description:
-        blockerCount > 0
-          ? `${blockerCount} ${blockerCount === 1 ? "item needs" : "items need"} attention before the project moves cleanly.`
-          : readinessDetail,
-      href: nextAction.primaryHref ?? "#project-command-center-title",
-      label: nextAction.primaryLabel ?? "Review status",
-      tone: blockerCount > 0 ? "warning" : "positive"
-    },
-    {
-      eyebrow: "What happened",
-      title:
-        timeline.needsAttention.length > 0
-          ? `${timeline.needsAttention.length} attention signal${
-              timeline.needsAttention.length === 1 ? "" : "s"
-            }`
-          : `${timeline.readyToMove.length} ready handoff${
-              timeline.readyToMove.length === 1 ? "" : "s"
-            }`,
-      description:
-        "Project Command Timeline keeps recent lifecycle movement tied back to canonical records.",
-      href: "#project-command-timeline",
-      label: "Review timeline",
-      tone: timeline.needsAttention.length > 0 ? "warning" : "neutral"
-    },
-    {
-      eyebrow: "What it means",
-      title: aiSummary ? aiSummary.stage : "Copilot quiet",
-      description: aiSummary
-        ? `${aiSummary.recommendedNextActions.length} recommendation${
-            aiSummary.recommendedNextActions.length === 1 ? "" : "s"
-          } and ${draftActionCount} review-first draft${
-            draftActionCount === 1 ? "" : "s"
-          } available when controls allow.`
-        : "Copilot summaries are disabled; ProjectPulse and canonical records still show the project state.",
-      href: "#ai-operational-copilot",
-      label: "Review Copilot",
-      tone:
-        aiSummary?.tone === "blocked"
-          ? "critical"
-          : aiSummary?.tone === "attention"
-            ? "warning"
-            : "neutral"
-    },
-    {
-      eyebrow: "Where to act",
-      title:
-        blockedLaneCount > 0
-          ? `${blockedLaneCount} lane${blockedLaneCount === 1 ? "" : "s"} flagged`
-          : `${connectedRecordLanes.length} linked lanes`,
-      description:
-        "Connected records route editing back to estimate, contract, invoice, job, field, portal, and schedule workspaces.",
-      href: "#connected-record-lanes",
-      label: "Open lanes",
-      tone: blockedLaneCount > 0 ? "warning" : "neutral"
-    }
-  ] satisfies Array<{
-    eyebrow: string;
-    title: string;
-    description: string;
-    href: string;
-    label: string;
-    tone: WorkspaceStateTone;
-  }>;
-
-  return (
-    <section
-      aria-labelledby="project-command-center-map-title"
-      className={projectWorkspacePanelClassName}
-    >
-      <div
-        className={[
-          "flex flex-col gap-3 px-4 py-4 md:flex-row md:items-start md:justify-between sm:px-5",
-          projectWorkspacePanelHeaderClassName
-        ].join(" ")}
-      >
-        <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--copper)]">
-            Command center map
-          </p>
-          <h2
-            id="project-command-center-map-title"
-            className="mt-1 text-lg font-semibold text-[var(--text-primary)]"
-          >
-            Status, timeline, guidance, and action lanes
-          </h2>
-          <p className="mt-1 max-w-[74ch] text-sm leading-6 text-[var(--text-secondary)]">
-            Use this map to scan the project without losing the source of truth:
-            status comes from readiness, timeline comes from linked records,
-            Copilot explains review-first next moves, and lanes open the
-            canonical workspaces.
-          </p>
-        </div>
-        <span className="rounded-full border border-[var(--border-warm)] bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-[var(--text-secondary)]">
-          No automatic actions
-        </span>
-      </div>
-
-      <div className="grid gap-px bg-[var(--border-warm)] md:grid-cols-2 xl:grid-cols-4">
-        {mapItems.map((item) => (
-          <a
-            key={item.eyebrow}
-            href={item.href}
-            className={[
-              "flex min-h-[168px] flex-col px-4 py-4 text-sm leading-6 transition hover:bg-white",
-              getCommandSummaryToneClassName(item.tone)
-            ].join(" ")}
-          >
-            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] opacity-75">
-              {item.eyebrow}
-            </p>
-            <p className="mt-2 font-semibold">{item.title}</p>
-            <p className="mt-2 opacity-80">{item.description}</p>
-            <span className="mt-auto pt-4 text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--copper)]">
-              {item.label}
-            </span>
-          </a>
         ))}
       </div>
     </section>
@@ -3846,6 +3463,215 @@ export default async function ProjectDetailPage({
     action: unscheduledJobs.length > 0 ? "schedule" : undefined,
     jobId: unscheduledJobs.length === 1 ? unscheduledJobs[0].id : undefined
   });
+  const projectProductionHub = {
+    overview: {
+      eyebrow: "Jobs / Scheduling / Punchlists",
+      title: "Execution pressure is summarized here first",
+      description:
+        "Use this section to see whether the project is ready for the field, what is unscheduled, what still needs crew attention, and what closeout work is still open.",
+      href: unscheduledJobs.length > 0 ? "/schedule?view=unscheduled" : "/jobs",
+      linkLabel: unscheduledJobs.length > 0 ? "Open schedule" : "Open jobs",
+      stat: `${projectJobs.length} jobs / ${jobsWithoutCrew.length} missing crew / ${unresolvedPunchlistItems.length} unresolved punchlists`
+    },
+    jobs: {
+      title: "Jobs",
+      items: projectJobs.slice(0, 3).map((job) => ({
+        id: job.id,
+        href: `/jobs/${job.id}`,
+        title: job.project?.name ?? project.name,
+        subtitle:
+          job.customer?.name ?? project.customer?.name ?? "Unknown customer",
+        meta: joinMetaParts([
+          job.scheduledDate
+            ? `${job.crewVendor?.name ?? "Crew not assigned"} / Scheduled ${new Date(`${job.scheduledDate}T00:00:00`).toLocaleDateString()}`
+            : `${job.crewVendor?.name ?? "Crew not assigned"} / Unscheduled`,
+          formatUpdatedActivity(job.updatedAt)
+        ]),
+        statusLabel: formatStatusLabel(job.dispatchStatus)
+      })),
+      emptyState: {
+        eyebrow: "No jobs",
+        title: "Hold operations until the handoff is clear",
+        description:
+          "Jobs should stay downstream of the commercial readiness chain instead of becoming a parallel scheduling system."
+      }
+    },
+    punchlists: {
+      title: "Punchlists",
+      items: projectPunchlistItems.slice(0, 3).map((item) => ({
+        id: item.id,
+        href: `/punchlists/${item.id}`,
+        title: item.title,
+        subtitle: item.assignee?.displayName ?? "Unassigned",
+        meta: item.job
+          ? `Job ${item.job.id.slice(0, 8)} / ${item.dueDate ? `Due ${new Date(`${item.dueDate}T00:00:00`).toLocaleDateString()}` : "No due date"}`
+          : item.dueDate
+            ? `Due ${new Date(`${item.dueDate}T00:00:00`).toLocaleDateString()}`
+            : "Project-level closeout item",
+        statusLabel: formatStatusLabel(item.status)
+      })),
+      emptyState: {
+        eyebrow: "No punchlists",
+        title: "Track closeout work here",
+        description:
+          "When corrective or closeout work needs to survive beyond one project day, keep it on the canonical punchlist chain.",
+        actionHref: `/punchlists?projectId=${project.id}&compose=1`,
+        actionLabel: "Create punchlist item"
+      }
+    },
+    dailyExecution: {
+      title: "Daily execution",
+      items: projectDailyLogs.slice(0, 2).map((dailyLog) => ({
+        id: dailyLog.id,
+        href: `/daily-logs/${dailyLog.id}`,
+        title:
+          dailyLog.summary?.trim() ||
+          new Date(`${dailyLog.logDate}T00:00:00`).toLocaleDateString(),
+        subtitle: new Date(`${dailyLog.logDate}T00:00:00`).toLocaleDateString(),
+        meta: joinMetaParts([
+          dailyLog.job
+            ? `Job ${dailyLog.job.id.slice(0, 8)} / ${dailyLog.weatherSummary ?? "No weather summary"}`
+            : (dailyLog.weatherSummary ?? "Project-day execution record"),
+          formatUpdatedActivity(dailyLog.updatedAt)
+        ]),
+        statusLabel: formatStatusLabel(dailyLog.status)
+      })),
+      emptyState: {
+        eyebrow: "No daily logs",
+        title: "Capture the first project day",
+        description:
+          "Daily execution records stay connected to the same project and job chain once field work begins.",
+        actionHref: buildDailyLogCaptureHref({
+          projectId: project.id
+        }),
+        actionLabel: "Start Daily Job Log"
+      }
+    }
+  };
+  const projectProductionScheduleContinuity = {
+    metrics: [
+      { label: "Scheduled", value: scheduledJobs.length },
+      { label: "Unscheduled", value: unscheduledJobs.length },
+      { label: "In progress", value: activeJobs.length },
+      {
+        label: "Equipment warnings",
+        value: projectEquipmentReadiness.jobsWithEquipmentWarnings
+      }
+    ],
+    focus: scheduleFocusJob
+      ? {
+          eyebrow:
+            scheduleFocusJob.dispatchStatus === "in_progress"
+              ? "Work in progress"
+              : scheduleFocusLabel,
+          title: project.name,
+          titleHref: `/jobs/${scheduleFocusJob.id}`,
+          statusLabel: formatStatusLabel(scheduleFocusJob.dispatchStatus),
+          summary: formatScheduleSummaryWindow({
+            scheduledDate: scheduleFocusJob.scheduledDate,
+            scheduledStartAt: scheduleFocusJob.scheduledStartAt,
+            scheduledEndAt: scheduleFocusJob.scheduledEndAt
+          }),
+          crewSummary:
+            scheduleFocusAssignments.length > 0
+              ? scheduleFocusSummary
+              : scheduleFocusJob.dispatchStatus === "scheduled"
+                ? "Scheduled, but crew assignment still needs to be confirmed"
+                : scheduleFocusSummary
+        }
+      : null,
+    notice: scheduleFocusJob
+      ? null
+      : {
+          eyebrow:
+            projectJobs.length > 0 ? "Ready for scheduling" : "No jobs yet",
+          title:
+            projectJobs.length > 0
+              ? "Project jobs exist, but no calendar commitment is set yet"
+              : "Production work has not been created yet",
+          detail:
+            projectJobs.length > 0
+              ? "The project has canonical jobs, but they are still unscheduled. Once a real date is attached, the next production commitment will show here."
+              : "Create downstream project jobs first. Schedule continuity will appear here once production work exists on the canonical job chain."
+        },
+    facts: [
+      {
+        label: "Crew assignment state",
+        value:
+          jobsWithoutAssignments.length > 0
+            ? `${jobsWithoutAssignments.length} job${
+                jobsWithoutAssignments.length === 1 ? "" : "s"
+              } still need crew assignment rows`
+            : projectJobs.length > 0
+              ? "Crew coverage is already attached where needed"
+              : "No project jobs yet"
+      },
+      {
+        label: "Equipment readiness",
+        value:
+          projectEquipmentReadiness.warningCount > 0
+            ? `${projectEquipmentReadiness.warningCount} advisory warning${
+                projectEquipmentReadiness.warningCount === 1 ? "" : "s"
+              }`
+            : projectJobs.length > 0
+              ? "No equipment warnings"
+              : "No project jobs yet",
+        detail:
+          projectEquipmentReadiness.warningCount > 0
+            ? projectEquipmentReadiness.jobsWithMissingRequiredEquipment > 0
+              ? `${projectEquipmentReadiness.jobsWithMissingRequiredEquipment} job${
+                  projectEquipmentReadiness.jobsWithMissingRequiredEquipment ===
+                  1
+                    ? ""
+                    : "s"
+                } missing required equipment`
+              : "Warning-only; GateKeeper checks are unchanged"
+            : undefined
+      },
+      {
+        label: "Current handoff",
+        value:
+          scheduleFocusJob?.dispatchStatus === "in_progress"
+            ? "Field work is already active on this project"
+            : readinessSnapshot?.isReadyToSchedule
+              ? unscheduledJobs.length > 0
+                ? "Commercial handoff is clear and production can now be placed on the calendar"
+                : "Commercial handoff is clear for schedule follow-through"
+              : "Project is still upstream of operational scheduling"
+      }
+    ],
+    actions: [
+      {
+        href: buildProjectScheduleHref({
+          projectId: project.id,
+          view:
+            unscheduledJobs.length > 0
+              ? "unscheduled"
+              : activeJobs.length > 0
+                ? "in_progress"
+                : "all",
+          crew: jobsWithoutAssignments.length > 0 ? "unassigned" : "all"
+        }),
+        label: "Open schedule"
+      },
+      ...(scheduleFocusJob
+        ? [
+            {
+              href: buildProjectScheduleHref({
+                projectId: project.id,
+                jobId: scheduleFocusJob.id,
+                action:
+                  scheduleFocusAssignments.length > 0 ||
+                  scheduleFocusJob.dispatchStatus === "unscheduled"
+                    ? "schedule"
+                    : "assign"
+              }),
+              label: "Open focused job in schedule"
+            }
+          ]
+        : [])
+    ]
+  };
   const projectPulse = deriveProjectPulseSummary({
     projectId: project.id,
     readinessSnapshot,
@@ -3942,6 +3768,54 @@ export default async function ProjectDetailPage({
           fieldSummary: aiFieldSummary
         })
       : [];
+  const aiCopilotSummaryView = aiOperationalSummary
+    ? {
+        stage: aiOperationalSummary.stage,
+        tone: aiOperationalSummary.tone,
+        executiveSummary: aiOperationalSummary.executiveSummary,
+        reviewBoundary: aiOperationalSummary.reviewBoundary,
+        statusItems: [
+          { label: "Readiness", value: aiOperationalSummary.readinessState },
+          { label: "Financials", value: aiOperationalSummary.financialState },
+          { label: "Schedule", value: aiOperationalSummary.scheduleState },
+          { label: "Execution", value: aiOperationalSummary.executionState }
+        ],
+        recommendedNextActions: aiOperationalSummary.recommendedNextActions.map(
+          (action) => ({
+            id: action.id,
+            title: action.title,
+            detail: action.detail,
+            reason: action.reason,
+            href: action.href,
+            label: action.label,
+            priority: action.priority
+          })
+        )
+      }
+    : null;
+  const aiFieldSummaryView = aiFieldSummary
+    ? {
+        pmSummary: aiFieldSummary.pmSummary,
+        riskIndicators: aiFieldSummary.riskIndicators
+      }
+    : null;
+  const aiDraftActionItems = aiDraftActions.map((action) => ({
+    id: action.id,
+    title: action.title,
+    audience: action.audience,
+    subject: action.subject,
+    draftBody: action.draftBody,
+    operationalReason: action.operationalReason,
+    reviewSafetyNote: action.reviewSafetyNote,
+    reviewHref: buildAiCopilotCommunicationHandoffHref({
+      action,
+      projectId: project.id,
+      projectName: project.name,
+      customerId: project.customerId,
+      customerName: project.customer?.name ?? null,
+      threadId: copilotCommunicationThreadId
+    })
+  }));
   const proofCenter = deriveProofCenterSummary({
     projectId: project.id,
     estimates: projectEstimates.map((estimate) => ({
@@ -4208,6 +4082,114 @@ export default async function ProjectDetailPage({
     currentBillableValue > 0 &&
     projectInvoices.filter((invoice) => invoice.billingModel === "aia_progress")
       .length === 0;
+  const projectFinancialContinuity = {
+    overview: {
+      eyebrow: "Invoices / Payments / Progress Billing",
+      title: "Financial state is visible without leaving the project hub",
+      description:
+        "Use this section to see what is billable, what has been invoiced, and what still needs collection before you move into the deeper billing workspaces.",
+      href: openInvoices.length > 0 ? "/payments" : "/invoices",
+      linkLabel: openInvoices.length > 0 ? "Open payments" : "Open invoices",
+      stat: `${projectInvoices.length} invoices / ${formatMoney(
+        openInvoices.reduce(
+          (sum, invoice) => sum + Number(invoice.balanceDueAmount),
+          0
+        )
+      )} open`
+    },
+    changeOrders: {
+      title: "Change orders",
+      items: projectChangeOrders.slice(0, 2).map((changeOrder) => ({
+        id: changeOrder.id,
+        href: `/change-orders/${changeOrder.id}`,
+        title: changeOrder.title,
+        subtitle:
+          changeOrder.customer?.name ??
+          project.customer?.name ??
+          "Unknown customer",
+        meta: joinMetaParts([
+          formatMoney(changeOrder.priceAdjustment),
+          changeOrder.invoice
+            ? `Invoice ${changeOrder.invoice.referenceNumber}`
+            : "Project scope change",
+          formatUpdatedActivity(changeOrder.updatedAt)
+        ]),
+        statusLabel: formatStatusLabel(changeOrder.status)
+      })),
+      emptyState: {
+        eyebrow: "No change orders",
+        title: "Track scope changes here",
+        description:
+          "When scope or price shifts after contract approval, keep the adjustment on the same project chain with a connected change order.",
+        actionHref: `/change-orders?projectId=${project.id}&compose=1`,
+        actionLabel: "Create change order"
+      }
+    },
+    progressBilling: {
+      title: "Progress billing / SOV",
+      items: projectProgressBilling.slice(0, 2).map((workspace) => ({
+        id: workspace.id,
+        href: `/progress-billing/${workspace.id}`,
+        title: workspace.estimate?.referenceNumber ?? "Schedule of values",
+        subtitle:
+          workspace.customer?.name ??
+          project.customer?.name ??
+          "Unknown customer",
+        meta: `Current ${formatMoney(workspace.currentBillableTotal)} / Balance ${formatMoney(workspace.balanceToFinishTotal)} / ${workspace.weightedPercentComplete}% complete`,
+        statusLabel: formatStatusLabel(workspace.status)
+      })),
+      emptyState: {
+        eyebrow: "No progress billing",
+        title: "Open progress billing after approved scope seeds here",
+        description:
+          "Once approved estimate items seed a schedule of values on this project, progress billing stays tied to the same estimate, project, and invoice chain."
+      }
+    },
+    invoices: {
+      title: "Invoices",
+      items: projectInvoices.slice(0, 3).map((invoice) => ({
+        id: invoice.id,
+        href: `/invoices/${invoice.id}`,
+        title: invoice.referenceNumber,
+        subtitle:
+          invoice.customer?.name ??
+          project.customer?.name ??
+          "Unknown customer",
+        meta: joinMetaParts([
+          getProjectInvoiceSummary(invoice),
+          formatUpdatedActivity(invoice.updatedAt)
+        ]),
+        statusLabel: formatStatusLabel(invoice.status)
+      })),
+      emptyState: {
+        eyebrow: "No invoices",
+        title: "Create invoice from the connected workflow",
+        description:
+          "Billing should continue from the same project and downstream work context, with deposit readiness staying on canonical invoices instead of a side model."
+      }
+    },
+    payments: {
+      title: "Payments",
+      items: recentPayments.slice(0, 3).map((payment) => ({
+        id: payment.id,
+        href: paymentFocusInvoice
+          ? `/invoices/${paymentFocusInvoice.id}`
+          : "/payments",
+        title: formatMoney(payment.amount),
+        subtitle: paymentFocusInvoice
+          ? `On ${paymentFocusInvoice.referenceNumber}`
+          : "Recent payment",
+        meta: getPaymentRecordSummary(payment),
+        statusLabel: formatStatusLabel(payment.status)
+      })),
+      emptyState: {
+        eyebrow: "No payments",
+        title: "Payment activity will show up here",
+        description:
+          "Recorded payments remain attached to canonical invoices, so this workspace surfaces them through the same billing chain."
+      }
+    }
+  };
   const projectOperationalSummary = deriveProjectOperationalWorkspaceSummary({
     projectId: project.id,
     todayIsoDate: new Date().toISOString().slice(0, 10),
@@ -4856,6 +4838,84 @@ export default async function ProjectDetailPage({
           : undefined
     }
   ];
+  const blockedConnectedRecordLaneCount = connectedRecordLanes.filter(
+    (lane) => lane.blocker
+  ).length;
+  const projectCommandCenterMapItems: ProjectCommandCenterMapItem[] = [
+    {
+      eyebrow: "Current status",
+      title: readinessSnapshot?.isReadyToSchedule
+        ? "Ready to schedule"
+        : formatStatusLabel(readinessStatus),
+      description:
+        workspaceBlockers.length > 0
+          ? `${workspaceBlockers.length} ${
+              workspaceBlockers.length === 1 ? "item needs" : "items need"
+            } attention before the project moves cleanly.`
+          : readinessSnapshot?.isReadyToSchedule
+            ? "Commercial handoff is complete."
+            : "Clear the current gate before operations moves forward.",
+      href: nextAction.primaryHref ?? "#project-command-center-title",
+      label: nextAction.primaryLabel ?? "Review status",
+      tone: workspaceBlockers.length > 0 ? "warning" : "positive"
+    },
+    {
+      eyebrow: "What happened",
+      title:
+        projectCommandTimeline.needsAttention.length > 0
+          ? `${projectCommandTimeline.needsAttention.length} attention signal${
+              projectCommandTimeline.needsAttention.length === 1 ? "" : "s"
+            }`
+          : `${projectCommandTimeline.readyToMove.length} ready handoff${
+              projectCommandTimeline.readyToMove.length === 1 ? "" : "s"
+            }`,
+      description:
+        "Project Command Timeline keeps recent lifecycle movement tied back to canonical records.",
+      href: "#project-command-timeline",
+      label: "Review timeline",
+      tone:
+        projectCommandTimeline.needsAttention.length > 0 ? "warning" : "neutral"
+    },
+    {
+      eyebrow: "What it means",
+      title: aiOperationalSummary
+        ? aiOperationalSummary.stage
+        : "Copilot quiet",
+      description: aiOperationalSummary
+        ? `${aiOperationalSummary.recommendedNextActions.length} recommendation${
+            aiOperationalSummary.recommendedNextActions.length === 1 ? "" : "s"
+          } and ${
+            showAiDraftActionComposer ? aiDraftActions.length : 0
+          } review-first draft${
+            (showAiDraftActionComposer ? aiDraftActions.length : 0) === 1
+              ? ""
+              : "s"
+          } available when controls allow.`
+        : "Copilot summaries are disabled; ProjectPulse and canonical records still show the project state.",
+      href: "#ai-operational-copilot",
+      label: "Review Copilot",
+      tone:
+        aiOperationalSummary?.tone === "blocked"
+          ? "critical"
+          : aiOperationalSummary?.tone === "attention"
+            ? "warning"
+            : "neutral"
+    },
+    {
+      eyebrow: "Where to act",
+      title:
+        blockedConnectedRecordLaneCount > 0
+          ? `${blockedConnectedRecordLaneCount} lane${
+              blockedConnectedRecordLaneCount === 1 ? "" : "s"
+            } flagged`
+          : `${connectedRecordLanes.length} linked lanes`,
+      description:
+        "Connected records route editing back to estimate, contract, invoice, job, field, portal, and schedule workspaces.",
+      href: "#connected-record-lanes",
+      label: "Open lanes",
+      tone: blockedConnectedRecordLaneCount > 0 ? "warning" : "neutral"
+    }
+  ];
   const drivingRecord =
     linkedRecordRecencyItems.find((item) => item.isDrivingRecord) ??
     linkedRecordRecencyItems[0] ??
@@ -5123,41 +5183,19 @@ export default async function ProjectDetailPage({
               summary={projectOperationalSummary}
             />
 
-            <ProjectCommandCenterMap
-              nextAction={nextAction}
-              readinessLabel={
-                readinessSnapshot?.isReadyToSchedule
-                  ? "Ready to schedule"
-                  : formatStatusLabel(readinessStatus)
-              }
-              readinessDetail={
-                readinessSnapshot?.isReadyToSchedule
-                  ? "Commercial handoff is complete."
-                  : "Clear the current gate before operations moves forward."
-              }
-              blockerCount={workspaceBlockers.length}
-              timeline={projectCommandTimeline}
-              aiSummary={aiOperationalSummary}
-              draftActionCount={
-                showAiDraftActionComposer ? aiDraftActions.length : 0
-              }
-              connectedRecordLanes={connectedRecordLanes}
+            <ProjectCommandCenterMapSection
+              items={projectCommandCenterMapItems}
             />
 
             <ProjectPulseSection summary={projectPulse} />
 
             <ProjectCommandTimelineSection timeline={projectCommandTimeline} />
 
-            <AiOperationalCopilotSection
-              summary={aiOperationalSummary}
-              fieldSummary={aiFieldSummary}
-              draftActions={showAiDraftActionComposer ? aiDraftActions : []}
+            <ProjectAiOperationalCopilotSection
+              summary={aiCopilotSummaryView}
+              fieldSummary={aiFieldSummaryView}
+              draftActions={showAiDraftActionComposer ? aiDraftActionItems : []}
               providerEnhancementNote={aiProviderAvailability.reason}
-              projectId={project.id}
-              projectName={project.name}
-              customerId={project.customerId}
-              customerName={project.customer?.name ?? null}
-              communicationThreadId={copilotCommunicationThreadId}
             />
 
             <OperationalGuidanceSection
@@ -5861,149 +5899,7 @@ export default async function ProjectDetailPage({
           description="Project stays the operating summary for jobs, scheduling pressure, and closeout work while real execution still happens on canonical job and punchlist records."
         >
           <div className="space-y-6">
-            <SectionOverview
-              eyebrow="Jobs / Scheduling / Punchlists"
-              title="Execution pressure is summarized here first"
-              description="Use this section to see whether the project is ready for the field, what is unscheduled, what still needs crew attention, and what closeout work is still open."
-              href={
-                unscheduledJobs.length > 0
-                  ? "/schedule?view=unscheduled"
-                  : "/jobs"
-              }
-              linkLabel={
-                unscheduledJobs.length > 0 ? "Open schedule" : "Open jobs"
-              }
-              stat={`${projectJobs.length} jobs / ${jobsWithoutCrew.length} missing crew / ${unresolvedPunchlistItems.length} unresolved punchlists`}
-            />
-            <div className="grid gap-8 xl:grid-cols-3">
-              <section className="space-y-4">
-                <div>
-                  <p className="text-sm font-medium text-slate-950">Jobs</p>
-                </div>
-                <div className="grid gap-4">
-                  {projectJobs.length > 0 ? (
-                    projectJobs
-                      .slice(0, 3)
-                      .map((job) => (
-                        <LinkedRecordCard
-                          key={job.id}
-                          href={`/jobs/${job.id}`}
-                          title={job.project?.name ?? project.name}
-                          subtitle={
-                            job.customer?.name ??
-                            project.customer?.name ??
-                            "Unknown customer"
-                          }
-                          meta={joinMetaParts([
-                            job.scheduledDate
-                              ? `${job.crewVendor?.name ?? "Crew not assigned"} / Scheduled ${new Date(`${job.scheduledDate}T00:00:00`).toLocaleDateString()}`
-                              : `${job.crewVendor?.name ?? "Crew not assigned"} / Unscheduled`,
-                            formatUpdatedActivity(job.updatedAt)
-                          ])}
-                          badge={renderStatusBadge(
-                            formatStatusLabel(job.dispatchStatus)
-                          )}
-                        />
-                      ))
-                  ) : (
-                    <AppEmptyState
-                      eyebrow="No jobs"
-                      title="Hold operations until the handoff is clear"
-                      description="Jobs should stay downstream of the commercial readiness chain instead of becoming a parallel scheduling system."
-                    />
-                  )}
-                </div>
-              </section>
-
-              <section className="space-y-4">
-                <div>
-                  <p className="text-sm font-medium text-slate-950">
-                    Punchlists
-                  </p>
-                </div>
-                <div className="grid gap-4">
-                  {projectPunchlistItems.length > 0 ? (
-                    projectPunchlistItems
-                      .slice(0, 3)
-                      .map((item) => (
-                        <LinkedRecordCard
-                          key={item.id}
-                          href={`/punchlists/${item.id}`}
-                          title={item.title}
-                          subtitle={item.assignee?.displayName ?? "Unassigned"}
-                          meta={
-                            item.job
-                              ? `Job ${item.job.id.slice(0, 8)} / ${item.dueDate ? `Due ${new Date(`${item.dueDate}T00:00:00`).toLocaleDateString()}` : "No due date"}`
-                              : item.dueDate
-                                ? `Due ${new Date(`${item.dueDate}T00:00:00`).toLocaleDateString()}`
-                                : "Project-level closeout item"
-                          }
-                          badge={renderStatusBadge(
-                            formatStatusLabel(item.status)
-                          )}
-                        />
-                      ))
-                  ) : (
-                    <AppEmptyState
-                      eyebrow="No punchlists"
-                      title="Track closeout work here"
-                      description="When corrective or closeout work needs to survive beyond one project day, keep it on the canonical punchlist chain."
-                      actionHref={`/punchlists?projectId=${project.id}&compose=1`}
-                      actionLabel="Create punchlist item"
-                    />
-                  )}
-                </div>
-              </section>
-
-              <section className="space-y-4">
-                <div>
-                  <p className="text-sm font-medium text-slate-950">
-                    Daily execution
-                  </p>
-                </div>
-                <div className="grid gap-4">
-                  {projectDailyLogs.slice(0, 2).length > 0 ? (
-                    projectDailyLogs
-                      .slice(0, 2)
-                      .map((dailyLog) => (
-                        <LinkedRecordCard
-                          key={dailyLog.id}
-                          href={`/daily-logs/${dailyLog.id}`}
-                          title={
-                            dailyLog.summary?.trim() ||
-                            new Date(
-                              `${dailyLog.logDate}T00:00:00`
-                            ).toLocaleDateString()
-                          }
-                          subtitle={new Date(
-                            `${dailyLog.logDate}T00:00:00`
-                          ).toLocaleDateString()}
-                          meta={joinMetaParts([
-                            dailyLog.job
-                              ? `Job ${dailyLog.job.id.slice(0, 8)} / ${dailyLog.weatherSummary ?? "No weather summary"}`
-                              : (dailyLog.weatherSummary ??
-                                "Project-day execution record"),
-                            formatUpdatedActivity(dailyLog.updatedAt)
-                          ])}
-                          badge={renderStatusBadge(
-                            formatStatusLabel(dailyLog.status)
-                          )}
-                        />
-                      ))
-                  ) : (
-                    <AppEmptyState
-                      eyebrow="No daily logs"
-                      title="Capture the first project day"
-                      description="Daily execution records stay connected to the same project and job chain once field work begins."
-                      actionHref={buildDailyLogCaptureHref({
-                        projectId: project.id
-                      })}
-                      actionLabel="Start Daily Job Log"
-                    />
-                  )}
-                </div>
-              </section>
-            </div>
+            <ProjectProductionHubSection {...projectProductionHub} />
 
             <ProjectFieldTrailSection
               summary={fieldTrail}
@@ -6100,177 +5996,13 @@ export default async function ProjectDetailPage({
           title="Financial Hub"
           description="Billing continuity stays visible here from scope change through progress billing, invoicing, and payment, while the project hub remains a summary-first surface."
         >
-          <div className="space-y-6">
-            <SectionOverview
-              eyebrow="Invoices / Payments / Progress Billing"
-              title="Financial state is visible without leaving the project hub"
-              description="Use this section to see what is billable, what has been invoiced, and what still needs collection before you move into the deeper billing workspaces."
-              href={openInvoices.length > 0 ? "/payments" : "/invoices"}
-              linkLabel={
-                openInvoices.length > 0 ? "Open payments" : "Open invoices"
-              }
-              stat={`${projectInvoices.length} invoices / ${formatMoney(openInvoices.reduce((sum, invoice) => sum + Number(invoice.balanceDueAmount), 0))} open`}
-            />
-            <div className="grid gap-8 xl:grid-cols-4">
-              <section className="space-y-4">
-                <div>
-                  <p className="text-sm font-medium text-slate-950">
-                    Change orders
-                  </p>
-                </div>
-                <div className="grid gap-4">
-                  {projectChangeOrders.length > 0 ? (
-                    projectChangeOrders
-                      .slice(0, 2)
-                      .map((changeOrder) => (
-                        <LinkedRecordCard
-                          key={changeOrder.id}
-                          href={`/change-orders/${changeOrder.id}`}
-                          title={changeOrder.title}
-                          subtitle={
-                            changeOrder.customer?.name ??
-                            project.customer?.name ??
-                            "Unknown customer"
-                          }
-                          meta={joinMetaParts([
-                            formatMoney(changeOrder.priceAdjustment),
-                            changeOrder.invoice
-                              ? `Invoice ${changeOrder.invoice.referenceNumber}`
-                              : "Project scope change",
-                            formatUpdatedActivity(changeOrder.updatedAt)
-                          ])}
-                          badge={renderStatusBadge(
-                            formatStatusLabel(changeOrder.status)
-                          )}
-                        />
-                      ))
-                  ) : (
-                    <AppEmptyState
-                      eyebrow="No change orders"
-                      title="Track scope changes here"
-                      description="When scope or price shifts after contract approval, keep the adjustment on the same project chain with a connected change order."
-                      actionHref={`/change-orders?projectId=${project.id}&compose=1`}
-                      actionLabel="Create change order"
-                    />
-                  )}
-                </div>
-              </section>
-
-              <section className="space-y-4">
-                <div>
-                  <p className="text-sm font-medium text-slate-950">
-                    Progress billing / SOV
-                  </p>
-                </div>
-                <div className="grid gap-4">
-                  {projectProgressBilling.length > 0 ? (
-                    projectProgressBilling
-                      .slice(0, 2)
-                      .map((workspace) => (
-                        <LinkedRecordCard
-                          key={workspace.id}
-                          href={`/progress-billing/${workspace.id}`}
-                          title={
-                            workspace.estimate?.referenceNumber ??
-                            "Schedule of values"
-                          }
-                          subtitle={
-                            workspace.customer?.name ??
-                            project.customer?.name ??
-                            "Unknown customer"
-                          }
-                          meta={`Current ${formatMoney(workspace.currentBillableTotal)} / Balance ${formatMoney(workspace.balanceToFinishTotal)} / ${workspace.weightedPercentComplete}% complete`}
-                          badge={renderStatusBadge(
-                            formatStatusLabel(workspace.status)
-                          )}
-                        />
-                      ))
-                  ) : (
-                    <AppEmptyState
-                      eyebrow="No progress billing"
-                      title="Open progress billing after approved scope seeds here"
-                      description="Once approved estimate items seed a schedule of values on this project, progress billing stays tied to the same estimate, project, and invoice chain."
-                    />
-                  )}
-                </div>
-              </section>
-
-              <section className="space-y-4">
-                <div>
-                  <p className="text-sm font-medium text-slate-950">Invoices</p>
-                </div>
-                <div className="grid gap-4">
-                  {projectInvoices.length > 0 ? (
-                    projectInvoices
-                      .slice(0, 3)
-                      .map((invoice) => (
-                        <LinkedRecordCard
-                          key={invoice.id}
-                          href={`/invoices/${invoice.id}`}
-                          title={invoice.referenceNumber}
-                          subtitle={
-                            invoice.customer?.name ??
-                            project.customer?.name ??
-                            "Unknown customer"
-                          }
-                          meta={joinMetaParts([
-                            getProjectInvoiceSummary(invoice),
-                            formatUpdatedActivity(invoice.updatedAt)
-                          ])}
-                          badge={renderStatusBadge(
-                            formatStatusLabel(invoice.status)
-                          )}
-                        />
-                      ))
-                  ) : (
-                    <AppEmptyState
-                      eyebrow="No invoices"
-                      title="Create invoice from the connected workflow"
-                      description="Billing should continue from the same project and downstream work context, with deposit readiness staying on canonical invoices instead of a side model."
-                    />
-                  )}
-                </div>
-              </section>
-
-              <section className="space-y-4">
-                <div>
-                  <p className="text-sm font-medium text-slate-950">Payments</p>
-                </div>
-                <div className="grid gap-4">
-                  {recentPayments.length > 0 ? (
-                    recentPayments
-                      .slice(0, 3)
-                      .map((payment) => (
-                        <LinkedRecordCard
-                          key={payment.id}
-                          href={
-                            paymentFocusInvoice
-                              ? `/invoices/${paymentFocusInvoice.id}`
-                              : "/payments"
-                          }
-                          title={formatMoney(payment.amount)}
-                          subtitle={
-                            paymentFocusInvoice
-                              ? `On ${paymentFocusInvoice.referenceNumber}`
-                              : "Recent payment"
-                          }
-                          meta={getPaymentRecordSummary(payment)}
-                          badge={renderStatusBadge(
-                            formatStatusLabel(payment.status)
-                          )}
-                        />
-                      ))
-                  ) : (
-                    <AppEmptyState
-                      eyebrow="No payments"
-                      title="Payment activity will show up here"
-                      description="Recorded payments remain attached to canonical invoices, so this workspace surfaces them through the same billing chain."
-                    />
-                  )}
-                </div>
-              </section>
-            </div>
-          </div>
+          <ProjectFinancialContinuitySection
+            overview={projectFinancialContinuity.overview}
+            changeOrders={projectFinancialContinuity.changeOrders}
+            progressBilling={projectFinancialContinuity.progressBilling}
+            invoices={projectFinancialContinuity.invoices}
+            payments={projectFinancialContinuity.payments}
+          />
         </DetailPanel>
 
         <DetailPanel
@@ -6855,157 +6587,9 @@ export default async function ProjectDetailPage({
           title="Production Schedule"
           description="Compact schedule continuity from canonical jobs and job assignments, with calendar work still handed off to the shared schedule workspace."
         >
-          <div className="space-y-4 text-sm leading-6 text-slate-600">
-            <ScheduleContextMetrics
-              items={[
-                { label: "Scheduled", value: scheduledJobs.length },
-                { label: "Unscheduled", value: unscheduledJobs.length },
-                { label: "In progress", value: activeJobs.length },
-                {
-                  label: "Equipment warnings",
-                  value: projectEquipmentReadiness.jobsWithEquipmentWarnings
-                }
-              ]}
-            />
-
-            {scheduleFocusJob ? (
-              <ScheduleContextFocusCard
-                eyebrow={
-                  scheduleFocusJob.dispatchStatus === "in_progress"
-                    ? "Work in progress"
-                    : scheduleFocusLabel
-                }
-                title={project.name}
-                titleHref={`/jobs/${scheduleFocusJob.id}`}
-                statusLabel={formatStatusLabel(scheduleFocusJob.dispatchStatus)}
-                summary={formatScheduleSummaryWindow({
-                  scheduledDate: scheduleFocusJob.scheduledDate,
-                  scheduledStartAt: scheduleFocusJob.scheduledStartAt,
-                  scheduledEndAt: scheduleFocusJob.scheduledEndAt
-                })}
-                detailRows={[
-                  {
-                    label: "Crew",
-                    value:
-                      scheduleFocusAssignments.length > 0
-                        ? scheduleFocusSummary
-                        : scheduleFocusJob.dispatchStatus === "scheduled"
-                          ? "Scheduled, but crew assignment still needs to be confirmed"
-                          : scheduleFocusSummary
-                  }
-                ]}
-              />
-            ) : (
-              <ScheduleContextNotice
-                eyebrow={
-                  projectJobs.length > 0
-                    ? "Ready for scheduling"
-                    : "No jobs yet"
-                }
-                title={
-                  projectJobs.length > 0
-                    ? "Project jobs exist, but no calendar commitment is set yet"
-                    : "Production work has not been created yet"
-                }
-              >
-                {projectJobs.length > 0
-                  ? "The project has canonical jobs, but they are still unscheduled. Once a real date is attached, the next production commitment will show here."
-                  : "Create downstream project jobs first. Schedule continuity will appear here once production work exists on the canonical job chain."}
-              </ScheduleContextNotice>
-            )}
-
-            <ContextFactsList
-              items={[
-                {
-                  label: "Crew assignment state",
-                  value:
-                    jobsWithoutAssignments.length > 0
-                      ? `${jobsWithoutAssignments.length} job${
-                          jobsWithoutAssignments.length === 1 ? "" : "s"
-                        } still need crew assignment rows`
-                      : projectJobs.length > 0
-                        ? "Crew coverage is already attached where needed"
-                        : "No project jobs yet"
-                },
-                {
-                  label: "Equipment readiness",
-                  value:
-                    projectEquipmentReadiness.warningCount > 0 ? (
-                      <>
-                        {projectEquipmentReadiness.warningCount} advisory
-                        warning
-                        {projectEquipmentReadiness.warningCount === 1
-                          ? ""
-                          : "s"}
-                        <span className="mt-1 block text-xs text-slate-500">
-                          {projectEquipmentReadiness.jobsWithMissingRequiredEquipment >
-                          0
-                            ? `${projectEquipmentReadiness.jobsWithMissingRequiredEquipment} job${
-                                projectEquipmentReadiness.jobsWithMissingRequiredEquipment ===
-                                1
-                                  ? ""
-                                  : "s"
-                              } missing required equipment`
-                            : "Warning-only; GateKeeper checks are unchanged"}
-                        </span>
-                      </>
-                    ) : projectJobs.length > 0 ? (
-                      "No equipment warnings"
-                    ) : (
-                      "No project jobs yet"
-                    )
-                },
-                {
-                  label: "Current handoff",
-                  value:
-                    scheduleFocusJob?.dispatchStatus === "in_progress"
-                      ? "Field work is already active on this project"
-                      : readinessSnapshot?.isReadyToSchedule
-                        ? unscheduledJobs.length > 0
-                          ? "Commercial handoff is clear and production can now be placed on the calendar"
-                          : "Commercial handoff is clear for schedule follow-through"
-                        : "Project is still upstream of operational scheduling"
-                }
-              ]}
-            />
-
-            <ScheduleContextActions
-              actions={[
-                {
-                  href: buildProjectScheduleHref({
-                    projectId: project.id,
-                    view:
-                      unscheduledJobs.length > 0
-                        ? "unscheduled"
-                        : activeJobs.length > 0
-                          ? "in_progress"
-                          : "all",
-                    crew:
-                      jobsWithoutAssignments.length > 0 ? "unassigned" : "all"
-                  }),
-                  label: "Open schedule",
-                  variant: "subtle"
-                },
-                ...(scheduleFocusJob
-                  ? [
-                      {
-                        href: buildProjectScheduleHref({
-                          projectId: project.id,
-                          jobId: scheduleFocusJob.id,
-                          action:
-                            scheduleFocusAssignments.length > 0 ||
-                            scheduleFocusJob.dispatchStatus === "unscheduled"
-                              ? "schedule"
-                              : "assign"
-                        }),
-                        label: "Open focused job in schedule",
-                        variant: "subtle" as const
-                      }
-                    ]
-                  : [])
-              ]}
-            />
-          </div>
+          <ProjectProductionScheduleContinuityPanel
+            schedule={projectProductionScheduleContinuity}
+          />
         </DetailPanel>
 
         <RelatedConversationsCard
