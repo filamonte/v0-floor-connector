@@ -65,6 +65,7 @@ pnpm worktree:doctor
 pnpm worktree:status
 pnpm worktree:reconcile
 pnpm worktree:audit
+pnpm setup:gh
 pnpm wave:status
 pnpm wave:review
 pnpm wave:pr
@@ -76,15 +77,33 @@ pnpm codex:next
 ```
 
 `pnpm worktree:doctor` verifies Node, pnpm, Corepack, shared links, developer
-tools, and branch health from the current worktree. `pnpm worktree:status`
-fetches origin and summarizes all active worktrees. `pnpm worktree:create
-<name>` creates `stream/<name>` at `C:\FC-worktrees\<name>`, links shared
-tools, and runs the doctor. `pnpm worktree:reconcile` is the standard morning
-health check for upstream state, dirty worktrees, missing upstreams, and
-branches behind main. `pnpm worktree:audit` verifies the registry and platform
-files. `pnpm worktree:finish <name>` safely retires a completed worktree with
+tools, GitHub CLI availability, and branch health from the current worktree.
+GitHub CLI is optional but recommended for live PR metadata and draft PR
+creation. Use `pnpm setup:gh` to detect the installed CLI, print version/auth
+status, and see install guidance. `pnpm worktree:status` fetches origin and
+summarizes all active worktrees. `pnpm worktree:create <name>` creates
+`stream/<name>` at `C:\FC-worktrees\<name>`, links shared tools, and runs the
+doctor. `pnpm worktree:reconcile` is the standard morning health check for
+upstream state, dirty worktrees, missing upstreams, and branches behind main.
+`pnpm worktree:audit` verifies the registry and platform files.
+`pnpm worktree:finish <name>` safely retires a completed worktree with
 interactive confirmation. `pnpm auth:refresh` reruns the shared Playwright auth
 setup and relinks the resulting auth state.
+
+Manual GitHub CLI setup:
+
+```powershell
+winget install --id GitHub.cli
+gh auth login
+gh auth status
+```
+
+If GitHub CLI is installed outside PATH, the scripts also check common Windows
+install paths. To force a specific executable, set:
+
+```powershell
+$env:FLOORCONNECTOR_GH_PATH = "C:\Program Files\GitHub CLI\gh.exe"
+```
 
 Use [active-worktrees.md](C:/FloorConnector/active-worktrees.md) as the local
 registry for active parallel streams. Use

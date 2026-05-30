@@ -5,6 +5,9 @@ param(
 
 $ErrorActionPreference = "Stop"
 
+. (Join-Path $PSScriptRoot "lib\wave-pr-guards.ps1")
+. (Join-Path $PSScriptRoot "lib\dev-tool-paths.ps1")
+
 function Invoke-Git {
   param([string]$Repo, [string[]]$Arguments)
 
@@ -75,10 +78,11 @@ function Get-ActiveRegistryRows {
   return $rows | Where-Object { $_.Worktree -ne "main" }
 }
 
-$ghAvailable = [bool](Get-Command gh -ErrorAction SilentlyContinue)
+$ghPath = Resolve-DevToolCommand -Name "gh"
+$ghAvailable = [bool]$ghPath
 $ghAuthed = $false
 if ($ghAvailable) {
-  gh auth status 1>$null 2>$null
+  & $ghPath auth status 1>$null 2>$null
   $ghAuthed = ($LASTEXITCODE -eq 0)
 }
 
@@ -104,6 +108,7 @@ foreach ($stream in Get-ActiveRegistryRows -Path $RegistryPath) {
       Branch = $stream.Branch
       Dirty = "missing"
       Unpushed = "unknown"
+      PRDrift = "unknown"
       PR = "unknown"
       Wave = $stream.Wave
     }
@@ -118,19 +123,36 @@ foreach ($stream in Get-ActiveRegistryRows -Path $RegistryPath) {
     $unpushed = if ($ahead.Code -eq 0 -and [int]$ahead.Output -gt 0) { $ahead.Output } else { "0" }
   }
 
-  $prStatus = "local-only"
-  if ($ghAvailable -and $ghAuthed) {
-    $json = gh pr list --head $worktree.Branch --state all --json number,title,isDraft,state,url 2>$null
-    if ($LASTEXITCODE -eq 0 -and $json -and $json -ne "[]") {
-      $prs = $json | ConvertFrom-Json
-      $pr = @($prs)[0]
-      $draft = if ($pr.isDraft) { "draft" } else { "ready" }
-      $prStatus = "#{0} {1} {2} {3}" -f $pr.number, $draft, $pr.state, $pr.url
+  $drift = Get-WavePullRequestDrift -Repo $worktree.Path -Branch $worktree.Branch
+  $prStatus = if ($drift.HasPullRequest) {
+    $draft = if ($null -eq $drift.PullRequestIsDraft) {
+      "draft-unknown"
+    } elseif ($drift.PullRequestIsDraft) {
+      "draft"
     } else {
-      $prStatus = "none"
+      "ready"
     }
-  } elseif ($ghAvailable) {
-    $prStatus = "gh unauthenticated"
+    "#{0} {1} {2} {3}" -f $drift.PullRequestNumber, $draft, $drift.PullRequestState, $drift.PullRequestUrl
+  } elseif ($ghAvailable -and -not $ghAuthed) {
+    "gh unauthenticated"
+  } elseif (-not $ghAvailable) {
+    "gh unavailable"
+  } else {
+    "none"
+  }
+
+  $prDrift = switch ($drift.Status) {
+    "ok" { "OK" }
+    "local-ahead-of-pr" {
+      if ($null -ne $drift.LocalOnlyCommitCount) {
+        "local-ahead-of-pr ($($drift.LocalOnlyCommitCount))"
+      } else {
+        "local-ahead-of-pr"
+      }
+    }
+    "unknown-gh-unavailable" { "unknown-gh-unavailable" }
+    "no-open-pr" { "no-open-pr" }
+    default { $drift.Status }
   }
 
   $rows += [pscustomobject]@{
@@ -138,6 +160,7 @@ foreach ($stream in Get-ActiveRegistryRows -Path $RegistryPath) {
     Branch = $worktree.Branch
     Dirty = $dirty
     Unpushed = $unpushed
+    PRDrift = $prDrift
     PR = $prStatus
     Wave = $stream.Wave
   }
@@ -145,11 +168,24 @@ foreach ($stream in Get-ActiveRegistryRows -Path $RegistryPath) {
 
 $rows | Format-Table -AutoSize
 
+$driftWarnings = @($rows | Where-Object { $_.PRDrift -like "local-ahead-of-pr*" })
+if ($driftWarnings.Count -gt 0) {
+  Write-Host ""
+  Write-Host "PR drift warnings:" -ForegroundColor Yellow
+  foreach ($row in $driftWarnings) {
+    $drift = Get-WavePullRequestDrift -Repo ((Get-Worktrees -Repo $CanonicalRepo | Where-Object { $_.Branch -eq $row.Branch } | Select-Object -First 1).Path) -Branch $row.Branch
+    Write-WavePullRequestDriftWarning -Drift $drift
+  }
+}
+
 Write-Host ""
 if ($ghAvailable -and $ghAuthed) {
-  Write-Host "GitHub CLI available: PR metadata includes draft vs ready when a PR exists."
+  Write-Host "GitHub CLI available: $ghPath"
+  Write-Host "PR metadata includes draft vs ready when a PR exists."
 } elseif ($ghAvailable) {
-  Write-Host "GitHub CLI available but unauthenticated: showing local-only status."
+  Write-Host "GitHub CLI available but unauthenticated: $ghPath"
+  Write-Host "Showing local-only status. Run gh auth login."
 } else {
   Write-Host "GitHub CLI not found: showing local-only status."
+  Get-GitHubCliInstallGuidance | ForEach-Object { Write-Host $_ }
 }
