@@ -6,6 +6,8 @@ param(
 $ErrorActionPreference = "Stop"
 $results = New-Object System.Collections.Generic.List[object]
 
+. (Join-Path $PSScriptRoot "lib\dev-tool-paths.ps1")
+
 function Add-Result {
   param(
     [ValidateSet("PASS", "WARNING", "FAIL")]
@@ -98,6 +100,8 @@ foreach ($requiredPath in @(
   "scripts\wave-review.ps1",
   "scripts\wave-pr.ps1",
   "scripts\wave-status.ps1",
+  "scripts\setup-github-cli.ps1",
+  "scripts\lib\dev-tool-paths.ps1",
   "scripts\codex-streams.ps1",
   "scripts\codex-next.ps1",
   ".codex\worktree-rules.md",
@@ -113,6 +117,19 @@ foreach ($requiredPath in @(
   } else {
     Add-Result "FAIL" "required file" "$requiredPath missing" "Restore or recreate this platform file."
   }
+}
+
+$ghPath = Resolve-DevToolCommand -Name "gh"
+if ($ghPath) {
+  Add-Result "PASS" "GitHub CLI available" $ghPath
+  $ghAuthOutput = & $ghPath auth status 2>&1
+  if ($LASTEXITCODE -eq 0) {
+    Add-Result "PASS" "GitHub CLI auth" "authenticated"
+  } else {
+    Add-Result "WARNING" "GitHub CLI auth" (($ghAuthOutput | Out-String).Trim()) "Run gh auth login."
+  }
+} else {
+  Add-Result "WARNING" "GitHub CLI available" "not found" "Run pnpm setup:gh for install and auth guidance."
 }
 
 $worktrees = @(Get-Worktrees -Repo $CanonicalRepo)

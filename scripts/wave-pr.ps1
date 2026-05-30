@@ -13,6 +13,7 @@ param(
 
 $ErrorActionPreference = "Stop"
 . (Join-Path $PSScriptRoot "lib\wave-pr-guards.ps1")
+. (Join-Path $PSScriptRoot "lib\dev-tool-paths.ps1")
 
 $repo = (git rev-parse --show-toplevel).Trim()
 $branch = (git -C $repo branch --show-current).Trim()
@@ -157,9 +158,10 @@ $draftNote
 No automatic merge, auto-merge, ready-for-review transition, branch deletion, or worktree deletion is authorized by this PR.
 "@
 
-$gh = Get-Command gh -ErrorAction SilentlyContinue
-if (-not $gh) {
+$ghPath = Resolve-DevToolCommand -Name "gh"
+if (-not $ghPath) {
   Write-Host "GitHub CLI is not installed or not on PATH." -ForegroundColor Yellow
+  Get-GitHubCliInstallGuidance | ForEach-Object { Write-Host $_ }
   Write-Host ""
   Write-Host "Create this PR manually in GitHub:"
   Write-Host "- Base: $Base"
@@ -171,7 +173,7 @@ if (-not $gh) {
   exit 0
 }
 
-gh auth status 1>$null 2>$null
+& $ghPath auth status 1>$null 2>$null
 if ($LASTEXITCODE -ne 0) {
   Write-Host "GitHub CLI is not authenticated." -ForegroundColor Yellow
   Write-Host ""
@@ -194,7 +196,7 @@ try {
     $args += "--draft"
   }
 
-  $prUrl = gh @args
+  $prUrl = & $ghPath @args
   if ($LASTEXITCODE -ne 0) {
     throw "gh pr create failed."
   }
@@ -214,7 +216,7 @@ try {
       $labelExitCode = 0
 
       try {
-        $labelOutput = gh pr edit $prUrl --add-label $label 2>&1
+        $labelOutput = & $ghPath pr edit $prUrl --add-label $label 2>&1
         $labelExitCode = $LASTEXITCODE
       } catch {
         $labelExitCode = 1

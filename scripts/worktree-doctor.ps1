@@ -7,6 +7,8 @@ param(
 $ErrorActionPreference = "Stop"
 $results = New-Object System.Collections.Generic.List[object]
 
+. (Join-Path $PSScriptRoot "lib\dev-tool-paths.ps1")
+
 function Add-Result {
   param(
     [ValidateSet("PASS", "WARNING", "FAIL")]
@@ -210,6 +212,27 @@ if ($pnpm.Code -eq 0) {
 
 $corepack = Invoke-Capture "corepack" @("--version") $worktreePath
 if ($corepack.Code -eq 0) { Add-Result "PASS" "Corepack" $corepack.Output } else { Add-Result "WARNING" "Corepack" $corepack.Output "Run corepack enable from an elevated shell if pnpm resolution drifts." }
+
+$ghPath = Resolve-DevToolCommand -Name "gh"
+if ($ghPath) {
+  Add-Result "PASS" "GitHub CLI available" $ghPath
+  $ghVersion = Invoke-Capture $ghPath @("--version") $worktreePath
+  if ($ghVersion.Code -eq 0) {
+    $ghVersionLine = (($ghVersion.Output -split "`r?`n") | Select-Object -First 1)
+    Add-Result "PASS" "GitHub CLI version" $ghVersionLine
+  } else {
+    Add-Result "WARNING" "GitHub CLI version" $ghVersion.Output "Run pnpm setup:gh to inspect the local GitHub CLI installation."
+  }
+
+  $ghAuth = Invoke-Capture $ghPath @("auth", "status") $worktreePath
+  if ($ghAuth.Code -eq 0) {
+    Add-Result "PASS" "GitHub CLI auth" "authenticated"
+  } else {
+    Add-Result "WARNING" "GitHub CLI auth" $ghAuth.Output "Run gh auth login."
+  }
+} else {
+  Add-Result "WARNING" "GitHub CLI available" "not found" "Run pnpm setup:gh for install and auth guidance."
+}
 
 foreach ($spec in @(
   @{ RelativePath = "node_modules"; Kind = "Directory" },

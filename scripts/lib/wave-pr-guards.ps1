@@ -1,5 +1,7 @@
 $ErrorActionPreference = "Stop"
 
+. (Join-Path $PSScriptRoot "dev-tool-paths.ps1")
+
 function Invoke-WaveGit {
   param(
     [Parameter(Mandatory = $true)]
@@ -104,11 +106,11 @@ function Get-WaveOpenPullRequestForBranch {
     [string]$Branch
   )
 
-  $gh = Get-Command gh -ErrorAction SilentlyContinue
-  if ($gh) {
-    gh auth status 1>$null 2>$null
+  $ghPath = Resolve-DevToolCommand -Name "gh"
+  if ($ghPath) {
+    & $ghPath auth status 1>$null 2>$null
     if ($LASTEXITCODE -eq 0) {
-      $json = gh pr list --head $Branch --state open --json number,url,isDraft,state,headRefName,headRefOid 2>$null
+      $json = & $ghPath pr list --head $Branch --state open --json number,url,isDraft,state,headRefName,headRefOid 2>$null
       if ($LASTEXITCODE -ne 0) {
         return [pscustomobject]@{
           PullRequest = $null

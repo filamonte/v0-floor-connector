@@ -20,6 +20,9 @@ Repository automation and maintenance scripts will live here.
   upstreams, doctor checks, and shared build-output mistakes.
 - `refresh-playwright-auth.ps1`: reruns shared Playwright auth setup from the
   canonical repo and relinks auth state into worktrees.
+- `setup-github-cli.ps1`: detects GitHub CLI, prints version/auth status, and
+  prints install/auth guidance. It does not install automatically unless run
+  with the explicit `-InstallWithWinget` switch.
 - `codex-streams.ps1`: prints the active six-stream operating model, paused or
   legacy streams, and the recommended next prompt order.
 - `codex-next.ps1`: prints the recommended next implementation prompt order
@@ -45,6 +48,7 @@ Package scripts:
 ```powershell
 pnpm devtools:link
 pnpm devtools:link:fix
+pnpm setup:gh
 pnpm worktree:doctor
 pnpm worktree:status
 pnpm worktree:reconcile
@@ -60,6 +64,31 @@ pnpm codex:next
 ```
 
 ## Wave And Draft PR Conveyor Belt
+
+GitHub CLI is optional but recommended. The conveyor-belt scripts use it for
+live PR metadata, PR drift checks, draft PR creation, and draft/ready status.
+When GitHub CLI is unavailable or unauthenticated, scripts fall back to local
+git refs where possible and print manual PR guidance.
+
+Use:
+
+```powershell
+pnpm setup:gh
+```
+
+Manual install/auth commands:
+
+```powershell
+winget install --id GitHub.cli
+gh auth login
+gh auth status
+```
+
+If GitHub CLI is installed outside PATH, set:
+
+```powershell
+$env:FLOORCONNECTOR_GH_PATH = "C:\Program Files\GitHub CLI\gh.exe"
+```
 
 The human-reviewed conveyor belt is:
 

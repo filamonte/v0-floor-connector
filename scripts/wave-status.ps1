@@ -6,6 +6,7 @@ param(
 $ErrorActionPreference = "Stop"
 
 . (Join-Path $PSScriptRoot "lib\wave-pr-guards.ps1")
+. (Join-Path $PSScriptRoot "lib\dev-tool-paths.ps1")
 
 function Invoke-Git {
   param([string]$Repo, [string[]]$Arguments)
@@ -77,10 +78,11 @@ function Get-ActiveRegistryRows {
   return $rows | Where-Object { $_.Worktree -ne "main" }
 }
 
-$ghAvailable = [bool](Get-Command gh -ErrorAction SilentlyContinue)
+$ghPath = Resolve-DevToolCommand -Name "gh"
+$ghAvailable = [bool]$ghPath
 $ghAuthed = $false
 if ($ghAvailable) {
-  gh auth status 1>$null 2>$null
+  & $ghPath auth status 1>$null 2>$null
   $ghAuthed = ($LASTEXITCODE -eq 0)
 }
 
@@ -178,9 +180,12 @@ if ($driftWarnings.Count -gt 0) {
 
 Write-Host ""
 if ($ghAvailable -and $ghAuthed) {
-  Write-Host "GitHub CLI available: PR metadata includes draft vs ready when a PR exists."
+  Write-Host "GitHub CLI available: $ghPath"
+  Write-Host "PR metadata includes draft vs ready when a PR exists."
 } elseif ($ghAvailable) {
-  Write-Host "GitHub CLI available but unauthenticated: showing local-only status."
+  Write-Host "GitHub CLI available but unauthenticated: $ghPath"
+  Write-Host "Showing local-only status. Run gh auth login."
 } else {
   Write-Host "GitHub CLI not found: showing local-only status."
+  Get-GitHubCliInstallGuidance | ForEach-Object { Write-Host $_ }
 }
