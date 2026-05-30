@@ -49,6 +49,11 @@ import {
   ProjectEvidenceContinuitySection,
   ProjectProofCenterSection
 } from "@/components/project-proof-evidence-sections";
+import {
+  ProjectAiOperationalCopilotSection,
+  ProjectCommandCenterMapSection,
+  type ProjectCommandCenterMapItem
+} from "@/components/project-ai-copilot-command-sections";
 import { ProjectFinancialContinuitySection } from "@/components/project-financial-continuity-section";
 import {
   ProjectProductionHubSection,
@@ -109,11 +114,7 @@ import {
   deriveAiCopilotDraftActions,
   deriveAiCommunicationAssistance,
   deriveAiFieldSummary,
-  deriveAiProjectOperationalSummary,
-  type AiCopilotDraftAction,
-  type AiProjectOperationalSummary,
-  type AiFieldSummary,
-  type AiOperationalCopilotTone
+  deriveAiProjectOperationalSummary
 } from "@/lib/ai-operational-copilot/summary";
 import { buildAiCopilotCommunicationHandoffHref } from "@/lib/ai-operational-copilot/communication-handoff";
 import { getAiProviderAvailability } from "@/lib/ai-operational-copilot/provider";
@@ -894,241 +895,6 @@ function ProjectPulseSection({ summary }: { summary: ProjectPulseSummary }) {
   );
 }
 
-function getAiOperationalCopilotToneClassName(tone: AiOperationalCopilotTone) {
-  switch (tone) {
-    case "ready":
-      return "border-emerald-200 bg-emerald-50 text-emerald-950";
-    case "attention":
-      return "border-amber-200 bg-amber-50 text-amber-950";
-    case "blocked":
-      return "border-rose-200 bg-rose-50 text-rose-950";
-    case "neutral":
-      return "border-[var(--border-warm)] bg-white text-[var(--text-primary)]";
-  }
-}
-
-function AiOperationalCopilotSection({
-  summary,
-  fieldSummary,
-  draftActions,
-  providerEnhancementNote,
-  projectId,
-  projectName,
-  customerId,
-  customerName,
-  communicationThreadId
-}: {
-  summary: AiProjectOperationalSummary | null;
-  fieldSummary: AiFieldSummary | null;
-  draftActions: AiCopilotDraftAction[];
-  providerEnhancementNote: string;
-  projectId: string;
-  projectName: string;
-  customerId: string | null;
-  customerName: string | null;
-  communicationThreadId: string | null;
-}) {
-  if (!summary || !fieldSummary) {
-    return (
-      <section
-        id="ai-operational-copilot"
-        className={projectWorkspacePanelClassName}
-      >
-        <div
-          className={`${projectWorkspacePanelHeaderClassName} px-4 py-4 sm:px-5`}
-        >
-          <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--copper)]">
-            AI Operational Copilot
-          </p>
-          <h3 className="mt-2 text-lg font-semibold tracking-tight text-[var(--text-primary)]">
-            Copilot summaries are disabled
-          </h3>
-          <p className="mt-2 max-w-[74ch] text-sm leading-6 text-[var(--text-secondary)]">
-            Organization workflow settings are keeping Copilot summaries quiet
-            for this workspace. ProjectPulse, readiness gates, workflow cues,
-            and connected records remain available from canonical project data.
-          </p>
-        </div>
-      </section>
-    );
-  }
-
-  return (
-    <section
-      id="ai-operational-copilot"
-      className={projectWorkspacePanelClassName}
-    >
-      <div
-        className={`${projectWorkspacePanelHeaderClassName} px-4 py-4 sm:px-5`}
-      >
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-          <div className="min-w-0">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--copper)]">
-              AI Operational Copilot
-            </p>
-            <h3 className="mt-2 text-lg font-semibold tracking-tight text-[var(--text-primary)]">
-              Project guidance
-            </h3>
-            <p className="mt-2 max-w-[74ch] text-sm leading-6 text-[var(--text-secondary)]">
-              Copilot explains what the timeline and readiness signals mean,
-              then prepares review-first next moves. {summary.executiveSummary}
-            </p>
-          </div>
-          <span
-            className={[
-              "inline-flex rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em]",
-              getAiOperationalCopilotToneClassName(summary.tone)
-            ].join(" ")}
-          >
-            {summary.stage}
-          </span>
-        </div>
-        <p className="mt-3 text-xs leading-5 text-[var(--text-secondary)]">
-          {providerEnhancementNote}
-        </p>
-      </div>
-
-      <div className="grid gap-px bg-[var(--border-warm)] lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
-        <div className="bg-white px-4 py-4 sm:px-5">
-          <div className="grid gap-3 md:grid-cols-2">
-            {[
-              ["Readiness", summary.readinessState],
-              ["Financials", summary.financialState],
-              ["Schedule", summary.scheduleState],
-              ["Execution", summary.executionState]
-            ].map(([label, value]) => (
-              <div
-                key={label}
-                className="rounded-lg border border-[var(--border-warm)] bg-[var(--highlight)] px-3 py-3"
-              >
-                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
-                  {label}
-                </p>
-                <p className="mt-1 text-sm leading-5 text-[var(--text-primary)]">
-                  {value}
-                </p>
-              </div>
-            ))}
-          </div>
-
-          <div className="mt-4">
-            <p className="text-sm font-semibold text-[var(--text-primary)]">
-              Recommended next actions
-            </p>
-            <div className="mt-3 space-y-3">
-              {summary.recommendedNextActions.map((action) => (
-                <div
-                  key={action.id}
-                  className="rounded-lg border border-slate-200 bg-white px-3 py-3 text-sm leading-5"
-                >
-                  <div className="flex flex-wrap items-start justify-between gap-2">
-                    <p className="font-semibold text-slate-950">
-                      {action.title}
-                    </p>
-                    <span className="rounded-md border border-slate-200 bg-slate-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-600">
-                      {action.priority}
-                    </span>
-                  </div>
-                  <p className="mt-1 text-slate-600">{action.detail}</p>
-                  <p className="mt-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">
-                    Why: {action.reason}
-                  </p>
-                  <Link
-                    href={action.href}
-                    className="mt-3 inline-flex h-8 items-center rounded-full border border-slate-200 bg-slate-50 px-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-700 transition hover:bg-white"
-                  >
-                    {action.label}
-                  </Link>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        <div className="space-y-px bg-[var(--border-warm)]">
-          <div className="bg-white px-4 py-4 sm:px-5">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--text-secondary)]">
-              Review-first draft composer
-            </p>
-            {draftActions.length > 0 ? (
-              <div className="mt-3 space-y-3">
-                {draftActions.slice(0, 3).map((action) => (
-                  <div
-                    key={action.id}
-                    className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-3 text-sm leading-5"
-                  >
-                    <div className="flex flex-wrap items-start justify-between gap-2">
-                      <p className="font-semibold text-slate-950">
-                        {action.title}
-                      </p>
-                      <span className="rounded-md border border-slate-200 bg-white px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-600">
-                        {action.audience}
-                      </span>
-                    </div>
-                    <p className="mt-2 text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
-                      {action.subject}
-                    </p>
-                    <p className="mt-2 whitespace-pre-line text-sm leading-6 text-[var(--text-primary)]">
-                      {action.draftBody}
-                    </p>
-                    <p className="mt-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">
-                      Why: {action.operationalReason}
-                    </p>
-                    <p className="mt-2 text-xs leading-5 text-slate-500">
-                      {action.reviewSafetyNote}
-                    </p>
-                    <Link
-                      href={buildAiCopilotCommunicationHandoffHref({
-                        action,
-                        projectId,
-                        projectName,
-                        customerId,
-                        customerName,
-                        threadId: communicationThreadId
-                      })}
-                      className="mt-3 inline-flex h-8 items-center rounded-full border border-[#e4d7ca] bg-white px-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-[#8f5b32] transition hover:bg-[#fbf5ee]"
-                    >
-                      Review draft
-                    </Link>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="mt-3 rounded-lg border border-dashed border-[var(--border-warm)] bg-[var(--highlight)] px-3 py-3">
-                <p className="text-sm font-semibold text-[var(--text-primary)]">
-                  Draft actions are disabled
-                </p>
-                <p className="mt-1 text-xs leading-5 text-[var(--text-secondary)]">
-                  Summaries can stay visible while organization settings keep
-                  Copilot draft text out of the workspace.
-                </p>
-              </div>
-            )}
-          </div>
-          <div className="bg-white px-4 py-4 sm:px-5">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--text-secondary)]">
-              Field summary
-            </p>
-            <p className="mt-2 text-sm leading-6 text-[var(--text-primary)]">
-              {fieldSummary.pmSummary}
-            </p>
-            {fieldSummary.riskIndicators.length > 0 ? (
-              <ul className="mt-3 space-y-2 text-sm leading-5 text-slate-600">
-                {fieldSummary.riskIndicators.map((risk) => (
-                  <li key={risk}>- {risk}</li>
-                ))}
-              </ul>
-            ) : null}
-          </div>
-          <div className="bg-slate-50 px-4 py-3 text-xs leading-5 text-slate-600 sm:px-5">
-            {summary.reviewBoundary}
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
-
 function getCloseoutTrailToneClassName(tone: CloseoutTrailTone) {
   switch (tone) {
     case "ready":
@@ -1421,154 +1187,6 @@ function OperationalCommandCenter({
             <p className="mt-1 font-semibold">{item.value}</p>
             <p className="mt-1 opacity-80">{item.detail}</p>
           </div>
-        ))}
-      </div>
-    </section>
-  );
-}
-
-function ProjectCommandCenterMap({
-  nextAction,
-  readinessLabel,
-  readinessDetail,
-  blockerCount,
-  timeline,
-  aiSummary,
-  draftActionCount,
-  connectedRecordLanes
-}: {
-  nextAction: ProjectReadinessNextAction;
-  readinessLabel: string;
-  readinessDetail: string;
-  blockerCount: number;
-  timeline: ProjectCommandTimeline;
-  aiSummary: AiProjectOperationalSummary | null;
-  draftActionCount: number;
-  connectedRecordLanes: ProjectConnectedRecordLane[];
-}) {
-  const blockedLaneCount = connectedRecordLanes.filter(
-    (lane) => lane.blocker
-  ).length;
-  const mapItems = [
-    {
-      eyebrow: "Current status",
-      title: readinessLabel,
-      description:
-        blockerCount > 0
-          ? `${blockerCount} ${blockerCount === 1 ? "item needs" : "items need"} attention before the project moves cleanly.`
-          : readinessDetail,
-      href: nextAction.primaryHref ?? "#project-command-center-title",
-      label: nextAction.primaryLabel ?? "Review status",
-      tone: blockerCount > 0 ? "warning" : "positive"
-    },
-    {
-      eyebrow: "What happened",
-      title:
-        timeline.needsAttention.length > 0
-          ? `${timeline.needsAttention.length} attention signal${
-              timeline.needsAttention.length === 1 ? "" : "s"
-            }`
-          : `${timeline.readyToMove.length} ready handoff${
-              timeline.readyToMove.length === 1 ? "" : "s"
-            }`,
-      description:
-        "Project Command Timeline keeps recent lifecycle movement tied back to canonical records.",
-      href: "#project-command-timeline",
-      label: "Review timeline",
-      tone: timeline.needsAttention.length > 0 ? "warning" : "neutral"
-    },
-    {
-      eyebrow: "What it means",
-      title: aiSummary ? aiSummary.stage : "Copilot quiet",
-      description: aiSummary
-        ? `${aiSummary.recommendedNextActions.length} recommendation${
-            aiSummary.recommendedNextActions.length === 1 ? "" : "s"
-          } and ${draftActionCount} review-first draft${
-            draftActionCount === 1 ? "" : "s"
-          } available when controls allow.`
-        : "Copilot summaries are disabled; ProjectPulse and canonical records still show the project state.",
-      href: "#ai-operational-copilot",
-      label: "Review Copilot",
-      tone:
-        aiSummary?.tone === "blocked"
-          ? "critical"
-          : aiSummary?.tone === "attention"
-            ? "warning"
-            : "neutral"
-    },
-    {
-      eyebrow: "Where to act",
-      title:
-        blockedLaneCount > 0
-          ? `${blockedLaneCount} lane${blockedLaneCount === 1 ? "" : "s"} flagged`
-          : `${connectedRecordLanes.length} linked lanes`,
-      description:
-        "Connected records route editing back to estimate, contract, invoice, job, field, portal, and schedule workspaces.",
-      href: "#connected-record-lanes",
-      label: "Open lanes",
-      tone: blockedLaneCount > 0 ? "warning" : "neutral"
-    }
-  ] satisfies Array<{
-    eyebrow: string;
-    title: string;
-    description: string;
-    href: string;
-    label: string;
-    tone: WorkspaceStateTone;
-  }>;
-
-  return (
-    <section
-      aria-labelledby="project-command-center-map-title"
-      className={projectWorkspacePanelClassName}
-    >
-      <div
-        className={[
-          "flex flex-col gap-3 px-4 py-4 md:flex-row md:items-start md:justify-between sm:px-5",
-          projectWorkspacePanelHeaderClassName
-        ].join(" ")}
-      >
-        <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--copper)]">
-            Command center map
-          </p>
-          <h2
-            id="project-command-center-map-title"
-            className="mt-1 text-lg font-semibold text-[var(--text-primary)]"
-          >
-            Status, timeline, guidance, and action lanes
-          </h2>
-          <p className="mt-1 max-w-[74ch] text-sm leading-6 text-[var(--text-secondary)]">
-            Use this map to scan the project without losing the source of truth:
-            status comes from readiness, timeline comes from linked records,
-            Copilot explains review-first next moves, and lanes open the
-            canonical workspaces.
-          </p>
-        </div>
-        <span className="rounded-full border border-[var(--border-warm)] bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-[var(--text-secondary)]">
-          No automatic actions
-        </span>
-      </div>
-
-      <div className="grid gap-px bg-[var(--border-warm)] md:grid-cols-2 xl:grid-cols-4">
-        {mapItems.map((item) => (
-          <a
-            key={item.eyebrow}
-            href={item.href}
-            className={[
-              "flex min-h-[168px] flex-col px-4 py-4 text-sm leading-6 transition hover:bg-white",
-              getCommandSummaryToneClassName(item.tone)
-            ].join(" ")}
-          >
-            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] opacity-75">
-              {item.eyebrow}
-            </p>
-            <p className="mt-2 font-semibold">{item.title}</p>
-            <p className="mt-2 opacity-80">{item.description}</p>
-            <span className="mt-auto pt-4 text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--copper)]">
-              {item.label}
-            </span>
-          </a>
         ))}
       </div>
     </section>
@@ -4150,6 +3768,54 @@ export default async function ProjectDetailPage({
           fieldSummary: aiFieldSummary
         })
       : [];
+  const aiCopilotSummaryView = aiOperationalSummary
+    ? {
+        stage: aiOperationalSummary.stage,
+        tone: aiOperationalSummary.tone,
+        executiveSummary: aiOperationalSummary.executiveSummary,
+        reviewBoundary: aiOperationalSummary.reviewBoundary,
+        statusItems: [
+          { label: "Readiness", value: aiOperationalSummary.readinessState },
+          { label: "Financials", value: aiOperationalSummary.financialState },
+          { label: "Schedule", value: aiOperationalSummary.scheduleState },
+          { label: "Execution", value: aiOperationalSummary.executionState }
+        ],
+        recommendedNextActions: aiOperationalSummary.recommendedNextActions.map(
+          (action) => ({
+            id: action.id,
+            title: action.title,
+            detail: action.detail,
+            reason: action.reason,
+            href: action.href,
+            label: action.label,
+            priority: action.priority
+          })
+        )
+      }
+    : null;
+  const aiFieldSummaryView = aiFieldSummary
+    ? {
+        pmSummary: aiFieldSummary.pmSummary,
+        riskIndicators: aiFieldSummary.riskIndicators
+      }
+    : null;
+  const aiDraftActionItems = aiDraftActions.map((action) => ({
+    id: action.id,
+    title: action.title,
+    audience: action.audience,
+    subject: action.subject,
+    draftBody: action.draftBody,
+    operationalReason: action.operationalReason,
+    reviewSafetyNote: action.reviewSafetyNote,
+    reviewHref: buildAiCopilotCommunicationHandoffHref({
+      action,
+      projectId: project.id,
+      projectName: project.name,
+      customerId: project.customerId,
+      customerName: project.customer?.name ?? null,
+      threadId: copilotCommunicationThreadId
+    })
+  }));
   const proofCenter = deriveProofCenterSummary({
     projectId: project.id,
     estimates: projectEstimates.map((estimate) => ({
@@ -5172,6 +4838,84 @@ export default async function ProjectDetailPage({
           : undefined
     }
   ];
+  const blockedConnectedRecordLaneCount = connectedRecordLanes.filter(
+    (lane) => lane.blocker
+  ).length;
+  const projectCommandCenterMapItems: ProjectCommandCenterMapItem[] = [
+    {
+      eyebrow: "Current status",
+      title: readinessSnapshot?.isReadyToSchedule
+        ? "Ready to schedule"
+        : formatStatusLabel(readinessStatus),
+      description:
+        workspaceBlockers.length > 0
+          ? `${workspaceBlockers.length} ${
+              workspaceBlockers.length === 1 ? "item needs" : "items need"
+            } attention before the project moves cleanly.`
+          : readinessSnapshot?.isReadyToSchedule
+            ? "Commercial handoff is complete."
+            : "Clear the current gate before operations moves forward.",
+      href: nextAction.primaryHref ?? "#project-command-center-title",
+      label: nextAction.primaryLabel ?? "Review status",
+      tone: workspaceBlockers.length > 0 ? "warning" : "positive"
+    },
+    {
+      eyebrow: "What happened",
+      title:
+        projectCommandTimeline.needsAttention.length > 0
+          ? `${projectCommandTimeline.needsAttention.length} attention signal${
+              projectCommandTimeline.needsAttention.length === 1 ? "" : "s"
+            }`
+          : `${projectCommandTimeline.readyToMove.length} ready handoff${
+              projectCommandTimeline.readyToMove.length === 1 ? "" : "s"
+            }`,
+      description:
+        "Project Command Timeline keeps recent lifecycle movement tied back to canonical records.",
+      href: "#project-command-timeline",
+      label: "Review timeline",
+      tone:
+        projectCommandTimeline.needsAttention.length > 0 ? "warning" : "neutral"
+    },
+    {
+      eyebrow: "What it means",
+      title: aiOperationalSummary
+        ? aiOperationalSummary.stage
+        : "Copilot quiet",
+      description: aiOperationalSummary
+        ? `${aiOperationalSummary.recommendedNextActions.length} recommendation${
+            aiOperationalSummary.recommendedNextActions.length === 1 ? "" : "s"
+          } and ${
+            showAiDraftActionComposer ? aiDraftActions.length : 0
+          } review-first draft${
+            (showAiDraftActionComposer ? aiDraftActions.length : 0) === 1
+              ? ""
+              : "s"
+          } available when controls allow.`
+        : "Copilot summaries are disabled; ProjectPulse and canonical records still show the project state.",
+      href: "#ai-operational-copilot",
+      label: "Review Copilot",
+      tone:
+        aiOperationalSummary?.tone === "blocked"
+          ? "critical"
+          : aiOperationalSummary?.tone === "attention"
+            ? "warning"
+            : "neutral"
+    },
+    {
+      eyebrow: "Where to act",
+      title:
+        blockedConnectedRecordLaneCount > 0
+          ? `${blockedConnectedRecordLaneCount} lane${
+              blockedConnectedRecordLaneCount === 1 ? "" : "s"
+            } flagged`
+          : `${connectedRecordLanes.length} linked lanes`,
+      description:
+        "Connected records route editing back to estimate, contract, invoice, job, field, portal, and schedule workspaces.",
+      href: "#connected-record-lanes",
+      label: "Open lanes",
+      tone: blockedConnectedRecordLaneCount > 0 ? "warning" : "neutral"
+    }
+  ];
   const drivingRecord =
     linkedRecordRecencyItems.find((item) => item.isDrivingRecord) ??
     linkedRecordRecencyItems[0] ??
@@ -5439,41 +5183,19 @@ export default async function ProjectDetailPage({
               summary={projectOperationalSummary}
             />
 
-            <ProjectCommandCenterMap
-              nextAction={nextAction}
-              readinessLabel={
-                readinessSnapshot?.isReadyToSchedule
-                  ? "Ready to schedule"
-                  : formatStatusLabel(readinessStatus)
-              }
-              readinessDetail={
-                readinessSnapshot?.isReadyToSchedule
-                  ? "Commercial handoff is complete."
-                  : "Clear the current gate before operations moves forward."
-              }
-              blockerCount={workspaceBlockers.length}
-              timeline={projectCommandTimeline}
-              aiSummary={aiOperationalSummary}
-              draftActionCount={
-                showAiDraftActionComposer ? aiDraftActions.length : 0
-              }
-              connectedRecordLanes={connectedRecordLanes}
+            <ProjectCommandCenterMapSection
+              items={projectCommandCenterMapItems}
             />
 
             <ProjectPulseSection summary={projectPulse} />
 
             <ProjectCommandTimelineSection timeline={projectCommandTimeline} />
 
-            <AiOperationalCopilotSection
-              summary={aiOperationalSummary}
-              fieldSummary={aiFieldSummary}
-              draftActions={showAiDraftActionComposer ? aiDraftActions : []}
+            <ProjectAiOperationalCopilotSection
+              summary={aiCopilotSummaryView}
+              fieldSummary={aiFieldSummaryView}
+              draftActions={showAiDraftActionComposer ? aiDraftActionItems : []}
               providerEnhancementNote={aiProviderAvailability.reason}
-              projectId={project.id}
-              projectName={project.name}
-              customerId={project.customerId}
-              customerName={project.customer?.name ?? null}
-              communicationThreadId={copilotCommunicationThreadId}
             />
 
             <OperationalGuidanceSection
