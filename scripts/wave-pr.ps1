@@ -6,6 +6,7 @@ param(
   [string]$Risks = "",
   [string]$Rollback = "",
   [switch]$Ready,
+  [switch]$SkipLabels,
   [string]$Base = "main"
 )
 
@@ -155,14 +156,34 @@ try {
   Write-Host ""
   Write-Host "PR created:"
   Write-Host $prUrl
-  Write-Host ""
-  Write-Host "Labels are best-effort:"
-  foreach ($label in @("codex", "wave", "needs-verification")) {
-    gh pr edit $prUrl --add-label $label 1>$null 2>$null
-    if ($LASTEXITCODE -eq 0) {
-      Write-Host "  added $label"
-    } else {
-      Write-Host "  could not add $label" -ForegroundColor Yellow
+
+  if ($SkipLabels) {
+    Write-Host ""
+    Write-Host "Skipping label application by request."
+  } else {
+    Write-Host ""
+    Write-Host "Labels are best-effort:"
+    foreach ($label in @("codex", "wave", "needs-verification")) {
+      $labelOutput = $null
+      $labelExitCode = 0
+
+      try {
+        $labelOutput = gh pr edit $prUrl --add-label $label 2>&1
+        $labelExitCode = $LASTEXITCODE
+      } catch {
+        $labelExitCode = 1
+        $labelOutput = $_.Exception.Message
+      }
+
+      if ($labelExitCode -eq 0) {
+        Write-Host "  added $label"
+      } else {
+        $labelMessage = ($labelOutput | Out-String).Trim()
+        if (-not $labelMessage) {
+          $labelMessage = "gh pr edit exited with code $labelExitCode"
+        }
+        Write-Host "  warning: could not add $label - $labelMessage" -ForegroundColor Yellow
+      }
     }
   }
 
@@ -173,4 +194,3 @@ try {
 } finally {
   Remove-Item -LiteralPath $bodyFile -Force -ErrorAction SilentlyContinue
 }
-

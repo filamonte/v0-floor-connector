@@ -30,7 +30,8 @@ Repository automation and maintenance scripts will live here.
 - `wave-pr.ps1`: opens a standard GitHub draft PR against `main` when `gh` is
   available and authenticated, or prints exact manual draft-PR steps when it is
   not. It never merges, enables auto-merge, marks a draft ready, or deletes
-  branches/worktrees.
+  branches/worktrees. Label application is best-effort; missing GitHub labels
+  are warnings only and can be skipped with `pnpm wave:pr -- -SkipLabels`.
 - `wave-status.ps1`: shows active wave files, stream branch status, unpushed
   commit status, and PR draft/ready metadata when `gh` can read it.
 
