@@ -583,6 +583,9 @@ file` actions without exposing raw storage paths. This remains contractor-only
   incomplete jobs, missing crew, crew overlap or same-day capacity warnings,
   aging ready-to-schedule jobs, and in-progress jobs. Same-day capacity warnings
   come from existing job assignment people/vendors and remain advisory only.
+  CrewBoard now also derives Triage, Plan, and Dispatch operating-mode summaries
+  from the same canonical job queues for blocker review, upcoming planning, and
+  same-day execution visibility.
   The slice adds no dispatch model, schema, route optimization, map integration,
   notification automation, portal sharing, or new schedule write path.
 - Scheduling / Field handoff visibility now adds a read-only Field handoff

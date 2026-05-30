@@ -1821,6 +1821,42 @@ export default async function SchedulePage({
     readinessByProjectId: projectReadinessByProjectId,
     warningSummaries: visibleScheduleWarningSummaries
   });
+  const visibleOperatingModes = visibleScheduleBoard.operatingModeSummaries.map(
+    (mode) => {
+      const href =
+        mode.key === "triage"
+          ? buildScheduleHref({
+              q: query,
+              projectId: projectFilterId ?? undefined,
+              view: "scheduled",
+              crew: crewFilter,
+              layout: "board",
+              date: plannerDateKey
+            })
+          : mode.key === "plan"
+            ? buildScheduleHref({
+                q: query,
+                projectId: projectFilterId ?? undefined,
+                view: "unscheduled",
+                crew: crewFilter,
+                layout: scheduleLayout,
+                date: plannerDateKey
+              })
+            : buildScheduleHref({
+                q: query,
+                projectId: projectFilterId ?? undefined,
+                view: "today",
+                crew: crewFilter,
+                layout: scheduleLayout,
+                date: plannerDateKey
+              });
+
+      return {
+        ...mode,
+        href
+      };
+    }
+  );
   const boardTimingGroups = [
     {
       key: "unscheduled-ready",
@@ -2865,6 +2901,117 @@ export default async function SchedulePage({
               </div>
             </section>
           ) : null}
+
+          <section className={schedulePanelClassName}>
+            <div className={schedulePanelHeaderClassName}>
+              <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                <div className="min-w-0">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
+                    Operating modes
+                  </p>
+                  <h2 className="mt-1 text-lg font-semibold tracking-tight text-[var(--text-primary)]">
+                    Triage, plan, dispatch
+                  </h2>
+                  <p className="mt-1 text-sm leading-6 text-[var(--text-secondary)]">
+                    CrewBoard groups the same canonical jobs into review modes
+                    so dispatchers can clear blockers, build the upcoming plan,
+                    and watch today without changing the source of truth.
+                  </p>
+                </div>
+                <span className="inline-flex items-center rounded-full border border-[var(--border-warm)] bg-white px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--text-primary)]">
+                  {visibleOperatingModes.reduce(
+                    (total, mode) => total + mode.attentionCount,
+                    0
+                  )}{" "}
+                  attention signals
+                </span>
+              </div>
+            </div>
+
+            <div className="grid gap-px bg-[var(--border-warm)] lg:grid-cols-3">
+              {visibleOperatingModes.map((mode) => (
+                <div key={mode.key} className="bg-white px-5 py-4 sm:px-6">
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--text-secondary)]">
+                        {mode.label}
+                      </p>
+                      <p className="mt-2 text-sm leading-6 text-[var(--text-secondary)]">
+                        {mode.detail}
+                      </p>
+                    </div>
+                    <span className="inline-flex shrink-0 items-center rounded-full border border-[var(--border-warm)] bg-[var(--highlight)] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--text-primary)]">
+                      {mode.jobCount} jobs
+                    </span>
+                  </div>
+
+                  <div className="mt-4 flex flex-wrap items-center gap-2">
+                    <Link
+                      href={mode.href}
+                      className={`inline-flex items-center rounded-[4px] border px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] transition ${scheduleSecondaryActionToneClassName}`}
+                    >
+                      Open {mode.label}
+                    </Link>
+                    <span className="text-sm text-[var(--text-tertiary)]">
+                      {mode.attentionCount} attention
+                    </span>
+                  </div>
+
+                  {mode.jobs.length > 0 ? (
+                    <div className="mt-4 space-y-2">
+                      {mode.jobs.map((job) => {
+                        const primaryAction = getPrimaryScheduleAction(job);
+
+                        return (
+                          <div
+                            key={`${mode.key}-${job.id}`}
+                            className="rounded-[4px] border border-[var(--border-warm)] bg-[var(--highlight)] px-3 py-2.5"
+                          >
+                            <Link
+                              href={`/jobs/${job.id}`}
+                              className="text-sm font-semibold text-[var(--text-primary)] transition hover:text-[var(--copper)]"
+                            >
+                              {getScheduleJobTitle(job)}
+                            </Link>
+                            <p className="mt-1 text-xs leading-5 text-[var(--text-secondary)]">
+                              {job.customer?.name ?? "Unknown customer"} ·{" "}
+                              {formatDate(job.scheduledDate)}
+                            </p>
+                            <div className="mt-2 flex flex-wrap gap-2">
+                              <Link
+                                href={
+                                  buildCurrentScheduleHref({
+                                    action: primaryAction.action,
+                                    jobId: job.id
+                                  }) + "#schedule-action"
+                                }
+                                className={[
+                                  "inline-flex items-center rounded-[4px] border px-2.5 py-1.5 text-xs font-semibold uppercase tracking-[0.14em] transition",
+                                  primaryAction.toneClass
+                                ].join(" ")}
+                              >
+                                {primaryAction.label}
+                              </Link>
+                              <Link
+                                href={`/projects/${job.projectId}`}
+                                className={scheduleCompactLinkClassName}
+                              >
+                                Project
+                              </Link>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <p className="mt-4 text-sm leading-6 text-[var(--text-tertiary)]">
+                      No jobs in this mode for the current filters.
+                    </p>
+                  )}
+                </div>
+              ))}
+            </div>
+          </section>
 
           <section className={schedulePanelClassName}>
             <div className={schedulePanelHeaderClassName}>

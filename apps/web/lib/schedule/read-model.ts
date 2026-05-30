@@ -112,6 +112,18 @@ export type ScheduleDispatchAttentionItem<TJob extends ScheduleBoardJobSource> =
     detail: string;
   };
 
+export type ScheduleOperatingModeKey = "triage" | "plan" | "dispatch";
+
+export type ScheduleOperatingModeSummary<TJob extends ScheduleBoardJobSource> =
+  {
+    key: ScheduleOperatingModeKey;
+    label: string;
+    detail: string;
+    jobCount: number;
+    attentionCount: number;
+    jobs: TJob[];
+  };
+
 export type ScheduleBoardReadModel<TJob extends ScheduleBoardJobSource> = {
   unscheduledReadyJobs: TJob[];
   unscheduledBlockedJobs: TJob[];
@@ -133,6 +145,7 @@ export type ScheduleBoardReadModel<TJob extends ScheduleBoardJobSource> = {
   latestScheduledJobs: TJob[];
   capacityWarningJobs: TJob[];
   dispatchAttentionItems: ScheduleDispatchAttentionItem<TJob>[];
+  operatingModeSummaries: ScheduleOperatingModeSummary<TJob>[];
   needsReadinessReviewJobs: TJob[];
   readinessReviewJobs: TJob[];
   timingGroups: ScheduleBoardTimingGroup<TJob>[];
@@ -160,6 +173,7 @@ export type ScheduleBoardQueues<TJob extends ScheduleBoardJobSource> = {
   latestScheduledJobs: TJob[];
   capacityWarningJobs: TJob[];
   dispatchAttentionItems: ScheduleDispatchAttentionItem<TJob>[];
+  operatingModeSummaries: ScheduleOperatingModeSummary<TJob>[];
   needsReadinessReviewJobs: TJob[];
 };
 
@@ -388,6 +402,99 @@ function buildDispatchAttentionItems<
   });
 }
 
+function uniqueJobsById<TJob extends ScheduleBoardJobSource>(
+  jobs: TJob[]
+): TJob[] {
+  const seen = new Set<string>();
+  const uniqueJobs: TJob[] = [];
+
+  for (const job of jobs) {
+    if (seen.has(job.id)) {
+      continue;
+    }
+
+    seen.add(job.id);
+    uniqueJobs.push(job);
+  }
+
+  return uniqueJobs;
+}
+
+export function deriveScheduleOperatingModeSummaries<
+  TJob extends ScheduleBoardJobSource
+>(input: {
+  unscheduledReadyJobs: TJob[];
+  unscheduledBlockedJobs: TJob[];
+  pastScheduledIncompleteJobs: TJob[];
+  crewAssignmentGaps: TJob[];
+  capacityWarningJobs: TJob[];
+  activeTodayJobs: TJob[];
+  tomorrowJobs: TJob[];
+  thisWeekJobs: TJob[];
+  laterScheduledJobs: TJob[];
+  dispatchAttentionItems: ScheduleDispatchAttentionItem<TJob>[];
+  jobsPerMode?: number;
+}): ScheduleOperatingModeSummary<TJob>[] {
+  const jobsPerMode = input.jobsPerMode ?? 3;
+  const triageJobs = uniqueJobsById([
+    ...input.dispatchAttentionItems
+      .filter(
+        (item) =>
+          item.kind !== "in_progress" && item.kind !== "unscheduled_aging"
+      )
+      .map((item) => item.job),
+    ...input.unscheduledBlockedJobs,
+    ...input.pastScheduledIncompleteJobs,
+    ...input.crewAssignmentGaps,
+    ...input.capacityWarningJobs
+  ]);
+  const planJobs = uniqueJobsById([
+    ...input.unscheduledReadyJobs,
+    ...input.tomorrowJobs,
+    ...input.thisWeekJobs,
+    ...input.laterScheduledJobs
+  ]);
+  const dispatchJobs = uniqueJobsById([
+    ...input.activeTodayJobs,
+    ...input.dispatchAttentionItems
+      .filter((item) => item.kind === "in_progress")
+      .map((item) => item.job)
+  ]);
+
+  return [
+    {
+      key: "triage",
+      label: "Triage",
+      detail:
+        "Resolve readiness blockers, stale scheduled work, missing crew, and advisory capacity warnings first.",
+      jobCount: triageJobs.length,
+      attentionCount: input.dispatchAttentionItems.filter(
+        (item) =>
+          item.kind !== "in_progress" && item.kind !== "unscheduled_aging"
+      ).length,
+      jobs: triageJobs.slice(0, jobsPerMode)
+    },
+    {
+      key: "plan",
+      label: "Plan",
+      detail:
+        "Turn ready unscheduled work and upcoming commitments into a reviewed field plan.",
+      jobCount: planJobs.length,
+      attentionCount: input.unscheduledReadyJobs.length,
+      jobs: planJobs.slice(0, jobsPerMode)
+    },
+    {
+      key: "dispatch",
+      label: "Dispatch",
+      detail:
+        "Watch today and live execution while keeping job, project, and Daily Log continuity one click away.",
+      jobCount: dispatchJobs.length,
+      attentionCount: input.activeTodayJobs.length,
+      jobs: dispatchJobs.slice(0, jobsPerMode)
+    }
+  ];
+}
+
 export function deriveScheduleBoardQueues<
   TJob extends ScheduleBoardJobSource
 >(input: {
@@ -529,6 +636,18 @@ export function deriveScheduleBoardQueues<
     inProgressJobs,
     warningSummariesByJobId
   });
+  const operatingModeSummaries = deriveScheduleOperatingModeSummaries({
+    unscheduledReadyJobs,
+    unscheduledBlockedJobs,
+    pastScheduledIncompleteJobs,
+    crewAssignmentGaps,
+    capacityWarningJobs,
+    activeTodayJobs,
+    tomorrowJobs,
+    thisWeekJobs,
+    laterScheduledJobs,
+    dispatchAttentionItems
+  });
   const needsReadinessReviewJobs = sortBySchedule(
     input.jobs.filter((job) => {
       if (job.dispatchStatus === "completed") {
@@ -568,6 +687,7 @@ export function deriveScheduleBoardQueues<
     latestScheduledJobs,
     capacityWarningJobs,
     dispatchAttentionItems,
+    operatingModeSummaries,
     needsReadinessReviewJobs
   };
 }
