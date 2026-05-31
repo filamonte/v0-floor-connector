@@ -587,129 +587,133 @@ export default function DashboardDesignPage() {
   return (
     <div className="min-h-screen bg-[var(--cream)] text-[var(--text-primary)]">
 
-      {/* ── PRIMARY TOP NAV (like CF) ── */}
-      <header className="sticky top-0 z-30 border-b border-[var(--graphite-dark)] bg-[var(--graphite-dark)] shadow-md print:hidden">
-        <div className="mx-auto flex h-14 max-w-[1680px] items-center justify-between gap-4 px-4">
+      {/* ══════════════════════════════════════════
+          ROW 1 — Brand + User (darkest graphite)
+      ══════════════════════════════════════════ */}
+      <header className="sticky top-0 z-30 bg-[#1a1f26] shadow-md print:hidden" style={{background: "linear-gradient(180deg,#1e242c 0%,#191e25 100%)"}}>
 
-          {/* Left: Brand + Project Selector + Menu */}
-          <div className="flex items-center gap-4">
-            {/* Brand */}
-            <div className="flex shrink-0 items-center gap-2">
-              <div className="flex h-9 w-9 items-center justify-center rounded-md bg-[var(--copper)] text-xs font-bold text-white shadow-sm">
-                FC
-              </div>
-              <div className="hidden sm:block">
-                <span className="text-sm font-bold text-white">FloorConnector</span>
-                <p className="text-[9px] text-white/60 leading-tight">Specialty Flooring Systems</p>
-              </div>
+        {/* ── Row 1: Brand / Identity / User ── */}
+        <div className="border-b border-white/10 mx-auto flex h-16 max-w-[1680px] items-center justify-between gap-6 px-5">
+
+          {/* Brand */}
+          <div className="flex shrink-0 items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[var(--copper)] text-sm font-extrabold text-white shadow">
+              FC
             </div>
-
-            <div className="hidden h-6 w-px bg-white/15 md:block" />
-
-            {/* Project Selector */}
-            <button 
-              onClick={() => setProjectSelectorOpen(!projectSelectorOpen)}
-              className="hidden md:flex items-center gap-2 rounded-md border border-white/20 bg-white/10 px-3 py-1.5 text-sm text-white/90 transition hover:bg-white/15"
-            >
-              <Briefcase className="h-3.5 w-3.5 text-white/70" />
-              <span>Select a Project</span>
-              <ChevronDown className="h-3.5 w-3.5 text-white/50" />
-            </button>
-
-            {/* Menu Dropdown Trigger */}
-            <button 
-              onClick={() => setMenuOpen(!menuOpen)}
-              className="flex items-center gap-2 rounded-md border border-white/20 bg-white/10 px-3 py-1.5 text-sm transition hover:bg-white/15"
-            >
-              <span className="text-[10px] font-semibold uppercase tracking-wider text-white/60">Menu</span>
-              <span className="font-semibold text-white">Dashboard</span>
-              <ChevronDown className={`h-3.5 w-3.5 text-white/50 transition-transform ${menuOpen ? 'rotate-180' : ''}`} />
-            </button>
-
-            {/* Starred Quick Links */}
-            <div className="hidden lg:flex items-center gap-1">
-              {STARRED_LINKS.map((link) => (
-                <Link
-                  key={link.label}
-                  href={link.href}
-                  className="flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-sm text-white/80 transition hover:bg-white/10 hover:text-white"
-                >
-                  <Star className="h-3 w-3 text-[var(--copper-light)] fill-[var(--copper-light)]" />
-                  {link.label}
-                </Link>
-              ))}
+            <div>
+              <p className="text-[15px] font-bold leading-tight text-white tracking-tight">FloorConnector</p>
+              <p className="text-[10px] text-white/50 leading-tight">Specialty Flooring Systems</p>
             </div>
           </div>
 
-          {/* Right: Training Links + Live Chat + User */}
-          <div className="flex items-center gap-3">
-            {/* Training/Support Links */}
-            <div className="hidden xl:flex flex-col items-end text-right">
-              <Link href="/trainings" className="text-[11px] text-[var(--copper-light)] hover:underline">Free Online Training</Link>
-              <div className="flex gap-2">
-                <Link href="/webinars" className="text-[10px] text-white/60 hover:text-[var(--copper-light)]">Daily Webinars</Link>
-                <Link href="/university" className="text-[10px] text-white/60 hover:text-[var(--copper-light)]">Contractor University</Link>
+          {/* Centre: Company title */}
+          <p className="hidden md:block absolute left-1/2 -translate-x-1/2 text-sm font-semibold text-white/70 tracking-wide">
+            {COMPANY_INFO.name}
+          </p>
+
+          {/* Right: Training + Chat + User */}
+          <div className="flex items-center gap-4">
+            {/* Training links */}
+            <div className="hidden xl:flex flex-col items-end leading-tight">
+              <Link href="/trainings" className="text-[11px] font-medium text-[var(--copper-light)] hover:underline">Free Online Training</Link>
+              <div className="flex gap-3 mt-0.5">
+                <Link href="/webinars" className="text-[10px] text-white/50 hover:text-[var(--copper-light)] transition">Daily Webinars</Link>
+                <Link href="/university" className="text-[10px] text-white/50 hover:text-[var(--copper-light)] transition">Contractor University</Link>
               </div>
             </div>
 
+            <div className="hidden xl:block h-8 w-px bg-white/10" />
+
             {/* Live Chat */}
-            <button className="hidden md:flex items-center gap-2 rounded-md border border-white/20 bg-white/10 px-3 py-1.5 text-sm transition hover:bg-white/15">
-              <MessageCircle className="h-4 w-4 text-white/70" />
-              <span className="text-white/90">Live Chat</span>
+            <button className="hidden md:flex items-center gap-2 rounded-md border border-white/15 bg-white/8 px-3 py-2 text-sm text-white/80 transition hover:bg-white/15 hover:text-white">
+              <MessageCircle className="h-4 w-4 text-white/60" />
+              <span>Live Chat</span>
             </button>
 
-            {/* User Profile */}
-            <div className="flex items-center gap-2">
-              <div className="hidden sm:block text-right">
-                <p className="text-xs font-semibold text-white">{USER_PROFILE.name}</p>
-                <p className="text-[10px] text-white/60">User ({USER_PROFILE.userId})</p>
-                <p className="text-[10px] text-white/60">{USER_PROFILE.lastLogin}</p>
+            <div className="h-8 w-px bg-white/10" />
+
+            {/* User */}
+            <div className="flex items-center gap-3">
+              <div className="hidden sm:block text-right leading-tight">
+                <p className="text-sm font-semibold text-white">{USER_PROFILE.name}</p>
+                <p className="text-[10px] text-white/50">User {USER_PROFILE.userId} &nbsp;·&nbsp; {USER_PROFILE.lastLogin}</p>
               </div>
-              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--copper)] text-sm font-semibold text-white shadow-sm">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--copper)] text-sm font-bold text-white shadow">
                 {USER_PROFILE.initials}
               </div>
             </div>
           </div>
         </div>
-      </header>
 
-      {/* ── SECONDARY NAV BAR (Breadcrumb + Company) ── */}
-      <div className="border-b border-[var(--graphite)] bg-[var(--graphite)] shadow-sm">
-        <div className="mx-auto flex h-10 max-w-[1680px] items-center justify-between px-4">
-          {/* Breadcrumb */}
-          <div className="flex items-center gap-2 text-white/70">
-            <Home className="h-3.5 w-3.5" />
-            <span className="text-white/40">/</span>
-            <span className="text-sm font-medium text-white">Dashboard</span>
+        {/* ── Row 2: Page context + project selector + menu ── */}
+        <div className="border-b border-white/8 mx-auto flex h-11 max-w-[1680px] items-center gap-4 px-5">
+
+          {/* Breadcrumb / page label */}
+          <div className="flex items-center gap-2">
+            <Home className="h-3.5 w-3.5 text-white/40" />
+            <span className="text-white/30 text-xs">/</span>
+            <span className="text-sm font-semibold text-white">Dashboard</span>
           </div>
 
-          {/* Company Name */}
-          <p className="text-sm font-semibold text-white">{COMPANY_INFO.name}</p>
+          <div className="h-5 w-px bg-white/10" />
 
-          {/* Quick Actions */}
-          <div className="flex items-center gap-3">
-            <button className="text-white/50 hover:text-white/80 transition" aria-label="Edit">
-              <Wrench className="h-4 w-4" />
-            </button>
-            <button className="text-white/50 hover:text-white/80 transition" aria-label="Video">
-              <MessageSquare className="h-4 w-4" />
-            </button>
-            <button className="text-white/50 hover:text-white/80 transition" aria-label="Location">
-              <Lightbulb className="h-4 w-4" />
-            </button>
-            <button className="text-white/50 hover:text-white/80 transition" aria-label="Settings">
-              <Settings className="h-4 w-4" />
-            </button>
+          {/* Project Selector */}
+          <button
+            onClick={() => setProjectSelectorOpen(!projectSelectorOpen)}
+            className="flex items-center gap-2 rounded-md border border-white/15 bg-white/8 px-3 py-1.5 text-xs text-white/80 transition hover:bg-white/15"
+          >
+            <Briefcase className="h-3.5 w-3.5 text-white/50" />
+            <span>Select a Project</span>
+            <ChevronDown className="h-3.5 w-3.5 text-white/40" />
+          </button>
+
+          {/* Menu trigger */}
+          <button
+            onClick={() => setMenuOpen(!menuOpen)}
+            className="flex items-center gap-2 rounded-md border border-white/15 bg-white/8 px-3 py-1.5 text-xs transition hover:bg-white/15"
+          >
+            <span className="text-[10px] font-semibold uppercase tracking-widest text-white/40">Menu</span>
+            <ChevronDown className={`h-3.5 w-3.5 text-white/40 transition-transform ${menuOpen ? "rotate-180" : ""}`} />
+          </button>
+
+          {/* Right: utility icons */}
+          <div className="ml-auto flex items-center gap-3">
+            <button className="text-white/40 hover:text-white/70 transition" aria-label="Tools"><Wrench className="h-4 w-4" /></button>
+            <button className="text-white/40 hover:text-white/70 transition" aria-label="Notes"><MessageSquare className="h-4 w-4" /></button>
+            <button className="text-white/40 hover:text-white/70 transition" aria-label="Suggestions"><Lightbulb className="h-4 w-4" /></button>
+            <button className="text-white/40 hover:text-white/70 transition" aria-label="Settings"><Settings className="h-4 w-4" /></button>
           </div>
         </div>
-      </div>
+
+        {/* ── Row 3: Customisable pinned page links ── */}
+        <div className="mx-auto flex h-9 max-w-[1680px] items-center gap-1 px-5 bg-[#141820]">
+          <span className="mr-2 text-[10px] font-semibold uppercase tracking-widest text-white/30 select-none">
+            Pinned
+          </span>
+          {STARRED_LINKS.map((link) => (
+            <Link
+              key={link.label}
+              href={link.href}
+              className="flex items-center gap-1.5 rounded px-2.5 py-1 text-xs text-white/60 transition hover:bg-white/8 hover:text-white"
+            >
+              <Star className="h-2.5 w-2.5 text-[var(--copper-light)] fill-[var(--copper-light)]" />
+              {link.label}
+            </Link>
+          ))}
+          <button className="ml-2 flex items-center gap-1 rounded px-2 py-1 text-[10px] text-white/30 transition hover:text-white/60">
+            <Plus className="h-3 w-3" />
+            Add page
+          </button>
+        </div>
+
+      </header>
 
       {/* ── MEGA MENU OVERLAY ── */}
       {menuOpen && (
         <div className="fixed inset-0 z-50" onClick={() => setMenuOpen(false)}>
           <div className="absolute inset-0 bg-black/20" />
           <div 
-            className="absolute left-0 right-0 top-[104px] border-b border-[var(--border-warm)] bg-white shadow-xl"
+            className="absolute left-0 right-0 top-[136px] border-b border-[var(--border-warm)] bg-white shadow-xl"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="mx-auto max-w-[1680px] px-4 py-6">
