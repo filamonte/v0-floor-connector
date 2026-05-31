@@ -53,6 +53,12 @@ continuity. It does not change the operational wave order above and does not
 authorize payment provider changes, webhooks, accounting integrations, schema,
 or duplicate financial models.
 
+Local stream note: the stale `stream/financials` branch/worktree has been
+retired as superseded by `stream/financials-reporting`. Financials planning
+references remain product-area planning context only; they do not reactivate the
+stale local branch, authorize a PR from it, or make it a source for
+cherry-picks.
+
 Shared guardrails:
 
 - preserve the canonical lifecycle:

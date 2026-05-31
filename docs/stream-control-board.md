@@ -114,9 +114,9 @@ worktree, PR, validation, blocker, or next-slice state changes. Use
 
 ## Optional / Paused Streams
 
-| Stream                  | Local worktree path                       | Branch                           | Status                 | Next action                                                                   |
-| ----------------------- | ----------------------------------------- | -------------------------------- | ---------------------- | ----------------------------------------------------------------------------- |
-| Portal                  | `C:\FC-worktrees\portal`                  | `stream/portal`                  | Paused / downstream    | Resume after customer-safe project and communications boundaries are selected |
-| Financials legacy       | `C:\FC-worktrees\financials`              | `stream/financials`              | Legacy / superseded    | Preserve only through explicit reconciliation                                 |
-| QA verification legacy  | `C:\FC-worktrees\qa-verification`         | `stream/qa-verification`         | Legacy / superseded    | Preserve only through explicit reconciliation                                 |
-| Project readiness panel | `C:\FC-worktrees\project-readiness-panel` | `stream/project-readiness-panel` | Legacy / review needed | Review or retire deliberately                                                 |
+| Stream                  | Local worktree path                       | Branch                           | Status                                                | Next action                                                                           |
+| ----------------------- | ----------------------------------------- | -------------------------------- | ----------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| Portal                  | `C:\FC-worktrees\portal`                  | `stream/portal`                  | Paused / downstream                                   | Resume after customer-safe project and communications boundaries are selected         |
+| Financials legacy       | `C:\FC-worktrees\financials`              | `stream/financials`              | Retired / superseded by `stream/financials-reporting` | Do not push, PR, merge, or cherry-pick; remove local worktree only after owner review |
+| QA verification legacy  | `C:\FC-worktrees\qa-verification`         | `stream/qa-verification`         | Legacy / superseded                                   | Preserve only through explicit reconciliation                                         |
+| Project readiness panel | `C:\FC-worktrees\project-readiness-panel` | `stream/project-readiness-panel` | Legacy / review needed                                | Review or retire deliberately                                                         |
