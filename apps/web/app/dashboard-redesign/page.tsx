@@ -6,10 +6,13 @@ import {
   AlertTriangle,
   ArrowRight,
   Bell,
+  Briefcase,
   Calendar,
   CheckCircle,
+  ChevronDown,
   ChevronLeft,
   ChevronRight,
+  Clipboard,
   Clock,
   Cloud,
   CloudRain,
@@ -17,14 +20,25 @@ import {
   DollarSign,
   FileSignature,
   FileText,
+  FolderOpen,
+  GraduationCap,
   HardHat,
+  HelpCircle,
+  Home,
   LayoutDashboard,
+  Lightbulb,
+  MessageCircle,
   MessageSquare,
   Plus,
+  Receipt,
   Search,
   Settings,
+  Star,
   Sun,
   TrendingUp,
+  UserCircle,
+  Users,
+  Wrench,
   Zap,
 } from "lucide-react";
 
@@ -310,6 +324,80 @@ const NAV_LINKS = [
   { label: "Field", href: "/field/work-items", active: false },
 ];
 
+// Starred/favorite quick links
+const STARRED_LINKS = [
+  { label: "Projects", href: "/projects" },
+  { label: "Time Cards", href: "/time-cards" },
+  { label: "Directory", href: "/directory" },
+];
+
+// Mega menu structure (like CF)
+const MEGA_MENU = {
+  "Project Management": [
+    { label: "Projects", href: "/projects", starred: true },
+    { label: "Daily Logs", href: "/daily-logs" },
+    { label: "Schedule", href: "/schedule" },
+    { label: "To-Do's", href: "/todos" },
+    { label: "Work Orders", href: "/work-orders" },
+    { label: "Inspections", href: "/inspections" },
+    { label: "Punchlists", href: "/punchlists" },
+    { label: "Service Tickets", href: "/service-tickets" },
+    { label: "Permits", href: "/permits" },
+  ],
+  "Financials": [
+    { label: "Estimates", href: "/estimates" },
+    { label: "Bid Manager", href: "/bids" },
+    { label: "Change Orders", href: "/change-orders" },
+    { label: "Invoices", href: "/invoices" },
+    { label: "Payments", href: "/payments" },
+    { label: "Expenses", href: "/expenses" },
+    { label: "Purchase Orders", href: "/purchase-orders" },
+    { label: "Sub-Contracts", href: "/sub-contracts" },
+    { label: "Bills", href: "/bills" },
+    { label: "Transaction Log", href: "/transaction-log" },
+  ],
+  "People": [
+    { label: "Directory", href: "/directory", starred: true },
+    { label: "Opportunities", href: "/opportunities" },
+    { label: "Time Cards", href: "/time-cards", starred: true },
+    { label: "Leads", href: "/leads" },
+    { label: "Calendar", href: "/calendar" },
+    { label: "Crew Schedule", href: "/crew-schedule" },
+    { label: "Incidents", href: "/incidents" },
+    { label: "Safety Meetings", href: "/safety-meetings" },
+  ],
+  "Documents": [
+    { label: "Files & Photos", href: "/files" },
+    { label: "Reports", href: "/reports" },
+    { label: "Forms & Checklists", href: "/forms" },
+    { label: "RFI & Notices", href: "/rfi" },
+    { label: "Submittals", href: "/submittals" },
+    { label: "Vehicle Logs", href: "/vehicle-logs" },
+    { label: "Equipment Logs", href: "/equipment-logs" },
+    { label: "Notes", href: "/notes" },
+  ],
+  "Settings & Support": [
+    { label: "Enable/Disable Features", href: "/settings/features" },
+    { label: "Settings", href: "/settings" },
+    { label: "Cost Items Database", href: "/cost-items" },
+    { label: "Trainings", href: "/trainings" },
+    { label: "Support", href: "/support" },
+  ],
+};
+
+// User profile data
+const USER_PROFILE = {
+  name: "John Doe",
+  userId: "5606120",
+  initials: "JD",
+  lastLogin: "05/31 09:03 AM",
+};
+
+// Company info
+const COMPANY_INFO = {
+  name: "FloorConnector Inc",
+};
+
 // ─── Utility Helpers ─────────────────────────────────────────────────────────
 
 function urgencyBadgeClass(urgency: string) {
@@ -490,6 +578,8 @@ function JobStatusPip({ status }: { status: string }) {
 
 export default function DashboardDesignPage() {
   const [createOpen, setCreateOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [projectSelectorOpen, setProjectSelectorOpen] = useState(false);
 
   // Find the max value for the opportunity chart scaling
   const maxOpportunityValue = Math.max(...OPPORTUNITY_STATS.map(s => s.value));
@@ -497,94 +587,178 @@ export default function DashboardDesignPage() {
   return (
     <div className="min-h-screen bg-[var(--cream)] text-[var(--text-primary)]">
 
-      {/* ── TOP NAV ── */}
-      <header className="sticky top-0 z-30 border-b border-[var(--border-warm)] bg-[var(--graphite)] shadow-sm print:hidden">
-        <div className="mx-auto flex h-12 max-w-[1680px] items-center justify-between gap-4 px-4">
+      {/* ── PRIMARY TOP NAV (like CF) ── */}
+      <header className="sticky top-0 z-30 border-b border-[var(--border-warm)] bg-white shadow-sm print:hidden">
+        <div className="mx-auto flex h-14 max-w-[1680px] items-center justify-between gap-4 px-4">
 
-          {/* Brand */}
-          <div className="flex shrink-0 items-center gap-3">
-            <div className="flex h-7 w-7 items-center justify-center rounded-md bg-[var(--copper)] text-xs font-bold text-white">
-              FC
+          {/* Left: Brand + Project Selector + Menu */}
+          <div className="flex items-center gap-4">
+            {/* Brand */}
+            <div className="flex shrink-0 items-center gap-2">
+              <div className="flex h-8 w-8 items-center justify-center rounded-md bg-[var(--graphite)] text-xs font-bold text-white">
+                FC
+              </div>
+              <div className="hidden sm:block">
+                <span className="text-sm font-bold text-[var(--graphite)]">FloorConnector</span>
+                <p className="text-[9px] text-[var(--text-tertiary)] leading-tight">Specialty Flooring Systems</p>
+              </div>
             </div>
-            <span className="hidden text-sm font-semibold text-white sm:block">
-              FloorConnector
-            </span>
-            <div className="hidden h-4 w-px bg-white/20 lg:block" />
-            {/* Nav Links */}
-            <nav className="hidden items-center gap-0.5 lg:flex" aria-label="Primary navigation">
-              {NAV_LINKS.map((link) => (
+
+            <div className="hidden h-6 w-px bg-[var(--border-warm)] md:block" />
+
+            {/* Project Selector */}
+            <button 
+              onClick={() => setProjectSelectorOpen(!projectSelectorOpen)}
+              className="hidden md:flex items-center gap-2 rounded-md border border-[var(--border-warm)] bg-white px-3 py-1.5 text-sm text-[var(--text-primary)] transition hover:bg-[var(--highlight)]"
+            >
+              <Briefcase className="h-3.5 w-3.5 text-[var(--text-secondary)]" />
+              <span>Select a Project</span>
+              <ChevronDown className="h-3.5 w-3.5 text-[var(--text-tertiary)]" />
+            </button>
+
+            {/* Menu Dropdown Trigger */}
+            <button 
+              onClick={() => setMenuOpen(!menuOpen)}
+              className="flex items-center gap-2 rounded-md border border-[var(--border-warm)] bg-white px-3 py-1.5 text-sm transition hover:bg-[var(--highlight)]"
+            >
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-[var(--text-tertiary)]">Menu</span>
+              <span className="font-semibold text-[var(--text-primary)]">Dashboard</span>
+              <ChevronDown className={`h-3.5 w-3.5 text-[var(--text-tertiary)] transition-transform ${menuOpen ? 'rotate-180' : ''}`} />
+            </button>
+
+            {/* Starred Quick Links */}
+            <div className="hidden lg:flex items-center gap-1">
+              {STARRED_LINKS.map((link) => (
                 <Link
                   key={link.label}
                   href={link.href}
-                  className={[
-                    "rounded-md px-2.5 py-1.5 text-sm transition-colors",
-                    link.active
-                      ? "bg-white/10 font-semibold text-white"
-                      : "text-white/70 hover:bg-white/10 hover:text-white",
-                  ].join(" ")}
-                  aria-current={link.active ? "page" : undefined}
+                  className="flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-sm text-[var(--text-secondary)] transition hover:bg-[var(--highlight)] hover:text-[var(--text-primary)]"
                 >
+                  <Star className="h-3 w-3 text-[var(--copper)] fill-[var(--copper)]" />
                   {link.label}
                 </Link>
               ))}
-            </nav>
-          </div>
-
-          {/* Right controls */}
-          <div className="flex items-center gap-2">
-            {/* Search trigger */}
-            <button
-              className="flex h-8 items-center gap-2 rounded-md border border-white/15 bg-white/10 px-3 text-sm text-white/70 transition hover:bg-white/20 hover:text-white"
-              aria-label="Search"
-            >
-              <Search className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">Search...</span>
-              <kbd className="hidden rounded border border-white/20 px-1 text-[10px] sm:inline">Cmd+K</kbd>
-            </button>
-
-            {/* Universal create */}
-            <button
-              onClick={() => setCreateOpen((v) => !v)}
-              className="flex h-8 items-center gap-1.5 rounded-md bg-[var(--copper)] px-3 text-sm font-semibold text-white transition hover:bg-[var(--copper-light)]"
-            >
-              <Plus className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">Create</span>
-            </button>
-
-            {/* Notifications */}
-            <button className="relative flex h-8 w-8 items-center justify-center rounded-md text-white/70 transition hover:bg-white/10 hover:text-white" aria-label="Notifications">
-              <Bell className="h-4 w-4" />
-              <span className="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-[var(--copper-light)]" />
-            </button>
-
-            {/* Avatar */}
-            <div className="flex h-7 w-7 items-center justify-center rounded-full bg-[var(--copper-light)] text-xs font-semibold text-white">
-              JD
             </div>
           </div>
-        </div>
 
-        {/* Health summary bar */}
-        <div className="border-t border-white/10 bg-[var(--graphite-dark)]">
-          <div className="mx-auto flex max-w-[1680px] items-center gap-0 overflow-x-auto px-4">
-            {/* Date */}
-            <div className="flex shrink-0 items-center gap-1.5 border-r border-white/10 py-2 pr-4 text-xs text-white/50">
-              <Calendar className="h-3 w-3" />
-              {TODAY}
-            </div>
-            {/* Metrics */}
-            {HEALTH_SUMMARY.map((m) => (
-              <div
-                key={m.key}
-                className="flex shrink-0 items-center gap-2 border-r border-white/10 px-4 py-2 text-xs"
-              >
-                <span className="text-white/50">{m.label}</span>
-                <span className="font-semibold text-white">{m.value}</span>
+          {/* Right: Training Links + Live Chat + User */}
+          <div className="flex items-center gap-3">
+            {/* Training/Support Links */}
+            <div className="hidden xl:flex flex-col items-end text-right">
+              <Link href="/trainings" className="text-[11px] text-[var(--copper)] hover:underline">Free Online Training</Link>
+              <div className="flex gap-2">
+                <Link href="/webinars" className="text-[10px] text-[var(--text-tertiary)] hover:text-[var(--copper)]">Daily Webinars</Link>
+                <Link href="/university" className="text-[10px] text-[var(--text-tertiary)] hover:text-[var(--copper)]">Contractor University</Link>
               </div>
-            ))}
+            </div>
+
+            {/* Live Chat */}
+            <button className="hidden md:flex items-center gap-2 rounded-md border border-[var(--border-warm)] bg-white px-3 py-1.5 text-sm transition hover:bg-[var(--highlight)]">
+              <MessageCircle className="h-4 w-4 text-[var(--text-secondary)]" />
+              <span className="text-[var(--text-primary)]">Live Chat</span>
+            </button>
+
+            {/* User Profile */}
+            <div className="flex items-center gap-2">
+              <div className="hidden sm:block text-right">
+                <p className="text-xs font-semibold text-[var(--text-primary)]">{USER_PROFILE.name}</p>
+                <p className="text-[10px] text-[var(--text-tertiary)]">User ({USER_PROFILE.userId})</p>
+                <p className="text-[10px] text-[var(--text-tertiary)]">{USER_PROFILE.lastLogin}</p>
+              </div>
+              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--copper)] text-sm font-semibold text-white">
+                {USER_PROFILE.initials}
+              </div>
+            </div>
           </div>
         </div>
       </header>
+
+      {/* ── SECONDARY NAV BAR (Breadcrumb + Company) ── */}
+      <div className="border-b border-[var(--border-warm)] bg-[var(--graphite)]">
+        <div className="mx-auto flex h-10 max-w-[1680px] items-center justify-between px-4">
+          {/* Breadcrumb */}
+          <div className="flex items-center gap-2 text-white/80">
+            <Home className="h-3.5 w-3.5" />
+            <span className="text-white/50">/</span>
+            <span className="text-sm font-medium">Dashboard</span>
+          </div>
+
+          {/* Company Name */}
+          <p className="text-sm font-semibold text-white">{COMPANY_INFO.name}</p>
+
+          {/* Quick Actions */}
+          <div className="flex items-center gap-3">
+            <button className="text-white/60 hover:text-white transition" aria-label="Edit">
+              <Wrench className="h-4 w-4" />
+            </button>
+            <button className="text-white/60 hover:text-white transition" aria-label="Video">
+              <MessageSquare className="h-4 w-4" />
+            </button>
+            <button className="text-white/60 hover:text-white transition" aria-label="Location">
+              <Lightbulb className="h-4 w-4" />
+            </button>
+            <button className="text-white/60 hover:text-white transition" aria-label="Settings">
+              <Settings className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* ── MEGA MENU OVERLAY ── */}
+      {menuOpen && (
+        <div className="fixed inset-0 z-50" onClick={() => setMenuOpen(false)}>
+          <div className="absolute inset-0 bg-black/20" />
+          <div 
+            className="absolute left-0 right-0 top-[104px] border-b border-[var(--border-warm)] bg-white shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="mx-auto max-w-[1680px] px-4 py-6">
+              {/* Menu Columns */}
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-8">
+                {Object.entries(MEGA_MENU).map(([category, items]) => (
+                  <div key={category}>
+                    <h3 className="mb-3 text-sm font-bold text-[var(--text-primary)]">{category}</h3>
+                    <ul className="space-y-1">
+                      {items.map((item) => (
+                        <li key={item.label}>
+                          <Link
+                            href={item.href}
+                            onClick={() => setMenuOpen(false)}
+                            className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm text-[var(--text-secondary)] transition hover:bg-[var(--highlight)] hover:text-[var(--text-primary)]"
+                          >
+                            {item.starred && <Star className="h-3 w-3 text-[var(--copper)] fill-[var(--copper)]" />}
+                            {item.label}
+                          </Link>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ))}
+              </div>
+
+              {/* Footer Links */}
+              <div className="mt-6 flex flex-wrap items-center justify-center gap-8 border-t border-[var(--border-warm)] pt-4">
+                <Link href="/referral" className="flex items-center gap-2 text-sm text-[var(--copper)] hover:underline">
+                  <DollarSign className="h-4 w-4" />
+                  Refer Us (Earn $$$)
+                </Link>
+                <Link href="/support/issue" className="flex items-center gap-2 text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)]">
+                  <AlertTriangle className="h-4 w-4" />
+                  Submit an Issue
+                </Link>
+                <Link href="/whats-new" className="flex items-center gap-2 text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)]">
+                  <HelpCircle className="h-4 w-4" />
+                  {"What's New"}
+                </Link>
+                <Link href="/suggestions" className="flex items-center gap-2 text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)]">
+                  <Lightbulb className="h-4 w-4" />
+                  Make a Suggestion
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── CREATE DROPDOWN OVERLAY ── */}
       {createOpen && (
@@ -620,6 +794,32 @@ export default function DashboardDesignPage() {
       {/* ── PAGE BODY ── */}
       <main className="mx-auto w-full max-w-[1680px] px-4 py-5 sm:px-6">
 
+        {/* Health Summary Bar */}
+        <div className="mb-5 flex flex-wrap items-center gap-3 rounded-[4px] border border-[var(--border-warm)] bg-white px-4 py-3">
+          {/* Date */}
+          <div className="flex items-center gap-2 pr-4 border-r border-[var(--border-warm)]">
+            <Calendar className="h-4 w-4 text-[var(--copper)]" />
+            <span className="text-sm font-medium text-[var(--text-primary)]">{TODAY}</span>
+          </div>
+          {/* Metrics */}
+          {HEALTH_SUMMARY.map((m, idx) => (
+            <div
+              key={m.key}
+              className={`flex items-center gap-2 ${idx < HEALTH_SUMMARY.length - 1 ? 'pr-4 border-r border-[var(--border-warm)]' : ''}`}
+            >
+              <span className="text-xs text-[var(--text-secondary)]">{m.label}</span>
+              <span className="text-sm font-bold text-[var(--text-primary)]">{m.value}</span>
+            </div>
+          ))}
+          {/* Customize button */}
+          <div className="ml-auto">
+            <button className="flex items-center gap-1.5 rounded-md border border-[var(--border-warm)] bg-white px-3 py-1.5 text-xs text-[var(--text-secondary)] transition hover:bg-[var(--highlight)]">
+              <Settings className="h-3 w-3" />
+              Customize
+            </button>
+          </div>
+        </div>
+
         {/* Page title row */}
         <div className="mb-5 flex items-center justify-between gap-3">
           <div className="flex items-center gap-2">
@@ -628,13 +828,27 @@ export default function DashboardDesignPage() {
               Command Center
             </h1>
           </div>
-          <Link
-            href="/settings"
-            className="flex h-7 items-center gap-1.5 rounded-md border border-[var(--border-warm)] bg-white px-2.5 text-xs text-[var(--text-secondary)] transition hover:bg-[var(--highlight)]"
-          >
-            <Settings className="h-3 w-3" />
-            Settings
-          </Link>
+          <div className="flex items-center gap-2">
+            {/* Search */}
+            <button className="flex h-8 items-center gap-2 rounded-md border border-[var(--border-warm)] bg-white px-3 text-xs text-[var(--text-secondary)] transition hover:bg-[var(--highlight)]">
+              <Search className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Search...</span>
+              <kbd className="hidden rounded border border-[var(--border-warm)] px-1 text-[10px] text-[var(--text-tertiary)] sm:inline">Cmd+K</kbd>
+            </button>
+            {/* Create */}
+            <button
+              onClick={() => setCreateOpen((v) => !v)}
+              className="flex h-8 items-center gap-1.5 rounded-md bg-[var(--copper)] px-3 text-xs font-semibold text-white transition hover:bg-[var(--copper-light)]"
+            >
+              <Plus className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Create</span>
+            </button>
+            {/* Notifications */}
+            <button className="relative flex h-8 w-8 items-center justify-center rounded-md border border-[var(--border-warm)] bg-white text-[var(--text-secondary)] transition hover:bg-[var(--highlight)]" aria-label="Notifications">
+              <Bell className="h-4 w-4" />
+              <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-red-500" />
+            </button>
+          </div>
         </div>
 
         {/* ══ TOP ROW: Calendar + Weather + Appointments + Time Tracking ══ */}
