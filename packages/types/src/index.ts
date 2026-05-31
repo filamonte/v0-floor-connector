@@ -530,6 +530,7 @@ export type DocumentDeliverySubjectType =
   | "estimate"
   | "invoice"
   | "contract";
+export type DocumentDeliverySubjectId = string;
 export type DocumentDeliveryEventType =
   | "delivery_recorded"
   | "send_requested"
@@ -2584,7 +2585,7 @@ export interface DocumentDeliveryEvent {
   id: DocumentDeliveryEventId;
   organizationId: OrganizationId;
   subjectType: DocumentDeliverySubjectType;
-  subjectId: WarrantyDocumentId | EstimateId | InvoiceId | ContractId;
+  subjectId: DocumentDeliverySubjectId;
   eventType: DocumentDeliveryEventType;
   recipientName: string | null;
   recipientEmail: string | null;
