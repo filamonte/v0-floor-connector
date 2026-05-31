@@ -34,11 +34,11 @@ This does not change the four-wave operational sequence above. Communications
 planning should stay record-linked and provider-dark until a separately
 approved implementation slice is selected.
 
-Financials is also tracked as a planned parallel stream:
+## Parallel Financials Planning Stream
 
-- [Financials Capability Wave v1](C:/FloorConnector/docs/design/financials-capability-wave-v1.md)
-
-Financials is a planned
+Use
+[docs/design/financials-capability-wave-v1.md](C:/FloorConnector/docs/design/financials-capability-wave-v1.md)
+as the planning-only source for the Financials stream. Financials is a planned
 parallel market-readiness stream over canonical invoices, payments, payment
 events, project financial readiness, and customer-safe portal payment
 continuity. It does not change the operational wave order above and does not

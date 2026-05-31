@@ -43,6 +43,102 @@ export default async function FinancialsHomePage() {
     todayIso
   });
   const financialControl = readModel.financialControl;
+  const collectionsDesk = readModel.collectionsCommandCenter;
+  const urgentPriorityCount = collectionsDesk.priorityItems.filter(
+    (item) => item.priorityBand === "urgent"
+  ).length;
+  const attentionPriorityCount = collectionsDesk.priorityItems.filter(
+    (item) => item.priorityBand === "attention"
+  ).length;
+  const paymentTrailAttentionCount =
+    collectionsDesk.paymentTrailAttention.filter(
+      (item) => item.tone !== "neutral"
+    ).length;
+  const topProjectAttention =
+    financialControl.projectCollectionAttention[0] ?? null;
+  const topCustomerExposure = collectionsDesk.customerContinuity[0] ?? null;
+  const financialContinuityLinks = [
+    {
+      id: "accounts-receivable",
+      eyebrow: "Receivables",
+      title: "Accounts Receivable cockpit",
+      href: "/financials/accounts-receivable",
+      value: formatMoney(financialControl.openReceivablesAmount),
+      detail: `${urgentPriorityCount} urgent / ${attentionPriorityCount} attention from the collections priority queue.`,
+      tone:
+        urgentPriorityCount > 0
+          ? "warning"
+          : attentionPriorityCount > 0
+            ? "attention"
+            : "neutral"
+    },
+    {
+      id: "payments",
+      eyebrow: "Payments",
+      title: "Payment manager and trail",
+      href: "/payments",
+      value: String(paymentTrailAttentionCount),
+      detail:
+        paymentTrailAttentionCount > 0
+          ? "Payment Trail items need review across failed, voided, requested, or pending evidence."
+          : "Payment Trail has no failed or voided attention items in the current read model.",
+      tone: paymentTrailAttentionCount > 0 ? "attention" : "neutral"
+    },
+    {
+      id: "invoices",
+      eyebrow: "Invoices",
+      title: "Canonical invoice register",
+      href: "/invoices?status=open",
+      value: String(financialControl.openInvoiceCount),
+      detail: `${financialControl.overdueInvoiceCount} overdue / ${financialControl.partiallyPaidCount} partially paid invoice${financialControl.partiallyPaidCount === 1 ? "" : "s"}.`,
+      tone:
+        financialControl.overdueInvoiceCount > 0
+          ? "warning"
+          : financialControl.openInvoiceCount > 0
+            ? "attention"
+            : "neutral"
+    },
+    {
+      id: "project-handoff",
+      eyebrow: "Projects",
+      title: "Project financial handoff",
+      href: topProjectAttention?.href ?? "/projects",
+      value: String(financialControl.projectCollectionAttention.length),
+      detail: topProjectAttention
+        ? `${topProjectAttention.projectName}: ${topProjectAttention.reason}`
+        : "Project-level financial pressure will route back to the Project Workspace when present.",
+      tone:
+        financialControl.projectCollectionAttention.length > 0
+          ? "attention"
+          : "neutral"
+    },
+    {
+      id: "customer-exposure",
+      eyebrow: "Customers",
+      title: "Customer balance exposure",
+      href: topCustomerExposure?.customerHref ?? "/customers",
+      value: topCustomerExposure
+        ? formatMoney(topCustomerExposure.outstandingAmount)
+        : formatMoney(0),
+      detail: topCustomerExposure
+        ? `${topCustomerExposure.customerName}: ${topCustomerExposure.openInvoiceCount} open / ${topCustomerExposure.overdueInvoiceCount} overdue.`
+        : "Customer exposure will appear once open receivables are attached to customer records.",
+      tone: topCustomerExposure?.tone ?? "neutral"
+    },
+    {
+      id: "progress-billing",
+      eyebrow: "Progress billing",
+      title: "SOV and retained amount review",
+      href: "/progress-billing",
+      value: formatMoney(financialControl.progressBillingReceivablesAmount),
+      detail: `${formatMoney(financialControl.retainageHeldAmount)} retained across existing invoice snapshots.`,
+      tone:
+        Number(financialControl.progressBillingReceivablesAmount) > 0 ||
+        Number(financialControl.retainageHeldAmount) > 0
+          ? "attention"
+          : "neutral"
+    }
+  ];
 
   return (
     <ContractorWorkspacePage
@@ -136,6 +232,59 @@ export default async function FinancialsHomePage() {
             >
               Open next move
             </Link>
+          </div>
+        </section>
+
+        <section className="border border-[#d6d6d6] bg-white">
+          <div className="border-b border-[#e5e5e5] px-4 py-3 sm:px-5">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#666666]">
+              Continuity map
+            </p>
+            <h2 className="mt-1 text-xl font-semibold tracking-tight text-[#171717]">
+              Financial command center links
+            </h2>
+            <p className="mt-1 max-w-[78ch] text-sm leading-6 text-slate-500">
+              Start here, then continue into the canonical workspace that owns
+              the invoice, payment, project, customer, or SOV context. These are
+              routing signals only.
+            </p>
+          </div>
+          <div className="grid gap-px bg-[#e5e5e5] md:grid-cols-2 xl:grid-cols-3">
+            {financialContinuityLinks.map((item) => (
+              <Link
+                key={item.id}
+                href={item.href}
+                className="min-w-0 bg-white px-4 py-4 transition hover:bg-[#f8f8f8]"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#666666]">
+                      {item.eyebrow}
+                    </p>
+                    <h3 className="mt-1 text-[17px] font-semibold tracking-tight text-[#171717]">
+                      {item.title}
+                    </h3>
+                  </div>
+                  <span
+                    className={
+                      item.tone === "warning"
+                        ? "rounded-full border border-red-200 bg-red-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-red-700"
+                        : item.tone === "attention"
+                          ? "rounded-full border border-[#e4d7ca] bg-[#fffcf7] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#8f5b32]"
+                          : "rounded-full border border-[#d6d6d6] bg-[#f8f8f8] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-500"
+                    }
+                  >
+                    {item.tone}
+                  </span>
+                </div>
+                <p className="mt-3 text-xl font-semibold tracking-tight text-[#171717]">
+                  {item.value}
+                </p>
+                <p className="mt-2 text-sm leading-5 text-slate-500">
+                  {item.detail}
+                </p>
+              </Link>
+            ))}
           </div>
         </section>
 
