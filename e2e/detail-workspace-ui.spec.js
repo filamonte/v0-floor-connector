@@ -299,7 +299,7 @@ test("contract detail smokes discovered contract workspaces", async ({
       page.getByRole("region", { name: "Current state and next action" })
     ).toBeVisible();
     await expect(
-      page.getByRole("region", { name: "Contract workflow" })
+      page.getByRole("region", { name: "Contract workflow", exact: true })
     ).toBeVisible();
     await expect(
       page.getByRole("region", { name: "Signature state" })
