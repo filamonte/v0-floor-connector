@@ -24,6 +24,16 @@ as the coordination source for the four operational waves:
 Project Workspace is the first implementation slice. The sequence above should
 not be read as permission to implement all four waves at the same time.
 
+## Parallel Planning Streams
+
+Communications is also tracked as a planned parallel stream:
+
+- [Communications Capability Wave v1](C:/FloorConnector/docs/design/communications-capability-wave-v1.md)
+
+This does not change the four-wave operational sequence above. Communications
+planning should stay record-linked and provider-dark until a separately
+approved implementation slice is selected.
+
 ## Parallel Financials Planning Stream
 
 Use
@@ -44,6 +54,9 @@ Shared guardrails:
 - keep Scheduling on canonical `jobs` and `job_assignments`
 - keep Field/Mobile on canonical execution records
 - keep Portal as a scoped customer read/action surface over canonical records
+- keep Communications on canonical `communication_threads`,
+  `communication_messages`, notifications, and source-record context without
+  duplicate message models or provider-send expansion
 - keep Financials on canonical invoices, payments, payment events, and
   source-record financial readiness without duplicate ledgers or portal-owned
   billing state

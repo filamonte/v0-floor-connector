@@ -19,6 +19,7 @@ import { JobEquipmentPanel } from "@/components/job-equipment-panel";
 import { LinkedRecordCard } from "@/components/linked-record-card";
 import { NeedsAttentionPanel } from "@/components/operational-cues/needs-attention-panel";
 import { CueStateControls } from "@/components/cue-states/cue-state-controls";
+import { RelatedConversationsCard } from "@/components/related-conversations-card";
 import {
   SaveStateForm,
   SaveStateSubmitButton
@@ -27,6 +28,7 @@ import { ServiceWarrantyContinuityPanel } from "@/components/service-warranty-co
 import { WorkItemCreateForm } from "@/components/work-items/work-item-create-form";
 import { WorkItemList } from "@/components/work-items/work-item-list";
 import { listDailyLogsByProject } from "@/lib/daily-logs/data";
+import { listCommunicationThreadsForProject } from "@/lib/communications/data";
 import {
   buildDailyLogCaptureHref,
   buildDailyLogSectionHref,
@@ -436,7 +438,8 @@ export default async function JobDetailPage({
     jobPunchlistItems,
     jobServiceTickets,
     jobWarrantyDocuments,
-    linkedWorkItems
+    linkedWorkItems,
+    projectCommunicationThreads
   ] = await Promise.all([
     job.estimateId
       ? getEstimateById(job.estimateId, `/jobs/${jobId}`)
@@ -452,7 +455,8 @@ export default async function JobDetailPage({
     listPunchlistItemsByJob(job.id, `/jobs/${jobId}`),
     listServiceTicketsByJob(job.id),
     listWarrantyDocumentsByJob(job.id),
-    listWorkItemsForJob(job.id, `/jobs/${jobId}`)
+    listWorkItemsForJob(job.id, `/jobs/${jobId}`),
+    listCommunicationThreadsForProject(job.projectId)
   ]);
   const jobAttentionCues = await getOperationalCuesForSubject({
     organizationId: job.organizationId,
@@ -1694,6 +1698,15 @@ export default async function JobDetailPage({
             {job.notes ?? "No job notes have been added yet."}
           </p>
         </DetailPanel>
+
+        <RelatedConversationsCard
+          source="project"
+          description="Job communication context stays on the canonical project and related record threads. Use the communications workspace for full message history, reply triage, and delivery context without creating job-local inbox state."
+          countLabel="Project communication threads"
+          emptyMessage="No project-linked communication threads are visible for this job yet. Review the shared communications workspace when customer, project, or billing follow-through needs context."
+          actionClassName={secondaryActionClassName}
+          threads={projectCommunicationThreads}
+        />
 
         <DetailPanel
           title="Workflow Guidance"
