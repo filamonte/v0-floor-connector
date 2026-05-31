@@ -588,42 +588,42 @@ export default function DashboardDesignPage() {
     <div className="min-h-screen bg-[var(--cream)] text-[var(--text-primary)]">
 
       {/* ── PRIMARY TOP NAV (like CF) ── */}
-      <header className="sticky top-0 z-30 border-b border-[var(--border-warm)] bg-white shadow-sm print:hidden">
+      <header className="sticky top-0 z-30 border-b border-[var(--graphite-dark)] bg-[var(--graphite-dark)] shadow-md print:hidden">
         <div className="mx-auto flex h-14 max-w-[1680px] items-center justify-between gap-4 px-4">
 
           {/* Left: Brand + Project Selector + Menu */}
           <div className="flex items-center gap-4">
             {/* Brand */}
             <div className="flex shrink-0 items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-md bg-[var(--graphite)] text-xs font-bold text-white">
+              <div className="flex h-9 w-9 items-center justify-center rounded-md bg-[var(--copper)] text-xs font-bold text-white shadow-sm">
                 FC
               </div>
               <div className="hidden sm:block">
-                <span className="text-sm font-bold text-[var(--graphite)]">FloorConnector</span>
-                <p className="text-[9px] text-[var(--text-tertiary)] leading-tight">Specialty Flooring Systems</p>
+                <span className="text-sm font-bold text-white">FloorConnector</span>
+                <p className="text-[9px] text-white/60 leading-tight">Specialty Flooring Systems</p>
               </div>
             </div>
 
-            <div className="hidden h-6 w-px bg-[var(--border-warm)] md:block" />
+            <div className="hidden h-6 w-px bg-white/15 md:block" />
 
             {/* Project Selector */}
             <button 
               onClick={() => setProjectSelectorOpen(!projectSelectorOpen)}
-              className="hidden md:flex items-center gap-2 rounded-md border border-[var(--border-warm)] bg-white px-3 py-1.5 text-sm text-[var(--text-primary)] transition hover:bg-[var(--highlight)]"
+              className="hidden md:flex items-center gap-2 rounded-md border border-white/20 bg-white/10 px-3 py-1.5 text-sm text-white/90 transition hover:bg-white/15"
             >
-              <Briefcase className="h-3.5 w-3.5 text-[var(--text-secondary)]" />
+              <Briefcase className="h-3.5 w-3.5 text-white/70" />
               <span>Select a Project</span>
-              <ChevronDown className="h-3.5 w-3.5 text-[var(--text-tertiary)]" />
+              <ChevronDown className="h-3.5 w-3.5 text-white/50" />
             </button>
 
             {/* Menu Dropdown Trigger */}
             <button 
               onClick={() => setMenuOpen(!menuOpen)}
-              className="flex items-center gap-2 rounded-md border border-[var(--border-warm)] bg-white px-3 py-1.5 text-sm transition hover:bg-[var(--highlight)]"
+              className="flex items-center gap-2 rounded-md border border-white/20 bg-white/10 px-3 py-1.5 text-sm transition hover:bg-white/15"
             >
-              <span className="text-[10px] font-semibold uppercase tracking-wider text-[var(--text-tertiary)]">Menu</span>
-              <span className="font-semibold text-[var(--text-primary)]">Dashboard</span>
-              <ChevronDown className={`h-3.5 w-3.5 text-[var(--text-tertiary)] transition-transform ${menuOpen ? 'rotate-180' : ''}`} />
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-white/60">Menu</span>
+              <span className="font-semibold text-white">Dashboard</span>
+              <ChevronDown className={`h-3.5 w-3.5 text-white/50 transition-transform ${menuOpen ? 'rotate-180' : ''}`} />
             </button>
 
             {/* Starred Quick Links */}
@@ -632,9 +632,9 @@ export default function DashboardDesignPage() {
                 <Link
                   key={link.label}
                   href={link.href}
-                  className="flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-sm text-[var(--text-secondary)] transition hover:bg-[var(--highlight)] hover:text-[var(--text-primary)]"
+                  className="flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-sm text-white/80 transition hover:bg-white/10 hover:text-white"
                 >
-                  <Star className="h-3 w-3 text-[var(--copper)] fill-[var(--copper)]" />
+                  <Star className="h-3 w-3 text-[var(--copper-light)] fill-[var(--copper-light)]" />
                   {link.label}
                 </Link>
               ))}
@@ -645,27 +645,27 @@ export default function DashboardDesignPage() {
           <div className="flex items-center gap-3">
             {/* Training/Support Links */}
             <div className="hidden xl:flex flex-col items-end text-right">
-              <Link href="/trainings" className="text-[11px] text-[var(--copper)] hover:underline">Free Online Training</Link>
+              <Link href="/trainings" className="text-[11px] text-[var(--copper-light)] hover:underline">Free Online Training</Link>
               <div className="flex gap-2">
-                <Link href="/webinars" className="text-[10px] text-[var(--text-tertiary)] hover:text-[var(--copper)]">Daily Webinars</Link>
-                <Link href="/university" className="text-[10px] text-[var(--text-tertiary)] hover:text-[var(--copper)]">Contractor University</Link>
+                <Link href="/webinars" className="text-[10px] text-white/60 hover:text-[var(--copper-light)]">Daily Webinars</Link>
+                <Link href="/university" className="text-[10px] text-white/60 hover:text-[var(--copper-light)]">Contractor University</Link>
               </div>
             </div>
 
             {/* Live Chat */}
-            <button className="hidden md:flex items-center gap-2 rounded-md border border-[var(--border-warm)] bg-white px-3 py-1.5 text-sm transition hover:bg-[var(--highlight)]">
-              <MessageCircle className="h-4 w-4 text-[var(--text-secondary)]" />
-              <span className="text-[var(--text-primary)]">Live Chat</span>
+            <button className="hidden md:flex items-center gap-2 rounded-md border border-white/20 bg-white/10 px-3 py-1.5 text-sm transition hover:bg-white/15">
+              <MessageCircle className="h-4 w-4 text-white/70" />
+              <span className="text-white/90">Live Chat</span>
             </button>
 
             {/* User Profile */}
             <div className="flex items-center gap-2">
               <div className="hidden sm:block text-right">
-                <p className="text-xs font-semibold text-[var(--text-primary)]">{USER_PROFILE.name}</p>
-                <p className="text-[10px] text-[var(--text-tertiary)]">User ({USER_PROFILE.userId})</p>
-                <p className="text-[10px] text-[var(--text-tertiary)]">{USER_PROFILE.lastLogin}</p>
+                <p className="text-xs font-semibold text-white">{USER_PROFILE.name}</p>
+                <p className="text-[10px] text-white/60">User ({USER_PROFILE.userId})</p>
+                <p className="text-[10px] text-white/60">{USER_PROFILE.lastLogin}</p>
               </div>
-              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--copper)] text-sm font-semibold text-white">
+              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--copper)] text-sm font-semibold text-white shadow-sm">
                 {USER_PROFILE.initials}
               </div>
             </div>
@@ -674,13 +674,13 @@ export default function DashboardDesignPage() {
       </header>
 
       {/* ── SECONDARY NAV BAR (Breadcrumb + Company) ── */}
-      <div className="border-b border-[var(--border-warm)] bg-[var(--graphite)]">
+      <div className="border-b border-[var(--graphite)] bg-[var(--graphite)] shadow-sm">
         <div className="mx-auto flex h-10 max-w-[1680px] items-center justify-between px-4">
           {/* Breadcrumb */}
-          <div className="flex items-center gap-2 text-white/80">
+          <div className="flex items-center gap-2 text-white/70">
             <Home className="h-3.5 w-3.5" />
-            <span className="text-white/50">/</span>
-            <span className="text-sm font-medium">Dashboard</span>
+            <span className="text-white/40">/</span>
+            <span className="text-sm font-medium text-white">Dashboard</span>
           </div>
 
           {/* Company Name */}
@@ -688,16 +688,16 @@ export default function DashboardDesignPage() {
 
           {/* Quick Actions */}
           <div className="flex items-center gap-3">
-            <button className="text-white/60 hover:text-white transition" aria-label="Edit">
+            <button className="text-white/50 hover:text-white/80 transition" aria-label="Edit">
               <Wrench className="h-4 w-4" />
             </button>
-            <button className="text-white/60 hover:text-white transition" aria-label="Video">
+            <button className="text-white/50 hover:text-white/80 transition" aria-label="Video">
               <MessageSquare className="h-4 w-4" />
             </button>
-            <button className="text-white/60 hover:text-white transition" aria-label="Location">
+            <button className="text-white/50 hover:text-white/80 transition" aria-label="Location">
               <Lightbulb className="h-4 w-4" />
             </button>
-            <button className="text-white/60 hover:text-white transition" aria-label="Settings">
+            <button className="text-white/50 hover:text-white/80 transition" aria-label="Settings">
               <Settings className="h-4 w-4" />
             </button>
           </div>
