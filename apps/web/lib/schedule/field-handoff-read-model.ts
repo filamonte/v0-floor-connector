@@ -1,7 +1,7 @@
 import {
   buildDailyLogCaptureHref,
   buildDailyLogSectionHref
-} from "@/lib/daily-logs/links";
+} from "../daily-logs/links";
 
 export type ScheduleFieldHandoffJob = {
   id: string;
