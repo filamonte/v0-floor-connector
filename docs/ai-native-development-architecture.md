@@ -10,6 +10,37 @@ organization.
 It is a planning and governance document. It does not implement application
 features, schema, routes, UI, or runtime behavior.
 
+## Current Active Stream Override
+
+For the current production-acceleration cycle, active stream status is owned by
+[active-worktrees.md](C:/FloorConnector/active-worktrees.md) and
+[.codex/active-stream-plan.md](C:/FloorConnector/.codex/active-stream-plan.md).
+Those files supersede older startup examples in this document when they differ.
+
+Current active streams:
+
+- `architecture-coordination`
+- `verification`
+- `project-workspace`
+- `scheduling`
+- `communications`
+- `financials-reporting`
+
+Paused or downstream streams:
+
+- `portal`
+- `field-mobile`
+
+Legacy or superseded streams:
+
+- `financials`
+- `qa-verification`
+- `project-readiness-panel`
+
+The broader stream lists below are reference topology for the AI-native
+operating model. They are not permission to reactivate paused streams, create
+new active branches, or merge registry/tooling changes from feature branches.
+
 Use this together with:
 
 - [docs/developer-source-of-truth.md](C:/FloorConnector/docs/developer-source-of-truth.md)
@@ -198,37 +229,41 @@ missing or claims exceed verified behavior.
 
 ### Folder Structure
 
-Canonical target structure:
+Canonical current structure:
 
 ```text
-C:\FloorConnector-main
+C:\FloorConnector
 C:\FC-worktrees
+  architecture-coordination
+  verification
   project-workspace
   scheduling
-  portal
-  field-mobile
-  financials
   communications
-  reporting
-  design-system
-  growth-site
-  qa-verification
+  financials-reporting
 ```
 
-`C:\FloorConnector-main` should track the canonical `main` branch and act as
-the integration baseline. Stream worktrees should live under `C:\FC-worktrees`.
+`C:\FloorConnector` tracks the canonical `main` branch and acts as the local
+integration baseline. Active stream worktrees should live under
+`C:\FC-worktrees`. Paused, legacy, or temporary worktrees may exist locally, but
+they are not active production-acceleration streams unless
+`active-worktrees.md` says they are active.
 
 ### Branch Naming
 
-Use `codex/<stream>/<capability-wave>-<slice>` unless the owner requests a
-different branch convention.
+Use `stream/<stream-name>` for current long-lived production-acceleration
+branches unless the owner explicitly assigns a different convention.
 
 Examples:
 
-- `codex/scheduling/scheduling-wave-v1-readiness-board`
-- `codex/portal/portal-wave-v1-status-window`
-- `codex/qa/scheduling-wave-v1-verification`
-- `codex/docs/ai-native-dev-architecture`
+- `stream/architecture-coordination`
+- `stream/verification`
+- `stream/project-workspace`
+- `stream/scheduling`
+- `stream/communications`
+- `stream/financials-reporting`
+
+Temporary investigation branches may use a short suffix, but they should not
+become silent alternate sources of stream truth.
 
 ### Worktree Naming
 
@@ -236,8 +271,8 @@ Worktree folder names should match stream names, not individual task names, for
 long-lived streams:
 
 - `C:\FC-worktrees\scheduling`
-- `C:\FC-worktrees\portal`
-- `C:\FC-worktrees\qa-verification`
+- `C:\FC-worktrees\communications`
+- `C:\FC-worktrees\financials-reporting`
 
 Temporary investigation worktrees may include a short suffix:
 
@@ -282,7 +317,7 @@ Expected cleanup command shape:
 
 ```powershell
 git worktree remove C:\FC-worktrees\<name>
-git branch -d codex/<stream>/<branch>
+git branch -d stream/<name>
 ```
 
 Use `-D` only after confirming the branch is intentionally abandoned.
@@ -342,20 +377,22 @@ slice.
 
 - Worktrees running local dev servers must use separate ports.
 - Preferred starting point:
-  - main/integration: `3000`
+  - main/canonical workspace: `3000`
+  - architecture-coordination: no dev server by default
+  - verification: `3020`
   - project-workspace: `3011`
   - scheduling: `3012`
-  - portal: `3013`
-  - field-mobile: `3014`
-  - financials: `3015`
   - communications: `3016`
-  - qa-verification: `3020`
+  - financials-reporting: `3015`
+  - portal: paused/downstream, use `3013` only when explicitly reactivated
+  - field-mobile: paused/downstream, use `3014` only when explicitly
+    reactivated
 - Record the active port in the stream handoff when browser QA is run.
 - Do not treat a stale dev server from another worktree as current evidence.
 
 ## 5. Build Stream Architecture
 
-Initial stream inventory:
+Reference stream inventory:
 
 | Stream              | Ownership                                                                                | Allowed scope                                                                                                | Forbidden scope                                                                                  | Merge sensitivity                                                    | Expected outputs                                                              |
 | ------------------- | ---------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
@@ -370,18 +407,16 @@ Initial stream inventory:
 | Growth/Marketing    | Public acquisition, website/growth planning, copy truthful to implemented core           | Public copy, acquisition planning, source-attribution docs, marketing QA                                     | Website-only CRM, public intake writes without canonical path, overclaimed AI                    | Medium because public claims affect product truth                    | Truthful growth surfaces and docs                                             |
 | QA/Verification     | Cross-stream testing, regression, browser QA, docs/status truth                          | Test plans, Playwright/browser smoke, visual checks, route validation, docs consistency                      | Feature implementation unless explicitly assigned, schema/runtime changes                        | Mandatory gate for all waves                                         | Pass/fail evidence, blocker list, merge recommendation                        |
 
-Start with 5-7 active streams. Recommended first active set:
+The first production-acceleration stream set is recorded in
+`active-worktrees.md` and `.codex/active-stream-plan.md`. As of the post-merge
+cleanup checkpoint, Architecture Coordination is the remaining active cleanup
+stream and the Verification, Project Workspace, Scheduling, Communications, and
+Financials Reporting worktrees are retained as merged stream worktrees until
+explicit retirement.
 
-- Project Workspace
-- Scheduling
-- Portal
-- Financial Ops
-- Field/Mobile
-- Communications
-- QA/Verification
-
-Reporting, Design System, and Growth/Marketing should join later or run as
-short targeted streams when a wave explicitly needs them.
+Portal and Field/Mobile are downstream planning references until reactivated by
+the active registry. Reporting, Design System, and Growth/Marketing should join
+later or run as short targeted streams when a wave explicitly needs them.
 
 ## 6. Agent Role Definitions
 
@@ -754,24 +789,28 @@ Pilot readiness checks:
 
 Initial 3-5 day targets:
 
-- 5-7 defined streams
-- 4-7 active worktrees, including QA/Verification
+- the active stream registry names the current streams, paused streams, and
+  legacy streams without ambiguity
+- 4-7 active worktrees, including Verification
 - one active capability wave
 - one orchestrator prompt template
 - one hotspot file map
 - one QA gate checklist
 - one integration cadence
 
-Expected active worktrees:
+Current active worktrees for the production-acceleration cycle:
 
-- `C:\FloorConnector-main`
+- `C:\FloorConnector`
+- `C:\FC-worktrees\architecture-coordination`
+- `C:\FC-worktrees\verification`
 - `C:\FC-worktrees\project-workspace`
 - `C:\FC-worktrees\scheduling`
-- `C:\FC-worktrees\portal`
-- `C:\FC-worktrees\field-mobile`
-- `C:\FC-worktrees\financials`
 - `C:\FC-worktrees\communications`
-- `C:\FC-worktrees\qa-verification`
+- `C:\FC-worktrees\financials-reporting`
+
+Paused or legacy worktrees may still exist locally, but they are not active
+production-acceleration streams unless `active-worktrees.md` is deliberately
+updated.
 
 Acceptable merge cadence:
 
@@ -798,11 +837,11 @@ Contractor pilot readiness targets:
 
 ## 11. Immediate Next Steps
 
-1. Create worktree infrastructure.
-   - Establish `C:\FloorConnector-main`.
-   - Establish `C:\FC-worktrees`.
-   - Add initial stream worktrees for Project Workspace, Scheduling, Portal,
-     Field/Mobile, Financials, Communications, and QA/Verification.
+1. Keep worktree infrastructure reconciled.
+   - Use `C:\FloorConnector` as the canonical local workspace.
+   - Use `C:\FC-worktrees` for active stream worktrees.
+   - Keep the active stream set aligned with `active-worktrees.md` and
+     `.codex/active-stream-plan.md`.
 
 2. Create stream briefs.
    - Define scope, forbidden scope, hotspots, branch name, port, docs to read,
