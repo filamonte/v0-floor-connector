@@ -4,6 +4,9 @@ Status: Active
 Doc Type: Repository Hygiene Checkpoint
 Date: 2026-05-29
 
+Post-merge update: refreshed 2026-05-31 after Communications PR #9,
+Verification PR #10, and Scheduling PR #12 merged to `main`.
+
 ## Scope
 
 This checkpoint resolves the coordination registry drift identified in
@@ -35,16 +38,19 @@ variables, auth, RLS, payments, signatures, portal access, or provider behavior.
 
 ## Canonical Active Model
 
-The current production-acceleration model has exactly six active streams:
+The first production-acceleration stream set has merged to `main`. The current
+post-merge registry keeps `architecture-coordination` as the only active cleanup
+stream and retains the merged stream worktrees temporarily until explicit
+retirement.
 
 | Stream                      | Status | Branch                             | Notes                                                    |
 | --------------------------- | ------ | ---------------------------------- | -------------------------------------------------------- |
-| `architecture-coordination` | Active | `stream/architecture-coordination` | Owns governance, sequencing, merge risk, and tooling     |
-| `verification`              | Active | `stream/verification`              | Supersedes `qa-verification` for active QA work          |
-| `project-workspace`         | Active | `stream/project-workspace`         | Project hub, readiness, and continuity work              |
-| `scheduling`                | Active | `stream/scheduling`                | CrewBoard and job-based scheduling work                  |
-| `communications`            | Active | `stream/communications`            | Shared record-linked communications work                 |
-| `financials-reporting`      | Active | `stream/financials-reporting`      | Supersedes broad `financials` for AR/reporting work      |
+| `architecture-coordination` | Active | `stream/architecture-coordination` | Final post-merge cleanup and registry truth              |
+| `verification`              | Merged | `stream/verification`              | PR #10 merged; worktree retained temporarily             |
+| `project-workspace`         | Merged | `stream/project-workspace`         | Project hub work merged before downstream streams        |
+| `scheduling`                | Merged | `stream/scheduling`                | PR #12 merged; worktree retained temporarily             |
+| `communications`            | Merged | `stream/communications`            | PR #9 merged; worktree retained temporarily              |
+| `financials-reporting`      | Merged | `stream/financials-reporting`      | AR/reporting stream merged; worktree retained            |
 | `portal`                    | Paused | `stream/portal`                    | Downstream after Project Workspace and Communications    |
 | `field-mobile`              | Paused | `stream/field-mobile`              | Downstream after Project Workspace and Scheduling        |
 | `financials`                | Legacy | `stream/financials`                | Reconcile useful work into `financials-reporting`        |
@@ -66,7 +72,7 @@ The current production-acceleration model has exactly six active streams:
 
 ## Remaining Merge Risk
 
-Feature branches that still carry stale worktree registry/tooling deletions
+Future feature branches that carry stale worktree registry/tooling deletions
 should remove those hunks before merge. In particular, merge reviewers should
 reject incidental changes to:
 
@@ -79,7 +85,6 @@ reject incidental changes to:
 - worktree platform scripts
 - package scripts for `codex:*`, `worktree:*`, and shared devtools
 
-The one unresolved product-ownership decision remains Financials stream
-reconciliation: useful work on legacy `stream/financials` should be explicitly
-cherry-picked, moved, or reclassified before merging into the active
-production-acceleration sequence.
+The legacy `stream/financials` worktree still exists and should remain out of
+the active registry unless the owner explicitly reopens it. Do not delete or
+merge it as part of this cleanup task.

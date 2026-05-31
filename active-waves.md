@@ -13,10 +13,9 @@ For implemented status, use
 For active stream status, use
 [active-worktrees.md](C:/FloorConnector/active-worktrees.md) and
 [.codex/active-stream-plan.md](C:/FloorConnector/.codex/active-stream-plan.md).
-The current production-acceleration model has exactly six active streams:
-`architecture-coordination`, `verification`, `project-workspace`, `scheduling`,
-`communications`, and `financials-reporting`. Field/Mobile and Portal remain
-planning/downstream wave docs until the active registry says otherwise.
+The first production-acceleration stream set has merged to `main`; the remaining
+active cleanup stream is `architecture-coordination`. Field/Mobile and Portal
+remain planning/downstream wave docs until the active registry says otherwise.
 
 ## Operational Capability Waves v1
 
@@ -29,8 +28,9 @@ as the coordination source for the four operational waves:
 3. [Field/Mobile Capability Wave v1](C:/FloorConnector/docs/design/field-mobile-capability-wave-v1.md)
 4. [Portal Capability Wave v1](C:/FloorConnector/docs/design/portal-capability-wave-v1.md)
 
-Project Workspace is the first implementation slice. The sequence above should
-not be read as permission to implement all four waves at the same time.
+Project Workspace and Scheduling have merged to `main` for the first stream set.
+The remaining wave references are planning context and should not be read as
+permission to implement all four waves at the same time.
 
 ## Parallel Planning Streams
 

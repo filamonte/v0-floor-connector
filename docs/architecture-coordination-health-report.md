@@ -4,6 +4,13 @@ Status: Active
 Doc Type: Audit
 Date: 2026-05-28
 
+Post-merge note: this report is historical architecture evidence from before
+the first stream set merged. As of 2026-05-31, Communications PR #9,
+Verification PR #10, and Scheduling PR #12 are merged to `main`; use
+[active-worktrees.md](C:/FloorConnector/active-worktrees.md) and
+[.codex/active-stream-plan.md](C:/FloorConnector/.codex/active-stream-plan.md)
+for current stream status.
+
 ## Scope
 
 This report reviews the current Architecture Coordination stream and adjacent

@@ -407,15 +407,12 @@ Reference stream inventory:
 | Growth/Marketing    | Public acquisition, website/growth planning, copy truthful to implemented core           | Public copy, acquisition planning, source-attribution docs, marketing QA                                     | Website-only CRM, public intake writes without canonical path, overclaimed AI                    | Medium because public claims affect product truth                    | Truthful growth surfaces and docs                                             |
 | QA/Verification     | Cross-stream testing, regression, browser QA, docs/status truth                          | Test plans, Playwright/browser smoke, visual checks, route validation, docs consistency                      | Feature implementation unless explicitly assigned, schema/runtime changes                        | Mandatory gate for all waves                                         | Pass/fail evidence, blocker list, merge recommendation                        |
 
-The current active set is the six-stream production-acceleration model recorded
-in `active-worktrees.md` and `.codex/active-stream-plan.md`:
-
-- Architecture Coordination
-- Verification
-- Project Workspace
-- Scheduling
-- Communications
-- Financials Reporting
+The first production-acceleration stream set is recorded in
+`active-worktrees.md` and `.codex/active-stream-plan.md`. As of the post-merge
+cleanup checkpoint, Architecture Coordination is the remaining active cleanup
+stream and the Verification, Project Workspace, Scheduling, Communications, and
+Financials Reporting worktrees are retained as merged stream worktrees until
+explicit retirement.
 
 Portal and Field/Mobile are downstream planning references until reactivated by
 the active registry. Reporting, Design System, and Growth/Marketing should join
