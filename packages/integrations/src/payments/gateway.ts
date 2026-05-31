@@ -32,7 +32,11 @@ export type VerifyPaymentGatewayWebhookInput = {
   rawBody: string;
 };
 
-export type PaymentGatewayWebhookOutcome = "success" | "failure" | "void" | "ignore";
+export type PaymentGatewayWebhookOutcome =
+  | "success"
+  | "failure"
+  | "void"
+  | "ignore";
 
 export type PaymentGatewayWebhookEvent = {
   gatewayProvider: PaymentGatewayProvider;
@@ -93,12 +97,6 @@ function amountToMinorUnits(amount: string) {
   return cents;
 }
 
-function withMessage(urlString: string, message: string) {
-  const url = new URL(urlString);
-  url.searchParams.set("message", message);
-  return url.toString();
-}
-
 function withMessagePath(urlString: string, message: string) {
   const url = new URL(urlString);
   url.searchParams.set("message", message);
@@ -122,7 +120,9 @@ function getObjectRecord(value: unknown) {
 function getMetadata(value: unknown) {
   const record = getObjectRecord(value);
 
-  return record?.metadata && typeof record.metadata === "object" && !Array.isArray(record.metadata)
+  return record?.metadata &&
+    typeof record.metadata === "object" &&
+    !Array.isArray(record.metadata)
     ? (record.metadata as Record<string, unknown>)
     : {};
 }
@@ -154,13 +154,21 @@ function formatCardSummary(card: Record<string, unknown> | null) {
   return brand ?? null;
 }
 
-function createStripeExpectedSignature(secret: string, timestamp: string, rawBody: string) {
+function createStripeExpectedSignature(
+  secret: string,
+  timestamp: string,
+  rawBody: string
+) {
   return createHmac("sha256", secret)
     .update(`${timestamp}.${rawBody}`, "utf8")
     .digest("hex");
 }
 
-function verifyStripeSignature(rawBody: string, signatureHeader: string, secret: string) {
+function verifyStripeSignature(
+  rawBody: string,
+  signatureHeader: string,
+  secret: string
+) {
   const stripeWebhookToleranceSeconds = 300;
   const fragments = signatureHeader.split(",");
   const timestamp = fragments
@@ -180,12 +188,19 @@ function verifyStripeSignature(rawBody: string, signatureHeader: string, secret:
 
   if (
     !Number.isFinite(timestampSeconds) ||
-    Math.abs(Date.now() / 1000 - timestampSeconds) > stripeWebhookToleranceSeconds
+    Math.abs(Date.now() / 1000 - timestampSeconds) >
+      stripeWebhookToleranceSeconds
   ) {
-    throw new Error("Stripe webhook signature timestamp is outside the accepted tolerance.");
+    throw new Error(
+      "Stripe webhook signature timestamp is outside the accepted tolerance."
+    );
   }
 
-  const expectedSignature = createStripeExpectedSignature(secret, timestamp, rawBody);
+  const expectedSignature = createStripeExpectedSignature(
+    secret,
+    timestamp,
+    rawBody
+  );
   const expectedBuffer = Buffer.from(expectedSignature);
   const hasMatch = signatures.some((signature) => {
     const providedBuffer = Buffer.from(signature);
@@ -200,7 +215,9 @@ function verifyStripeSignature(rawBody: string, signatureHeader: string, secret:
   }
 }
 
-function normalizeStripeWebhookEvent(rawBody: string): PaymentGatewayWebhookEvent {
+function normalizeStripeWebhookEvent(
+  rawBody: string
+): PaymentGatewayWebhookEvent {
   const envelope = JSON.parse(rawBody) as StripeEventEnvelope;
 
   if (typeof envelope.id !== "string" || typeof envelope.type !== "string") {
@@ -221,7 +238,9 @@ function normalizeStripeWebhookEvent(rawBody: string): PaymentGatewayWebhookEven
   const charges = getObjectRecord(object.charges);
   const chargeData = Array.isArray(charges?.data) ? charges.data : [];
   const latestCharge = getObjectRecord(chargeData[0]);
-  const paymentMethodDetails = getObjectRecord(latestCharge?.payment_method_details);
+  const paymentMethodDetails = getObjectRecord(
+    latestCharge?.payment_method_details
+  );
   const cardDetails = getObjectRecord(paymentMethodDetails?.card);
 
   const baseEvent: PaymentGatewayWebhookEvent = {
@@ -232,29 +251,32 @@ function normalizeStripeWebhookEvent(rawBody: string): PaymentGatewayWebhookEven
     organizationId,
     invoiceId,
     paymentId,
-    amount:
-      numberToCurrencyAmount(
-        typeof object.amount_total === "number"
-          ? object.amount_total
-          : typeof object.amount_received === "number"
-            ? object.amount_received
-            : typeof object.amount === "number"
-              ? object.amount
-              : null
-      ),
+    amount: numberToCurrencyAmount(
+      typeof object.amount_total === "number"
+        ? object.amount_total
+        : typeof object.amount_received === "number"
+          ? object.amount_received
+          : typeof object.amount === "number"
+            ? object.amount
+            : null
+    ),
     currency: getString(object.currency),
     paymentDate: null,
     paymentMethod:
       getString(paymentMethodDetails?.type) ??
       getString(object.payment_method_collection) ??
       "Gateway checkout",
-    gatewayPaymentIntentReference: getString(object.payment_intent) ?? getString(object.id),
-    gatewayCheckoutSessionReference:
-      envelope.type.startsWith("checkout.session.")
-        ? getString(object.id)
-        : getString(metadata.checkout_session_id),
+    gatewayPaymentIntentReference:
+      getString(object.payment_intent) ?? getString(object.id),
+    gatewayCheckoutSessionReference: envelope.type.startsWith(
+      "checkout.session."
+    )
+      ? getString(object.id)
+      : getString(metadata.checkout_session_id),
     gatewayStatus:
-      getString(object.payment_status) ?? getString(object.status) ?? getString(object.cancellation_reason),
+      getString(object.payment_status) ??
+      getString(object.status) ??
+      getString(object.cancellation_reason),
     paymentMethodSummary:
       formatCardSummary(cardDetails) ??
       getString(object.customer_email) ??
@@ -269,8 +291,7 @@ function normalizeStripeWebhookEvent(rawBody: string): PaymentGatewayWebhookEven
     occurredAt: getOccurredAtIso(envelope.created),
     payload: {
       stripeEvent: envelope,
-      stripeObjectType:
-        typeof object.object === "string" ? object.object : null
+      stripeObjectType: typeof object.object === "string" ? object.object : null
     }
   };
 
@@ -278,7 +299,8 @@ function normalizeStripeWebhookEvent(rawBody: string): PaymentGatewayWebhookEven
     case "checkout.session.completed":
       return {
         ...baseEvent,
-        outcome: getString(object.payment_status) === "paid" ? "success" : "ignore",
+        outcome:
+          getString(object.payment_status) === "paid" ? "success" : "ignore",
         gatewayStatus: getString(object.payment_status) ?? "complete",
         gatewayPaymentIntentReference: getString(object.payment_intent),
         gatewayCheckoutSessionReference: getString(object.id),
@@ -320,7 +342,9 @@ function normalizeStripeWebhookEvent(rawBody: string): PaymentGatewayWebhookEven
         gatewayStatus: getString(object.status) ?? "succeeded",
         gatewayPaymentIntentReference: getString(object.id),
         paymentDate: getOccurredAtIso(envelope.created).slice(0, 10),
-        paymentMethod: formatCardSummary(cardDetails) ? "Card" : "Gateway payment"
+        paymentMethod: formatCardSummary(cardDetails)
+          ? "Card"
+          : "Gateway payment"
       };
     case "payment_intent.payment_failed":
       return {
@@ -328,7 +352,9 @@ function normalizeStripeWebhookEvent(rawBody: string): PaymentGatewayWebhookEven
         outcome: "failure",
         gatewayStatus: getString(object.status) ?? "failed",
         gatewayPaymentIntentReference: getString(object.id),
-        paymentMethod: formatCardSummary(cardDetails) ? "Card" : "Gateway payment"
+        paymentMethod: formatCardSummary(cardDetails)
+          ? "Card"
+          : "Gateway payment"
       };
     case "payment_intent.canceled":
       return {
@@ -336,7 +362,9 @@ function normalizeStripeWebhookEvent(rawBody: string): PaymentGatewayWebhookEven
         outcome: "void",
         gatewayStatus: getString(object.status) ?? "canceled",
         gatewayPaymentIntentReference: getString(object.id),
-        paymentMethod: formatCardSummary(cardDetails) ? "Card" : "Gateway payment"
+        paymentMethod: formatCardSummary(cardDetails)
+          ? "Card"
+          : "Gateway payment"
       };
     default:
       return baseEvent;
@@ -383,10 +411,16 @@ class StripePaymentGatewayAdapter implements PaymentGatewayAdapter {
     formData.set("metadata[invoice_id]", input.invoiceId);
     if (input.paymentId) {
       formData.set("metadata[payment_id]", input.paymentId);
-      formData.set("payment_intent_data[metadata][payment_id]", input.paymentId);
+      formData.set(
+        "payment_intent_data[metadata][payment_id]",
+        input.paymentId
+      );
     }
     formData.set("metadata[reference_number]", input.referenceNumber);
-    formData.set("payment_intent_data[metadata][organization_id]", input.organizationId);
+    formData.set(
+      "payment_intent_data[metadata][organization_id]",
+      input.organizationId
+    );
     formData.set("payment_intent_data[metadata][invoice_id]", input.invoiceId);
     formData.set(
       "payment_intent_data[metadata][reference_number]",
@@ -397,15 +431,18 @@ class StripePaymentGatewayAdapter implements PaymentGatewayAdapter {
       formData.set("customer_email", input.payerEmail);
     }
 
-    const response = await fetch("https://api.stripe.com/v1/checkout/sessions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${env.STRIPE_SECRET_KEY}`,
-        "Content-Type": "application/x-www-form-urlencoded"
-      },
-      body: formData.toString(),
-      cache: "no-store"
-    });
+    const response = await fetch(
+      "https://api.stripe.com/v1/checkout/sessions",
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${env.STRIPE_SECRET_KEY}`,
+          "Content-Type": "application/x-www-form-urlencoded"
+        },
+        body: formData.toString(),
+        cache: "no-store"
+      }
+    );
 
     const payload = (await response.json()) as StripeCheckoutSessionResponse & {
       error?: { message?: string };
@@ -419,14 +456,18 @@ class StripePaymentGatewayAdapter implements PaymentGatewayAdapter {
     }
 
     if (typeof payload.id !== "string" || typeof payload.url !== "string") {
-      throw new Error("Stripe checkout response did not include session details.");
+      throw new Error(
+        "Stripe checkout response did not include session details."
+      );
     }
 
     return {
       gatewayProvider: this.provider,
       gatewayCheckoutSessionReference: payload.id,
       gatewayPaymentIntentReference:
-        typeof payload.payment_intent === "string" ? payload.payment_intent : null,
+        typeof payload.payment_intent === "string"
+          ? payload.payment_intent
+          : null,
       gatewayStatus:
         typeof payload.status === "string"
           ? payload.status
@@ -438,11 +479,15 @@ class StripePaymentGatewayAdapter implements PaymentGatewayAdapter {
       payload: {
         stripeCheckoutSessionId: payload.id,
         stripePaymentIntentReference:
-          typeof payload.payment_intent === "string" ? payload.payment_intent : null,
+          typeof payload.payment_intent === "string"
+            ? payload.payment_intent
+            : null,
         stripeCheckoutStatus:
           typeof payload.status === "string" ? payload.status : null,
         stripePaymentStatus:
-          typeof payload.payment_status === "string" ? payload.payment_status : null
+          typeof payload.payment_status === "string"
+            ? payload.payment_status
+            : null
       }
     };
   }
@@ -453,7 +498,9 @@ class StripePaymentGatewayAdapter implements PaymentGatewayAdapter {
     const env = getServerEnv();
 
     if (!env.STRIPE_WEBHOOK_SECRET) {
-      throw new Error("Stripe webhook secret is required for Stripe callbacks.");
+      throw new Error(
+        "Stripe webhook secret is required for Stripe callbacks."
+      );
     }
 
     const signatureHeader = input.headers.get("stripe-signature");
@@ -462,7 +509,11 @@ class StripePaymentGatewayAdapter implements PaymentGatewayAdapter {
       throw new Error("Stripe webhook signature header is missing.");
     }
 
-    verifyStripeSignature(input.rawBody, signatureHeader, env.STRIPE_WEBHOOK_SECRET);
+    verifyStripeSignature(
+      input.rawBody,
+      signatureHeader,
+      env.STRIPE_WEBHOOK_SECRET
+    );
 
     return Promise.resolve(normalizeStripeWebhookEvent(input.rawBody));
   }
@@ -494,7 +545,9 @@ class LocalManualPaymentGatewayAdapter implements PaymentGatewayAdapter {
 
   verifyAndNormalizeWebhookEvent(): Promise<PaymentGatewayWebhookEvent> {
     return Promise.reject(
-      new Error("Local manual payment gateway does not support webhook callbacks.")
+      new Error(
+        "Local manual payment gateway does not support webhook callbacks."
+      )
     );
   }
 }
@@ -536,5 +589,7 @@ export async function verifyAndNormalizePaymentGatewayWebhookEvent(
   provider: PaymentGatewayProvider,
   input: VerifyPaymentGatewayWebhookInput
 ) {
-  return getPaymentGatewayAdapter(provider).verifyAndNormalizeWebhookEvent(input);
+  return getPaymentGatewayAdapter(provider).verifyAndNormalizeWebhookEvent(
+    input
+  );
 }
