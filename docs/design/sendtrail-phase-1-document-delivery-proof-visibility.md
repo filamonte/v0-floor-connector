@@ -115,6 +115,45 @@ The helper uses deterministic rules:
 
 These rules do not mutate any record or mark delivery complete.
 
+## Communications Delivery Proof V1
+
+`/communications` now clarifies the existing document-delivery and
+shared-evidence context with deterministic read-only labels for proof state,
+proof source, and boundary. The workspace can show whether the latest visible
+evidence is customer-facing, provider-derived, internal evidence, delivery proof
+available, customer activity, send requested, or needs review.
+
+This is a presentation/read-model refinement only. It does not add a route,
+schema, provider send, webhook behavior, notification mutation, portal-owned
+copy, retry action, or standalone delivery center.
+
+## Communications Delivery Proof V2
+
+`/communications` now groups the same read-only proof context by canonical
+source record where existing data safely identifies one. The record grouping
+shows compact source-record proof rows with source links, communications review
+links, latest proof state, proof counts, proof source and boundary labels,
+customer/internal labels, and deterministic review-needed ordering for failed,
+bounced, or revoked evidence.
+
+This is still a read-model and presentation slice only. It does not add source
+record support beyond existing evidence, create send or resend behavior, change
+provider adapters or webhooks, mutate notification events, create portal-owned
+state, or add a standalone tracking system.
+
+## Communications Delivery Proof Review V1
+
+`/communications` now derives a compact proof-review summary from the grouped
+source-record proof rows. The summary distinguishes no proof recorded, proof
+recorded with no current review items, and source records with failed, bounced,
+revoked, or otherwise review-needed proof. It links back into the existing
+communications review context and keeps the source record as the place to
+resolve the underlying business question.
+
+This does not add delivery state, a retry queue, provider callbacks,
+notification mutations, portal-owned proof, or a separate delivery-review
+workflow.
+
 ## Behavior Preserved
 
 This slice preserves:

@@ -160,6 +160,10 @@ type PortalEvidenceDeliveryContextRow = {
   created_at: string;
 };
 
+export type DeliveryProofSourceRecordType =
+  | DocumentDeliverySubjectType
+  | "project";
+
 const RECENT_WINDOW_DAYS = 14;
 
 export type ContractorCommunicationThreadView =
@@ -229,6 +233,12 @@ export type ContractorCommunicationContextEvent = {
   kind: "document_delivery" | "shared_evidence";
   sourceType: DocumentDeliverySubjectType | "shared_evidence";
   sourceId: string;
+  sourceRecord: {
+    type: DeliveryProofSourceRecordType;
+    id: string;
+    label: string;
+    href: string;
+  };
   eventType: string;
   title: string;
   description: string;
@@ -236,6 +246,10 @@ export type ContractorCommunicationContextEvent = {
   occurredAt: string;
   tone: "neutral" | "positive" | "warning" | "critical";
   audience: "customer" | "internal";
+  proofStateLabel: string;
+  proofBoundaryLabel: string;
+  proofSourceLabel: string;
+  needsReview: boolean;
 };
 
 type SubjectDescriptor = {
@@ -290,6 +304,39 @@ function getDocumentDeliveryEventTone(
   return eventType === "send_requested" ? "warning" : "neutral";
 }
 
+function getDocumentDeliveryProofStateLabel(
+  eventType: DocumentDeliveryEventType
+) {
+  switch (eventType) {
+    case "failed":
+    case "bounced":
+      return "Needs review";
+    case "opened":
+    case "clicked":
+    case "viewed":
+      return "Customer activity";
+    case "sent":
+    case "delivery_recorded":
+      return "Delivery proof available";
+    case "send_requested":
+      return "Send requested";
+    default:
+      return "Proof status unknown";
+  }
+}
+
+function getDocumentDeliveryProofSourceLabel(
+  event: Pick<DocumentDeliveryContextRow, "provider" | "channel">
+) {
+  if (event.provider) {
+    return "Provider-derived";
+  }
+
+  return event.channel === "email" || event.channel === "portal"
+    ? "Customer-facing"
+    : "Internal evidence";
+}
+
 function getEvidenceDeliveryEventTone(
   eventType: PortalEvidenceDeliveryEventType
 ): ContractorCommunicationContextEvent["tone"] {
@@ -302,6 +349,19 @@ function getEvidenceDeliveryEventTone(
   }
 
   return "neutral";
+}
+
+function getEvidenceDeliveryProofStateLabel(
+  eventType: PortalEvidenceDeliveryEventType
+) {
+  switch (eventType) {
+    case "acknowledged":
+      return "Customer activity";
+    case "revoked":
+      return "Needs review";
+    default:
+      return "Proof available";
+  }
 }
 
 function getDocumentSubjectHref(
@@ -320,10 +380,29 @@ function getDocumentSubjectHref(
   }
 }
 
-function getDocumentSubjectLabel(subjectType: DocumentDeliverySubjectType) {
-  return subjectType === "warranty_document"
-    ? "Warranty document"
-    : formatLabel(subjectType);
+function getDocumentSourceRecordLabel(input: {
+  subjectType: DocumentDeliverySubjectType;
+  subjectId: string;
+  estimatesById: Map<string, EstimateRow>;
+  contractsById: Map<string, ContractRow>;
+  invoicesById: Map<string, InvoiceRow>;
+}) {
+  switch (input.subjectType) {
+    case "estimate": {
+      const estimate = input.estimatesById.get(input.subjectId);
+      return estimate ? `Estimate ${estimate.reference_number}` : "Estimate";
+    }
+    case "contract": {
+      const contract = input.contractsById.get(input.subjectId);
+      return contract ? `Contract ${contract.reference_number}` : "Contract";
+    }
+    case "invoice": {
+      const invoice = input.invoicesById.get(input.subjectId);
+      return invoice ? `Invoice ${invoice.reference_number}` : "Invoice";
+    }
+    case "warranty_document":
+      return "Warranty document";
+  }
 }
 
 function getThreadIdFromPayload(
@@ -1152,38 +1231,113 @@ export async function listContractorCommunicationContextEvents(): Promise<
     );
   }
 
-  const documentEvents = (
-    (documentDeliveryResponse.data as DocumentDeliveryContextRow[] | null) ?? []
-  ).map((event): ContractorCommunicationContextEvent => {
-    const recipient =
-      event.recipient_name ?? event.recipient_email ?? "customer recipient";
-    const subjectLabel = getDocumentSubjectLabel(event.subject_type);
-
-    return {
-      id: `document:${event.id}`,
-      kind: "document_delivery",
-      sourceType: event.subject_type,
-      sourceId: event.subject_id,
-      eventType: event.event_type,
-      title: `${subjectLabel} ${formatLabel(event.event_type)}`,
-      description: `${formatLabel(event.event_type)} by ${formatLabel(event.channel)} for ${recipient}${event.provider ? ` through ${event.provider}` : ""}.`,
-      href: getDocumentSubjectHref(event.subject_type, event.subject_id),
-      occurredAt: event.created_at,
-      tone: getDocumentDeliveryEventTone(event.event_type),
-      audience: "customer"
-    };
-  });
-
-  const evidenceEvents = (
+  const documentEvents =
+    (documentDeliveryResponse.data as DocumentDeliveryContextRow[] | null) ??
+    [];
+  const evidenceDeliveryRows =
     (evidenceDeliveryResponse.data as
       | PortalEvidenceDeliveryContextRow[]
-      | null) ?? []
-  ).map(
+      | null) ?? [];
+  const documentIdsByType = {
+    estimate: documentEvents
+      .filter((event) => event.subject_type === "estimate")
+      .map((event) => event.subject_id),
+    contract: documentEvents
+      .filter((event) => event.subject_type === "contract")
+      .map((event) => event.subject_id),
+    invoice: documentEvents
+      .filter((event) => event.subject_type === "invoice")
+      .map((event) => event.subject_id)
+  };
+  const projectIds = [
+    ...new Set(evidenceDeliveryRows.map((event) => event.project_id))
+  ];
+  const [estimateRows, contractRows, invoiceRows, projectRows] =
+    await Promise.all([
+      loadSubjectRows<EstimateRow>(
+        "estimates",
+        "id, reference_number",
+        [...new Set(documentIdsByType.estimate)],
+        organizationId
+      ),
+      loadSubjectRows<ContractRow>(
+        "contracts",
+        "id, reference_number, title",
+        [...new Set(documentIdsByType.contract)],
+        organizationId
+      ),
+      loadSubjectRows<InvoiceRow>(
+        "invoices",
+        "id, reference_number",
+        [...new Set(documentIdsByType.invoice)],
+        organizationId
+      ),
+      loadSubjectRows<ProjectRow>(
+        "projects",
+        "id, name",
+        projectIds,
+        organizationId
+      )
+    ]);
+  const estimatesById = new Map(estimateRows.map((row) => [row.id, row]));
+  const contractsById = new Map(contractRows.map((row) => [row.id, row]));
+  const invoicesById = new Map(invoiceRows.map((row) => [row.id, row]));
+  const projectsById = new Map(projectRows.map((row) => [row.id, row]));
+
+  const mappedDocumentEvents = documentEvents.map(
+    (event): ContractorCommunicationContextEvent => {
+      const recipient =
+        event.recipient_name ?? event.recipient_email ?? "customer recipient";
+      const subjectLabel = getDocumentSourceRecordLabel({
+        subjectType: event.subject_type,
+        subjectId: event.subject_id,
+        estimatesById,
+        contractsById,
+        invoicesById
+      });
+      const href = getDocumentSubjectHref(event.subject_type, event.subject_id);
+
+      return {
+        id: `document:${event.id}`,
+        kind: "document_delivery",
+        sourceType: event.subject_type,
+        sourceId: event.subject_id,
+        sourceRecord: {
+          type: event.subject_type,
+          id: event.subject_id,
+          label: subjectLabel,
+          href
+        },
+        eventType: event.event_type,
+        title: `${subjectLabel} ${formatLabel(event.event_type)}`,
+        description: `${formatLabel(event.event_type)} by ${formatLabel(event.channel)} for ${recipient}${event.provider ? ` through ${event.provider}` : ""}.`,
+        href,
+        occurredAt: event.created_at,
+        tone: getDocumentDeliveryEventTone(event.event_type),
+        audience: "customer",
+        proofStateLabel: getDocumentDeliveryProofStateLabel(event.event_type),
+        proofBoundaryLabel: "Read-only delivery proof",
+        proofSourceLabel: getDocumentDeliveryProofSourceLabel(event),
+        needsReview:
+          event.event_type === "failed" || event.event_type === "bounced"
+      };
+    }
+  );
+
+  const evidenceEvents = evidenceDeliveryRows.map(
     (event): ContractorCommunicationContextEvent => ({
       id: `shared-evidence:${event.id}`,
       kind: "shared_evidence",
       sourceType: "shared_evidence",
       sourceId: event.portal_evidence_grant_id,
+      sourceRecord: {
+        type: "project",
+        id: event.project_id,
+        label: projectsById.get(event.project_id)
+          ? `Project - ${projectsById.get(event.project_id)?.name}`
+          : "Project",
+        href: `/projects/${event.project_id}#project-evidence`
+      },
       eventType: event.event_type,
       title: `Shared evidence ${formatLabel(event.event_type)}`,
       description:
@@ -1193,11 +1347,19 @@ export async function listContractorCommunicationContextEvents(): Promise<
       href: `/projects/${event.project_id}#project-evidence`,
       occurredAt: event.occurred_at,
       tone: getEvidenceDeliveryEventTone(event.event_type),
-      audience: event.actor_kind === "portal_customer" ? "customer" : "internal"
+      audience:
+        event.actor_kind === "portal_customer" ? "customer" : "internal",
+      proofStateLabel: getEvidenceDeliveryProofStateLabel(event.event_type),
+      proofBoundaryLabel: "Read-only evidence proof",
+      proofSourceLabel:
+        event.actor_kind === "portal_customer"
+          ? "Customer-facing"
+          : "Internal evidence",
+      needsReview: event.event_type === "revoked"
     })
   );
 
-  return [...documentEvents, ...evidenceEvents].sort((left, right) =>
+  return [...mappedDocumentEvents, ...evidenceEvents].sort((left, right) =>
     right.occurredAt.localeCompare(left.occurredAt)
   );
 }
