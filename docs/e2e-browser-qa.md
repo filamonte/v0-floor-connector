@@ -772,6 +772,51 @@ It verifies:
 - `/schedule?projectId={projectId}` stays project-scoped for already scheduled jobs without opening job creation, work-item creation, or schedule mutation surfaces
 - the intentional submit-path regression uses a disposable `[E2E] Schedule Submit Path ...` fixture, schedules that one canonical job through the existing `/schedule` composer, verifies the saved schedule persists after reload, confirms no duplicate jobs or work items were created, and resets that fixture job back to unscheduled after the assertions
 
+## Golden Workflow Browser Verification QA
+
+The golden workflow verification spec is the first browser-level proof chain
+for the canonical lifecycle:
+
+```text
+Opportunity -> Customer -> Project -> Estimate -> Contract -> Signature -> Job -> Schedule -> Invoice -> Payment
+```
+
+Run it through the protected project:
+
+```bash
+pnpm exec playwright test e2e/golden-workflow-verification.spec.js --project=chromium-protected
+```
+
+The spec creates a disposable `[E2E] Golden Browser Workflow ...` canonical
+fixture chain for the contractor E2E organization. It asserts:
+
+- converted opportunity, customer, project, estimate, and contract ids stay
+  linked
+- no job or standard invoice exists while the contract is still out for
+  signature
+- signing state is represented by the canonical contract, signer, and signature
+  event rows
+- the same project becomes ready to schedule and carries one canonical job into
+  `/schedule`
+- a standard invoice is created only after commercial readiness in the fixture
+  chain
+- a canonical payment plus `payment_succeeded` event updates the invoice to
+  paid and remains visible from contractor routes
+
+Portal comparison is opportunistic inside the same protected run. When
+`FLOORCONNECTOR_PORTAL_E2E_EMAIL` plus either `playwright/.auth/portal-user.json`
+or portal E2E credentials are available, the spec creates canonical portal
+grant/project-access rows for the same customer contact and checks the same
+project, contract, and invoice ids through portal routes. If portal auth is not
+available, the spec records a fixture-limited annotation instead of counting
+unauthenticated portal navigation as a pass.
+
+This spec is a verification layer over existing records. It does not add
+schema, routes, server actions, portal-only copies, fake production shortcuts,
+provider calls, or duplicate workflow logic. It also does not yet submit every
+production UI form; UI refusal coverage for blocked job creation and blocked
+standard invoice creation remains a follow-up.
+
 ## Golden Workflow Demo Path QA
 
 The Golden Workflow Demo Path is documented in [docs/golden-workflow-demo-path.md](C:/FloorConnector/docs/golden-workflow-demo-path.md). Protected route checks must use the same authenticated contractor storage-state setup described above.
