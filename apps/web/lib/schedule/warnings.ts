@@ -32,6 +32,20 @@ export type ScheduleWarningSummary = {
   label: string;
   detail: string;
   relatedJobIds: string[];
+  resourceKeys?: string[];
+  resourceLabels?: string[];
+  sameDayJobCount?: number;
+};
+
+export type ScheduleResourceLoadSummary = {
+  id: string;
+  dateKey: string;
+  resourceKey: string;
+  resourceLabel: string;
+  jobIds: string[];
+  jobCount: number;
+  hasIncompleteTiming: boolean;
+  hasOverlap: boolean;
 };
 
 type CrewResource = {
@@ -124,9 +138,8 @@ function hasComparableScheduleWindow(job: ScheduledJobWithResources) {
   return job.startTime !== null && job.endTime !== null;
 }
 
-export function deriveScheduleWarningSummaries(jobs: ScheduleWarningJob[]) {
-  const warningsByJobId = new Map<string, ScheduleWarningSummary[]>();
-  const scheduledJobs = jobs
+function buildScheduledJobsWithResources(jobs: ScheduleWarningJob[]) {
+  return jobs
     .filter(isActiveScheduledJob)
     .map<ScheduledJobWithResources>((job) => ({
       ...job,
@@ -134,6 +147,95 @@ export function deriveScheduleWarningSummaries(jobs: ScheduleWarningJob[]) {
       startTime: parseScheduleTime(job.scheduledStartAt),
       endTime: parseScheduleTime(job.scheduledEndAt)
     }));
+}
+
+function getResourceLoadKey(dateKey: string, resourceKey: string) {
+  return `${dateKey}:${resourceKey}`;
+}
+
+function deriveResourceLoadSummariesFromScheduledJobs(
+  scheduledJobs: ScheduledJobWithResources[]
+): ScheduleResourceLoadSummary[] {
+  const resourceLoads = new Map<
+    string,
+    {
+      dateKey: string;
+      resource: CrewResource;
+      jobs: ScheduledJobWithResources[];
+    }
+  >();
+
+  for (const job of scheduledJobs) {
+    if (!job.scheduledDate) {
+      continue;
+    }
+
+    for (const resource of job.resources) {
+      const key = getResourceLoadKey(job.scheduledDate, resource.key);
+      const existing = resourceLoads.get(key);
+
+      if (existing) {
+        existing.jobs.push(job);
+      } else {
+        resourceLoads.set(key, {
+          dateKey: job.scheduledDate,
+          resource,
+          jobs: [job]
+        });
+      }
+    }
+  }
+
+  return [...resourceLoads.values()]
+    .filter((load) => load.jobs.length > 1)
+    .map((load) => {
+      const hasResourceOverlap = load.jobs.some((leftJob, leftIndex) =>
+        load.jobs
+          .slice(leftIndex + 1)
+          .some((rightJob) => hasOverlap(leftJob, rightJob))
+      );
+
+      return {
+        id: getResourceLoadKey(load.dateKey, load.resource.key),
+        dateKey: load.dateKey,
+        resourceKey: load.resource.key,
+        resourceLabel: load.resource.label,
+        jobIds: load.jobs.map((job) => job.id).sort(),
+        jobCount: load.jobs.length,
+        hasIncompleteTiming: load.jobs.some(
+          (job) => !hasComparableScheduleWindow(job)
+        ),
+        hasOverlap: hasResourceOverlap
+      };
+    })
+    .sort((left, right) => {
+      const dateComparison = left.dateKey.localeCompare(right.dateKey);
+
+      if (dateComparison !== 0) {
+        return dateComparison;
+      }
+
+      return left.resourceLabel.localeCompare(right.resourceLabel);
+    });
+}
+
+export function deriveScheduleResourceLoadSummaries(
+  jobs: ScheduleWarningJob[]
+) {
+  return deriveResourceLoadSummariesFromScheduledJobs(
+    buildScheduledJobsWithResources(jobs)
+  );
+}
+
+export function deriveScheduleWarningSummaries(jobs: ScheduleWarningJob[]) {
+  const warningsByJobId = new Map<string, ScheduleWarningSummary[]>();
+  const scheduledJobs = buildScheduledJobsWithResources(jobs);
+  const resourceLoadsByKey = new Map(
+    deriveResourceLoadSummariesFromScheduledJobs(scheduledJobs).map((load) => [
+      load.id,
+      load
+    ])
+  );
 
   for (const job of scheduledJobs) {
     if (job.resources.length === 0) {
@@ -174,6 +276,12 @@ export function deriveScheduleWarningSummaries(jobs: ScheduleWarningJob[]) {
         continue;
       }
 
+      const scheduledDate = leftJob.scheduledDate;
+
+      if (!scheduledDate) {
+        continue;
+      }
+
       const rightResourceKeys = new Set(
         rightJob.resources.map((resource) => resource.key)
       );
@@ -188,6 +296,25 @@ export function deriveScheduleWarningSummaries(jobs: ScheduleWarningJob[]) {
       const sharedCrewLabel = sharedResources
         .map((resource) => resource.label)
         .join(", ");
+      const sharedResourceKeys = sharedResources.map(
+        (resource) => resource.key
+      );
+      const sharedResourceLabels = sharedResources.map(
+        (resource) => resource.label
+      );
+      const sameDayJobCount = Math.max(
+        ...sharedResources.map(
+          (resource) =>
+            resourceLoadsByKey.get(
+              getResourceLoadKey(scheduledDate, resource.key)
+            )?.jobCount ?? 0
+        )
+      );
+      const sharedResourceWarningMetadata = {
+        resourceKeys: sharedResourceKeys,
+        resourceLabels: sharedResourceLabels,
+        sameDayJobCount: sameDayJobCount > 0 ? sameDayJobCount : undefined
+      };
 
       if (hasOverlap(leftJob, rightJob)) {
         addWarning(warningsByJobId, {
@@ -196,7 +323,8 @@ export function deriveScheduleWarningSummaries(jobs: ScheduleWarningJob[]) {
           kind: "overlap",
           label: "Schedule overlap",
           detail: `${sharedCrewLabel} also appears on ${rightJob.title} during this time window.`,
-          relatedJobIds: [rightJob.id]
+          relatedJobIds: [rightJob.id],
+          ...sharedResourceWarningMetadata
         });
         addWarning(warningsByJobId, {
           id: `${rightJob.id}:overlap:${leftJob.id}`,
@@ -204,7 +332,8 @@ export function deriveScheduleWarningSummaries(jobs: ScheduleWarningJob[]) {
           kind: "overlap",
           label: "Schedule overlap",
           detail: `${sharedCrewLabel} also appears on ${leftJob.title} during this time window.`,
-          relatedJobIds: [leftJob.id]
+          relatedJobIds: [leftJob.id],
+          ...sharedResourceWarningMetadata
         });
 
         continue;
@@ -220,7 +349,8 @@ export function deriveScheduleWarningSummaries(jobs: ScheduleWarningJob[]) {
           kind: "same_day_capacity",
           label: "Same-day capacity",
           detail: `${sharedCrewLabel} is also assigned to ${rightJob.title} on this date. Confirm timing and travel manually.`,
-          relatedJobIds: [rightJob.id]
+          relatedJobIds: [rightJob.id],
+          ...sharedResourceWarningMetadata
         });
         addWarning(warningsByJobId, {
           id: `${rightJob.id}:same-day-capacity:${leftJob.id}`,
@@ -228,7 +358,8 @@ export function deriveScheduleWarningSummaries(jobs: ScheduleWarningJob[]) {
           kind: "same_day_capacity",
           label: "Same-day capacity",
           detail: `${sharedCrewLabel} is also assigned to ${leftJob.title} on this date. Confirm timing and travel manually.`,
-          relatedJobIds: [leftJob.id]
+          relatedJobIds: [leftJob.id],
+          ...sharedResourceWarningMetadata
         });
       }
     }

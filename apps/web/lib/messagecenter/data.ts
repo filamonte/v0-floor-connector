@@ -9,6 +9,7 @@ import type {
   CommunicationMessageVisibility,
   CommunicationThreadCategory,
   CommunicationThreadStatus,
+  CanonicalRecordSubjectType,
   ContractSignatureActorType,
   ContractSignatureEventType,
   DocumentDeliveryChannel,
@@ -29,7 +30,7 @@ export type MessageCenterCommunicationThread = {
   appointmentId: string | null;
   customerId: string | null;
   projectId: string | null;
-  subjectType: string;
+  subjectType: CanonicalRecordSubjectType;
   subjectId: string;
   threadCategory: CommunicationThreadCategory;
   channelKind: CommunicationChannelKind;
@@ -113,7 +114,7 @@ type CommunicationThreadRow = {
   appointment_id: string | null;
   customer_id: string | null;
   project_id: string | null;
-  subject_type: string;
+  subject_type: CanonicalRecordSubjectType;
   subject_id: string;
   thread_category: CommunicationThreadCategory;
   channel_kind: CommunicationChannelKind;

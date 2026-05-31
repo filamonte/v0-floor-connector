@@ -389,8 +389,8 @@ export default async function CommunicationsPage({
   return (
     <ContractorWorkspacePage
       eyebrow="Communications"
-      title={`Communication review for ${organizationContext.organization.displayName}`}
-      description="Review canonical message threads, replies, and unread workflow alerts from one contractor-side queue without creating a second inbox, provider integration, or portal-only copy."
+      title={`Record-linked communications for ${organizationContext.organization.displayName}`}
+      description="Review operational memory across opportunity, customer, project, estimate, contract, change order, invoice, and payment records without creating a second inbox, provider integration, or portal-only copy."
       summary={
         <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
           <div className="border border-[#e5e5e5] bg-white px-4 py-3">
@@ -400,29 +400,41 @@ export default async function CommunicationsPage({
             <p className="mt-1 text-lg font-semibold tracking-tight text-[#171717]">
               {workspaceSummary.primaryStatus}
             </p>
+            <p className="mt-1 text-xs leading-5 text-slate-500">
+              {workspaceSummary.workflowCoverageLabel}
+            </p>
           </div>
           <div className="border border-[#e5e5e5] bg-white px-4 py-3">
             <p className="text-[11px] uppercase tracking-[0.14em] text-[#666666]">
-              Follow-up signals
+              Reply / review
             </p>
             <p className="mt-1 text-2xl font-semibold tracking-tight text-[#171717]">
               {workspaceSummary.followUpCount}
             </p>
-          </div>
-          <div className="border border-[#e5e5e5] bg-white px-4 py-3">
-            <p className="text-[11px] uppercase tracking-[0.14em] text-[#666666]">
-              Customer-visible
-            </p>
-            <p className="mt-1 text-2xl font-semibold tracking-tight text-[#171717]">
-              {workspaceSummary.customerVisibleThreadCount}
+            <p className="mt-1 text-xs leading-5 text-slate-500">
+              {workspaceSummary.notificationReviewDetail}
             </p>
           </div>
           <div className="border border-[#e5e5e5] bg-white px-4 py-3">
             <p className="text-[11px] uppercase tracking-[0.14em] text-[#666666]">
-              Closeout/evidence
+              Customer boundary
             </p>
-            <p className="mt-1 text-2xl font-semibold tracking-tight text-[#171717]">
-              {workspaceSummary.closeoutEvidenceContextCount}
+            <p className="mt-1 text-lg font-semibold tracking-tight text-[#171717]">
+              {workspaceSummary.customerBoundaryLabel}
+            </p>
+            <p className="mt-1 text-xs leading-5 text-slate-500">
+              {workspaceSummary.customerBoundaryDetail}
+            </p>
+          </div>
+          <div className="border border-[#e5e5e5] bg-white px-4 py-3">
+            <p className="text-[11px] uppercase tracking-[0.14em] text-[#666666]">
+              Delivery proof
+            </p>
+            <p className="mt-1 text-lg font-semibold tracking-tight text-[#171717]">
+              {workspaceSummary.deliveryProofLabel}
+            </p>
+            <p className="mt-1 text-xs leading-5 text-slate-500">
+              {workspaceSummary.deliveryProofDetail}
             </p>
           </div>
         </div>
@@ -644,6 +656,9 @@ export default async function CommunicationsPage({
               <p className="mt-2 text-sm leading-6 text-slate-500">
                 {workspaceSummary.primaryDetail}
               </p>
+              <p className="mt-2 text-sm leading-6 text-slate-500">
+                {workspaceSummary.workflowCoverageDetail}
+              </p>
             </div>
             <div className="grid gap-2 text-sm sm:grid-cols-2 lg:min-w-[360px]">
               <div className="rounded-[4px] border border-[#e5e5e5] bg-[#f8f8f8] px-3 py-2">
@@ -677,6 +692,14 @@ export default async function CommunicationsPage({
                     <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#666666]">
                       {lane.label}
                     </p>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      <span className="inline-flex rounded-full border border-[#d6d6d6] bg-white px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-600">
+                        {lane.boundaryLabel}
+                      </span>
+                      <span className="inline-flex rounded-full border border-[#e4d7ca] bg-[#fbf5ee] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#8f5b32]">
+                        {lane.actionLabel}
+                      </span>
+                    </div>
                     <p className="mt-2 text-sm leading-6 text-slate-500">
                       {lane.detail}
                     </p>
@@ -732,6 +755,7 @@ export default async function CommunicationsPage({
                 <p className="mt-3 text-sm leading-6 text-slate-500">
                   No unanswered customer message, stale thread, or delivery
                   issue is currently visible in the communications read model.
+                  Notification read state remains separate from reply triage.
                 </p>
               )}
             </div>
@@ -740,6 +764,147 @@ export default async function CommunicationsPage({
               <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#666666]">
                 Delivery and evidence context
               </p>
+              <div className="mt-2 rounded-[4px] border border-[#e5e5e5] bg-white px-3 py-2">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-semibold text-slate-950">
+                      {workspaceSummary.deliveryProofLabel}
+                    </p>
+                    <p className="mt-1 text-sm leading-6 text-slate-500">
+                      {workspaceSummary.deliveryProofDetail}
+                    </p>
+                  </div>
+                  <span
+                    className={[
+                      "inline-flex rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em]",
+                      workspaceSummary.deliveryProofReviewCount > 0
+                        ? "border-rose-200 bg-rose-50 text-rose-700"
+                        : "border-[#d6e6d9] bg-[#f4fbf5] text-[#2f6b3b]"
+                    ].join(" ")}
+                  >
+                    {workspaceSummary.deliveryProofReviewCount > 0
+                      ? "Needs review"
+                      : "Read-only proof"}
+                  </span>
+                </div>
+              </div>
+              <div className="mt-2 rounded-[4px] border border-[#e5e5e5] bg-white px-3 py-2">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-semibold text-slate-950">
+                      {workspaceSummary.deliveryProofReviewSummary.label}
+                    </p>
+                    <p className="mt-1 text-sm leading-6 text-slate-500">
+                      {workspaceSummary.deliveryProofReviewSummary.detail}
+                    </p>
+                  </div>
+                  <Link
+                    href={workspaceSummary.deliveryProofReviewSummary.href}
+                    className="inline-flex shrink-0 items-center rounded-[4px] border border-[#d6d6d6] bg-white px-2.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#3f3f3f] transition hover:bg-slate-50"
+                  >
+                    Review proof
+                  </Link>
+                </div>
+              </div>
+              <div className="mt-3">
+                <div className="flex flex-wrap items-end justify-between gap-3">
+                  <div>
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#666666]">
+                      Delivery Proof by Record
+                    </p>
+                    <p className="mt-1 text-xs leading-5 text-slate-500">
+                      Grouped read-only evidence by canonical source record.
+                    </p>
+                  </div>
+                  <span className="text-xs font-medium text-slate-500">
+                    {workspaceSummary.deliveryProofRecordGroups.length} record
+                    {workspaceSummary.deliveryProofRecordGroups.length === 1
+                      ? ""
+                      : "s"}
+                  </span>
+                </div>
+                {workspaceSummary.deliveryProofRecordGroups.length > 0 ? (
+                  <div className="mt-3 space-y-2">
+                    {workspaceSummary.deliveryProofRecordGroups
+                      .slice(0, 5)
+                      .map((group) => (
+                        <article
+                          key={group.key}
+                          className="rounded-[4px] border border-[#e5e5e5] bg-white px-3 py-3"
+                        >
+                          <div className="flex flex-wrap items-start justify-between gap-3">
+                            <div className="min-w-0">
+                              <Link
+                                href={group.sourceHref}
+                                className="text-sm font-semibold text-slate-950 transition hover:text-brand-700"
+                              >
+                                {group.sourceLabel}
+                              </Link>
+                              <p className="mt-1 text-sm leading-6 text-slate-500">
+                                {group.latestDescription}
+                              </p>
+                            </div>
+                            <div className="shrink-0 text-left sm:text-right">
+                              <p className="text-xs font-semibold text-slate-900">
+                                {group.proofCount} proof{" "}
+                                {group.proofCount === 1 ? "event" : "events"}
+                              </p>
+                              <p className="mt-1 text-xs text-slate-500">
+                                {formatDateTime(group.latestEventAt)}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="mt-2 flex flex-wrap gap-2">
+                            <span
+                              className={[
+                                "inline-flex rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em]",
+                                group.needsReview
+                                  ? "border-rose-200 bg-rose-50 text-rose-700"
+                                  : "border-[#d6e6d9] bg-[#f4fbf5] text-[#2f6b3b]"
+                              ].join(" ")}
+                            >
+                              {group.needsReview
+                                ? "Needs review"
+                                : group.latestProofStateLabel}
+                            </span>
+                            {[
+                              ...group.proofSourceLabels,
+                              ...group.proofBoundaryLabels,
+                              ...group.audienceLabels
+                            ].map((label) => (
+                              <span
+                                key={`${group.key}:${label}`}
+                                className="inline-flex rounded-full border border-[#d6d6d6] bg-slate-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-600"
+                              >
+                                {label}
+                              </span>
+                            ))}
+                          </div>
+                          <div className="mt-3 flex flex-wrap gap-2">
+                            <Link
+                              href={group.sourceHref}
+                              className="inline-flex items-center rounded-[4px] border border-[#d6d6d6] bg-white px-2.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#3f3f3f] transition hover:bg-slate-50"
+                            >
+                              Open source record
+                            </Link>
+                            <Link
+                              href={group.communicationsHref}
+                              className="inline-flex items-center rounded-[4px] px-2.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500 transition hover:text-slate-900"
+                            >
+                              Review communication activity
+                            </Link>
+                          </div>
+                        </article>
+                      ))}
+                  </div>
+                ) : (
+                  <p className="mt-3 rounded-[4px] border border-dashed border-[#d6d6d6] bg-white px-3 py-3 text-sm leading-6 text-slate-500">
+                    No delivery proof has been recorded yet. That does not mean
+                    a send failed; it means no proof evidence exists in the
+                    current communications read model.
+                  </p>
+                )}
+              </div>
               {workspaceSummary.recentContextEvents.length > 0 ? (
                 <div className="mt-3 space-y-2">
                   {workspaceSummary.recentContextEvents.map((event) => (
@@ -759,13 +924,35 @@ export default async function CommunicationsPage({
                       <p className="mt-1 text-sm leading-6 text-slate-500">
                         {event.description}
                       </p>
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        <span
+                          className={[
+                            "inline-flex rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em]",
+                            event.needsReview
+                              ? "border-rose-200 bg-rose-50 text-rose-700"
+                              : event.tone === "positive"
+                                ? "border-[#d6e6d9] bg-[#f4fbf5] text-[#2f6b3b]"
+                                : "border-[#d6d6d6] bg-slate-50 text-slate-600"
+                          ].join(" ")}
+                        >
+                          {event.proofStateLabel}
+                        </span>
+                        <span className="inline-flex rounded-full border border-[#d6d6d6] bg-white px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-600">
+                          {event.proofSourceLabel}
+                        </span>
+                        <span className="inline-flex rounded-full border border-[#e4d7ca] bg-[#fbf5ee] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#8f5b32]">
+                          {event.proofBoundaryLabel}
+                        </span>
+                      </div>
                     </Link>
                   ))}
                 </div>
               ) : (
                 <p className="mt-3 text-sm leading-6 text-slate-500">
-                  Document sends and shared-evidence proof will appear here when
-                  canonical delivery or portal evidence events exist.
+                  No delivery proof yet. Document sends and shared-evidence
+                  proof will appear here when canonical delivery or portal
+                  evidence events exist; this panel does not send, resend, or
+                  mutate delivery state.
                 </p>
               )}
             </div>
@@ -838,15 +1025,16 @@ export default async function CommunicationsPage({
             <div className="flex items-end justify-between gap-4 border-b border-[#e5e5e5] px-5 py-4 sm:px-6">
               <div>
                 <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#666666]">
-                  Thread queue
+                  Record-linked queue
                 </p>
                 <h3 className="mt-2 text-2xl font-semibold tracking-tight text-slate-950">
-                  Review conversation summaries and handoff threads
+                  Review workflow conversations, not a detached inbox
                 </h3>
                 <p className="mt-2 text-sm leading-6 text-slate-500">
                   Detail pages summarize related conversations only. Full
-                  history, replies, and notification triage stay in this
-                  workspace for supported sources.
+                  history, replies, notification triage, and customer-safe
+                  boundaries stay in this workspace for supported canonical
+                  sources.
                 </p>
               </div>
               <p className="text-sm leading-6 text-slate-500">

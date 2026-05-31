@@ -251,6 +251,45 @@ export async function listCommunicationThreadsForSubject(
   );
 }
 
+export async function listCommunicationThreadsForProject(projectId: string) {
+  const supabase = await getSupabaseServerClient();
+  const response = await supabase
+    .from("communication_threads")
+    .select(
+      `
+        id,
+        company_id,
+        opportunity_id,
+        appointment_id,
+        customer_id,
+        project_id,
+        subject_type,
+        subject_id,
+        created_by_user_id,
+        thread_category,
+        channel_kind,
+        thread_status,
+        last_message_at,
+        last_message_preview,
+        last_message_visibility,
+        created_at,
+        updated_at
+      `
+    )
+    .eq("project_id", projectId)
+    .order("updated_at", { ascending: false });
+
+  if (response.error) {
+    throw new Error(
+      `Unable to load project communication threads: ${response.error.message}`
+    );
+  }
+
+  return ((response.data as CommunicationThreadRow[] | null) ?? []).map(
+    mapThread
+  );
+}
+
 export async function getOrCreateCommunicationThread(
   input: GetOrCreateThreadInput,
   next = "/dashboard"

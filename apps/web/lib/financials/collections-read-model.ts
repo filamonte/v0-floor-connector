@@ -541,6 +541,7 @@ async function listEventInputs(organizationId: string) {
     .in("event_type", [
       "payment_requested",
       "checkout_started",
+      "payment_succeeded",
       "payment_failed",
       "payment_voided",
       "provider_sync"

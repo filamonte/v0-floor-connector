@@ -15,7 +15,8 @@ const devServerPort =
 process.env.FLOORCONNECTOR_E2E_PAYMENT_GATEWAY =
   process.env.FLOORCONNECTOR_E2E_PAYMENT_GATEWAY ?? "local_manual";
 process.env.STRIPE_WEBHOOK_SECRET =
-  process.env.STRIPE_WEBHOOK_SECRET ?? "whsec_floorconnector_e2e_payment_webhook";
+  process.env.STRIPE_WEBHOOK_SECRET ??
+  "whsec_floorconnector_e2e_payment_webhook";
 
 module.exports = defineConfig({
   testDir: "./e2e",
@@ -47,13 +48,15 @@ module.exports = defineConfig({
     },
     {
       name: "chromium-public",
-      testMatch: /(?:marketing-login|save-state-form|ui-primitives|data-export)\.spec\.js/,
+      testMatch:
+        /(?:marketing-login|save-state-form|ui-primitives|data-export)\.spec\.js/,
       use: { ...devices["Desktop Chrome"] }
     },
     {
       name: "chromium-protected",
       dependencies: ["setup"],
-      testMatch: /(?:estimate-.*|project-detail-ui|customer-detail-ui|people-directory-access|project-ai-cue-work-item-bridge|operational-cues-record-panels|schedule-ready-handoff|dashboard-ui|dashboard-ui-my-work-queue-modes|detail-workspace-ui|data-export)\.spec\.js/,
+      testMatch:
+        /(?:estimate-.*|project-detail-ui|customer-detail-ui|people-directory-access|project-ai-cue-work-item-bridge|operational-cues-record-panels|schedule-ready-handoff|golden-workflow-verification|dashboard-ui|dashboard-ui-my-work-queue-modes|detail-workspace-ui|data-export)\.spec\.js/,
       use: {
         ...devices["Desktop Chrome"],
         storageState: authStatePath
@@ -71,7 +74,8 @@ module.exports = defineConfig({
     },
     {
       name: "chromium-portal",
-      testMatch: /(?:portal-(?:golden-path|invite-acceptance|change-order-actions|estimate-actions|contract-actions|invoice-boundary|invoice-checkout-start)|stripe-webhook-reconciliation|data-export)\.spec\.js/,
+      testMatch:
+        /(?:portal-(?:golden-path|invite-acceptance|change-order-actions|estimate-actions|contract-actions|invoice-boundary|invoice-checkout-start)|stripe-webhook-reconciliation|data-export)\.spec\.js/,
       use: {
         ...devices["Desktop Chrome"]
       }
