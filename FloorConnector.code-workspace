@@ -1,0 +1,43 @@
+{
+  "folders": [
+    {
+      "name": "main",
+      "path": "C:\\FloorConnector"
+    },
+    {
+      "name": "architecture-coordination",
+      "path": "C:\\FC-worktrees\\architecture-coordination"
+    },
+    {
+      "name": "verification",
+      "path": "C:\\FC-worktrees\\verification"
+    },
+    {
+      "name": "project-workspace",
+      "path": "C:\\FC-worktrees\\project-workspace"
+    },
+    {
+      "name": "scheduling",
+      "path": "C:\\FC-worktrees\\scheduling"
+    },
+    {
+      "name": "communications",
+      "path": "C:\\FC-worktrees\\communications"
+    },
+    {
+      "name": "financials-reporting",
+      "path": "C:\\FC-worktrees\\financials-reporting"
+    },
+    {
+      "name": "field-mobile",
+      "path": "C:\\FC-worktrees\\field-mobile"
+    }
+  ],
+  "settings": {
+    "files.exclude": {
+      "**/.next": true,
+      "**/coverage": true,
+      "**/test-results": true
+    }
+  }
+}

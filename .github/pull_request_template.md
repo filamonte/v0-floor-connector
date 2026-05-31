@@ -1,17 +1,24 @@
-# Summary
+# Stream
 
 -
 
-## Wave / Stream
-
-- Wave:
-- Stream:
-
-## Scope
+## Summary
 
 -
 
-## Out of Scope
+## User-Visible Change
+
+-
+
+## Technical Change
+
+-
+
+## Files Changed By Area
+
+-
+
+## Shared-Risk Files Touched
 
 -
 
@@ -19,30 +26,36 @@
 
 -
 
-## Architecture Guardrails
+## Docs Updated
 
 -
 
-## Risk Areas
+## Not Included
 
 -
 
-## Screenshots / Notes
+## Screenshots If UI
 
 -
 
-## Rollback
+## Merge Notes
 
 -
 
-## Reviewer Checklist
+## Control Tower Checklist
 
-- [ ] No duplicate models.
-- [ ] No portal-only records.
-- [ ] No financial math drift.
-- [ ] No readiness bypass.
+- [ ] Branch/status checked before work.
+- [ ] Fetched origin before work.
+- [ ] Scope stayed inside the stream contract.
+- [ ] No unrelated dirty or untracked files staged.
+- [ ] No duplicate canonical models.
+- [ ] No portal-only business records.
 - [ ] No tenant/RLS/access regression.
-- [ ] Docs updated if behavior changed.
-- [ ] Targeted validation run.
-- [ ] PR opened as draft unless human explicitly marked ready.
+- [ ] No financial math, payment-state, contract, or signature drift unless explicitly scoped and tested.
+- [ ] No readiness gate bypass.
+- [ ] No provider sends, production env changes, secrets, or remote migrations.
+- [ ] Shared-risk files are listed above.
+- [ ] Targeted validation run and reported.
+- [ ] Docs/product ledger updated when behavior changed.
+- [ ] PR remains draft until human owner confirms readiness.
 - [ ] No automatic merge enabled.

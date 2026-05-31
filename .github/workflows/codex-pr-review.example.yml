@@ -1,0 +1,31 @@
+name: Codex PR Review Example
+
+# Example only. This workflow is manual and does not run on pull_request events.
+# Enable an active workflow only after the repository owner confirms the chosen
+# Codex/GitHub Action pattern, required secrets, cost boundaries, and comment
+# permissions. Do not assume OPENAI_API_KEY exists.
+
+on:
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: "Pull request number to review"
+        required: true
+
+permissions:
+  contents: read
+  pull-requests: read
+  issues: write
+
+jobs:
+  example-review:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Print enablement guidance
+        run: |
+          echo "This is an example-only workflow."
+          echo "Wire in the approved Codex review action and secrets only after owner approval."
+          echo "The workflow must comment with advisory review only and must not push, patch, or merge."

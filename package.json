@@ -44,7 +44,10 @@
     "staging:preflight": "node scripts/staging-preflight.mjs",
     "typecheck": "turbo run typecheck",
     "format": "prettier --check .",
-    "format:write": "prettier --write ."
+    "format:write": "prettier --write .",
+    "fc:status": "node scripts/fc-stream-status.mjs",
+    "fc:preflight:fast": "node scripts/fc-preflight.mjs fast",
+    "fc:preflight:full": "node scripts/fc-preflight.mjs full"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.49.4",
