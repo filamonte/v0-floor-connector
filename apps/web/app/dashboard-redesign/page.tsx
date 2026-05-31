@@ -7,7 +7,13 @@ import {
   ArrowRight,
   Bell,
   Calendar,
+  CheckCircle,
+  ChevronLeft,
   ChevronRight,
+  Clock,
+  Cloud,
+  CloudRain,
+  CloudSun,
   DollarSign,
   FileSignature,
   FileText,
@@ -17,6 +23,7 @@ import {
   Plus,
   Search,
   Settings,
+  Sun,
   TrendingUp,
   Zap,
 } from "lucide-react";
@@ -24,12 +31,100 @@ import {
 // ─── Placeholder Data ──────────────────────────────────────────────────────────
 
 const TODAY = "Saturday, May 31, 2025";
+const CURRENT_MONTH = "May 2025";
 
 const HEALTH_SUMMARY = [
   { key: "active_projects", label: "Active Projects", value: "14" },
   { key: "open_ar", label: "Open AR", value: "$128,400" },
   { key: "jobs_today", label: "Jobs Today", value: "3" },
   { key: "open_blockers", label: "Open Blockers", value: "2" },
+];
+
+// Weather data
+const WEATHER = {
+  current: {
+    temp: "72°F",
+    condition: "Partly Cloudy",
+    humidity: "45%",
+    wind: "8 mph NW",
+  },
+  hourly: "Clear skies expected. Chance of rain Saturday evening.",
+  forecast: [
+    { day: "Sun", temp: "68°F", icon: "sun" },
+    { day: "Mon", temp: "71°F", icon: "cloud-sun" },
+    { day: "Tue", temp: "74°F", icon: "sun" },
+    { day: "Wed", temp: "69°F", icon: "cloud" },
+    { day: "Thu", temp: "65°F", icon: "rain" },
+    { day: "Fri", temp: "67°F", icon: "cloud-sun" },
+    { day: "Sat", temp: "70°F", icon: "sun" },
+  ],
+};
+
+// Calendar data - days with jobs highlighted
+const CALENDAR_DAYS = [
+  { day: 1, hasJob: false },
+  { day: 2, hasJob: false },
+  { day: 3, hasJob: true },
+  { day: 4, hasJob: false },
+  { day: 5, hasJob: true },
+  { day: 6, hasJob: true },
+  { day: 7, hasJob: false },
+  { day: 8, hasJob: true },
+  { day: 9, hasJob: false },
+  { day: 10, hasJob: false },
+  { day: 11, hasJob: true },
+  { day: 12, hasJob: false },
+  { day: 13, hasJob: true },
+  { day: 14, hasJob: false },
+  { day: 15, hasJob: true },
+  { day: 16, hasJob: false },
+  { day: 17, hasJob: false },
+  { day: 18, hasJob: true },
+  { day: 19, hasJob: false },
+  { day: 20, hasJob: true },
+  { day: 21, hasJob: false },
+  { day: 22, hasJob: false },
+  { day: 23, hasJob: true },
+  { day: 24, hasJob: false },
+  { day: 25, hasJob: false },
+  { day: 26, hasJob: true },
+  { day: 27, hasJob: false },
+  { day: 28, hasJob: true },
+  { day: 29, hasJob: false },
+  { day: 30, hasJob: true },
+  { day: 31, hasJob: true }, // Today
+];
+
+// Appointments
+const APPOINTMENTS = [
+  { id: "apt1", date: "May 31", subject: "Site walkthrough - Metro Distribution", time: "10:00 AM" },
+  { id: "apt2", date: "Jun 2", subject: "Estimate presentation - Apex Corp", time: "2:00 PM" },
+  { id: "apt3", date: "Jun 4", subject: "Weekly crew meeting", time: "7:00 AM" },
+];
+
+// Time tracking
+const TIME_TRACKING = {
+  hoursThisWeek: 38.5,
+  regularHours: 38.5,
+  overtimeHours: 0,
+  clockedIn: false,
+  lastPunch: "Yesterday, 5:32 PM",
+};
+
+// Open punchlists
+const OPEN_PUNCHLISTS = [
+  { id: "pl1", date: "05/28/2025", project: "Metro Distribution Center", title: "Touch-up required in Zone C", href: "/punchlists/pl-001" },
+  { id: "pl2", date: "05/26/2025", project: "Summit Retail Group", title: "Edge sealing incomplete", href: "/punchlists/pl-002" },
+  { id: "pl3", date: "05/24/2025", project: "Valley Cold Storage", title: "Floor marking not to spec", href: "/punchlists/pl-003" },
+];
+
+// Opportunities stats for chart
+const OPPORTUNITY_STATS = [
+  { stage: "New Leads", count: 6, value: 85000 },
+  { stage: "Qualified", count: 4, value: 124000 },
+  { stage: "Estimate Sent", count: 9, value: 284000 },
+  { stage: "Negotiating", count: 3, value: 96500 },
+  { stage: "Won", count: 4, value: 152000 },
 ];
 
 const PRIORITIES = [
@@ -217,12 +312,6 @@ const NAV_LINKS = [
 
 // ─── Utility Helpers ─────────────────────────────────────────────────────────
 
-function urgencyDot(urgency: string) {
-  if (urgency === "critical") return "bg-red-500";
-  if (urgency === "high") return "bg-amber-500";
-  return "bg-[var(--copper-light)]";
-}
-
 function urgencyBadgeClass(urgency: string) {
   if (urgency === "critical")
     return "bg-red-50 text-red-700 border border-red-200";
@@ -271,6 +360,16 @@ function PriorityIcon({ type }: { type: string }) {
   }
 }
 
+function WeatherIcon({ icon, className }: { icon: string; className?: string }) {
+  switch (icon) {
+    case "sun": return <Sun className={className} />;
+    case "cloud-sun": return <CloudSun className={className} />;
+    case "cloud": return <Cloud className={className} />;
+    case "rain": return <CloudRain className={className} />;
+    default: return <Sun className={className} />;
+  }
+}
+
 // ─── Sub-components ──────────────────────────────────────────────────────────
 
 function SectionCard({
@@ -302,6 +401,35 @@ function SectionCard({
             {title}
           </h3>
         </div>
+        {action}
+      </div>
+      {children}
+    </section>
+  );
+}
+
+function CompactCard({
+  title,
+  action,
+  children,
+  className = "",
+}: {
+  title: string;
+  action?: React.ReactNode;
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <section
+      className={[
+        "rounded-[4px] border border-[var(--border-warm)] bg-white",
+        className,
+      ].join(" ")}
+    >
+      <div className="flex items-center justify-between gap-2 border-b border-[var(--border-warm)] bg-[var(--highlight)] px-3 py-2">
+        <h3 className="text-xs font-semibold text-[var(--text-primary)]">
+          {title}
+        </h3>
         {action}
       </div>
       {children}
@@ -361,8 +489,10 @@ function JobStatusPip({ status }: { status: string }) {
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function DashboardDesignPage() {
-  const [searchOpen, setSearchOpen] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
+
+  // Find the max value for the opportunity chart scaling
+  const maxOpportunityValue = Math.max(...OPPORTUNITY_STATS.map(s => s.value));
 
   return (
     <div className="min-h-screen bg-[var(--cream)] text-[var(--text-primary)]">
@@ -404,13 +534,12 @@ export default function DashboardDesignPage() {
           <div className="flex items-center gap-2">
             {/* Search trigger */}
             <button
-              onClick={() => setSearchOpen((v) => !v)}
               className="flex h-8 items-center gap-2 rounded-md border border-white/15 bg-white/10 px-3 text-sm text-white/70 transition hover:bg-white/20 hover:text-white"
               aria-label="Search"
             >
               <Search className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">Search…</span>
-              <kbd className="hidden rounded border border-white/20 px-1 text-[10px] sm:inline">⌘K</kbd>
+              <span className="hidden sm:inline">Search...</span>
+              <kbd className="hidden rounded border border-white/20 px-1 text-[10px] sm:inline">Cmd+K</kbd>
             </button>
 
             {/* Universal create */}
@@ -508,9 +637,138 @@ export default function DashboardDesignPage() {
           </Link>
         </div>
 
+        {/* ══ TOP ROW: Calendar + Weather + Appointments + Time Tracking ══ */}
+        <div className="mb-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          
+          {/* Mini Calendar */}
+          <CompactCard 
+            title={CURRENT_MONTH}
+            action={
+              <div className="flex items-center gap-1">
+                <button className="rounded p-0.5 hover:bg-[var(--border-warm)] transition" aria-label="Previous month">
+                  <ChevronLeft className="h-3.5 w-3.5 text-[var(--text-tertiary)]" />
+                </button>
+                <button className="rounded p-0.5 hover:bg-[var(--border-warm)] transition" aria-label="Next month">
+                  <ChevronRight className="h-3.5 w-3.5 text-[var(--text-tertiary)]" />
+                </button>
+              </div>
+            }
+          >
+            <div className="p-2">
+              {/* Day headers */}
+              <div className="grid grid-cols-7 gap-0.5 mb-1">
+                {["S", "M", "T", "W", "T", "F", "S"].map((d, i) => (
+                  <div key={i} className="text-center text-[9px] font-medium text-[var(--text-tertiary)]">{d}</div>
+                ))}
+              </div>
+              {/* Empty cells for May 2025 (starts on Thursday) */}
+              <div className="grid grid-cols-7 gap-0.5">
+                {[null, null, null, null].map((_, i) => (
+                  <div key={`empty-${i}`} className="h-6" />
+                ))}
+                {CALENDAR_DAYS.map((d) => (
+                  <button
+                    key={d.day}
+                    className={[
+                      "h-6 rounded text-[10px] font-medium transition",
+                      d.day === 31 
+                        ? "bg-[var(--copper)] text-white" 
+                        : d.hasJob 
+                          ? "bg-[var(--copper)]/10 text-[var(--copper)] hover:bg-[var(--copper)]/20" 
+                          : "text-[var(--text-secondary)] hover:bg-[var(--highlight)]",
+                    ].join(" ")}
+                  >
+                    {d.day}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </CompactCard>
+
+          {/* Weather Widget */}
+          <CompactCard 
+            title="Weather Forecast"
+            action={
+              <span className="text-[10px] text-[var(--text-tertiary)]">Next hour: Clear</span>
+            }
+          >
+            <div className="p-3">
+              {/* Current conditions */}
+              <div className="flex items-center gap-3 mb-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-amber-50">
+                  <Sun className="h-5 w-5 text-amber-500" />
+                </div>
+                <div>
+                  <p className="text-xl font-bold text-[var(--text-primary)]">{WEATHER.current.temp}</p>
+                  <p className="text-[10px] text-[var(--text-secondary)]">{WEATHER.current.condition}</p>
+                </div>
+              </div>
+              {/* 7-day forecast */}
+              <div className="flex items-center justify-between gap-1 border-t border-[var(--border-warm)] pt-2">
+                {WEATHER.forecast.map((day) => (
+                  <div key={day.day} className="flex flex-col items-center gap-0.5">
+                    <span className="text-[9px] font-medium text-[var(--text-tertiary)]">{day.day}</span>
+                    <WeatherIcon icon={day.icon} className="h-3.5 w-3.5 text-[var(--text-secondary)]" />
+                    <span className="text-[9px] text-[var(--text-secondary)]">{day.temp}</span>
+                  </div>
+                ))}
+              </div>
+              <p className="mt-2 text-[10px] text-[var(--text-tertiary)] leading-tight">{WEATHER.hourly}</p>
+            </div>
+          </CompactCard>
+
+          {/* My Appointments */}
+          <CompactCard 
+            title="My Appointments"
+            action={
+              <Link href="/calendar" className="text-[10px] text-[var(--copper)] hover:underline">View all</Link>
+            }
+          >
+            <div className="divide-y divide-[var(--border-warm)]">
+              {APPOINTMENTS.map((apt) => (
+                <div key={apt.id} className="flex items-center gap-2 px-3 py-2">
+                  <div className="flex h-8 w-10 flex-col items-center justify-center rounded bg-[var(--copper)]/10">
+                    <span className="text-[9px] font-medium text-[var(--copper)]">{apt.date.split(" ")[0]}</span>
+                    <span className="text-xs font-bold text-[var(--copper)]">{apt.date.split(" ")[1]}</span>
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-xs font-medium text-[var(--text-primary)]">{apt.subject}</p>
+                    <p className="text-[10px] text-[var(--text-tertiary)]">{apt.time}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CompactCard>
+
+          {/* Time Tracking */}
+          <CompactCard 
+            title="My Hours This Week"
+            action={
+              <span className="text-xs font-bold text-[var(--text-primary)]">{TIME_TRACKING.hoursThisWeek}h</span>
+            }
+          >
+            <div className="p-3">
+              <div className="flex items-center justify-between text-xs mb-3">
+                <span className="text-[var(--text-secondary)]">Regular</span>
+                <span className="font-medium text-[var(--text-primary)]">{TIME_TRACKING.regularHours}h</span>
+              </div>
+              <div className="flex items-center justify-between text-xs mb-4">
+                <span className="text-[var(--text-secondary)]">Overtime</span>
+                <span className="font-medium text-[var(--text-primary)]">{TIME_TRACKING.overtimeHours}h</span>
+              </div>
+              {/* Clock in/out button */}
+              <button className="w-full flex items-center justify-center gap-2 rounded-md border-2 border-dashed border-[var(--copper)] bg-[var(--copper)]/5 py-2 text-sm font-semibold text-[var(--copper)] transition hover:bg-[var(--copper)]/10">
+                <Clock className="h-4 w-4" />
+                Clock In
+              </button>
+              <p className="mt-2 text-center text-[10px] text-[var(--text-tertiary)]">Last: {TIME_TRACKING.lastPunch}</p>
+            </div>
+          </CompactCard>
+        </div>
+
         {/* ══ SECTION 1: TODAY'S PRIORITIES ══ */}
         <SectionCard
-          eyebrow="Today's priorities"
+          eyebrow="Today&apos;s priorities"
           title="What needs attention now"
           className="mb-5"
           action={
@@ -564,6 +822,79 @@ export default function DashboardDesignPage() {
               {PRODUCTION.map((cell) => (
                 <PipelineCell key={cell.key} {...cell} />
               ))}
+            </div>
+          </SectionCard>
+        </div>
+
+        {/* ══ OPPORTUNITY STATS + OPEN PUNCHLISTS ══ */}
+        <div className="mb-5 grid gap-5 lg:grid-cols-2">
+          
+          {/* Opportunity Stats Chart */}
+          <SectionCard eyebrow="Opportunities" title="Pipeline by Stage">
+            <div className="p-4">
+              <div className="space-y-3">
+                {OPPORTUNITY_STATS.map((stage) => (
+                  <div key={stage.stage} className="flex items-center gap-3">
+                    <div className="w-24 shrink-0">
+                      <p className="text-xs font-medium text-[var(--text-primary)]">{stage.stage}</p>
+                      <p className="text-[10px] text-[var(--text-tertiary)]">{stage.count} deals</p>
+                    </div>
+                    <div className="flex-1 h-6 bg-[var(--highlight)] rounded overflow-hidden">
+                      <div 
+                        className="h-full bg-[var(--copper)] rounded transition-all"
+                        style={{ width: `${(stage.value / maxOpportunityValue) * 100}%` }}
+                      />
+                    </div>
+                    <div className="w-20 text-right">
+                      <p className="text-xs font-semibold text-[var(--text-primary)]">${(stage.value / 1000).toFixed(0)}k</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-4 pt-3 border-t border-[var(--border-warm)] flex items-center justify-between">
+                <p className="text-xs text-[var(--text-secondary)]">Total Pipeline Value</p>
+                <p className="text-lg font-bold text-[var(--copper)]">
+                  ${(OPPORTUNITY_STATS.reduce((sum, s) => sum + s.value, 0) / 1000).toFixed(0)}k
+                </p>
+              </div>
+            </div>
+          </SectionCard>
+
+          {/* Open Punchlists */}
+          <SectionCard 
+            eyebrow="Quality control" 
+            title="Open Punchlists"
+            action={
+              <span className="rounded-full bg-amber-50 border border-amber-200 px-2 py-0.5 text-xs font-semibold text-amber-800">
+                {OPEN_PUNCHLISTS.length} open
+              </span>
+            }
+          >
+            <div className="divide-y divide-[var(--border-warm)]">
+              {OPEN_PUNCHLISTS.map((pl) => (
+                <div key={pl.id} className="flex items-center gap-3 px-4 py-3">
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-amber-50">
+                    <CheckCircle className="h-4 w-4 text-amber-600" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <Link href={pl.href} className="text-sm font-semibold text-[var(--text-primary)] hover:text-[var(--copper)] transition">
+                      {pl.title}
+                    </Link>
+                    <p className="text-xs text-[var(--text-secondary)]">{pl.project} · {pl.date}</p>
+                  </div>
+                  <Link
+                    href={pl.href}
+                    className="shrink-0 rounded-md border border-[var(--border-warm)] bg-white px-2.5 py-1.5 text-[11px] font-semibold text-[var(--text-primary)] transition hover:bg-[var(--highlight)]"
+                  >
+                    Review
+                  </Link>
+                </div>
+              ))}
+            </div>
+            <div className="border-t border-[var(--border-warm)] px-4 py-3">
+              <Link href="/punchlists" className="text-xs font-semibold text-[var(--copper)] hover:underline">
+                View all punchlists
+              </Link>
             </div>
           </SectionCard>
         </div>
@@ -636,7 +967,7 @@ export default function DashboardDesignPage() {
           </SectionCard>
 
           {/* Field Activity */}
-          <SectionCard eyebrow="Field activity" title="Today's jobs, logs & blockers">
+          <SectionCard eyebrow="Field activity" title="Today&apos;s jobs, logs & blockers">
 
             {/* Today's jobs */}
             <div className="border-b border-[var(--border-warm)] px-4 py-2 bg-[var(--highlight)]">
