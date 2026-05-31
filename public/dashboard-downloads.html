@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FloorConnector Dashboard - Downloads</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: linear-gradient(135deg, #1e242c 0%, #2a3038 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    
+    .container {
+      max-width: 600px;
+      width: 100%;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      overflow: hidden;
+    }
+    
+    .header {
+      background: linear-gradient(135deg, #1e242c 0%, #2a3038 100%);
+      padding: 40px 30px;
+      text-align: center;
+      color: white;
+    }
+    
+    .header h1 {
+      font-size: 32px;
+      margin-bottom: 8px;
+      font-weight: 700;
+    }
+    
+    .header p {
+      font-size: 14px;
+      opacity: 0.8;
+    }
+    
+    .logo {
+      display: inline-block;
+      width: 48px;
+      height: 48px;
+      background: #d4835f;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      color: white;
+      font-size: 20px;
+      margin-bottom: 16px;
+    }
+    
+    .content {
+      padding: 40px 30px;
+    }
+    
+    .download-section {
+      margin-bottom: 32px;
+    }
+    
+    .download-section h2 {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 12px;
+      color: #1e242c;
+    }
+    
+    .download-section p {
+      font-size: 13px;
+      color: #666;
+      margin-bottom: 16px;
+      line-height: 1.5;
+    }
+    
+    .download-button {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 20px;
+      background: #d4835f;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.2s;
+      text-align: center;
+      justify-content: center;
+    }
+    
+    .download-button:hover {
+      background: #c16d47;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 16px rgba(212, 131, 95, 0.3);
+    }
+    
+    .download-button-secondary {
+      background: #f0f0f0;
+      color: #333;
+    }
+    
+    .download-button-secondary:hover {
+      background: #e0e0e0;
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+    }
+    
+    .button-group {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    
+    .divider {
+      height: 1px;
+      background: #e0e0e0;
+      margin: 32px 0;
+    }
+    
+    .info-box {
+      background: #f9f9f9;
+      border-left: 4px solid #d4835f;
+      padding: 16px;
+      border-radius: 4px;
+      font-size: 13px;
+      color: #666;
+      line-height: 1.5;
+    }
+    
+    .footer {
+      text-align: center;
+      padding: 24px 30px;
+      background: #f9f9f9;
+      border-top: 1px solid #e0e0e0;
+      font-size: 12px;
+      color: #999;
+    }
+    
+    @media (max-width: 480px) {
+      .header {
+        padding: 30px 20px;
+      }
+      
+      .header h1 {
+        font-size: 24px;
+      }
+      
+      .content {
+        padding: 24px 20px;
+      }
+      
+      .button-group {
+        flex-direction: column;
+      }
+      
+      .download-button {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="logo">FC</div>
+      <h1>FloorConnector</h1>
+      <p>Dashboard Redesign Downloads</p>
+    </div>
+    
+    <div class="content">
+      <div class="download-section">
+        <h2>📸 Screenshots</h2>
+        <p>Full-page screenshots of the dashboard redesign in high resolution for presentations, documentation, or design review.</p>
+        <div class="button-group">
+          <a href="dashboard-screenshot.png" download="FloorConnector-Dashboard-Redesign.png" class="download-button">
+            Download PNG (Full Page)
+          </a>
+        </div>
+      </div>
+      
+      <div class="divider"></div>
+      
+      <div class="download-section">
+        <h2>💾 Component Code</h2>
+        <p>Export the dashboard page component as a standalone React file with all sections, data structures, and styling included.</p>
+        <div class="button-group">
+          <a href="dashboard-component.tsx" download="contractor-dashboard-redesign.tsx" class="download-button">
+            Download TSX Component
+          </a>
+          <a href="dashboard-component.jsx" download="contractor-dashboard-redesign.jsx" class="download-button download-button-secondary">
+            Download JSX Component
+          </a>
+        </div>
+      </div>
+      
+      <div class="divider"></div>
+      
+      <div class="download-section">
+        <h2>📋 Design Specs</h2>
+        <p>Design system reference including colors, typography, spacing, and component patterns used in the redesign.</p>
+        <div class="button-group">
+          <a href="design-specs.md" download="FloorConnector-Design-Specs.md" class="download-button download-button-secondary">
+            Download Design Specs (Markdown)
+          </a>
+        </div>
+      </div>
+      
+      <div class="divider"></div>
+      
+      <div class="info-box">
+        <strong>💡 Tip:</strong> All files are ready to use. The component code requires React and Tailwind CSS. Design specs can be imported directly into Figma or design documentation systems.
+      </div>
+    </div>
+    
+    <div class="footer">
+      <p>FloorConnector Dashboard Redesign © 2026</p>
+      <p>All files generated for internal design review and development</p>
+    </div>
+  </div>
+</body>
+</html>
