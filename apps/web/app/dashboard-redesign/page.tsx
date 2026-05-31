@@ -686,21 +686,21 @@ export default function DashboardDesignPage() {
         </div>
 
         {/* ── Row 3: Customisable pinned page links ── */}
-        <div className="mx-auto flex h-9 max-w-[1680px] items-center gap-1 px-5 bg-[#141820]">
-          <span className="mr-2 text-[10px] font-semibold uppercase tracking-widest text-white/30 select-none">
+        <div className="mx-auto flex h-9 max-w-[1680px] items-center gap-1 px-5" style={{background: "linear-gradient(180deg,#282f38 0%,#23282f 100%)"}}>
+          <span className="mr-2 text-[10px] font-semibold uppercase tracking-widest text-white/40 select-none">
             Pinned
           </span>
           {STARRED_LINKS.map((link) => (
             <Link
               key={link.label}
               href={link.href}
-              className="flex items-center gap-1.5 rounded px-2.5 py-1 text-xs text-white/60 transition hover:bg-white/8 hover:text-white"
+              className="flex items-center gap-1.5 rounded px-2.5 py-1 text-xs text-white/70 transition hover:bg-white/10 hover:text-white"
             >
               <Star className="h-2.5 w-2.5 text-[var(--copper-light)] fill-[var(--copper-light)]" />
               {link.label}
             </Link>
           ))}
-          <button className="ml-2 flex items-center gap-1 rounded px-2 py-1 text-[10px] text-white/30 transition hover:text-white/60">
+          <button className="ml-2 flex items-center gap-1 rounded px-2 py-1 text-[10px] text-white/40 transition hover:text-white/70">
             <Plus className="h-3 w-3" />
             Add page
           </button>
