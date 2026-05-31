@@ -132,6 +132,19 @@ as implemented truth.
 8. Update the product change ledger only after merge, unless the entry is
    clearly marked Draft / Pending.
 
+## Phase 1 Local Task Runner Workflow
+
+The Phase 1 local task runner uses the repository as the handoff bus. It can
+create `.agent/queue/*.md` task files, list queued work, print local Codex
+instruction blocks, and create `.agent/logs/*.md` run summaries.
+
+The default runner path is dry-run / instruction mode. Use it before Codex Cloud
+for risky or local-state-dependent work so the human owner can confirm the
+worktree, scope, preflight, and approval boundary. Human approval remains
+required for pushes, merges, branch deletion, remote database actions,
+production environment changes, provider sends, payment/signature actions, and
+any autonomous behavior.
+
 ## Merge Queue / Integration Guidance
 
 - Merge smallest ready streams first when they unblock larger streams.

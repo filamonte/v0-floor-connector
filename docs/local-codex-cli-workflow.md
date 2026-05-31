@@ -41,6 +41,40 @@ report requirements.
 
 Run local Codex against the task file when the work is ready to execute.
 
+## Phase 1 Task Runner Helpers
+
+Use the Phase 1 helpers to reduce copy/paste while keeping execution manual and
+human-approved.
+
+Create a task:
+
+```powershell
+pnpm fc:task:create -- --stream scheduling --title "Add dispatch summary"
+```
+
+List queued tasks:
+
+```powershell
+pnpm fc:task:list
+```
+
+Print local Codex CLI instructions for a task:
+
+```powershell
+pnpm fc:agent:run -- --task .agent/queue/<file>.md
+```
+
+Capture a run summary:
+
+```powershell
+pnpm fc:task:summary -- --task .agent/queue/<file>.md --status done --commit abc123
+```
+
+Paste the generated instruction block into local Codex CLI or VS Code Codex
+after opening the recommended worktree. The runner is instruction-only in Phase
+1; it does not run Codex, push, merge, rebase, apply migrations, touch secrets,
+or perform provider/production actions.
+
 ## Validation
 
 Use:

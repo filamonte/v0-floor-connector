@@ -39,6 +39,25 @@ It is not a planning backlog and it does not replace `docs/current-state.md`.
 
 ## Entries
 
+### 2026-05-31 - Agent Control Tower Phase 1
+
+- Status: Draft / Pending until merged
+- Stream: Control Tower / Architecture
+- PR: Pending
+- Commit: Pending
+- User-visible change: None. This is development workflow tooling only.
+- Technical change: Adds local task-runner helpers for creating `.agent/queue`
+  task files, listing queued tasks, generating instruction-only local Codex
+  handoff blocks, and capturing `.agent/logs` run summaries.
+- Validation: Pending in this branch.
+- Docs updated: `.agent/README.md`,
+  `docs/local-codex-cli-workflow.md`,
+  `docs/development-operating-model.md`, and this ledger.
+- Not included: No product runtime behavior, schema, migrations, provider
+  calls, production env changes, automatic Codex execution, auto-merge,
+  auto-push, branch deletion, secrets handling, or remote database actions.
+- Follow-up: Resolve this entry with the merged PR and commit hash after merge.
+
 ### 2026-05-31 - Retire Superseded Financials Stream
 
 - Status: Draft / Pending until merged
