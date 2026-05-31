@@ -72,7 +72,7 @@ async function expectAuthenticatedSchedulePage(page) {
     page.getByRole("heading", { name: "Needs Scheduling" })
   ).toBeVisible();
   await expect(
-    page.getByRole("heading", { name: "Schedule board" })
+    page.getByRole("heading", { name: "Dispatch board" })
   ).toBeVisible();
 }
 

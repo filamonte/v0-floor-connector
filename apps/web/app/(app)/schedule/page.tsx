@@ -14,6 +14,19 @@ import {
 } from "@/components/crewboard-drag-drop-layer";
 import { ManagerDashboardCard } from "@/components/manager-dashboard-card";
 import { ScheduleCrewAssignmentForm } from "@/components/schedule-crew-assignment-form";
+import {
+  ScheduleDispatchBoardShell,
+  ScheduleFieldHandoffPanel,
+  ScheduleJobActionLinks,
+  ScheduleNotesPreview,
+  ScheduleOperationalIndicators,
+  ScheduleResourceLoadPanel,
+  ScheduleSelectedJobPanelSummary,
+  ScheduleWarningBadges,
+  ScheduleWarningDetails,
+  type ScheduleOperationalIndicator,
+  type ScheduleResourceLoadPanelItem
+} from "@/components/schedule-crewboard-presentational";
 import { ScheduleJobForm } from "@/components/schedule-job-form";
 import { WorkspaceComposerSheet } from "@/components/workspace-composer-sheet";
 import { buildDailyLogCaptureHref } from "@/lib/daily-logs/links";
@@ -40,6 +53,7 @@ import {
   type ScheduleLayoutKey,
   type ScheduleViewKey
 } from "@/lib/schedule/links";
+import { listScheduleFieldHandoffsByJobIds } from "@/lib/schedule/field-handoff-data";
 import {
   buildScheduleBoardReadModel,
   buildScheduleItems,
@@ -54,6 +68,7 @@ import {
   formatDropTargetLabel
 } from "@/lib/schedule/proposed-move";
 import {
+  deriveScheduleResourceLoadSummaries,
   deriveScheduleWarningSummaries,
   type ScheduleWarningSummary
 } from "@/lib/schedule/warnings";
@@ -947,61 +962,6 @@ function ScheduleJobStateBadges(input: {
   );
 }
 
-function ScheduleWarningBadges(input: {
-  warnings: ScheduleWarningSummary[];
-  limit?: number;
-}) {
-  const visibleWarnings = input.warnings.slice(0, input.limit ?? 2);
-  const hiddenCount = Math.max(
-    input.warnings.length - visibleWarnings.length,
-    0
-  );
-
-  if (input.warnings.length === 0) {
-    return null;
-  }
-
-  return (
-    <div className="mt-3 flex flex-wrap gap-2">
-      {visibleWarnings.map((warning) => (
-        <span
-          key={warning.id}
-          className="inline-flex items-center rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-amber-800"
-          title={warning.detail}
-        >
-          {warning.label}
-        </span>
-      ))}
-      {hiddenCount > 0 ? (
-        <span className="inline-flex items-center rounded-full border border-[var(--border-warm)] bg-white px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--text-secondary)]">
-          +{hiddenCount}
-        </span>
-      ) : null}
-    </div>
-  );
-}
-
-type ScheduleOperationalIndicator = {
-  id: string;
-  label: string;
-  detail: string;
-  href?: string | null;
-  tone: "ready" | "warning" | "blocked" | "neutral";
-};
-
-function getIndicatorClassName(tone: ScheduleOperationalIndicator["tone"]) {
-  switch (tone) {
-    case "ready":
-      return "border-emerald-200 bg-emerald-50 text-emerald-700";
-    case "blocked":
-      return "border-rose-200 bg-rose-50 text-rose-700";
-    case "warning":
-      return "border-amber-200 bg-amber-50 text-amber-800";
-    default:
-      return "border-[var(--border-warm)] bg-white text-[var(--text-secondary)]";
-  }
-}
-
 function getDispatchAttentionToneClassName(
   tone: ScheduleDispatchAttentionTone
 ) {
@@ -1106,133 +1066,6 @@ function buildScheduleOperationalIndicators(input: {
   }
 
   return indicators;
-}
-
-function ScheduleOperationalIndicators(input: {
-  indicators: ScheduleOperationalIndicator[];
-  limit?: number;
-}) {
-  const visibleIndicators = input.indicators.slice(0, input.limit ?? 4);
-  const hiddenCount = Math.max(
-    input.indicators.length - visibleIndicators.length,
-    0
-  );
-
-  if (visibleIndicators.length === 0) {
-    return null;
-  }
-
-  return (
-    <div className="mt-3 flex flex-wrap gap-2">
-      {visibleIndicators.map((indicator) => {
-        const className = [
-          "inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em]",
-          getIndicatorClassName(indicator.tone)
-        ].join(" ");
-
-        return indicator.href ? (
-          <Link
-            key={indicator.id}
-            href={indicator.href}
-            className={`${className} transition hover:opacity-80`}
-            title={indicator.detail}
-          >
-            {indicator.label}
-          </Link>
-        ) : (
-          <span
-            key={indicator.id}
-            className={className}
-            title={indicator.detail}
-          >
-            {indicator.label}
-          </span>
-        );
-      })}
-      {hiddenCount > 0 ? (
-        <span className="inline-flex items-center rounded-full border border-[var(--border-warm)] bg-white px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--text-secondary)]">
-          +{hiddenCount}
-        </span>
-      ) : null}
-    </div>
-  );
-}
-
-function ScheduleNotesPreview(input: { notes: string | null }) {
-  const notes = input.notes?.trim();
-
-  if (!notes) {
-    return null;
-  }
-
-  return (
-    <p className="mt-2 line-clamp-2 text-sm leading-6 text-[var(--text-secondary)]">
-      Schedule notes: {notes}
-    </p>
-  );
-}
-
-function ScheduleJobActionLinks(input: {
-  actionHref: string;
-  actionLabel: string;
-  actionToneClass: string;
-  projectHref: string;
-  projectLabel: string;
-  projectVariant?: "plain" | "bordered";
-  jobHref?: string;
-  jobLabel?: string;
-  jobVariant?: "plain" | "bordered";
-  dailyLogHref?: string;
-  size?: "compact" | "default";
-  justifyEnd?: boolean;
-}) {
-  const actionPadding =
-    input.size === "compact" ? "px-2.5 py-1.5" : "px-3 py-2";
-  const secondaryPadding =
-    input.size === "compact" ? "px-2.5 py-1.5" : "px-3 py-2";
-  const secondaryText =
-    input.size === "compact"
-      ? "text-xs font-semibold uppercase tracking-[0.14em]"
-      : "text-xs font-semibold uppercase tracking-[0.14em]";
-
-  const projectClassName =
-    input.projectVariant === "bordered"
-      ? `inline-flex items-center justify-center rounded-[4px] border text-center leading-4 ${scheduleSecondaryActionToneClassName} ${secondaryPadding} ${secondaryText} transition`
-      : `inline-flex items-center justify-center rounded-[4px] text-center leading-4 ${secondaryPadding} ${secondaryText} text-[var(--text-secondary)] transition hover:text-[var(--text-primary)]`;
-
-  const jobClassName =
-    input.jobVariant === "bordered"
-      ? `inline-flex items-center justify-center rounded-[4px] border text-center leading-4 ${scheduleSecondaryActionToneClassName} ${secondaryPadding} ${secondaryText} transition`
-      : `inline-flex items-center justify-center rounded-[4px] text-center leading-4 ${secondaryPadding} ${secondaryText} text-[var(--text-secondary)] transition hover:text-[var(--text-primary)]`;
-
-  return (
-    <div
-      className={`flex flex-wrap gap-2 ${input.justifyEnd ? "md:justify-end" : ""}`}
-    >
-      <Link
-        href={input.actionHref}
-        className={[
-          `inline-flex items-center justify-center rounded-[4px] border ${actionPadding} text-center text-xs font-semibold uppercase leading-4 tracking-[0.14em] transition`,
-          input.actionToneClass
-        ].join(" ")}
-      >
-        {input.actionLabel}
-      </Link>
-      <Link href={input.projectHref} className={projectClassName}>
-        {input.projectLabel}
-      </Link>
-      {input.jobHref && input.jobLabel ? (
-        <Link href={input.jobHref} className={jobClassName}>
-          {input.jobLabel}
-        </Link>
-      ) : null}
-      {input.dailyLogHref ? (
-        <Link href={input.dailyLogHref} className={jobClassName}>
-          Daily Job Log
-        </Link>
-      ) : null}
-    </div>
-  );
 }
 
 function getScheduledSortTime(job: {
@@ -1584,31 +1417,43 @@ export default async function SchedulePage({
       isUpcoming
     };
   });
+  const fieldHandoffsByJobId = await listScheduleFieldHandoffsByJobIds({
+    jobs: jobsWithAssignments.map((job) => ({
+      id: job.id,
+      projectId: job.projectId,
+      scheduledDate: job.scheduledDate,
+      dispatchStatus: job.dispatchStatus,
+      assignmentCount: job.assignmentCount
+    })),
+    todayDateKey
+  });
   const projectReadinessByProjectId =
     await getDashboardProjectFinancialReadinessSummaries({
       organizationId: organizationContext.organization.id,
       projectIds: jobsWithAssignments.map((job) => job.projectId)
     });
-  const scheduleWarningSummaries = deriveScheduleWarningSummaries(
-    jobsWithAssignments.map((job) => ({
-      id: job.id,
-      title: getScheduleJobTitle(job),
-      dispatchStatus: job.dispatchStatus,
-      scheduledDate: job.scheduledDate,
-      scheduledStartAt: job.scheduledStartAt,
-      scheduledEndAt: job.scheduledEndAt,
-      crewVendorId: job.crewVendorId,
-      crewVendor: job.crewVendor,
-      assignments: job.assignments.map((assignment) => ({
-        personId: assignment.personId,
-        vendorId: assignment.vendorId,
-        person: assignment.person
-          ? { displayName: assignment.person.displayName }
-          : null,
-        vendor: assignment.vendor ? { name: assignment.vendor.name } : null
-      }))
+  const scheduleWarningJobs = jobsWithAssignments.map((job) => ({
+    id: job.id,
+    title: getScheduleJobTitle(job),
+    dispatchStatus: job.dispatchStatus,
+    scheduledDate: job.scheduledDate,
+    scheduledStartAt: job.scheduledStartAt,
+    scheduledEndAt: job.scheduledEndAt,
+    crewVendorId: job.crewVendorId,
+    crewVendor: job.crewVendor,
+    assignments: job.assignments.map((assignment) => ({
+      personId: assignment.personId,
+      vendorId: assignment.vendorId,
+      person: assignment.person
+        ? { displayName: assignment.person.displayName }
+        : null,
+      vendor: assignment.vendor ? { name: assignment.vendor.name } : null
     }))
-  );
+  }));
+  const scheduleWarningSummaries =
+    deriveScheduleWarningSummaries(scheduleWarningJobs);
+  const scheduleResourceLoadSummaries =
+    deriveScheduleResourceLoadSummaries(scheduleWarningJobs);
   const scheduleWarningsByJobId = new Map(
     scheduleWarningSummaries.map((summary) => [summary.jobId, summary.warnings])
   );
@@ -1731,6 +1576,9 @@ export default async function SchedulePage({
         todayDateKey
       })
     : [];
+  const selectedJobFieldHandoff = selectedJob
+    ? (fieldHandoffsByJobId.get(selectedJob.id) ?? null)
+    : null;
   const selectedJobNeedsScheduleBeforeCrew =
     selectedAction === "assign" &&
     selectedJob?.dispatchStatus === "unscheduled";
@@ -1822,6 +1670,43 @@ export default async function SchedulePage({
     (total, summary) => total + summary.warnings.length,
     0
   );
+  const visibleScheduleResourceLoadItems = scheduleResourceLoadSummaries
+    .map((load) => {
+      const loadJobs = load.jobIds
+        .map((jobId) => visibleJobsById.get(jobId))
+        .filter((job): job is NonNullable<typeof job> => Boolean(job));
+
+      if (loadJobs.length < 2) {
+        return null;
+      }
+
+      const tone: ScheduleResourceLoadPanelItem["tone"] =
+        load.hasOverlap || load.hasIncompleteTiming ? "warning" : "neutral";
+
+      return {
+        id: load.id,
+        dateLabel: formatDate(load.dateKey),
+        resourceLabel: load.resourceLabel,
+        jobCount: load.jobCount,
+        detail: load.hasOverlap
+          ? "This person or labor-provider vendor has overlapping scheduled windows."
+          : load.hasIncompleteTiming
+            ? "This person or labor-provider vendor appears on multiple jobs and at least one job needs complete timing."
+            : "This person or labor-provider vendor appears on multiple jobs for the same day.",
+        tone,
+        jobs: loadJobs.map((job) => ({
+          id: job.id,
+          title: getScheduleJobTitle(job),
+          href:
+            buildCurrentScheduleHref({
+              action: getPrimaryScheduleAction(job).action,
+              jobId: job.id
+            }) + "#schedule-action"
+        }))
+      };
+    })
+    .filter((item): item is NonNullable<typeof item> => item !== null)
+    .slice(0, 6);
   const visibleAppointments = appointments.filter((appointment) => {
     const appointmentDateKey = new Date(appointment.startsAt)
       .toISOString()
@@ -1936,6 +1821,42 @@ export default async function SchedulePage({
     readinessByProjectId: projectReadinessByProjectId,
     warningSummaries: visibleScheduleWarningSummaries
   });
+  const visibleOperatingModes = visibleScheduleBoard.operatingModeSummaries.map(
+    (mode) => {
+      const href =
+        mode.key === "triage"
+          ? buildScheduleHref({
+              q: query,
+              projectId: projectFilterId ?? undefined,
+              view: "scheduled",
+              crew: crewFilter,
+              layout: "board",
+              date: plannerDateKey
+            })
+          : mode.key === "plan"
+            ? buildScheduleHref({
+                q: query,
+                projectId: projectFilterId ?? undefined,
+                view: "unscheduled",
+                crew: crewFilter,
+                layout: scheduleLayout,
+                date: plannerDateKey
+              })
+            : buildScheduleHref({
+                q: query,
+                projectId: projectFilterId ?? undefined,
+                view: "today",
+                crew: crewFilter,
+                layout: scheduleLayout,
+                date: plannerDateKey
+              });
+
+      return {
+        ...mode,
+        href
+      };
+    }
+  );
   const boardTimingGroups = [
     {
       key: "unscheduled-ready",
@@ -2986,6 +2907,117 @@ export default async function SchedulePage({
               <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                 <div className="min-w-0">
                   <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
+                    Operating modes
+                  </p>
+                  <h2 className="mt-1 text-lg font-semibold tracking-tight text-[var(--text-primary)]">
+                    Triage, plan, dispatch
+                  </h2>
+                  <p className="mt-1 text-sm leading-6 text-[var(--text-secondary)]">
+                    CrewBoard groups the same canonical jobs into review modes
+                    so dispatchers can clear blockers, build the upcoming plan,
+                    and watch today without changing the source of truth.
+                  </p>
+                </div>
+                <span className="inline-flex items-center rounded-full border border-[var(--border-warm)] bg-white px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--text-primary)]">
+                  {visibleOperatingModes.reduce(
+                    (total, mode) => total + mode.attentionCount,
+                    0
+                  )}{" "}
+                  attention signals
+                </span>
+              </div>
+            </div>
+
+            <div className="grid gap-px bg-[var(--border-warm)] lg:grid-cols-3">
+              {visibleOperatingModes.map((mode) => (
+                <div key={mode.key} className="bg-white px-5 py-4 sm:px-6">
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--text-secondary)]">
+                        {mode.label}
+                      </p>
+                      <p className="mt-2 text-sm leading-6 text-[var(--text-secondary)]">
+                        {mode.detail}
+                      </p>
+                    </div>
+                    <span className="inline-flex shrink-0 items-center rounded-full border border-[var(--border-warm)] bg-[var(--highlight)] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--text-primary)]">
+                      {mode.jobCount} jobs
+                    </span>
+                  </div>
+
+                  <div className="mt-4 flex flex-wrap items-center gap-2">
+                    <Link
+                      href={mode.href}
+                      className={`inline-flex items-center rounded-[4px] border px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] transition ${scheduleSecondaryActionToneClassName}`}
+                    >
+                      Open {mode.label}
+                    </Link>
+                    <span className="text-sm text-[var(--text-tertiary)]">
+                      {mode.attentionCount} attention
+                    </span>
+                  </div>
+
+                  {mode.jobs.length > 0 ? (
+                    <div className="mt-4 space-y-2">
+                      {mode.jobs.map((job) => {
+                        const primaryAction = getPrimaryScheduleAction(job);
+
+                        return (
+                          <div
+                            key={`${mode.key}-${job.id}`}
+                            className="rounded-[4px] border border-[var(--border-warm)] bg-[var(--highlight)] px-3 py-2.5"
+                          >
+                            <Link
+                              href={`/jobs/${job.id}`}
+                              className="text-sm font-semibold text-[var(--text-primary)] transition hover:text-[var(--copper)]"
+                            >
+                              {getScheduleJobTitle(job)}
+                            </Link>
+                            <p className="mt-1 text-xs leading-5 text-[var(--text-secondary)]">
+                              {job.customer?.name ?? "Unknown customer"} ·{" "}
+                              {formatDate(job.scheduledDate)}
+                            </p>
+                            <div className="mt-2 flex flex-wrap gap-2">
+                              <Link
+                                href={
+                                  buildCurrentScheduleHref({
+                                    action: primaryAction.action,
+                                    jobId: job.id
+                                  }) + "#schedule-action"
+                                }
+                                className={[
+                                  "inline-flex items-center rounded-[4px] border px-2.5 py-1.5 text-xs font-semibold uppercase tracking-[0.14em] transition",
+                                  primaryAction.toneClass
+                                ].join(" ")}
+                              >
+                                {primaryAction.label}
+                              </Link>
+                              <Link
+                                href={`/projects/${job.projectId}`}
+                                className={scheduleCompactLinkClassName}
+                              >
+                                Project
+                              </Link>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <p className="mt-4 text-sm leading-6 text-[var(--text-tertiary)]">
+                      No jobs in this mode for the current filters.
+                    </p>
+                  )}
+                </div>
+              ))}
+            </div>
+          </section>
+
+          <section className={schedulePanelClassName}>
+            <div className={schedulePanelHeaderClassName}>
+              <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                <div className="min-w-0">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
                     Dispatch priority
                   </p>
                   <h2 className="mt-1 text-lg font-semibold tracking-tight text-[var(--text-primary)]">
@@ -3304,6 +3336,34 @@ export default async function SchedulePage({
             )}
           </section>
 
+          <section className={schedulePanelClassName}>
+            <div className={schedulePanelHeaderClassName}>
+              <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                <div className="min-w-0">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
+                    Resource load
+                  </p>
+                  <h2 className="mt-1 text-lg font-semibold tracking-tight text-[var(--text-primary)]">
+                    Crew load review
+                  </h2>
+                  <p className="mt-1 text-sm leading-6 text-[var(--text-secondary)]">
+                    Review repeated person and labor-provider assignments from
+                    the current filtered jobs. These are advisory signals only;
+                    crew changes still use the existing job assignment action.
+                  </p>
+                </div>
+                <span className="inline-flex items-center rounded-full border border-[var(--border-warm)] bg-white px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--text-primary)]">
+                  {visibleScheduleResourceLoadItems.length} load signals
+                </span>
+              </div>
+            </div>
+            <div className="px-5 py-4 sm:px-6">
+              <ScheduleResourceLoadPanel
+                items={visibleScheduleResourceLoadItems}
+              />
+            </div>
+          </section>
+
           <section className="grid gap-4 xl:auto-rows-fr xl:grid-cols-2">
             <ManagerDashboardCard
               eyebrow="Needs commitment"
@@ -3584,109 +3644,52 @@ export default async function SchedulePage({
             />
           </section>
 
-          <section className={schedulePanelClassName}>
-            <div className={schedulePanelHeaderClassName}>
-              <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-                <div className="min-w-0">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
-                    CrewBoard planner
-                  </p>
-                  <h2 className="mt-1 text-lg font-semibold tracking-tight text-[var(--text-primary)]">
-                    Schedule board
-                  </h2>
-                  <p className="mt-1 text-sm leading-6 text-[var(--text-secondary)]">
-                    Run CrewBoard as a bounded planner on top of jobs. Keep
-                    Needs Scheduling work separate, review dated work by day or
-                    week, and reschedule through the same job action path.
-                  </p>
-                </div>
-                <div className="flex flex-wrap items-center gap-2 lg:justify-end">
-                  {SCHEDULE_LAYOUT_OPTIONS.map((option) => {
-                    const isActive = scheduleLayout === option.value;
-
-                    return (
-                      <Link
-                        key={option.value}
-                        href={buildScheduleHref({
-                          q: query,
-                          projectId: projectFilterId ?? undefined,
-                          view,
-                          crew: crewFilter,
-                          layout: option.value,
-                          date: plannerDateKey
-                        })}
-                        className={[
-                          scheduleFilterChipClassName,
-                          isActive
-                            ? "bg-[var(--graphite)] text-white"
-                            : `border ${scheduleSecondaryActionToneClassName}`
-                        ].join(" ")}
-                      >
-                        {option.label}
-                      </Link>
-                    );
-                  })}
-                </div>
-              </div>
-
-              <div className="mt-4 flex flex-col gap-3 border-t border-[var(--border-warm)] pt-4 lg:flex-row lg:items-center lg:justify-between">
-                <div className="flex flex-wrap items-center gap-3">
-                  <span className="inline-flex items-center rounded-full border border-[var(--border-warm)] bg-white px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--text-primary)]">
-                    {scheduleLayout === "board"
-                      ? visibleJobs.length
-                      : plannerItemCount}{" "}
-                    {scheduleLayout === "board"
-                      ? "visible jobs"
-                      : "scheduled items"}
-                  </span>
-                  <span className="inline-flex items-center rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-amber-800">
-                    {scheduleLayout === "board"
-                      ? visibleJobs.filter((job) => job.assignmentCount === 0)
-                          .length
-                      : plannerNeedsCrewCount}{" "}
-                    need crew
-                  </span>
-                  <p className="text-sm leading-6 text-[var(--text-secondary)]">
-                    {scheduleLayout === "board"
-                      ? "Grouped by operational timing"
-                      : plannerRangeLabel}
-                  </p>
-                </div>
-
-                <div className="flex flex-col gap-2 lg:items-end">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <Link
-                      href={plannerPrevHref}
-                      className={`inline-flex items-center rounded-[4px] border px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] transition ${scheduleSecondaryActionToneClassName}`}
-                    >
-                      {scheduleLayout === "day"
-                        ? "Previous day"
-                        : "Previous week"}
-                    </Link>
-                    <Link
-                      href={plannerTodayHref}
-                      className={`inline-flex items-center rounded-[4px] border px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] transition ${scheduleSecondaryActionToneClassName}`}
-                    >
-                      Today
-                    </Link>
-                    <Link
-                      href={plannerNextHref}
-                      className={`inline-flex items-center rounded-[4px] border px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] transition ${scheduleSecondaryActionToneClassName}`}
-                    >
-                      {scheduleLayout === "day" ? "Next day" : "Next week"}
-                    </Link>
-                  </div>
-                  {scheduleLayout === "board" ? (
-                    <p className="max-w-xl text-sm leading-6 text-[var(--text-secondary)] lg:text-right">
-                      Board mode uses this selected date to preserve handoff
-                      context while grouping the filtered jobs by operational
-                      timing.
-                    </p>
-                  ) : null}
-                </div>
-              </div>
-            </div>
-
+          <ScheduleDispatchBoardShell
+            eyebrow="CrewBoard planner"
+            title="Dispatch board"
+            description="Run CrewBoard as a bounded planner on top of jobs. Keep Needs Scheduling work separate, review dated work by day or week, and reschedule through the same job action path."
+            layoutOptions={SCHEDULE_LAYOUT_OPTIONS.map((option) => ({
+              key: option.value,
+              label: option.label,
+              href: buildScheduleHref({
+                q: query,
+                projectId: projectFilterId ?? undefined,
+                view,
+                crew: crewFilter,
+                layout: option.value,
+                date: plannerDateKey
+              }),
+              active: scheduleLayout === option.value
+            }))}
+            primaryCount={
+              scheduleLayout === "board" ? visibleJobs.length : plannerItemCount
+            }
+            primaryLabel={
+              scheduleLayout === "board" ? "visible jobs" : "scheduled items"
+            }
+            crewAttentionCount={
+              scheduleLayout === "board"
+                ? visibleJobs.filter((job) => job.assignmentCount === 0).length
+                : plannerNeedsCrewCount
+            }
+            rangeLabel={
+              scheduleLayout === "board"
+                ? "Grouped by operational timing"
+                : plannerRangeLabel
+            }
+            previousHref={plannerPrevHref}
+            previousLabel={
+              scheduleLayout === "day" ? "Previous day" : "Previous week"
+            }
+            todayHref={plannerTodayHref}
+            nextHref={plannerNextHref}
+            nextLabel={scheduleLayout === "day" ? "Next day" : "Next week"}
+            boardModeDescription={
+              scheduleLayout === "board"
+                ? "Board mode uses this selected date to preserve handoff context while grouping the filtered jobs by operational timing."
+                : undefined
+            }
+          >
             <CrewBoardDragDropLayer>
               {boardItemCount > 0 ? (
                 scheduleLayout === "day" ? (
@@ -4389,7 +4392,7 @@ export default async function SchedulePage({
                 </div>
               )}
             </CrewBoardDragDropLayer>
-          </section>
+          </ScheduleDispatchBoardShell>
 
           {resolvedSearchParams.error ? (
             <div className="rounded-[6px] border border-rose-200 bg-rose-50 px-5 py-4 text-sm leading-6 text-rose-800">
@@ -4543,6 +4546,7 @@ export default async function SchedulePage({
                       warnings: jobWarnings,
                       todayDateKey
                     });
+                  const fieldHandoff = fieldHandoffsByJobId.get(job.id);
 
                   return (
                     <div key={job.id} className="px-5 py-4 sm:px-6">
@@ -4594,6 +4598,14 @@ export default async function SchedulePage({
                           <ScheduleOperationalIndicators
                             indicators={operationalIndicators}
                           />
+                          {fieldHandoff ? (
+                            <div className="mt-3">
+                              <ScheduleFieldHandoffPanel
+                                handoff={fieldHandoff}
+                                compact
+                              />
+                            </div>
+                          ) : null}
                           <ScheduleNotesPreview notes={job.scheduleNotes} />
                           <ScheduleWarningBadges warnings={jobWarnings} />
                         </div>
@@ -4721,61 +4733,30 @@ export default async function SchedulePage({
                   Selected job action panel
                 </h2>
               </div>
-              <div className={scheduleInsetPanelClassName}>
-                <p className="font-semibold text-[var(--text-primary)]">
-                  {getScheduleJobTitle(selectedJob)}
-                </p>
-                <p className="mt-1">
-                  {selectedJob.customer?.name ?? "Unknown customer"} ·{" "}
-                  <span className="capitalize">
-                    {formatStatusLabel(selectedJob.dispatchStatus)}
-                  </span>
-                </p>
-                {selectedJob.serviceTicket ? (
-                  <p className="mt-1">
-                    Service ticket:{" "}
-                    <Link
-                      href={`/service-tickets/${selectedJob.serviceTicket.id}`}
-                      className="font-medium text-[var(--copper)] transition hover:text-[var(--copper-light)]"
-                    >
-                      {selectedJob.serviceTicket.title}
-                    </Link>
-                  </p>
-                ) : null}
-                <p className="mt-1">
-                  {selectedJobAssignments.length > 0
+              <ScheduleSelectedJobPanelSummary
+                title={getScheduleJobTitle(selectedJob)}
+                customerName={selectedJob.customer?.name ?? "Unknown customer"}
+                dispatchStatusLabel={formatStatusLabel(
+                  selectedJob.dispatchStatus
+                )}
+                serviceTicket={selectedJob.serviceTicket}
+                assignmentSummary={
+                  selectedJobAssignments.length > 0
                     ? `${formatAssignmentLabel(selectedJobAssignments.length)} already attached`
-                    : "Crew not assigned yet"}
-                </p>
-                <ScheduleOperationalIndicators
-                  indicators={selectedJobOperationalIndicators}
-                />
-              </div>
-
-              <div className="flex flex-wrap gap-2">
-                <Link
-                  href={`/projects/${selectedJob.projectId}`}
-                  className={`inline-flex items-center rounded-[4px] border px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] transition ${scheduleSecondaryActionToneClassName}`}
-                >
-                  Open Project Workspace
-                </Link>
-                <Link
-                  href={`/jobs/${selectedJob.id}`}
-                  className={`inline-flex items-center rounded-[4px] border px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] transition ${scheduleSecondaryActionToneClassName}`}
-                >
-                  Open job
-                </Link>
-                <Link
-                  href={buildDailyLogCaptureHref({
-                    projectId: selectedJob.projectId,
-                    jobId: selectedJob.id,
-                    logDate: selectedJob.scheduledDate
-                  })}
-                  className={`inline-flex items-center rounded-[4px] border px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] transition ${scheduleSecondaryActionToneClassName}`}
-                >
-                  Start Daily Job Log
-                </Link>
-              </div>
+                    : "Crew not assigned yet"
+                }
+                indicators={selectedJobOperationalIndicators}
+                projectHref={`/projects/${selectedJob.projectId}`}
+                jobHref={`/jobs/${selectedJob.id}`}
+                dailyLogHref={buildDailyLogCaptureHref({
+                  projectId: selectedJob.projectId,
+                  jobId: selectedJob.id,
+                  logDate: selectedJob.scheduledDate
+                })}
+              />
+              {selectedJobFieldHandoff ? (
+                <ScheduleFieldHandoffPanel handoff={selectedJobFieldHandoff} />
+              ) : null}
               {selectedJobCrewState ? (
                 <div className="rounded-[6px] border border-[var(--border-warm)] bg-white px-4 py-3 text-sm leading-6 text-[var(--text-secondary)]">
                   <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--text-secondary)]">
@@ -4794,25 +4775,7 @@ export default async function SchedulePage({
 
               <ScheduleNotesPreview notes={selectedJob.scheduleNotes} />
 
-              {selectedJobScheduleWarnings.length > 0 ? (
-                <div className="rounded-[6px] border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-900">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.16em]">
-                    Schedule warnings
-                  </p>
-                  <ul className="mt-2 space-y-2">
-                    {selectedJobScheduleWarnings.map((warning) => (
-                      <li key={warning.id}>
-                        <span className="font-semibold">{warning.label}:</span>{" "}
-                        {warning.detail}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              ) : (
-                <div className="rounded-[6px] border border-[var(--border-warm)] bg-white px-4 py-3 text-sm leading-6 text-[var(--text-secondary)]">
-                  No schedule warnings found for this job.
-                </div>
-              )}
+              <ScheduleWarningDetails warnings={selectedJobScheduleWarnings} />
 
               {selectedJobEquipmentReadiness ? (
                 <div className="rounded-[6px] border border-[var(--border-warm)] bg-white px-4 py-3 text-sm leading-6 text-[var(--text-secondary)]">

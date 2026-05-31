@@ -4,6 +4,7 @@ import test from "node:test";
 import {
   buildScheduleBoardReadModel,
   buildScheduleItems,
+  deriveScheduleOperatingModeSummaries,
   deriveScheduleBoardQueues,
   filterUpcomingAssignedAppointments
 } from "./read-model";
@@ -588,5 +589,75 @@ void test("schedule board queue helper exposes the derived queues without board 
   assert.deepEqual(
     queues.needsReadinessReviewJobs.map((job) => job.id),
     [blockedUnscheduled.id, todayMissingCrew.id]
+  );
+});
+
+void test("schedule operating modes group triage, plan, and dispatch jobs without duplicate records", () => {
+  const blockedUnscheduled = {
+    ...baseJob,
+    id: "88888888-bbbb-4bbb-8bbb-888888888888",
+    dispatchStatus: "unscheduled" as const,
+    projectId: "project-blocked",
+    scheduledDate: null,
+    scheduledStartAt: null,
+    scheduledEndAt: null,
+    updatedAt: "2026-05-07T12:00:00.000Z"
+  };
+  const readyUnscheduled = {
+    ...baseJob,
+    id: "99999999-bbbb-4bbb-8bbb-999999999999",
+    dispatchStatus: "unscheduled" as const,
+    scheduledDate: null,
+    scheduledStartAt: null,
+    scheduledEndAt: null,
+    updatedAt: "2026-05-07T13:00:00.000Z"
+  };
+  const todayMissingCrew = {
+    ...baseJob,
+    id: "aaaaaaaa-cccc-4ccc-8ccc-aaaaaaaaaaaa",
+    dispatchStatus: "scheduled" as const,
+    scheduledDate: "2026-05-08",
+    scheduledStartAt: "2026-05-08T09:00:00.000Z",
+    assignmentCount: 0,
+    assignments: [],
+    crewSummary: []
+  };
+  const inProgress = {
+    ...baseJob,
+    id: "bbbbbbbb-cccc-4ccc-8ccc-bbbbbbbbbbbb",
+    dispatchStatus: "in_progress" as const,
+    scheduledDate: "2026-05-08",
+    scheduledStartAt: "2026-05-08T07:00:00.000Z",
+    assignmentCount: 1,
+    crewSummary: ["Field crew"]
+  };
+
+  const queues = deriveScheduleBoardQueues({
+    jobs: [blockedUnscheduled, readyUnscheduled, todayMissingCrew, inProgress],
+    today: new Date(2026, 4, 8),
+    readinessByProjectId: new Map([
+      ["project-blocked", { isReadyToSchedule: false }]
+    ])
+  });
+  const modes = deriveScheduleOperatingModeSummaries({
+    ...queues,
+    jobsPerMode: 5
+  });
+
+  assert.deepEqual(
+    modes.map((mode) => mode.key),
+    ["triage", "plan", "dispatch"]
+  );
+  assert.deepEqual(
+    modes.find((mode) => mode.key === "triage")?.jobs.map((job) => job.id),
+    [blockedUnscheduled.id, todayMissingCrew.id]
+  );
+  assert.deepEqual(
+    modes.find((mode) => mode.key === "plan")?.jobs.map((job) => job.id),
+    [readyUnscheduled.id]
+  );
+  assert.deepEqual(
+    modes.find((mode) => mode.key === "dispatch")?.jobs.map((job) => job.id),
+    [inProgress.id, todayMissingCrew.id]
   );
 });
