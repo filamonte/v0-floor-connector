@@ -29,6 +29,7 @@ import {
   ProjectConnectedRecordLanes,
   type ProjectConnectedRecordLane
 } from "@/components/project-connected-record-lanes";
+import { ProjectNextActionsPanel } from "@/components/project-next-actions-panel";
 import {
   ProjectReadinessNextActionPanel,
   type ProjectReadinessBlockerItem,
@@ -140,6 +141,7 @@ import {
 import { listProgressBillingByProject } from "@/lib/progress-billing/data";
 import { updateProjectAction } from "@/lib/projects/actions";
 import { buildProjectCues, type ProjectCue } from "@/lib/projects/cues";
+import { buildProjectNextActions } from "@/lib/projects/project-next-actions";
 import { getProjectById } from "@/lib/projects/data";
 import {
   deriveProjectOperationalWorkspaceSummary,
@@ -4254,6 +4256,16 @@ export default async function ProjectDetailPage({
       })
     )
   });
+  const projectNextActions = buildProjectNextActions({
+    project,
+    todayIsoDate: new Date().toISOString().slice(0, 10),
+    readinessSnapshot,
+    estimates: projectEstimates,
+    contracts: projectContracts,
+    invoices: projectInvoices,
+    jobs: projectJobs,
+    fieldNotes: projectFieldNotes
+  });
   const workspaceBlockers = [
     ...activeBlockers.map((blocker) => formatBlockerLabel(blocker)),
     ...(unscheduledJobs.length > 0
@@ -5146,6 +5158,8 @@ export default async function ProjectDetailPage({
                 ]
               )}`}
             />
+
+            <ProjectNextActionsPanel summary={projectNextActions} />
 
             {showReadinessGuidancePanel ? (
               <WorkflowBar title="Project workflow" steps={workflowSteps} />
