@@ -1,0 +1,32 @@
+{
+  "name": "example-wave",
+  "goal": "Describe the product outcome for this wave.",
+  "base": "origin/main",
+  "worktreeRoot": "C:/FC-worktrees",
+  "maxConcurrency": 2,
+  "mainValidation": [
+    "pnpm.cmd --filter @floorconnector/web typecheck",
+    "pnpm.cmd --filter @floorconnector/web lint",
+    "pnpm.cmd fc:preflight:fast",
+    "git diff --check"
+  ],
+  "productStrideCriteria": [
+    "Improves daily contractor operations",
+    "Connects to canonical workflow records",
+    "Reduces manual decision friction",
+    "Creates visible user-facing capability",
+    "Avoids duplicate models and module silos"
+  ],
+  "streams": [
+    {
+      "name": "example-stream-v1",
+      "branch": "stream/example-stream-v1",
+      "worktree": "C:/FC-worktrees/example-stream",
+      "prompt": ".codex/waves/example-wave/prompts/example-stream-v1.md",
+      "risk": "low",
+      "productOutcome": "Describe the bounded product outcome.",
+      "expectedFiles": ["docs/current-state.md"],
+      "validation": ["pnpm.cmd fc:preflight:fast", "git diff --check"]
+    }
+  ]
+}

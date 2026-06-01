@@ -1,0 +1,102 @@
+{
+  "name": "ops-core-next",
+  "goal": "Make FloorConnector more operationally useful for field execution and collections follow-up without schema changes.",
+  "base": "origin/main",
+  "worktreeRoot": "C:/FC-worktrees",
+  "maxConcurrency": 2,
+  "mainValidation": [
+    "pnpm.cmd --filter @floorconnector/web typecheck",
+    "pnpm.cmd --filter @floorconnector/web lint",
+    "pnpm.cmd fc:preflight:fast",
+    "git diff --check"
+  ],
+  "productStrideCriteria": [
+    "Improves daily contractor operations",
+    "Connects to canonical workflow records",
+    "Reduces manual decision friction",
+    "Creates visible user-facing capability",
+    "Avoids duplicate models and module silos"
+  ],
+  "streams": [
+    {
+      "name": "field-execution-command-v1",
+      "branch": "stream/field-execution-command-v1",
+      "worktree": "C:/FC-worktrees/field-execution-command",
+      "prompt": ".codex/waves/ops-core-next/prompts/field-execution-command-v1.md",
+      "risk": "medium",
+      "productOutcome": "Make daily logs, open field notes, blockers, and today's job execution easier to act on from existing project/job/daily-log context.",
+      "expectedFiles": [
+        "apps/web/app/(app)/daily-logs",
+        "apps/web/lib",
+        "apps/web/components",
+        "docs/current-state.md"
+      ],
+      "validation": [
+        "pnpm.cmd --filter @floorconnector/web typecheck",
+        "pnpm.cmd --filter @floorconnector/web lint",
+        "pnpm.cmd fc:preflight:fast",
+        "git diff --check"
+      ]
+    },
+    {
+      "name": "collections-follow-up-context-v1",
+      "branch": "stream/collections-follow-up-context-v1",
+      "worktree": "C:/FC-worktrees/collections-follow-up-context",
+      "prompt": ".codex/waves/ops-core-next/prompts/collections-follow-up-context-v1.md",
+      "risk": "medium",
+      "productOutcome": "Extend AR Collections with read-only follow-up context and clearer invoice/customer/project continuity using existing records only.",
+      "expectedFiles": [
+        "apps/web/app/(app)/financials/accounts-receivable",
+        "apps/web/lib",
+        "apps/web/components",
+        "docs/current-state.md"
+      ],
+      "validation": [
+        "pnpm.cmd --filter @floorconnector/web typecheck",
+        "pnpm.cmd --filter @floorconnector/web lint",
+        "pnpm.cmd fc:preflight:fast",
+        "git diff --check"
+      ]
+    },
+    {
+      "name": "portal-trust-continuity-v1",
+      "branch": "stream/portal-trust-continuity-v1",
+      "worktree": "C:/FC-worktrees/portal-trust-continuity",
+      "prompt": ".codex/waves/ops-core-next/prompts/portal-trust-continuity-v1.md",
+      "risk": "medium",
+      "productOutcome": "Improve customer portal project/invoice/contract continuity so customer-facing state reflects the same operational loop more clearly.",
+      "expectedFiles": [
+        "apps/web/app/portal",
+        "apps/web/lib/portal",
+        "apps/web/components",
+        "docs/current-state.md"
+      ],
+      "validation": [
+        "pnpm.cmd --filter @floorconnector/web typecheck",
+        "pnpm.cmd --filter @floorconnector/web lint",
+        "pnpm.cmd fc:preflight:fast",
+        "git diff --check"
+      ]
+    },
+    {
+      "name": "e2e-fixture-refresh-v1",
+      "branch": "stream/e2e-fixture-refresh-v1",
+      "worktree": "C:/FC-worktrees/e2e-fixture-refresh",
+      "prompt": ".codex/waves/ops-core-next/prompts/e2e-fixture-refresh-v1.md",
+      "risk": "low",
+      "productOutcome": "Fix stale protected smoke fixture discovery so browser validation proves real detail pages without hard-coded dead IDs.",
+      "expectedFiles": [
+        "scripts",
+        "e2e",
+        "docs/local-auth-qa-recovery.md",
+        "docs/current-state.md"
+      ],
+      "validation": [
+        "pnpm.cmd --filter @floorconnector/web typecheck",
+        "pnpm.cmd --filter @floorconnector/web lint",
+        "pnpm.cmd fc:preflight:fast",
+        "git diff --check"
+      ]
+    }
+  ]
+}

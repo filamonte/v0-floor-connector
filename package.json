@@ -51,7 +51,15 @@
     "fc:task:create": "node scripts/fc-task-create.mjs",
     "fc:task:list": "node scripts/fc-task-list.mjs",
     "fc:task:summary": "node scripts/fc-task-summary.mjs",
-    "fc:agent:run": "node scripts/fc-agent-runner.mjs"
+    "fc:agent:run": "node scripts/fc-agent-runner.mjs",
+    "fc:wave": "node scripts/fc-wave-runner.mjs run",
+    "fc:wave:prepare": "node scripts/fc-wave-runner.mjs prepare",
+    "fc:wave:status": "node scripts/fc-wave-runner.mjs status",
+    "fc:wave:validate": "node scripts/fc-wave-runner.mjs validate",
+    "fc:wave:merge-check": "node scripts/fc-wave-runner.mjs merge-check",
+    "fc:wave:report": "node scripts/fc-wave-runner.mjs report",
+    "fc:wave:approve": "node scripts/fc-wave-runner.mjs approve",
+    "fc:wave:merge": "node scripts/fc-wave-runner.mjs merge"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.49.4",
