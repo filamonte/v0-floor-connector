@@ -1,5 +1,5 @@
 {
-  "state": "proposed",
+  "state": "active",
   "name": "ops-core-continuity-v3",
   "goal": "Tighten operational continuity across field execution, collections follow-up, portal trust, and reporting using existing canonical records only.",
   "rationale": "The current ops-core-next wave prepares field execution, collections, portal, and E2E fixture streams. This follow-on wave keeps the same production-first direction but shifts each stream toward reviewable, user-visible continuity improvements that derive from existing projects, jobs, daily logs, invoices, payments, contracts, portal grants, and reporting read models without schema, auth, payment, provider, or mutation expansion.",
@@ -107,5 +107,6 @@
         "git diff --check"
       ]
     }
-  ]
+  ],
+  "activatedAt": "2026-06-01T22:39:31.658Z"
 }

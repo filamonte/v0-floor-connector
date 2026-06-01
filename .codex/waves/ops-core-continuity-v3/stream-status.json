@@ -1,0 +1,14 @@
+{
+  "generatedAt": "2026-06-01T22:39:31.661Z",
+  "approval": {
+    "approved": false,
+    "pushApproved": false
+  },
+  "streams": {},
+  "proposalApproval": {
+    "proposalApproved": true,
+    "activatedAt": "2026-06-01T22:39:31.658Z",
+    "wave": "ops-core-continuity-v3"
+  },
+  "reportPath": "C:\\FloorConnector\\.codex\\waves\\ops-core-continuity-v3\\run-report.md"
+}
