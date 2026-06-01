@@ -2,14 +2,9 @@ import type { ReactNode } from "react";
 import type { User } from "@supabase/supabase-js";
 
 import type { ActiveOrganizationContext } from "@/lib/organizations/active-context";
-import { AppShellMobileNav } from "@/components/app-shell-mobile-nav";
-import { ContractorNotificationsCenter } from "@/components/contractor-notifications-center";
 import { DevQaTools } from "@/components/dev-qa-tools";
 import { EarlyAccessHelpButton } from "@/components/early-access-help-button";
-import { OrganizationBrandLink } from "@/components/organization-brand-link";
-import { ProtectedAppBreadcrumbs } from "@/components/protected-app-breadcrumbs";
 import { ProtectedAppTopNav } from "@/components/protected-app-top-nav";
-import { SignOutForm } from "@/components/sign-out-form";
 import { signOutAction } from "@/lib/auth/actions";
 import { listContractorNotificationsForContext } from "@/lib/notifications/data";
 
@@ -50,54 +45,21 @@ export async function ContractorAppShell({
   return (
     <div className="min-h-screen bg-[var(--cream)] text-[var(--text-primary)] print:bg-white">
       <div className="flex min-h-screen flex-col">
-        <header className="sticky top-0 z-30 border-b border-[var(--border-warm)] bg-white print:hidden">
-          <div className="hidden lg:block">
-            <ProtectedAppTopNav
-              currentRole={organizationContext?.membership.role}
-              notifications={notifications}
-              organizationName={organizationName}
-              organizationLogoUrl={organizationContext?.organization.logoUrl}
-              organizationBrandAccentColor={
-                organizationContext?.organization.brandAccentColor
-              }
-              organizationStatus={organizationStatus}
-              userEmail={user.email ?? "Authenticated user"}
-              timestampLabel={timestampLabel}
-              homeHref="/dashboard"
-              signOutAction={signOutAction}
-            />
-          </div>
-
-          <div className="border-b border-[var(--border-warm)] bg-white px-5 py-3 lg:hidden">
-            <div className="flex items-start justify-between gap-3">
-              <OrganizationBrandLink
-                href="/dashboard"
-                organizationName={organizationName}
-                logoUrl={organizationContext?.organization.logoUrl}
-                brandAccentColor={
-                  organizationContext?.organization.brandAccentColor
-                }
-                supportingLabel="Shared contractor workspace"
-                navigationLabel="Dashboard home"
-                className="min-w-0 flex-1"
-              />
-              <div className="flex shrink-0 items-center gap-2 pt-1">
-                <AppShellMobileNav
-                  currentRole={organizationContext?.membership.role}
-                />
-                <SignOutForm className="border-[var(--graphite)] bg-[var(--graphite)] px-3 py-2 text-white hover:border-[var(--graphite-light)] hover:bg-[var(--graphite-light)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--copper)] focus-visible:ring-offset-2" />
-              </div>
-            </div>
-            <div className="mt-3 space-y-3 border-t border-[var(--border-warm)] pt-3">
-              <ProtectedAppBreadcrumbs organizationName={organizationName} />
-              <div className="flex flex-wrap items-center gap-2">
-                <ContractorNotificationsCenter
-                  notifications={notifications}
-                  compact
-                />
-              </div>
-            </div>
-          </div>
+        <header className="sticky top-0 z-30 print:hidden">
+          <ProtectedAppTopNav
+            currentRole={organizationContext?.membership.role}
+            notifications={notifications}
+            organizationName={organizationName}
+            organizationLogoUrl={organizationContext?.organization.logoUrl}
+            organizationBrandAccentColor={
+              organizationContext?.organization.brandAccentColor
+            }
+            organizationStatus={organizationStatus}
+            userEmail={user.email ?? "Authenticated user"}
+            timestampLabel={timestampLabel}
+            homeHref="/dashboard"
+            signOutAction={signOutAction}
+          />
         </header>
 
         <main className="flex-1 px-3 py-3 sm:px-5 sm:py-4 print:p-0">

@@ -6,7 +6,6 @@ import Link from "next/link";
 
 import type { MembershipRole } from "@floorconnector/types";
 
-import { ProtectedAppBreadcrumbs } from "@/components/protected-app-breadcrumbs";
 import { ContractorNotificationsCenter } from "@/components/contractor-notifications-center";
 import {
   FloorConnectorIcon,
@@ -74,6 +73,28 @@ function UtilityIconFrame({
     >
       {children}
     </Link>
+  );
+}
+
+function HomeSlashIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 20 20"
+      width="14"
+      height="14"
+      className="h-3.5 w-3.5"
+      style={{ width: "14px", height: "14px", flexShrink: 0 }}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="m3 9 7-6 7 6" />
+      <path d="M5.5 8.5V17h9V8.5" />
+      <path d="M8 17v-5h4v5" />
+    </svg>
   );
 }
 
@@ -179,7 +200,7 @@ export function ProtectedAppTopNav({
       ref={shellRef}
       className="relative bg-[linear-gradient(180deg,var(--graphite-dark)_0%,#191e25_100%)] text-white shadow-[0_16px_40px_-34px_rgba(31,41,55,0.9)]"
     >
-      <div className="mx-auto flex h-16 w-full max-w-[1680px] items-center justify-between gap-5 border-b border-white/10 px-5">
+      <div className="mx-auto flex min-h-14 w-full max-w-[1680px] items-center justify-between gap-4 border-b border-white/10 px-4 py-2 sm:px-5">
         <Link
           href={homeHref}
           className="group flex min-w-0 shrink-0 items-center gap-3 rounded-[6px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--copper)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--graphite-dark)]"
@@ -228,7 +249,7 @@ export function ProtectedAppTopNav({
               href="/trainings"
               className="text-[11px] font-medium text-[var(--copper-light)] hover:underline"
             >
-              Training
+              Free Online Training
             </Link>
             <span className="mt-0.5 text-[10px] text-white/50">
               {timestampLabel}
@@ -263,7 +284,7 @@ export function ProtectedAppTopNav({
           {accountMenuOpen ? (
             <div
               id={accountMenuId}
-              className="absolute right-4 top-[4.25rem] z-40 w-[280px] border border-[var(--border-warm)] bg-white p-2 text-[var(--text-primary)] shadow-[0_24px_70px_-36px_rgba(34,26,20,0.55)]"
+              className="absolute right-4 top-[3.75rem] z-40 w-[280px] border border-[var(--border-warm)] bg-white p-2 text-[var(--text-primary)] shadow-[0_24px_70px_-36px_rgba(34,26,20,0.55)]"
             >
               <div className="border-b border-[var(--border-warm)] px-3 py-2.5">
                 <p className="truncate text-sm font-semibold text-[var(--text-primary)]">
@@ -314,33 +335,41 @@ export function ProtectedAppTopNav({
         </div>
       </div>
 
-      <div className="mx-auto flex min-h-11 w-full max-w-[1680px] flex-wrap items-center gap-2 border-b border-white/10 px-5 py-2">
-        <div className="min-w-[180px] text-[12px] font-medium text-[var(--cream)]">
-          <ProtectedAppBreadcrumbs
-            organizationName={organizationName}
-            variant="dark"
-          />
+      <div className="mx-auto flex min-h-10 w-full max-w-[1680px] flex-wrap items-center gap-3 border-b border-white/10 px-4 py-1.5 sm:px-5">
+        <div className="flex min-w-0 items-center gap-2 pr-1 text-[var(--cream)] sm:pr-3">
+          <Link
+            href={homeHref}
+            aria-label="Dashboard home"
+            className="text-white/45 transition hover:text-white/75"
+          >
+            <HomeSlashIcon />
+          </Link>
+          <span className="text-white/25">/</span>
+          <span className="truncate text-sm font-semibold text-white">
+            {activeItem?.label ?? "Dashboard"}
+          </span>
         </div>
+
+        <div className="hidden h-5 w-px bg-white/10 sm:block" />
 
         <Link
           href={projectLauncherHref}
           aria-current={pathname.startsWith("/projects") ? "page" : undefined}
           className={[
-            "inline-flex h-10 min-w-[190px] items-center justify-between rounded-[3px] border px-3 text-left text-[var(--cream)] transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--copper)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--graphite)]",
+            "inline-flex h-8 min-w-[170px] items-center justify-between gap-2 rounded-[4px] border px-2.5 text-left text-[var(--cream)] transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--copper)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--graphite)]",
             pathname.startsWith("/projects")
               ? "border-[var(--copper)] bg-[var(--copper)]/20 text-white"
               : "border-white/14 bg-white/8 hover:border-[var(--copper)] hover:bg-white/12 hover:text-white"
           ].join(" ")}
         >
-          <span className="min-w-0">
-            <span className="block text-[9px] font-semibold uppercase tracking-[0.16em] text-[var(--copper-light)]">
-              Project
-            </span>
-            <span className="mt-0.5 block truncate text-[12px] font-semibold">
-              {projectLauncherHref === "/projects"
-                ? "Open project queue"
-                : "Recent project"}
-            </span>
+          <FloorConnectorIcon
+            name="projects"
+            className="h-3.5 w-3.5 text-white/50"
+          />
+          <span className="min-w-0 truncate text-xs font-medium">
+            {projectLauncherHref === "/projects"
+              ? "Select a project"
+              : "Recent project"}
           </span>
           <Chevron open={false} />
         </Link>
@@ -351,44 +380,36 @@ export function ProtectedAppTopNav({
           aria-expanded={menuOpen}
           aria-controls={menuId}
           className={[
-            "inline-flex h-10 min-w-[180px] items-center justify-between rounded-[3px] border px-3 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--copper)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--graphite)]",
+            "inline-flex h-8 items-center justify-between gap-2 rounded-[4px] border px-2.5 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--copper)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--graphite)]",
             menuOpen
               ? "border-[var(--copper)] bg-[var(--copper)]/20 text-white"
               : "border-white/14 bg-white/8 text-[var(--cream)] hover:border-[var(--copper)] hover:bg-white/12 hover:text-white"
           ].join(" ")}
         >
-          <span className="min-w-0">
-            <span className="block text-[9px] font-semibold uppercase tracking-[0.16em] text-[var(--copper-light)]">
-              Menu
-            </span>
-            <span className="mt-0.5 block truncate text-[12px] font-semibold">
-              {activeItem?.label ?? "Dashboard"}
-            </span>
+          <span className="text-[10px] font-semibold uppercase tracking-widest text-white/45">
+            Menu
           </span>
           <Chevron open={menuOpen} />
         </button>
 
-        <GlobalSearch
-          compact
-          buttonLabel="Search"
-          buttonClassName="inline-flex h-10 min-w-[210px] max-w-full items-center justify-between rounded-[3px] border border-white/14 bg-white/8 px-3 text-[13px] font-medium text-[var(--cream)] transition hover:border-[var(--copper)] hover:bg-white/12 hover:text-white"
-        />
-        <UniversalCreateMenu
-          idBase="top-nav-universal-create-menu"
-          buttonLabel="Create"
-          buttonClassName="inline-flex h-10 items-center rounded-[3px] border border-[var(--copper)] bg-[var(--copper)] px-4 py-2 text-[13px] font-semibold text-white transition hover:bg-[var(--copper-light)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--copper-light)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--graphite)]"
-          panelClassName="mt-3"
-        />
-        <ContractorNotificationsCenter notifications={notifications} />
-
-        <div className="ml-auto flex items-center gap-2">
-          <UtilityIconFrame
-            href={homeHref}
-            label="Open dashboard home"
-            active={pathname === homeHref}
-          >
-            <FloorConnectorIcon name="dashboard" className="h-4 w-4" />
-          </UtilityIconFrame>
+        <div className="ml-auto flex min-w-0 items-center gap-2">
+          <div className="hidden sm:block">
+            <GlobalSearch
+              compact
+              buttonLabel="Search"
+              buttonClassName="inline-flex h-8 min-w-[170px] max-w-full items-center justify-between rounded-[4px] border border-white/14 bg-white/8 px-2.5 text-xs font-medium text-[var(--cream)] transition hover:border-[var(--copper)] hover:bg-white/12 hover:text-white"
+            />
+          </div>
+          <UniversalCreateMenu
+            idBase="top-nav-universal-create-menu"
+            buttonLabel="Create"
+            buttonClassName="inline-flex h-8 items-center rounded-[4px] border border-[var(--copper)] bg-[var(--copper)] px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-[var(--copper-light)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--copper-light)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--graphite)]"
+            panelClassName="mt-2"
+          />
+          <ContractorNotificationsCenter
+            notifications={notifications}
+            compact
+          />
           <UtilityIconFrame
             href="/settings"
             label="Open settings"
@@ -401,7 +422,7 @@ export function ProtectedAppTopNav({
         </div>
       </div>
 
-      <div className="mx-auto flex h-9 w-full max-w-[1680px] items-center gap-1 px-5 [background:linear-gradient(180deg,#282f38_0%,#23282f_100%)]">
+      <div className="mx-auto flex h-8 w-full max-w-[1680px] items-center gap-1 overflow-x-auto px-4 [background:linear-gradient(180deg,#282f38_0%,#23282f_100%)] sm:px-5">
         <span className="mr-2 select-none text-[10px] font-semibold uppercase tracking-widest text-white/40">
           Pinned
         </span>

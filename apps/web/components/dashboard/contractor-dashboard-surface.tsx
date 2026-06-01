@@ -109,7 +109,7 @@ type DashboardPlaceholder = {
 };
 
 export type ContractorDashboardSurfaceProps = {
-  header: {
+  header?: {
     organizationName: string;
     currentRole?: MembershipRole;
     roleLabel: string;

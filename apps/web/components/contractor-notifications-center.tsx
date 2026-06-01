@@ -65,7 +65,7 @@ export function ContractorNotificationsCenter({
         className={[
           "inline-flex items-center gap-2 rounded-[4px] border transition",
           compact
-            ? "h-9 border-[#e2d4c5] bg-[#fbf5ee] px-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#6b5442] hover:border-[#ef7d32] hover:bg-white hover:text-[#221a14]"
+            ? "h-8 border-white/15 bg-white/8 px-2.5 text-[11px] font-semibold text-white/75 hover:border-[var(--copper)] hover:bg-white/12 hover:text-white"
             : "h-10 border-[#e2d4c5] bg-[#fbf5ee] px-3.5 text-[12px] font-semibold text-[#2b241f] hover:border-[#ef7d32] hover:bg-white"
         ].join(" ")}
       >
@@ -110,7 +110,10 @@ export function ContractorNotificationsCenter({
           {hasNotifications ? (
             <div className="max-h-[70vh] overflow-y-auto">
               {notifications.sections.map((section) => (
-                <section key={section.key} className="border-b border-[#f1e7dd] last:border-b-0">
+                <section
+                  key={section.key}
+                  className="border-b border-[#f1e7dd] last:border-b-0"
+                >
                   <div className="flex items-center justify-between px-4 py-2.5">
                     <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#8f5b32]">
                       {section.label}
@@ -173,9 +176,9 @@ export function ContractorNotificationsCenter({
             </div>
           ) : (
             <div className="px-4 py-5 text-sm leading-6 text-[#665446]">
-              The contractor workspace is clear for the current high-signal checks. New
-              schedule, collections, contract, appointment, punchlist, or progress-billing
-              pressure will show up here.
+              The contractor workspace is clear for the current high-signal
+              checks. New schedule, collections, contract, appointment,
+              punchlist, or progress-billing pressure will show up here.
             </div>
           )}
         </div>
