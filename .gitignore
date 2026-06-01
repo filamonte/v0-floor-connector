@@ -37,6 +37,9 @@ pnpm-debug.log*
 !.agent/reports/.gitkeep
 !.agent/templates/*.md
 
+# local wave generation scratch attempts
+.codex/waves/**/.tmp/
+
 # system
 .DS_Store
 Thumbs.db

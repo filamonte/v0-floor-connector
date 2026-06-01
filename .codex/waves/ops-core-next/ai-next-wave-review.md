@@ -1,7 +1,7 @@
 # AI Next Wave Review
 
 Status: Manual Or Template Fallback
-Generated: 2026-06-01T16:28:17.203Z
+Generated: 2026-06-01T20:16:34.586Z
 
 ## Proposed Wave
 

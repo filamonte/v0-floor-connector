@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 import {
+  copyFileSync,
   existsSync,
   mkdirSync,
   readFileSync,
@@ -837,7 +838,21 @@ function ensureNextWaveSchema() {
   return schemaPath;
 }
 
-function buildGeneratorContext(manifest, waveDir, status) {
+function safeTimestamp() {
+  return new Date().toISOString().replace(/[-:]/g, "").replace(/\..+$/, "");
+}
+
+function createGenerationAttemptDir(waveDir) {
+  const attemptDir = join(waveDir, ".tmp", "generation", safeTimestamp());
+  mkdirSync(attemptDir, { recursive: true });
+  return attemptDir;
+}
+
+function writeJsonFile(path, value) {
+  writeFileSync(path, `${JSON.stringify(value, null, 2)}\n`);
+}
+
+function buildGeneratorContext(manifest, sourceWaveDir, status, outputDir) {
   const lines = [
     "# Wave Generator Context",
     "",
@@ -872,7 +887,7 @@ function buildGeneratorContext(manifest, waveDir, status) {
     "",
     "## Current Run Report",
     "",
-    excerptText(firstExistingText(join(waveDir, reportFileName)), 5000),
+    excerptText(firstExistingText(join(sourceWaveDir, reportFileName)), 5000),
     "",
     "## Explicit Generator Instruction",
     "",
@@ -888,19 +903,19 @@ function buildGeneratorContext(manifest, waveDir, status) {
     lines.push("");
   }
 
-  const contextPath = join(waveDir, "generator-context.md");
+  const contextPath = join(outputDir, "generator-context.md");
   writeFileSync(contextPath, `${lines.join("\n")}\n`);
   return contextPath;
 }
 
 function buildGeneratorPrompt(
   manifest,
-  waveDir,
+  outputDir,
   contextPath,
   schemaPath,
   outputPath
 ) {
-  const promptPath = join(waveDir, "generate-next-wave.prompt.md");
+  const promptPath = join(outputDir, "generate-next-wave.prompt.md");
   const prompt = `# Generate Next FloorConnector Wave
 
 Use the context bundle:
@@ -915,18 +930,53 @@ Write only JSON matching the schema to:
 
 \`${outputPath}\`
 
-Rules:
+Output contract:
 
-- Propose a product-outcome wave, not random tasks.
-- Prefer 3 to 5 bounded streams.
+- Output only JSON matching the schema.
+- Do not include Markdown, commentary, logs, analysis, or follow-up text.
+
+Wave rules:
+
+- Generate 3 to 5 product-outcome streams only.
+- Do not generate meta/debug/tooling-only streams.
+- Do not generate streams named or themed around blocked file writes, docs reading, cleanup checks, validation-only, or sandbox diagnostics.
+- Every stream must materially advance FloorConnector using existing canonical records.
+- Avoid cosmetic-only crumbs.
+- Prefer operational product areas:
+  - Field execution command
+  - Collections follow-up context
+  - Portal trust continuity
+  - E2E fixture refresh
+  - Reporting/operational visibility
+  - Customer/project continuity
 - Keep streams mergeable and reviewable.
 - Respect FloorConnector canonical lifecycle guardrails.
-- Do not propose blocked work.
-- Do not propose schema, migrations, auth, RLS, payment math, provider behavior, env var, route-protection, or production mutation tasks unless the stream is high risk and explicitly justified.
-- Include runnable Codex prompt bodies with required docs, boundaries, implementation requirements, validation, git completion, and final response requirements.
-- Include validation and git completion requirements in every promptBody.
-- Avoid cosmetic-only crumbs.
+- Do not propose schema, migrations, auth, RLS, payment math, provider behavior, env vars, route protection, or production mutation tasks.
+- No blocked streams.
+- Every stream risk must be low or medium unless explicitly allowed by the runner.
+- No high-risk streams unless --allow-high-risk is explicitly being used.
+- Every stream branch must be stream/<kebab-case-name>.
+- Every stream worktree should be under C:/FC-worktrees/<kebab-case-name-without-stream-prefix>.
+- Every promptFile must be .codex/waves/<next-wave-name>/prompts/<stream-name>.md.
 - Do not approve, run, merge, push, or activate the generated wave.
+
+Every promptBody must include:
+
+- Chat: <stream title>
+- Start by checking git status, current branch, and ahead/behind state.
+- Run git fetch origin.
+- Avoid staging unrelated changes.
+- Run git diff --check.
+- Stage only intended files.
+- Commit the completed slice.
+- Final response requirements including branch, status, commit hash, files changed, validation results, and limitations.
+
+Required promptBody boundaries:
+
+- Read the required FloorConnector docs first.
+- Use existing canonical records.
+- Do not create duplicate business models.
+- Do not change schema, migrations, Supabase policies, RLS, auth, env vars, route protection, payment math, provider behavior, or business logic outside the named product outcome.
 
 Current wave: ${manifest.name}
 `;
@@ -1076,7 +1126,9 @@ ${stream.boundaries.map((boundary) => `- ${boundary}`).join("\n")}
 
 ## Implementation Requirements
 
-- Start with \`git status --short --branch\`, current branch confirmation, and \`git fetch origin\`.
+- Start by checking \`git status --short --branch\`, current branch, and ahead/behind state.
+- Run \`git fetch origin\`.
+- Avoid staging unrelated changes.
 - Preserve existing repo conventions and canonical records.
 - Keep the slice bounded to the named product outcome.
 - Update docs only if implemented behavior changes.
@@ -1101,7 +1153,7 @@ ${stream.validation.join("\n")}
 
 ## Final Response Requirements
 
-Report branch, starting status, final status, commit hash/message, files changed, validation results, skipped checks, assumptions, and follow-up dependencies.
+Report branch, starting status, final status, commit hash/message, files changed, validation results, skipped checks, limitations, assumptions, and follow-up dependencies.
 `;
 }
 
@@ -1128,10 +1180,43 @@ function extractJson(text) {
   throw new Error("could not find JSON object in generator output");
 }
 
+function trimStrings(value) {
+  if (typeof value === "string") return value.trim();
+  if (Array.isArray(value)) return value.map((item) => trimStrings(item));
+  if (value && typeof value === "object") {
+    return Object.fromEntries(
+      Object.entries(value).map(([key, item]) => [key, trimStrings(item)])
+    );
+  }
+  return value;
+}
+
+function normalizeGeneratedWave(candidate) {
+  const normalized = trimStrings(candidate);
+  const safeName = /^[a-z0-9][a-z0-9-]*$/;
+  if (!safeName.test(normalized?.name || "")) return normalized;
+  if (!Array.isArray(normalized.streams)) return normalized;
+
+  for (const stream of normalized.streams) {
+    if (!safeName.test(stream?.name || "")) continue;
+    stream.promptFile = `.codex/waves/${normalized.name}/prompts/${stream.name}.md`;
+  }
+
+  return normalized;
+}
+
+function generatedWaveValidationError(errors) {
+  const error = new Error(errors.join("\n"));
+  error.validationErrors = errors;
+  return error;
+}
+
 function validateGeneratedWave(candidate, options = {}) {
+  candidate = normalizeGeneratedWave(candidate);
   const errors = [];
   const safeName = /^[a-z0-9][a-z0-9-]*$/;
   const safeBranch = /^stream\/[a-z0-9][a-z0-9-]*$/;
+  const safeWorktree = /^C:\/FC-worktrees\/[a-z0-9][a-z0-9-]*$/;
   const secretPatterns = [
     /\.env/i,
     /secret/i,
@@ -1141,6 +1226,14 @@ function validateGeneratedWave(candidate, options = {}) {
   ];
   const highRiskTerms =
     /\b(add|create|change|modify|update|implement|apply|run)\s+(schema|migration|migrations|rls|auth|payment math|provider|webhook|env|route protection)\b/i;
+  const metaStreamTerms =
+    /\b(meta|debug|sandbox diagnostics?|blocked file writes?|docs reading|cleanup checks?|validation-only|tooling-only)\b|blocked-file-write|docs-read|cleanup-check/i;
+  const productOutcomeTerms =
+    /field|collections?|portal|e2e|fixture|reporting|operational|visibility|customer|project|schedule|crew|invoice|payment|communications?|daily|job|handoff|continuity/i;
+
+  const streamErrors = (stream, reason) => {
+    errors.push(`stream ${stream?.name || "(unnamed)"} ${reason}`);
+  };
 
   for (const field of [
     "name",
@@ -1166,8 +1259,8 @@ function validateGeneratedWave(candidate, options = {}) {
   }
 
   const streams = Array.isArray(candidate.streams) ? candidate.streams : [];
-  if (streams.length < 3 || streams.length > 6) {
-    errors.push("streams must contain 3 to 6 streams");
+  if (streams.length < 3 || streams.length > 5) {
+    errors.push("streams must contain 3 to 5 streams");
   }
 
   const highRiskStreams = streams.filter((stream) => stream.risk === "high");
@@ -1205,16 +1298,33 @@ function validateGeneratedWave(candidate, options = {}) {
         stream[field] === null ||
         stream[field] === ""
       ) {
-        errors.push(`stream ${stream.name || "(unnamed)"} missing ${field}`);
+        streamErrors(stream, `missing ${field}`);
       }
     }
 
     if (stream.name && !safeName.test(stream.name)) {
-      errors.push(`stream ${stream.name} name must be lowercase kebab-case`);
+      streamErrors(stream, "name must be lowercase kebab-case");
+    }
+    if (metaStreamTerms.test(`${stream.name} ${stream.productOutcome || ""}`)) {
+      streamErrors(
+        stream,
+        "must be a product-outcome stream, not meta/debug/blocked/docs/cleanup/sandbox work"
+      );
     }
     if (stream.branch && !safeBranch.test(stream.branch)) {
-      errors.push(
-        `stream ${stream.name} branch must start with stream/ and use kebab-case`
+      streamErrors(stream, "branch must start with stream/ and use kebab-case");
+    }
+    if (
+      stream.name &&
+      stream.branch &&
+      stream.branch !== `stream/${stream.name}`
+    ) {
+      streamErrors(stream, "branch must match stream/<stream-name>");
+    }
+    if (stream.worktree && !safeWorktree.test(stream.worktree)) {
+      streamErrors(
+        stream,
+        "worktree must be under C:/FC-worktrees/<kebab-case-name>"
       );
     }
     const expectedPromptPrefix = `.codex/waves/${candidate.name}/prompts/`;
@@ -1222,12 +1332,38 @@ function validateGeneratedWave(candidate, options = {}) {
       stream.promptFile &&
       !stream.promptFile.startsWith(expectedPromptPrefix)
     ) {
-      errors.push(
-        `stream ${stream.name} promptFile must be inside ${expectedPromptPrefix}`
+      streamErrors(stream, `promptFile must be inside ${expectedPromptPrefix}`);
+    }
+    if (
+      stream.name &&
+      stream.promptFile &&
+      stream.promptFile !== `${expectedPromptPrefix}${stream.name}.md`
+    ) {
+      streamErrors(
+        stream,
+        `promptFile must be ${expectedPromptPrefix}${stream.name}.md`
       );
     }
     if (!["low", "medium", "high", "blocked"].includes(stream.risk)) {
-      errors.push(`stream ${stream.name} has invalid risk ${stream.risk}`);
+      streamErrors(stream, `has invalid risk ${stream.risk}`);
+    }
+    if (!["low", "medium"].includes(stream.risk) && !options.allowHighRisk) {
+      streamErrors(
+        stream,
+        "risk must be low or medium unless --allow-high-risk"
+      );
+    }
+    if (
+      !productOutcomeTerms.test(
+        `${stream.name || ""} ${stream.productOutcome || ""} ${
+          stream.whyThisMatters || ""
+        }`
+      )
+    ) {
+      streamErrors(
+        stream,
+        "must materially advance a FloorConnector operational product area"
+      );
     }
 
     const joinedText = JSON.stringify(stream);
@@ -1236,44 +1372,82 @@ function validateGeneratedWave(candidate, options = {}) {
       ""
     );
     if (secretPatterns.some((pattern) => pattern.test(joinedText))) {
-      errors.push(
-        `stream ${stream.name} references env files, secrets, tokens, or credentials`
+      streamErrors(
+        stream,
+        "references env files, secrets, tokens, or credentials"
       );
     }
     if (stream.risk !== "high" && highRiskTerms.test(textWithoutProhibitions)) {
-      errors.push(
-        `stream ${stream.name} references high-risk work but is not high risk`
-      );
+      streamErrors(stream, "references high-risk work but is not high risk");
     }
     if (!Array.isArray(stream.validation) || stream.validation.length === 0) {
-      errors.push(`stream ${stream.name} must include validation commands`);
+      streamErrors(stream, "must include validation commands");
     }
     if (
       !Array.isArray(stream.acceptanceCriteria) ||
       stream.acceptanceCriteria.length === 0
     ) {
-      errors.push(`stream ${stream.name} must include acceptance criteria`);
+      streamErrors(stream, "must include acceptance criteria");
     }
-    if (!/git status --short --branch/i.test(stream.promptBody || "")) {
-      errors.push(
-        `stream ${stream.name} promptBody must include git status start requirement`
+    const promptBody = stream.promptBody || "";
+    if (!/Chat:/i.test(promptBody)) {
+      streamErrors(stream, "promptBody must include Chat: <stream title>");
+    }
+    if (
+      !/git status --short --branch/i.test(promptBody) ||
+      !/current branch/i.test(promptBody) ||
+      !/ahead\/behind|ahead and behind|ahead.*behind/i.test(promptBody)
+    ) {
+      streamErrors(
+        stream,
+        "promptBody must include git status, current branch, and ahead/behind start requirements"
       );
     }
-    if (!/git diff --check/i.test(stream.promptBody || "")) {
-      errors.push(
-        `stream ${stream.name} promptBody must include git diff --check validation`
+    if (!/git fetch origin/i.test(promptBody)) {
+      streamErrors(stream, "promptBody must include git fetch origin");
+    }
+    if (!/avoid staging unrelated changes/i.test(promptBody)) {
+      streamErrors(
+        stream,
+        "promptBody must include avoiding unrelated staging"
       );
     }
-    if (!/commit/i.test(stream.promptBody || "")) {
-      errors.push(
-        `stream ${stream.name} promptBody must include git completion requirements`
+    if (!/git diff --check/i.test(promptBody)) {
+      streamErrors(
+        stream,
+        "promptBody must include git diff --check validation"
+      );
+    }
+    if (!/stage only intended files/i.test(promptBody)) {
+      streamErrors(
+        stream,
+        "promptBody must include staging only intended files"
+      );
+    }
+    if (!/commit the completed slice/i.test(promptBody)) {
+      streamErrors(stream, "promptBody must include commit completion");
+    }
+    if (
+      !/final response/i.test(promptBody) ||
+      !/branch/i.test(promptBody) ||
+      !/status/i.test(promptBody) ||
+      !/commit hash/i.test(promptBody) ||
+      !/files changed/i.test(promptBody) ||
+      !/validation results/i.test(promptBody) ||
+      !/limitations/i.test(promptBody)
+    ) {
+      streamErrors(
+        stream,
+        "promptBody must include final response requirements for branch, status, commit hash, files changed, validation results, and limitations"
       );
     }
   }
 
   if (errors.length > 0) {
-    throw new Error(errors.join("\n"));
+    throw generatedWaveValidationError(errors);
   }
+
+  return candidate;
 }
 
 function writeGeneratedWave(candidate, currentWaveDir, generationMode) {
@@ -1365,6 +1539,27 @@ pnpm fc:wave:approve --wave ${candidate.name} --proposal
   return { nextWaveDir, reviewPath };
 }
 
+function generatorSandboxFailure(text) {
+  return /windows sandbox/i.test(text) && /spawn setup refresh/i.test(text);
+}
+
+function writeGenerationAttemptStatus(attemptDir, failure) {
+  const failurePath = join(attemptDir, "generation-status.json");
+  writeJsonFile(failurePath, failure);
+  return failurePath;
+}
+
+function formatInvalidProposalFailure(error, attemptDir) {
+  const reasons = Array.isArray(error.validationErrors)
+    ? error.validationErrors
+    : error.message.split(/\r?\n/).filter(Boolean);
+  return [
+    "AI generated an invalid wave proposal.",
+    ...reasons.map((reason) => `- ${reason}`),
+    `Scratch attempt: ${attemptDir}`
+  ].join("\n");
+}
+
 function generateWave(manifest, waveDir, options) {
   requireCleanMain();
   git(["fetch", "origin"]);
@@ -1372,11 +1567,17 @@ function generateWave(manifest, waveDir, options) {
 
   const status = loadStatus(waveDir);
   const schemaPath = ensureNextWaveSchema();
-  const contextPath = buildGeneratorContext(manifest, waveDir, status);
-  const outputPath = join(waveDir, "generated-next-wave.json");
-  const promptPath = buildGeneratorPrompt(
+  const attemptDir = createGenerationAttemptDir(waveDir);
+  const contextPath = buildGeneratorContext(
     manifest,
     waveDir,
+    status,
+    attemptDir
+  );
+  const outputPath = join(attemptDir, "generated-next-wave.json");
+  const promptPath = buildGeneratorPrompt(
+    manifest,
+    attemptDir,
     contextPath,
     schemaPath,
     outputPath
@@ -1401,13 +1602,45 @@ function generateWave(manifest, waveDir, options) {
       outputFile: outputPath
     });
     commandResult = runProcess(command, { cwd: repoRoot });
+    writeFileSync(join(attemptDir, "stdout.txt"), commandResult.stdout);
+    writeFileSync(join(attemptDir, "stderr.txt"), commandResult.stderr);
     const raw = existsSync(outputPath)
       ? readFileSync(outputPath, "utf8")
       : `${commandResult.stdout}\n${commandResult.stderr}`;
+    writeFileSync(join(attemptDir, "generated-next-wave.raw.txt"), raw);
+
+    if (
+      commandResult.status !== 0 &&
+      generatorSandboxFailure(
+        `${commandResult.stdout}\n${commandResult.stderr}`
+      )
+    ) {
+      const failure = {
+        generatedAt: new Date().toISOString(),
+        mode: generationMode,
+        status: "failed",
+        classification:
+          "Codex Windows sandbox failed before repo commands could run.",
+        command,
+        exitCode: commandResult.status,
+        stdoutPath: join(attemptDir, "stdout.txt"),
+        stderrPath: join(attemptDir, "stderr.txt"),
+        contextPath,
+        promptPath,
+        schemaPath,
+        outputPath,
+        scratchPath: attemptDir
+      };
+      writeGenerationAttemptStatus(attemptDir, failure);
+      throw new Error(
+        `Codex Windows sandbox failed before repo commands could run.\nScratch attempt: ${attemptDir}`
+      );
+    }
+
     try {
       candidate = extractJson(raw);
+      writeJsonFile(join(attemptDir, "generated-next-wave.json"), candidate);
     } catch (error) {
-      const failurePath = join(waveDir, "generation-status.json");
       const failure = {
         generatedAt: new Date().toISOString(),
         mode: generationMode,
@@ -1420,19 +1653,50 @@ function generateWave(manifest, waveDir, options) {
         contextPath,
         promptPath,
         schemaPath,
-        outputPath
+        outputPath,
+        scratchPath: attemptDir
       };
-      writeFileSync(failurePath, `${JSON.stringify(failure, null, 2)}\n`);
-      status.generation = failure;
-      saveStatus(waveDir, status);
-      throw new Error(`Generator output parsing failed. See ${failurePath}`);
+      writeGenerationAttemptStatus(attemptDir, failure);
+      throw new Error(
+        `Generator output parsing failed. Scratch attempt: ${attemptDir}`
+      );
     }
   } else {
     generationMode = "template_fallback";
     candidate = defaultGeneratedWave(manifest);
+    writeJsonFile(join(attemptDir, "generated-next-wave.json"), candidate);
   }
 
-  validateGeneratedWave(candidate, options);
+  try {
+    candidate = validateGeneratedWave(candidate, options);
+    writeJsonFile(join(attemptDir, "generated-next-wave.json"), candidate);
+  } catch (error) {
+    const failure = {
+      generatedAt: new Date().toISOString(),
+      mode: generationMode,
+      status: "failed",
+      classification: "AI generated an invalid wave proposal.",
+      errors: Array.isArray(error.validationErrors)
+        ? error.validationErrors
+        : error.message.split(/\r?\n/).filter(Boolean),
+      commandExitCode: commandResult?.status ?? null,
+      contextPath,
+      promptPath,
+      schemaPath,
+      outputPath,
+      scratchPath: attemptDir
+    };
+    writeGenerationAttemptStatus(attemptDir, failure);
+    throw new Error(formatInvalidProposalFailure(error, attemptDir));
+  }
+
+  const trackedContextPath = join(waveDir, "generator-context.md");
+  const trackedPromptPath = join(waveDir, "generate-next-wave.prompt.md");
+  const trackedOutputPath = join(waveDir, "generated-next-wave.json");
+  copyFileSync(contextPath, trackedContextPath);
+  copyFileSync(promptPath, trackedPromptPath);
+  writeJsonFile(trackedOutputPath, candidate);
+
   const { nextWaveDir, reviewPath } = writeGeneratedWave(
     candidate,
     waveDir,
@@ -1446,18 +1710,16 @@ function generateWave(manifest, waveDir, options) {
     proposedWave: candidate.name,
     proposedWaveDir: nextWaveDir,
     reviewPath,
-    contextPath,
-    promptPath,
+    contextPath: trackedContextPath,
+    promptPath: trackedPromptPath,
     schemaPath,
-    outputPath,
+    outputPath: trackedOutputPath,
+    scratchPath: attemptDir,
     validationStatus: "passed",
     commandExitCode: commandResult?.status ?? null
   };
 
-  writeFileSync(
-    join(waveDir, "generation-status.json"),
-    `${JSON.stringify(generationStatus, null, 2)}\n`
-  );
+  writeJsonFile(join(waveDir, "generation-status.json"), generationStatus);
   status.generation = generationStatus;
   saveStatus(waveDir, status);
   return generationStatus;

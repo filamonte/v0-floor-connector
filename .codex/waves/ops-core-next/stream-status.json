@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-06-01T16:28:55.316Z",
+  "generatedAt": "2026-06-01T20:16:34.587Z",
   "approval": {
     "approved": false,
     "pushApproved": false
@@ -49,7 +49,7 @@
   "wave": "ops-core-next",
   "goal": "Make FloorConnector more operationally useful for field execution and collections follow-up without schema changes.",
   "base": "origin/main",
-  "baseCommit": "22fa6927a9bc96f0a8921f7424f45e62fcd23bcc",
+  "baseCommit": "00407c57cadb6d04cc5d154204711b3e4a4c0219",
   "nextWaveProposalPath": "C:\\FloorConnector\\.codex\\waves\\ops-core-next\\next-wave-proposal.md",
   "productStrideReview": [
     {
@@ -91,7 +91,7 @@
   ],
   "reportPath": "C:\\FloorConnector\\.codex\\waves\\ops-core-next\\run-report.md",
   "generation": {
-    "generatedAt": "2026-06-01T16:28:17.204Z",
+    "generatedAt": "2026-06-01T20:16:34.586Z",
     "mode": "template_fallback",
     "status": "manual_ai_required",
     "proposedWave": "ops-core-next-ai-proposed",
@@ -101,6 +101,7 @@
     "promptPath": "C:\\FloorConnector\\.codex\\waves\\ops-core-next\\generate-next-wave.prompt.md",
     "schemaPath": "C:\\FloorConnector\\.codex\\waves\\templates\\next-wave.schema.json",
     "outputPath": "C:\\FloorConnector\\.codex\\waves\\ops-core-next\\generated-next-wave.json",
+    "scratchPath": "C:\\FloorConnector\\.codex\\waves\\ops-core-next\\.tmp\\generation\\20260601T201634",
     "validationStatus": "passed",
     "commandExitCode": null
   }

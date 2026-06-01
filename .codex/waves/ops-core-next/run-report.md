@@ -1,9 +1,9 @@
 # Agent Wave Run Report
 
 Wave: ops-core-next
-Generated: 2026-06-01T16:28:55.315Z
+Generated: 2026-06-01T20:14:50.865Z
 Base: origin/main
-Base commit: 22fa6927a9bc96f0a8921f7424f45e62fcd23bcc
+Base commit: 00407c57cadb6d04cc5d154204711b3e4a4c0219
 
 ## Goal
 

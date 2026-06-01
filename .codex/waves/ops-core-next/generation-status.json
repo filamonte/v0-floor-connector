@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-06-01T16:28:17.204Z",
+  "generatedAt": "2026-06-01T20:16:34.586Z",
   "mode": "template_fallback",
   "status": "manual_ai_required",
   "proposedWave": "ops-core-next-ai-proposed",
@@ -9,6 +9,7 @@
   "promptPath": "C:\\FloorConnector\\.codex\\waves\\ops-core-next\\generate-next-wave.prompt.md",
   "schemaPath": "C:\\FloorConnector\\.codex\\waves\\templates\\next-wave.schema.json",
   "outputPath": "C:\\FloorConnector\\.codex\\waves\\ops-core-next\\generated-next-wave.json",
+  "scratchPath": "C:\\FloorConnector\\.codex\\waves\\ops-core-next\\.tmp\\generation\\20260601T201634",
   "validationStatus": "passed",
   "commandExitCode": null
 }

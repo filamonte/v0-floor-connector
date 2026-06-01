@@ -187,15 +187,24 @@ pnpm fc:wave:generate --wave ops-core-next
 
 The generator reads the current manifest, `run-report.md`,
 `stream-status.json`, recent git history, and current roadmap/status docs, then
-creates a context bundle and generator prompt:
+creates attempt-local scratch files first:
 
 ```text
-.codex/waves/<current-wave>/generator-context.md
-.codex/waves/<current-wave>/generate-next-wave.prompt.md
+.codex/waves/<current-wave>/.tmp/generation/<timestamp>/generator-context.md
+.codex/waves/<current-wave>/.tmp/generation/<timestamp>/generate-next-wave.prompt.md
+.codex/waves/<current-wave>/.tmp/generation/<timestamp>/generated-next-wave.raw.txt
+.codex/waves/<current-wave>/.tmp/generation/<timestamp>/generated-next-wave.json
+.codex/waves/<current-wave>/.tmp/generation/<timestamp>/generation-status.json
+.codex/waves/<current-wave>/.tmp/generation/<timestamp>/stdout.txt
+.codex/waves/<current-wave>/.tmp/generation/<timestamp>/stderr.txt
 ```
 
 If `FLOORCONNECTOR_WAVE_GENERATOR_COMMAND` is configured, the runner invokes it
-and validates the resulting JSON before writing any proposed wave files.
+and validates the resulting JSON before writing any tracked current-wave or
+proposed-wave files. Failed attempts stay under the ignored `.tmp` scratch path
+and do not update `generator-context.md`, `generate-next-wave.prompt.md`,
+`generated-next-wave.json`, `generation-status.json`, `stream-status.json`, or
+the proposed wave directory.
 
 Example:
 
@@ -219,6 +228,24 @@ The generator should write JSON to `{outputFile}`. If it does not, the runner
 attempts to parse JSON from stdout/stderr. The runner never treats arbitrary AI
 text as trusted instructions.
 
+On Windows, the recommended Codex command keeps the CLI in an unelevated
+sandbox:
+
+```powershell
+$env:FLOORCONNECTOR_WAVE_GENERATOR_COMMAND = 'codex -c windows.sandbox="unelevated" exec --cd {repo} --prompt-file {generatorPromptFile}'
+pnpm fc:wave:generate --wave ops-core-next
+```
+
+If Codex fails before repo commands can run with the known Windows sandbox
+`spawn setup refresh` issue, the runner reports:
+
+```text
+Codex Windows sandbox failed before repo commands could run.
+```
+
+The scratch attempt path is printed so the stdout/stderr diagnostics can be
+inspected without dirtying `main`.
+
 ## Structured Schema Safety
 
 AI output must match:
@@ -230,11 +257,17 @@ AI output must match:
 The runner also applies additional local validation:
 
 - valid JSON only
-- 3 to 6 streams
+- 3 to 5 streams
+- product-outcome streams only
+- no meta/debug/tooling-only streams
+- no streams named or themed around blocked file writes, docs reading, cleanup
+  checks, validation-only work, or sandbox diagnostics
 - no `blocked` streams
 - at most one high-risk stream
 - high-risk output requires `--allow-high-risk`
 - stream names, branches, worktrees, and prompt paths must be safe
+- stream branches must be `stream/<kebab-case-name>`
+- stream worktrees must be under `C:/FC-worktrees/<kebab-case-name>`
 - prompt files must be inside `.codex/waves/<next-wave>/prompts/`
 - env files, secrets, tokens, credentials, and service-role references are
   rejected
@@ -243,6 +276,17 @@ The runner also applies additional local validation:
   risk was explicitly allowed
 - every stream must include a clear product outcome, acceptance criteria,
   validation commands, and git completion requirements in `promptBody`
+- every `promptBody` must include git status/current branch/ahead-behind start
+  requirements, `git fetch origin`, `git diff --check`, unrelated-staging
+  avoidance, intended-file staging, commit completion, and final response
+  requirements covering branch, status, commit hash, files changed, validation
+  results, and limitations
+
+Before rejecting generated output, the runner only performs narrow safe
+normalization: it trims whitespace and normalizes `promptFile` to
+`.codex/waves/<next-wave>/prompts/<stream-name>.md` when the wave and stream
+names are already safe. It does not repair blocked, high-risk, meta/debug, or
+invalid product-outcome proposals.
 
 ## Template Fallback Mode
 
@@ -335,6 +379,9 @@ validation, stops on conflict or validation failure, and never pushes unless
 ## Handling Failures
 
 - Dirty `main`: commit, stash, or move unrelated changes before running.
+- Invalid AI proposal: the runner prints `AI generated an invalid wave
+proposal.`, lists the invalid stream names and exact reasons, and prints the
+  ignored scratch path under `.codex/waves/<wave>/.tmp/generation/<timestamp>/`.
 - Dirty stream worktree: inspect it; use `--resume` only when the dirty state is
   intentional.
 - Missing prompt: fix the manifest or add the prompt.
@@ -343,6 +390,23 @@ validation, stops on conflict or validation failure, and never pushes unless
 - Merge conflict: resolve in the stream or integration branch manually; the
   runner will not auto-resolve.
 - Missing agent command: use manual-agent mode.
+
+To inspect a failed generator attempt:
+
+```powershell
+Get-ChildItem .codex/waves/ops-core-next/.tmp/generation
+Get-Content .codex/waves/ops-core-next/.tmp/generation/<timestamp>/generation-status.json
+Get-Content .codex/waves/ops-core-next/.tmp/generation/<timestamp>/generated-next-wave.raw.txt
+Get-Content .codex/waves/ops-core-next/.tmp/generation/<timestamp>/stdout.txt
+Get-Content .codex/waves/ops-core-next/.tmp/generation/<timestamp>/stderr.txt
+```
+
+After reviewing the scratch diagnostics, fix the generator command or prompt
+inputs and rerun:
+
+```powershell
+pnpm fc:wave:generate --wave ops-core-next
+```
 
 ## Resume
 

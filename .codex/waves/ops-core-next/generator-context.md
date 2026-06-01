@@ -1,12 +1,13 @@
 # Wave Generator Context
 
-Generated: 2026-06-01T16:28:17.125Z
-Current main commit: de60ff74e6f94fe9ab0d28b2d86c4b0df0010898
+Generated: 2026-06-01T20:16:34.514Z
+Current main commit: b921d9096cba55b5115f38476dd28e60dae0e6ed
 
 ## Recent Git Log
 
 ```text
-de60ff74 feat: add AI wave generation gate
+b921d909 chore: harden AI wave generation
+00407c57 feat: add AI wave generation gate
 22fa6927 feat: add agent wave runner v1
 c8a7c990 Merge remote-tracking branch 'origin/stream/dispatch-board'
 25cc9ad4 Merge remote-tracking branch 'origin/main' into stream/dispatch-board
@@ -17,7 +18,6 @@ c53b7d25 feat: add project next actions panel
 6de1f484 feat: add record communication continuity panels
 03e16bb6 feat: add dashboard action queues
 ac96b92a fix: restore dashboard operating metrics
-38b2d64d fix: replace contractor app header chrome
 ```
 
 ## Current Wave
@@ -80,9 +80,9 @@ Goal: Make FloorConnector more operationally useful for field execution and coll
 # Agent Wave Run Report
 
 Wave: ops-core-next
-Generated: 2026-06-01T16:27:08.600Z
+Generated: 2026-06-01T20:14:50.865Z
 Base: origin/main
-Base commit: 22fa6927a9bc96f0a8921f7424f45e62fcd23bcc
+Base commit: 00407c57cadb6d04cc5d154204711b3e4a4c0219
 
 ## Goal
 
@@ -214,7 +214,18 @@ Validation results:
 
 ## AI Next-Wave Generation
 
-- AI next-wave generation has not run. Run `pnpm fc:wave:generate --wave ops-core-next`.
+- Status: manual_ai_required
+- Mode: template_fallback
+- Proposed wave: ops-core-next-ai-proposed
+- Review: C:\FloorConnector\.codex\waves\ops-core-next\ai-next-wave-review.md
+- Schema validation: passed
+
+Next proposed-wave command:
+
+```powershell
+pnpm fc:wave:approve --wave ops-core-next-ai-proposed --proposal
+pnpm fc:wave:prepare --wave ops-core-next-ai-proposed
+```
 
 ## Merge Recommendation
 
@@ -227,16 +238,7 @@ Human review required before approval. Do not merge until validation and product
 - Confirm validation results are acceptable.
 - Confirm dry merge checks are acceptable.
 - Confirm next-wave prompts are present.
-- Run `pnpm fc:wave:approve --wave ops-core-next` only after human approval.
-
-## Exact Commands To Run Next
-
-```powershell
-pnpm fc:wave:status --wave ops-core-next
-pnpm fc:wave:approve --wave ops-core-next
-pnpm fc:wave:merge --wave ops-core-next --approved
-# Optional after explicit approval:
-pnpm fc:wave:merge --wave ops-core-next --approved --pus
+- Run `pnpm fc:wave:approve --wave ops-core-next` only after human
 
 [excerpt truncated]
 
@@ -719,7 +721,6 @@ Current operating-core surfaces include:
   over canonical readiness, invoices/payments, retainage, progress billing,
   CrewBoard jobs/assignments, Daily Logs, field blockers, change orders, and
 
-
 [excerpt truncated]
 
 ### docs/system-overview.md
@@ -783,5 +784,3 @@ Those layers must preserve the data-management philosophy:
 - workflow stages extend canonica
 
 [excerpt truncated]
-
-```

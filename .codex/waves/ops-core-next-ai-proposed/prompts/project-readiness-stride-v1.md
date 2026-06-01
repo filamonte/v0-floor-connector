@@ -29,7 +29,9 @@ Read these before implementation:
 
 ## Implementation Requirements
 
-- Start with `git status --short --branch`, current branch confirmation, and `git fetch origin`.
+- Start by checking `git status --short --branch`, current branch, and ahead/behind state.
+- Run `git fetch origin`.
+- Avoid staging unrelated changes.
 - Preserve existing repo conventions and canonical records.
 - Keep the slice bounded to the named product outcome.
 - Update docs only if implemented behavior changes.
@@ -59,4 +61,4 @@ git diff --check
 
 ## Final Response Requirements
 
-Report branch, starting status, final status, commit hash/message, files changed, validation results, skipped checks, assumptions, and follow-up dependencies.
+Report branch, starting status, final status, commit hash/message, files changed, validation results, skipped checks, limitations, assumptions, and follow-up dependencies.
