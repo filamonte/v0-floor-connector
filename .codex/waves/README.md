@@ -61,15 +61,17 @@ does the command promote the proposal into tracked files:
 
 - `.codex/waves/<current-wave>/generator-context.md`
 - `.codex/waves/<current-wave>/generate-next-wave.prompt.md`
-- `.codex/waves/<current-wave>/generated-next-wave.json`
 - `.codex/waves/<current-wave>/generation-status.json`
 - `.codex/waves/<current-wave>/ai-next-wave-review.md`
 - `.codex/waves/<generated-wave>/wave.json`
 - `.codex/waves/<generated-wave>/PROPOSED.md`
 - `.codex/waves/<generated-wave>/prompts/*.md`
 
-Failed generator attempts do not dirty tracked wave files. Inspect the printed
-scratch path, then rerun generation after fixing the command or prompt inputs.
+Generated proposal JSON stays in the scratch attempt as
+`.codex/waves/<current-wave>/.tmp/generation/<timestamp>/generated-next-wave.json`.
+It is not promoted into the tracked current-wave folder. Failed generator
+attempts do not dirty tracked wave files. Inspect the printed scratch path,
+then rerun generation after fixing the command or prompt inputs.
 
 Generated waves are proposals, not approved execution plans. They are written
 with `state: "proposed"` and the runner refuses to prepare or run them until a
@@ -94,7 +96,7 @@ status.
 Recommended Windows Codex generator command:
 
 ```powershell
-$env:FLOORCONNECTOR_WAVE_GENERATOR_COMMAND = 'codex -c windows.sandbox="unelevated" exec --cd {repo} --prompt-file {generatorPromptFile}'
+$env:FLOORCONNECTOR_WAVE_GENERATOR_COMMAND = 'powershell -NoProfile -ExecutionPolicy Bypass -Command "Get-Content -Raw ''{generatorPromptFile}'' | codex -c windows.sandbox=''unelevated'' exec --cd ''{repo}'' --output-schema ''{schemaFile}'' -o ''{outputFile}'' -"'
 pnpm fc:wave:generate --wave ops-core-next
 ```
 

@@ -203,13 +203,15 @@ If `FLOORCONNECTOR_WAVE_GENERATOR_COMMAND` is configured, the runner invokes it
 and validates the resulting JSON before writing any tracked current-wave or
 proposed-wave files. Failed attempts stay under the ignored `.tmp` scratch path
 and do not update `generator-context.md`, `generate-next-wave.prompt.md`,
-`generated-next-wave.json`, `generation-status.json`, `stream-status.json`, or
-the proposed wave directory.
+`generation-status.json`, `stream-status.json`, `run-report.md`,
+`next-wave-proposal.md`, or the proposed wave directory. Generated proposal JSON
+stays in the scratch attempt as `generated-next-wave.json`; it is not promoted
+into the tracked current-wave folder.
 
 Example:
 
 ```powershell
-$env:FLOORCONNECTOR_WAVE_GENERATOR_COMMAND = "codex exec --cd {repo} --prompt-file {generatorPromptFile}"
+$env:FLOORCONNECTOR_WAVE_GENERATOR_COMMAND = 'powershell -NoProfile -ExecutionPolicy Bypass -Command "Get-Content -Raw ''{generatorPromptFile}'' | codex -c windows.sandbox=''unelevated'' exec --cd ''{repo}'' --output-schema ''{schemaFile}'' -o ''{outputFile}'' -"'
 pnpm fc:wave:generate --wave ops-core-next
 ```
 
@@ -232,7 +234,7 @@ On Windows, the recommended Codex command keeps the CLI in an unelevated
 sandbox:
 
 ```powershell
-$env:FLOORCONNECTOR_WAVE_GENERATOR_COMMAND = 'codex -c windows.sandbox="unelevated" exec --cd {repo} --prompt-file {generatorPromptFile}'
+$env:FLOORCONNECTOR_WAVE_GENERATOR_COMMAND = 'powershell -NoProfile -ExecutionPolicy Bypass -Command "Get-Content -Raw ''{generatorPromptFile}'' | codex -c windows.sandbox=''unelevated'' exec --cd ''{repo}'' --output-schema ''{schemaFile}'' -o ''{outputFile}'' -"'
 pnpm fc:wave:generate --wave ops-core-next
 ```
 
@@ -336,6 +338,7 @@ Then inspect:
 ```text
 .codex/waves/ops-core-next/ai-next-wave-review.md
 .codex/waves/ops-core-next/generation-status.json
+.codex/waves/ops-core-next/.tmp/generation/<timestamp>/generated-next-wave.json
 .codex/waves/<generated-wave>/PROPOSED.md
 .codex/waves/<generated-wave>/wave.json
 .codex/waves/<generated-wave>/prompts/

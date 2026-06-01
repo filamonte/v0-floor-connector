@@ -1,7 +1,6 @@
 #!/usr/bin/env node
 
 import {
-  copyFileSync,
   existsSync,
   mkdirSync,
   readFileSync,
@@ -1692,10 +1691,8 @@ function generateWave(manifest, waveDir, options) {
 
   const trackedContextPath = join(waveDir, "generator-context.md");
   const trackedPromptPath = join(waveDir, "generate-next-wave.prompt.md");
-  const trackedOutputPath = join(waveDir, "generated-next-wave.json");
-  copyFileSync(contextPath, trackedContextPath);
-  copyFileSync(promptPath, trackedPromptPath);
-  writeJsonFile(trackedOutputPath, candidate);
+  writeFileSync(trackedContextPath, readFileSync(contextPath, "utf8"));
+  writeFileSync(trackedPromptPath, readFileSync(promptPath, "utf8"));
 
   const { nextWaveDir, reviewPath } = writeGeneratedWave(
     candidate,
@@ -1713,7 +1710,7 @@ function generateWave(manifest, waveDir, options) {
     contextPath: trackedContextPath,
     promptPath: trackedPromptPath,
     schemaPath,
-    outputPath: trackedOutputPath,
+    outputPath,
     scratchPath: attemptDir,
     validationStatus: "passed",
     commandExitCode: commandResult?.status ?? null
