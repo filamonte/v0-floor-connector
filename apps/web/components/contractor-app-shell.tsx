@@ -6,7 +6,6 @@ import { AppShellMobileNav } from "@/components/app-shell-mobile-nav";
 import { ContractorNotificationsCenter } from "@/components/contractor-notifications-center";
 import { DevQaTools } from "@/components/dev-qa-tools";
 import { EarlyAccessHelpButton } from "@/components/early-access-help-button";
-import { GlobalSearch } from "@/components/global-search";
 import { OrganizationBrandLink } from "@/components/organization-brand-link";
 import { ProtectedAppBreadcrumbs } from "@/components/protected-app-breadcrumbs";
 import { ProtectedAppTopNav } from "@/components/protected-app-top-nav";
@@ -125,16 +124,6 @@ export async function ContractorAppShell({
             ) : null}
           </div>
         </main>
-
-        <footer className="border-t border-[var(--border-warm)] bg-white px-3 py-2 sm:px-5 print:hidden">
-          <div className="mx-auto flex w-full max-w-[1680px] justify-end">
-            <GlobalSearch
-              compact
-              buttonLabel="Global Search"
-              buttonClassName="inline-flex h-10 min-w-[220px] max-w-full items-center justify-between rounded-[4px] border border-[var(--border-warm)] bg-[var(--highlight)] px-3.5 text-[13px] font-medium text-[var(--text-secondary)] transition hover:border-[var(--copper)] hover:bg-white hover:text-[var(--text-primary)] xl:min-w-[280px]"
-            />
-          </div>
-        </footer>
       </div>
     </div>
   );
