@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-06-01T22:41:46.936Z",
+  "generatedAt": "2026-06-01T22:43:35.727Z",
   "approval": {
     "approved": false,
     "pushApproved": false
@@ -12,8 +12,8 @@
       "prompt": ".codex/waves/ops-core-continuity-v3/prompts/field-handoff-command-context-v1.md",
       "risk": "medium",
       "latestCommit": "b0718b97076dfba718713a9d92d62f9cc4b95f0a",
-      "note": "new branch created from base",
-      "updatedAt": "2026-06-01T22:41:44.722Z"
+      "note": "worktree already exists",
+      "updatedAt": "2026-06-01T22:43:35.016Z"
     },
     "collections-customer-project-continuity-v1": {
       "status": "prepared",
@@ -22,8 +22,8 @@
       "prompt": ".codex/waves/ops-core-continuity-v3/prompts/collections-customer-project-continuity-v1.md",
       "risk": "medium",
       "latestCommit": "b0718b97076dfba718713a9d92d62f9cc4b95f0a",
-      "note": "new branch created from base",
-      "updatedAt": "2026-06-01T22:41:45.497Z"
+      "note": "worktree already exists",
+      "updatedAt": "2026-06-01T22:43:35.252Z"
     },
     "portal-project-trust-thread-v1": {
       "status": "prepared",
@@ -32,8 +32,8 @@
       "prompt": ".codex/waves/ops-core-continuity-v3/prompts/portal-project-trust-thread-v1.md",
       "risk": "medium",
       "latestCommit": "b0718b97076dfba718713a9d92d62f9cc4b95f0a",
-      "note": "new branch created from base",
-      "updatedAt": "2026-06-01T22:41:46.245Z"
+      "note": "worktree already exists",
+      "updatedAt": "2026-06-01T22:43:35.429Z"
     },
     "reports-operations-continuity-v1": {
       "status": "prepared",
@@ -42,8 +42,8 @@
       "prompt": ".codex/waves/ops-core-continuity-v3/prompts/reports-operations-continuity-v1.md",
       "risk": "medium",
       "latestCommit": "b0718b97076dfba718713a9d92d62f9cc4b95f0a",
-      "note": "new branch created from base",
-      "updatedAt": "2026-06-01T22:41:46.936Z"
+      "note": "worktree already exists",
+      "updatedAt": "2026-06-01T22:43:35.727Z"
     }
   },
   "proposalApproval": {
@@ -55,5 +55,5 @@
   "wave": "ops-core-continuity-v3",
   "goal": "Tighten operational continuity across field execution, collections follow-up, portal trust, and reporting using existing canonical records only.",
   "base": "origin/main",
-  "baseCommit": "b0718b97076dfba718713a9d92d62f9cc4b95f0a"
+  "baseCommit": "9854f99de901cb7e4bd04c8a59bf9f99ca58ea85"
 }
