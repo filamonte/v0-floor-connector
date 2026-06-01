@@ -11,6 +11,9 @@ need to copy/paste between ChatGPT, VS Code, local Codex CLI, and Codex Cloud.
 - `reports/`: integration, status, PR readiness, and audit outputs.
 - `templates/`: reusable task and run-summary templates.
 
+Generated queue, log, and report Markdown files are local run artifacts and are
+intentionally ignored by Git; `.gitkeep` files and templates remain tracked.
+
 Keep secrets out of this folder. Queue files should describe scope, not embed
 credentials or private tokens.
 

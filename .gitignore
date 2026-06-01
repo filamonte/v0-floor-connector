@@ -28,6 +28,15 @@ turbo.json.old
 pnpm-debug.log*
 .codex-logs/
 
+# local Agent Control Tower run artifacts
+.agent/queue/*.md
+.agent/logs/*.md
+.agent/reports/*.md
+!.agent/queue/.gitkeep
+!.agent/logs/.gitkeep
+!.agent/reports/.gitkeep
+!.agent/templates/*.md
+
 # system
 .DS_Store
 Thumbs.db
