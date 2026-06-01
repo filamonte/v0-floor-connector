@@ -16,6 +16,7 @@ import { ManagerDashboardCard } from "@/components/manager-dashboard-card";
 import { ScheduleCrewAssignmentForm } from "@/components/schedule-crew-assignment-form";
 import {
   ScheduleDispatchBoardShell,
+  ScheduleFieldHandoffCommandView,
   ScheduleFieldHandoffPanel,
   ScheduleJobActionLinks,
   ScheduleNotesPreview,
@@ -54,6 +55,7 @@ import {
   type ScheduleViewKey
 } from "@/lib/schedule/links";
 import { listScheduleFieldHandoffsByJobIds } from "@/lib/schedule/field-handoff-data";
+import { buildScheduleFieldHandoffCommandView } from "@/lib/schedule/field-handoff-read-model";
 import {
   buildScheduleBoardReadModel,
   buildScheduleItems,
@@ -1424,9 +1426,15 @@ export default async function SchedulePage({
       projectId: job.projectId,
       scheduledDate: job.scheduledDate,
       dispatchStatus: job.dispatchStatus,
-      assignmentCount: job.assignmentCount
+      assignmentCount: job.assignmentCount,
+      title: getScheduleJobTitle(job),
+      customerName: job.customer?.name ?? null,
+      projectName: job.project?.name ?? null
     })),
     todayDateKey
+  });
+  const fieldHandoffCommandView = buildScheduleFieldHandoffCommandView({
+    handoffs: fieldHandoffsByJobId.values()
   });
   const projectReadinessByProjectId =
     await getDashboardProjectFinancialReadinessSummaries({
@@ -2913,6 +2921,10 @@ export default async function SchedulePage({
               </div>
             </section>
           ) : null}
+
+          <ScheduleFieldHandoffCommandView
+            commandView={fieldHandoffCommandView}
+          />
 
           <section className={schedulePanelClassName}>
             <div className={schedulePanelHeaderClassName}>

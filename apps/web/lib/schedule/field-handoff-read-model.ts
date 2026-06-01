@@ -9,6 +9,9 @@ export type ScheduleFieldHandoffJob = {
   scheduledDate: string | null;
   dispatchStatus: string;
   assignmentCount: number;
+  title?: string | null;
+  customerName?: string | null;
+  projectName?: string | null;
 };
 
 export type ScheduleFieldHandoffDailyLog = {
@@ -37,6 +40,8 @@ export type ScheduleFieldHandoffTimeCard = {
 
 export type ScheduleFieldHandoffSummary = {
   jobId: string;
+  title: string;
+  contextLabel: string;
   targetDate: string;
   hasCrewAssigned: boolean;
   dailyLog: {
@@ -62,6 +67,38 @@ export type ScheduleFieldHandoffSummary = {
   tone: "ready" | "warning" | "blocked" | "neutral";
   label: string;
   detail: string;
+};
+
+export type ScheduleFieldHandoffCommandItem = {
+  id: string;
+  jobId: string;
+  title: string;
+  contextLabel: string;
+  targetDate: string;
+  label: string;
+  detail: string;
+  tone: ScheduleFieldHandoffSummary["tone"];
+  jobHref: string;
+  projectHref: string;
+  dailyLogHref: string;
+  fieldWorkHref: string;
+  blockerHref: string;
+  latestFieldActivityAt: string | null;
+};
+
+export type ScheduleFieldHandoffCommandLane = {
+  key: "readyToWork" | "needsAttention" | "recentFieldActivity";
+  title: string;
+  description: string;
+  emptyTitle: string;
+  emptyDescription: string;
+  items: ScheduleFieldHandoffCommandItem[];
+};
+
+export type ScheduleFieldHandoffCommandView = {
+  readyToWork: ScheduleFieldHandoffCommandLane;
+  needsAttention: ScheduleFieldHandoffCommandLane;
+  recentFieldActivity: ScheduleFieldHandoffCommandLane;
 };
 
 function sortLatestByDate<T extends { logDate: string; updatedAt: string }>(
@@ -97,6 +134,21 @@ function getLatestActivityAt(input: {
 
 function getTargetDate(job: ScheduleFieldHandoffJob, todayDateKey: string) {
   return job.scheduledDate ?? todayDateKey;
+}
+
+function getJobTitle(job: ScheduleFieldHandoffJob) {
+  return job.title?.trim() || `Job ${job.id.slice(0, 8)}`;
+}
+
+function getContextLabel(job: ScheduleFieldHandoffJob) {
+  const projectName = job.projectName?.trim();
+  const customerName = job.customerName?.trim();
+
+  if (projectName && customerName) {
+    return `${customerName} - ${projectName}`;
+  }
+
+  return projectName ?? customerName ?? "Project context";
 }
 
 function getHandoffState(input: {
@@ -247,6 +299,8 @@ export function buildScheduleFieldHandoffSummaries(input: {
 
     summaries.set(job.id, {
       jobId: job.id,
+      title: getJobTitle(job),
+      contextLabel: getContextLabel(job),
       targetDate,
       hasCrewAssigned: job.assignmentCount > 0,
       dailyLog: targetDailyLog
@@ -278,4 +332,107 @@ export function buildScheduleFieldHandoffSummaries(input: {
   }
 
   return summaries;
+}
+
+function toCommandItem(
+  summary: ScheduleFieldHandoffSummary
+): ScheduleFieldHandoffCommandItem {
+  return {
+    id: summary.jobId,
+    jobId: summary.jobId,
+    title: summary.title,
+    contextLabel: summary.contextLabel,
+    targetDate: summary.targetDate,
+    label: summary.label,
+    detail: summary.detail,
+    tone: summary.tone,
+    jobHref: summary.jobHref,
+    projectHref: summary.projectHref,
+    dailyLogHref: summary.dailyLogHref,
+    fieldWorkHref: summary.fieldWorkHref,
+    blockerHref: summary.blockerHref,
+    latestFieldActivityAt: summary.latestFieldActivityAt
+  };
+}
+
+function sortByTargetDateThenTitle(
+  left: ScheduleFieldHandoffCommandItem,
+  right: ScheduleFieldHandoffCommandItem
+) {
+  const dateComparison = left.targetDate.localeCompare(right.targetDate);
+
+  if (dateComparison !== 0) {
+    return dateComparison;
+  }
+
+  return left.title.localeCompare(right.title);
+}
+
+function sortByLatestActivity(
+  left: ScheduleFieldHandoffCommandItem,
+  right: ScheduleFieldHandoffCommandItem
+) {
+  return (
+    (right.latestFieldActivityAt ?? "").localeCompare(
+      left.latestFieldActivityAt ?? ""
+    ) || sortByTargetDateThenTitle(left, right)
+  );
+}
+
+export function buildScheduleFieldHandoffCommandView(input: {
+  handoffs: Iterable<ScheduleFieldHandoffSummary>;
+  limitPerLane?: number;
+}): ScheduleFieldHandoffCommandView {
+  const limit = input.limitPerLane ?? 4;
+  const items = [...input.handoffs].map(toCommandItem);
+  const readyToWork = items
+    .filter((item) => item.tone === "ready" || item.tone === "neutral")
+    .sort(sortByTargetDateThenTitle)
+    .slice(0, limit);
+  const needsAttention = items
+    .filter((item) => item.tone === "blocked" || item.tone === "warning")
+    .sort((left, right) => {
+      const toneComparison =
+        Number(right.tone === "blocked") - Number(left.tone === "blocked");
+
+      return toneComparison || sortByTargetDateThenTitle(left, right);
+    })
+    .slice(0, limit);
+  const recentFieldActivity = items
+    .filter((item) => item.latestFieldActivityAt)
+    .sort(sortByLatestActivity)
+    .slice(0, limit);
+
+  return {
+    readyToWork: {
+      key: "readyToWork",
+      title: "Ready to work",
+      description:
+        "Scheduled jobs with crew, Daily Log continuity, and no open field blockers.",
+      emptyTitle: "No ready field handoffs right now.",
+      emptyDescription:
+        "Ready field handoffs will appear here when scheduled jobs have crew, Daily Log context, and no open field blockers.",
+      items: readyToWork
+    },
+    needsAttention: {
+      key: "needsAttention",
+      title: "Needs attention",
+      description:
+        "Crew gaps, missing Daily Logs, or open blocker notes that need review before field handoff is clear.",
+      emptyTitle: "No field handoff attention items.",
+      emptyDescription:
+        "Crew gaps, missing Daily Logs, and open field blockers will appear here when existing job records need review.",
+      items: needsAttention
+    },
+    recentFieldActivity: {
+      key: "recentFieldActivity",
+      title: "Recent field activity",
+      description:
+        "Latest Daily Log, field note, and time-card movement tied back to scheduled jobs.",
+      emptyTitle: "No recent field activity in this view.",
+      emptyDescription:
+        "Recent Daily Log, field note, and time-card activity will appear here after crews record work on existing jobs.",
+      items: recentFieldActivity
+    }
+  };
 }
