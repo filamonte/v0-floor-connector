@@ -1,0 +1,14 @@
+{
+  "generatedAt": "2026-06-01T16:28:17.204Z",
+  "mode": "template_fallback",
+  "status": "manual_ai_required",
+  "proposedWave": "ops-core-next-ai-proposed",
+  "proposedWaveDir": "C:\\FloorConnector\\.codex\\waves\\ops-core-next-ai-proposed",
+  "reviewPath": "C:\\FloorConnector\\.codex\\waves\\ops-core-next\\ai-next-wave-review.md",
+  "contextPath": "C:\\FloorConnector\\.codex\\waves\\ops-core-next\\generator-context.md",
+  "promptPath": "C:\\FloorConnector\\.codex\\waves\\ops-core-next\\generate-next-wave.prompt.md",
+  "schemaPath": "C:\\FloorConnector\\.codex\\waves\\templates\\next-wave.schema.json",
+  "outputPath": "C:\\FloorConnector\\.codex\\waves\\ops-core-next\\generated-next-wave.json",
+  "validationStatus": "passed",
+  "commandExitCode": null
+}

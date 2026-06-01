@@ -1,0 +1,136 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "FloorConnector next wave proposal",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "name",
+    "goal",
+    "rationale",
+    "base",
+    "worktreeRoot",
+    "maxConcurrency",
+    "productStrideCriteria",
+    "mainValidation",
+    "streams"
+  ],
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "goal": {
+      "type": "string"
+    },
+    "rationale": {
+      "type": "string"
+    },
+    "base": {
+      "type": "string"
+    },
+    "worktreeRoot": {
+      "type": "string"
+    },
+    "maxConcurrency": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 6
+    },
+    "productStrideCriteria": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string"
+      }
+    },
+    "mainValidation": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string"
+      }
+    },
+    "streams": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 6,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "name",
+          "branch",
+          "worktree",
+          "promptFile",
+          "risk",
+          "productOutcome",
+          "whyThisMatters",
+          "dependsOn",
+          "expectedFiles",
+          "validation",
+          "acceptanceCriteria",
+          "boundaries",
+          "promptBody"
+        ],
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "branch": {
+            "type": "string"
+          },
+          "worktree": {
+            "type": "string"
+          },
+          "promptFile": {
+            "type": "string"
+          },
+          "risk": {
+            "enum": ["low", "medium", "high", "blocked"]
+          },
+          "productOutcome": {
+            "type": "string"
+          },
+          "whyThisMatters": {
+            "type": "string"
+          },
+          "dependsOn": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "expectedFiles": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "validation": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "string"
+            }
+          },
+          "acceptanceCriteria": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "string"
+            }
+          },
+          "boundaries": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "string"
+            }
+          },
+          "promptBody": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

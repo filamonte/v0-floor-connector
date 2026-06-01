@@ -24,6 +24,7 @@ const commands = new Set([
   "validate",
   "merge-check",
   "report",
+  "generate",
   "approve",
   "merge"
 ]);
@@ -39,6 +40,7 @@ Commands:
   validate     Run stream validation commands
   merge-check  Dry-check stream merges in a scratch integration worktree
   report       Generate report and next-wave proposal
+  generate     Generate a schema-validated proposed next wave
   approve      Create approved.json after successful review
   merge        Merge approved streams into main
 
@@ -48,7 +50,8 @@ Options:
   --resume
   --force
   --approved
-  --push`);
+  --push
+  --proposal`);
 }
 
 function parseArgs(argv) {
@@ -67,7 +70,14 @@ function parseArgs(argv) {
 
     const name = key.slice(2);
     if (
-      ["allow-high-risk", "resume", "force", "approved", "push"].includes(name)
+      [
+        "allow-high-risk",
+        "resume",
+        "force",
+        "approved",
+        "push",
+        "proposal"
+      ].includes(name)
     ) {
       options[toCamel(name)] = true;
       continue;
@@ -167,6 +177,13 @@ function loadManifest(waveName) {
   return { manifest, waveDir, manifestPath };
 }
 
+function saveManifest(waveDir, manifest) {
+  writeFileSync(
+    join(waveDir, "wave.json"),
+    `${JSON.stringify(manifest, null, 2)}\n`
+  );
+}
+
 function resolveRepoPath(pathValue) {
   return isAbsolute(pathValue) ? pathValue : join(repoRoot, pathValue);
 }
@@ -223,6 +240,14 @@ function validateManifestShape(manifest, options = {}) {
   }
 }
 
+function requireActiveManifest(manifest, command) {
+  if (manifest.state === "proposed") {
+    throw new Error(
+      `Refusing to ${command} proposed wave ${manifest.name}. Run pnpm fc:wave:approve --wave ${manifest.name} --proposal after human review.`
+    );
+  }
+}
+
 function loadStatus(waveDir) {
   const statusPath = join(waveDir, statusFileName);
   if (!existsSync(statusPath)) {
@@ -269,6 +294,7 @@ function isDirty(cwd) {
 }
 
 function prepareWave(manifest, waveDir, options) {
+  requireActiveManifest(manifest, "prepare");
   validateManifestShape(manifest, options);
   git(["fetch", "origin"]);
   requireCleanMain();
@@ -363,6 +389,13 @@ function commandFromTemplate(template, manifest, stream) {
   );
 }
 
+function generatorCommandFromTemplate(template, values) {
+  return Object.entries(values).reduce(
+    (value, [key, replacement]) => value.replaceAll(`{${key}}`, replacement),
+    template
+  );
+}
+
 function runAgentsIfConfigured(manifest, waveDir, options) {
   const status = loadStatus(waveDir);
   const template = process.env.FLOORCONNECTOR_AGENT_COMMAND;
@@ -412,6 +445,7 @@ function runAgentsIfConfigured(manifest, waveDir, options) {
 }
 
 function validateWave(manifest, waveDir) {
+  requireActiveManifest(manifest, "validate");
   validateManifestShape(manifest, { allowHighRisk: true });
   const status = loadStatus(waveDir);
 
@@ -457,6 +491,7 @@ function validateWave(manifest, waveDir) {
 }
 
 function mergeCheckWave(manifest, waveDir) {
+  requireActiveManifest(manifest, "merge-check");
   validateManifestShape(manifest, { allowHighRisk: true });
   git(["fetch", "origin"]);
 
@@ -669,6 +704,765 @@ Focus on validation gaps, integration clarity, and product usefulness. Do not ex
   return proposalPath;
 }
 
+const defaultMainValidation = [
+  "pnpm.cmd --filter @floorconnector/web typecheck",
+  "pnpm.cmd --filter @floorconnector/web lint",
+  "pnpm.cmd fc:preflight:fast",
+  "git diff --check"
+];
+
+const defaultProductStrideCriteria = [
+  "Improves daily contractor operations",
+  "Connects to canonical workflow records",
+  "Reduces manual decision friction",
+  "Creates visible user-facing capability",
+  "Avoids duplicate models and module silos"
+];
+
+const docsForGenerator = [
+  "docs/developer-source-of-truth.md",
+  "docs/current-state.md",
+  "docs/workflows.md",
+  "docs/Roadmap.md",
+  "docs/target-ia.md",
+  "docs/chat-handoff.md",
+  "docs/system-overview.md"
+];
+
+function firstExistingText(...paths) {
+  for (const path of paths) {
+    if (existsSync(path)) return readFileSync(path, "utf8");
+  }
+  return "";
+}
+
+function excerptText(text, maxLength = 3000) {
+  const compact = text.replace(/\r\n/g, "\n").trim();
+  if (compact.length <= maxLength) return compact;
+  return `${compact.slice(0, maxLength)}\n\n[excerpt truncated]`;
+}
+
+function ensureNextWaveSchema() {
+  const schemaPath = join(codexWavesRoot, "templates", "next-wave.schema.json");
+  if (existsSync(schemaPath)) return schemaPath;
+
+  const schema = {
+    $schema: "https://json-schema.org/draft/2020-12/schema",
+    title: "FloorConnector next wave proposal",
+    type: "object",
+    additionalProperties: false,
+    required: [
+      "name",
+      "goal",
+      "rationale",
+      "base",
+      "worktreeRoot",
+      "maxConcurrency",
+      "productStrideCriteria",
+      "mainValidation",
+      "streams"
+    ],
+    properties: {
+      name: { type: "string" },
+      goal: { type: "string" },
+      rationale: { type: "string" },
+      base: { type: "string" },
+      worktreeRoot: { type: "string" },
+      maxConcurrency: { type: "integer", minimum: 1, maximum: 6 },
+      productStrideCriteria: {
+        type: "array",
+        minItems: 1,
+        items: { type: "string" }
+      },
+      mainValidation: {
+        type: "array",
+        minItems: 1,
+        items: { type: "string" }
+      },
+      streams: {
+        type: "array",
+        minItems: 3,
+        maxItems: 6,
+        items: {
+          type: "object",
+          additionalProperties: false,
+          required: [
+            "name",
+            "branch",
+            "worktree",
+            "promptFile",
+            "risk",
+            "productOutcome",
+            "whyThisMatters",
+            "dependsOn",
+            "expectedFiles",
+            "validation",
+            "acceptanceCriteria",
+            "boundaries",
+            "promptBody"
+          ],
+          properties: {
+            name: { type: "string" },
+            branch: { type: "string" },
+            worktree: { type: "string" },
+            promptFile: { type: "string" },
+            risk: { enum: ["low", "medium", "high", "blocked"] },
+            productOutcome: { type: "string" },
+            whyThisMatters: { type: "string" },
+            dependsOn: { type: "array", items: { type: "string" } },
+            expectedFiles: { type: "array", items: { type: "string" } },
+            validation: {
+              type: "array",
+              minItems: 1,
+              items: { type: "string" }
+            },
+            acceptanceCriteria: {
+              type: "array",
+              minItems: 1,
+              items: { type: "string" }
+            },
+            boundaries: {
+              type: "array",
+              minItems: 1,
+              items: { type: "string" }
+            },
+            promptBody: { type: "string" }
+          }
+        }
+      }
+    }
+  };
+
+  writeFileSync(schemaPath, `${JSON.stringify(schema, null, 2)}\n`);
+  return schemaPath;
+}
+
+function buildGeneratorContext(manifest, waveDir, status) {
+  const lines = [
+    "# Wave Generator Context",
+    "",
+    `Generated: ${new Date().toISOString()}`,
+    `Current main commit: ${tryGit(["rev-parse", "HEAD"]) || ""}`,
+    "",
+    "## Recent Git Log",
+    "",
+    "```text",
+    tryGit(["log", "--oneline", "-12"]) || "(unavailable)",
+    "```",
+    "",
+    "## Current Wave",
+    "",
+    `Name: ${manifest.name}`,
+    `Goal: ${manifest.goal}`,
+    "",
+    "## Current Wave Streams",
+    "",
+    ...manifest.streams.map(
+      (stream) =>
+        `- ${stream.name}: ${stream.risk}; ${stream.productOutcome}; status ${
+          status.streams?.[stream.name]?.status || "unknown"
+        }; validation ${status.streams?.[stream.name]?.validation?.status || "not_run"}`
+    ),
+    "",
+    "## Product Stride Review",
+    "",
+    "```json",
+    JSON.stringify(status.productStrideReview || [], null, 2),
+    "```",
+    "",
+    "## Current Run Report",
+    "",
+    excerptText(firstExistingText(join(waveDir, reportFileName)), 5000),
+    "",
+    "## Explicit Generator Instruction",
+    "",
+    "Generate an outcome-based next wave that materially advances FloorConnector. Avoid cosmetic-only crumbs. Prefer 3 to 5 bounded streams that connect to the canonical contractor workflow.",
+    "",
+    "## Relevant Doc Excerpts",
+    ""
+  ];
+
+  for (const docPath of docsForGenerator) {
+    lines.push(`### ${docPath}`, "");
+    lines.push(excerptText(firstExistingText(join(repoRoot, docPath)), 4500));
+    lines.push("");
+  }
+
+  const contextPath = join(waveDir, "generator-context.md");
+  writeFileSync(contextPath, `${lines.join("\n")}\n`);
+  return contextPath;
+}
+
+function buildGeneratorPrompt(
+  manifest,
+  waveDir,
+  contextPath,
+  schemaPath,
+  outputPath
+) {
+  const promptPath = join(waveDir, "generate-next-wave.prompt.md");
+  const prompt = `# Generate Next FloorConnector Wave
+
+Use the context bundle:
+
+\`${contextPath}\`
+
+Use the JSON schema:
+
+\`${schemaPath}\`
+
+Write only JSON matching the schema to:
+
+\`${outputPath}\`
+
+Rules:
+
+- Propose a product-outcome wave, not random tasks.
+- Prefer 3 to 5 bounded streams.
+- Keep streams mergeable and reviewable.
+- Respect FloorConnector canonical lifecycle guardrails.
+- Do not propose blocked work.
+- Do not propose schema, migrations, auth, RLS, payment math, provider behavior, env var, route-protection, or production mutation tasks unless the stream is high risk and explicitly justified.
+- Include runnable Codex prompt bodies with required docs, boundaries, implementation requirements, validation, git completion, and final response requirements.
+- Include validation and git completion requirements in every promptBody.
+- Avoid cosmetic-only crumbs.
+- Do not approve, run, merge, push, or activate the generated wave.
+
+Current wave: ${manifest.name}
+`;
+
+  writeFileSync(promptPath, prompt);
+  return promptPath;
+}
+
+function defaultGeneratedWave(manifest) {
+  const nextWaveName = `${manifest.name}-ai-proposed`;
+  const promptBase = `.codex/waves/${nextWaveName}/prompts`;
+  const streams = [
+    {
+      name: "project-readiness-stride-v1",
+      branch: "stream/project-readiness-stride-v1",
+      worktree: "C:/FC-worktrees/project-readiness-stride",
+      promptFile: `${promptBase}/project-readiness-stride-v1.md`,
+      risk: "medium",
+      productOutcome:
+        "Tighten Project Workspace readiness and next-action continuity over existing project, estimate, contract, job, invoice, and payment records.",
+      whyThisMatters:
+        "Project remains the operating hub, and clearer readiness makes the existing canonical loop easier to act on without adding new models.",
+      dependsOn: [],
+      expectedFiles: [
+        "apps/web/app/(app)/projects",
+        "apps/web/lib/projects",
+        "docs/current-state.md"
+      ],
+      validation: defaultMainValidation,
+      acceptanceCriteria: [
+        "Project-facing changes use existing canonical records and read models.",
+        "No schema, auth, RLS, payment math, provider, or route-protection changes are made.",
+        "Users can identify the next safe operational action more quickly."
+      ],
+      boundaries: [
+        "Do not create a project activity table or duplicate project state.",
+        "Do not mutate source records from read-model surfaces.",
+        "Do not expose portal-only or contractor-only data incorrectly."
+      ],
+      promptBody: ""
+    },
+    {
+      name: "crewboard-field-handoff-stride-v1",
+      branch: "stream/crewboard-field-handoff-stride-v1",
+      worktree: "C:/FC-worktrees/crewboard-field-handoff-stride",
+      promptFile: `${promptBase}/crewboard-field-handoff-stride-v1.md`,
+      risk: "medium",
+      productOutcome:
+        "Improve CrewBoard to field execution handoff clarity using canonical jobs, job assignments, daily logs, field notes, and project context.",
+      whyThisMatters:
+        "The schedule-to-field boundary is where operations become real work, and it should be clear without creating a dispatch or field silo.",
+      dependsOn: [],
+      expectedFiles: [
+        "apps/web/app/(app)/schedule",
+        "apps/web/lib/schedule",
+        "docs/current-state.md"
+      ],
+      validation: defaultMainValidation,
+      acceptanceCriteria: [
+        "CrewBoard handoff remains advisory/read-only unless using existing actions.",
+        "Daily Log and Job links route to canonical records.",
+        "No new schedule, dispatch, or field task model is introduced."
+      ],
+      boundaries: [
+        "Do not add route optimization, automated scheduling, or dispatch tables.",
+        "Do not bypass Ready Check or project readiness gates.",
+        "Do not expose field internals to portal users."
+      ],
+      promptBody: ""
+    },
+    {
+      name: "portal-operational-trust-stride-v1",
+      branch: "stream/portal-operational-trust-stride-v1",
+      worktree: "C:/FC-worktrees/portal-operational-trust-stride",
+      promptFile: `${promptBase}/portal-operational-trust-stride-v1.md`,
+      risk: "medium",
+      productOutcome:
+        "Clarify customer-safe portal continuity across project, contract, invoice, payment, and shared document review paths.",
+      whyThisMatters:
+        "The portal should reinforce the same shared operational loop without leaking contractor-only state or creating portal-owned truth.",
+      dependsOn: [],
+      expectedFiles: [
+        "apps/web/app/portal",
+        "apps/web/lib/portal",
+        "docs/current-state.md"
+      ],
+      validation: defaultMainValidation,
+      acceptanceCriteria: [
+        "Portal copy remains customer-safe and scoped by existing access checks.",
+        "Customer actions route to canonical estimate, contract, invoice, and payment records.",
+        "No portal-owned copies or access-rule changes are introduced."
+      ],
+      boundaries: [
+        "Do not change portal grants, RLS, auth, or route protection.",
+        "Do not expose internal blockers, Job Notes, provider diagnostics, or contractor-only evidence.",
+        "Do not create portal-specific business records."
+      ],
+      promptBody: ""
+    }
+  ];
+
+  for (const stream of streams) {
+    stream.promptBody = buildDefaultPromptBody(stream);
+  }
+
+  return {
+    name: nextWaveName,
+    goal: "Advance FloorConnector operational continuity across Project Workspace, CrewBoard field handoff, and customer-safe portal trust without schema changes.",
+    rationale:
+      "Template fallback selected high-value operational strides from current docs and wave context while preserving canonical records and human approval.",
+    base: "origin/main",
+    worktreeRoot: "C:/FC-worktrees",
+    maxConcurrency: 2,
+    productStrideCriteria: defaultProductStrideCriteria,
+    mainValidation: defaultMainValidation,
+    streams
+  };
+}
+
+function buildDefaultPromptBody(stream) {
+  return `# Chat: ${titleFromSlug(stream.name)}
+
+Branch: \`${stream.branch}\`
+Worktree: \`${stream.worktree.replaceAll("/", "\\")}\`
+
+## Goal
+
+${stream.productOutcome}
+
+## Required Docs
+
+Read these before implementation:
+
+- \`docs/developer-source-of-truth.md\`
+- \`docs/current-state.md\`
+- \`docs/workflows.md\`
+- \`docs/chat-handoff.md\`
+- \`docs/system-overview.md\`
+- \`.codex/worktree-rules.md\`
+- \`.codex/active-stream-plan.md\`
+
+## Boundaries
+
+${stream.boundaries.map((boundary) => `- ${boundary}`).join("\n")}
+- Do not change schema, migrations, Supabase policies, RLS, auth, env vars, route protection, payment math, provider behavior, or unrelated business logic.
+- Do not create duplicate business models or portal-owned operational state.
+
+## Implementation Requirements
+
+- Start with \`git status --short --branch\`, current branch confirmation, and \`git fetch origin\`.
+- Preserve existing repo conventions and canonical records.
+- Keep the slice bounded to the named product outcome.
+- Update docs only if implemented behavior changes.
+
+## Acceptance Criteria
+
+${stream.acceptanceCriteria.map((item) => `- ${item}`).join("\n")}
+
+## Validation
+
+Run:
+
+\`\`\`powershell
+${stream.validation.join("\n")}
+\`\`\`
+
+## Git Completion Requirements
+
+- Stage only intended files.
+- Commit the completed slice.
+- Do not push unless asked.
+
+## Final Response Requirements
+
+Report branch, starting status, final status, commit hash/message, files changed, validation results, skipped checks, assumptions, and follow-up dependencies.
+`;
+}
+
+function titleFromSlug(slug) {
+  return slug
+    .split("-")
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
+}
+
+function extractJson(text) {
+  const trimmed = text.trim();
+  if (!trimmed) throw new Error("generator output was empty");
+  if (trimmed.startsWith("{")) return JSON.parse(trimmed);
+
+  const fenced = trimmed.match(/```(?:json)?\s*([\s\S]*?)```/i);
+  if (fenced) return JSON.parse(fenced[1]);
+
+  const first = trimmed.indexOf("{");
+  const last = trimmed.lastIndexOf("}");
+  if (first >= 0 && last > first)
+    return JSON.parse(trimmed.slice(first, last + 1));
+
+  throw new Error("could not find JSON object in generator output");
+}
+
+function validateGeneratedWave(candidate, options = {}) {
+  const errors = [];
+  const safeName = /^[a-z0-9][a-z0-9-]*$/;
+  const safeBranch = /^stream\/[a-z0-9][a-z0-9-]*$/;
+  const secretPatterns = [
+    /\.env/i,
+    /secret/i,
+    /service[_-]?role/i,
+    /password/i,
+    /token/i
+  ];
+  const highRiskTerms =
+    /\b(add|create|change|modify|update|implement|apply|run)\s+(schema|migration|migrations|rls|auth|payment math|provider|webhook|env|route protection)\b/i;
+
+  for (const field of [
+    "name",
+    "goal",
+    "rationale",
+    "base",
+    "worktreeRoot",
+    "maxConcurrency",
+    "productStrideCriteria",
+    "mainValidation",
+    "streams"
+  ]) {
+    if (candidate[field] === undefined || candidate[field] === null) {
+      errors.push(`missing required field: ${field}`);
+    }
+  }
+
+  if (candidate.name && !safeName.test(candidate.name)) {
+    errors.push("name must be lowercase kebab-case");
+  }
+  if (!Number.isInteger(candidate.maxConcurrency)) {
+    errors.push("maxConcurrency must be an integer");
+  }
+
+  const streams = Array.isArray(candidate.streams) ? candidate.streams : [];
+  if (streams.length < 3 || streams.length > 6) {
+    errors.push("streams must contain 3 to 6 streams");
+  }
+
+  const highRiskStreams = streams.filter((stream) => stream.risk === "high");
+  const blockedStreams = streams.filter((stream) => stream.risk === "blocked");
+  if (blockedStreams.length > 0) {
+    errors.push(
+      `blocked streams are refused: ${blockedStreams.map((stream) => stream.name).join(", ")}`
+    );
+  }
+  if (highRiskStreams.length > 1) {
+    errors.push("refusing more than one high-risk stream in one wave");
+  }
+  if (highRiskStreams.length > 0 && !options.allowHighRisk) {
+    errors.push("high-risk generated streams require --allow-high-risk");
+  }
+
+  for (const stream of streams) {
+    for (const field of [
+      "name",
+      "branch",
+      "worktree",
+      "promptFile",
+      "risk",
+      "productOutcome",
+      "whyThisMatters",
+      "dependsOn",
+      "expectedFiles",
+      "validation",
+      "acceptanceCriteria",
+      "boundaries",
+      "promptBody"
+    ]) {
+      if (
+        stream[field] === undefined ||
+        stream[field] === null ||
+        stream[field] === ""
+      ) {
+        errors.push(`stream ${stream.name || "(unnamed)"} missing ${field}`);
+      }
+    }
+
+    if (stream.name && !safeName.test(stream.name)) {
+      errors.push(`stream ${stream.name} name must be lowercase kebab-case`);
+    }
+    if (stream.branch && !safeBranch.test(stream.branch)) {
+      errors.push(
+        `stream ${stream.name} branch must start with stream/ and use kebab-case`
+      );
+    }
+    const expectedPromptPrefix = `.codex/waves/${candidate.name}/prompts/`;
+    if (
+      stream.promptFile &&
+      !stream.promptFile.startsWith(expectedPromptPrefix)
+    ) {
+      errors.push(
+        `stream ${stream.name} promptFile must be inside ${expectedPromptPrefix}`
+      );
+    }
+    if (!["low", "medium", "high", "blocked"].includes(stream.risk)) {
+      errors.push(`stream ${stream.name} has invalid risk ${stream.risk}`);
+    }
+
+    const joinedText = JSON.stringify(stream);
+    const textWithoutProhibitions = joinedText.replace(
+      /do not [^.!?\n]+[.!?]?/gi,
+      ""
+    );
+    if (secretPatterns.some((pattern) => pattern.test(joinedText))) {
+      errors.push(
+        `stream ${stream.name} references env files, secrets, tokens, or credentials`
+      );
+    }
+    if (stream.risk !== "high" && highRiskTerms.test(textWithoutProhibitions)) {
+      errors.push(
+        `stream ${stream.name} references high-risk work but is not high risk`
+      );
+    }
+    if (!Array.isArray(stream.validation) || stream.validation.length === 0) {
+      errors.push(`stream ${stream.name} must include validation commands`);
+    }
+    if (
+      !Array.isArray(stream.acceptanceCriteria) ||
+      stream.acceptanceCriteria.length === 0
+    ) {
+      errors.push(`stream ${stream.name} must include acceptance criteria`);
+    }
+    if (!/git status --short --branch/i.test(stream.promptBody || "")) {
+      errors.push(
+        `stream ${stream.name} promptBody must include git status start requirement`
+      );
+    }
+    if (!/git diff --check/i.test(stream.promptBody || "")) {
+      errors.push(
+        `stream ${stream.name} promptBody must include git diff --check validation`
+      );
+    }
+    if (!/commit/i.test(stream.promptBody || "")) {
+      errors.push(
+        `stream ${stream.name} promptBody must include git completion requirements`
+      );
+    }
+  }
+
+  if (errors.length > 0) {
+    throw new Error(errors.join("\n"));
+  }
+}
+
+function writeGeneratedWave(candidate, currentWaveDir, generationMode) {
+  const nextWaveDir = join(codexWavesRoot, candidate.name);
+  const promptsDir = join(nextWaveDir, "prompts");
+  mkdirSync(promptsDir, { recursive: true });
+
+  const manifest = {
+    state: "proposed",
+    name: candidate.name,
+    goal: candidate.goal,
+    rationale: candidate.rationale,
+    base: candidate.base,
+    worktreeRoot: candidate.worktreeRoot,
+    maxConcurrency: candidate.maxConcurrency,
+    mainValidation: candidate.mainValidation,
+    productStrideCriteria: candidate.productStrideCriteria,
+    streams: candidate.streams.map((stream) => ({
+      name: stream.name,
+      branch: stream.branch,
+      worktree: stream.worktree,
+      prompt: stream.promptFile,
+      risk: stream.risk,
+      productOutcome: stream.productOutcome,
+      expectedFiles: stream.expectedFiles,
+      validation: stream.validation
+    }))
+  };
+
+  saveManifest(nextWaveDir, manifest);
+  for (const stream of candidate.streams) {
+    writeFileSync(resolveRepoPath(stream.promptFile), stream.promptBody);
+  }
+
+  const proposed = `# Proposed Wave
+
+Status: Proposed
+Source: ${generationMode}
+Generated: ${new Date().toISOString()}
+
+This wave is not active. Review \`wave.json\` and prompts, then activate with:
+
+\`\`\`powershell
+pnpm fc:wave:approve --wave ${candidate.name} --proposal
+\`\`\`
+
+Do not run, merge, or push it before human review.
+`;
+  writeFileSync(join(nextWaveDir, "PROPOSED.md"), proposed);
+
+  const reviewPath = join(currentWaveDir, "ai-next-wave-review.md");
+  const review = `# AI Next Wave Review
+
+Status: ${generationMode === "generator_command" ? "Generated" : "Manual Or Template Fallback"}
+Generated: ${new Date().toISOString()}
+
+## Proposed Wave
+
+- Name: ${candidate.name}
+- Goal: ${candidate.goal}
+- Mode: ${generationMode}
+- State: proposed
+
+## Rationale
+
+${candidate.rationale}
+
+## Streams
+
+${candidate.streams
+  .map(
+    (stream) => `- ${stream.name} (${stream.risk}): ${stream.productOutcome}
+  - Why: ${stream.whyThisMatters}`
+  )
+  .join("\n")}
+
+## Human Review Required
+
+This wave is not approved and was not run. Review the manifest and prompts before activation.
+
+Next command:
+
+\`\`\`powershell
+pnpm fc:wave:approve --wave ${candidate.name} --proposal
+\`\`\`
+`;
+  writeFileSync(reviewPath, review);
+
+  return { nextWaveDir, reviewPath };
+}
+
+function generateWave(manifest, waveDir, options) {
+  requireCleanMain();
+  git(["fetch", "origin"]);
+  validateManifestShape(manifest, { allowHighRisk: true });
+
+  const status = loadStatus(waveDir);
+  const schemaPath = ensureNextWaveSchema();
+  const contextPath = buildGeneratorContext(manifest, waveDir, status);
+  const outputPath = join(waveDir, "generated-next-wave.json");
+  const promptPath = buildGeneratorPrompt(
+    manifest,
+    waveDir,
+    contextPath,
+    schemaPath,
+    outputPath
+  );
+  const generatorCommand = process.env.FLOORCONNECTOR_WAVE_GENERATOR_COMMAND;
+
+  let candidate;
+  let generationMode = "template_fallback";
+  let commandResult = null;
+
+  if (generatorCommand) {
+    generationMode = "generator_command";
+    const nextWavePlaceholder = `${manifest.name}-next`;
+    const command = generatorCommandFromTemplate(generatorCommand, {
+      repo: repoRoot,
+      wave: manifest.name,
+      currentWave: manifest.name,
+      nextWave: nextWavePlaceholder,
+      generatorPromptFile: promptPath,
+      contextFile: contextPath,
+      schemaFile: schemaPath,
+      outputFile: outputPath
+    });
+    commandResult = runProcess(command, { cwd: repoRoot });
+    const raw = existsSync(outputPath)
+      ? readFileSync(outputPath, "utf8")
+      : `${commandResult.stdout}\n${commandResult.stderr}`;
+    try {
+      candidate = extractJson(raw);
+    } catch (error) {
+      const failurePath = join(waveDir, "generation-status.json");
+      const failure = {
+        generatedAt: new Date().toISOString(),
+        mode: generationMode,
+        status: "failed",
+        error: error.message,
+        command,
+        exitCode: commandResult.status,
+        stdout: commandResult.stdout.slice(-4000),
+        stderr: commandResult.stderr.slice(-4000),
+        contextPath,
+        promptPath,
+        schemaPath,
+        outputPath
+      };
+      writeFileSync(failurePath, `${JSON.stringify(failure, null, 2)}\n`);
+      status.generation = failure;
+      saveStatus(waveDir, status);
+      throw new Error(`Generator output parsing failed. See ${failurePath}`);
+    }
+  } else {
+    generationMode = "template_fallback";
+    candidate = defaultGeneratedWave(manifest);
+  }
+
+  validateGeneratedWave(candidate, options);
+  const { nextWaveDir, reviewPath } = writeGeneratedWave(
+    candidate,
+    waveDir,
+    generationMode
+  );
+
+  const generationStatus = {
+    generatedAt: new Date().toISOString(),
+    mode: generatorCommand ? "generator_command" : "template_fallback",
+    status: generatorCommand ? "generated" : "manual_ai_required",
+    proposedWave: candidate.name,
+    proposedWaveDir: nextWaveDir,
+    reviewPath,
+    contextPath,
+    promptPath,
+    schemaPath,
+    outputPath,
+    validationStatus: "passed",
+    commandExitCode: commandResult?.status ?? null
+  };
+
+  writeFileSync(
+    join(waveDir, "generation-status.json"),
+    `${JSON.stringify(generationStatus, null, 2)}\n`
+  );
+  status.generation = generationStatus;
+  saveStatus(waveDir, status);
+  return generationStatus;
+}
+
 function reportWave(manifest, waveDir) {
   validateManifestShape(manifest, { allowHighRisk: true });
   const status = loadStatus(waveDir);
@@ -741,6 +1535,23 @@ ${formatValidation(validation)}
   )
     ? "Human review required before approval. Do not merge until validation and product-stride concerns are resolved."
     : "Streams are eligible for human approval if the diff review confirms scope and product value.";
+  const generation = status.generation;
+  const generationSection = generation
+    ? `- Status: ${generation.status}
+- Mode: ${generation.mode}
+- Proposed wave: ${generation.proposedWave || "(none)"}
+- Review: ${generation.reviewPath || "(none)"}
+- Schema validation: ${generation.validationStatus || "not_run"}
+
+Next proposed-wave command:
+
+\`\`\`powershell
+pnpm fc:wave:approve --wave ${generation.proposedWave} --proposal
+pnpm fc:wave:prepare --wave ${generation.proposedWave}
+\`\`\``
+    : "- AI next-wave generation has not run. Run `pnpm fc:wave:generate --wave " +
+      manifest.name +
+      "`.";
 
   const report = `# Agent Wave Run Report
 
@@ -782,6 +1593,10 @@ ${strideRows}
 ## Next Prompt Proposals
 
 - ${nextProposalPath}
+
+## AI Next-Wave Generation
+
+${generationSection}
 
 ## Merge Recommendation
 
@@ -827,6 +1642,31 @@ function formatValidation(validation) {
 }
 
 function approveWave(manifest, waveDir, options) {
+  if (options.proposal) {
+    if (manifest.state !== "proposed") {
+      throw new Error(
+        `Refusing proposal approval: wave ${manifest.name} is not marked proposed.`
+      );
+    }
+    manifest.state = "active";
+    manifest.activatedAt = new Date().toISOString();
+    saveManifest(waveDir, manifest);
+    const proposalApproval = {
+      proposalApproved: true,
+      activatedAt: manifest.activatedAt,
+      wave: manifest.name
+    };
+    writeFileSync(
+      join(waveDir, "proposal-approved.json"),
+      `${JSON.stringify(proposalApproval, null, 2)}\n`
+    );
+    const status = loadStatus(waveDir);
+    status.proposalApproval = proposalApproval;
+    saveStatus(waveDir, status);
+    return status;
+  }
+
+  requireActiveManifest(manifest, "approve");
   const status = loadStatus(waveDir);
   const failed = Object.values(status.streams || {}).filter(
     (stream) => stream.validation?.status === "failed"
@@ -861,6 +1701,7 @@ function approveWave(manifest, waveDir, options) {
 }
 
 function mergeWave(manifest, waveDir, options) {
+  requireActiveManifest(manifest, "merge");
   if (!options.approved) {
     throw new Error("Refusing merge without --approved.");
   }
@@ -992,6 +1833,9 @@ function main() {
       case "report":
         reportWave(manifest, waveDir);
         break;
+      case "generate":
+        generateWave(manifest, waveDir, options);
+        break;
       case "approve":
         approveWave(manifest, waveDir, options);
         break;
@@ -999,6 +1843,7 @@ function main() {
         mergeWave(manifest, waveDir, options);
         break;
       case "run":
+        requireActiveManifest(manifest, "run");
         prepareWave(manifest, waveDir, options);
         runAgentsIfConfigured(manifest, waveDir, options);
         validateWave(manifest, waveDir);

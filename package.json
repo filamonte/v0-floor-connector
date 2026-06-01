@@ -58,6 +58,7 @@
     "fc:wave:validate": "node scripts/fc-wave-runner.mjs validate",
     "fc:wave:merge-check": "node scripts/fc-wave-runner.mjs merge-check",
     "fc:wave:report": "node scripts/fc-wave-runner.mjs report",
+    "fc:wave:generate": "node scripts/fc-wave-runner.mjs generate",
     "fc:wave:approve": "node scripts/fc-wave-runner.mjs approve",
     "fc:wave:merge": "node scripts/fc-wave-runner.mjs merge"
   },

@@ -1,4 +1,5 @@
 {
+  "state": "active",
   "name": "example-wave",
   "goal": "Describe the product outcome for this wave.",
   "base": "origin/main",

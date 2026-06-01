@@ -177,6 +177,140 @@ first, start with git status and fetch, use existing canonical records, avoid
 schema unless explicitly approved, run validation, commit only the completed
 slice, and report final status honestly.
 
+## AI-Driven Generation
+
+Wave Runner V1.5 adds a separate proposed-wave generator:
+
+```powershell
+pnpm fc:wave:generate --wave ops-core-next
+```
+
+The generator reads the current manifest, `run-report.md`,
+`stream-status.json`, recent git history, and current roadmap/status docs, then
+creates a context bundle and generator prompt:
+
+```text
+.codex/waves/<current-wave>/generator-context.md
+.codex/waves/<current-wave>/generate-next-wave.prompt.md
+```
+
+If `FLOORCONNECTOR_WAVE_GENERATOR_COMMAND` is configured, the runner invokes it
+and validates the resulting JSON before writing any proposed wave files.
+
+Example:
+
+```powershell
+$env:FLOORCONNECTOR_WAVE_GENERATOR_COMMAND = "codex exec --cd {repo} --prompt-file {generatorPromptFile}"
+pnpm fc:wave:generate --wave ops-core-next
+```
+
+Supported placeholders:
+
+- `{repo}`
+- `{wave}`
+- `{currentWave}`
+- `{nextWave}`
+- `{generatorPromptFile}`
+- `{contextFile}`
+- `{schemaFile}`
+- `{outputFile}`
+
+The generator should write JSON to `{outputFile}`. If it does not, the runner
+attempts to parse JSON from stdout/stderr. The runner never treats arbitrary AI
+text as trusted instructions.
+
+## Structured Schema Safety
+
+AI output must match:
+
+```text
+.codex/waves/templates/next-wave.schema.json
+```
+
+The runner also applies additional local validation:
+
+- valid JSON only
+- 3 to 6 streams
+- no `blocked` streams
+- at most one high-risk stream
+- high-risk output requires `--allow-high-risk`
+- stream names, branches, worktrees, and prompt paths must be safe
+- prompt files must be inside `.codex/waves/<next-wave>/prompts/`
+- env files, secrets, tokens, credentials, and service-role references are
+  rejected
+- schema, migrations, auth, RLS, payment math, provider, webhook, env, and
+  route-protection tasks are rejected unless the stream is high risk and high
+  risk was explicitly allowed
+- every stream must include a clear product outcome, acceptance criteria,
+  validation commands, and git completion requirements in `promptBody`
+
+## Template Fallback Mode
+
+If `FLOORCONNECTOR_WAVE_GENERATOR_COMMAND` is not set,
+`pnpm fc:wave:generate` exits safely and writes a template fallback proposed
+wave plus manual generator files. The generation status is marked
+`manual_ai_required` so the user can inspect the context/prompt or rerun with a
+configured generator command.
+
+Fallback mode does not run agents and does not approve the proposed wave.
+
+## Generated Wave Approval
+
+Generated waves are written with:
+
+```json
+{
+  "state": "proposed"
+}
+```
+
+The runner refuses to `run`, `prepare`, `validate`, `merge-check`, or `merge`
+a proposed wave. A human must review the manifest, prompt files,
+`PROPOSED.md`, and the current wave's `ai-next-wave-review.md`, then activate:
+
+```powershell
+pnpm fc:wave:approve --wave <generated-wave-name> --proposal
+```
+
+This changes the generated manifest to `state: "active"` and writes
+`proposal-approved.json`. Activation is not stream approval and does not merge
+or push anything. Stream merge approval still uses the normal approval and merge
+gate after the wave has actually run.
+
+## Recommended AI Generation Workflow
+
+```powershell
+pnpm fc:wave:validate --wave ops-core-next
+pnpm fc:wave:merge-check --wave ops-core-next
+pnpm fc:wave:report --wave ops-core-next
+pnpm fc:wave:generate --wave ops-core-next
+pnpm fc:wave:status --wave ops-core-next
+```
+
+Then inspect:
+
+```text
+.codex/waves/ops-core-next/ai-next-wave-review.md
+.codex/waves/ops-core-next/generation-status.json
+.codex/waves/<generated-wave>/PROPOSED.md
+.codex/waves/<generated-wave>/wave.json
+.codex/waves/<generated-wave>/prompts/
+```
+
+Only after review:
+
+```powershell
+pnpm fc:wave:approve --wave <generated-wave> --proposal
+pnpm fc:wave:prepare --wave <generated-wave>
+```
+
+## Generator Boundaries
+
+The generator is allowed to propose product-outcome wave manifests and prompt
+files. It must never approve, run, merge, push, mutate product code, apply
+migrations, edit env files, call Supabase, call providers, store secrets, or
+claim planned capabilities are implemented.
+
 ## Merge And Push
 
 Approval and merge are separate:

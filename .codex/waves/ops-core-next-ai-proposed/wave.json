@@ -1,0 +1,81 @@
+{
+  "state": "proposed",
+  "name": "ops-core-next-ai-proposed",
+  "goal": "Advance FloorConnector operational continuity across Project Workspace, CrewBoard field handoff, and customer-safe portal trust without schema changes.",
+  "rationale": "Template fallback selected high-value operational strides from current docs and wave context while preserving canonical records and human approval.",
+  "base": "origin/main",
+  "worktreeRoot": "C:/FC-worktrees",
+  "maxConcurrency": 2,
+  "mainValidation": [
+    "pnpm.cmd --filter @floorconnector/web typecheck",
+    "pnpm.cmd --filter @floorconnector/web lint",
+    "pnpm.cmd fc:preflight:fast",
+    "git diff --check"
+  ],
+  "productStrideCriteria": [
+    "Improves daily contractor operations",
+    "Connects to canonical workflow records",
+    "Reduces manual decision friction",
+    "Creates visible user-facing capability",
+    "Avoids duplicate models and module silos"
+  ],
+  "streams": [
+    {
+      "name": "project-readiness-stride-v1",
+      "branch": "stream/project-readiness-stride-v1",
+      "worktree": "C:/FC-worktrees/project-readiness-stride",
+      "prompt": ".codex/waves/ops-core-next-ai-proposed/prompts/project-readiness-stride-v1.md",
+      "risk": "medium",
+      "productOutcome": "Tighten Project Workspace readiness and next-action continuity over existing project, estimate, contract, job, invoice, and payment records.",
+      "expectedFiles": [
+        "apps/web/app/(app)/projects",
+        "apps/web/lib/projects",
+        "docs/current-state.md"
+      ],
+      "validation": [
+        "pnpm.cmd --filter @floorconnector/web typecheck",
+        "pnpm.cmd --filter @floorconnector/web lint",
+        "pnpm.cmd fc:preflight:fast",
+        "git diff --check"
+      ]
+    },
+    {
+      "name": "crewboard-field-handoff-stride-v1",
+      "branch": "stream/crewboard-field-handoff-stride-v1",
+      "worktree": "C:/FC-worktrees/crewboard-field-handoff-stride",
+      "prompt": ".codex/waves/ops-core-next-ai-proposed/prompts/crewboard-field-handoff-stride-v1.md",
+      "risk": "medium",
+      "productOutcome": "Improve CrewBoard to field execution handoff clarity using canonical jobs, job assignments, daily logs, field notes, and project context.",
+      "expectedFiles": [
+        "apps/web/app/(app)/schedule",
+        "apps/web/lib/schedule",
+        "docs/current-state.md"
+      ],
+      "validation": [
+        "pnpm.cmd --filter @floorconnector/web typecheck",
+        "pnpm.cmd --filter @floorconnector/web lint",
+        "pnpm.cmd fc:preflight:fast",
+        "git diff --check"
+      ]
+    },
+    {
+      "name": "portal-operational-trust-stride-v1",
+      "branch": "stream/portal-operational-trust-stride-v1",
+      "worktree": "C:/FC-worktrees/portal-operational-trust-stride",
+      "prompt": ".codex/waves/ops-core-next-ai-proposed/prompts/portal-operational-trust-stride-v1.md",
+      "risk": "medium",
+      "productOutcome": "Clarify customer-safe portal continuity across project, contract, invoice, payment, and shared document review paths.",
+      "expectedFiles": [
+        "apps/web/app/portal",
+        "apps/web/lib/portal",
+        "docs/current-state.md"
+      ],
+      "validation": [
+        "pnpm.cmd --filter @floorconnector/web typecheck",
+        "pnpm.cmd --filter @floorconnector/web lint",
+        "pnpm.cmd fc:preflight:fast",
+        "git diff --check"
+      ]
+    }
+  ]
+}

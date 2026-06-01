@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-06-01T16:15:29.468Z",
+  "generatedAt": "2026-06-01T16:28:55.316Z",
   "approval": {
     "approved": false,
     "pushApproved": false
@@ -49,7 +49,7 @@
   "wave": "ops-core-next",
   "goal": "Make FloorConnector more operationally useful for field execution and collections follow-up without schema changes.",
   "base": "origin/main",
-  "baseCommit": "c8a7c99098351c89d0c4895cdd5425f073ecd12d",
+  "baseCommit": "22fa6927a9bc96f0a8921f7424f45e62fcd23bcc",
   "nextWaveProposalPath": "C:\\FloorConnector\\.codex\\waves\\ops-core-next\\next-wave-proposal.md",
   "productStrideReview": [
     {
@@ -89,5 +89,19 @@
       "recommendedAction": "needs human review"
     }
   ],
-  "reportPath": "C:\\FloorConnector\\.codex\\waves\\ops-core-next\\run-report.md"
+  "reportPath": "C:\\FloorConnector\\.codex\\waves\\ops-core-next\\run-report.md",
+  "generation": {
+    "generatedAt": "2026-06-01T16:28:17.204Z",
+    "mode": "template_fallback",
+    "status": "manual_ai_required",
+    "proposedWave": "ops-core-next-ai-proposed",
+    "proposedWaveDir": "C:\\FloorConnector\\.codex\\waves\\ops-core-next-ai-proposed",
+    "reviewPath": "C:\\FloorConnector\\.codex\\waves\\ops-core-next\\ai-next-wave-review.md",
+    "contextPath": "C:\\FloorConnector\\.codex\\waves\\ops-core-next\\generator-context.md",
+    "promptPath": "C:\\FloorConnector\\.codex\\waves\\ops-core-next\\generate-next-wave.prompt.md",
+    "schemaPath": "C:\\FloorConnector\\.codex\\waves\\templates\\next-wave.schema.json",
+    "outputPath": "C:\\FloorConnector\\.codex\\waves\\ops-core-next\\generated-next-wave.json",
+    "validationStatus": "passed",
+    "commandExitCode": null
+  }
 }
