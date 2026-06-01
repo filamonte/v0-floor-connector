@@ -2,8 +2,10 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  buildRecordCommunicationContinuityItems,
   buildRecordCommunicationHref,
   deriveRecordCommunicationContinuitySummary,
+  filterRecordCommunicationContinuityThreads,
   filterProjectCommunicationContinuityThreads,
   type RecordCommunicationContinuityThread
 } from "./record-continuity";
@@ -13,10 +15,12 @@ function buildThread(
 ): RecordCommunicationContinuityThread {
   return {
     id: overrides.id ?? "thread-1",
+    organizationId: overrides.organizationId ?? "org-1",
     projectId: Object.prototype.hasOwnProperty.call(overrides, "projectId")
       ? (overrides.projectId ?? null)
       : "project-1",
     subjectType: overrides.subjectType ?? "project",
+    subjectId: overrides.subjectId ?? "project-1",
     lastMessageAt: overrides.lastMessageAt ?? "2026-05-27T15:00:00.000Z",
     lastMessagePreview:
       overrides.lastMessagePreview ?? "Customer asked about closeout timing.",
@@ -114,6 +118,126 @@ void test("record communication continuity zero-state links to the source queue 
   assert.equal(summary.latestActivityAt, null);
   assert.equal(summary.latestPreview, "No preview stored yet.");
   assert.equal(summary.communicationsHref, "/communications?source=project");
+});
+
+void test("record communication continuity filters to the exact customer and tenant", () => {
+  const threads = filterRecordCommunicationContinuityThreads({
+    target: {
+      organizationId: "org-1",
+      source: "customer",
+      subjectId: "customer-1"
+    },
+    threads: [
+      buildThread({
+        id: "matching-customer-thread",
+        organizationId: "org-1",
+        subjectType: "customer",
+        subjectId: "customer-1",
+        projectId: null
+      }),
+      buildThread({
+        id: "other-customer-thread",
+        organizationId: "org-1",
+        subjectType: "customer",
+        subjectId: "customer-2",
+        projectId: null
+      }),
+      buildThread({
+        id: "other-tenant-thread",
+        organizationId: "org-2",
+        subjectType: "customer",
+        subjectId: "customer-1",
+        projectId: null
+      })
+    ]
+  });
+
+  assert.deepEqual(
+    threads.map((thread) => thread.id),
+    ["matching-customer-thread"]
+  );
+});
+
+void test("record communication continuity supports invoice and contract subjects only when linked", () => {
+  const invoiceThreads = filterRecordCommunicationContinuityThreads({
+    target: {
+      organizationId: "org-1",
+      source: "invoice",
+      subjectId: "invoice-1"
+    },
+    threads: [
+      buildThread({
+        id: "invoice-thread",
+        subjectType: "invoice",
+        subjectId: "invoice-1"
+      }),
+      buildThread({
+        id: "contract-thread",
+        subjectType: "contract",
+        subjectId: "contract-1"
+      })
+    ]
+  });
+  const contractThreads = filterRecordCommunicationContinuityThreads({
+    target: {
+      organizationId: "org-1",
+      source: "contract",
+      subjectId: "contract-1"
+    },
+    threads: [
+      buildThread({
+        id: "invoice-thread",
+        subjectType: "invoice",
+        subjectId: "invoice-1"
+      }),
+      buildThread({
+        id: "contract-thread",
+        subjectType: "contract",
+        subjectId: "contract-1"
+      })
+    ]
+  });
+
+  assert.deepEqual(
+    invoiceThreads.map((thread) => thread.id),
+    ["invoice-thread"]
+  );
+  assert.deepEqual(
+    contractThreads.map((thread) => thread.id),
+    ["contract-thread"]
+  );
+});
+
+void test("record communication continuity item list exposes recent snippets and status signals", () => {
+  const items = buildRecordCommunicationContinuityItems([
+    buildThread({
+      id: "older-thread",
+      subjectType: "project",
+      subjectId: "project-1",
+      lastMessageAt: "2026-05-27T15:00:00.000Z",
+      lastMessageVisibility: "internal",
+      threadStatus: "open"
+    }),
+    buildThread({
+      id: "needs-response-thread",
+      subjectType: "invoice",
+      subjectId: "invoice-1",
+      lastMessageAt: "2026-05-28T15:00:00.000Z",
+      lastMessagePreview: "The customer replied from the portal.",
+      lastMessageVisibility: "customer_visible",
+      threadStatus: "waiting_on_contractor"
+    })
+  ]);
+
+  assert.equal(items[0]?.id, "needs-response-thread");
+  assert.equal(items[0]?.sourceLabel, "invoice");
+  assert.equal(items[0]?.statusLabel, "Needs response");
+  assert.equal(items[0]?.boundaryLabel, "Customer-visible");
+  assert.equal(items[0]?.snippet, "The customer replied from the portal.");
+  assert.equal(
+    items[0]?.href,
+    "/communications?source=invoice&threadId=needs-response-thread"
+  );
 });
 
 void test("record communication href does not imply unsupported job subjects", () => {

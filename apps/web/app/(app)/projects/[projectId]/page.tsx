@@ -6608,6 +6608,8 @@ export default async function ProjectDetailPage({
 
         <RelatedConversationsCard
           source="project"
+          organizationId={project.organizationId}
+          projectId={project.id}
           description="Project-scoped communication stays on canonical threads and routes back into the shared communications review workspace when follow-through is needed."
           countLabel="Project and record threads"
           emptyMessage="No project-scoped communication threads are attached to this canonical project yet."
