@@ -1,29 +1,29 @@
 # AI Next Wave Review
 
 Status: Generated
-Generated: 2026-06-01T22:12:04.976Z
+Generated: 2026-06-01T22:24:20.510Z
 
 ## Proposed Wave
 
-- Name: ops-core-continuity-v2
-- Goal: Deepen field execution, collections follow-up, portal trust, and operational visibility with reviewable read-only product slices over existing canonical records.
+- Name: ops-core-continuity-v3
+- Goal: Tighten operational continuity across field execution, collections follow-up, portal trust, and reporting using existing canonical records only.
 - Mode: generator_command
 - State: proposed
 
 ## Rationale
 
-The current operating core already has Project Workspace, CrewBoard, Accounts Receivable, portal status, communications, and reporting foundations. The next wave should turn those foundations into clearer daily operating context without introducing duplicate records, schema changes, provider actions, or financial/auth behavior changes.
+The current ops-core-next wave prepares field execution, collections, portal, and E2E fixture streams. This follow-on wave keeps the same production-first direction but shifts each stream toward reviewable, user-visible continuity improvements that derive from existing projects, jobs, daily logs, invoices, payments, contracts, portal grants, and reporting read models without schema, auth, payment, provider, or mutation expansion.
 
 ## Streams
 
-- field-daily-execution-handoff (medium): Make the Field and Project execution surfaces show a clearer daily handoff from scheduled jobs to Daily Logs, field notes, blockers, time activity, and source Project Workspace links.
-  - Why: Field teams and office coordinators need to know what is happening today, what is missing, and where to resolve it without treating field notes, Daily Logs, and jobs as separate systems.
-- collections-conversation-context (medium): Connect Accounts Receivable follow-up rows to existing communication context, invoice/customer/project continuity, and payment-event evidence so collections review has the next human follow-up context in one place.
-  - Why: Collectors need to understand whether an invoice needs outreach, internal review, or patience because a payment is already in progress, without inventing reminders or changing payment state.
-- portal-project-trust-window (medium): Improve the portal Project Workspace trust window so customers see clearer customer-safe continuity across project status, estimates, contracts, invoices, payments, shared documents, and next customer actions.
-  - Why: Customers should understand where their project stands and what they can safely do next without seeing contractor-only operations, internal blockers, field notes, or provider diagnostics.
-- reports-operational-visibility (low): Make Reports a stronger read-only operating snapshot by tying field execution, schedule readiness, collections exposure, communication follow-up, and project continuity back to canonical source workspaces.
-  - Why: A contractor owner needs a company-level view that explains where operations and collections need attention while keeping reports as a lens over source records, not a new analytics warehouse.
+- field-handoff-command-context-v1 (medium): Make field handoff context clearer by connecting scheduled jobs, assigned work, Daily Logs, and open field blockers into one read-only command view.
+  - Why: Field users need to see what is ready, what is blocked, and where to act without jumping across disconnected pages or creating another field task model.
+- collections-customer-project-continuity-v1 (medium): Improve AR follow-up context by showing invoice, payment, customer, project, and last activity continuity from existing financial records.
+  - Why: Collections work is faster and safer when users can see why an invoice needs attention and where the related customer/project context lives without changing payment logic.
+- portal-project-trust-thread-v1 (medium): Make the portal project view show a clearer customer-safe trust thread across project status, contract, invoice, shared documents, and field evidence visibility.
+  - Why: Customers need a coherent view of what has happened, what is visible to them, and what requires attention while the contractor app remains the source of truth.
+- reports-operations-continuity-v1 (medium): Strengthen the Reports operations view with clearer cross-record continuity for project readiness, field execution, schedule attention, AR exposure, and recent movement.
+  - Why: Managers need a company-level view that routes them back to source records instead of reading reports as a separate truth layer.
 
 ## Human Review Required
 
@@ -32,5 +32,5 @@ This wave is not approved and was not run. Review the manifest and prompts befor
 Next command:
 
 ```powershell
-pnpm fc:wave:approve --wave ops-core-continuity-v2 --proposal
+pnpm fc:wave:approve --wave ops-core-continuity-v3 --proposal
 ```

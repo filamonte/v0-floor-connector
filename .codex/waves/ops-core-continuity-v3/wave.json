@@ -1,0 +1,111 @@
+{
+  "state": "proposed",
+  "name": "ops-core-continuity-v3",
+  "goal": "Tighten operational continuity across field execution, collections follow-up, portal trust, and reporting using existing canonical records only.",
+  "rationale": "The current ops-core-next wave prepares field execution, collections, portal, and E2E fixture streams. This follow-on wave keeps the same production-first direction but shifts each stream toward reviewable, user-visible continuity improvements that derive from existing projects, jobs, daily logs, invoices, payments, contracts, portal grants, and reporting read models without schema, auth, payment, provider, or mutation expansion.",
+  "base": "origin/main",
+  "worktreeRoot": "C:/FC-worktrees",
+  "maxConcurrency": 2,
+  "mainValidation": [
+    "pnpm worktree:doctor",
+    "pnpm worktree:audit",
+    "pnpm --filter @floorconnector/web typecheck",
+    "pnpm --filter @floorconnector/web lint",
+    "git diff --check"
+  ],
+  "productStrideCriteria": [
+    "Each stream must produce a visible or testable operational improvement for contractor or portal workflows.",
+    "Each stream must derive from existing canonical records and must not introduce duplicate customer, project, job, invoice, payment, portal, communication, or reporting truth.",
+    "Each stream must remain mergeable as a bounded read-model, presentation, or non-mutating fixture slice.",
+    "Each stream must include targeted tests for changed derivation helpers or focused route smoke when touching protected UI."
+  ],
+  "streams": [
+    {
+      "name": "field-handoff-command-context-v1",
+      "branch": "stream/field-handoff-command-context-v1",
+      "worktree": "C:/FC-worktrees/field-handoff-command-context-v1",
+      "prompt": ".codex/waves/ops-core-continuity-v3/prompts/field-handoff-command-context-v1.md",
+      "risk": "medium",
+      "productOutcome": "Make field handoff context clearer by connecting scheduled jobs, assigned work, Daily Logs, and open field blockers into one read-only command view.",
+      "expectedFiles": [
+        "apps/web/lib/schedule/field-handoff-read-model.ts",
+        "apps/web/lib/schedule/field-handoff-read-model.test.ts",
+        "apps/web/components/field-execution-command-band.tsx",
+        "apps/web/app/(app)/schedule/page.tsx",
+        "apps/web/app/(app)/daily-logs/[dailyLogId]/page.tsx"
+      ],
+      "validation": [
+        "pnpm --filter @floorconnector/web exec tsx apps/web/lib/schedule/field-handoff-read-model.test.ts",
+        "pnpm --filter @floorconnector/web typecheck",
+        "pnpm --filter @floorconnector/web lint",
+        "git diff --check"
+      ]
+    },
+    {
+      "name": "collections-customer-project-continuity-v1",
+      "branch": "stream/collections-customer-project-continuity-v1",
+      "worktree": "C:/FC-worktrees/collections-customer-project-continuity-v1",
+      "prompt": ".codex/waves/ops-core-continuity-v3/prompts/collections-customer-project-continuity-v1.md",
+      "risk": "medium",
+      "productOutcome": "Improve AR follow-up context by showing invoice, payment, customer, project, and last activity continuity from existing financial records.",
+      "expectedFiles": [
+        "apps/web/lib/financials/collections-follow-up-intelligence.ts",
+        "apps/web/lib/financials/collections-follow-up-intelligence.test.ts",
+        "apps/web/lib/financials/collections-command-center.ts",
+        "apps/web/lib/financials/collections-command-center.test.ts",
+        "apps/web/app/(app)/financials/accounts-receivable/page.tsx"
+      ],
+      "validation": [
+        "pnpm --filter @floorconnector/web exec tsx apps/web/lib/financials/collections-follow-up-intelligence.test.ts",
+        "pnpm --filter @floorconnector/web exec tsx apps/web/lib/financials/collections-command-center.test.ts",
+        "pnpm --filter @floorconnector/web typecheck",
+        "pnpm --filter @floorconnector/web lint",
+        "git diff --check"
+      ]
+    },
+    {
+      "name": "portal-project-trust-thread-v1",
+      "branch": "stream/portal-project-trust-thread-v1",
+      "worktree": "C:/FC-worktrees/portal-project-trust-thread-v1",
+      "prompt": ".codex/waves/ops-core-continuity-v3/prompts/portal-project-trust-thread-v1.md",
+      "risk": "medium",
+      "productOutcome": "Make the portal project view show a clearer customer-safe trust thread across project status, contract, invoice, shared documents, and field evidence visibility.",
+      "expectedFiles": [
+        "apps/web/lib/portal/project-timeline.ts",
+        "apps/web/lib/portal/project-timeline.test.ts",
+        "apps/web/lib/portal/status-explanation.ts",
+        "apps/web/lib/portal/status-explanation.test.ts",
+        "apps/web/components/portal-project-summary-panel.tsx",
+        "apps/web/app/(portal)/portal/projects/[projectId]/page.tsx"
+      ],
+      "validation": [
+        "pnpm --filter @floorconnector/web exec tsx apps/web/lib/portal/project-timeline.test.ts",
+        "pnpm --filter @floorconnector/web exec tsx apps/web/lib/portal/status-explanation.test.ts",
+        "pnpm --filter @floorconnector/web typecheck",
+        "pnpm --filter @floorconnector/web lint",
+        "git diff --check"
+      ]
+    },
+    {
+      "name": "reports-operations-continuity-v1",
+      "branch": "stream/reports-operations-continuity-v1",
+      "worktree": "C:/FC-worktrees/reports-operations-continuity-v1",
+      "prompt": ".codex/waves/ops-core-continuity-v3/prompts/reports-operations-continuity-v1.md",
+      "risk": "medium",
+      "productOutcome": "Strengthen the Reports operations view with clearer cross-record continuity for project readiness, field execution, schedule attention, AR exposure, and recent movement.",
+      "expectedFiles": [
+        "apps/web/lib/reports/operations-summary.ts",
+        "apps/web/lib/reports/operations-summary.test.ts",
+        "apps/web/app/(app)/reports/page.tsx",
+        "docs/current-state.md"
+      ],
+      "validation": [
+        "pnpm --filter @floorconnector/web exec tsx apps/web/lib/reports/operations-summary.test.ts",
+        "pnpm --filter @floorconnector/web typecheck",
+        "pnpm --filter @floorconnector/web lint",
+        "pnpm exec prettier --check docs/current-state.md",
+        "git diff --check"
+      ]
+    }
+  ]
+}

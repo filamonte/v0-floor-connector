@@ -2,7 +2,7 @@
 
 Status: Generated
 Source Wave: ops-core-next
-Generated: 2026-06-01T22:12:39.599Z
+Generated: 2026-06-01T22:25:12.676Z
 
 ## Current Wave Goal
 

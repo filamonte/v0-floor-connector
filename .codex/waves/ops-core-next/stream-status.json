@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-06-01T22:12:39.725Z",
+  "generatedAt": "2026-06-01T22:25:12.785Z",
   "approval": {
     "approved": false,
     "pushApproved": false
@@ -49,7 +49,7 @@
   "wave": "ops-core-next",
   "goal": "Make FloorConnector more operationally useful for field execution and collections follow-up without schema changes.",
   "base": "origin/main",
-  "baseCommit": "aa7148683daf294f920f809e0780ba9046394a6d",
+  "baseCommit": "abd01164f75480757961606a2f5eb1a99ddb525d",
   "nextWaveProposalPath": "C:\\FloorConnector\\.codex\\waves\\ops-core-next\\next-wave-proposal.md",
   "productStrideReview": [
     {
@@ -91,17 +91,17 @@
   ],
   "reportPath": "C:\\FloorConnector\\.codex\\waves\\ops-core-next\\run-report.md",
   "generation": {
-    "generatedAt": "2026-06-01T22:12:04.976Z",
+    "generatedAt": "2026-06-01T22:24:20.510Z",
     "mode": "generator_command",
     "status": "generated",
-    "proposedWave": "ops-core-continuity-v2",
-    "proposedWaveDir": "C:\\FloorConnector\\.codex\\waves\\ops-core-continuity-v2",
+    "proposedWave": "ops-core-continuity-v3",
+    "proposedWaveDir": "C:\\FloorConnector\\.codex\\waves\\ops-core-continuity-v3",
     "reviewPath": "C:\\FloorConnector\\.codex\\waves\\ops-core-next\\ai-next-wave-review.md",
     "contextPath": "C:\\FloorConnector\\.codex\\waves\\ops-core-next\\generator-context.md",
     "promptPath": "C:\\FloorConnector\\.codex\\waves\\ops-core-next\\generate-next-wave.prompt.md",
     "schemaPath": "C:\\FloorConnector\\.codex\\waves\\templates\\next-wave.schema.json",
-    "outputPath": "C:\\FloorConnector\\.codex\\waves\\ops-core-next\\.tmp\\generation\\20260601T221204\\generated-next-wave.json",
-    "scratchPath": "C:\\FloorConnector\\.codex\\waves\\ops-core-next\\.tmp\\generation\\20260601T221204",
+    "outputPath": "C:\\FloorConnector\\.codex\\waves\\ops-core-next\\.tmp\\generation\\20260601T221905\\generated-next-wave.json",
+    "scratchPath": "C:\\FloorConnector\\.codex\\waves\\ops-core-next\\.tmp\\generation\\20260601T221905",
     "validationStatus": "passed",
     "commandExitCode": 0
   }

@@ -2,7 +2,7 @@
 
 Use the context bundle:
 
-`C:\FloorConnector\.codex\waves\ops-core-next\.tmp\generation\20260601T221204\generator-context.md`
+`C:\FloorConnector\.codex\waves\ops-core-next\.tmp\generation\20260601T221905\generator-context.md`
 
 Use the JSON schema:
 
@@ -10,7 +10,7 @@ Use the JSON schema:
 
 Write only JSON matching the schema to:
 
-`C:\FloorConnector\.codex\waves\ops-core-next\.tmp\generation\20260601T221204\generated-next-wave.json`
+`C:\FloorConnector\.codex\waves\ops-core-next\.tmp\generation\20260601T221905\generated-next-wave.json`
 
 Output contract:
 

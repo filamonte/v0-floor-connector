@@ -1,12 +1,12 @@
 # Wave Generator Context
 
-Generated: 2026-06-01T22:12:04.821Z
-Current main commit: 260228b5fdb8926499c832af5674c65957508a4a
+Generated: 2026-06-01T22:19:05.378Z
+Current main commit: abd01164f75480757961606a2f5eb1a99ddb525d
 
 ## Recent Git Log
 
 ```text
-260228b5 fix: normalize generated wave prompt guardrails
+abd01164 fix: normalize generated wave prompt guardrails
 aa714868 fix: keep rejected wave generation scratch-only
 83f351c4 chore: harden AI wave generation
 00407c57 feat: add AI wave generation gate
@@ -80,7 +80,7 @@ Goal: Make FloorConnector more operationally useful for field execution and coll
 # Agent Wave Run Report
 
 Wave: ops-core-next
-Generated: 2026-06-01T22:09:41.306Z
+Generated: 2026-06-01T22:12:39.724Z
 Base: origin/main
 Base commit: aa7148683daf294f920f809e0780ba9046394a6d
 
@@ -214,17 +214,17 @@ Validation results:
 
 ## AI Next-Wave Generation
 
-- Status: manual_ai_required
-- Mode: template_fallback
-- Proposed wave: ops-core-next-ai-proposed
+- Status: generated
+- Mode: generator_command
+- Proposed wave: ops-core-continuity-v2
 - Review: C:\FloorConnector\.codex\waves\ops-core-next\ai-next-wave-review.md
 - Schema validation: passed
 
 Next proposed-wave command:
 
 ```powershell
-pnpm fc:wave:approve --wave ops-core-next-ai-proposed --proposal
-pnpm fc:wave:prepare --wave ops-core-next-ai-proposed
+pnpm fc:wave:approve --wave ops-core-continuity-v2 --proposal
+pnpm fc:wave:prepare --wave ops-core-continuity-v2
 ```
 
 ## Merge Recommendation
@@ -238,7 +238,9 @@ Human review required before approval. Do not merge until validation and product
 - Confirm validation results are acceptable.
 - Confirm dry merge checks are acceptable.
 - Confirm next-wave prompts are present.
-- Run `pnpm fc:wave:approve --wave ops-core-next` only after human
+- Run `pnpm fc:wave:approve --wave ops-core-next` only after human approval.
+
+## Exac
 
 [excerpt truncated]
 
