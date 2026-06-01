@@ -16,6 +16,8 @@ import {
 } from "@/components/operational-guidance-section";
 import {
   dashboardGridDividerClassName,
+  dashboardCommandStatClassName,
+  dashboardCommandSurfaceClassName,
   dashboardMetricCardClassName,
   dashboardPanelActionClassName,
   dashboardPanelClassName,
@@ -181,6 +183,28 @@ function SearchIcon() {
     >
       <circle cx="11" cy="11" r="7" />
       <path d="m20 20-3.5-3.5" />
+    </svg>
+  );
+}
+
+function CommandCenterIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 24 24"
+      width="16"
+      height="16"
+      className="h-4 w-4"
+      style={dashboardIconStyle}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M12 3v18" />
+      <path d="M3 12h18" />
+      <circle cx="12" cy="12" r="4" />
     </svg>
   );
 }
@@ -491,6 +515,633 @@ function QueueRows({
   );
 }
 
+function PreviewPill({ children }: { children: ReactNode }) {
+  return (
+    <span className="inline-flex items-center rounded-[4px] border border-white/15 bg-white/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--cream)]">
+      {children}
+    </span>
+  );
+}
+
+function DisabledPreviewControl({ label }: { label: string }) {
+  return (
+    <button
+      type="button"
+      disabled
+      className="inline-flex h-9 cursor-not-allowed items-center rounded-[4px] border border-white/12 bg-white/[0.06] px-3 text-xs font-semibold text-white/55"
+      title={`${label} is display-only in this dashboard slice.`}
+    >
+      {label}
+      <span className="ml-2 rounded-[3px] border border-white/10 px-1.5 py-0.5 text-[9px] uppercase tracking-[0.12em] text-white/45">
+        Preview
+      </span>
+    </button>
+  );
+}
+
+function DashboardCommandBand({
+  header,
+  metrics,
+  priorityItems,
+  query,
+  onQueryChange
+}: {
+  header: ContractorDashboardSurfaceProps["header"];
+  metrics: DashboardMetric[];
+  priorityItems: DashboardPriorityItem[];
+  query: string;
+  onQueryChange: (value: string) => void;
+}) {
+  const todayLabel = new Intl.DateTimeFormat("en-US", {
+    weekday: "long",
+    month: "short",
+    day: "numeric"
+  }).format(new Date());
+  const jobsTodayMetric = metrics.find((metric) => metric.key === "jobs-today");
+  const blockersCount = priorityItems.filter(
+    (item) => !["complete", "paid"].includes(String(item.status))
+  ).length;
+  const pinnedLinks = [
+    { label: "Projects", href: "/projects" },
+    { label: "Time Cards", href: "/time" },
+    { label: "Directory", href: "/people" }
+  ];
+
+  return (
+    <section className={dashboardCommandSurfaceClassName}>
+      <div className="border-b border-white/10 px-4 py-4 lg:px-5">
+        <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+          <div className="flex min-w-0 items-center gap-3">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[5px] border border-[var(--copper)] bg-[var(--copper)] text-sm font-semibold text-white">
+              FC
+            </div>
+            <div className="min-w-0">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--copper-light)]">
+                FloorConnector
+              </p>
+              <h2 className="truncate text-lg font-semibold text-white">
+                {header.organizationName}
+              </h2>
+            </div>
+          </div>
+
+          <div className="flex min-w-0 flex-1 justify-start xl:justify-center">
+            <div className="min-w-0 border border-white/10 bg-white/[0.06] px-4 py-2 text-center">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-white/55">
+                Command context
+              </p>
+              <p className="mt-1 truncate text-sm font-semibold text-white">
+                {header.activeProjectCount} active projects /{" "}
+                {header.openReceivablesLabel} open AR
+              </p>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center justify-start gap-2 xl:justify-end">
+            <PreviewPill>{header.roleLabel}</PreviewPill>
+            <DisabledPreviewControl label="Select a project" />
+          </div>
+        </div>
+      </div>
+
+      <div className="flex flex-col gap-3 border-b border-white/10 px-4 py-3 lg:px-5 xl:flex-row xl:items-center xl:justify-between">
+        <div className="flex flex-wrap gap-2">
+          {pinnedLinks.map((link) => (
+            <Link
+              key={link.href}
+              href={link.href}
+              className="inline-flex h-9 items-center rounded-[4px] border border-white/12 bg-white/[0.07] px-3 text-xs font-semibold text-[var(--cream)] transition hover:border-[var(--copper)] hover:bg-white/12 hover:text-white"
+            >
+              {link.label}
+            </Link>
+          ))}
+          <DisabledPreviewControl label="Add page" />
+        </div>
+        <div className="flex flex-wrap gap-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-white/60">
+          <span>Health strip</span>
+          <span className="text-[var(--copper-light)]">
+            Live records + preview controls
+          </span>
+        </div>
+      </div>
+
+      <div className="grid gap-px bg-white/10 md:grid-cols-2 xl:grid-cols-5">
+        {[
+          {
+            label: "Today",
+            value: todayLabel,
+            detail: "Calendar display only"
+          },
+          {
+            label: "Active projects",
+            value: String(header.activeProjectCount),
+            detail: "Existing project read model"
+          },
+          {
+            label: "Open AR",
+            value: header.openReceivablesLabel,
+            detail: "Existing invoice/payment chain"
+          },
+          {
+            label: "Jobs today",
+            value: jobsTodayMetric?.value ?? "0",
+            detail: "Existing schedule/job data"
+          },
+          {
+            label: "Open blockers",
+            value: String(blockersCount),
+            detail: "Derived from attention strip"
+          }
+        ].map((stat) => (
+          <div key={stat.label} className={dashboardCommandStatClassName}>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/50">
+              {stat.label}
+            </p>
+            <p className="mt-1 text-lg font-semibold text-white">
+              {stat.value}
+            </p>
+            <p className="mt-1 text-[11px] leading-4 text-white/55">
+              {stat.detail}
+            </p>
+          </div>
+        ))}
+      </div>
+
+      <div className="flex flex-col gap-3 px-4 py-4 lg:px-5 xl:flex-row xl:items-center xl:justify-between">
+        <div>
+          <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--copper-light)]">
+            Contractor dashboard
+          </p>
+          <h2 className="mt-1 text-2xl font-semibold text-white">
+            Command Center
+          </h2>
+        </div>
+        <div className="flex w-full flex-col gap-2 sm:flex-row xl:w-auto">
+          <label className="relative min-w-0 flex-1 xl:w-[360px]">
+            <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-white/55">
+              <SearchIcon />
+            </span>
+            <input
+              type="search"
+              value={query}
+              onChange={(event) => onQueryChange(event.currentTarget.value)}
+              placeholder="Search command center"
+              className="h-10 w-full rounded-[4px] border border-white/12 bg-white/[0.08] pl-9 pr-3 text-sm text-white outline-none placeholder:text-white/45 focus:border-[var(--copper)]"
+            />
+          </label>
+          <Link
+            href="/dashboard?capture=1#universal-capture"
+            role="button"
+            aria-label="Universal create"
+            className="inline-flex h-10 shrink-0 items-center justify-center rounded-[4px] border border-[var(--copper)] bg-[var(--copper)] px-4 text-sm font-semibold text-white transition hover:bg-[var(--copper-light)]"
+          >
+            <CommandCenterIcon />
+            <span className="ml-2">Create</span>
+          </Link>
+          <DisabledPreviewControl label="Bell" />
+          <DisabledPreviewControl label="Customize" />
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function UtilityCardGrid({
+  metrics,
+  operationsWidgets
+}: {
+  metrics: DashboardMetric[];
+  operationsWidgets: DashboardWidget[];
+}) {
+  const appointmentsMetric = metrics.find(
+    (metric) => metric.key === "appointments-today"
+  );
+  const jobsTodayMetric = metrics.find((metric) => metric.key === "jobs-today");
+  const fieldWidget = operationsWidgets[3] ?? operationsWidgets[0] ?? null;
+
+  return (
+    <section className="grid gap-3 lg:grid-cols-4">
+      <Link href="/schedule" className={dashboardPanelClassName}>
+        <div className="px-4 py-4">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--copper)]">
+            Calendar
+          </p>
+          <p className="mt-2 text-lg font-semibold text-[var(--text-primary)]">
+            Today board
+          </p>
+          <p className="mt-1 text-sm leading-5 text-[var(--text-secondary)]">
+            Open schedule, jobs, and appointment context from existing routes.
+          </p>
+        </div>
+      </Link>
+      <div className={dashboardPanelClassName}>
+        <div className="px-4 py-4">
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--copper)]">
+              Weather
+            </p>
+            <span className="rounded-[4px] border border-[var(--border-warm)] bg-[var(--highlight)] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--text-secondary)]">
+              Preview
+            </span>
+          </div>
+          <p className="mt-2 text-lg font-semibold text-[var(--text-primary)]">
+            Not live yet
+          </p>
+          <p className="mt-1 text-sm leading-5 text-[var(--text-secondary)]">
+            Weather-aware schedule guidance is display-only in this slice.
+          </p>
+        </div>
+      </div>
+      <Link href="/appointments" className={dashboardPanelClassName}>
+        <div className="px-4 py-4">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--copper)]">
+            Appointments
+          </p>
+          <p className="mt-2 text-lg font-semibold text-[var(--text-primary)]">
+            {appointmentsMetric?.value ?? "0"} today
+          </p>
+          <p className="mt-1 text-sm leading-5 text-[var(--text-secondary)]">
+            {appointmentsMetric?.detail ??
+              "Existing appointment records surface here when scheduled."}
+          </p>
+        </div>
+      </Link>
+      <Link href="/time" className={dashboardPanelClassName}>
+        <div className="px-4 py-4">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--copper)]">
+            Hours
+          </p>
+          <p className="mt-2 text-lg font-semibold text-[var(--text-primary)]">
+            {jobsTodayMetric?.value ?? "0"} jobs live
+          </p>
+          <p className="mt-1 text-sm leading-5 text-[var(--text-secondary)]">
+            Clock-in stays in the existing Time workflow; no dashboard action
+            was added.
+          </p>
+        </div>
+      </Link>
+      {fieldWidget ? (
+        <div className="lg:col-span-4">
+          <QueueRows widget={fieldWidget} items={fieldWidget.items} />
+        </div>
+      ) : null}
+    </section>
+  );
+}
+
+function PipelineCell({
+  label,
+  value,
+  detail,
+  href,
+  tone
+}: {
+  label: string;
+  value: string;
+  detail: string;
+  href: string;
+  tone: "attention" | "active" | "ready" | "quiet";
+}) {
+  const toneClassName =
+    tone === "attention"
+      ? "border-amber-200 bg-amber-50 text-amber-950"
+      : tone === "ready"
+        ? "border-emerald-200 bg-emerald-50 text-emerald-950"
+        : tone === "active"
+          ? "border-[var(--border-warm)] bg-[var(--highlight)] text-[var(--text-primary)]"
+          : "border-[var(--border-warm)] bg-white text-[var(--text-secondary)]";
+
+  return (
+    <Link
+      href={href}
+      className={[
+        "group flex min-h-[126px] flex-col rounded-[4px] border px-4 py-4 transition hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--copper)]",
+        toneClassName
+      ].join(" ")}
+    >
+      <div className="flex items-start justify-between gap-3">
+        <p className="text-[10px] font-semibold uppercase tracking-[0.16em] opacity-75">
+          {label}
+        </p>
+        <span className="mt-1 h-1.5 w-1.5 rounded-full bg-[var(--copper)] opacity-50 transition group-hover:opacity-100" />
+      </div>
+      <p className="mt-2 text-2xl font-semibold tracking-tight">{value}</p>
+      <p className="mt-1 line-clamp-2 text-xs leading-5 opacity-70">{detail}</p>
+    </Link>
+  );
+}
+
+function StageBars({ cells }: { cells: DashboardLifecycleStep[] }) {
+  const maxValue = Math.max(
+    1,
+    ...cells.map((cell) => {
+      const numericValue = Number.parseInt(cell.value.replace(/[^0-9]/g, ""));
+      return Number.isFinite(numericValue) ? numericValue : 0;
+    })
+  );
+
+  return (
+    <BoardPanel
+      eyebrow="Opportunities"
+      title="Pipeline by stage"
+      description="Display-only stage bars from the existing lifecycle snapshot, not a separate reporting model."
+      action={
+        <span className="rounded-[4px] border border-[var(--border-warm)] bg-[var(--highlight)] px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--text-secondary)]">
+          Live snapshot
+        </span>
+      }
+    >
+      <div className="space-y-3 px-4 py-4">
+        {cells.map((cell) => {
+          const numericValue = Number.parseInt(
+            cell.value.replace(/[^0-9]/g, "")
+          );
+          const width = `${Math.max(
+            8,
+            ((Number.isFinite(numericValue) ? numericValue : 0) / maxValue) *
+              100
+          )}%`;
+
+          return (
+            <Link
+              key={cell.key}
+              href={cell.href}
+              className="grid grid-cols-[minmax(96px,0.38fr)_minmax(0,1fr)_auto] items-center gap-3"
+            >
+              <div className="min-w-0">
+                <p className="truncate text-xs font-semibold text-[var(--text-primary)]">
+                  {cell.label}
+                </p>
+                <p className="mt-0.5 truncate text-[10px] text-[var(--text-tertiary)]">
+                  {cell.detail}
+                </p>
+              </div>
+              <div className="h-6 overflow-hidden rounded-[4px] bg-[var(--highlight)]">
+                <div
+                  className="h-full rounded-[4px] bg-[var(--copper)]"
+                  style={{ width }}
+                />
+              </div>
+              <p className="w-14 text-right text-sm font-semibold text-[var(--text-primary)]">
+                {cell.value}
+              </p>
+            </Link>
+          );
+        })}
+      </div>
+    </BoardPanel>
+  );
+}
+
+function DashboardV0Sections({
+  metrics,
+  lifecycleSteps,
+  commercialWidgets,
+  operationsWidgets,
+  financeWidgets,
+  projectCueWidget,
+  attentionWidget
+}: {
+  metrics: DashboardMetric[];
+  lifecycleSteps: DashboardLifecycleStep[];
+  commercialWidgets: DashboardWidget[];
+  operationsWidgets: DashboardWidget[];
+  financeWidgets: DashboardWidget[];
+  projectCueWidget: DashboardWidget | null;
+  attentionWidget: DashboardWidget | null;
+}) {
+  const metricByKey = new Map(metrics.map((metric) => [metric.key, metric]));
+  const leadsMetric = metricByKey.get("leads-follow-up");
+  const estimatesMetric = metricByKey.get("estimates-awaiting-action");
+  const scheduleMetric = metricByKey.get("jobs-needing-schedule");
+  const jobsTodayMetric = metricByKey.get("jobs-today");
+  const contractsWidget = commercialWidgets.find(
+    (widget) => widget.key === "contracts"
+  );
+  const readyWidget = operationsWidgets.find(
+    (widget) => widget.key === "ready-to-schedule-projects"
+  );
+  const projectsWidget = operationsWidgets.find(
+    (widget) => widget.key === "projects"
+  );
+  const jobsScheduleWidget = operationsWidgets.find(
+    (widget) => widget.key === "jobs-needing-schedule"
+  );
+  const jobsTodayWidget = operationsWidgets.find(
+    (widget) => widget.key === "jobs-today"
+  );
+  const collectionsWidget =
+    financeWidgets.find((widget) => widget.key === "unpaid-invoices") ?? null;
+  const recentPaymentsWidget =
+    financeWidgets.find((widget) => widget.key === "recent-payments") ?? null;
+
+  const revenueCells = [
+    {
+      label: "New Leads",
+      value: leadsMetric?.value ?? "0",
+      detail: leadsMetric?.detail ?? "Existing lead follow-up queue",
+      href: leadsMetric?.href ?? "/leads",
+      tone: "quiet" as const
+    },
+    {
+      label: "Estimates Pending",
+      value: estimatesMetric?.value ?? "0",
+      detail: estimatesMetric?.detail ?? "Existing estimate queue",
+      href: estimatesMetric?.href ?? "/estimates",
+      tone: "active" as const
+    },
+    {
+      label: "Awaiting Signature",
+      value: String(contractsWidget?.items.length ?? 0),
+      detail:
+        contractsWidget?.description ??
+        "Existing contract send and signature queue",
+      href: contractsWidget?.href ?? "/contracts",
+      tone:
+        (contractsWidget?.items.length ?? 0) > 0
+          ? ("attention" as const)
+          : ("quiet" as const)
+    },
+    {
+      label: "Won / Not Scheduled",
+      value: String(readyWidget?.items.length ?? 0),
+      detail:
+        readyWidget?.description ??
+        "Ready projects that need canonical job creation",
+      href: readyWidget?.href ?? "/projects",
+      tone:
+        (readyWidget?.items.length ?? 0) > 0
+          ? ("ready" as const)
+          : ("quiet" as const)
+    }
+  ];
+
+  const productionCells = [
+    {
+      label: "Ready to Schedule",
+      value: String(readyWidget?.items.length ?? 0),
+      detail: readyWidget?.description ?? "Ready Check cleared projects",
+      href: readyWidget?.href ?? "/schedule",
+      tone:
+        (readyWidget?.items.length ?? 0) > 0
+          ? ("ready" as const)
+          : ("quiet" as const)
+    },
+    {
+      label: "Blocked Projects",
+      value: String(projectsWidget?.items.length ?? 0),
+      detail: projectsWidget?.description ?? "Projects needing attention",
+      href: projectsWidget?.href ?? "/projects",
+      tone:
+        (projectsWidget?.items.length ?? 0) > 0
+          ? ("attention" as const)
+          : ("quiet" as const)
+    },
+    {
+      label: "Jobs Today",
+      value:
+        jobsTodayMetric?.value ?? String(jobsTodayWidget?.items.length ?? 0),
+      detail: jobsTodayMetric?.detail ?? "Existing jobs today queue",
+      href: jobsTodayMetric?.href ?? jobsTodayWidget?.href ?? "/jobs",
+      tone:
+        (jobsTodayWidget?.items.length ?? 0) > 0
+          ? ("active" as const)
+          : ("quiet" as const)
+    },
+    {
+      label: "Crew Assignment Gaps",
+      value:
+        scheduleMetric?.value ?? String(jobsScheduleWidget?.items.length ?? 0),
+      detail:
+        scheduleMetric?.detail ??
+        "Schedule handoffs and crew follow-through from canonical jobs",
+      href: scheduleMetric?.href ?? jobsScheduleWidget?.href ?? "/schedule",
+      tone:
+        (jobsScheduleWidget?.items.length ?? 0) > 0
+          ? ("attention" as const)
+          : ("quiet" as const)
+    }
+  ];
+
+  return (
+    <section
+      aria-labelledby="dashboard-v0-sections-title"
+      className="space-y-4"
+    >
+      <div>
+        <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
+          Operating blocks
+        </p>
+        <h2
+          id="dashboard-v0-sections-title"
+          className="mt-1 text-[17px] font-semibold tracking-tight text-[var(--text-primary)]"
+        >
+          Pipeline, production, cash, and field
+        </h2>
+      </div>
+
+      <div className="grid gap-4 lg:grid-cols-2">
+        <BoardPanel
+          eyebrow="Revenue pipeline"
+          title="Sales and close stage"
+          description="Existing commercial records grouped into the v0 pipeline card rhythm."
+        >
+          <div className="grid grid-cols-2 gap-3 p-4">
+            {revenueCells.map((cell) => (
+              <PipelineCell key={cell.label} {...cell} />
+            ))}
+          </div>
+        </BoardPanel>
+
+        <BoardPanel
+          eyebrow="Production readiness"
+          title="Scheduling and execution status"
+          description="Readiness and schedule pressure stay derived from canonical projects and jobs."
+        >
+          <div className="grid grid-cols-2 gap-3 p-4">
+            {productionCells.map((cell) => (
+              <PipelineCell key={cell.label} {...cell} />
+            ))}
+          </div>
+        </BoardPanel>
+      </div>
+
+      <div className="grid gap-4 lg:grid-cols-2">
+        <StageBars cells={lifecycleSteps} />
+        {projectCueWidget ? (
+          <QueueRows
+            widget={{
+              ...projectCueWidget,
+              eyebrow: "Quality / Field Notes",
+              title: "Open issues and punch items",
+              description:
+                "Field and quality signals stay on existing project cues, Daily Logs, jobs, and work items. No punchlist-only dashboard model was added.",
+              actionLabel: "Open projects"
+            }}
+            items={projectCueWidget.items}
+          />
+        ) : null}
+      </div>
+
+      <div className="grid gap-4 lg:grid-cols-2">
+        {collectionsWidget ? (
+          <FinanceTable
+            widget={{
+              ...collectionsWidget,
+              eyebrow: "Collections / AR",
+              title: "Receivables and payment status"
+            }}
+            items={collectionsWidget.items}
+          />
+        ) : null}
+        {jobsTodayWidget ? (
+          <QueueRows
+            widget={{
+              ...jobsTodayWidget,
+              eyebrow: "Field activity",
+              title: "Today's jobs, logs, and blockers",
+              description:
+                "Day-of work stays tied to existing jobs, schedule, project, and Daily Log routes."
+            }}
+            items={jobsTodayWidget.items}
+          />
+        ) : null}
+      </div>
+
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]">
+        {projectCueWidget ? (
+          <QueueRows
+            widget={{
+              ...projectCueWidget,
+              eyebrow: "Next Move",
+              title: "Recommended action",
+              description:
+                "Recommended action is deterministic and review-first. Drafting or workflow execution still happens only in existing workspaces."
+            }}
+            items={projectCueWidget.items.slice(0, 3)}
+          />
+        ) : null}
+        {(attentionWidget ?? recentPaymentsWidget) ? (
+          <QueueRows
+            widget={{
+              ...(attentionWidget ?? recentPaymentsWidget!),
+              eyebrow: "Recent activity",
+              title: "Latest events",
+              description:
+                attentionWidget?.description ??
+                "Recent payment movement from the canonical invoice and payment chain.",
+              actionLabel: attentionWidget?.actionLabel ?? "Open payments"
+            }}
+            items={
+              (attentionWidget ?? recentPaymentsWidget)?.items.slice(0, 5) ?? []
+            }
+          />
+        ) : null}
+      </div>
+    </section>
+  );
+}
+
 function FinanceTable({
   widget,
   items
@@ -673,6 +1324,7 @@ function AiOperationalDigestPanel({
 }
 
 export function ContractorDashboardSurface({
+  header,
   earlyAccess,
   priorityItems,
   universalCapture,
@@ -694,6 +1346,11 @@ export function ContractorDashboardSurface({
 }: ContractorDashboardSurfaceProps) {
   const [query, setQuery] = useState("");
   const deferredQuery = useDeferredValue(query.trim().toLowerCase());
+  const handleQueryChange = (nextValue: string) => {
+    startTransition(() => {
+      setQuery(nextValue);
+    });
+  };
 
   const filteredCommercialWidgets = useMemo(
     () =>
@@ -771,6 +1428,14 @@ export function ContractorDashboardSurface({
       <div className="space-y-4 px-4 py-4 sm:px-6">
         <h1 className="sr-only">Dashboard</h1>
 
+        <DashboardCommandBand
+          header={header}
+          metrics={metrics}
+          priorityItems={priorityItems}
+          query={query}
+          onQueryChange={handleQueryChange}
+        />
+
         {earlyAccess ? (
           <section
             className={[
@@ -842,6 +1507,21 @@ export function ContractorDashboardSurface({
         <PriorityStrip items={priorityItems} />
 
         {universalCapture ? universalCapture : null}
+
+        <UtilityCardGrid
+          metrics={metrics}
+          operationsWidgets={filteredOperationsWidgets}
+        />
+
+        <DashboardV0Sections
+          metrics={metrics}
+          lifecycleSteps={lifecycleSteps}
+          commercialWidgets={filteredCommercialWidgets}
+          operationsWidgets={filteredOperationsWidgets}
+          financeWidgets={filteredFinanceWidgets}
+          projectCueWidget={filteredProjectCueWidget}
+          attentionWidget={attentionWidget ?? null}
+        />
 
         <div className="grid gap-4 2xl:grid-cols-[minmax(0,1.05fr)_minmax(360px,0.95fr)]">
           <LifecycleRail steps={lifecycleSteps} />
@@ -1011,12 +1691,9 @@ export function ContractorDashboardSurface({
               <input
                 type="search"
                 value={query}
-                onChange={(event) => {
-                  const nextValue = event.currentTarget.value;
-                  startTransition(() => {
-                    setQuery(nextValue);
-                  });
-                }}
+                onChange={(event) =>
+                  handleQueryChange(event.currentTarget.value)
+                }
                 placeholder="Filter dashboard queues"
                 className="h-9 w-full rounded-md border border-[var(--border-warm)] bg-white pl-9 pr-3 text-sm text-[var(--text-primary)] outline-none placeholder:text-[var(--text-tertiary)] focus:border-[var(--copper)]"
               />
