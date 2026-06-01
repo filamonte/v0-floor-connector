@@ -7,6 +7,7 @@ import type { MembershipRole } from "@floorconnector/types";
 import { getStatusBadgeClassName } from "@floorconnector/ui";
 
 import type { AiOperationalDashboardDigest } from "@/lib/ai-operational-copilot/dashboard-digest";
+import type { DashboardActionQueue } from "@/lib/dashboard/action-queues";
 import type { DashboardPriorityItem } from "@/components/dashboard/priority-strip";
 import { PriorityStrip } from "@/components/dashboard/priority-strip";
 import { StartHereCard } from "@/components/onboarding/start-here-card";
@@ -128,6 +129,7 @@ export type ContractorDashboardSurfaceProps = {
   priorityItems: DashboardPriorityItem[];
   universalCapture?: ReactNode;
   metrics: DashboardMetric[];
+  actionQueues?: DashboardActionQueue[];
   lifecycleSteps: DashboardLifecycleStep[];
   aiOperationalDigest?: AiOperationalDashboardDigest | null;
   operationalCockpitBuckets?: OperationalGuidanceBucket[];
@@ -574,6 +576,106 @@ function DashboardOperatingSummary({
               {item.detail}
             </p>
           </Link>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function DashboardActionQueues({ queues }: { queues: DashboardActionQueue[] }) {
+  return (
+    <section
+      aria-labelledby="dashboard-action-queues-title"
+      className="space-y-3"
+    >
+      <div>
+        <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--copper)]">
+          Today's priorities
+        </p>
+        <h2
+          id="dashboard-action-queues-title"
+          className="mt-1 text-[17px] font-semibold tracking-tight text-[var(--text-primary)]"
+        >
+          Action Queues
+        </h2>
+      </div>
+      <div className="grid gap-3 xl:grid-cols-5">
+        {queues.map((queue) => (
+          <BoardPanel
+            key={queue.key}
+            eyebrow="Action queue"
+            title={queue.title}
+            description={queue.description}
+            action={
+              <Link href={queue.href} className={dashboardPanelActionClassName}>
+                {queue.actionLabel}
+              </Link>
+            }
+          >
+            <div className="divide-y divide-[var(--border-warm)]">
+              {queue.items.length > 0 ? (
+                queue.items.map((item) => (
+                  <article key={item.id} className="px-4 py-3">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Link
+                        href={item.href}
+                        aria-label={`${item.recommendedActionLabel}: ${item.title}`}
+                        className="min-w-0 truncate text-sm font-semibold text-[var(--text-primary)] transition hover:text-[var(--copper)]"
+                      >
+                        {item.title}
+                      </Link>
+                      {item.badge ? (
+                        <span
+                          className={[
+                            "rounded-md border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em]",
+                            getStatusBadgeClassName(item.badge)
+                          ].join(" ")}
+                        >
+                          {item.badge}
+                        </span>
+                      ) : null}
+                    </div>
+                    <p className="mt-1 text-xs leading-5 text-[var(--text-secondary)]">
+                      {item.subtitle}
+                    </p>
+                    <p className="mt-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--text-secondary)]">
+                      Why: {item.reason}
+                    </p>
+                    {item.metadata ? (
+                      <p className="mt-1 text-xs leading-5 text-[var(--text-secondary)]">
+                        {item.metadata}
+                      </p>
+                    ) : null}
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <Link
+                        href={item.href}
+                        className="inline-flex h-8 items-center border border-[var(--border-warm)] bg-[var(--highlight)] px-2.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--text-secondary)] transition hover:bg-white"
+                      >
+                        {item.recommendedActionLabel}
+                      </Link>
+                      {item.contextHref && item.contextLabel ? (
+                        <Link
+                          href={item.contextHref}
+                          className="inline-flex h-8 items-center border border-[var(--border-warm)] bg-white px-2.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--text-secondary)] transition hover:bg-[var(--highlight)]"
+                        >
+                          {item.contextLabel}
+                        </Link>
+                      ) : null}
+                    </div>
+                  </article>
+                ))
+              ) : (
+                <div className="px-4 py-5">
+                  <p className="text-sm font-semibold text-[var(--text-primary)]">
+                    {queue.emptyTitle}
+                  </p>
+                  <p className="mt-2 text-sm leading-5 text-[var(--text-secondary)]">
+                    {queue.emptyDescription}
+                  </p>
+                </div>
+              )}
+            </div>
+          </BoardPanel>
         ))}
       </div>
     </section>
@@ -1203,6 +1305,7 @@ export function ContractorDashboardSurface({
   priorityItems,
   universalCapture,
   metrics,
+  actionQueues = [],
   lifecycleSteps,
   aiOperationalDigest,
   operationalCockpitBuckets = [],
@@ -1307,6 +1410,10 @@ export function ContractorDashboardSurface({
           metrics={metrics}
           priorityItems={priorityItems}
         />
+
+        {actionQueues.length > 0 ? (
+          <DashboardActionQueues queues={actionQueues} />
+        ) : null}
 
         {earlyAccess ? (
           <section

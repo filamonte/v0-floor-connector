@@ -11,14 +11,35 @@ if (!["fast", "full"].includes(mode)) {
 
 const packageJson = JSON.parse(readFileSync("package.json", "utf8"));
 const scripts = packageJson.scripts || {};
-const pnpm = "pnpm";
+const pnpmCommand = process.env.npm_execpath
+  ? process.execPath
+  : process.platform === "win32"
+    ? "pnpm.cmd"
+    : "pnpm";
+const pnpmArgsPrefix = process.env.npm_execpath
+  ? [process.env.npm_execpath]
+  : [];
 const summary = [];
 
 function runStep(name, command, args, options = {}) {
   console.log(`\n== ${name} ==`);
-  const result = spawnSync(command, args, {
+  const commandArgs =
+    process.platform === "win32" && command.endsWith(".cmd")
+      ? [
+          "cmd.exe",
+          [
+            "/d",
+            "/s",
+            "/c",
+            [
+              command,
+              ...args.map((arg) => `"${String(arg).replaceAll('"', '\\"')}"`)
+            ].join(" ")
+          ]
+        ]
+      : [command, args];
+  const result = spawnSync(commandArgs[0], commandArgs[1], {
     stdio: "inherit",
-    shell: true,
     ...options
   });
 
@@ -79,7 +100,8 @@ let ok = true;
 const filesForPrettier = prettierFiles(changedFiles());
 if (filesForPrettier.length > 0) {
   ok =
-    runStep("prettier changed files", pnpm, [
+    runStep("prettier changed files", pnpmCommand, [
+      ...pnpmArgsPrefix,
       "exec",
       "prettier",
       "--check",
@@ -90,13 +112,14 @@ if (filesForPrettier.length > 0) {
 }
 
 if (scripts.lint) {
-  ok = runStep("lint", pnpm, ["lint"]) && ok;
+  ok = runStep("lint", pnpmCommand, [...pnpmArgsPrefix, "lint"]) && ok;
 } else {
   skipStep("lint", "package.json has no lint script");
 }
 
 if (scripts.typecheck) {
-  ok = runStep("typecheck", pnpm, ["typecheck"]) && ok;
+  ok =
+    runStep("typecheck", pnpmCommand, [...pnpmArgsPrefix, "typecheck"]) && ok;
 } else {
   skipStep("typecheck", "package.json has no typecheck script");
 }
@@ -105,7 +128,7 @@ ok = runStep("git diff --check", "git", ["diff", "--check"]) && ok;
 
 if (mode === "full") {
   if (scripts.test) {
-    ok = runStep("test", pnpm, ["test"]) && ok;
+    ok = runStep("test", pnpmCommand, [...pnpmArgsPrefix, "test"]) && ok;
   } else {
     skipStep("test", "package.json has no generic test script");
   }

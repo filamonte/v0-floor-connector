@@ -17,9 +17,31 @@ test("dashboard renders decision-center UI", async ({ page }) => {
     );
   }
 
-  await expect(page.getByRole("heading", { name: "Decide what needs attention first" })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Pipeline and execution snapshot" })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Universal create" })).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Decide what needs attention first" })
+  ).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Action Queues" })
+  ).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Needs Contract" })
+  ).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Ready to Schedule" })
+  ).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Open AR" })).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Today's Work" })
+  ).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Open Blockers" })
+  ).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Pipeline and execution snapshot" })
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Universal create" })
+  ).toBeVisible();
   await expect(page.locator('a[href="/projects"]').first()).toBeVisible();
   expect(consoleErrors).toEqual([]);
 });

@@ -36,6 +36,7 @@ import {
   getDashboardOperationalCockpitReadModel,
   getDashboardOverviewReadModel
 } from "@/lib/dashboard/operational-cockpit-read-model";
+import { buildDashboardActionQueues } from "@/lib/dashboard/action-queues";
 import { getDashboardProgressBillingSummaryReadModel } from "@/lib/dashboard/progress-billing-summary-read-model";
 import { getDashboardProjectCueInputReadModel } from "@/lib/dashboard/project-cue-input-read-model";
 import { mapProjectCuesToDashboardPreviewItems } from "@/lib/dashboard/project-cue-preview";
@@ -425,16 +426,14 @@ export default async function DashboardPage({
       buildProjectCueIdentity(organizationContext.organization.id, cue)
     )
   });
-  const projectCues = selectHighestPriorityProjectCues(
-    applyCueStates({
-      cues: derivedProjectCues,
-      states: projectCueStates,
-      currentUserId: user.id,
-      now: new Date(),
-      companyId: organizationContext.organization.id
-    }).visibleCues,
-    5
-  );
+  const visibleProjectCues = applyCueStates({
+    cues: derivedProjectCues,
+    states: projectCueStates,
+    currentUserId: user.id,
+    now: new Date(),
+    companyId: organizationContext.organization.id
+  }).visibleCues;
+  const projectCues = selectHighestPriorityProjectCues(visibleProjectCues, 5);
   const openInvoices = dashboardProjectCueInputReadModel.openInvoicePreviews;
   const overdueInvoices =
     dashboardProjectCueInputReadModel.overdueInvoicePreviews;
@@ -463,6 +462,38 @@ export default async function DashboardPage({
     dashboardProjectCueInputReadModel.jobsNeedingScheduling;
   const jobsTodayOrInProgress =
     dashboardProjectCueInputReadModel.jobsTodayOrInProgress;
+  const actionQueues = buildDashboardActionQueues({
+    projectCues: visibleProjectCues,
+    readyProjectsWithoutJobs: readyProjectsWithoutJobs.map((project) => {
+      const readinessSnapshot =
+        projectReadinessSnapshots.get(project.id) ?? null;
+      const searchParams = new URLSearchParams({
+        projectId: project.id,
+        compose: "1"
+      });
+
+      if (readinessSnapshot?.estimateId) {
+        searchParams.set("estimateId", readinessSnapshot.estimateId);
+      }
+
+      if (readinessSnapshot?.contractId) {
+        searchParams.set("contractId", readinessSnapshot.contractId);
+      }
+
+      return {
+        id: project.id,
+        name: project.name,
+        status: project.status,
+        customerName: project.customer?.name ?? null,
+        jobCreateHref: `/jobs?${searchParams.toString()}`
+      };
+    }),
+    jobsNeedingScheduling,
+    openInvoices,
+    overdueInvoices,
+    jobsTodayOrInProgress,
+    today
+  });
   const currentUserPerson = dashboardOverviewReadModel.currentUserPerson;
   const showUniversalCapture = resolvedSearchParams.capture === "1";
   const assignablePeople = people
@@ -1348,6 +1379,7 @@ export default async function DashboardPage({
           href: "/schedule?view=today"
         }
       ]}
+      actionQueues={actionQueues}
       lifecycleSteps={[
         {
           key: "opportunity",
