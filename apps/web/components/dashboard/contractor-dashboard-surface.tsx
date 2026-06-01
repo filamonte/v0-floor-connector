@@ -491,6 +491,95 @@ function QueueRows({
   );
 }
 
+function DashboardOperatingSummary({
+  header,
+  metrics,
+  priorityItems
+}: {
+  header?: ContractorDashboardSurfaceProps["header"];
+  metrics: DashboardMetric[];
+  priorityItems: DashboardPriorityItem[];
+}) {
+  const jobsTodayMetric = metrics.find((metric) => metric.key === "jobs-today");
+  const openBlockersCount = priorityItems.filter(
+    (item) => !["complete", "paid"].includes(String(item.status))
+  ).length;
+
+  const summaryItems = [
+    {
+      key: "active-projects",
+      label: "Active Projects",
+      value: String(header?.activeProjectCount ?? "0"),
+      detail: "Project chain",
+      href: "/projects"
+    },
+    {
+      key: "open-ar",
+      label: "Open AR",
+      value: header?.openReceivablesLabel ?? "$0.00",
+      detail: "Invoice/payment chain",
+      href: "/invoices"
+    },
+    {
+      key: "jobs-today",
+      label: "Jobs Today",
+      value: jobsTodayMetric?.value ?? "0",
+      detail: "Schedule and jobs",
+      href: jobsTodayMetric?.href ?? "/schedule"
+    },
+    {
+      key: "open-blockers",
+      label: "Open Blockers",
+      value: String(openBlockersCount),
+      detail: "Attention strip",
+      href: "/dashboard#dashboard-priority-strip"
+    }
+  ];
+
+  return (
+    <section
+      aria-labelledby="dashboard-operating-summary-title"
+      className="border border-[var(--border-warm)] bg-white shadow-[0_18px_42px_-36px_rgba(34,26,20,0.35)]"
+    >
+      <div className="border-b border-[var(--border-warm)] bg-[var(--highlight)] px-4 py-3">
+        <div>
+          <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--copper)]">
+            Dashboard command metrics
+          </p>
+          <h2
+            id="dashboard-operating-summary-title"
+            className="mt-1 text-[17px] font-semibold tracking-tight text-[var(--text-primary)]"
+          >
+            Operating health at a glance
+          </h2>
+        </div>
+      </div>
+      <div className="grid divide-y divide-[var(--border-warm)] sm:grid-cols-2 sm:divide-x sm:divide-y-0 xl:grid-cols-4">
+        {summaryItems.map((item) => (
+          <Link
+            key={item.key}
+            href={item.href}
+            className="group min-w-0 px-4 py-3 transition hover:bg-[var(--highlight)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--copper)] focus-visible:ring-inset"
+          >
+            <div className="flex items-start justify-between gap-3">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--text-secondary)]">
+                {item.label}
+              </p>
+              <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-[var(--copper)] opacity-70 transition group-hover:opacity-100" />
+            </div>
+            <p className="mt-2 truncate text-xl font-semibold tracking-tight text-[var(--text-primary)]">
+              {item.value}
+            </p>
+            <p className="mt-1 text-[11px] leading-4 text-[var(--text-secondary)]">
+              {item.detail}
+            </p>
+          </Link>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 function UtilityCardGrid({
   metrics,
   operationsWidgets
@@ -1109,6 +1198,7 @@ function AiOperationalDigestPanel({
 }
 
 export function ContractorDashboardSurface({
+  header,
   earlyAccess,
   priorityItems,
   universalCapture,
@@ -1212,6 +1302,12 @@ export function ContractorDashboardSurface({
       <div className="space-y-4 px-4 py-4 sm:px-6">
         <h1 className="sr-only">Dashboard</h1>
 
+        <DashboardOperatingSummary
+          header={header}
+          metrics={metrics}
+          priorityItems={priorityItems}
+        />
+
         {earlyAccess ? (
           <section
             className={[
@@ -1280,7 +1376,9 @@ export function ContractorDashboardSurface({
           </section>
         ) : null}
 
-        <PriorityStrip items={priorityItems} />
+        <div id="dashboard-priority-strip">
+          <PriorityStrip items={priorityItems} />
+        </div>
 
         {universalCapture ? universalCapture : null}
 
