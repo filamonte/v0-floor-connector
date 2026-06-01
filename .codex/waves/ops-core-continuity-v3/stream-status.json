@@ -1,14 +1,59 @@
 {
-  "generatedAt": "2026-06-01T22:39:31.661Z",
+  "generatedAt": "2026-06-01T22:41:46.936Z",
   "approval": {
     "approved": false,
     "pushApproved": false
   },
-  "streams": {},
+  "streams": {
+    "field-handoff-command-context-v1": {
+      "status": "prepared",
+      "branch": "stream/field-handoff-command-context-v1",
+      "worktree": "C:/FC-worktrees/field-handoff-command-context-v1",
+      "prompt": ".codex/waves/ops-core-continuity-v3/prompts/field-handoff-command-context-v1.md",
+      "risk": "medium",
+      "latestCommit": "b0718b97076dfba718713a9d92d62f9cc4b95f0a",
+      "note": "new branch created from base",
+      "updatedAt": "2026-06-01T22:41:44.722Z"
+    },
+    "collections-customer-project-continuity-v1": {
+      "status": "prepared",
+      "branch": "stream/collections-customer-project-continuity-v1",
+      "worktree": "C:/FC-worktrees/collections-customer-project-continuity-v1",
+      "prompt": ".codex/waves/ops-core-continuity-v3/prompts/collections-customer-project-continuity-v1.md",
+      "risk": "medium",
+      "latestCommit": "b0718b97076dfba718713a9d92d62f9cc4b95f0a",
+      "note": "new branch created from base",
+      "updatedAt": "2026-06-01T22:41:45.497Z"
+    },
+    "portal-project-trust-thread-v1": {
+      "status": "prepared",
+      "branch": "stream/portal-project-trust-thread-v1",
+      "worktree": "C:/FC-worktrees/portal-project-trust-thread-v1",
+      "prompt": ".codex/waves/ops-core-continuity-v3/prompts/portal-project-trust-thread-v1.md",
+      "risk": "medium",
+      "latestCommit": "b0718b97076dfba718713a9d92d62f9cc4b95f0a",
+      "note": "new branch created from base",
+      "updatedAt": "2026-06-01T22:41:46.245Z"
+    },
+    "reports-operations-continuity-v1": {
+      "status": "prepared",
+      "branch": "stream/reports-operations-continuity-v1",
+      "worktree": "C:/FC-worktrees/reports-operations-continuity-v1",
+      "prompt": ".codex/waves/ops-core-continuity-v3/prompts/reports-operations-continuity-v1.md",
+      "risk": "medium",
+      "latestCommit": "b0718b97076dfba718713a9d92d62f9cc4b95f0a",
+      "note": "new branch created from base",
+      "updatedAt": "2026-06-01T22:41:46.936Z"
+    }
+  },
   "proposalApproval": {
     "proposalApproved": true,
     "activatedAt": "2026-06-01T22:39:31.658Z",
     "wave": "ops-core-continuity-v3"
   },
-  "reportPath": "C:\\FloorConnector\\.codex\\waves\\ops-core-continuity-v3\\run-report.md"
+  "reportPath": "C:\\FloorConnector\\.codex\\waves\\ops-core-continuity-v3\\run-report.md",
+  "wave": "ops-core-continuity-v3",
+  "goal": "Tighten operational continuity across field execution, collections follow-up, portal trust, and reporting using existing canonical records only.",
+  "base": "origin/main",
+  "baseCommit": "b0718b97076dfba718713a9d92d62f9cc4b95f0a"
 }
