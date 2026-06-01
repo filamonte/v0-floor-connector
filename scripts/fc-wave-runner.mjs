@@ -373,6 +373,48 @@ function spawnGitOrThrow(args, cwd = repoRoot) {
   }
 }
 
+function abortMergeIfInProgress(cwd) {
+  const mergeHead = tryGit(["rev-parse", "-q", "--verify", "MERGE_HEAD"], {
+    cwd
+  });
+
+  if (!mergeHead) {
+    return {
+      status: "no_merge_in_progress",
+      detail: "MERGE_HEAD missing"
+    };
+  }
+
+  const result = spawnSync("git", ["merge", "--abort"], {
+    cwd,
+    encoding: "utf8",
+    stdio: ["ignore", "pipe", "pipe"]
+  });
+
+  if (result.status === 0) {
+    return {
+      status: "aborted_merge",
+      detail: "merge aborted"
+    };
+  }
+
+  return {
+    status: "failed",
+    detail:
+      (result.stderr || result.stdout || "").trim() ||
+      "git merge --abort failed"
+  };
+}
+
+function abortMergeIfInProgressOrThrow(cwd) {
+  const abortResult = abortMergeIfInProgress(cwd);
+  if (abortResult.status === "failed") {
+    throw new Error(`Failed to abort merge in ${cwd}: ${abortResult.detail}`);
+  }
+
+  return abortResult;
+}
+
 function commandFromTemplate(template, manifest, stream) {
   const promptFile = resolveRepoPath(stream.prompt);
   const replacements = {
@@ -546,24 +588,31 @@ function mergeCheckWave(manifest, waveDir) {
     );
 
     if (result.status === 0) {
-      spawnGitOrThrow(["merge", "--abort"], scratchWorktree);
+      const abortResult = abortMergeIfInProgressOrThrow(scratchWorktree);
       dryResults.push({
         stream: stream.name,
         branch: stream.branch,
-        status: "passed"
+        status: "passed",
+        abortStatus: abortResult.status
       });
       updateStreamStatus(status, stream.name, {
-        mergeCheck: { status: "passed", scratchBranch, scratchWorktree }
+        mergeCheck: {
+          status: "passed",
+          scratchBranch,
+          scratchWorktree,
+          abortStatus: abortResult.status
+        }
       });
       continue;
     }
 
     ok = false;
-    tryGit(["merge", "--abort"], { cwd: scratchWorktree });
+    const abortResult = abortMergeIfInProgressOrThrow(scratchWorktree);
     dryResults.push({
       stream: stream.name,
       branch: stream.branch,
       status: "failed",
+      abortStatus: abortResult.status,
       detail: (result.stderr || result.stdout || "").trim()
     });
     updateStreamStatus(status, stream.name, {
@@ -571,6 +620,7 @@ function mergeCheckWave(manifest, waveDir) {
         status: "failed",
         scratchBranch,
         scratchWorktree,
+        abortStatus: abortResult.status,
         detail: (result.stderr || result.stdout || "").trim()
       }
     });

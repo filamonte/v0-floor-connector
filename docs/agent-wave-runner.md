@@ -63,6 +63,11 @@ The `run` command:
 11. Generates `.codex/waves/<wave>/next-wave-proposal.md`.
 12. Stops before merge.
 
+During scratch merge checks, the runner aborts an in-progress merge after each
+dry merge attempt. If Git reports no merge is in progress because `MERGE_HEAD`
+is missing, that cleanup is treated as a safe no-op; any other merge-abort
+failure still stops the runner.
+
 Do not configure an agent command unless you want stream agents to run.
 
 ## Manifest Format
