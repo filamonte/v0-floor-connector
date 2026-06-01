@@ -33,7 +33,7 @@ Boundaries:
 
 Validation:
 
-- pnpm --filter @floorconnector/web exec tsx apps/web/lib/schedule/field-handoff-read-model.test.ts
+- pnpm --filter @floorconnector/web exec tsx lib/schedule/field-handoff-read-model.test.ts
 - pnpm --filter @floorconnector/web typecheck
 - pnpm --filter @floorconnector/web lint
 - git diff --check

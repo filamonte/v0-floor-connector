@@ -53,6 +53,10 @@ pnpm.cmd fc:preflight:fast
 git diff --check
 ```
 
+If using `pnpm --filter @floorconnector/web exec`, pass package-relative paths
+from `apps/web`, for example `lib/schedule/example.test.ts`, not
+`apps/web/lib/schedule/example.test.ts`.
+
 ## Final Response Requirements
 
 Report branch name, starting status, final status, commit hash and message,

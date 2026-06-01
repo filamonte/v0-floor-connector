@@ -35,8 +35,8 @@ Boundaries:
 
 Validation:
 
-- pnpm --filter @floorconnector/web exec tsx apps/web/lib/portal/project-timeline.test.ts
-- pnpm --filter @floorconnector/web exec tsx apps/web/lib/portal/status-explanation.test.ts
+- pnpm --filter @floorconnector/web exec tsx lib/portal/project-timeline.test.ts
+- pnpm --filter @floorconnector/web exec tsx lib/portal/status-explanation.test.ts
 - pnpm --filter @floorconnector/web typecheck
 - pnpm --filter @floorconnector/web lint
 - git diff --check

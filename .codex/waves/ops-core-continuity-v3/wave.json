@@ -35,7 +35,7 @@
         "apps/web/app/(app)/daily-logs/[dailyLogId]/page.tsx"
       ],
       "validation": [
-        "pnpm --filter @floorconnector/web exec tsx apps/web/lib/schedule/field-handoff-read-model.test.ts",
+        "pnpm --filter @floorconnector/web exec tsx lib/schedule/field-handoff-read-model.test.ts",
         "pnpm --filter @floorconnector/web typecheck",
         "pnpm --filter @floorconnector/web lint",
         "git diff --check"
@@ -56,8 +56,8 @@
         "apps/web/app/(app)/financials/accounts-receivable/page.tsx"
       ],
       "validation": [
-        "pnpm --filter @floorconnector/web exec tsx apps/web/lib/financials/collections-follow-up-intelligence.test.ts",
-        "pnpm --filter @floorconnector/web exec tsx apps/web/lib/financials/collections-command-center.test.ts",
+        "pnpm --filter @floorconnector/web exec tsx lib/financials/collections-follow-up-intelligence.test.ts",
+        "pnpm --filter @floorconnector/web exec tsx lib/financials/collections-command-center.test.ts",
         "pnpm --filter @floorconnector/web typecheck",
         "pnpm --filter @floorconnector/web lint",
         "git diff --check"
@@ -79,8 +79,8 @@
         "apps/web/app/(portal)/portal/projects/[projectId]/page.tsx"
       ],
       "validation": [
-        "pnpm --filter @floorconnector/web exec tsx apps/web/lib/portal/project-timeline.test.ts",
-        "pnpm --filter @floorconnector/web exec tsx apps/web/lib/portal/status-explanation.test.ts",
+        "pnpm --filter @floorconnector/web exec tsx lib/portal/project-timeline.test.ts",
+        "pnpm --filter @floorconnector/web exec tsx lib/portal/status-explanation.test.ts",
         "pnpm --filter @floorconnector/web typecheck",
         "pnpm --filter @floorconnector/web lint",
         "git diff --check"
@@ -100,7 +100,7 @@
         "docs/current-state.md"
       ],
       "validation": [
-        "pnpm --filter @floorconnector/web exec tsx apps/web/lib/reports/operations-summary.test.ts",
+        "pnpm --filter @floorconnector/web exec tsx lib/reports/operations-summary.test.ts",
         "pnpm --filter @floorconnector/web typecheck",
         "pnpm --filter @floorconnector/web lint",
         "pnpm exec prettier --check docs/current-state.md",

@@ -34,7 +34,7 @@ Boundaries:
 
 Validation:
 
-- pnpm --filter @floorconnector/web exec tsx apps/web/lib/reports/operations-summary.test.ts
+- pnpm --filter @floorconnector/web exec tsx lib/reports/operations-summary.test.ts
 - pnpm --filter @floorconnector/web typecheck
 - pnpm --filter @floorconnector/web lint
 - pnpm exec prettier --check docs/current-state.md

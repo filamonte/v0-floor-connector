@@ -8,7 +8,7 @@ import {
   writeFileSync
 } from "node:fs";
 import { execFileSync, spawnSync } from "node:child_process";
-import { dirname, isAbsolute, join, resolve } from "node:path";
+import { dirname, isAbsolute, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -133,6 +133,93 @@ function runProcess(command, options = {}) {
     stdout: result.stdout?.trim() || "",
     stderr: result.stderr?.trim() || "",
     error: result.error?.message || ""
+  };
+}
+
+function pathIsInside(childPath, parentPath) {
+  const child = resolve(childPath);
+  const parent = resolve(parentPath);
+  const childLower = child.toLowerCase();
+  const parentLower = parent.toLowerCase();
+  const relativePath = relative(parentLower, childLower);
+  return (
+    relativePath === "" ||
+    (!relativePath.startsWith("..") && !isAbsolute(relativePath))
+  );
+}
+
+function normalizeValidationCommand(command) {
+  if (typeof command !== "string") return command;
+  return command.replace(
+    /\bpnpm(?:\.cmd)?\s+--filter\s+@floorconnector\/web\s+exec\s+tsx\s+apps\/web\//g,
+    (match) => match.replace("apps/web/", "")
+  );
+}
+
+function normalizeValidationCommands(commandsToRun) {
+  return Array.isArray(commandsToRun)
+    ? commandsToRun.map((command) => normalizeValidationCommand(command))
+    : [];
+}
+
+function normalizeValidationText(text) {
+  if (typeof text !== "string") return text;
+  return text.replace(
+    /\bpnpm(?:\.cmd)?\s+--filter\s+@floorconnector\/web\s+exec\s+tsx\s+apps\/web\//g,
+    (match) => match.replace("apps/web/", "")
+  );
+}
+
+function prepareWorktreeDependencies(manifest, stream) {
+  const worktreeRoot = resolve(manifest.worktreeRoot || "C:/FC-worktrees");
+  const worktree = resolve(stream.worktree);
+
+  if (!pathIsInside(worktree, worktreeRoot)) {
+    return {
+      status: "failed",
+      detail: `Refusing dependency install outside worktree root: ${worktree}`
+    };
+  }
+
+  if (!existsSync(join(worktree, "package.json"))) {
+    return {
+      status: "failed",
+      detail: `Missing package.json in stream worktree: ${worktree}`
+    };
+  }
+
+  if (existsSync(join(worktree, "node_modules"))) {
+    return {
+      status: "ready",
+      detail: "node_modules present"
+    };
+  }
+
+  const result = runProcess("pnpm install --frozen-lockfile", {
+    cwd: worktree
+  });
+
+  if (result.status === 0) {
+    return {
+      status: "installed",
+      command: result.command,
+      exitCode: result.status,
+      stdout: result.stdout.slice(-4000),
+      stderr: result.stderr.slice(-4000)
+    };
+  }
+
+  return {
+    status: "failed",
+    command: result.command,
+    exitCode: result.status,
+    stdout: result.stdout.slice(-4000),
+    stderr: result.stderr.slice(-4000),
+    detail:
+      result.stderr ||
+      result.stdout ||
+      result.error ||
+      "pnpm install --frozen-lockfile failed"
   };
 }
 
@@ -465,6 +552,15 @@ function runAgentsIfConfigured(manifest, waveDir, options) {
       );
     }
 
+    const dependencyPreparation = prepareWorktreeDependencies(manifest, stream);
+    updateStreamStatus(status, stream.name, { dependencyPreparation });
+    if (dependencyPreparation.status === "failed") {
+      saveStatus(waveDir, status);
+      throw new Error(
+        `Dependency preparation failed for ${stream.name}: ${dependencyPreparation.detail}`
+      );
+    }
+
     const command = commandFromTemplate(template, manifest, stream);
     const result = runProcess(command, { cwd: stream.worktree });
     updateStreamStatus(status, stream.name, {
@@ -500,9 +596,32 @@ function validateWave(manifest, waveDir) {
       continue;
     }
 
-    const commandsToRun = Array.isArray(stream.validation)
-      ? stream.validation
-      : [];
+    const dependencyPreparation = prepareWorktreeDependencies(manifest, stream);
+    updateStreamStatus(status, stream.name, { dependencyPreparation });
+    if (dependencyPreparation.status === "failed") {
+      updateStreamStatus(status, stream.name, {
+        validation: {
+          status: "failed",
+          reason: "dependency preparation failed",
+          results: [
+            {
+              command:
+                dependencyPreparation.command ||
+                "pnpm install --frozen-lockfile",
+              exitCode: dependencyPreparation.exitCode ?? 1,
+              stdout: dependencyPreparation.stdout || "",
+              stderr:
+                dependencyPreparation.stderr || dependencyPreparation.detail
+            }
+          ]
+        },
+        latestCommit: currentCommit(stream.worktree),
+        changedFiles: changedFilesAgainstBase(stream.worktree, manifest.base)
+      });
+      continue;
+    }
+
+    const commandsToRun = normalizeValidationCommands(stream.validation);
     const results = [];
     let ok = true;
 
@@ -1394,6 +1513,8 @@ function normalizeGeneratedWave(candidate, options = {}) {
   for (const stream of normalized.streams) {
     if (!generatedWaveSafeName.test(stream?.name || "")) continue;
     stream.promptFile = `.codex/waves/${normalized.name}/prompts/${stream.name}.md`;
+    stream.validation = normalizeValidationCommands(stream.validation);
+    stream.promptBody = normalizeValidationText(stream.promptBody);
     if (
       isPromptBodyNormalizationEligible(normalized, stream, options) &&
       (!hasMandatoryPromptGuardrails(stream.promptBody) ||

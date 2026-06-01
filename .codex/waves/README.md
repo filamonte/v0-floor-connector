@@ -39,6 +39,17 @@ pnpm fc:wave:status --wave ops-core-next
 pnpm fc:wave:report --wave ops-core-next
 ```
 
+When a validation command uses `pnpm --filter @floorconnector/web exec`, the
+command runs inside the `apps/web` package. Test/script paths should therefore
+be package-relative, such as `lib/schedule/example.test.ts`, not
+`apps/web/lib/schedule/example.test.ts`.
+
+The runner checks dependency readiness before agent execution and validation.
+If a stream worktree under the manifest `worktreeRoot` has `package.json` but no
+root `node_modules`, it runs `pnpm install --frozen-lockfile` from that stream
+worktree root. Failed installs are reported as dependency-preparation failures
+instead of surfacing later as missing ESLint or TypeScript packages.
+
 Do not run `pnpm fc:wave:merge --wave <name> --approved` until a human has
 reviewed the report and created approval with `pnpm fc:wave:approve`.
 

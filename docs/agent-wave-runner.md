@@ -108,6 +108,24 @@ product-stride criteria, and streams:
 Each stream includes `name`, `branch`, `worktree`, `prompt`, `risk`,
 `productOutcome`, `expectedFiles`, and `validation`.
 
+Validation commands that use `pnpm --filter @floorconnector/web exec` run from
+the `apps/web` package context. Use package-relative paths for those commands:
+
+```powershell
+pnpm --filter @floorconnector/web exec tsx lib/schedule/example.test.ts
+```
+
+Do not prefix those filtered `tsx` paths with `apps/web/`; that would resolve
+inside the package as `apps/web/apps/web/...`.
+
+Before running an agent command or stream validation, the runner checks the
+stream worktree for dependency readiness. If the worktree root is under the
+manifest `worktreeRoot`, has its own `package.json`, and lacks `node_modules`,
+the runner runs `pnpm install --frozen-lockfile` from that worktree root only.
+If the install fails, validation or agent execution stops with the install
+output recorded in stream status. The runner does not edit `package.json` or
+`pnpm-lock.yaml`.
+
 ## Agent Command Configuration
 
 The runner uses `FLOORCONNECTOR_AGENT_COMMAND` so it does not depend on one

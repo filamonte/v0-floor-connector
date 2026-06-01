@@ -33,8 +33,8 @@ Boundaries:
 
 Validation:
 
-- pnpm --filter @floorconnector/web exec tsx apps/web/lib/financials/collections-follow-up-intelligence.test.ts
-- pnpm --filter @floorconnector/web exec tsx apps/web/lib/financials/collections-command-center.test.ts
+- pnpm --filter @floorconnector/web exec tsx lib/financials/collections-follow-up-intelligence.test.ts
+- pnpm --filter @floorconnector/web exec tsx lib/financials/collections-command-center.test.ts
 - pnpm --filter @floorconnector/web typecheck
 - pnpm --filter @floorconnector/web lint
 - git diff --check
