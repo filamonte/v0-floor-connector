@@ -2780,6 +2780,16 @@ Implemented UI behavior now:
   history only in this slice; it does not send email/SMS, create provider
   attempts, create delivery proof, create portal-only message copies, expose
   internal notes to the portal, add schema, or run automation.
+- Communications Record Continuity v1 now projects that same canonical
+  communication context back into Project, Customer, Invoice, and Contract
+  Workspaces through compact Related Communications panels. The panels filter
+  existing `communication_threads` by tenant and source record, show recent
+  stored thread snippets, thread status, customer-visible/internal boundary
+  labels, and links back to `/communications`; Project Workspace includes
+  project-linked commercial/billing record threads from MessageCenter context.
+  It adds no communication tables, message persistence model, fake messages,
+  provider sends, notification automation, AI summaries, portal-only copies,
+  schema, or migrations.
 - Communication Reply Triage v1 adds a no-schema contractor-side unread/triage
   layer for portal customer replies. The shared
   `apps/web/lib/communications/reply-triage.ts` helper derives needs-response

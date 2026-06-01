@@ -1533,6 +1533,8 @@ export default async function ContractDetailPage({
 
             <RelatedConversationsCard
               source="contract"
+              organizationId={contract.organizationId}
+              subjectId={contract.id}
               description="Contract-scoped communication stays on canonical threads and routes back into the shared communications workspace when customer follow-through is needed."
               countLabel="Contract threads"
               emptyMessage="No contract-scoped communication threads are attached to this canonical contract yet."

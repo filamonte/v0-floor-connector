@@ -2190,6 +2190,8 @@ export default async function InvoiceDetailPage({
 
         <RelatedConversationsCard
           source="invoice"
+          organizationId={invoice.organizationId}
+          subjectId={invoice.id}
           description="Invoice-scoped communication stays on canonical threads and routes back into the shared communications workspace when billing follow-through needs context."
           countLabel="Invoice threads"
           emptyMessage="No invoice-scoped communication threads are attached to this canonical invoice yet."

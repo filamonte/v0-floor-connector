@@ -1817,6 +1817,8 @@ export default async function CustomerDetailPage({
         <div id="communication-history" className="space-y-4">
           <RelatedConversationsCard
             source="customer"
+            organizationId={customer.organizationId}
+            subjectId={customer.id}
             description="Customer-scoped communication stays on shared threads and routes back into the communications review workspace when this relationship needs follow-through."
             countLabel="Customer threads"
             emptyMessage="No customer-scoped communication threads are attached to this customer yet."
