@@ -18,9 +18,9 @@ worktree, PR, validation, blocker, or next-slice state changes. Use
 | Status                    | Active cleanup stream                                                          |
 | Blocked by                | Human merge/retirement decisions as needed                                     |
 | Shared-risk files touched | `active-worktrees.md`, `.codex/**`, scripts, package scripts, GitHub templates |
-| Last main sync            | 2026-05-31 registry indicates post-merge cleanup                               |
-| Last validation           | Check live with `pnpm fc:status` and `pnpm wave:status`                        |
-| Next intended slice       | Merge or retire final architecture-coordination cleanup                        |
+| Last main sync            | 2026-06-01 local branch reset to `origin/main` at `bcac52a5`                   |
+| Last validation           | `pnpm fc:status`; main `pnpm fc:preflight:fast`                                |
+| Next intended slice       | Start future coordination work from refreshed local branch                     |
 
 ## Verification
 
@@ -60,11 +60,11 @@ worktree, PR, validation, blocker, or next-slice state changes. Use
 | Local worktree path       | `C:\FC-worktrees\scheduling`                                              |
 | Branch                    | `stream/scheduling`                                                       |
 | Current PR                | PR #12 merged                                                             |
-| Status                    | Merged, retained temporarily                                              |
+| Status                    | Merged, refreshed to current `origin/main`, retained temporarily          |
 | Blocked by                | Explicit worktree retirement decision                                     |
 | Shared-risk files touched | `/schedule`, schedule helpers/tests, Scheduling E2E                       |
-| Last main sync            | Merged to `main`                                                          |
-| Last validation           | See PR #12 evidence and current live status commands                      |
+| Last main sync            | 2026-06-01 local branch reset to `origin/main` at `bcac52a5`              |
+| Last validation           | `pnpm fc:preflight:fast` and schedule helper tests passed                 |
 | Next intended slice       | Retire or start next Scheduling slice from current `main`                 |
 
 ## Communications
