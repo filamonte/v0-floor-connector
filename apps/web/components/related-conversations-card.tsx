@@ -4,14 +4,17 @@ import Link from "next/link";
 import { DetailPanel } from "@/components/detail-panel";
 import {
   deriveRecordCommunicationContinuitySummary,
+  filterRecordCommunicationContinuityThreads,
   type RecordCommunicationContinuitySource
 } from "@/lib/communications/record-continuity";
 
 type RelatedConversationThread = Pick<
   CommunicationThread,
   | "id"
+  | "organizationId"
   | "projectId"
   | "subjectType"
+  | "subjectId"
   | "lastMessageAt"
   | "lastMessagePreview"
   | "lastMessageVisibility"
@@ -21,6 +24,9 @@ type RelatedConversationThread = Pick<
 
 type RelatedConversationsCardProps = {
   source: RecordCommunicationContinuitySource;
+  organizationId?: string | null;
+  subjectId?: string | null;
+  projectId?: string | null;
   description: string;
   countLabel: string;
   emptyMessage: string;
@@ -30,15 +36,27 @@ type RelatedConversationsCardProps = {
 
 export function RelatedConversationsCard({
   source,
+  organizationId,
+  subjectId,
+  projectId,
   description,
   countLabel,
   emptyMessage,
   actionClassName,
   threads
 }: RelatedConversationsCardProps) {
+  const scopedThreads = filterRecordCommunicationContinuityThreads({
+    target: {
+      organizationId,
+      source,
+      subjectId,
+      projectId
+    },
+    threads
+  });
   const summary = deriveRecordCommunicationContinuitySummary({
     source,
-    threads
+    threads: scopedThreads
   });
 
   return (
@@ -94,6 +112,26 @@ export function RelatedConversationsCard({
                 {summary.latestPreview}
               </span>
             </p>
+            <div className="space-y-2">
+              {summary.recentItems.slice(0, 3).map((item) => (
+                <Link
+                  key={item.id}
+                  href={item.href}
+                  className="block rounded-[6px] border border-slate-200 bg-slate-50/80 px-3 py-3 transition hover:border-slate-300 hover:bg-white"
+                >
+                  <div className="flex flex-wrap items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">
+                    <span>{item.sourceLabel}</span>
+                    <span aria-hidden="true">/</span>
+                    <span>{item.statusLabel}</span>
+                    <span aria-hidden="true">/</span>
+                    <span>{item.boundaryLabel}</span>
+                  </div>
+                  <p className="mt-1 line-clamp-2 text-sm font-medium leading-6 text-slate-800">
+                    {item.snippet}
+                  </p>
+                </Link>
+              ))}
+            </div>
             <div className="pt-1">
               <Link
                 href={summary.communicationsHref}
