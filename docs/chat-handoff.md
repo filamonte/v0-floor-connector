@@ -588,6 +588,13 @@ file` actions without exposing raw storage paths. This remains contractor-only
   same-day execution visibility.
   The slice adds no dispatch model, schema, route optimization, map integration,
   notification automation, portal sharing, or new schedule write path.
+- Schedule Dispatch Board V1 adds
+  `apps/web/lib/schedule/dispatch-board.ts` as the pure section helper for the
+  four daily operations lanes: Today, Upcoming, Unscheduled / Needs Dispatch,
+  and In Progress. `/schedule` uses those sections for the dispatch cards while
+  preserving existing CrewBoard read models, warnings, job/project handoffs, and
+  schedule/crew actions. It adds no schema, dispatch table, automation, AI, or
+  route-optimization behavior.
 - Scheduling / Field handoff visibility now adds a read-only Field handoff
   layer to `/schedule`. It derives scheduled-day Daily Log presence, open
   blocker/issue counts, field-note totals, same-day and open time-card counts,
