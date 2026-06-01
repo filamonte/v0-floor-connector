@@ -86,9 +86,14 @@ the runner's additional safety validation. Valid AI proposals must contain 3 to
 5 low/medium-risk product-outcome streams, avoid meta/debug/tooling-only work,
 avoid blocked-file-write/docs-read/cleanup-check/validation-only/sandbox
 themes, keep branches under `stream/<kebab-case-name>`, keep worktrees under
-`C:/FC-worktrees/`, and include prompt bodies with git status, fetch,
-`git diff --check`, intended-file staging, commit, and final reporting
-requirements. If
+`C:/FC-worktrees/`, and include prompt bodies with the exact required git,
+validation, staging, commit, and final reporting sentences. Before final
+validation, the runner may inject a `## Required Git And Validation Workflow`
+block only into otherwise-valid product stream prompts that used equivalent
+wording but missed the exact required sentences. This normalization does not
+repair blocked streams, high-risk streams without explicit approval, invalid
+paths, missing required fields, schema-invalid structures, or unsafe
+schema/auth/RLS/payment/provider/env/route-protection proposals. If
 `FLOORCONNECTOR_WAVE_GENERATOR_COMMAND` is missing, generation falls back to a
 template/manual proposal and records `manual_ai_required` in the generation
 status.

@@ -1,0 +1,105 @@
+{
+  "state": "proposed",
+  "name": "ops-core-continuity-v2",
+  "goal": "Deepen field execution, collections follow-up, portal trust, and operational visibility with reviewable read-only product slices over existing canonical records.",
+  "rationale": "The current operating core already has Project Workspace, CrewBoard, Accounts Receivable, portal status, communications, and reporting foundations. The next wave should turn those foundations into clearer daily operating context without introducing duplicate records, schema changes, provider actions, or financial/auth behavior changes.",
+  "base": "origin/main",
+  "worktreeRoot": "C:/FC-worktrees",
+  "maxConcurrency": 4,
+  "mainValidation": [
+    "pnpm worktree:doctor",
+    "pnpm worktree:audit",
+    "pnpm fc:wave:validate --wave ops-core-continuity-v2",
+    "pnpm fc:wave:review --wave ops-core-continuity-v2"
+  ],
+  "productStrideCriteria": [
+    "Each stream must produce a user-visible operational improvement tied to canonical records.",
+    "Each stream must preserve the canonical lifecycle: opportunity -> customer -> project -> estimate -> contract -> change order -> job -> invoice -> payment.",
+    "Each stream must stay bounded to read models, route composition, copy hierarchy, or test fixture selection over existing records.",
+    "No stream may add schema, migrations, Supabase policies, RLS changes, auth changes, env vars, route protection changes, payment math, provider behavior, or production mutation behavior.",
+    "Each stream must include targeted validation and commit only intended files."
+  ],
+  "streams": [
+    {
+      "name": "field-daily-execution-handoff",
+      "branch": "stream/field-daily-execution-handoff",
+      "worktree": "C:/FC-worktrees/field-daily-execution-handoff",
+      "prompt": ".codex/waves/ops-core-continuity-v2/prompts/field-daily-execution-handoff.md",
+      "risk": "medium",
+      "productOutcome": "Make the Field and Project execution surfaces show a clearer daily handoff from scheduled jobs to Daily Logs, field notes, blockers, time activity, and source Project Workspace links.",
+      "expectedFiles": [
+        "apps/web/lib/field/**",
+        "apps/web/app/(app)/field/**",
+        "apps/web/app/(app)/projects/[projectId]/**",
+        "apps/web/components/**",
+        "apps/web/**/*.test.*"
+      ],
+      "validation": [
+        "pnpm prettier --check <changed files>",
+        "pnpm test -- --runInBand --testPathPattern=field",
+        "pnpm test -- --runInBand --testPathPattern=projects",
+        "git diff --check"
+      ]
+    },
+    {
+      "name": "collections-conversation-context",
+      "branch": "stream/collections-conversation-context",
+      "worktree": "C:/FC-worktrees/collections-conversation-context",
+      "prompt": ".codex/waves/ops-core-continuity-v2/prompts/collections-conversation-context.md",
+      "risk": "medium",
+      "productOutcome": "Connect Accounts Receivable follow-up rows to existing communication context, invoice/customer/project continuity, and payment-event evidence so collections review has the next human follow-up context in one place.",
+      "expectedFiles": [
+        "apps/web/lib/financials/**",
+        "apps/web/lib/communications/**",
+        "apps/web/app/(app)/financials/accounts-receivable/**",
+        "apps/web/components/**",
+        "apps/web/**/*.test.*"
+      ],
+      "validation": [
+        "pnpm prettier --check <changed files>",
+        "pnpm test -- --runInBand --testPathPattern=financials",
+        "pnpm test -- --runInBand --testPathPattern=communications",
+        "git diff --check"
+      ]
+    },
+    {
+      "name": "portal-project-trust-window",
+      "branch": "stream/portal-project-trust-window",
+      "worktree": "C:/FC-worktrees/portal-project-trust-window",
+      "prompt": ".codex/waves/ops-core-continuity-v2/prompts/portal-project-trust-window.md",
+      "risk": "medium",
+      "productOutcome": "Improve the portal Project Workspace trust window so customers see clearer customer-safe continuity across project status, estimates, contracts, invoices, payments, shared documents, and next customer actions.",
+      "expectedFiles": [
+        "apps/web/lib/portal/**",
+        "apps/web/app/(portal)/**",
+        "apps/web/components/**",
+        "apps/web/**/*.test.*"
+      ],
+      "validation": [
+        "pnpm prettier --check <changed files>",
+        "pnpm test -- --runInBand --testPathPattern=portal",
+        "pnpm e2e:portal-fixture",
+        "git diff --check"
+      ]
+    },
+    {
+      "name": "reports-operational-visibility",
+      "branch": "stream/reports-operational-visibility",
+      "worktree": "C:/FC-worktrees/reports-operational-visibility",
+      "prompt": ".codex/waves/ops-core-continuity-v2/prompts/reports-operational-visibility.md",
+      "risk": "low",
+      "productOutcome": "Make Reports a stronger read-only operating snapshot by tying field execution, schedule readiness, collections exposure, communication follow-up, and project continuity back to canonical source workspaces.",
+      "expectedFiles": [
+        "apps/web/lib/reports/**",
+        "apps/web/app/(app)/reports/**",
+        "apps/web/components/**",
+        "apps/web/**/*.test.*"
+      ],
+      "validation": [
+        "pnpm prettier --check <changed files>",
+        "pnpm test -- --runInBand --testPathPattern=reports",
+        "git diff --check"
+      ]
+    }
+  ]
+}

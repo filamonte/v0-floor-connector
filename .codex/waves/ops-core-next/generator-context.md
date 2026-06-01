@@ -1,12 +1,14 @@
 # Wave Generator Context
 
-Generated: 2026-06-01T20:16:34.514Z
-Current main commit: b921d9096cba55b5115f38476dd28e60dae0e6ed
+Generated: 2026-06-01T22:12:04.821Z
+Current main commit: 260228b5fdb8926499c832af5674c65957508a4a
 
 ## Recent Git Log
 
 ```text
-b921d909 chore: harden AI wave generation
+260228b5 fix: normalize generated wave prompt guardrails
+aa714868 fix: keep rejected wave generation scratch-only
+83f351c4 chore: harden AI wave generation
 00407c57 feat: add AI wave generation gate
 22fa6927 feat: add agent wave runner v1
 c8a7c990 Merge remote-tracking branch 'origin/stream/dispatch-board'
@@ -16,8 +18,6 @@ d3abfdde Merge remote-tracking branch 'origin/stream/project-next-actions'
 a0caba7a feat: add schedule dispatch board v1
 c53b7d25 feat: add project next actions panel
 6de1f484 feat: add record communication continuity panels
-03e16bb6 feat: add dashboard action queues
-ac96b92a fix: restore dashboard operating metrics
 ```
 
 ## Current Wave
@@ -80,9 +80,9 @@ Goal: Make FloorConnector more operationally useful for field execution and coll
 # Agent Wave Run Report
 
 Wave: ops-core-next
-Generated: 2026-06-01T20:14:50.865Z
+Generated: 2026-06-01T22:09:41.306Z
 Base: origin/main
-Base commit: 00407c57cadb6d04cc5d154204711b3e4a4c0219
+Base commit: aa7148683daf294f920f809e0780ba9046394a6d
 
 ## Goal
 

@@ -27,9 +27,17 @@ Read these before implementation:
 - Use existing canonical records and routes.
 - Keep the slice small, testable, and reviewable.
 
+## Required Git And Validation Workflow
+
+- Start by checking git status, current branch, and ahead/behind state.
+- Run git fetch origin.
+- Avoid staging unrelated changes.
+- Run git diff --check.
+- Stage only intended files.
+- Commit the completed slice.
+
 ## Implementation Requirements
 
-- Start with `git status --short --branch` and `git fetch origin`.
 - Confirm the branch and worktree match this prompt.
 - Preserve repo conventions.
 - Update docs only when behavior changes or the prompt requires it.
@@ -45,14 +53,8 @@ pnpm.cmd fc:preflight:fast
 git diff --check
 ```
 
-## Git Completion Requirements
-
-- Stage only intended files.
-- Commit the completed slice.
-- Do not push unless asked.
-
 ## Final Response Requirements
 
-Report branch, starting status, final status, commit hash/message, files
-changed, validation results, skipped checks, assumptions, and follow-up
-dependencies.
+Report branch name, starting status, final status, commit hash and message,
+files changed, validation results, and limitations. Also report skipped checks,
+assumptions, and follow-up dependencies when applicable.

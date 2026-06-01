@@ -278,17 +278,30 @@ The runner also applies additional local validation:
   risk was explicitly allowed
 - every stream must include a clear product outcome, acceptance criteria,
   validation commands, and git completion requirements in `promptBody`
-- every `promptBody` must include git status/current branch/ahead-behind start
-  requirements, `git fetch origin`, `git diff --check`, unrelated-staging
-  avoidance, intended-file staging, commit completion, and final response
-  requirements covering branch, status, commit hash, files changed, validation
-  results, and limitations
+- every `promptBody` must include the exact git and validation guardrails:
+  `Start by checking git status, current branch, and ahead/behind state.`,
+  `Run git fetch origin.`, `Avoid staging unrelated changes.`,
+  `Run git diff --check.`, `Stage only intended files.`, and
+  `Commit the completed slice.`
+- every `promptBody` must require the final response to report branch name,
+  starting status, final status, commit hash and message, files changed,
+  validation results, and limitations
 
 Before rejecting generated output, the runner only performs narrow safe
-normalization: it trims whitespace and normalizes `promptFile` to
+normalization: it trims whitespace, normalizes `promptFile` to
 `.codex/waves/<next-wave>/prompts/<stream-name>.md` when the wave and stream
-names are already safe. It does not repair blocked, high-risk, meta/debug, or
-invalid product-outcome proposals.
+names are already safe, and may inject a `## Required Git And Validation
+Workflow` block into otherwise-valid product stream prompts that used
+equivalent wording but missed the exact required sentences.
+
+The guardrail injection is not a safety repair. The runner still refuses
+blocked streams, high-risk streams without `--allow-high-risk`, unsafe branch
+names, unsafe worktree paths, prompt paths outside the proposed wave, missing
+product outcomes, missing acceptance criteria, schema-invalid structures,
+meta/debug/tooling-only streams, secret references, and schema/auth/RLS/payment
+math/provider/env/route-protection work without explicit high-risk approval.
+Failed attempts stay under the ignored scratch attempt path and do not promote
+tracked wave files.
 
 ## Template Fallback Mode
 

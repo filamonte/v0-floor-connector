@@ -1,15 +1,15 @@
 {
-  "generatedAt": "2026-06-01T20:16:34.586Z",
-  "mode": "template_fallback",
-  "status": "manual_ai_required",
-  "proposedWave": "ops-core-next-ai-proposed",
-  "proposedWaveDir": "C:\\FloorConnector\\.codex\\waves\\ops-core-next-ai-proposed",
+  "generatedAt": "2026-06-01T22:12:04.976Z",
+  "mode": "generator_command",
+  "status": "generated",
+  "proposedWave": "ops-core-continuity-v2",
+  "proposedWaveDir": "C:\\FloorConnector\\.codex\\waves\\ops-core-continuity-v2",
   "reviewPath": "C:\\FloorConnector\\.codex\\waves\\ops-core-next\\ai-next-wave-review.md",
   "contextPath": "C:\\FloorConnector\\.codex\\waves\\ops-core-next\\generator-context.md",
   "promptPath": "C:\\FloorConnector\\.codex\\waves\\ops-core-next\\generate-next-wave.prompt.md",
   "schemaPath": "C:\\FloorConnector\\.codex\\waves\\templates\\next-wave.schema.json",
-  "outputPath": "C:\\FloorConnector\\.codex\\waves\\ops-core-next\\.tmp\\generation\\20260601T201634\\generated-next-wave.json",
-  "scratchPath": "C:\\FloorConnector\\.codex\\waves\\ops-core-next\\.tmp\\generation\\20260601T201634",
+  "outputPath": "C:\\FloorConnector\\.codex\\waves\\ops-core-next\\.tmp\\generation\\20260601T221204\\generated-next-wave.json",
+  "scratchPath": "C:\\FloorConnector\\.codex\\waves\\ops-core-next\\.tmp\\generation\\20260601T221204",
   "validationStatus": "passed",
-  "commandExitCode": null
+  "commandExitCode": 0
 }

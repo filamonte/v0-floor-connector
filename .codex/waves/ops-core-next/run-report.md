@@ -1,9 +1,9 @@
 # Agent Wave Run Report
 
 Wave: ops-core-next
-Generated: 2026-06-01T20:38:16.958Z
+Generated: 2026-06-01T22:12:39.724Z
 Base: origin/main
-Base commit: 00407c57cadb6d04cc5d154204711b3e4a4c0219
+Base commit: aa7148683daf294f920f809e0780ba9046394a6d
 
 ## Goal
 
@@ -135,17 +135,17 @@ Validation results:
 
 ## AI Next-Wave Generation
 
-- Status: manual_ai_required
-- Mode: template_fallback
-- Proposed wave: ops-core-next-ai-proposed
+- Status: generated
+- Mode: generator_command
+- Proposed wave: ops-core-continuity-v2
 - Review: C:\FloorConnector\.codex\waves\ops-core-next\ai-next-wave-review.md
 - Schema validation: passed
 
 Next proposed-wave command:
 
 ```powershell
-pnpm fc:wave:approve --wave ops-core-next-ai-proposed --proposal
-pnpm fc:wave:prepare --wave ops-core-next-ai-proposed
+pnpm fc:wave:approve --wave ops-core-continuity-v2 --proposal
+pnpm fc:wave:prepare --wave ops-core-continuity-v2
 ```
 
 ## Merge Recommendation

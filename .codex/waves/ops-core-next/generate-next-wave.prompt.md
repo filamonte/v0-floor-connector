@@ -2,7 +2,7 @@
 
 Use the context bundle:
 
-`C:\FloorConnector\.codex\waves\ops-core-next\.tmp\generation\20260601T201634\generator-context.md`
+`C:\FloorConnector\.codex\waves\ops-core-next\.tmp\generation\20260601T221204\generator-context.md`
 
 Use the JSON schema:
 
@@ -10,7 +10,7 @@ Use the JSON schema:
 
 Write only JSON matching the schema to:
 
-`C:\FloorConnector\.codex\waves\ops-core-next\.tmp\generation\20260601T201634\generated-next-wave.json`
+`C:\FloorConnector\.codex\waves\ops-core-next\.tmp\generation\20260601T221204\generated-next-wave.json`
 
 Output contract:
 
@@ -51,7 +51,7 @@ Every promptBody must include:
 - Run git diff --check.
 - Stage only intended files.
 - Commit the completed slice.
-- Final response requirements including branch, status, commit hash, files changed, validation results, and limitations.
+- Final response requirements: Report branch name, starting status, final status, commit hash and message, files changed, validation results, and limitations.
 
 Required promptBody boundaries:
 

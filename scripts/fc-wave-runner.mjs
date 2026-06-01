@@ -968,7 +968,7 @@ Every promptBody must include:
 - Run git diff --check.
 - Stage only intended files.
 - Commit the completed slice.
-- Final response requirements including branch, status, commit hash, files changed, validation results, and limitations.
+- Final response requirements: Report branch name, starting status, final status, commit hash and message, files changed, validation results, and limitations.
 
 Required promptBody boundaries:
 
@@ -1123,11 +1123,17 @@ ${stream.boundaries.map((boundary) => `- ${boundary}`).join("\n")}
 - Do not change schema, migrations, Supabase policies, RLS, auth, env vars, route protection, payment math, provider behavior, or unrelated business logic.
 - Do not create duplicate business models or portal-owned operational state.
 
+## Required Git And Validation Workflow
+
+- Start by checking git status, current branch, and ahead/behind state.
+- Run git fetch origin.
+- Avoid staging unrelated changes.
+- Run git diff --check.
+- Stage only intended files.
+- Commit the completed slice.
+
 ## Implementation Requirements
 
-- Start by checking \`git status --short --branch\`, current branch, and ahead/behind state.
-- Run \`git fetch origin\`.
-- Avoid staging unrelated changes.
 - Preserve existing repo conventions and canonical records.
 - Keep the slice bounded to the named product outcome.
 - Update docs only if implemented behavior changes.
@@ -1144,15 +1150,10 @@ Run:
 ${stream.validation.join("\n")}
 \`\`\`
 
-## Git Completion Requirements
-
-- Stage only intended files.
-- Commit the completed slice.
-- Do not push unless asked.
-
 ## Final Response Requirements
 
-Report branch, starting status, final status, commit hash/message, files changed, validation results, skipped checks, limitations, assumptions, and follow-up dependencies.
+Report branch name, starting status, final status, commit hash and message, files changed, validation results, and limitations.
+Also report skipped checks, assumptions, and follow-up dependencies when applicable.
 `;
 }
 
@@ -1190,15 +1191,167 @@ function trimStrings(value) {
   return value;
 }
 
-function normalizeGeneratedWave(candidate) {
+const generatedWaveSafeName = /^[a-z0-9][a-z0-9-]*$/;
+const generatedWaveSafeBranch = /^stream\/[a-z0-9][a-z0-9-]*$/;
+const generatedWaveSafeWorktree = /^C:\/FC-worktrees\/[a-z0-9][a-z0-9-]*$/;
+const generatedWaveSecretPatterns = [
+  /\.env/i,
+  /secret/i,
+  /service[_-]?role/i,
+  /password/i,
+  /token/i
+];
+const generatedWaveHighRiskTerms =
+  /\b(add|create|change|modify|update|implement|apply|run)\s+(schema|migration|migrations|rls|auth|payment math|provider|webhook|env|route protection)\b/i;
+const generatedWaveMetaStreamTerms =
+  /\b(meta|debug|sandbox diagnostics?|blocked file writes?|docs reading|cleanup checks?|validation-only|tooling-only)\b|blocked-file-write|docs-read|cleanup-check/i;
+const generatedWaveProductOutcomeTerms =
+  /field|collections?|portal|e2e|fixture|reporting|operational|visibility|customer|project|schedule|crew|invoice|payment|communications?|daily|job|handoff|continuity/i;
+
+const mandatoryPromptPhrases = {
+  gitStart:
+    "Start by checking git status, current branch, and ahead/behind state.",
+  fetch: "Run git fetch origin.",
+  avoidStaging: "Avoid staging unrelated changes.",
+  diffCheck: "Run git diff --check.",
+  stageOnly: "Stage only intended files.",
+  commit: "Commit the completed slice.",
+  finalResponse:
+    "Report branch name, starting status, final status, commit hash and message, files changed, validation results, and limitations."
+};
+
+function hasMandatoryPromptGuardrails(promptBody) {
+  return [
+    mandatoryPromptPhrases.gitStart,
+    mandatoryPromptPhrases.fetch,
+    mandatoryPromptPhrases.avoidStaging,
+    mandatoryPromptPhrases.diffCheck,
+    mandatoryPromptPhrases.stageOnly,
+    mandatoryPromptPhrases.commit
+  ].every((phrase) => promptBody.includes(phrase));
+}
+
+function hasMandatoryFinalResponse(promptBody) {
+  return promptBody.includes(mandatoryPromptPhrases.finalResponse);
+}
+
+function buildMandatoryPromptGuardrailBlock(promptBody) {
+  const heading = /## Required Git And Validation Workflow/i.test(promptBody)
+    ? "## Runner-Injected Git And Validation Workflow"
+    : "## Required Git And Validation Workflow";
+
+  return `${heading}
+
+- ${mandatoryPromptPhrases.gitStart}
+- ${mandatoryPromptPhrases.fetch}
+- ${mandatoryPromptPhrases.avoidStaging}
+- ${mandatoryPromptPhrases.diffCheck}
+- ${mandatoryPromptPhrases.stageOnly}
+- ${mandatoryPromptPhrases.commit}
+
+## Required Final Response
+
+${mandatoryPromptPhrases.finalResponse}
+`;
+}
+
+function isPromptBodyNormalizationEligible(candidate, stream, options = {}) {
+  if (!candidate || typeof candidate !== "object") return false;
+  if (!stream || typeof stream !== "object") return false;
+  if (!generatedWaveSafeName.test(candidate.name || "")) return false;
+  if (candidate.base !== "origin/main") return false;
+  if (candidate.worktreeRoot !== "C:/FC-worktrees") return false;
+  if (!Number.isInteger(candidate.maxConcurrency)) return false;
+  if (!Array.isArray(candidate.productStrideCriteria)) return false;
+  if (!Array.isArray(candidate.mainValidation)) return false;
+  if (!Array.isArray(candidate.streams)) return false;
+
+  if (!generatedWaveSafeName.test(stream.name || "")) return false;
+  if (!generatedWaveSafeBranch.test(stream.branch || "")) return false;
+  if (stream.branch !== `stream/${stream.name}`) return false;
+  if (!generatedWaveSafeWorktree.test(stream.worktree || "")) return false;
+
+  const expectedPromptFile = `.codex/waves/${candidate.name}/prompts/${stream.name}.md`;
+  if (stream.promptFile !== expectedPromptFile) return false;
+  if (!["low", "medium", "high"].includes(stream.risk)) return false;
+  if (stream.risk === "high" && !options.allowHighRisk) return false;
+  if (stream.risk === "blocked") return false;
+
+  for (const field of ["productOutcome", "whyThisMatters", "promptBody"]) {
+    if (typeof stream[field] !== "string" || stream[field].trim() === "") {
+      return false;
+    }
+  }
+
+  for (const field of [
+    "dependsOn",
+    "expectedFiles",
+    "validation",
+    "acceptanceCriteria",
+    "boundaries"
+  ]) {
+    if (!Array.isArray(stream[field])) return false;
+  }
+  for (const field of [
+    "expectedFiles",
+    "validation",
+    "acceptanceCriteria",
+    "boundaries"
+  ]) {
+    if (stream[field].length === 0) return false;
+  }
+
+  if (
+    generatedWaveMetaStreamTerms.test(
+      `${stream.name} ${stream.productOutcome || ""}`
+    )
+  ) {
+    return false;
+  }
+  if (
+    !generatedWaveProductOutcomeTerms.test(
+      `${stream.name || ""} ${stream.productOutcome || ""} ${
+        stream.whyThisMatters || ""
+      }`
+    )
+  ) {
+    return false;
+  }
+
+  const joinedText = JSON.stringify(stream);
+  const textWithoutProhibitions = joinedText.replace(
+    /do not [^.!?\n]+[.!?]?/gi,
+    ""
+  );
+  if (generatedWaveSecretPatterns.some((pattern) => pattern.test(joinedText))) {
+    return false;
+  }
+  if (
+    stream.risk !== "high" &&
+    generatedWaveHighRiskTerms.test(textWithoutProhibitions)
+  ) {
+    return false;
+  }
+
+  return true;
+}
+
+function normalizeGeneratedWave(candidate, options = {}) {
   const normalized = trimStrings(candidate);
-  const safeName = /^[a-z0-9][a-z0-9-]*$/;
-  if (!safeName.test(normalized?.name || "")) return normalized;
+  if (!generatedWaveSafeName.test(normalized?.name || "")) return normalized;
   if (!Array.isArray(normalized.streams)) return normalized;
 
   for (const stream of normalized.streams) {
-    if (!safeName.test(stream?.name || "")) continue;
+    if (!generatedWaveSafeName.test(stream?.name || "")) continue;
     stream.promptFile = `.codex/waves/${normalized.name}/prompts/${stream.name}.md`;
+    if (
+      isPromptBodyNormalizationEligible(normalized, stream, options) &&
+      (!hasMandatoryPromptGuardrails(stream.promptBody) ||
+        !hasMandatoryFinalResponse(stream.promptBody))
+    ) {
+      stream.promptBody =
+        `${stream.promptBody.replace(/\s+$/g, "")}\n\n${buildMandatoryPromptGuardrailBlock(stream.promptBody)}`.trimEnd();
+    }
   }
 
   return normalized;
@@ -1211,24 +1364,8 @@ function generatedWaveValidationError(errors) {
 }
 
 function validateGeneratedWave(candidate, options = {}) {
-  candidate = normalizeGeneratedWave(candidate);
+  candidate = normalizeGeneratedWave(candidate, options);
   const errors = [];
-  const safeName = /^[a-z0-9][a-z0-9-]*$/;
-  const safeBranch = /^stream\/[a-z0-9][a-z0-9-]*$/;
-  const safeWorktree = /^C:\/FC-worktrees\/[a-z0-9][a-z0-9-]*$/;
-  const secretPatterns = [
-    /\.env/i,
-    /secret/i,
-    /service[_-]?role/i,
-    /password/i,
-    /token/i
-  ];
-  const highRiskTerms =
-    /\b(add|create|change|modify|update|implement|apply|run)\s+(schema|migration|migrations|rls|auth|payment math|provider|webhook|env|route protection)\b/i;
-  const metaStreamTerms =
-    /\b(meta|debug|sandbox diagnostics?|blocked file writes?|docs reading|cleanup checks?|validation-only|tooling-only)\b|blocked-file-write|docs-read|cleanup-check/i;
-  const productOutcomeTerms =
-    /field|collections?|portal|e2e|fixture|reporting|operational|visibility|customer|project|schedule|crew|invoice|payment|communications?|daily|job|handoff|continuity/i;
 
   const streamErrors = (stream, reason) => {
     errors.push(`stream ${stream?.name || "(unnamed)"} ${reason}`);
@@ -1250,7 +1387,7 @@ function validateGeneratedWave(candidate, options = {}) {
     }
   }
 
-  if (candidate.name && !safeName.test(candidate.name)) {
+  if (candidate.name && !generatedWaveSafeName.test(candidate.name)) {
     errors.push("name must be lowercase kebab-case");
   }
   if (!Number.isInteger(candidate.maxConcurrency)) {
@@ -1301,16 +1438,20 @@ function validateGeneratedWave(candidate, options = {}) {
       }
     }
 
-    if (stream.name && !safeName.test(stream.name)) {
+    if (stream.name && !generatedWaveSafeName.test(stream.name)) {
       streamErrors(stream, "name must be lowercase kebab-case");
     }
-    if (metaStreamTerms.test(`${stream.name} ${stream.productOutcome || ""}`)) {
+    if (
+      generatedWaveMetaStreamTerms.test(
+        `${stream.name} ${stream.productOutcome || ""}`
+      )
+    ) {
       streamErrors(
         stream,
         "must be a product-outcome stream, not meta/debug/blocked/docs/cleanup/sandbox work"
       );
     }
-    if (stream.branch && !safeBranch.test(stream.branch)) {
+    if (stream.branch && !generatedWaveSafeBranch.test(stream.branch)) {
       streamErrors(stream, "branch must start with stream/ and use kebab-case");
     }
     if (
@@ -1320,7 +1461,7 @@ function validateGeneratedWave(candidate, options = {}) {
     ) {
       streamErrors(stream, "branch must match stream/<stream-name>");
     }
-    if (stream.worktree && !safeWorktree.test(stream.worktree)) {
+    if (stream.worktree && !generatedWaveSafeWorktree.test(stream.worktree)) {
       streamErrors(
         stream,
         "worktree must be under C:/FC-worktrees/<kebab-case-name>"
@@ -1353,7 +1494,7 @@ function validateGeneratedWave(candidate, options = {}) {
       );
     }
     if (
-      !productOutcomeTerms.test(
+      !generatedWaveProductOutcomeTerms.test(
         `${stream.name || ""} ${stream.productOutcome || ""} ${
           stream.whyThisMatters || ""
         }`
@@ -1370,13 +1511,18 @@ function validateGeneratedWave(candidate, options = {}) {
       /do not [^.!?\n]+[.!?]?/gi,
       ""
     );
-    if (secretPatterns.some((pattern) => pattern.test(joinedText))) {
+    if (
+      generatedWaveSecretPatterns.some((pattern) => pattern.test(joinedText))
+    ) {
       streamErrors(
         stream,
         "references env files, secrets, tokens, or credentials"
       );
     }
-    if (stream.risk !== "high" && highRiskTerms.test(textWithoutProhibitions)) {
+    if (
+      stream.risk !== "high" &&
+      generatedWaveHighRiskTerms.test(textWithoutProhibitions)
+    ) {
       streamErrors(stream, "references high-risk work but is not high risk");
     }
     if (!Array.isArray(stream.validation) || stream.validation.length === 0) {
@@ -1392,52 +1538,46 @@ function validateGeneratedWave(candidate, options = {}) {
     if (!/Chat:/i.test(promptBody)) {
       streamErrors(stream, "promptBody must include Chat: <stream title>");
     }
-    if (
-      !/git status --short --branch/i.test(promptBody) ||
-      !/current branch/i.test(promptBody) ||
-      !/ahead\/behind|ahead and behind|ahead.*behind/i.test(promptBody)
-    ) {
+    if (!promptBody.includes(mandatoryPromptPhrases.gitStart)) {
       streamErrors(
         stream,
-        "promptBody must include git status, current branch, and ahead/behind start requirements"
+        `promptBody must include exact phrase: ${mandatoryPromptPhrases.gitStart}`
       );
     }
-    if (!/git fetch origin/i.test(promptBody)) {
-      streamErrors(stream, "promptBody must include git fetch origin");
-    }
-    if (!/avoid staging unrelated changes/i.test(promptBody)) {
+    if (!promptBody.includes(mandatoryPromptPhrases.fetch)) {
       streamErrors(
         stream,
-        "promptBody must include avoiding unrelated staging"
+        `promptBody must include exact phrase: ${mandatoryPromptPhrases.fetch}`
       );
     }
-    if (!/git diff --check/i.test(promptBody)) {
+    if (!promptBody.includes(mandatoryPromptPhrases.avoidStaging)) {
       streamErrors(
         stream,
-        "promptBody must include git diff --check validation"
+        `promptBody must include exact phrase: ${mandatoryPromptPhrases.avoidStaging}`
       );
     }
-    if (!/stage only intended files/i.test(promptBody)) {
+    if (!promptBody.includes(mandatoryPromptPhrases.diffCheck)) {
       streamErrors(
         stream,
-        "promptBody must include staging only intended files"
+        `promptBody must include exact phrase: ${mandatoryPromptPhrases.diffCheck}`
       );
     }
-    if (!/commit the completed slice/i.test(promptBody)) {
-      streamErrors(stream, "promptBody must include commit completion");
-    }
-    if (
-      !/final response/i.test(promptBody) ||
-      !/branch/i.test(promptBody) ||
-      !/status/i.test(promptBody) ||
-      !/commit hash/i.test(promptBody) ||
-      !/files changed/i.test(promptBody) ||
-      !/validation results/i.test(promptBody) ||
-      !/limitations/i.test(promptBody)
-    ) {
+    if (!promptBody.includes(mandatoryPromptPhrases.stageOnly)) {
       streamErrors(
         stream,
-        "promptBody must include final response requirements for branch, status, commit hash, files changed, validation results, and limitations"
+        `promptBody must include exact phrase: ${mandatoryPromptPhrases.stageOnly}`
+      );
+    }
+    if (!promptBody.includes(mandatoryPromptPhrases.commit)) {
+      streamErrors(
+        stream,
+        `promptBody must include exact phrase: ${mandatoryPromptPhrases.commit}`
+      );
+    }
+    if (!promptBody.includes(mandatoryPromptPhrases.finalResponse)) {
+      streamErrors(
+        stream,
+        `promptBody must include exact phrase: ${mandatoryPromptPhrases.finalResponse}`
       );
     }
   }
