@@ -91,6 +91,39 @@ pnpm fc:wave:validate --wave <wave>
 pnpm fc:wave:report --wave <wave>
 ```
 
+The runner classifies every stream so partial waves can recover cleanly:
+
+- `not_started`
+- `prepared`
+- `dirty_uncommitted`
+- `committed_unpushed`
+- `pushed_unmerged`
+- `merged`
+- `failed_agent`
+- `failed_validation`
+- `no_op_validation_only`
+- `needs_human_review`
+
+`no_op_validation_only` means validation passed but no stream-specific product
+commit or changed files exist. Treat it as not completed. `merged` means the
+stream has product commits and its branch head is reachable from `origin/main`.
+Activation-only branches should not be treated as completed.
+
+Use per-stream commands when recovering one lane:
+
+```powershell
+pnpm fc:wave:status --wave <wave> --stream <stream>
+pnpm fc:wave:validate --wave <wave> --stream <stream>
+pnpm fc:wave --wave <wave> --stream <stream>
+pnpm fc:wave:push-stream --wave <wave> --stream <stream>
+```
+
+`run` skips `merged` streams, skips pushed/unmerged or committed/unpushed work
+unless an explicit push path is requested, refuses dirty streams unless
+`--resume-dirty` is supplied, and reruns `not_started`, `prepared`, or
+`no_op_validation_only` streams. The push helper refuses dirty worktrees, runs
+link readiness first, and sets upstream to `origin/<branch>`.
+
 Do not run `pnpm fc:wave:merge --wave <name> --approved` until a human has
 reviewed the report and created approval with `pnpm fc:wave:approve`.
 

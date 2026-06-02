@@ -37,6 +37,8 @@ The runner is intentionally conservative:
 - refuses merge without `--approved`
 - refuses push unless approval was created with push approval and merge is run
   with `--approved --push`
+- classifies stream completion before status/report/run/validation so partial
+  waves can recover without manually inspecting every worktree
 
 High-risk work includes schema, migrations, auth, RLS, payment math, provider
 behavior, env, or route-protection changes. Those are not appropriate for the
@@ -150,6 +152,39 @@ The snapshot command copies available runtime status/report/proposal files into
 `.codex/waves/<wave>/snapshots/<timestamp>/`. Use it deliberately; default
 runtime output remains ignored.
 
+## Stream Completion States
+
+Status and reports classify each stream independently:
+
+- `not_started`: no branch/worktree exists yet.
+- `prepared`: branch or worktree exists, but no completed stream work is
+  detected yet.
+- `dirty_uncommitted`: the stream worktree has uncommitted changes.
+- `committed_unpushed`: the stream branch has local commits that are not pushed
+  to `origin/<branch>`.
+- `pushed_unmerged`: the stream branch is pushed and has product commits not
+  reachable from `origin/main`.
+- `merged`: the stream has product commits and the branch head is reachable
+  from `origin/main`.
+- `failed_agent`: the last recorded agent run failed.
+- `failed_validation`: the last recorded validation failed.
+- `no_op_validation_only`: validation passed, but the stream has no product
+  commits and no changed files.
+- `needs_human_review`: the runner could not safely classify the state.
+
+The runner uses the wave activation commit as the stream base when possible.
+That prevents activation-only branches from being reported as completed just
+because their branch head is reachable from `origin/main`.
+
+Validation passing is not enough to mark a stream completed. A validation pass
+without stream-specific commits or changed files is classified as
+`no_op_validation_only`, and the recommended action is to run the stream.
+
+Already-merged streams are skipped by default during `run` and `validate`.
+Streams with pushed but unmerged product commits are not rerun by default; they
+should be reviewed or merged after human approval. Dirty streams are refused by
+`run` unless `--resume-dirty` is supplied.
+
 Validation commands that use `pnpm --filter @floorconnector/web exec` run from
 the `apps/web` package context. Use package-relative paths for those commands:
 
@@ -224,6 +259,33 @@ pnpm fc:wave:validate --wave ops-core-next
 pnpm fc:wave:merge-check --wave ops-core-next
 pnpm fc:wave:report --wave ops-core-next
 ```
+
+Use `--stream <stream-name>` to inspect, validate, or run one stream:
+
+```powershell
+pnpm fc:wave:status --wave ops-core-next --stream field-handoff-command-context-v1
+pnpm fc:wave:validate --wave ops-core-next --stream field-handoff-command-context-v1
+pnpm fc:wave --wave ops-core-next --stream field-handoff-command-context-v1
+```
+
+To push one stream branch after link readiness checks:
+
+```powershell
+pnpm fc:wave:push-stream --wave ops-core-next --stream field-handoff-command-context-v1
+```
+
+The push helper refuses dirty worktrees, runs the existing worktree link/doctor
+readiness flow first, pushes only when local commits need pushing, and sets the
+upstream to `origin/<branch>`.
+
+For a partially completed wave:
+
+1. Run `pnpm fc:wave:status --wave <wave>`.
+2. Treat `merged` as done.
+3. Treat `pushed_unmerged` as ready for review/merge, not rerun.
+4. Preserve and commit `dirty_uncommitted` stream work inside that stream
+   worktree before rerunning the controller.
+5. Rerun `prepared`, `not_started`, or `no_op_validation_only` streams.
 
 ## Product Stride Review
 
@@ -491,6 +553,12 @@ proposal.`, lists the invalid stream names and exact reasons, and prints the
   inspect `git -C <worktree> status --short --branch`, run
   `pnpm fc:wave:prepare --wave <wave> --resume` from the clean controller, then
   run validation/report after preserving or committing the useful stream work.
+- Dirty stream rerun: use `--resume-dirty` only when the dirty work is
+  intentional and the stream agent should continue from that state.
+- No-op validation-only stream: run the stream; passing validation without
+  product commits is not completion.
+- Pushed unmerged stream: review or merge the branch after human approval; do
+  not rerun it by default.
 - Missing prompt: fix the manifest or add the prompt.
 - Validation failure: repair the stream, rerun validation, then regenerate the
   report.
