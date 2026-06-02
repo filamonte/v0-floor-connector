@@ -215,12 +215,14 @@ function AttentionList({
   title,
   description,
   items,
-  emptyTitle
+  emptyTitle,
+  emptyDescription = "This list appears when source records show work needing review."
 }: {
   title: string;
   description: string;
   items: ReportsListItem[];
   emptyTitle: string;
+  emptyDescription?: string;
 }) {
   return (
     <section className="border border-[#d6d6d6] bg-white">
@@ -246,6 +248,11 @@ function AttentionList({
                   <p className="mt-1 truncate text-xs text-slate-500">
                     {item.subtitle}
                   </p>
+                  {item.sourceLabel ? (
+                    <p className="mt-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-[#666666]">
+                      {item.sourceLabel}
+                    </p>
+                  ) : null}
                 </div>
                 <span
                   className={`shrink-0 rounded-[4px] border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] ${toneClassName(
@@ -261,7 +268,7 @@ function AttentionList({
           <div className="px-4 py-5">
             <p className="text-sm font-semibold text-[#171717]">{emptyTitle}</p>
             <p className="mt-2 text-sm leading-5 text-slate-500">
-              This list appears when source records show work needing review.
+              {emptyDescription}
             </p>
           </div>
         )}
@@ -302,6 +309,16 @@ function OperationsReportingWorkspace({
                 detail: "active jobs"
               },
               {
+                label: "Ready",
+                value: summary.counts.readyToMove,
+                detail: "source-record handoffs"
+              },
+              {
+                label: "Recent",
+                value: summary.counts.recentMovement,
+                detail: "latest source moves"
+              },
+              {
                 label: "Overdue",
                 value: summary.amounts.overdueReceivables,
                 detail: `${summary.counts.overdueInvoices} invoice${
@@ -325,6 +342,19 @@ function OperationsReportingWorkspace({
           </div>
         </div>
       </ReportSection>
+
+      <section className="grid gap-4 xl:grid-cols-5">
+        {summary.continuitySections.map((section) => (
+          <AttentionList
+            key={section.id}
+            title={section.title}
+            description={section.description}
+            items={section.items}
+            emptyTitle={section.emptyTitle}
+            emptyDescription="Reports stay empty here until canonical source records create this signal."
+          />
+        ))}
+      </section>
 
       <section className="grid gap-4 xl:grid-cols-3">
         <AttentionList
