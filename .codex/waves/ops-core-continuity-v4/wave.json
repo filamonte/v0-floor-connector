@@ -76,6 +76,7 @@
         "apps/web/lib/portal/project-timeline.test.ts",
         "apps/web/app/(portal)/portal/projects/[projectId]/page.tsx",
         "apps/web/components/portal-project-summary-panel.tsx",
+        "apps/web/lib/reports/data.ts",
         "docs/current-state.md"
       ],
       "validation": [
@@ -96,6 +97,7 @@
       "expectedFiles": [
         "apps/web/lib/reports/operations-summary.ts",
         "apps/web/lib/reports/operations-summary.test.ts",
+        "apps/web/lib/reports/data.ts",
         "apps/web/app/(app)/reports/page.tsx",
         "docs/current-state.md"
       ],
