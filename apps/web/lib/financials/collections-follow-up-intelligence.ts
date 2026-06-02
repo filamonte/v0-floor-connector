@@ -47,6 +47,17 @@ export type CollectionsFollowUpItem = {
   reason: string;
   recommendedNextStep: string;
   sourceSignals: string[];
+  nextContactBrief: {
+    summary: string;
+    customerContext: string;
+    projectContext: string;
+    invoiceContext: string;
+    paymentContext: string;
+    agingContext: string;
+    lastActivityContext: string;
+    sourceRecordContext: string[];
+    activityRecency: "recent_activity" | "no_recent_activity";
+  };
   draftActionAvailable: boolean;
   draftAction: AiCopilotDraftAction | null;
   communicationHandoffHref: string | null;
@@ -286,6 +297,84 @@ function buildDueOrAgeSignal(
   return `Due in ${Math.abs(daysOverdue)} day${daysOverdue === -1 ? "" : "s"}.`;
 }
 
+function daysSinceActivity(activityAt: string, todayIso: string) {
+  return Math.floor(
+    (parseDateKey(todayIso).getTime() -
+      parseDateKey(activityAt.slice(0, 10)).getTime()) /
+      86_400_000
+  );
+}
+
+function buildPaymentContext(input: {
+  classification: ReturnType<typeof classifyItem>;
+  latestEvent: FinancialControlPaymentEventInput | undefined;
+  latestPayment: FinancialControlPaymentInput | undefined;
+}) {
+  if (input.latestEvent) {
+    return `Latest Payment Trail signal is ${formatStatusLabel(input.latestEvent.eventType)}. ${input.classification.recommendedNextStep}.`;
+  }
+
+  if (input.latestPayment) {
+    return `Latest payment record is a ${formatStatusLabel(input.latestPayment.status)} payment for $${money(input.latestPayment.amount)}. ${input.classification.recommendedNextStep}.`;
+  }
+
+  return `No Payment Trail or payment record is attached to this open invoice yet. ${input.classification.recommendedNextStep}.`;
+}
+
+function buildNextContactBrief(input: {
+  invoice: FinancialControlInvoiceInput;
+  classification: ReturnType<typeof classifyItem>;
+  projectName: string;
+  customerName: string;
+  amountDue: string;
+  dueOrAgeSignal: string;
+  latestEvent: FinancialControlPaymentEventInput | undefined;
+  latestPayment: FinancialControlPaymentInput | undefined;
+  lastActivity: ReturnType<typeof buildLastActivity>;
+  todayIso: string;
+}) {
+  const activityAgeDays = daysSinceActivity(
+    input.lastActivity.lastActivityAt,
+    input.todayIso
+  );
+  const activityRecency =
+    activityAgeDays >= 14 ? "no_recent_activity" : "recent_activity";
+  const lastActivityContext =
+    activityRecency === "no_recent_activity"
+      ? `${input.lastActivity.lastActivityLabel} No recent activity in ${activityAgeDays} days.`
+      : `${input.lastActivity.lastActivityLabel} Activity is recent within ${activityAgeDays} day${activityAgeDays === 1 ? "" : "s"}.`;
+
+  return {
+    summary: `${input.customerName} has ${input.invoice.referenceNumber} open for $${input.amountDue}. ${input.classification.reason}`,
+    customerContext: `Customer: ${input.customerName}.`,
+    projectContext: `Project: ${input.projectName}.`,
+    invoiceContext: `Invoice ${input.invoice.referenceNumber} is ${formatStatusLabel(input.invoice.status)} with $${input.amountDue} due.`,
+    paymentContext: buildPaymentContext({
+      classification: input.classification,
+      latestEvent: input.latestEvent,
+      latestPayment: input.latestPayment
+    }),
+    agingContext: input.dueOrAgeSignal,
+    lastActivityContext,
+    sourceRecordContext: [
+      `Invoice record ${input.invoice.referenceNumber}`,
+      input.invoice.customerId
+        ? `Customer record ${input.invoice.customerId}`
+        : "Missing customer record link",
+      input.invoice.projectId
+        ? `Project record ${input.invoice.projectId}`
+        : "Missing project record link",
+      input.latestPayment
+        ? `Payment record ${input.latestPayment.id}`
+        : "No payment record",
+      input.latestEvent
+        ? `Payment Trail event ${input.latestEvent.id}`
+        : "No Payment Trail event"
+    ],
+    activityRecency
+  } satisfies CollectionsFollowUpItem["nextContactBrief"];
+}
+
 function buildDraftAction(input: {
   itemId: string;
   category: CollectionsFollowUpCategory;
@@ -496,6 +585,18 @@ export function buildCollectionsFollowUpIntelligence(input: {
         reason: classification.reason,
         recommendedNextStep: classification.recommendedNextStep,
         sourceSignals,
+        nextContactBrief: buildNextContactBrief({
+          invoice,
+          classification,
+          projectName,
+          customerName,
+          amountDue,
+          dueOrAgeSignal,
+          latestEvent,
+          latestPayment,
+          lastActivity,
+          todayIso: input.todayIso
+        }),
         draftActionAvailable: draftAction !== null,
         draftAction,
         communicationHandoffHref: buildHandoff({

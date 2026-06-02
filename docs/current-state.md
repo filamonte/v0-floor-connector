@@ -148,8 +148,11 @@ partially paid balances, checkout/payment-in-progress signals, failed/voided
 payment attempts, and internal-review cases. The `/financials/accounts-receivable`
 workspace shows those items with invoice/project/customer links, amount due,
 payment state, reason, latest activity context, recommended next step, and
-review-first Copilot draft handoffs when AI drafting controls allow them. The
-AR command-center Payment Trail lane now keeps failed/voided/in-progress/stale
+review-first Copilot draft handoffs when AI drafting controls allow them. Each
+follow-up row now includes a read-only next-contact brief summarizing customer,
+project, invoice, payment, aging, last-activity, and source-record context from
+the same existing financial read models. The AR command-center Payment Trail
+lane now keeps failed/voided/in-progress/stale
 pending exceptions separate from recently settled recorded-payment activity
 while preserving Invoice Workspace, Project Workspace, and customer/project
 links. These drafts use the existing communications composer handoff; they do
@@ -1090,9 +1093,11 @@ Implemented now:
   payment-in-progress states, failed/voided payment attempts, and
   internal-review cases; shows source-record reasons, latest activity context,
   payment state, amount due, recommended next step, and canonical
-  invoice/project/customer links; separates open payment exceptions from recent
-  settled activity; and exposes review-first Copilot draft handoffs only when AI
-  drafting controls allow them.
+  invoice/project/customer links; adds a read-only next-contact brief with
+  customer, project, invoice, payment, aging, last-activity, and source-record
+  context; separates open payment exceptions from recent settled activity; and
+  exposes review-first Copilot draft handoffs only when AI drafting controls
+  allow them.
 - The AR Collections Command Center priority engine is derived only from
   canonical receivable balances, due dates, workflow roles, Payment Trail
   events, pending/recorded payments, retainage snapshots, progress-billing
