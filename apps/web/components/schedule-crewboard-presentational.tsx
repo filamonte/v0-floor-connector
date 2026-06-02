@@ -1,11 +1,17 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 
-import type { ScheduleFieldHandoffSummary } from "@/lib/schedule/field-handoff-read-model";
+import type {
+  ScheduleFieldHandoffCommandLane,
+  ScheduleFieldHandoffCommandView,
+  ScheduleFieldHandoffSummary
+} from "@/lib/schedule/field-handoff-read-model";
 import type { ScheduleWarningSummary } from "@/lib/schedule/warnings";
 
 const scheduleSecondaryActionToneClassName =
   "border-[var(--border-warm)] bg-white text-[var(--text-primary)] hover:bg-[var(--highlight)]";
+const scheduleCompactLinkClassName =
+  "inline-flex items-center rounded-[4px] px-2.5 py-1.5 text-xs font-medium text-[var(--text-secondary)] transition hover:text-[var(--text-primary)]";
 
 export type ScheduleOperationalIndicator = {
   id: string;
@@ -296,6 +302,132 @@ export function ScheduleResourceLoadPanel(input: {
         </div>
       ))}
     </div>
+  );
+}
+
+function ScheduleFieldHandoffCommandLaneCard(input: {
+  lane: ScheduleFieldHandoffCommandLane;
+}) {
+  return (
+    <section className="rounded-[6px] border border-[var(--border-warm)] bg-white">
+      <div className="border-b border-[var(--border-warm)] bg-[var(--highlight)] px-4 py-3">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <h3 className="text-sm font-semibold text-[var(--text-primary)]">
+              {input.lane.title}
+            </h3>
+            <p className="mt-1 text-sm leading-6 text-[var(--text-secondary)]">
+              {input.lane.description}
+            </p>
+          </div>
+          <span className="inline-flex shrink-0 items-center rounded-full border border-[var(--border-warm)] bg-white px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--text-secondary)]">
+            {input.lane.items.length}
+          </span>
+        </div>
+      </div>
+      <div className="space-y-3 px-4 py-4">
+        {input.lane.items.length > 0 ? (
+          input.lane.items.map((item) => (
+            <article
+              key={`${input.lane.key}-${item.id}`}
+              className={[
+                "rounded-[4px] border px-3 py-3 text-sm leading-6",
+                getIndicatorClassName(item.tone)
+              ].join(" ")}
+            >
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                <div className="min-w-0">
+                  <Link
+                    href={item.jobHref}
+                    className="font-semibold text-[var(--text-primary)] transition hover:text-[var(--copper)]"
+                  >
+                    {item.title}
+                  </Link>
+                  <p className="mt-1 text-xs font-medium text-[var(--text-secondary)]">
+                    {item.contextLabel} · {item.targetDate}
+                  </p>
+                  <p className="mt-2 font-semibold">{item.label}</p>
+                  <p className="mt-1">{item.detail}</p>
+                </div>
+              </div>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <Link
+                  href={item.jobHref}
+                  className={scheduleCompactLinkClassName}
+                >
+                  Job
+                </Link>
+                <Link
+                  href={item.projectHref}
+                  className={scheduleCompactLinkClassName}
+                >
+                  Project
+                </Link>
+                <Link
+                  href={item.dailyLogHref}
+                  className={scheduleCompactLinkClassName}
+                >
+                  Daily Log
+                </Link>
+                <Link
+                  href={item.fieldWorkHref}
+                  className={scheduleCompactLinkClassName}
+                >
+                  Field Work Items
+                </Link>
+                {item.tone === "blocked" ? (
+                  <Link
+                    href={item.blockerHref}
+                    className={scheduleCompactLinkClassName}
+                  >
+                    Blockers
+                  </Link>
+                ) : null}
+              </div>
+            </article>
+          ))
+        ) : (
+          <div className="rounded-[4px] border border-dashed border-[var(--border-warm)] bg-[var(--highlight)] px-3 py-4 text-sm leading-6 text-[var(--text-secondary)]">
+            <p className="font-semibold text-[var(--text-primary)]">
+              {input.lane.emptyTitle}
+            </p>
+            <p className="mt-1">{input.lane.emptyDescription}</p>
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
+export function ScheduleFieldHandoffCommandView(input: {
+  commandView: ScheduleFieldHandoffCommandView;
+}) {
+  return (
+    <section className="rounded-[6px] border border-[var(--border-warm)] bg-white shadow-sm">
+      <div className="border-b border-[var(--border-warm)] bg-[var(--highlight)] px-5 py-4 sm:px-6">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
+          Field command view
+        </p>
+        <h2 className="mt-1 text-lg font-semibold tracking-tight text-[var(--text-primary)]">
+          Field handoff command context
+        </h2>
+        <p className="mt-1 text-sm leading-6 text-[var(--text-secondary)]">
+          Read-only field context across scheduled jobs, assigned work, Daily
+          Logs, open blocker notes, and recent activity.
+        </p>
+      </div>
+      <div className="grid gap-4 px-5 py-4 sm:px-6 xl:grid-cols-3">
+        <ScheduleFieldHandoffCommandLaneCard
+          lane={input.commandView.readyToWork}
+        />
+        <ScheduleFieldHandoffCommandLaneCard
+          lane={input.commandView.needsAttention}
+        />
+        <ScheduleFieldHandoffCommandLaneCard
+          lane={input.commandView.recentFieldActivity}
+        />
+      </div>
+    </section>
   );
 }
 
