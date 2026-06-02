@@ -6,6 +6,13 @@ import { derivePortalCloseoutHandoff } from "./closeout-handoff";
 void test("portal closeout handoff prioritizes unsigned contract review", () => {
   const handoff = derivePortalCloseoutHandoff({
     projectId: "project-1",
+    projectStatus: "in_progress",
+    customerNextStep: {
+      label: "Sign contract",
+      description: "The contract is waiting for signature.",
+      href: "/portal/contracts/contract-1",
+      tone: "attention"
+    },
     contracts: [
       {
         id: "contract-1",
@@ -28,6 +35,17 @@ void test("portal closeout handoff prioritizes unsigned contract review", () => 
   assert.equal(handoff.nextAction.label, "Review contract");
   assert.equal(handoff.nextAction.href, "/portal/contracts/contract-1");
   assert.equal(handoff.documentPackageItems[0]?.label, "Contract");
+  assert.deepEqual(
+    handoff.confidenceThread
+      .filter(
+        (item) => item.key === "project-status" || item.key === "next-step"
+      )
+      .map((item) => [item.label, item.value, item.tone]),
+    [
+      ["Project status", "in progress", "attention"],
+      ["Next step", "Sign contract", "attention"]
+    ]
+  );
 });
 
 void test("portal closeout handoff classifies customer-safe payment states", () => {
@@ -100,6 +118,129 @@ void test("portal closeout handoff summarizes document package without internal 
   assert.doesNotMatch(packageText, /proof center/);
   assert.doesNotMatch(packageText, /execution attachment/);
   assert.match(handoff.customerSafeBoundary, /remain internal/);
+});
+
+void test("portal closeout handoff shows ready-for-closeout context from current shared records", () => {
+  const handoff = derivePortalCloseoutHandoff({
+    projectId: "project-1",
+    projectStatus: "ready_for_closeout",
+    customerNextStep: {
+      label: "No action needed",
+      description: "No shared record currently needs customer action.",
+      href: "/portal/projects/project-1",
+      tone: "complete"
+    },
+    contracts: [{ id: "contract-1", status: "signed" }],
+    invoices: [{ id: "invoice-1", status: "paid", balanceDueAmount: "0" }],
+    sharedEvidenceReceipt: {
+      statusLabel: "No shared evidence",
+      primaryMessage:
+        "No customer-visible project evidence has been explicitly shared yet.",
+      activeSharedCount: 0,
+      acknowledgedCount: 0,
+      unacknowledgedSharedCount: 0,
+      lastCustomerInteractionAt: null,
+      status: "no_shared_evidence"
+    }
+  });
+
+  assert.equal(handoff.statusTone, "complete");
+  assert.equal(handoff.nextAction.label, "Review closeout records");
+  assert.equal(
+    handoff.confidenceThread.find((item) => item.key === "project-status")
+      ?.value,
+    "ready for closeout"
+  );
+  assert.equal(
+    handoff.confidenceThread.find((item) => item.key === "invoice")?.tone,
+    "complete"
+  );
+});
+
+void test("portal closeout handoff keeps missing-document context customer safe", () => {
+  const handoff = derivePortalCloseoutHandoff({
+    projectId: "project-1",
+    projectStatus: "in_progress",
+    customerNextStep: {
+      label: "No action needed",
+      description: "No shared record currently needs customer action.",
+      href: "/portal/projects/project-1",
+      tone: "complete"
+    },
+    invoices: [{ id: "invoice-1", status: "paid", balanceDueAmount: "0" }],
+    sharedEvidenceReceipt: {
+      statusLabel: "No shared evidence",
+      primaryMessage:
+        "No customer-visible project evidence has been explicitly shared yet.",
+      activeSharedCount: 0,
+      acknowledgedCount: 0,
+      unacknowledgedSharedCount: 0,
+      lastCustomerInteractionAt: null,
+      status: "no_shared_evidence"
+    }
+  });
+
+  const contractThread = handoff.confidenceThread.find(
+    (item) => item.key === "contract"
+  );
+  const warrantyThread = handoff.confidenceThread.find(
+    (item) => item.key === "warranty"
+  );
+  const evidenceThread = handoff.confidenceThread.find(
+    (item) => item.key === "evidence-receipt"
+  );
+  const renderedText = JSON.stringify(handoff.confidenceThread).toLowerCase();
+
+  assert.equal(contractThread?.value, "Not shared");
+  assert.equal(warrantyThread?.value, "Warranty not shared yet");
+  assert.equal(evidenceThread?.value, "No shared evidence");
+  assert.doesNotMatch(renderedText, /fieldtrail/);
+  assert.doesNotMatch(renderedText, /daily job log/);
+  assert.doesNotMatch(renderedText, /execution attachment/);
+});
+
+void test("portal closeout handoff shows completed closeout confidence when evidence and warranty are acknowledged", () => {
+  const handoff = derivePortalCloseoutHandoff({
+    projectId: "project-1",
+    projectStatus: "completed",
+    customerNextStep: {
+      label: "No action needed",
+      description: "No shared record currently needs customer action.",
+      href: "/portal/projects/project-1",
+      tone: "complete"
+    },
+    contracts: [{ id: "contract-1", status: "signed" }],
+    invoices: [{ id: "invoice-1", status: "paid", balanceDueAmount: "0" }],
+    warrantyDocuments: [
+      {
+        id: "warranty-1",
+        title: "Warranty certificate",
+        status: "signed",
+        currentUserSignerStatus: "signed"
+      }
+    ],
+    sharedEvidenceReceipt: {
+      statusLabel: "Fully acknowledged",
+      primaryMessage:
+        "All active shared evidence has customer acknowledgement recorded.",
+      activeSharedCount: 2,
+      acknowledgedCount: 2,
+      unacknowledgedSharedCount: 0,
+      lastCustomerInteractionAt: "2026-06-01T16:00:00.000Z",
+      status: "fully_acknowledged"
+    }
+  });
+
+  assert.equal(handoff.statusTone, "complete");
+  assert.equal(
+    handoff.confidenceThread.find((item) => item.key === "evidence-receipt")
+      ?.tone,
+    "complete"
+  );
+  assert.equal(
+    handoff.confidenceThread.find((item) => item.key === "warranty")?.tone,
+    "complete"
+  );
 });
 
 void test("portal closeout handoff routes warranty signer action", () => {

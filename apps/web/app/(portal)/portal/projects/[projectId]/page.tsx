@@ -372,6 +372,8 @@ export default async function PortalProjectDetailPage({
     invoices,
     changeOrders
   });
+  const sharedEvidenceReceipt =
+    deriveSharedEvidenceReceiptRollupFromPortalSummary(sharedEvidence);
   const closeoutHandoff = derivePortalCloseoutHandoff({
     projectId: project.id,
     projectName: project.name,
@@ -380,10 +382,10 @@ export default async function PortalProjectDetailPage({
     contracts,
     invoices,
     changeOrders,
-    warrantyDocuments
+    warrantyDocuments,
+    customerNextStep: statusWindow.customerNextStep,
+    sharedEvidenceReceipt
   });
-  const sharedEvidenceReceipt =
-    deriveSharedEvidenceReceiptRollupFromPortalSummary(sharedEvidence);
   const customerHubCards = [
     {
       key: "next-step",
@@ -605,6 +607,60 @@ export default async function PortalProjectDetailPage({
                 </div>
               ))}
             </div>
+
+            <section className={portalInsetPanelClassName}>
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+                    Closeout confidence thread
+                  </p>
+                  <p className="mt-2 text-sm leading-6 text-slate-600">
+                    Customer-safe status, next step, documents, evidence
+                    receipt, payment, and warranty signals from records already
+                    visible in this portal.
+                  </p>
+                </div>
+                <PortalStatusBadge status={closeoutHandoff.statusTone}>
+                  {closeoutHandoff.statusLabel}
+                </PortalStatusBadge>
+              </div>
+              <div className="mt-4 grid gap-3 lg:grid-cols-2">
+                {closeoutHandoff.confidenceThread.map((item) => (
+                  <div
+                    key={item.key}
+                    className="rounded-lg border border-slate-200 bg-white px-4 py-3"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+                          {item.label}
+                        </p>
+                        <p className="mt-1 text-sm font-semibold text-slate-950">
+                          {item.value}
+                        </p>
+                      </div>
+                      <PortalStatusBadge status={item.tone}>
+                        {item.tone === "attention"
+                          ? "Review"
+                          : item.tone === "complete"
+                            ? "Current"
+                            : item.tone}
+                      </PortalStatusBadge>
+                    </div>
+                    <p className="mt-2 text-sm leading-6 text-slate-600">
+                      {item.detail}
+                    </p>
+                    {item.href ? (
+                      <div className="mt-3">
+                        <PortalSecondaryLink href={item.href}>
+                          Open
+                        </PortalSecondaryLink>
+                      </div>
+                    ) : null}
+                  </div>
+                ))}
+              </div>
+            </section>
 
             {closeoutHandoff.documentPackageItems.length > 0 ? (
               <section className="grid gap-4 lg:grid-cols-2">
