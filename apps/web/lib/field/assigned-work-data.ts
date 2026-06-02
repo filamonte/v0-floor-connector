@@ -2,6 +2,7 @@ import "server-only";
 
 import { cache } from "react";
 
+import { getDashboardProjectFinancialReadinessSummaries } from "@/lib/projects/readiness";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 import {
   getCurrentUserWorkItemPerson,
@@ -80,6 +81,20 @@ type FieldAssignedJobAssignmentRow = {
 type CountRow = {
   id: string;
   job_id: string | null;
+};
+
+type DailyLogContextRow = CountRow & {
+  log_date: string;
+  status: string;
+  updated_at: string;
+};
+
+type FieldNoteContextRow = CountRow & {
+  daily_log_id: string;
+  note_type: string;
+  title: string;
+  status: string;
+  created_at: string;
 };
 
 type TimeCardCountRow = CountRow & {
@@ -178,6 +193,36 @@ function isCountRow(value: unknown): value is CountRow {
   );
 }
 
+function isDailyLogContextRow(value: unknown): value is DailyLogContextRow {
+  if (!isCountRow(value)) {
+    return false;
+  }
+
+  const row = value as Partial<DailyLogContextRow>;
+
+  return (
+    typeof row.log_date === "string" &&
+    typeof row.status === "string" &&
+    typeof row.updated_at === "string"
+  );
+}
+
+function isFieldNoteContextRow(value: unknown): value is FieldNoteContextRow {
+  if (!isCountRow(value)) {
+    return false;
+  }
+
+  const row = value as Partial<FieldNoteContextRow>;
+
+  return (
+    typeof row.daily_log_id === "string" &&
+    typeof row.note_type === "string" &&
+    typeof row.title === "string" &&
+    typeof row.status === "string" &&
+    typeof row.created_at === "string"
+  );
+}
+
 function isTimeCardCountRow(value: unknown): value is TimeCardCountRow {
   if (!value || typeof value !== "object") {
     return false;
@@ -200,6 +245,59 @@ function countByJobId(rows: CountRow[]) {
   }
 
   return counts;
+}
+
+function mapLatestDailyLogByJobId(rows: DailyLogContextRow[]) {
+  const latestByJobId = new Map<
+    string,
+    FieldAssignedWorkJob["latestDailyLog"]
+  >();
+
+  for (const row of [...rows].sort((left, right) => {
+    const dateComparison = right.log_date.localeCompare(left.log_date);
+
+    if (dateComparison !== 0) {
+      return dateComparison;
+    }
+
+    return right.updated_at.localeCompare(left.updated_at);
+  })) {
+    if (!row.job_id || latestByJobId.has(row.job_id)) {
+      continue;
+    }
+
+    latestByJobId.set(row.job_id, {
+      id: row.id,
+      logDate: row.log_date,
+      status: row.status
+    });
+  }
+
+  return latestByJobId;
+}
+
+function mapLatestOpenFieldBlockerByJobId(rows: FieldNoteContextRow[]) {
+  const latestByJobId = new Map<
+    string,
+    FieldAssignedWorkJob["latestOpenFieldBlocker"]
+  >();
+
+  for (const row of [...rows].sort((left, right) =>
+    right.created_at.localeCompare(left.created_at)
+  )) {
+    if (!row.job_id || latestByJobId.has(row.job_id)) {
+      continue;
+    }
+
+    latestByJobId.set(row.job_id, {
+      id: row.id,
+      dailyLogId: row.daily_log_id,
+      title: row.title,
+      noteType: row.note_type
+    });
+  }
+
+  return latestByJobId;
 }
 
 function unwrapOne<T>(value: T | T[] | null | undefined): T | null {
@@ -248,9 +346,13 @@ function mapFieldAssignedWorkJob(input: {
   row: FieldAssignedJobRow;
   assignments: FieldAssignedWorkAssignee[];
   dailyLogCount: number;
+  latestDailyLog: FieldAssignedWorkJob["latestDailyLog"];
   fieldNoteCount: number;
+  openFieldBlockerCount: number;
+  latestOpenFieldBlocker: FieldAssignedWorkJob["latestOpenFieldBlocker"];
   timeCardCount: number;
   openTimeCardCount: number;
+  readiness: FieldAssignedWorkJob["readiness"];
 }): FieldAssignedWorkJob {
   const customer = unwrapOne(input.row.customers);
   const project = unwrapOne(input.row.projects);
@@ -278,9 +380,13 @@ function mapFieldAssignedWorkJob(input: {
       : null,
     assignments: input.assignments,
     dailyLogCount: input.dailyLogCount,
+    latestDailyLog: input.latestDailyLog,
     fieldNoteCount: input.fieldNoteCount,
+    openFieldBlockerCount: input.openFieldBlockerCount,
+    latestOpenFieldBlocker: input.latestOpenFieldBlocker,
     timeCardCount: input.timeCardCount,
-    openTimeCardCount: input.openTimeCardCount
+    openTimeCardCount: input.openTimeCardCount,
+    readiness: input.readiness
   };
 }
 
@@ -361,12 +467,14 @@ export const listAssignedFieldWorkForCurrentUser = cache(
         .order("created_at", { ascending: true }),
       supabase
         .from("daily_logs")
-        .select("id, job_id")
+        .select("id, job_id, log_date, status, updated_at")
         .eq("company_id", scope.organizationId)
         .in("job_id", jobIds),
       supabase
         .from("field_notes")
-        .select("id, job_id")
+        .select(
+          "id, job_id, daily_log_id, note_type, title, status, created_at"
+        )
         .eq("company_id", scope.organizationId)
         .in("job_id", jobIds),
       supabase
@@ -426,13 +534,29 @@ export const listAssignedFieldWorkForCurrentUser = cache(
     const assignmentsByJobId = mapAssignmentsByJobId(
       rawAssignmentRows.filter(isFieldAssignedJobAssignmentRow)
     );
-    const dailyLogCounts = countByJobId(rawDailyLogRows.filter(isCountRow));
-    const fieldNoteCounts = countByJobId(rawFieldNoteRows.filter(isCountRow));
+    const dailyLogRows = rawDailyLogRows.filter(isDailyLogContextRow);
+    const fieldNoteRows = rawFieldNoteRows.filter(isFieldNoteContextRow);
+    const dailyLogCounts = countByJobId(dailyLogRows);
+    const latestDailyLogByJobId = mapLatestDailyLogByJobId(dailyLogRows);
+    const fieldNoteCounts = countByJobId(fieldNoteRows);
+    const openFieldBlockerRows = fieldNoteRows.filter(
+      (row) =>
+        row.status === "open" &&
+        (row.note_type === "blocker" || row.note_type === "issue")
+    );
+    const openFieldBlockerCounts = countByJobId(openFieldBlockerRows);
+    const latestOpenFieldBlockerByJobId =
+      mapLatestOpenFieldBlockerByJobId(openFieldBlockerRows);
     const timeCardRows = rawTimeCardRows.filter(isTimeCardCountRow);
     const timeCardCounts = countByJobId(timeCardRows);
     const openTimeCardCounts = countByJobId(
       timeCardRows.filter((row) => row.status === "open")
     );
+    const readinessByProjectId =
+      await getDashboardProjectFinancialReadinessSummaries({
+        organizationId: scope.organizationId,
+        projectIds: jobRows.map((row) => row.project_id)
+      });
 
     return {
       currentPerson,
@@ -441,9 +565,14 @@ export const listAssignedFieldWorkForCurrentUser = cache(
           row,
           assignments: assignmentsByJobId.get(row.id) ?? [],
           dailyLogCount: dailyLogCounts.get(row.id) ?? 0,
+          latestDailyLog: latestDailyLogByJobId.get(row.id) ?? null,
           fieldNoteCount: fieldNoteCounts.get(row.id) ?? 0,
+          openFieldBlockerCount: openFieldBlockerCounts.get(row.id) ?? 0,
+          latestOpenFieldBlocker:
+            latestOpenFieldBlockerByJobId.get(row.id) ?? null,
           timeCardCount: timeCardCounts.get(row.id) ?? 0,
-          openTimeCardCount: openTimeCardCounts.get(row.id) ?? 0
+          openTimeCardCount: openTimeCardCounts.get(row.id) ?? 0,
+          readiness: readinessByProjectId.get(row.project_id) ?? null
         })
       )
     };
