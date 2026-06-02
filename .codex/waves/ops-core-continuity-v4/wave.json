@@ -1,0 +1,110 @@
+{
+  "state": "proposed",
+  "name": "ops-core-continuity-v4",
+  "goal": "Deepen FloorConnector operating continuity across field execution, collections follow-up, portal trust, and reporting using existing canonical records only.",
+  "rationale": "The completed ops-core-continuity-v3 wave connected major operating surfaces to canonical records. The next bounded wave should turn that continuity into clearer operator/customer decision context without creating new state, changing schema, or altering protected workflow behavior.",
+  "base": "origin/main",
+  "worktreeRoot": "C:/FC-worktrees",
+  "maxConcurrency": 4,
+  "mainValidation": [
+    "git status --short --branch",
+    "pnpm fc:preflight:fast",
+    "git diff --check"
+  ],
+  "productStrideCriteria": [
+    "Each stream creates a visible product improvement tied to the canonical lifecycle: opportunity -> customer -> project -> estimate -> contract -> change order -> job -> invoice -> payment.",
+    "Each stream reuses existing read models, helpers, records, and routes instead of creating duplicate persistence or workflow state.",
+    "Each stream remains reviewable as a bounded UI/read-model/test/docs slice with no schema, auth, RLS, provider, payment math, route protection, env var, or production mutation changes.",
+    "Each stream improves operator or customer continuity enough that a contractor can understand status, risk, or next context faster than before."
+  ],
+  "streams": [
+    {
+      "name": "field-execution-readiness-brief-v1",
+      "branch": "stream/field-execution-readiness-brief-v1",
+      "worktree": "C:/FC-worktrees/field-execution-readiness-brief-v1",
+      "prompt": ".codex/waves/ops-core-continuity-v4/prompts/field-execution-readiness-brief-v1.md",
+      "risk": "medium",
+      "productOutcome": "Add a read-only field execution readiness brief that helps crews and dispatchers understand job readiness, assigned work, Daily Log coverage, blockers, and project/customer context from existing canonical records.",
+      "expectedFiles": [
+        "apps/web/lib/field/assigned-work-read-model.ts",
+        "apps/web/lib/field/assigned-work-read-model.test.ts",
+        "apps/web/app/(app)/field/work-items/page.tsx",
+        "apps/web/components/field-execution-command-band.tsx",
+        "docs/current-state.md"
+      ],
+      "validation": [
+        "pnpm --filter @floorconnector/web exec tsx lib/field/assigned-work-read-model.test.ts",
+        "pnpm --filter @floorconnector/web typecheck",
+        "pnpm --filter @floorconnector/web lint",
+        "git diff --check"
+      ]
+    },
+    {
+      "name": "collections-next-contact-brief-v1",
+      "branch": "stream/collections-next-contact-brief-v1",
+      "worktree": "C:/FC-worktrees/collections-next-contact-brief-v1",
+      "prompt": ".codex/waves/ops-core-continuity-v4/prompts/collections-next-contact-brief-v1.md",
+      "risk": "medium",
+      "productOutcome": "Improve the AR follow-up surface with a next-contact brief that summarizes customer, project, invoice, payment, aging, last activity, and source-record context from existing financial read models.",
+      "expectedFiles": [
+        "apps/web/lib/financials/collections-follow-up-intelligence.ts",
+        "apps/web/lib/financials/collections-follow-up-intelligence.test.ts",
+        "apps/web/lib/financials/collections-command-center.ts",
+        "apps/web/lib/financials/collections-command-center.test.ts",
+        "apps/web/app/(app)/financials/accounts-receivable/page.tsx",
+        "docs/current-state.md"
+      ],
+      "validation": [
+        "pnpm --filter @floorconnector/web exec tsx lib/financials/collections-follow-up-intelligence.test.ts",
+        "pnpm --filter @floorconnector/web exec tsx lib/financials/collections-command-center.test.ts",
+        "pnpm --filter @floorconnector/web typecheck",
+        "pnpm --filter @floorconnector/web lint",
+        "git diff --check"
+      ]
+    },
+    {
+      "name": "portal-closeout-confidence-thread-v1",
+      "branch": "stream/portal-closeout-confidence-thread-v1",
+      "worktree": "C:/FC-worktrees/portal-closeout-confidence-thread-v1",
+      "prompt": ".codex/waves/ops-core-continuity-v4/prompts/portal-closeout-confidence-thread-v1.md",
+      "risk": "medium",
+      "productOutcome": "Strengthen the customer portal project view with a closeout confidence thread that connects customer-safe project status, contract/invoice visibility, shared documents, evidence receipts, warranty documents, and next-step context from existing portal helpers.",
+      "expectedFiles": [
+        "apps/web/lib/portal/closeout-handoff.ts",
+        "apps/web/lib/portal/closeout-handoff.test.ts",
+        "apps/web/lib/portal/project-timeline.ts",
+        "apps/web/lib/portal/project-timeline.test.ts",
+        "apps/web/app/(portal)/portal/projects/[projectId]/page.tsx",
+        "apps/web/components/portal-project-summary-panel.tsx",
+        "docs/current-state.md"
+      ],
+      "validation": [
+        "pnpm --filter @floorconnector/web exec tsx lib/portal/closeout-handoff.test.ts",
+        "pnpm --filter @floorconnector/web exec tsx lib/portal/project-timeline.test.ts",
+        "pnpm --filter @floorconnector/web typecheck",
+        "pnpm --filter @floorconnector/web lint",
+        "git diff --check"
+      ]
+    },
+    {
+      "name": "reports-execution-to-cash-visibility-v1",
+      "branch": "stream/reports-execution-to-cash-visibility-v1",
+      "worktree": "C:/FC-worktrees/reports-execution-to-cash-visibility-v1",
+      "prompt": ".codex/waves/ops-core-continuity-v4/prompts/reports-execution-to-cash-visibility-v1.md",
+      "risk": "medium",
+      "productOutcome": "Enhance Reports with an execution-to-cash visibility lane that helps operators see how project readiness, field execution, schedule attention, invoices, payments, and recent movement connect across existing records.",
+      "expectedFiles": [
+        "apps/web/lib/reports/operations-summary.ts",
+        "apps/web/lib/reports/operations-summary.test.ts",
+        "apps/web/app/(app)/reports/page.tsx",
+        "docs/current-state.md"
+      ],
+      "validation": [
+        "pnpm --filter @floorconnector/web exec tsx lib/reports/operations-summary.test.ts",
+        "pnpm --filter @floorconnector/web typecheck",
+        "pnpm --filter @floorconnector/web lint",
+        "git diff --check"
+      ]
+    }
+  ]
+}
