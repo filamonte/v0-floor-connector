@@ -39,16 +39,57 @@ pnpm fc:wave:status --wave ops-core-next
 pnpm fc:wave:report --wave ops-core-next
 ```
 
+Runner output is split between tracked wave definitions and ignored runtime
+state. Tracked wave directories should keep intentional inputs such as
+`wave.json`, prompt files, proposal/approval markers, and docs. Local runtime
+status, reports, next-wave proposal notes, readiness diagnostics, validation
+results, merge-check output, manual-agent markers, and agent stdout/stderr
+snippets are written under:
+
+```text
+.codex/waves/<wave>/.tmp/runtime/
+```
+
+Inspect local runtime state with:
+
+```powershell
+Get-Content .codex/waves/<wave>/.tmp/runtime/stream-status.json
+Get-Content .codex/waves/<wave>/.tmp/runtime/run-report.md
+Get-Content .codex/waves/<wave>/.tmp/runtime/next-wave-proposal.md
+```
+
+Commit runtime output only by explicit snapshot:
+
+```powershell
+pnpm fc:wave:snapshot --wave <wave>
+```
+
+Default `status`, `report`, `prepare`, and `run` attempts should not dirty
+`main` unless a tracked manifest, prompt, approval/proposal artifact, product
+file, or intentional doc changes.
+
 When a validation command uses `pnpm --filter @floorconnector/web exec`, the
 command runs inside the `apps/web` package. Test/script paths should therefore
 be package-relative, such as `lib/schedule/example.test.ts`, not
 `apps/web/lib/schedule/example.test.ts`.
 
-The runner checks dependency readiness before agent execution and validation.
-If a stream worktree under the manifest `worktreeRoot` has `package.json` but no
-root `node_modules`, it runs `pnpm install --frozen-lockfile` from that stream
-worktree root. Failed installs are reported as dependency-preparation failures
-instead of surfacing later as missing ESLint or TypeScript packages.
+The runner checks worktree link and dependency readiness before agent execution
+and validation. It runs the existing devtools link flow from the canonical repo,
+including the safe fix mode for ignored tool directories, then runs
+`worktree:doctor` against the stream worktree. Failed readiness is recorded in
+ignored runtime status before Codex or validation starts. The runner does not
+edit `package.json`, mutate `pnpm-lock.yaml`, or run arbitrary installs inside
+stream worktrees.
+
+If a stream contains partial useful work, do not reset or delete it. Inspect the
+stream branch/worktree, preserve or commit useful changes there, then resume the
+controller with:
+
+```powershell
+pnpm fc:wave:prepare --wave <wave> --resume
+pnpm fc:wave:validate --wave <wave>
+pnpm fc:wave:report --wave <wave>
+```
 
 Do not run `pnpm fc:wave:merge --wave <name> --approved` until a human has
 reviewed the report and created approval with `pnpm fc:wave:approve`.
@@ -68,12 +109,13 @@ an ignored scratch directory:
 - `.codex/waves/<current-wave>/.tmp/generation/<timestamp>/stderr.txt`
 
 Only after generated output parses and passes the runner's schema/safety checks
-does the command promote the proposal into tracked files:
+does the command promote current-wave diagnostics into ignored runtime files and
+the proposed wave into tracked review files:
 
-- `.codex/waves/<current-wave>/generator-context.md`
-- `.codex/waves/<current-wave>/generate-next-wave.prompt.md`
-- `.codex/waves/<current-wave>/generation-status.json`
-- `.codex/waves/<current-wave>/ai-next-wave-review.md`
+- `.codex/waves/<current-wave>/.tmp/runtime/generator-context.md`
+- `.codex/waves/<current-wave>/.tmp/runtime/generate-next-wave.prompt.md`
+- `.codex/waves/<current-wave>/.tmp/runtime/generation-status.json`
+- `.codex/waves/<current-wave>/.tmp/runtime/ai-next-wave-review.md`
 - `.codex/waves/<generated-wave>/wave.json`
 - `.codex/waves/<generated-wave>/PROPOSED.md`
 - `.codex/waves/<generated-wave>/prompts/*.md`
@@ -117,7 +159,7 @@ pnpm fc:wave:generate --wave ops-core-next
 ```
 
 Generated waves remain proposals. Review `PROPOSED.md`, `wave.json`, prompt
-files, and `ai-next-wave-review.md`, then activate explicitly:
+files, and the runtime `ai-next-wave-review.md`, then activate explicitly:
 
 ```powershell
 pnpm fc:wave:approve --wave <generated-wave> --proposal

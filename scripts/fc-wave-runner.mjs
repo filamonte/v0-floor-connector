@@ -16,6 +16,7 @@ const repoRoot = resolve(__dirname, "..");
 const codexWavesRoot = join(repoRoot, ".codex", "waves");
 const statusFileName = "stream-status.json";
 const reportFileName = "run-report.md";
+const nextWaveProposalFileName = "next-wave-proposal.md";
 
 const commands = new Set([
   "run",
@@ -24,6 +25,7 @@ const commands = new Set([
   "validate",
   "merge-check",
   "report",
+  "snapshot",
   "generate",
   "approve",
   "merge"
@@ -40,6 +42,7 @@ Commands:
   validate     Run stream validation commands
   merge-check  Dry-check stream merges in a scratch integration worktree
   report       Generate report and next-wave proposal
+  snapshot     Export ignored runtime status/report/proposal into a tracked snapshot
   generate     Generate a schema-validated proposed next wave
   approve      Create approved.json after successful review
   merge        Merge approved streams into main
@@ -136,6 +139,10 @@ function runProcess(command, options = {}) {
   };
 }
 
+function shellQuote(value) {
+  return `"${String(value).replaceAll('"', '`"')}"`;
+}
+
 function pathIsInside(childPath, parentPath) {
   const child = resolve(childPath);
   const parent = resolve(parentPath);
@@ -188,38 +195,80 @@ function prepareWorktreeDependencies(manifest, stream) {
     };
   }
 
-  if (existsSync(join(worktree, "node_modules"))) {
-    return {
-      status: "ready",
-      detail: "node_modules present"
-    };
-  }
+  const linkCommand = [
+    "powershell",
+    "-NoProfile",
+    "-ExecutionPolicy",
+    "Bypass",
+    "-File",
+    "scripts/link-worktree-dev-tools.ps1",
+    "-CanonicalRepo",
+    shellQuote(repoRoot),
+    "-WorktreeRoot",
+    shellQuote(worktreeRoot)
+  ].join(" ");
+  const fixCommand = `${linkCommand} -Fix`;
+  const doctorCommand = [
+    "powershell",
+    "-NoProfile",
+    "-ExecutionPolicy",
+    "Bypass",
+    "-File",
+    "scripts/worktree-doctor.ps1",
+    "-Path",
+    shellQuote(worktree),
+    "-CanonicalRepo",
+    shellQuote(repoRoot)
+  ].join(" ");
 
-  const result = runProcess("pnpm install --frozen-lockfile", {
-    cwd: worktree
-  });
+  const linkResult = runProcess(linkCommand, { cwd: repoRoot });
+  const fixResult = runProcess(fixCommand, { cwd: repoRoot });
+  const doctorResult = runProcess(doctorCommand, { cwd: repoRoot });
 
-  if (result.status === 0) {
+  const results = [
+    {
+      step: "devtools:link",
+      command: linkResult.command,
+      exitCode: linkResult.status,
+      stdout: linkResult.stdout.slice(-4000),
+      stderr: linkResult.stderr.slice(-4000)
+    },
+    {
+      step: "devtools:link:fix",
+      command: fixResult.command,
+      exitCode: fixResult.status,
+      stdout: fixResult.stdout.slice(-4000),
+      stderr: fixResult.stderr.slice(-4000)
+    },
+    {
+      step: "worktree:doctor",
+      command: doctorResult.command,
+      exitCode: doctorResult.status,
+      stdout: doctorResult.stdout.slice(-4000),
+      stderr: doctorResult.stderr.slice(-4000)
+    }
+  ];
+
+  const failed = results.find((result) => result.exitCode !== 0);
+  if (failed) {
     return {
-      status: "installed",
-      command: result.command,
-      exitCode: result.status,
-      stdout: result.stdout.slice(-4000),
-      stderr: result.stderr.slice(-4000)
+      status: "failed",
+      command: failed.command,
+      exitCode: failed.exitCode,
+      stdout: failed.stdout,
+      stderr: failed.stderr,
+      results,
+      detail:
+        failed.stderr ||
+        failed.stdout ||
+        `Worktree readiness failed during ${failed.step}`
     };
   }
 
   return {
-    status: "failed",
-    command: result.command,
-    exitCode: result.status,
-    stdout: result.stdout.slice(-4000),
-    stderr: result.stderr.slice(-4000),
-    detail:
-      result.stderr ||
-      result.stdout ||
-      result.error ||
-      "pnpm install --frozen-lockfile failed"
+    status: "ready",
+    detail: "worktree links and dependency tools passed worktree:doctor",
+    results
   };
 }
 
@@ -262,6 +311,14 @@ function loadManifest(waveName) {
 
   const manifest = JSON.parse(readFileSync(manifestPath, "utf8"));
   return { manifest, waveDir, manifestPath };
+}
+
+function runtimeDirForWave(waveDir) {
+  return join(waveDir, ".tmp", "runtime");
+}
+
+function runtimePath(waveDir, fileName) {
+  return join(runtimeDirForWave(waveDir), fileName);
 }
 
 function saveManifest(waveDir, manifest) {
@@ -336,8 +393,13 @@ function requireActiveManifest(manifest, command) {
 }
 
 function loadStatus(waveDir) {
-  const statusPath = join(waveDir, statusFileName);
+  const statusPath = runtimePath(waveDir, statusFileName);
+  const legacyStatusPath = join(waveDir, statusFileName);
   if (!existsSync(statusPath)) {
+    if (existsSync(legacyStatusPath)) {
+      return JSON.parse(readFileSync(legacyStatusPath, "utf8"));
+    }
+
     return {
       generatedAt: new Date().toISOString(),
       approval: { approved: false, pushApproved: false },
@@ -349,11 +411,13 @@ function loadStatus(waveDir) {
 }
 
 function saveStatus(waveDir, status) {
-  mkdirSync(waveDir, { recursive: true });
+  const runtimeDir = runtimeDirForWave(waveDir);
+  mkdirSync(runtimeDir, { recursive: true });
   status.generatedAt = new Date().toISOString();
-  status.reportPath = join(waveDir, reportFileName);
+  status.runtimeDir = runtimeDir;
+  status.reportPath = runtimePath(waveDir, reportFileName);
   writeFileSync(
-    join(waveDir, statusFileName),
+    runtimePath(waveDir, statusFileName),
     `${JSON.stringify(status, null, 2)}\n`
   );
 }
@@ -814,7 +878,8 @@ function productStrideReview(manifest, status) {
 
 function generateNextWaveProposal(manifest, waveDir, status) {
   const nextWaveName = `${manifest.name}-follow-up`;
-  const proposalPath = join(waveDir, "next-wave-proposal.md");
+  const proposalPath = runtimePath(waveDir, nextWaveProposalFileName);
+  mkdirSync(dirname(proposalPath), { recursive: true });
   const streamNotes = manifest.streams
     .map((stream) => {
       const streamStatus = status.streams[stream.name] || {};
@@ -1055,7 +1120,10 @@ function buildGeneratorContext(manifest, sourceWaveDir, status, outputDir) {
     "",
     "## Current Run Report",
     "",
-    excerptText(firstExistingText(join(sourceWaveDir, reportFileName)), 5000),
+    excerptText(
+      firstExistingText(runtimePath(sourceWaveDir, reportFileName)),
+      5000
+    ),
     "",
     "## Explicit Generator Instruction",
     "",
@@ -1808,7 +1876,8 @@ Do not run, merge, or push it before human review.
 `;
   writeFileSync(join(nextWaveDir, "PROPOSED.md"), proposed);
 
-  const reviewPath = join(currentWaveDir, "ai-next-wave-review.md");
+  const reviewPath = runtimePath(currentWaveDir, "ai-next-wave-review.md");
+  mkdirSync(dirname(reviewPath), { recursive: true });
   const review = `# AI Next Wave Review
 
 Status: ${generationMode === "generator_command" ? "Generated" : "Manual Or Template Fallback"}
@@ -2000,10 +2069,14 @@ function generateWave(manifest, waveDir, options) {
     throw new Error(formatInvalidProposalFailure(error, attemptDir));
   }
 
-  const trackedContextPath = join(waveDir, "generator-context.md");
-  const trackedPromptPath = join(waveDir, "generate-next-wave.prompt.md");
-  writeFileSync(trackedContextPath, readFileSync(contextPath, "utf8"));
-  writeFileSync(trackedPromptPath, readFileSync(promptPath, "utf8"));
+  const runtimeContextPath = runtimePath(waveDir, "generator-context.md");
+  const runtimePromptPath = runtimePath(
+    waveDir,
+    "generate-next-wave.prompt.md"
+  );
+  mkdirSync(dirname(runtimeContextPath), { recursive: true });
+  writeFileSync(runtimeContextPath, readFileSync(contextPath, "utf8"));
+  writeFileSync(runtimePromptPath, readFileSync(promptPath, "utf8"));
 
   const { nextWaveDir, reviewPath } = writeGeneratedWave(
     candidate,
@@ -2018,8 +2091,8 @@ function generateWave(manifest, waveDir, options) {
     proposedWave: candidate.name,
     proposedWaveDir: nextWaveDir,
     reviewPath,
-    contextPath: trackedContextPath,
-    promptPath: trackedPromptPath,
+    contextPath: runtimeContextPath,
+    promptPath: runtimePromptPath,
     schemaPath,
     outputPath,
     scratchPath: attemptDir,
@@ -2027,7 +2100,10 @@ function generateWave(manifest, waveDir, options) {
     commandExitCode: commandResult?.status ?? null
   };
 
-  writeJsonFile(join(waveDir, "generation-status.json"), generationStatus);
+  writeJsonFile(
+    runtimePath(waveDir, "generation-status.json"),
+    generationStatus
+  );
   status.generation = generationStatus;
   saveStatus(waveDir, status);
   return generationStatus;
@@ -2192,9 +2268,57 @@ pnpm fc:wave:merge --wave ${manifest.name} --approved --push
 \`\`\`
 `;
 
-  writeFileSync(join(waveDir, reportFileName), report);
+  writeFileSync(runtimePath(waveDir, reportFileName), report);
   saveStatus(waveDir, status);
   return status;
+}
+
+function snapshotWave(manifest, waveDir) {
+  validateManifestShape(manifest, { allowHighRisk: true });
+  const runtimeDir = runtimeDirForWave(waveDir);
+  if (!existsSync(runtimeDir)) {
+    throw new Error(
+      `No runtime state found for ${manifest.name}: ${runtimeDir}`
+    );
+  }
+
+  const snapshotDir = join(waveDir, "snapshots", safeTimestamp());
+  mkdirSync(snapshotDir, { recursive: true });
+  const files = [
+    statusFileName,
+    reportFileName,
+    nextWaveProposalFileName,
+    "generation-status.json",
+    "ai-next-wave-review.md"
+  ];
+  const copied = [];
+
+  for (const fileName of files) {
+    const sourcePath = join(runtimeDir, fileName);
+    if (!existsSync(sourcePath)) continue;
+    const targetPath = join(snapshotDir, fileName);
+    writeFileSync(targetPath, readFileSync(sourcePath, "utf8"));
+    copied.push(targetPath);
+  }
+
+  if (copied.length === 0) {
+    throw new Error(
+      `No runtime files were available to snapshot in ${runtimeDir}`
+    );
+  }
+
+  const index = `# Wave Runtime Snapshot
+
+Wave: ${manifest.name}
+Generated: ${new Date().toISOString()}
+Source runtime: ${runtimeDir}
+
+Files:
+
+${copied.map((file) => `- ${relative(snapshotDir, file)}`).join("\n")}
+`;
+  writeFileSync(join(snapshotDir, "README.md"), index);
+  return { snapshotDir, copied };
 }
 
 function formatValidation(validation) {
@@ -2317,9 +2441,9 @@ function mergeWave(manifest, waveDir, options) {
     });
   }
 
-  const mainValidation = Array.isArray(manifest.mainValidation)
-    ? manifest.mainValidation
-    : [];
+  const mainValidation = normalizeValidationCommands(
+    Array.isArray(manifest.mainValidation) ? manifest.mainValidation : []
+  );
   const results = [];
   let ok = true;
   for (const command of mainValidation) {
@@ -2353,8 +2477,17 @@ function printStatus(manifest, waveDir) {
   console.log(`Wave: ${manifest.name}`);
   console.log(`Goal: ${manifest.goal}`);
   console.log(`Base: ${manifest.base}`);
+  console.log(`Proposal state: ${manifest.state || "active"}`);
   console.log(
-    `Approval: ${status.approval?.approved ? "approved" : "not approved"}`
+    `Runtime status: ${
+      existsSync(runtimePath(waveDir, statusFileName))
+        ? "available"
+        : "not started"
+    }`
+  );
+  console.log(`Runtime path: ${runtimeDirForWave(waveDir)}`);
+  console.log(
+    `Merge approval: ${status.approval?.approved ? "approved" : "not approved"}`
   );
   console.log("");
   for (const stream of manifest.streams) {
@@ -2402,6 +2535,9 @@ function main() {
         break;
       case "report":
         reportWave(manifest, waveDir);
+        break;
+      case "snapshot":
+        snapshotWave(manifest, waveDir);
         break;
       case "generate":
         generateWave(manifest, waveDir, options);

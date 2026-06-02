@@ -59,8 +59,8 @@ The `run` command:
 7. Falls back to manual-agent instructions when no agent command is configured.
 8. Runs stream validation where worktrees exist.
 9. Creates a scratch integration worktree for dry merge checks.
-10. Generates `.codex/waves/<wave>/run-report.md`.
-11. Generates `.codex/waves/<wave>/next-wave-proposal.md`.
+10. Generates `.codex/waves/<wave>/.tmp/runtime/run-report.md`.
+11. Generates `.codex/waves/<wave>/.tmp/runtime/next-wave-proposal.md`.
 12. Stops before merge.
 
 During scratch merge checks, the runner aborts an in-progress merge after each
@@ -108,6 +108,48 @@ product-stride criteria, and streams:
 Each stream includes `name`, `branch`, `worktree`, `prompt`, `risk`,
 `productOutcome`, `expectedFiles`, and `validation`.
 
+## Tracked Definition Vs Runtime State
+
+Tracked wave directories should contain only intentional coordination inputs:
+
+- `wave.json`
+- proposal or approval markers when a human intentionally commits them
+- prompt files
+- docs intentionally committed by the user
+
+Runner-owned runtime state is ignored and lives under:
+
+```text
+.codex/waves/<wave>/.tmp/runtime/
+```
+
+Runtime files include `stream-status.json`, `run-report.md`,
+`next-wave-proposal.md`, validation and readiness output captured in status,
+merge-check results, agent stdout/stderr snippets, manual-agent markers, and
+dependency/link-readiness diagnostics. These files are meant for local recovery
+and review, not normal commits. Because they are ignored, status, report,
+prepare, and run attempts should not dirty `main` unless a tracked definition,
+prompt, approval marker, proposed wave, or product/source/doc file changes.
+
+To inspect local runtime state:
+
+```powershell
+Get-Content .codex/waves/<wave>/.tmp/runtime/stream-status.json
+Get-Content .codex/waves/<wave>/.tmp/runtime/run-report.md
+Get-Content .codex/waves/<wave>/.tmp/runtime/next-wave-proposal.md
+```
+
+If a report needs to be committed for review, create an explicit tracked
+snapshot:
+
+```powershell
+pnpm fc:wave:snapshot --wave <wave>
+```
+
+The snapshot command copies available runtime status/report/proposal files into
+`.codex/waves/<wave>/snapshots/<timestamp>/`. Use it deliberately; default
+runtime output remains ignored.
+
 Validation commands that use `pnpm --filter @floorconnector/web exec` run from
 the `apps/web` package context. Use package-relative paths for those commands:
 
@@ -119,12 +161,27 @@ Do not prefix those filtered `tsx` paths with `apps/web/`; that would resolve
 inside the package as `apps/web/apps/web/...`.
 
 Before running an agent command or stream validation, the runner checks the
-stream worktree for dependency readiness. If the worktree root is under the
-manifest `worktreeRoot`, has its own `package.json`, and lacks `node_modules`,
-the runner runs `pnpm install --frozen-lockfile` from that worktree root only.
-If the install fails, validation or agent execution stops with the install
-output recorded in stream status. The runner does not edit `package.json` or
-`pnpm-lock.yaml`.
+stream worktree for link and dependency readiness. It verifies the worktree is
+under the manifest `worktreeRoot`, then runs the existing devtools link repair
+flow from the canonical repo:
+
+```powershell
+pnpm devtools:link
+pnpm devtools:link:fix
+```
+
+It then runs the equivalent of:
+
+```powershell
+pnpm worktree:doctor
+```
+
+against the stream worktree. This repairs or verifies shared links such as root
+`node_modules`, `apps/web/node_modules`, `.env.local`, `.turbo`, and Playwright
+auth state before Codex or validation starts. If readiness fails, the stream is
+recorded as failed in ignored runtime status and the runner stops before agent
+execution or validation. The runner does not edit `package.json`,
+`pnpm-lock.yaml`, or run arbitrary installs inside stream worktrees.
 
 ## Agent Command Configuration
 
@@ -185,10 +242,11 @@ does not clearly preserve canonical workflow boundaries.
 
 ## Next Prompt Generation
 
-Reports create:
+Reports create ignored runtime output:
 
 ```text
-.codex/waves/<wave>/next-wave-proposal.md
+.codex/waves/<wave>/.tmp/runtime/run-report.md
+.codex/waves/<wave>/.tmp/runtime/next-wave-proposal.md
 ```
 
 V1 generation is template-driven. It uses the current wave goal, stream
@@ -208,9 +266,9 @@ Wave Runner V1.5 adds a separate proposed-wave generator:
 pnpm fc:wave:generate --wave ops-core-next
 ```
 
-The generator reads the current manifest, `run-report.md`,
-`stream-status.json`, recent git history, and current roadmap/status docs, then
-creates attempt-local scratch files first:
+The generator reads the current manifest, ignored runtime `run-report.md`,
+ignored runtime `stream-status.json`, recent git history, and current
+roadmap/status docs, then creates attempt-local scratch files first:
 
 ```text
 .codex/waves/<current-wave>/.tmp/generation/<timestamp>/generator-context.md
@@ -223,13 +281,14 @@ creates attempt-local scratch files first:
 ```
 
 If `FLOORCONNECTOR_WAVE_GENERATOR_COMMAND` is configured, the runner invokes it
-and validates the resulting JSON before writing any tracked current-wave or
-proposed-wave files. Failed attempts stay under the ignored `.tmp` scratch path
-and do not update `generator-context.md`, `generate-next-wave.prompt.md`,
-`generation-status.json`, `stream-status.json`, `run-report.md`,
-`next-wave-proposal.md`, or the proposed wave directory. Generated proposal JSON
-stays in the scratch attempt as `generated-next-wave.json`; it is not promoted
-into the tracked current-wave folder.
+and validates the resulting JSON before writing current-wave runtime files or
+tracked proposed-wave files. Failed attempts stay under the ignored `.tmp`
+scratch path and do not update runtime `generator-context.md`,
+`generate-next-wave.prompt.md`, `generation-status.json`,
+`stream-status.json`, `run-report.md`, `next-wave-proposal.md`, or the proposed
+wave directory. Generated proposal JSON stays in the scratch attempt as
+`generated-next-wave.json`; it is not promoted into the current-wave runtime
+folder.
 
 Example:
 
@@ -372,8 +431,8 @@ pnpm fc:wave:status --wave ops-core-next
 Then inspect:
 
 ```text
-.codex/waves/ops-core-next/ai-next-wave-review.md
-.codex/waves/ops-core-next/generation-status.json
+.codex/waves/ops-core-next/.tmp/runtime/ai-next-wave-review.md
+.codex/waves/ops-core-next/.tmp/runtime/generation-status.json
 .codex/waves/ops-core-next/.tmp/generation/<timestamp>/generated-next-wave.json
 .codex/waves/<generated-wave>/PROPOSED.md
 .codex/waves/<generated-wave>/wave.json
@@ -418,11 +477,20 @@ validation, stops on conflict or validation failure, and never pushes unless
 ## Handling Failures
 
 - Dirty `main`: commit, stash, or move unrelated changes before running.
+- Runtime-only wave changes: current runner output belongs under ignored
+  `.codex/waves/<wave>/.tmp/runtime/`. If old tracked runtime files appear in
+  `git status`, move their contents into runtime storage or regenerate with
+  `pnpm fc:wave:status` / `pnpm fc:wave:report`, then remove the tracked
+  runtime artifacts from the wave root.
 - Invalid AI proposal: the runner prints `AI generated an invalid wave
 proposal.`, lists the invalid stream names and exact reasons, and prints the
   ignored scratch path under `.codex/waves/<wave>/.tmp/generation/<timestamp>/`.
 - Dirty stream worktree: inspect it; use `--resume` only when the dirty state is
   intentional.
+- Partial useful stream work: leave the stream branch and worktree intact,
+  inspect `git -C <worktree> status --short --branch`, run
+  `pnpm fc:wave:prepare --wave <wave> --resume` from the clean controller, then
+  run validation/report after preserving or committing the useful stream work.
 - Missing prompt: fix the manifest or add the prompt.
 - Validation failure: repair the stream, rerun validation, then regenerate the
   report.
