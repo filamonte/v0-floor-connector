@@ -227,6 +227,26 @@ export function derivePortalSafeStatusExplanation(
     };
   }
 
+  const paymentNeedsReviewInvoice = getMostRecent(
+    invoices.filter(
+      (invoice) => invoice.latestPaymentEventType === "payment_failed"
+    )
+  );
+
+  if (paymentNeedsReviewInvoice) {
+    return {
+      headline: "Payment needs review",
+      shortExplanation:
+        "A recent payment attempt did not complete for a shared invoice. Open the invoice for the current customer-safe status.",
+      customerActionLabel: "Review payment",
+      customerActionHref: `/portal/invoices/${paymentNeedsReviewInvoice.id}`,
+      statusTone: "attention",
+      sourceCategory: "payment",
+      safeNextStep:
+        "Open the invoice to review the payment status and available next action."
+    };
+  }
+
   const openInvoice = getMostRecent(invoices.filter(isOpenInvoice));
 
   if (openInvoice) {
