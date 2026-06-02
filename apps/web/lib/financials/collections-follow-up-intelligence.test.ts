@@ -31,15 +31,19 @@ function invoice(
     balanceDueAmount: overrides.balanceDueAmount ?? "100.00",
     totalAmount: overrides.totalAmount ?? "100.00",
     updatedAt: overrides.updatedAt ?? "2026-05-20T12:00:00.000Z",
-    customer: overrides.customer ?? {
-      id: overrides.customerId ?? "customer-1",
-      name: "Acme Flooring"
-    },
-    project: overrides.project ?? {
-      id: overrides.projectId ?? "project-1",
-      name: "Lobby resurfacing",
-      status: "active"
-    }
+    customer: Object.hasOwn(overrides, "customer")
+      ? (overrides.customer ?? null)
+      : {
+          id: overrides.customerId ?? "customer-1",
+          name: "Acme Flooring"
+        },
+    project: Object.hasOwn(overrides, "project")
+      ? (overrides.project ?? null)
+      : {
+          id: overrides.projectId ?? "project-1",
+          name: "Lobby resurfacing",
+          status: "active"
+        }
   };
 }
 
@@ -187,11 +191,19 @@ void test("prioritizes failed and voided payment events", () => {
   });
 
   assert.equal(intelligence.items[0]?.invoiceId, "failed");
+  assert.deepEqual(
+    intelligence.items.map((item) => item.invoiceId),
+    ["failed", "overdue"]
+  );
   assert.equal(intelligence.items[0]?.category, "failed_or_voided_payment");
   assert.equal(intelligence.items[0]?.priority, "critical");
   assert.equal(
     intelligence.items[0]?.draftAction?.actionType,
     "payment_failed_follow_up"
+  );
+  assert.match(
+    intelligence.items[0]?.lastActivityLabel ?? "",
+    /Payment Trail payment failed/
   );
 });
 
@@ -224,6 +236,18 @@ void test("uses internal review drafts when customer or project context is incom
   });
 
   assert.equal(item.category, "overdue_invoice");
+  assert.equal(item.customerName, "Missing customer context");
+  assert.equal(item.projectName, "Missing project context");
+  assert.equal(item.customerHref, null);
+  assert.equal(item.projectHref, null);
+  assert.match(
+    item.sourceSignals.join(" "),
+    /Customer: Missing customer context/
+  );
+  assert.match(
+    item.sourceSignals.join(" "),
+    /Project: Missing project context/
+  );
   assert.equal(
     item.draftAction?.actionType,
     "internal_collections_review_summary"

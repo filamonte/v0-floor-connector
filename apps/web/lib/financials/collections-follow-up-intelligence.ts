@@ -41,6 +41,8 @@ export type CollectionsFollowUpItem = {
   invoiceStatus: string;
   dueDate: string | null;
   dueOrAgeSignal: string;
+  lastActivityAt: string;
+  lastActivityLabel: string;
   paymentState: CollectionsFollowUpPaymentState;
   reason: string;
   recommendedNextStep: string;
@@ -124,6 +126,56 @@ function hasPendingPayment(
   return payments.some(
     (payment) => payment.invoiceId === invoiceId && payment.status === "pending"
   );
+}
+
+function latestPaymentForInvoice(
+  invoiceId: string,
+  payments: FinancialControlPaymentInput[]
+) {
+  return payments
+    .filter((payment) => payment.invoiceId === invoiceId)
+    .sort((left, right) => {
+      const leftDate = left.createdAt ?? left.paymentDate ?? "";
+      const rightDate = right.createdAt ?? right.paymentDate ?? "";
+
+      return rightDate.localeCompare(leftDate);
+    })[0];
+}
+
+function buildLastActivity(input: {
+  invoice: FinancialControlInvoiceInput;
+  latestEvent: FinancialControlPaymentEventInput | undefined;
+  latestPayment: FinancialControlPaymentInput | undefined;
+}) {
+  const candidates = [
+    {
+      at: input.latestEvent?.occurredAt ?? "",
+      label: input.latestEvent
+        ? `Last activity: Payment Trail ${formatStatusLabel(input.latestEvent.eventType)}.`
+        : ""
+    },
+    {
+      at:
+        input.latestPayment?.createdAt ??
+        input.latestPayment?.paymentDate ??
+        "",
+      label: input.latestPayment
+        ? `Last activity: ${formatStatusLabel(input.latestPayment.status)} payment record.`
+        : ""
+    },
+    {
+      at: input.invoice.updatedAt,
+      label: "Last activity: invoice record update."
+    }
+  ].filter((candidate) => candidate.at);
+  const latest = candidates.sort((left, right) =>
+    right.at.localeCompare(left.at)
+  )[0];
+
+  return {
+    lastActivityAt: latest?.at ?? input.invoice.updatedAt,
+    lastActivityLabel: latest?.label ?? "Last activity: invoice record update."
+  };
 }
 
 function classifyItem(input: {
@@ -376,22 +428,31 @@ export function buildCollectionsFollowUpIntelligence(input: {
     .filter(isOpenReceivable)
     .map((invoice) => {
       const latestEvent = getLatestEvent(invoice.id, input.paymentEvents);
+      const latestPayment = latestPaymentForInvoice(invoice.id, input.payments);
+      const lastActivity = buildLastActivity({
+        invoice,
+        latestEvent,
+        latestPayment
+      });
       const classification = classifyItem({
         invoice,
         latestEvent,
         hasPendingPayment: hasPendingPayment(invoice.id, input.payments),
         todayIso: input.todayIso
       });
-      const projectName = invoice.project?.name ?? "No project";
-      const customerName = invoice.customer?.name ?? "Unknown customer";
+      const projectName = invoice.project?.name ?? "Missing project context";
+      const customerName = invoice.customer?.name ?? "Missing customer context";
       const amountDue = money(invoice.balanceDueAmount);
       const dueOrAgeSignal = buildDueOrAgeSignal(invoice, input.todayIso);
       const sourceSignals = [
         `Invoice: ${invoice.referenceNumber}`,
+        `Customer: ${customerName}`,
+        `Project: ${projectName}`,
         `Invoice status: ${formatStatusLabel(invoice.status)}`,
         `Workflow role: ${formatStatusLabel(invoice.workflowRole)}`,
         `Balance due: $${amountDue}`,
         dueOrAgeSignal,
+        lastActivity.lastActivityLabel,
         latestEvent ? `Payment event: ${latestEvent.eventType}` : null
       ].filter((signal): signal is string => Boolean(signal));
       const itemId = `collections-follow-up-${invoice.id}`;
@@ -429,6 +490,8 @@ export function buildCollectionsFollowUpIntelligence(input: {
         invoiceStatus: invoice.status,
         dueDate: invoice.dueDate,
         dueOrAgeSignal,
+        lastActivityAt: lastActivity.lastActivityAt,
+        lastActivityLabel: lastActivity.lastActivityLabel,
         paymentState: classification.paymentState,
         reason: classification.reason,
         recommendedNextStep: classification.recommendedNextStep,
