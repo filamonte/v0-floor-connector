@@ -27,6 +27,7 @@ const commands = new Set([
   "report",
   "snapshot",
   "push-stream",
+  "merge-pushed",
   "generate",
   "approve",
   "merge"
@@ -45,6 +46,7 @@ Commands:
   report       Generate report and next-wave proposal
   snapshot     Export ignored runtime status/report/proposal into a tracked snapshot
   push-stream  Push one stream branch after readiness checks
+  merge-pushed Merge approved pushed_unmerged streams one at a time
   generate     Generate a schema-validated proposed next wave
   approve      Create approved.json after successful review
   merge        Merge approved streams into main
@@ -317,6 +319,22 @@ function requireMainUpToDate() {
   }
 }
 
+function requireMainNotBehindOrigin() {
+  git(["fetch", "origin"], { cwd: repoRoot });
+  const counts = git([
+    "rev-list",
+    "--left-right",
+    "--count",
+    "origin/main...HEAD"
+  ]);
+  const [behind = "0"] = counts.split(/\s+/);
+  if (behind !== "0") {
+    throw new Error(
+      `Refusing to continue: main is behind ${behind} commit(s) vs origin/main.`
+    );
+  }
+}
+
 function loadManifest(waveName) {
   const waveDir = join(codexWavesRoot, waveName);
   const manifestPath = join(waveDir, "wave.json");
@@ -557,27 +575,54 @@ function streamProductCommits(manifest, stream, branchCommit) {
   );
 }
 
-function recommendedActionForClassification(classification, streamName) {
+function nextCommandForClassification(waveName, classification, stream) {
+  switch (classification) {
+    case "merged":
+      return "";
+    case "pushed_unmerged":
+      return `pnpm fc:wave:merge-check --wave ${waveName} --stream ${stream.name}; pnpm fc:wave:merge-pushed --wave ${waveName} --approved`;
+    case "committed_unpushed":
+      return `pnpm fc:wave:push-stream --wave ${waveName} --stream ${stream.name}`;
+    case "dirty_uncommitted":
+      return `git -C ${stream.worktree} status --short --branch`;
+    case "failed_agent":
+    case "prepared":
+    case "not_started":
+    case "no_op_validation_only":
+      return `pnpm fc:wave --wave ${waveName} --stream ${stream.name}`;
+    case "failed_validation":
+      return `pnpm fc:wave:validate --wave ${waveName} --stream ${stream.name}`;
+    default:
+      return `pnpm fc:wave:status --wave ${waveName} --stream ${stream.name}`;
+  }
+}
+
+function recommendedActionForClassification(manifest, classification, stream) {
+  const nextCommand = nextCommandForClassification(
+    manifest.name,
+    classification,
+    stream
+  );
   switch (classification) {
     case "merged":
       return "No action; stream is already reachable from origin/main.";
     case "pushed_unmerged":
-      return "Review or merge the pushed stream branch after human approval.";
+      return `Run merge-check, then merge after approval: ${nextCommand}`;
     case "committed_unpushed":
-      return `Push with pnpm fc:wave:push-stream --wave <wave> --stream ${streamName}.`;
+      return `Push with ${nextCommand}.`;
     case "dirty_uncommitted":
-      return "Inspect and commit or preserve dirty stream work before rerunning.";
+      return `Inspect and commit or preserve dirty stream work before rerunning: ${nextCommand}`;
     case "failed_agent":
-      return "Repair the agent failure, then rerun this stream.";
+      return `Repair the agent failure, then rerun this stream: ${nextCommand}`;
     case "failed_validation":
-      return "Repair validation failure, rerun validation, then regenerate report.";
+      return `Repair validation failure, rerun validation, then regenerate report: ${nextCommand}`;
     case "no_op_validation_only":
-      return "Run the stream; validation passed without stream product commits.";
+      return `Run the stream; validation passed without stream product commits: ${nextCommand}`;
     case "not_started":
     case "prepared":
-      return "Run the stream.";
+      return `Run the stream: ${nextCommand}`;
     default:
-      return "Needs human review.";
+      return `Needs human review: ${nextCommand}`;
   }
 }
 
@@ -683,9 +728,15 @@ function classifyStream(manifest, stream, streamStatus = {}) {
     hasProductCommits,
     lastAgentStatus,
     validationStatus,
-    recommendedAction: recommendedActionForClassification(
+    nextCommand: nextCommandForClassification(
+      manifest.name,
       classification,
-      stream.name
+      stream
+    ),
+    recommendedAction: recommendedActionForClassification(
+      manifest,
+      classification,
+      stream
     ),
     latestCommitSubject: commitSubject(head || branchCommit)
   };
@@ -864,6 +915,14 @@ function runAgentsIfConfigured(manifest, waveDir, options) {
       });
       continue;
     }
+    if (completion.classification === "pushed_unmerged") {
+      updateStreamStatus(status, stream.name, {
+        status: "skipped_pushed_unmerged",
+        completion,
+        note: "stream has pushed product commits; run merge-check and merge after approval"
+      });
+      continue;
+    }
     if (completion.classification === "committed_unpushed") {
       if (options.pushStreams) {
         const pushResult = pushStreamBranch(manifest, stream, status);
@@ -1031,6 +1090,46 @@ function pushStream(manifest, waveDir, options) {
   return result;
 }
 
+function loadMergeApproval(waveDir, options, action = "merge") {
+  if (!options.approved) {
+    throw new Error(`Refusing ${action} without --approved.`);
+  }
+  const approvalPath = join(waveDir, "approved.json");
+  if (!existsSync(approvalPath)) {
+    throw new Error(`Refusing ${action}: missing ${approvalPath}`);
+  }
+
+  const approval = JSON.parse(readFileSync(approvalPath, "utf8"));
+  if (!approval.approved) {
+    throw new Error(
+      `Refusing ${action}: approved.json does not mark the wave approved.`
+    );
+  }
+  if (options.push && !approval.pushApproved) {
+    throw new Error(
+      "Refusing push: approved.json was not created with push approval."
+    );
+  }
+  return approval;
+}
+
+function runMainValidation(manifest) {
+  const mainValidation = normalizeValidationCommands(
+    Array.isArray(manifest.mainValidation) ? manifest.mainValidation : []
+  );
+  const results = [];
+  let ok = true;
+  for (const command of mainValidation) {
+    const result = runProcess(command, { cwd: repoRoot, inherit: true });
+    results.push({ command, exitCode: result.status });
+    if (result.status !== 0) {
+      ok = false;
+      break;
+    }
+  }
+  return { status: ok ? "passed" : "failed", results };
+}
+
 function validateWave(manifest, waveDir, options = {}) {
   requireActiveManifest(manifest, "validate");
   validateManifestShape(manifest, { allowHighRisk: true });
@@ -1041,6 +1140,17 @@ function validateWave(manifest, waveDir, options = {}) {
     const completion =
       status.streams?.[stream.name]?.completion ||
       classifyStream(manifest, stream, status.streams?.[stream.name] || {});
+    if (
+      options.skipPushedUnmerged &&
+      completion.classification === "pushed_unmerged"
+    ) {
+      updateStreamStatus(status, stream.name, {
+        status: "skipped_pushed_unmerged",
+        completion,
+        note: "stream has pushed product commits; explicit merge-check and merge-pushed are required"
+      });
+      continue;
+    }
     if (completion.classification === "merged") {
       updateStreamStatus(status, stream.name, {
         validation: {
@@ -1132,11 +1242,31 @@ function mergeCheckWave(manifest, waveDir, options = {}) {
   refreshStreamCompletion(manifest, status, options);
   const selectedStreams = selectStreams(manifest, options);
   const streamsToCheck = [];
+  const skippedMergeCheckResults = [];
 
   for (const stream of selectedStreams) {
     const completion =
       status.streams?.[stream.name]?.completion ||
       classifyStream(manifest, stream, status.streams?.[stream.name] || {});
+    if (
+      options.skipPushedUnmerged &&
+      completion.classification === "pushed_unmerged"
+    ) {
+      updateStreamStatus(status, stream.name, {
+        mergeCheck: {
+          status: "skipped",
+          detail: "explicit merge-check is required for pushed_unmerged streams"
+        },
+        completion
+      });
+      skippedMergeCheckResults.push({
+        stream: stream.name,
+        branch: stream.branch,
+        status: "skipped",
+        detail: "explicit merge-check is required for pushed_unmerged streams"
+      });
+      continue;
+    }
     if (completion.classification === "merged") {
       updateStreamStatus(status, stream.name, {
         mergeCheck: {
@@ -1144,6 +1274,12 @@ function mergeCheckWave(manifest, waveDir, options = {}) {
           detail: "stream already merged into origin/main"
         },
         completion
+      });
+      skippedMergeCheckResults.push({
+        stream: stream.name,
+        branch: stream.branch,
+        status: "skipped",
+        detail: "stream already merged into origin/main"
       });
     } else {
       streamsToCheck.push(stream);
@@ -1153,13 +1289,9 @@ function mergeCheckWave(manifest, waveDir, options = {}) {
   if (streamsToCheck.length === 0) {
     status.mergeCheck = {
       status: "skipped",
-      detail: "all selected streams are already merged",
-      results: selectedStreams.map((stream) => ({
-        stream: stream.name,
-        branch: stream.branch,
-        status: "skipped",
-        detail: "stream already merged into origin/main"
-      }))
+      detail:
+        "all selected streams are already merged or intentionally skipped",
+      results: skippedMergeCheckResults
     };
     saveStatus(waveDir, status);
     return status;
@@ -2592,7 +2724,7 @@ function reportWave(manifest, waveDir) {
       const completion =
         streamStatus.completion ||
         classifyStream(manifest, stream, streamStatus);
-      return `| ${stream.name} | ${stream.risk} | ${completion.classification} | ${completion.hasProductCommits ? "yes" : "no"} | ${completion.branchCommitReachableFromOriginMain ? "yes" : "no"} | ${streamStatus.validation?.status || "not_run"} | ${streamStatus.mergeCheck?.status || "not_run"} | ${completion.head ? completion.head.slice(0, 12) : ""} | ${completion.recommendedAction} |`;
+      return `| ${stream.name} | ${stream.risk} | ${completion.classification} | ${completion.hasProductCommits ? "yes" : "no"} | ${completion.branchCommitReachableFromOriginMain ? "yes" : "no"} | ${streamStatus.validation?.status || "not_run"} | ${streamStatus.mergeCheck?.status || "not_run"} | ${completion.head ? completion.head.slice(0, 12) : ""} | ${completion.recommendedAction} | ${completion.nextCommand || "(none)"} |`;
     })
     .join("\n");
 
@@ -2628,6 +2760,7 @@ function reportWave(manifest, waveDir) {
 - Validation: ${validation?.status || "not_run"}
 - Merge check: ${streamStatus.mergeCheck?.status || "not_run"}
 - Recommended next action: ${completion.recommendedAction}
+- Next command: ${completion.nextCommand || "(none)"}
 
 Commits:
 
@@ -2693,8 +2826,8 @@ ${manifest.goal}
 
 ## Stream Summary
 
-| Stream | Risk | Completion | Product commits | Reachable from main | Validation | Merge check | Latest commit | Recommended action |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| Stream | Risk | Completion | Product commits | Reachable from main | Validation | Merge check | Latest commit | Recommended action | Next command |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 ${streamRows}
 
 ## Per-Stream Status
@@ -2877,30 +3010,7 @@ function approveWave(manifest, waveDir, options) {
 
 function mergeWave(manifest, waveDir, options) {
   requireActiveManifest(manifest, "merge");
-  if (!options.approved) {
-    throw new Error("Refusing merge without --approved.");
-  }
-  if (options.push && !options.approved) {
-    throw new Error("Refusing push without --approved.");
-  }
-
-  const approvalPath = join(waveDir, "approved.json");
-  if (!existsSync(approvalPath)) {
-    throw new Error(`Refusing merge: missing ${approvalPath}`);
-  }
-
-  const approval = JSON.parse(readFileSync(approvalPath, "utf8"));
-  if (!approval.approved) {
-    throw new Error(
-      "Refusing merge: approved.json does not mark the wave approved."
-    );
-  }
-  if (options.push && !approval.pushApproved) {
-    throw new Error(
-      "Refusing push: approved.json was not created with push approval."
-    );
-  }
-
+  const approval = loadMergeApproval(waveDir, options, "merge");
   requireCleanMain();
   requireMainUpToDate();
 
@@ -2922,26 +3032,132 @@ function mergeWave(manifest, waveDir, options) {
     });
   }
 
-  const mainValidation = normalizeValidationCommands(
-    Array.isArray(manifest.mainValidation) ? manifest.mainValidation : []
-  );
-  const results = [];
-  let ok = true;
-  for (const command of mainValidation) {
-    const result = runProcess(command, { cwd: repoRoot, inherit: true });
-    results.push({ command, exitCode: result.status });
-    if (result.status !== 0) {
-      ok = false;
-      break;
+  const mainValidation = runMainValidation(manifest);
+  status.mainValidation = mainValidation;
+  saveStatus(waveDir, status);
+
+  if (mainValidation.status !== "passed") {
+    throw new Error("Stopping after main validation failure.");
+  }
+
+  if (options.push) {
+    spawnGitOrThrow(["push", "origin", "main"]);
+    status.pushedAt = new Date().toISOString();
+    saveStatus(waveDir, status);
+  }
+
+  return status;
+}
+
+function mergePushedStreams(manifest, waveDir, options) {
+  requireActiveManifest(manifest, "merge-pushed");
+  const approval = loadMergeApproval(waveDir, options, "merge-pushed");
+  requireCleanMain();
+  requireMainNotBehindOrigin();
+
+  const status = loadStatus(waveDir);
+  refreshStreamCompletion(manifest, status, options);
+  const approvedStreams = new Set(approval.approvedStreams || []);
+  const selectedStreams = selectStreams(manifest, options);
+  const mergeResults = [];
+
+  for (const stream of selectedStreams) {
+    if (!approvedStreams.has(stream.name)) {
+      continue;
+    }
+
+    const streamStatus = status.streams?.[stream.name] || {};
+    const completion =
+      streamStatus.completion || classifyStream(manifest, stream, streamStatus);
+    const alreadyMergedLocally = isAncestor(stream.branch, "HEAD");
+
+    if (alreadyMergedLocally) {
+      mergeResults.push({
+        stream: stream.name,
+        branch: stream.branch,
+        status: "skipped",
+        detail: "stream branch is already reachable from local HEAD"
+      });
+      updateStreamStatus(status, stream.name, {
+        mergePushed: {
+          status: "skipped",
+          detail: "stream branch is already reachable from local HEAD"
+        }
+      });
+      continue;
+    }
+
+    if (completion.classification !== "pushed_unmerged") {
+      mergeResults.push({
+        stream: stream.name,
+        branch: stream.branch,
+        status: "skipped",
+        detail: `stream is ${completion.classification}, not pushed_unmerged`
+      });
+      updateStreamStatus(status, stream.name, {
+        mergePushed: {
+          status: "skipped",
+          detail: `stream is ${completion.classification}, not pushed_unmerged`
+        }
+      });
+      continue;
+    }
+
+    if (streamStatus.validation?.status !== "passed") {
+      throw new Error(
+        `Refusing merge-pushed for ${stream.name}: validation has not passed. Run pnpm fc:wave:validate --wave ${manifest.name} --stream ${stream.name}.`
+      );
+    }
+    if (streamStatus.mergeCheck?.status !== "passed") {
+      throw new Error(
+        `Refusing merge-pushed for ${stream.name}: merge-check has not passed. Run pnpm fc:wave:merge-check --wave ${manifest.name} --stream ${stream.name}.`
+      );
+    }
+
+    spawnGitOrThrow([
+      "merge",
+      "--no-ff",
+      stream.branch,
+      "-m",
+      `Merge ${stream.name} wave stream`
+    ]);
+
+    const mainValidation = runMainValidation(manifest);
+    const mergedAt = new Date().toISOString();
+    const mergeResult = {
+      stream: stream.name,
+      branch: stream.branch,
+      status: mainValidation.status === "passed" ? "merged" : "failed",
+      mergedAt,
+      mainValidation
+    };
+    mergeResults.push(mergeResult);
+    updateStreamStatus(status, stream.name, {
+      mergedAt,
+      mergeTarget: "main",
+      mergePushed: mergeResult
+    });
+    status.mainValidation = mainValidation;
+    status.mergePushed = {
+      status: mainValidation.status === "passed" ? "running" : "failed",
+      results: mergeResults
+    };
+    saveStatus(waveDir, status);
+
+    if (mainValidation.status !== "passed") {
+      throw new Error(
+        `Stopping after main validation failure for ${stream.name}.`
+      );
     }
   }
 
-  status.mainValidation = { status: ok ? "passed" : "failed", results };
+  status.mergePushed = {
+    status: mergeResults.some((result) => result.status === "merged")
+      ? "passed"
+      : "skipped",
+    results: mergeResults
+  };
   saveStatus(waveDir, status);
-
-  if (!ok) {
-    throw new Error("Stopping after main validation failure.");
-  }
 
   if (options.push) {
     spawnGitOrThrow(["push", "origin", "main"]);
@@ -3002,6 +3218,7 @@ function printStatus(manifest, waveDir, options = {}) {
     console.log(`  worktree-dirty: ${completion.worktreeDirty ? "yes" : "no"}`);
     console.log(`  changed-files: ${completion.changedFiles.length}`);
     console.log(`  next: ${completion.recommendedAction}`);
+    console.log(`  next-command: ${completion.nextCommand || "(none)"}`);
     if (streamStatus.manualCommand) {
       console.log(`  manual-agent: ${streamStatus.manualCommand}`);
     }
@@ -3041,6 +3258,9 @@ function main() {
       case "push-stream":
         pushStream(manifest, waveDir, options);
         break;
+      case "merge-pushed":
+        mergePushedStreams(manifest, waveDir, options);
+        break;
       case "generate":
         generateWave(manifest, waveDir, options);
         break;
@@ -3054,8 +3274,14 @@ function main() {
         requireActiveManifest(manifest, "run");
         prepareWave(manifest, waveDir, options);
         runAgentsIfConfigured(manifest, waveDir, options);
-        validateWave(manifest, waveDir, options);
-        mergeCheckWave(manifest, waveDir, options);
+        validateWave(manifest, waveDir, {
+          ...options,
+          skipPushedUnmerged: true
+        });
+        mergeCheckWave(manifest, waveDir, {
+          ...options,
+          skipPushedUnmerged: true
+        });
         reportWave(manifest, waveDir);
         break;
       default:

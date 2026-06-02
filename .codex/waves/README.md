@@ -116,13 +116,20 @@ pnpm fc:wave:status --wave <wave> --stream <stream>
 pnpm fc:wave:validate --wave <wave> --stream <stream>
 pnpm fc:wave --wave <wave> --stream <stream>
 pnpm fc:wave:push-stream --wave <wave> --stream <stream>
+pnpm fc:wave:merge-pushed --wave <wave> --approved
 ```
 
-`run` skips `merged` streams, skips pushed/unmerged or committed/unpushed work
-unless an explicit push path is requested, refuses dirty streams unless
-`--resume-dirty` is supplied, and reruns `not_started`, `prepared`, or
-`no_op_validation_only` streams. The push helper refuses dirty worktrees, runs
-link readiness first, and sets upstream to `origin/<branch>`.
+`run` skips `merged` streams, always skips `pushed_unmerged` streams, skips
+committed/unpushed work unless an explicit push path is requested, refuses dirty
+streams unless `--resume-dirty` is supplied, and reruns `not_started`,
+`prepared`, or `no_op_validation_only` streams. The push helper refuses dirty
+worktrees, runs link readiness first, and sets upstream to `origin/<branch>`.
+
+For `pushed_unmerged` streams, run the report's exact next command: per-stream
+merge-check first, then `pnpm fc:wave:merge-pushed --wave <wave> --approved`
+after human approval. The sequential merge command merges only approved
+`pushed_unmerged` streams, one at a time, and runs manifest `mainValidation`
+after each merge.
 
 Do not run `pnpm fc:wave:merge --wave <name> --approved` until a human has
 reviewed the report and created approval with `pnpm fc:wave:approve`.

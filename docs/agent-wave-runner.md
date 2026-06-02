@@ -181,9 +181,10 @@ without stream-specific commits or changed files is classified as
 `no_op_validation_only`, and the recommended action is to run the stream.
 
 Already-merged streams are skipped by default during `run` and `validate`.
-Streams with pushed but unmerged product commits are not rerun by default; they
-should be reviewed or merged after human approval. Dirty streams are refused by
-`run` unless `--resume-dirty` is supplied.
+Streams with pushed but unmerged product commits are always skipped by `run`;
+the status/report next command points to merge-check plus the approved
+sequential merge path instead of rerunning the stream. Dirty streams are refused
+by `run` unless `--resume-dirty` is supplied.
 
 Validation commands that use `pnpm --filter @floorconnector/web exec` run from
 the `apps/web` package context. Use package-relative paths for those commands:
@@ -278,11 +279,26 @@ The push helper refuses dirty worktrees, runs the existing worktree link/doctor
 readiness flow first, pushes only when local commits need pushing, and sets the
 upstream to `origin/<branch>`.
 
+For a pushed/unmerged stream that has passed validation and merge-check, use
+the approved sequential merge command:
+
+```powershell
+pnpm fc:wave:merge-check --wave ops-core-next --stream field-handoff-command-context-v1
+pnpm fc:wave:approve --wave ops-core-next
+pnpm fc:wave:merge-pushed --wave ops-core-next --approved
+```
+
+`merge-pushed` merges only approved streams currently classified as
+`pushed_unmerged`. It merges one stream at a time and runs manifest
+`mainValidation` after each merge, stopping immediately on conflict or
+validation failure. It requires a clean `main` that is not behind `origin/main`.
+
 For a partially completed wave:
 
 1. Run `pnpm fc:wave:status --wave <wave>`.
 2. Treat `merged` as done.
-3. Treat `pushed_unmerged` as ready for review/merge, not rerun.
+3. Treat `pushed_unmerged` as ready for merge-check and approved
+   `merge-pushed`, not rerun.
 4. Preserve and commit `dirty_uncommitted` stream work inside that stream
    worktree before rerunning the controller.
 5. Rerun `prepared`, `not_started`, or `no_op_validation_only` streams.
@@ -524,6 +540,18 @@ pnpm fc:wave:approve --wave ops-core-next
 pnpm fc:wave:merge --wave ops-core-next --approved
 ```
 
+For recovery waves with pushed/unmerged stream branches, prefer the sequential
+merge command:
+
+```powershell
+pnpm fc:wave:approve --wave ops-core-next
+pnpm fc:wave:merge-pushed --wave ops-core-next --approved
+```
+
+The report prints an exact next command for each stream. For
+`pushed_unmerged`, that command includes the per-stream merge-check and this
+approved sequential merge command.
+
 Push requires explicit push approval and the merge command flag:
 
 ```powershell
@@ -535,6 +563,10 @@ The merge command fetches `origin`, requires clean up-to-date `main`, merges
 approved stream branches one by one with `--no-ff`, runs manifest main
 validation, stops on conflict or validation failure, and never pushes unless
 `--push` is supplied.
+
+The `merge-pushed` command is narrower: it merges only approved streams that
+are still classified as `pushed_unmerged`, skips merged/dirty/prepared/no-op
+streams, and validates after each individual merge.
 
 ## Handling Failures
 
@@ -557,8 +589,9 @@ proposal.`, lists the invalid stream names and exact reasons, and prints the
   intentional and the stream agent should continue from that state.
 - No-op validation-only stream: run the stream; passing validation without
   product commits is not completion.
-- Pushed unmerged stream: review or merge the branch after human approval; do
-  not rerun it by default.
+- Pushed unmerged stream: run the report's merge-check command, approve the
+  wave, then run `pnpm fc:wave:merge-pushed --wave <wave> --approved`; do not
+  rerun it by default.
 - Missing prompt: fix the manifest or add the prompt.
 - Validation failure: repair the stream, rerun validation, then regenerate the
   report.
