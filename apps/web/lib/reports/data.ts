@@ -217,6 +217,7 @@ export async function loadOperationsReportingSummary(input: {
     jobs,
     contracts,
     invoices,
+    payments,
     dailyLogs,
     fieldNotes,
     collectionsReadModel
@@ -225,6 +226,7 @@ export async function loadOperationsReportingSummary(input: {
     listScheduleJobs(),
     listContracts(),
     listInvoices(),
+    listPayments(),
     listDailyLogs(),
     listFieldNotes(),
     getFinancialCollectionsReadModel({
@@ -307,6 +309,22 @@ export async function loadOperationsReportingSummary(input: {
       balanceDueAmount: invoice.balanceDueAmount,
       customer: invoice.customer,
       project: invoice.project
+    })),
+    payments: payments.map((payment) => ({
+      id: payment.id,
+      invoiceId: payment.invoiceId,
+      amount: payment.amount,
+      status: payment.status,
+      paymentDate: payment.paymentDate,
+      createdAt: payment.createdAt,
+      invoice: payment.invoice
+        ? {
+            id: payment.invoice.id,
+            referenceNumber: payment.invoice.referenceNumber
+          }
+        : null,
+      customer: payment.customer,
+      project: payment.project
     })),
     dailyLogs: dailyLogs.map((dailyLog) => ({
       id: dailyLog.id,

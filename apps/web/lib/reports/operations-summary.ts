@@ -46,6 +46,18 @@ export type ReportsInvoiceInput = {
   project?: { name: string } | null;
 };
 
+export type ReportsPaymentInput = {
+  id: string;
+  invoiceId: string;
+  amount: string | number;
+  status: string;
+  paymentDate: string;
+  createdAt: string;
+  invoice?: { id: string; referenceNumber: string } | null;
+  customer?: { name: string } | null;
+  project?: { id: string; name: string } | null;
+};
+
 export type ReportsFieldNoteInput = {
   id: string;
   projectId: string;
@@ -106,7 +118,7 @@ export type ReportsMetric = {
 };
 
 export type ReportsContinuitySection = {
-  id: "attention" | "ready" | "ar" | "field" | "recent";
+  id: "attention" | "ready" | "executionToCash" | "ar" | "field" | "recent";
   title: string;
   description: string;
   emptyTitle: string;
@@ -296,11 +308,15 @@ function metric(input: ReportsMetric): ReportsMetric {
   return input;
 }
 
-function uniqueById(items: ReportsListItem[]) {
+function uniqueById(items: Array<ReportsListItem | null>) {
   const seenIds = new Set<string>();
   const uniqueItems: ReportsListItem[] = [];
 
   for (const item of items) {
+    if (item === null) {
+      continue;
+    }
+
     if (seenIds.has(item.id)) {
       continue;
     }
@@ -312,6 +328,12 @@ function uniqueById(items: ReportsListItem[]) {
   return uniqueItems;
 }
 
+function isReportsListItem(
+  item: ReportsListItem | null
+): item is ReportsListItem {
+  return item !== null;
+}
+
 export function deriveOperationsReportingSummary(input: {
   todayIso: string;
   projects: ReportsProjectInput[];
@@ -320,6 +342,7 @@ export function deriveOperationsReportingSummary(input: {
   scheduleWarnings: ReportsScheduleWarningInput[];
   contracts: ReportsContractInput[];
   invoices: ReportsInvoiceInput[];
+  payments: ReportsPaymentInput[];
   dailyLogs: ReportsDailyLogInput[];
   fieldNotes: ReportsFieldNoteInput[];
   attachments: ReportsAttachmentInput[];
@@ -370,6 +393,9 @@ export function deriveOperationsReportingSummary(input: {
   const openFieldBlockers = input.fieldNotes.filter(isOpenBlocker);
   const waitingContracts = input.contracts.filter(isWaitingSignature);
   const openInvoices = input.invoices.filter(isOpenInvoice);
+  const recordedPayments = input.payments.filter(
+    (payment) => payment.status === "recorded"
+  );
   const overdueInvoices = openInvoices.filter(
     (invoice) => invoice.dueDate !== null && invoice.dueDate < input.todayIso
   );
@@ -466,6 +492,76 @@ export function deriveOperationsReportingSummary(input: {
           : ("attention" as ReportsTone),
       sourceLabel: "Invoice Workspace"
     }));
+  const executionToCashItems = uniqueById([
+    ...unscheduledJobs
+      .filter((job) =>
+        readyProjects.some((project) => project.id === job.projectId)
+      )
+      .map((job) => ({
+        id: `execution-ready-unscheduled:${job.id}`,
+        title: getProjectLabel(job.project),
+        subtitle: getCustomerLabel(job.customer),
+        meta: "Ready but unscheduled",
+        href: `/schedule?view=unscheduled&jobId=${job.id}`,
+        tone: "attention" as ReportsTone,
+        sourceLabel: "CrewBoard"
+      })),
+    ...inProgressJobs
+      .map((job) => {
+        const blocker = openFieldBlockers.find(
+          (note) => note.projectId === job.projectId
+        );
+
+        if (!blocker) {
+          return null;
+        }
+
+        return {
+          id: `execution-field-blocked:${job.id}:${blocker.id}`,
+          title: getProjectLabel(job.project),
+          subtitle: getCustomerLabel(job.customer),
+          meta: "In field with open blockers",
+          href: `/daily-logs/${blocker.dailyLogId}`,
+          tone: "blocked" as ReportsTone,
+          sourceLabel: "Daily Logs"
+        };
+      })
+      .filter(isReportsListItem),
+    ...completedJobs
+      .map((job) => {
+        const invoice = openInvoices.find(
+          (candidate) => candidate.projectId === job.projectId
+        );
+
+        if (!invoice) {
+          return null;
+        }
+
+        return {
+          id: `execution-completed-open-invoice:${job.id}:${invoice.id}`,
+          title: getProjectLabel(invoice.project ?? job.project),
+          subtitle: getCustomerLabel(invoice.customer ?? job.customer),
+          meta: "Completed with open invoice",
+          href: `/invoices/${invoice.id}`,
+          tone: "attention" as ReportsTone,
+          sourceLabel: "Invoice Workspace"
+        };
+      })
+      .filter(isReportsListItem),
+    ...recordedPayments.map((payment) => ({
+      id: `execution-paid:${payment.id}`,
+      title: payment.invoice?.referenceNumber ?? "Recorded payment",
+      subtitle: `${getCustomerLabel(payment.customer)} / ${getProjectLabel(
+        payment.project
+      )}`,
+      meta: `Paid ${money(payment.amount)}`,
+      href: payment.invoice?.id
+        ? `/invoices/${payment.invoice.id}`
+        : "/payments",
+      tone: "good" as ReportsTone,
+      sourceLabel: payment.invoice?.id ? "Invoice Workspace" : "Payments"
+    }))
+  ]).slice(0, 8);
   const fieldExecutionItems = uniqueById([
     ...inProgressJobs.map((job) => ({
       id: `job:${job.id}`,
@@ -545,6 +641,23 @@ export function deriveOperationsReportingSummary(input: {
       tone: "neutral" as ReportsTone,
       sourceLabel: "Daily Logs",
       updatedAt: `${dailyLog.logDate}T00:00:00.000Z`
+    })),
+    ...input.payments.map((payment) => ({
+      id: `payment:${payment.id}`,
+      title: payment.invoice?.referenceNumber ?? "Payment",
+      subtitle: `${getCustomerLabel(payment.customer)} / ${getProjectLabel(
+        payment.project
+      )}`,
+      meta: payment.status.replaceAll("_", " "),
+      href: payment.invoice?.id
+        ? `/invoices/${payment.invoice.id}`
+        : "/payments",
+      tone:
+        payment.status === "recorded"
+          ? ("good" as ReportsTone)
+          : ("neutral" as ReportsTone),
+      sourceLabel: payment.invoice?.id ? "Invoice Workspace" : "Payments",
+      updatedAt: payment.createdAt
     }))
   ]
     .sort((left, right) => right.updatedAt.localeCompare(left.updatedAt))
@@ -789,6 +902,14 @@ export function deriveOperationsReportingSummary(input: {
         items: readyToMoveItems.slice(0, 6)
       },
       {
+        id: "executionToCash",
+        title: "Execution to cash",
+        description:
+          "Project readiness, field execution, invoice, payment, and recent movement signals routed back to canonical source surfaces.",
+        emptyTitle: "No execution-to-cash handoffs are visible.",
+        items: executionToCashItems
+      },
+      {
         id: "ar",
         title: "AR exposure",
         description:
@@ -808,7 +929,7 @@ export function deriveOperationsReportingSummary(input: {
         id: "recent",
         title: "Recent movement",
         description:
-          "Latest movement across jobs, contracts, Daily Logs, and Job Notes from canonical timestamps.",
+          "Latest movement across jobs, contracts, payments, Daily Logs, and Job Notes from canonical timestamps.",
         emptyTitle: "No recent source-record movement is visible.",
         items: recentMovementItems
       }
