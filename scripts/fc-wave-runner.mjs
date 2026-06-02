@@ -783,13 +783,29 @@ function classifyStream(manifest, stream, streamStatus = {}) {
     remoteCommit && branchCommit
       ? aheadBehind(remoteRef, stream.branch)
       : { ahead: branchCommit ? 1 : 0, behind: 0, available: false };
+  const remoteBranchSynced =
+    Boolean(remoteCommit) &&
+    Boolean(branchCommit) &&
+    remoteComparison.available &&
+    remoteComparison.ahead === 0 &&
+    remoteComparison.behind === 0 &&
+    remoteCommit === branchCommit;
   const branchHasUnpushedCommits =
     !remoteCommit || (remoteComparison.available && remoteComparison.ahead > 0);
   const branchHasUnmergedPushedCommits =
     hasProductCommits &&
-    !branchReachableFromMain &&
-    remoteCommit === branchCommit &&
+    !latestProductCommitReachableFromMain &&
+    remoteBranchSynced &&
     branchHasCommitsNotInOriginMain;
+  const finishStreamPushed =
+    streamStatus.finishStream?.status === "passed" &&
+    streamStatus.finishStream?.push?.status === "pushed";
+  const cleanValidatedPushedUnmerged =
+    branchHasUnmergedPushedCommits &&
+    !worktreeDirty &&
+    validationStatus === "passed";
+  const finishStreamPushedUnmerged =
+    finishStreamPushed && cleanValidatedPushedUnmerged;
   const committedChangedFiles = baseCommit
     ? changedFilesBetween(baseCommit, branchCommit)
     : changedFilesAgainstBase(stream.worktree || repoRoot, manifest.base);
@@ -809,14 +825,14 @@ function classifyStream(manifest, stream, streamStatus = {}) {
     validationAllowsMerged
   ) {
     classification = "merged";
+  } else if (cleanValidatedPushedUnmerged) {
+    classification = "pushed_unmerged";
+  } else if (hasProductCommits && branchHasUnpushedCommits) {
+    classification = "committed_unpushed";
   } else if (lastAgentStatus === "failed") {
     classification = "failed_agent";
   } else if (validationStatus === "failed") {
     classification = "failed_validation";
-  } else if (hasProductCommits && branchHasUnpushedCommits) {
-    classification = "committed_unpushed";
-  } else if (branchHasUnmergedPushedCommits) {
-    classification = "pushed_unmerged";
   } else if (
     validationStatus === "passed" &&
     !hasProductCommits &&
@@ -842,6 +858,7 @@ function classifyStream(manifest, stream, streamStatus = {}) {
         ? `ahead ${remoteComparison.ahead}, behind ${remoteComparison.behind}`
         : "available"
       : "missing",
+    remoteBranchSynced,
     branchHasCommitsNotInOriginMain,
     branchCommitReachableFromOriginMain: branchReachableFromMain,
     worktreeDirty,
@@ -853,6 +870,13 @@ function classifyStream(manifest, stream, streamStatus = {}) {
     latestProductCommit,
     latestProductCommitReachableFromOriginMain:
       latestProductCommitReachableFromMain,
+    cleanValidatedPushedUnmerged,
+    finishStreamPushed,
+    finishStreamPushedUnmerged,
+    mergeReadyForPushed:
+      classification === "pushed_unmerged" &&
+      cleanValidatedPushedUnmerged &&
+      remoteBranchSynced,
     lastAgentStatus,
     validationStatus,
     validationAllowsMergedCompletion: validationAllowsMerged,
@@ -3514,6 +3538,11 @@ function mergePushedStreams(manifest, waveDir, options) {
       continue;
     }
 
+    if (!completion.mergeReadyForPushed) {
+      throw new Error(
+        `Refusing merge-pushed for ${stream.name}: pushed stream evidence is not merge-ready. Confirm the branch is synced, validation passed, the worktree is clean, and the latest product commit is not already reachable from origin/main.`
+      );
+    }
     if (streamStatus.validation?.status !== "passed") {
       throw new Error(
         `Refusing merge-pushed for ${stream.name}: validation has not passed. Run pnpm fc:wave:validate --wave ${manifest.name} --stream ${stream.name}.`

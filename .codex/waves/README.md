@@ -111,6 +111,14 @@ stream has product commits, the latest product commit is reachable from
 because the stream already merged. Activation-only branches should not be
 treated as completed.
 
+Stale runtime failures do not override clean Git completion evidence. A stream
+with product commits, passed validation, a clean worktree, and a synced remote
+branch is `pushed_unmerged` when its latest product commit is not reachable
+from `origin/main`, even if older runtime status says `agent_failed` or
+`manual_agent_required`. Missing remotes, ahead/behind remote state, dirty
+worktrees, failed validation, failed merge-checks, missing product commits, and
+already-merged commits still keep the normal safety behavior.
+
 Use per-stream commands when recovering one lane:
 
 ```powershell

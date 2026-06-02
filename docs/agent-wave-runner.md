@@ -183,6 +183,17 @@ already merged, status/report classify it as `merged` even when ignored runtime
 status still contains an older `agent_failed`, `failed_validation`,
 `manual_agent_required`, or `prepared` marker.
 
+Clean pushed/unmerged evidence also wins over stale runtime failure state. If a
+stream has product commits, the latest product commit is not reachable from
+`origin/main`, `origin/<stream branch>` exists and is synced with the local
+stream branch, the worktree is clean, and validation passed, status/report
+classify it as `pushed_unmerged` even if older runtime status says
+`agent_failed`, `failed_validation`, `manual_agent_required`, or `prepared`.
+`finish-stream` evidence with `status: passed` and `push.status: pushed`
+reinforces that classification, but does not bypass dirty worktrees, failed
+validation, failed merge-checks, missing remote branches, ahead/behind remote
+state, missing product commits, or already-merged commits.
+
 When every stream is classified as `merged`, status/report show `Wave
 completion: complete`, `Remaining streams: none`, and recommend generating the
 next wave with `pnpm fc:wave:generate --wave <wave>` instead of rerunning or
