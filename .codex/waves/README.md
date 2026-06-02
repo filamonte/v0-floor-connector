@@ -118,6 +118,7 @@ pnpm fc:wave:status --wave <wave> --stream <stream>
 pnpm fc:wave:validate --wave <wave> --stream <stream>
 pnpm fc:wave --wave <wave> --stream <stream>
 pnpm fc:wave:push-stream --wave <wave> --stream <stream>
+pnpm fc:wave:finish-stream --wave <wave> --stream <stream>
 pnpm fc:wave:merge-pushed --wave <wave> --approved
 ```
 
@@ -126,6 +127,12 @@ committed/unpushed work unless an explicit push path is requested, refuses dirty
 streams unless `--resume-dirty` is supplied, and reruns `not_started`,
 `prepared`, or `no_op_validation_only` streams. The push helper refuses dirty
 worktrees, runs link readiness first, and sets upstream to `origin/<branch>`.
+
+Use `finish-stream` when an agent leaves useful dirty work in a stream
+worktree. It validates the stream, formats changed supported files, refuses
+out-of-scope changes, stages only files listed in the stream `expectedFiles`,
+commits on the stream branch, and pushes only with `--push`. Status/report print
+the exact finish command when dirty files match the expected file list.
 
 For `pushed_unmerged` streams, run the report's exact next command: per-stream
 merge-check first, then `pnpm fc:wave:merge-pushed --wave <wave> --approved`

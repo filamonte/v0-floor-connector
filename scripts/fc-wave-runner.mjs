@@ -27,6 +27,7 @@ const commands = new Set([
   "report",
   "snapshot",
   "push-stream",
+  "finish-stream",
   "merge-pushed",
   "generate",
   "approve",
@@ -46,6 +47,7 @@ Commands:
   report       Generate report and next-wave proposal
   snapshot     Export ignored runtime status/report/proposal into a tracked snapshot
   push-stream  Push one stream branch after readiness checks
+  finish-stream Validate, format, stage, commit, and optionally push one stream
   merge-pushed Merge approved pushed_unmerged streams one at a time
   generate     Generate a schema-validated proposed next wave
   approve      Create runtime approved.json after successful review
@@ -61,6 +63,7 @@ Options:
   --force
   --approved
   --push
+  --message <message>
   --proposal`);
 }
 
@@ -511,6 +514,10 @@ function uniqueValues(values) {
   return [...new Set(values.filter(Boolean))];
 }
 
+function normalizeRepoPath(filePath) {
+  return String(filePath || "").replaceAll("\\", "/");
+}
+
 function changedFilesAgainstBase(cwd, base = "origin/main") {
   const output = tryGit(["diff", "--name-only", `${base}...HEAD`], { cwd });
   return output ? output.split(/\r?\n/).filter(Boolean) : [];
@@ -528,9 +535,79 @@ function dirtyFiles(cwd) {
   return listLines(output)
     .map((line) => {
       const pathStart = line[2] === " " ? 3 : 2;
-      return line.slice(pathStart).trim();
+      const path = line.slice(pathStart).trim();
+      return normalizeRepoPath(
+        path.includes(" -> ") ? path.split(" -> ").pop() : path
+      );
     })
     .filter(Boolean);
+}
+
+function porcelainEntries(cwd) {
+  const output = tryGit(["status", "--porcelain"], { cwd });
+  return listLines(output).map((line) => {
+    const pathStart = line[2] === " " ? 3 : 2;
+    const rawPath = line.slice(pathStart).trim();
+    const normalizedPath = normalizeRepoPath(
+      rawPath.includes(" -> ") ? rawPath.split(" -> ").pop() : rawPath
+    );
+    return {
+      status: line.slice(0, 2),
+      path: normalizedPath
+    };
+  });
+}
+
+function unpushedCommitCount(stream) {
+  const remoteRef = `origin/${stream.branch}`;
+  const remoteCommit = revParse(remoteRef, stream.worktree || repoRoot);
+  const branchCommit = revParse(stream.branch, stream.worktree || repoRoot);
+  if (!branchCommit) return 0;
+  if (!remoteCommit) return 1;
+  return aheadBehind(remoteRef, stream.branch, stream.worktree || repoRoot)
+    .ahead;
+}
+
+function expectedFileSet(stream) {
+  return new Set(
+    (stream.expectedFiles || []).map((file) => normalizeRepoPath(file))
+  );
+}
+
+function unexpectedChangedFiles(stream, files) {
+  const expected = expectedFileSet(stream);
+  return files.filter((file) => !expected.has(normalizeRepoPath(file)));
+}
+
+function sensitiveChangedFiles(stream, files) {
+  const expected = expectedFileSet(stream);
+  return files.filter((file) => {
+    const normalized = normalizeRepoPath(file);
+    const sensitive =
+      /^supabase\//i.test(normalized) ||
+      /^\.env(?:\.|$)/i.test(normalized) ||
+      /(?:^|\/)migrations\//i.test(normalized) ||
+      /(?:^|\/)(auth|rls|stripe|payment|provider|route-protection)(?:\/|-|_)/i.test(
+        normalized
+      ) ||
+      /^packages\/integrations\//i.test(normalized);
+    return sensitive && (!expected.has(normalized) || stream.risk !== "high");
+  });
+}
+
+function allChangedFilesExpected(stream, files) {
+  return files.length > 0 && unexpectedChangedFiles(stream, files).length === 0;
+}
+
+function supportedPrettierFiles(files) {
+  return files.filter((file) =>
+    /\.(?:cjs|css|html|js|json|jsx|md|mjs|scss|ts|tsx|yaml|yml)$/i.test(file)
+  );
+}
+
+function defaultFinishCommitMessage(streamName) {
+  const readable = streamName.replace(/-v\d+$/i, "").replace(/-/g, " ");
+  return `feat: complete ${readable}`;
 }
 
 function isDirty(cwd) {
@@ -594,7 +671,12 @@ function validationAllowsMergedCompletion(validation) {
   return /merged|reachable/i.test(validation.reason || "");
 }
 
-function nextCommandForClassification(waveName, classification, stream) {
+function nextCommandForClassification(
+  waveName,
+  classification,
+  stream,
+  details = {}
+) {
   switch (classification) {
     case "merged":
       return "";
@@ -603,6 +685,9 @@ function nextCommandForClassification(waveName, classification, stream) {
     case "committed_unpushed":
       return `pnpm fc:wave:push-stream --wave ${waveName} --stream ${stream.name}`;
     case "dirty_uncommitted":
+      if (details.dirtyFilesMatchExpected) {
+        return `pnpm fc:wave:finish-stream --wave ${waveName} --stream ${stream.name}`;
+      }
       return `git -C ${stream.worktree} status --short --branch`;
     case "failed_agent":
     case "prepared":
@@ -616,11 +701,17 @@ function nextCommandForClassification(waveName, classification, stream) {
   }
 }
 
-function recommendedActionForClassification(manifest, classification, stream) {
+function recommendedActionForClassification(
+  manifest,
+  classification,
+  stream,
+  details = {}
+) {
   const nextCommand = nextCommandForClassification(
     manifest.name,
     classification,
-    stream
+    stream,
+    details
   );
   switch (classification) {
     case "merged":
@@ -630,6 +721,9 @@ function recommendedActionForClassification(manifest, classification, stream) {
     case "committed_unpushed":
       return `Push with ${nextCommand}.`;
     case "dirty_uncommitted":
+      if (nextCommand.includes("finish-stream")) {
+        return `Finish the dirty stream safely: ${nextCommand}`;
+      }
       return `Inspect and commit or preserve dirty stream work before rerunning: ${nextCommand}`;
     case "failed_agent":
       return `Repair the agent failure, then rerun this stream: ${nextCommand}`;
@@ -765,12 +859,24 @@ function classifyStream(manifest, stream, streamStatus = {}) {
     nextCommand: nextCommandForClassification(
       manifest.name,
       classification,
-      stream
+      stream,
+      {
+        dirtyFilesMatchExpected: allChangedFilesExpected(
+          stream,
+          worktreeDirtyFiles
+        )
+      }
     ),
     recommendedAction: recommendedActionForClassification(
       manifest,
       classification,
-      stream
+      stream,
+      {
+        dirtyFilesMatchExpected: allChangedFilesExpected(
+          stream,
+          worktreeDirtyFiles
+        )
+      }
     ),
     latestCommitSubject: commitSubject(head || branchCommit)
   };
@@ -1197,6 +1303,223 @@ function runMainValidation(manifest) {
     }
   }
   return { status: ok ? "passed" : "failed", results };
+}
+
+function runStreamValidation(manifest, stream) {
+  const commandsToRun = normalizeValidationCommands(stream.validation);
+  const results = [];
+  let ok = true;
+
+  for (const command of commandsToRun) {
+    const result = runProcess(command, { cwd: stream.worktree });
+    results.push({
+      command,
+      exitCode: result.status,
+      stdout: result.stdout.slice(-4000),
+      stderr: result.stderr.slice(-4000)
+    });
+    if (result.status !== 0) {
+      ok = false;
+      break;
+    }
+  }
+
+  return {
+    status: commandsToRun.length === 0 ? "skipped" : ok ? "passed" : "failed",
+    results
+  };
+}
+
+function assertFinishStreamScope(stream, files) {
+  const unexpected = unexpectedChangedFiles(stream, files);
+  if (unexpected.length > 0) {
+    throw new Error(
+      `Refusing finish-stream: changed files outside expectedFiles:\n${unexpected
+        .map((file) => `- ${file}`)
+        .join("\n")}`
+    );
+  }
+
+  const sensitive = sensitiveChangedFiles(stream, files);
+  if (sensitive.length > 0) {
+    throw new Error(
+      `Refusing finish-stream: sensitive/high-risk files are not allowed for this stream risk:\n${sensitive
+        .map((file) => `- ${file}`)
+        .join("\n")}`
+    );
+  }
+}
+
+function runPrettierOnChangedFiles(stream, changedFiles) {
+  const prettierFiles = supportedPrettierFiles(changedFiles);
+  if (prettierFiles.length === 0) {
+    return { status: "skipped", files: [] };
+  }
+
+  const command = `pnpm exec prettier --write ${prettierFiles
+    .map((file) => shellQuote(file))
+    .join(" ")}`;
+  const result = runProcess(command, { cwd: stream.worktree });
+  return {
+    status: result.status === 0 ? "passed" : "failed",
+    command,
+    exitCode: result.status,
+    stdout: result.stdout.slice(-4000),
+    stderr: result.stderr.slice(-4000),
+    files: prettierFiles
+  };
+}
+
+function finishStream(manifest, waveDir, options) {
+  requireActiveManifest(manifest, "finish-stream");
+  validateManifestShape(manifest, { allowHighRisk: true });
+  if (!options.stream) {
+    throw new Error(
+      "Missing required option for finish-stream: --stream <name>"
+    );
+  }
+
+  const status = loadStatus(waveDir);
+  const [stream] = selectStreams(manifest, options);
+  if (!existsSync(stream.worktree)) {
+    throw new Error(
+      `Refusing finish-stream: missing worktree ${stream.worktree}`
+    );
+  }
+
+  const currentBranch = git(["branch", "--show-current"], {
+    cwd: stream.worktree
+  });
+  if (currentBranch !== stream.branch) {
+    throw new Error(
+      `Refusing finish-stream: stream worktree is on ${currentBranch}, expected ${stream.branch}.`
+    );
+  }
+
+  const initialEntries = porcelainEntries(stream.worktree);
+  const initialChangedFiles = initialEntries.map((entry) => entry.path);
+  const initialUnpushedCommitCount = unpushedCommitCount(stream);
+  if (initialChangedFiles.length === 0 && initialUnpushedCommitCount === 0) {
+    throw new Error(
+      "Refusing finish-stream: stream worktree is clean and has no unpushed commit."
+    );
+  }
+
+  const dependencyPreparation = prepareWorktreeDependencies(manifest, stream);
+  updateStreamStatus(status, stream.name, { dependencyPreparation });
+  if (dependencyPreparation.status === "failed") {
+    saveStatus(waveDir, status);
+    throw new Error(
+      `Dependency preparation failed for ${stream.name}: ${dependencyPreparation.detail}`
+    );
+  }
+
+  let validation = { status: "skipped", results: [] };
+  if (initialChangedFiles.length > 0) {
+    assertFinishStreamScope(stream, initialChangedFiles);
+    validation = runStreamValidation(manifest, stream);
+    updateStreamStatus(status, stream.name, { validation });
+    if (validation.status === "failed") {
+      saveStatus(waveDir, status);
+      const failed = validation.results.find((result) => result.exitCode !== 0);
+      throw new Error(
+        `Validation failed for ${stream.name}: ${failed?.command || "unknown command"}`
+      );
+    }
+
+    const prettier = runPrettierOnChangedFiles(stream, initialChangedFiles);
+    updateStreamStatus(status, stream.name, { prettier });
+    if (prettier.status === "failed") {
+      saveStatus(waveDir, status);
+      throw new Error(
+        `Prettier failed for ${stream.name}: ${prettier.command}`
+      );
+    }
+
+    const afterFormatFiles = porcelainEntries(stream.worktree).map(
+      (entry) => entry.path
+    );
+    assertFinishStreamScope(stream, afterFormatFiles);
+
+    const diffCheck = runProcess("git diff --check", {
+      cwd: stream.worktree
+    });
+    updateStreamStatus(status, stream.name, {
+      diffCheck: {
+        status: diffCheck.status === 0 ? "passed" : "failed",
+        command: diffCheck.command,
+        exitCode: diffCheck.status,
+        stdout: diffCheck.stdout.slice(-4000),
+        stderr: diffCheck.stderr.slice(-4000)
+      }
+    });
+    if (diffCheck.status !== 0) {
+      saveStatus(waveDir, status);
+      throw new Error(`git diff --check failed for ${stream.name}`);
+    }
+
+    const finalFiles = porcelainEntries(stream.worktree).map(
+      (entry) => entry.path
+    );
+    assertFinishStreamScope(stream, finalFiles);
+    spawnGitOrThrow(["add", "--", ...finalFiles], stream.worktree);
+
+    const stagedFiles = listLines(
+      tryGit(["diff", "--cached", "--name-only"], { cwd: stream.worktree })
+    ).map((file) => normalizeRepoPath(file));
+    assertFinishStreamScope(stream, stagedFiles);
+    if (stagedFiles.length === 0) {
+      throw new Error("Refusing finish-stream: no expected files were staged.");
+    }
+
+    const commitMessage =
+      options.message || defaultFinishCommitMessage(stream.name);
+    spawnGitOrThrow(["commit", "-m", commitMessage], stream.worktree);
+  }
+
+  let push = { status: "skipped" };
+  const unpushedAfterCommit = unpushedCommitCount(stream);
+  if (options.push) {
+    if (unpushedAfterCommit === 0) {
+      push = { status: "skipped", reason: "no unpushed commits" };
+    } else {
+      spawnGitOrThrow(["push", "-u", "origin", stream.branch], stream.worktree);
+      push = {
+        status: "pushed",
+        branch: stream.branch,
+        pushedAt: new Date().toISOString()
+      };
+    }
+  } else if (unpushedAfterCommit > 0) {
+    push = {
+      status: "not_pushed",
+      reason: "run again with --push to push the stream branch",
+      unpushedCommits: unpushedAfterCommit
+    };
+  }
+
+  updateStreamStatus(status, stream.name, {
+    status: "finished_stream",
+    validation,
+    finishStream: {
+      status: "passed",
+      committedAt: new Date().toISOString(),
+      latestCommit: currentCommit(stream.worktree),
+      changedFiles: changedFilesAgainstBase(stream.worktree, manifest.base),
+      push
+    },
+    latestCommit: currentCommit(stream.worktree),
+    changedFiles: changedFilesAgainstBase(stream.worktree, manifest.base)
+  });
+  updateStreamStatus(status, stream.name, {
+    completion: classifyStream(
+      manifest,
+      stream,
+      status.streams?.[stream.name] || {}
+    )
+  });
+  saveStatus(waveDir, status);
+  return status;
 }
 
 function validateWave(manifest, waveDir, options = {}) {
@@ -3357,6 +3680,9 @@ function main() {
         break;
       case "push-stream":
         pushStream(manifest, waveDir, options);
+        break;
+      case "finish-stream":
+        finishStream(manifest, waveDir, options);
         break;
       case "merge-pushed":
         mergePushedStreams(manifest, waveDir, options);

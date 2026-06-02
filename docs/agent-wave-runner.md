@@ -291,6 +291,29 @@ The push helper refuses dirty worktrees, runs the existing worktree link/doctor
 readiness flow first, pushes only when local commits need pushing, and sets the
 upstream to `origin/<branch>`.
 
+To finish useful dirty stream work after an agent run:
+
+```powershell
+pnpm fc:wave:finish-stream --wave ops-core-next --stream field-handoff-command-context-v1
+```
+
+Optional flags:
+
+```powershell
+pnpm fc:wave:finish-stream --wave ops-core-next --stream field-handoff-command-context-v1 --message "feat: complete field execution readiness brief"
+pnpm fc:wave:finish-stream --wave ops-core-next --stream field-handoff-command-context-v1 --push
+```
+
+`finish-stream` runs inside the stream worktree, never from `main`. It refuses a
+missing worktree, a branch mismatch, a clean stream with no unpushed commit, and
+any changed file outside the stream manifest `expectedFiles`. It runs the
+worktree readiness checks, stream validation commands, Prettier `--write` on
+changed supported files only, `git diff --check`, stages only expected changed
+files, commits with the provided message or a generated
+`feat: complete <stream name>` message, and pushes only when `--push` is passed.
+Status/report recommend this command when a dirty stream's changed files all
+match `expectedFiles`.
+
 For a pushed/unmerged stream that has passed validation and merge-check, use
 the approved sequential merge command:
 
