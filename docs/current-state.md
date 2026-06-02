@@ -260,10 +260,12 @@ matters now` line from existing list fields only. This does not add portal
   The portal Project Workspace now shows a customer-safe Closeout Handoff
   section that derives closeout status, next customer action, contract/change
   order/payment/warranty progress, a document package summary, payment status,
-  warranty handoff status, and a clear internal-evidence boundary from the
-  same portal-scoped canonical records already visible to the customer:
+  warranty handoff status, a closeout confidence thread, and a clear
+  internal-evidence boundary from the same portal-scoped canonical records
+  already visible to the customer:
   estimates, contracts, change orders, invoices/payment events, project
-  summary, schedule context, and portal-visible warranty documents. It does not
+  summary, schedule context, portal-visible warranty documents, and explicit
+  portal evidence receipt rollups. It does not
   create portal-only closeout records, expose FieldTrail, Proof Center, Daily
   Job Log details, Job Notes, execution attachments, internal blockers, raw
   provider metadata, service-ticket internals, stored PDFs, delivery proof,

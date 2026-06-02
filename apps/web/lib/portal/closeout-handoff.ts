@@ -19,6 +19,15 @@ export type PortalCloseoutHandoffActionSource =
   | "project"
   | "none";
 
+export type PortalCloseoutConfidenceThreadSource =
+  | "project_status"
+  | "next_step"
+  | "contract"
+  | "invoice"
+  | "shared_documents"
+  | "evidence_receipt"
+  | "warranty";
+
 type PortalCloseoutContract = NonNullable<
   PortalSharedDocumentsInput["contracts"]
 >[number];
@@ -47,6 +56,21 @@ export type PortalCloseoutHandoffInput = PortalSharedDocumentsInput & {
   projectName?: string | null;
   projectStatus?: string | null;
   warrantyDocuments?: PortalCloseoutWarrantyDocument[];
+  customerNextStep?: {
+    label: string;
+    description: string;
+    href: string;
+    tone: PortalCloseoutHandoffTone;
+  };
+  sharedEvidenceReceipt?: {
+    statusLabel: string;
+    primaryMessage: string;
+    activeSharedCount: number;
+    acknowledgedCount: number;
+    unacknowledgedSharedCount: number;
+    lastCustomerInteractionAt: string | null;
+    status?: string;
+  };
 };
 
 export type PortalCloseoutNextAction = {
@@ -99,6 +123,16 @@ export type PortalCloseoutWarrantySummary = {
   tone: PortalCloseoutHandoffTone;
 };
 
+export type PortalCloseoutConfidenceThreadItem = {
+  key: string;
+  label: string;
+  value: string;
+  detail: string;
+  tone: PortalCloseoutHandoffTone;
+  source: PortalCloseoutConfidenceThreadSource;
+  href?: string;
+};
+
 export type PortalCloseoutHandoff = {
   statusLabel: string;
   statusTone: PortalCloseoutHandoffTone;
@@ -106,6 +140,7 @@ export type PortalCloseoutHandoff = {
   nextAction: PortalCloseoutNextAction;
   progressItems: PortalCloseoutProgressItem[];
   documentPackageItems: PortalCloseoutDocumentPackageItem[];
+  confidenceThread: PortalCloseoutConfidenceThreadItem[];
   paymentSummary: PortalCloseoutPaymentSummary;
   warrantySummary: PortalCloseoutWarrantySummary;
   customerSafeBoundary: string;
@@ -363,6 +398,145 @@ function deriveWarrantySummary(
   };
 }
 
+function getEvidenceReceiptTone(
+  receipt: NonNullable<PortalCloseoutHandoffInput["sharedEvidenceReceipt"]>
+): PortalCloseoutHandoffTone {
+  if (receipt.status === "revoked_or_changed") {
+    return "warning";
+  }
+
+  if (receipt.activeSharedCount === 0) {
+    return "neutral";
+  }
+
+  if (receipt.unacknowledgedSharedCount > 0) {
+    return "attention";
+  }
+
+  return "complete";
+}
+
+function deriveConfidenceThread(input: {
+  projectId: string;
+  projectStatus?: string | null;
+  customerNextStep?: PortalCloseoutHandoffInput["customerNextStep"];
+  documentPackageItems: PortalCloseoutDocumentPackageItem[];
+  openContractCount: number;
+  signedContractCount: number;
+  contractCount: number;
+  paymentSummary: PortalCloseoutPaymentSummary;
+  warrantySummary: PortalCloseoutWarrantySummary;
+  sharedEvidenceReceipt?: PortalCloseoutHandoffInput["sharedEvidenceReceipt"];
+}): PortalCloseoutConfidenceThreadItem[] {
+  const customerActionDocumentCount = input.documentPackageItems.filter(
+    (item) => item.customerActionRequired
+  ).length;
+  const completedDocumentCount = input.documentPackageItems.filter(
+    (item) => item.tone === "complete"
+  ).length;
+  const documentTone: PortalCloseoutHandoffTone =
+    customerActionDocumentCount > 0
+      ? "attention"
+      : input.documentPackageItems.length > 0
+        ? "complete"
+        : "neutral";
+  const evidenceReceipt = input.sharedEvidenceReceipt;
+  const evidenceTone = evidenceReceipt
+    ? getEvidenceReceiptTone(evidenceReceipt)
+    : "neutral";
+
+  return [
+    {
+      key: "project-status",
+      label: "Project status",
+      value: formatStatusLabel(input.projectStatus),
+      detail: input.customerNextStep
+        ? `Portal status is paired with the current customer next step: ${input.customerNextStep.label}.`
+        : "Portal status is shown from the shared project record.",
+      tone: input.customerNextStep?.tone ?? "neutral",
+      source: "project_status",
+      href: `/portal/projects/${input.projectId}`
+    },
+    {
+      key: "next-step",
+      label: "Next step",
+      value: input.customerNextStep?.label ?? "Review project",
+      detail:
+        input.customerNextStep?.description ??
+        "Review the project workspace for the latest customer-safe status.",
+      tone: input.customerNextStep?.tone ?? "neutral",
+      source: "next_step",
+      href:
+        input.customerNextStep?.href ?? `/portal/projects/${input.projectId}`
+    },
+    {
+      key: "contract",
+      label: "Contract visibility",
+      value:
+        input.contractCount > 0
+          ? `${input.signedContractCount}/${input.contractCount} signed`
+          : "Not shared",
+      detail:
+        input.openContractCount > 0
+          ? "A shared contract still needs review or signature."
+          : input.contractCount > 0
+            ? "Shared contract records are complete or no longer active."
+            : "No contract is currently shared in this portal.",
+      tone:
+        input.openContractCount > 0
+          ? "attention"
+          : input.contractCount > 0
+            ? "complete"
+            : "neutral",
+      source: "contract"
+    },
+    {
+      key: "invoice",
+      label: "Invoice and payment",
+      value: input.paymentSummary.outstandingBalanceLabel,
+      detail: input.paymentSummary.helperText,
+      tone: input.paymentSummary.tone,
+      source: "invoice"
+    },
+    {
+      key: "shared-documents",
+      label: "Shared documents",
+      value:
+        input.documentPackageItems.length > 0
+          ? `${completedDocumentCount}/${input.documentPackageItems.length} current`
+          : "None shared",
+      detail:
+        input.documentPackageItems.length > 0
+          ? customerActionDocumentCount > 0
+            ? `${customerActionDocumentCount} shared record${customerActionDocumentCount === 1 ? "" : "s"} still need customer review.`
+            : "Shared closeout records are available for review or saving."
+          : "Closeout documents will appear here when your contractor shares them.",
+      tone: documentTone,
+      source: "shared_documents"
+    },
+    {
+      key: "evidence-receipt",
+      label: "Evidence receipt",
+      value: evidenceReceipt?.statusLabel ?? "No shared evidence",
+      detail:
+        evidenceReceipt?.primaryMessage ??
+        "Explicitly shared project evidence and receipt activity will appear here when available.",
+      tone: evidenceTone,
+      source: "evidence_receipt",
+      href: `/portal/projects/${input.projectId}/evidence/receipt`
+    },
+    {
+      key: "warranty",
+      label: "Warranty handoff",
+      value: input.warrantySummary.statusLabel,
+      detail: input.warrantySummary.helperText,
+      tone: input.warrantySummary.tone,
+      source: "warranty",
+      href: input.warrantySummary.href ?? undefined
+    }
+  ];
+}
+
 function deriveNextAction(input: {
   projectId: string;
   contracts: PortalCloseoutContract[];
@@ -508,6 +682,18 @@ export function derivePortalCloseoutHandoff(
         : statusTone === "complete"
           ? "Closeout records ready"
           : "Closeout package not ready yet";
+  const confidenceThread = deriveConfidenceThread({
+    projectId: input.projectId,
+    projectStatus: input.projectStatus,
+    customerNextStep: input.customerNextStep,
+    documentPackageItems,
+    openContractCount,
+    signedContractCount,
+    contractCount: contracts.length,
+    paymentSummary,
+    warrantySummary,
+    sharedEvidenceReceipt: input.sharedEvidenceReceipt
+  });
 
   return {
     statusLabel,
@@ -567,6 +753,7 @@ export function derivePortalCloseoutHandoff(
       }
     ],
     documentPackageItems,
+    confidenceThread,
     paymentSummary,
     warrantySummary,
     customerSafeBoundary:
