@@ -99,6 +99,8 @@ export default async function AccountsReceivablePage() {
   );
   const showAiDraftActions = shouldShowAiDraftActions(guidancePreferences);
   const collectionsDesk = readModel.collectionsCommandCenter;
+  const paymentExceptions = collectionsDesk.paymentExceptions;
+  const recentPaymentActivity = collectionsDesk.recentActivity;
   const continuitySnapshot = collectionsDesk.continuitySnapshot;
   const invoiceStatusCounts = [
     {
@@ -688,6 +690,10 @@ export default async function AccountsReceivablePage() {
                           {item.dueOrAgeSignal} Payment state:{" "}
                           {item.paymentState.replaceAll("_", " ")}.
                         </p>
+                        <p className="mt-1 text-xs leading-5 text-slate-500">
+                          {item.lastActivityLabel}{" "}
+                          {formatOptionalDateTime(item.lastActivityAt)}.
+                        </p>
                         <p className="mt-1 text-xs uppercase tracking-[0.12em] text-slate-400">
                           {formatStatusLabel(item.invoiceStatus)}
                         </p>
@@ -991,12 +997,17 @@ export default async function AccountsReceivablePage() {
                 Payment attention
               </p>
               <h3 className="mt-2 text-xl font-semibold tracking-tight text-slate-950">
-                Payment Trail continuity
+                Payment exceptions
               </h3>
+              <p className="mt-1 text-sm leading-6 text-slate-500">
+                Failed, voided, in-progress, and stale pending payment signals
+                stay in the attention lane until the existing invoice and
+                payment records show a clear outcome.
+              </p>
             </div>
             <div className="divide-y divide-[#e5e5e5]">
-              {collectionsDesk.paymentTrailAttention.length > 0 ? (
-                collectionsDesk.paymentTrailAttention.map((event) => (
+              {paymentExceptions.length > 0 ? (
+                paymentExceptions.map((event) => (
                   <article
                     key={event.id}
                     className="px-5 py-4 transition hover:bg-[#f8f8f8]"
@@ -1060,12 +1071,93 @@ export default async function AccountsReceivablePage() {
                 ))
               ) : (
                 <div className="px-5 py-6 text-sm leading-6 text-slate-500">
-                  No failed, voided, or in-progress Payment Trail items need
-                  review.
+                  No failed, voided, in-progress, or stale pending Payment Trail
+                  items need review.
                 </div>
               )}
             </div>
           </section>
+        </section>
+
+        <section className="border border-[#d6d6d6] bg-white">
+          <div className="border-b border-[#e5e5e5] px-5 py-4">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#666666]">
+              Recent collections activity
+            </p>
+            <h3 className="mt-2 text-xl font-semibold tracking-tight text-slate-950">
+              Recently settled payments
+            </h3>
+            <p className="mt-1 text-sm leading-6 text-slate-500">
+              Recorded payments stay separate from open exceptions so the team
+              can confirm continuity without mixing settled activity into the
+              attention queue.
+            </p>
+          </div>
+          <div className="divide-y divide-[#e5e5e5]">
+            {recentPaymentActivity.length > 0 ? (
+              recentPaymentActivity.map((event) => (
+                <article key={event.id} className="px-5 py-4">
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <Link
+                        href={event.invoiceHref}
+                        className="text-sm font-semibold text-[#171717] transition hover:text-brand-700"
+                      >
+                        {event.invoiceReference}
+                      </Link>
+                      <p className="mt-1 text-sm leading-5 text-slate-600">
+                        {event.customerHref ? (
+                          <Link
+                            href={event.customerHref}
+                            className="font-medium text-brand-700 transition hover:text-brand-800"
+                          >
+                            {event.customerName}
+                          </Link>
+                        ) : (
+                          event.customerName
+                        )}{" "}
+                        -{" "}
+                        {event.projectHref ? (
+                          <Link
+                            href={event.projectHref}
+                            className="font-medium text-brand-700 transition hover:text-brand-800"
+                          >
+                            {event.projectName}
+                          </Link>
+                        ) : (
+                          event.projectName
+                        )}
+                      </p>
+                      <p className="mt-1 text-xs uppercase tracking-[0.12em] text-slate-500">
+                        {formatOptionalDateTime(event.occurredAt)} /{" "}
+                        {event.providerLabel}
+                      </p>
+                      <p className="mt-2 text-sm leading-5 text-slate-500">
+                        {event.reason}
+                      </p>
+                      {event.amount ? (
+                        <p className="mt-1 text-sm font-semibold text-slate-950">
+                          {formatMoney(event.amount)}
+                        </p>
+                      ) : null}
+                    </div>
+                    <span
+                      className={`rounded-[4px] border px-2 py-1 text-xs font-semibold uppercase tracking-[0.12em] ${toneBadgeClass(
+                        event.tone
+                      )}`}
+                    >
+                      {event.nextAction}
+                    </span>
+                  </div>
+                </article>
+              ))
+            ) : (
+              <div className="px-5 py-6 text-sm leading-6 text-slate-500">
+                No recent recorded payment activity is visible in the current
+                read model.
+              </div>
+            )}
+          </div>
         </section>
       </div>
     </ContractorWorkspacePage>

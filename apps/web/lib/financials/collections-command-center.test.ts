@@ -185,8 +185,13 @@ void test("surfaces stale pending payments and recent recorded continuity", () =
     commandCenter.paymentTrailAttention[0]?.nextAction,
     "Resolve pending state"
   );
-  assert.equal(commandCenter.paymentTrailAttention[1]?.kind, "recent_success");
-  assert.equal(commandCenter.paymentTrailAttention[1]?.tone, "neutral");
+  assert.equal(commandCenter.paymentTrailAttention.length, 1);
+  assert.equal(
+    commandCenter.paymentExceptions[0]?.kind,
+    "stale_pending_payment"
+  );
+  assert.equal(commandCenter.recentActivity[0]?.kind, "recent_success");
+  assert.equal(commandCenter.recentActivity[0]?.tone, "neutral");
 });
 
 void test("summarizes invoice status counts and operational continuity queues", () => {
@@ -455,9 +460,60 @@ void test("selects payment succeeded as the latest payment trail signal", () => 
     (item) => item.kind === "recent_success"
   );
 
-  assert.equal(success?.invoiceId, "succeeded");
-  assert.equal(success?.tone, "neutral");
-  assert.equal(success?.historyCount, 2);
+  assert.equal(success, undefined);
+  assert.equal(commandCenter.recentActivity[0]?.invoiceId, "succeeded");
+  assert.equal(commandCenter.recentActivity[0]?.tone, "neutral");
+  assert.equal(commandCenter.recentActivity[0]?.historyCount, 2);
+});
+
+void test("keeps settled payment activity separate from open payment exceptions", () => {
+  const commandCenter = build({
+    invoices: [
+      invoice({
+        id: "failed",
+        referenceNumber: "INV-FAILED",
+        balanceDueAmount: "300.00"
+      }),
+      invoice({
+        id: "paid",
+        referenceNumber: "INV-PAID",
+        status: "paid",
+        balanceDueAmount: "0.00"
+      })
+    ],
+    payments: [
+      payment({
+        id: "recorded",
+        invoiceId: "paid",
+        status: "recorded",
+        createdAt: "2026-05-19T12:00:00.000Z"
+      })
+    ],
+    paymentEvents: [
+      event({
+        id: "failed-event",
+        invoiceId: "failed",
+        eventType: "payment_failed",
+        occurredAt: "2026-05-20T12:00:00.000Z"
+      }),
+      event({
+        id: "success-event",
+        invoiceId: "paid",
+        eventType: "payment_succeeded",
+        occurredAt: "2026-05-19T12:00:00.000Z"
+      })
+    ]
+  });
+
+  assert.deepEqual(
+    commandCenter.paymentExceptions.map((item) => item.kind),
+    ["failed"]
+  );
+  assert.deepEqual(
+    commandCenter.recentActivity.map((item) => item.kind),
+    ["recent_success", "recent_success"]
+  );
+  assert.equal(commandCenter.paymentTrailAttention[0]?.kind, "failed");
 });
 
 void test("summarizes control room open ar, trail issues, deposits, and recent success", () => {

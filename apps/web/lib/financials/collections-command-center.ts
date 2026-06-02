@@ -161,6 +161,8 @@ export type CollectionsCommandCenter = {
   depositContinuity: CollectionsDepositContinuity[];
   customerContinuity: CollectionsCustomerContinuity[];
   paymentTrailAttention: CollectionsPaymentTrailAttention[];
+  paymentExceptions: CollectionsPaymentTrailAttention[];
+  recentActivity: CollectionsPaymentTrailAttention[];
 };
 
 const criticalEventTypes = ["payment_failed", "payment_voided"] as const;
@@ -1313,12 +1315,18 @@ export function buildCollectionsCommandCenter(input: {
     todayIso: input.todayIso
   });
   const customerContinuity = buildCustomerContinuity({ customerTotals });
-  const paymentTrailAttention = buildPaymentTrailAttention({
+  const paymentTrailContinuity = buildPaymentTrailAttention({
     invoices: input.invoices,
     payments: input.payments,
     paymentEvents: input.paymentEvents,
     todayIso: input.todayIso
   });
+  const paymentExceptions = paymentTrailContinuity.filter(
+    (item) => item.kind !== "recent_success"
+  );
+  const recentActivity = paymentTrailContinuity
+    .filter((item) => item.kind === "recent_success")
+    .sort((left, right) => right.occurredAt.localeCompare(left.occurredAt));
   const depositContinuity = buildDepositContinuity({
     invoices: input.invoices,
     payments: input.payments,
@@ -1330,7 +1338,7 @@ export function buildCollectionsCommandCenter(input: {
       priorityItems,
       depositContinuity,
       customerContinuity,
-      paymentTrailAttention
+      paymentTrailAttention: paymentTrailContinuity
     }),
     continuitySnapshot: buildContinuitySnapshot({
       invoices: input.invoices,
@@ -1341,6 +1349,8 @@ export function buildCollectionsCommandCenter(input: {
     priorityItems: priorityItems.slice(0, 12),
     depositContinuity: depositContinuity.slice(0, 8),
     customerContinuity: customerContinuity.slice(0, 8),
-    paymentTrailAttention: paymentTrailAttention.slice(0, 12)
+    paymentTrailAttention: paymentExceptions.slice(0, 12),
+    paymentExceptions: paymentExceptions.slice(0, 12),
+    recentActivity: recentActivity.slice(0, 8)
   };
 }
