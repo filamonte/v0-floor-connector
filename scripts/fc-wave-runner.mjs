@@ -575,6 +575,11 @@ function streamProductCommits(manifest, stream, branchCommit) {
   );
 }
 
+function latestProductCommitHash(productCommits) {
+  const [latestCommit = ""] = productCommits;
+  return latestCommit.split(/\s+/)[0] || "";
+}
+
 function nextCommandForClassification(waveName, classification, stream) {
   switch (classification) {
     case "merged":
@@ -655,6 +660,10 @@ function classifyStream(manifest, stream, streamStatus = {}) {
     : false;
   const productCommits = streamProductCommits(manifest, stream, branchCommit);
   const hasProductCommits = productCommits.length > 0;
+  const latestProductCommit = latestProductCommitHash(productCommits);
+  const latestProductCommitReachableFromMain = latestProductCommit
+    ? isAncestor(latestProductCommit, "origin/main")
+    : false;
   const commitsNotInMain = branchCommit
     ? listLines(tryGit(["log", "--oneline", `origin/main..${stream.branch}`]))
     : [];
@@ -683,12 +692,12 @@ function classifyStream(manifest, stream, streamStatus = {}) {
     classification = "not_started";
   } else if (worktreeDirty) {
     classification = "dirty_uncommitted";
+  } else if (hasProductCommits && latestProductCommitReachableFromMain) {
+    classification = "merged";
   } else if (lastAgentStatus === "failed") {
     classification = "failed_agent";
   } else if (validationStatus === "failed") {
     classification = "failed_validation";
-  } else if (hasProductCommits && branchReachableFromMain) {
-    classification = "merged";
   } else if (hasProductCommits && branchHasUnpushedCommits) {
     classification = "committed_unpushed";
   } else if (branchHasUnmergedPushedCommits) {
@@ -726,6 +735,9 @@ function classifyStream(manifest, stream, streamStatus = {}) {
     committedChangedFiles,
     productCommits,
     hasProductCommits,
+    latestProductCommit,
+    latestProductCommitReachableFromOriginMain:
+      latestProductCommitReachableFromMain,
     lastAgentStatus,
     validationStatus,
     nextCommand: nextCommandForClassification(

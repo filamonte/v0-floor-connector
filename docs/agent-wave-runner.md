@@ -176,6 +176,11 @@ The runner uses the wave activation commit as the stream base when possible.
 That prevents activation-only branches from being reported as completed just
 because their branch head is reachable from `origin/main`.
 
+Clean Git completion evidence wins over stale runtime failure state. If a clean
+stream has product commits and the latest product commit is reachable from
+`origin/main`, status/report classify it as `merged` even when ignored runtime
+status still contains an older `agent_failed` or failed validation marker.
+
 Validation passing is not enough to mark a stream completed. A validation pass
 without stream-specific commits or changed files is classified as
 `no_op_validation_only`, and the recommended action is to run the stream.
