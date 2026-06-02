@@ -5,7 +5,7 @@
   "rationale": "The completed ops-core-continuity-v3 wave connected major operating surfaces to canonical records. The next bounded wave should turn that continuity into clearer operator/customer decision context without creating new state, changing schema, or altering protected workflow behavior.",
   "base": "origin/main",
   "worktreeRoot": "C:/FC-worktrees",
-  "maxConcurrency": 4,
+  "maxConcurrency": 2,
   "mainValidation": [
     "git status --short --branch",
     "pnpm fc:preflight:fast",
