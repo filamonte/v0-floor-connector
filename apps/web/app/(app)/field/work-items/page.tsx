@@ -3,6 +3,7 @@ import Link from "next/link";
 import { listExecutionAttachmentsBySubjects } from "@/lib/execution-attachments/data";
 import { listAssignedFieldWorkForCurrentUser } from "@/lib/field/assigned-work-data";
 import {
+  buildFieldExecutionReadinessBrief,
   buildFieldAssignedWorkQueue,
   summarizeFieldAssignedWorkJob,
   type FieldAssignedWorkGroupKey
@@ -92,6 +93,19 @@ function getContextLabel(input: {
   ]
     .filter(Boolean)
     .join(" · ");
+}
+
+function getReadinessBriefClassName(
+  status: ReturnType<typeof buildFieldExecutionReadinessBrief>["status"]
+) {
+  switch (status) {
+    case "ready":
+      return "border-emerald-200 bg-emerald-50 text-emerald-950";
+    case "blocked":
+      return "border-amber-300 bg-amber-50 text-amber-950";
+    case "needs_context":
+      return "border-slate-300 bg-white text-slate-700";
+  }
 }
 
 export default async function FieldWorkItemsPage() {
@@ -213,6 +227,8 @@ export default async function FieldWorkItemsPage() {
                       <ul className="mt-3 space-y-2">
                         {jobs.map((job) => {
                           const summary = summarizeFieldAssignedWorkJob(job);
+                          const readinessBrief =
+                            buildFieldExecutionReadinessBrief(job);
 
                           return (
                             <li key={job.id}>
@@ -264,6 +280,45 @@ export default async function FieldWorkItemsPage() {
                                   {job.openTimeCardCount > 0 ? (
                                     <span>{job.openTimeCardCount} open</span>
                                   ) : null}
+                                </div>
+                                <div
+                                  className={`mt-3 rounded-[6px] border px-3 py-2 ${getReadinessBriefClassName(
+                                    readinessBrief.status
+                                  )}`}
+                                >
+                                  <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                                    <div>
+                                      <p className="text-xs font-semibold uppercase tracking-[0.12em]">
+                                        Field readiness brief
+                                      </p>
+                                      <p className="mt-1 text-sm font-semibold">
+                                        {readinessBrief.label}
+                                      </p>
+                                      <p className="mt-1 text-xs leading-5 opacity-80">
+                                        {readinessBrief.detail}
+                                      </p>
+                                    </div>
+                                    <div className="flex shrink-0 flex-wrap gap-2">
+                                      {readinessBrief.sources.map((source) =>
+                                        source.href ? (
+                                          <Link
+                                            key={`${job.id}-${source.label}`}
+                                            href={source.href}
+                                            className="rounded-[6px] border border-current bg-white/70 px-2 py-1 text-[11px] font-semibold"
+                                          >
+                                            {source.label}
+                                          </Link>
+                                        ) : (
+                                          <span
+                                            key={`${job.id}-${source.label}`}
+                                            className="rounded-[6px] border border-current bg-white/70 px-2 py-1 text-[11px] font-semibold opacity-75"
+                                          >
+                                            {source.label}
+                                          </span>
+                                        )
+                                      )}
+                                    </div>
+                                  </div>
                                 </div>
                               </div>
                             </li>

@@ -1,4 +1,5 @@
 import type { JobStatus } from "@floorconnector/types";
+import type { ProjectFinancialReadinessSnapshot } from "@/lib/projects/readiness";
 
 export type FieldAssignedWorkAssignee = {
   id: string;
@@ -26,9 +27,37 @@ export type FieldAssignedWorkJob = {
   } | null;
   assignments: FieldAssignedWorkAssignee[];
   dailyLogCount: number;
+  latestDailyLog: {
+    id: string;
+    logDate: string;
+    status: string;
+  } | null;
   fieldNoteCount: number;
+  openFieldBlockerCount: number;
+  latestOpenFieldBlocker: {
+    id: string;
+    dailyLogId: string;
+    title: string;
+    noteType: string;
+  } | null;
   timeCardCount: number;
   openTimeCardCount: number;
+  readiness: ProjectFinancialReadinessSnapshot | null;
+};
+
+export type FieldExecutionReadinessBriefStatus =
+  | "ready"
+  | "blocked"
+  | "needs_context";
+
+export type FieldExecutionReadinessBrief = {
+  status: FieldExecutionReadinessBriefStatus;
+  label: string;
+  detail: string;
+  sources: Array<{
+    label: string;
+    href: string | null;
+  }>;
 };
 
 export type FieldAssignedWorkGroupKey =
@@ -170,5 +199,119 @@ export function summarizeFieldAssignedWorkJob(job: FieldAssignedWorkJob) {
           }).format(new Date(`${job.scheduledDate}T00:00:00`))
         : "Unscheduled",
     crewLabel: crewLabels.length > 0 ? crewLabels.join(", ") : "No crew listed"
+  };
+}
+
+function requiresSameDayDailyLog(job: FieldAssignedWorkJob) {
+  return job.dispatchStatus === "in_progress" || job.scheduledDate !== null;
+}
+
+function getReadinessBlockerLabel(blocker: string) {
+  return blocker.replaceAll("_", " ");
+}
+
+export function buildFieldExecutionReadinessBrief(
+  job: FieldAssignedWorkJob
+): FieldExecutionReadinessBrief {
+  const sources: FieldExecutionReadinessBrief["sources"] = [
+    {
+      label: "Job",
+      href: `/jobs/${job.id}`
+    }
+  ];
+
+  if (job.project) {
+    sources.push({
+      label: "Project",
+      href: `/projects/${job.project.id}`
+    });
+  } else {
+    sources.push({
+      label: "Project missing",
+      href: null
+    });
+  }
+
+  if (job.customer) {
+    sources.push({
+      label: "Customer",
+      href: `/customers/${job.customer.id}`
+    });
+  } else {
+    sources.push({
+      label: "Customer missing",
+      href: null
+    });
+  }
+
+  if (job.latestDailyLog) {
+    sources.push({
+      label: `Daily Log ${job.latestDailyLog.logDate}`,
+      href: `/daily-logs/${job.latestDailyLog.id}`
+    });
+  } else {
+    sources.push({
+      label: "Daily Log missing",
+      href: null
+    });
+  }
+
+  if (!job.project || !job.customer || !job.readiness) {
+    return {
+      status: "needs_context",
+      label: "Readiness context missing",
+      detail:
+        "Project, customer, or project readiness context is not complete enough to verify field handoff.",
+      sources
+    };
+  }
+
+  if (!job.readiness.isReadyToSchedule) {
+    const blocker =
+      job.readiness.blockers[0] ?? job.readiness.status ?? "not_ready";
+
+    return {
+      status: "blocked",
+      label: "Project readiness blocked",
+      detail: getReadinessBlockerLabel(blocker),
+      sources
+    };
+  }
+
+  if (job.openFieldBlockerCount > 0) {
+    return {
+      status: "blocked",
+      label: "Field blocker open",
+      detail:
+        job.latestOpenFieldBlocker?.title ??
+        `${job.openFieldBlockerCount} open blocker or issue note`,
+      sources: job.latestOpenFieldBlocker
+        ? [
+            ...sources,
+            {
+              label: "Open blocker",
+              href: `/daily-logs/${job.latestOpenFieldBlocker.dailyLogId}#job-notes`
+            }
+          ]
+        : sources
+    };
+  }
+
+  if (requiresSameDayDailyLog(job) && !job.latestDailyLog) {
+    return {
+      status: "needs_context",
+      label: "Daily Log not started",
+      detail:
+        "Field work is scheduled or in progress, but no Daily Log is linked to this job yet.",
+      sources
+    };
+  }
+
+  return {
+    status: "ready",
+    label: "Ready for field execution",
+    detail:
+      "Project readiness is clear, crew context exists, and no open field blockers are linked to this job.",
+    sources
   };
 }
