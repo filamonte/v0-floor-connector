@@ -4,6 +4,7 @@ import test from "node:test";
 import {
   deriveOperationsReportingSummary,
   type ReportsContractInput,
+  type ReportsFieldNoteInput,
   type ReportsInvoiceInput,
   type ReportsJobInput,
   type ReportsProjectInput
@@ -64,6 +65,21 @@ function invoice(
     balanceDueAmount: overrides.balanceDueAmount ?? "100.00",
     project: overrides.project ?? { name: "Project One" },
     customer: overrides.customer ?? { name: "Customer One" }
+  };
+}
+
+function fieldNote(
+  overrides: Partial<ReportsFieldNoteInput> = {}
+): ReportsFieldNoteInput {
+  return {
+    id: overrides.id ?? "field-note-1",
+    projectId: overrides.projectId ?? "project-1",
+    dailyLogId: overrides.dailyLogId ?? "daily-log-1",
+    noteType: overrides.noteType ?? "blocker",
+    status: overrides.status ?? "open",
+    title: overrides.title ?? "Moisture issue",
+    updatedAt: overrides.updatedAt ?? "2026-05-20T12:00:00.000Z",
+    project: overrides.project ?? { name: "Project One" }
   };
 }
 
@@ -216,5 +232,161 @@ void test("handles empty state without fake counts", () => {
       (metric) => metric.value === 0 || metric.value === "0.00"
     ),
     true
+  );
+  assert.deepEqual(
+    result.continuitySections.map((section) => ({
+      id: section.id,
+      items: section.items.length,
+      emptyTitle: section.emptyTitle
+    })),
+    [
+      {
+        id: "attention",
+        items: 0,
+        emptyTitle: "No cross-record attention is visible."
+      },
+      {
+        id: "ready",
+        items: 0,
+        emptyTitle: "No ready-to-move handoffs are visible."
+      },
+      {
+        id: "ar",
+        items: 0,
+        emptyTitle: "No AR exposure is visible."
+      },
+      {
+        id: "field",
+        items: 0,
+        emptyTitle: "No field execution review is visible."
+      },
+      {
+        id: "recent",
+        items: 0,
+        emptyTitle: "No recent source-record movement is visible."
+      }
+    ]
+  );
+});
+
+void test("distinguishes operations continuity lanes and source links", () => {
+  const result = summary({
+    projects: [
+      project({
+        id: "blocked-project",
+        name: "Blocked Project",
+        commercialReadinessStatus: "contract_required"
+      }),
+      project({
+        id: "ready-project",
+        name: "Ready Project",
+        commercialReadinessStatus: "ready_to_schedule"
+      })
+    ],
+    jobs: [
+      job({
+        id: "unscheduled-job",
+        projectId: "ready-project",
+        dispatchStatus: "unscheduled",
+        updatedAt: "2026-05-21T10:00:00.000Z",
+        project: { name: "Ready Project" }
+      }),
+      job({
+        id: "in-progress-job",
+        projectId: "ready-project",
+        dispatchStatus: "in_progress",
+        scheduledDate: "2026-05-20",
+        updatedAt: "2026-05-22T10:00:00.000Z",
+        project: { name: "Ready Project" }
+      })
+    ],
+    contracts: [
+      contract({
+        id: "signature-contract",
+        projectId: "blocked-project",
+        status: "sent",
+        updatedAt: "2026-05-23T10:00:00.000Z"
+      })
+    ],
+    invoices: [
+      invoice({
+        id: "overdue-invoice",
+        projectId: "blocked-project",
+        dueDate: "2026-05-01",
+        balanceDueAmount: "900.00"
+      })
+    ],
+    dailyLogs: [
+      {
+        id: "daily-log-1",
+        projectId: "ready-project",
+        jobId: "in-progress-job",
+        logDate: "2026-05-19"
+      }
+    ],
+    fieldNotes: [
+      fieldNote({
+        id: "field-blocker",
+        projectId: "ready-project",
+        updatedAt: "2026-05-24T10:00:00.000Z"
+      })
+    ],
+    collections: {
+      openReceivableAmount: "900.00",
+      overdueReceivableAmount: "900.00",
+      openInvoiceCount: 1,
+      overdueInvoiceCount: 1,
+      pendingPaymentAmount: "0.00",
+      pendingEventCount: 0,
+      failedOrVoidedEventCount: 0
+    }
+  });
+
+  const sections = new Map(
+    result.continuitySections.map((section) => [section.id, section])
+  );
+
+  assert.equal(result.counts.projectsNeedingAttention, 1);
+  assert.equal(result.counts.readyToMove, 2);
+  assert.equal(result.counts.fieldBlockers, 1);
+  assert.equal(result.counts.openReceivables, 1);
+  assert.equal(result.counts.recentMovement, 5);
+
+  assert.deepEqual(
+    sections
+      .get("attention")
+      ?.items.map((item) => [item.href, item.sourceLabel]),
+    [
+      ["/projects/blocked-project", "Project Workspace"],
+      ["/schedule?crew=unassigned&jobId=in-progress-job", "CrewBoard"],
+      ["/contracts/signature-contract", "Contract Workspace"],
+      ["/daily-logs/daily-log-1", "Daily Logs"]
+    ]
+  );
+  assert.deepEqual(
+    sections.get("ready")?.items.map((item) => [item.href, item.sourceLabel]),
+    [
+      ["/projects/ready-project", "Project Workspace"],
+      ["/schedule?view=unscheduled&jobId=unscheduled-job", "CrewBoard"]
+    ]
+  );
+  assert.deepEqual(sections.get("ar")?.items[0], {
+    id: "invoice:overdue-invoice",
+    title: "INV-001",
+    subtitle: "Customer One / Project One",
+    meta: "900.00",
+    href: "/invoices/overdue-invoice",
+    tone: "blocked",
+    sourceLabel: "Invoice Workspace"
+  });
+  assert.equal(
+    sections
+      .get("field")
+      ?.items.some((item) => item.href === "/jobs/in-progress-job"),
+    true
+  );
+  assert.equal(
+    sections.get("recent")?.items[0]?.href,
+    "/daily-logs/daily-log-1"
   );
 });

@@ -93,6 +93,7 @@ export type ReportsListItem = {
   meta: string;
   href: string;
   tone: ReportsTone;
+  sourceLabel?: string;
 };
 
 export type ReportsMetric = {
@@ -102,6 +103,14 @@ export type ReportsMetric = {
   detail: string;
   href: string;
   tone: ReportsTone;
+};
+
+export type ReportsContinuitySection = {
+  id: "attention" | "ready" | "ar" | "field" | "recent";
+  title: string;
+  description: string;
+  emptyTitle: string;
+  items: ReportsListItem[];
 };
 
 export type OperationsReportingSummary = {
@@ -124,6 +133,8 @@ export type OperationsReportingSummary = {
     paymentAttention: number;
     closeoutAttention: number;
     proofGaps: number;
+    readyToMove: number;
+    recentMovement: number;
   };
   amounts: {
     openReceivables: string;
@@ -139,6 +150,7 @@ export type OperationsReportingSummary = {
     fieldBlockers: ReportsListItem[];
     closeoutProofAttention: ReportsListItem[];
   };
+  continuitySections: ReportsContinuitySection[];
 };
 
 function money(value: string | number) {
@@ -284,6 +296,22 @@ function metric(input: ReportsMetric): ReportsMetric {
   return input;
 }
 
+function uniqueById(items: ReportsListItem[]) {
+  const seenIds = new Set<string>();
+  const uniqueItems: ReportsListItem[] = [];
+
+  for (const item of items) {
+    if (seenIds.has(item.id)) {
+      continue;
+    }
+
+    seenIds.add(item.id);
+    uniqueItems.push(item);
+  }
+
+  return uniqueItems;
+}
+
 export function deriveOperationsReportingSummary(input: {
   todayIso: string;
   projects: ReportsProjectInput[];
@@ -300,6 +328,9 @@ export function deriveOperationsReportingSummary(input: {
   const assignmentsByJobId = buildJobAssignmentMap(input.jobAssignments);
   const openProjects = input.projects.filter(isOpenProject);
   const readyCheckProjects = input.projects.filter(isReadyCheckAttention);
+  const readyProjects = openProjects.filter(
+    (project) => project.commercialReadinessStatus === "ready_to_schedule"
+  );
   const unscheduledJobs = input.jobs.filter(
     (job) => job.dispatchStatus === "unscheduled"
   );
@@ -354,6 +385,180 @@ export function deriveOperationsReportingSummary(input: {
     fieldNotes: input.fieldNotes,
     attachments: input.attachments
   });
+  const readyToMoveItems = uniqueById([
+    ...readyProjects.map((project) => ({
+      id: `project:${project.id}`,
+      title: project.name,
+      subtitle: getCustomerLabel(project.customer),
+      meta: "Ready Check clear",
+      href: `/projects/${project.id}`,
+      tone: "good" as ReportsTone,
+      sourceLabel: "Project Workspace"
+    })),
+    ...unscheduledJobs.map((job) => ({
+      id: `job:${job.id}`,
+      title: getProjectLabel(job.project),
+      subtitle: getCustomerLabel(job.customer),
+      meta: "Ready for CrewBoard",
+      href: `/schedule?view=unscheduled&jobId=${job.id}`,
+      tone: "attention" as ReportsTone,
+      sourceLabel: "CrewBoard"
+    }))
+  ]);
+  const attentionItems = uniqueById([
+    ...readyCheckProjects.map((project) => ({
+      id: `project:${project.id}`,
+      title: project.name,
+      subtitle: getCustomerLabel(project.customer),
+      meta: project.commercialReadinessStatus.replaceAll("_", " "),
+      href: `/projects/${project.id}`,
+      tone: "blocked" as ReportsTone,
+      sourceLabel: "Project Workspace"
+    })),
+    ...missingCrewJobs.map((job) => ({
+      id: `job:${job.id}`,
+      title: getProjectLabel(job.project),
+      subtitle: getCustomerLabel(job.customer),
+      meta: "Missing crew",
+      href: `/schedule?crew=unassigned&jobId=${job.id}`,
+      tone: "attention" as ReportsTone,
+      sourceLabel: "CrewBoard"
+    })),
+    ...waitingContracts.map((contract) => ({
+      id: `contract:${contract.id}`,
+      title: contract.referenceNumber,
+      subtitle: `${getCustomerLabel(contract.customer)} / ${getProjectLabel(
+        contract.project
+      )}`,
+      meta: contract.status.replaceAll("_", " "),
+      href: `/contracts/${contract.id}`,
+      tone: "attention" as ReportsTone,
+      sourceLabel: "Contract Workspace"
+    })),
+    ...openFieldBlockers.map((note) => ({
+      id: `field-note:${note.id}`,
+      title: note.title,
+      subtitle: getProjectLabel(note.project),
+      meta: note.noteType.replaceAll("_", " "),
+      href: `/daily-logs/${note.dailyLogId}`,
+      tone: "blocked" as ReportsTone,
+      sourceLabel: "Daily Logs"
+    }))
+  ]).slice(0, 6);
+  const arExposureItems = openInvoices
+    .slice()
+    .sort(
+      (left, right) =>
+        Number(right.balanceDueAmount) - Number(left.balanceDueAmount)
+    )
+    .slice(0, 6)
+    .map((invoice) => ({
+      id: `invoice:${invoice.id}`,
+      title: invoice.referenceNumber,
+      subtitle: `${getCustomerLabel(invoice.customer)} / ${getProjectLabel(
+        invoice.project
+      )}`,
+      meta: money(invoice.balanceDueAmount),
+      href: `/invoices/${invoice.id}`,
+      tone:
+        invoice.dueDate !== null && invoice.dueDate < input.todayIso
+          ? ("blocked" as ReportsTone)
+          : ("attention" as ReportsTone),
+      sourceLabel: "Invoice Workspace"
+    }));
+  const fieldExecutionItems = uniqueById([
+    ...inProgressJobs.map((job) => ({
+      id: `job:${job.id}`,
+      title: getProjectLabel(job.project),
+      subtitle: getCustomerLabel(job.customer),
+      meta: "In progress",
+      href: `/jobs/${job.id}`,
+      tone: "neutral" as ReportsTone,
+      sourceLabel: "Job Workspace"
+    })),
+    ...projectsMissingRecentDailyLogs.map((projectId) => {
+      const project = input.projects.find(
+        (candidate) => candidate.id === projectId
+      );
+
+      return {
+        id: `daily-log-missing:${projectId}`,
+        title: project?.name ?? "Project field execution",
+        subtitle: getCustomerLabel(project?.customer),
+        meta: "No Daily Log today",
+        href: `/daily-logs?projectId=${projectId}`,
+        tone: "attention" as ReportsTone,
+        sourceLabel: "Daily Logs"
+      };
+    }),
+    ...openFieldBlockers.map((note) => ({
+      id: `field-note:${note.id}`,
+      title: note.title,
+      subtitle: getProjectLabel(note.project),
+      meta: note.noteType.replaceAll("_", " "),
+      href: `/daily-logs/${note.dailyLogId}`,
+      tone: "blocked" as ReportsTone,
+      sourceLabel: "Daily Logs"
+    }))
+  ]).slice(0, 6);
+  const recentMovementItems = [
+    ...input.jobs.map((job) => ({
+      id: `job:${job.id}`,
+      title: getProjectLabel(job.project),
+      subtitle: getCustomerLabel(job.customer),
+      meta: job.dispatchStatus.replaceAll("_", " "),
+      href: `/jobs/${job.id}`,
+      tone: "neutral" as ReportsTone,
+      sourceLabel: "Job Workspace",
+      updatedAt: job.updatedAt
+    })),
+    ...input.contracts.map((contract) => ({
+      id: `contract:${contract.id}`,
+      title: contract.referenceNumber,
+      subtitle: `${getCustomerLabel(contract.customer)} / ${getProjectLabel(
+        contract.project
+      )}`,
+      meta: contract.status.replaceAll("_", " "),
+      href: `/contracts/${contract.id}`,
+      tone: "neutral" as ReportsTone,
+      sourceLabel: "Contract Workspace",
+      updatedAt: contract.updatedAt
+    })),
+    ...input.fieldNotes.map((note) => ({
+      id: `field-note:${note.id}`,
+      title: note.title,
+      subtitle: getProjectLabel(note.project),
+      meta: note.noteType.replaceAll("_", " "),
+      href: `/daily-logs/${note.dailyLogId}`,
+      tone: note.status === "open" ? ("attention" as ReportsTone) : "neutral",
+      sourceLabel: "Daily Logs",
+      updatedAt: note.updatedAt
+    })),
+    ...input.dailyLogs.map((dailyLog) => ({
+      id: `daily-log:${dailyLog.id}`,
+      title: "Daily Job Log",
+      subtitle: dailyLog.jobId
+        ? `Job ${dailyLog.jobId}`
+        : `Project ${dailyLog.projectId}`,
+      meta: dailyLog.logDate,
+      href: `/daily-logs/${dailyLog.id}`,
+      tone: "neutral" as ReportsTone,
+      sourceLabel: "Daily Logs",
+      updatedAt: `${dailyLog.logDate}T00:00:00.000Z`
+    }))
+  ]
+    .sort((left, right) => right.updatedAt.localeCompare(left.updatedAt))
+    .slice(0, 6)
+    .map((item) => ({
+      id: item.id,
+      title: item.title,
+      subtitle: item.subtitle,
+      meta: item.meta,
+      href: item.href,
+      tone: item.tone,
+      sourceLabel: item.sourceLabel
+    }));
+  const readyToMoveCount = readyToMoveItems.length;
   const closeoutAttentionProjectIds = new Set<string>([
     ...completedJobsAwaitingCloseout.map((job) => job.projectId),
     ...openFieldBlockers.map((note) => note.projectId),
@@ -383,7 +588,9 @@ export function deriveOperationsReportingSummary(input: {
       closeoutAttention: closeoutAttentionProjectIds.size,
       proofGaps: proofGapProjectIds.filter((projectId) =>
         completedProjectIds.has(projectId)
-      ).length
+      ).length,
+      readyToMove: readyToMoveCount,
+      recentMovement: recentMovementItems.length
     },
     amounts: {
       openReceivables: money(input.collections.openReceivableAmount),
@@ -563,6 +770,48 @@ export function deriveOperationsReportingSummary(input: {
           };
         })
       ].slice(0, 6)
-    }
+    },
+    continuitySections: [
+      {
+        id: "attention",
+        title: "Attention",
+        description:
+          "Readiness blockers, signature follow-up, crew gaps, and field blockers that need review at the source record.",
+        emptyTitle: "No cross-record attention is visible.",
+        items: attentionItems
+      },
+      {
+        id: "ready",
+        title: "Ready to move",
+        description:
+          "Projects and jobs that can move forward through Project Workspace or CrewBoard without report-owned workflow state.",
+        emptyTitle: "No ready-to-move handoffs are visible.",
+        items: readyToMoveItems.slice(0, 6)
+      },
+      {
+        id: "ar",
+        title: "AR exposure",
+        description:
+          "Open invoice balances routed back to Invoice Workspace and Accounts Receivable review.",
+        emptyTitle: "No AR exposure is visible.",
+        items: arExposureItems
+      },
+      {
+        id: "field",
+        title: "Field execution",
+        description:
+          "In-progress jobs, missing Daily Logs, and field blockers from execution source records.",
+        emptyTitle: "No field execution review is visible.",
+        items: fieldExecutionItems
+      },
+      {
+        id: "recent",
+        title: "Recent movement",
+        description:
+          "Latest movement across jobs, contracts, Daily Logs, and Job Notes from canonical timestamps.",
+        emptyTitle: "No recent source-record movement is visible.",
+        items: recentMovementItems
+      }
+    ]
   };
 }

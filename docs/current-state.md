@@ -2854,9 +2854,13 @@ Implemented UI behavior now:
 - `/reports` now includes Reports Phase 1, a read-only operations and
   collections visibility workspace over existing projects, jobs, schedule
   warnings, contracts, invoices, payments, Daily Job Logs, Job Notes, field
-  evidence, closeout, and proof signals. It links back to source workspaces and
-  does not add an analytics warehouse, report builder, fake metrics, export
-  system, automation, AI, schema, migrations, or payment/signature behavior.
+  evidence, closeout, and proof signals. The operations view now separates
+  attention, ready-to-move handoffs, AR exposure, field execution, and recent
+  source-record movement while linking rows back to Project Workspace,
+  CrewBoard, Invoice Workspace, Contract Workspace, Job Workspace, or Daily
+  Logs. It does not add an analytics warehouse, report builder, fake metrics,
+  export system, automation, AI, schema, migrations, reporting persistence, or
+  payment/signature behavior.
 - Estimate, Contract, Invoice, Job, and Project Workspaces share the same baseline grammar: compact header band, semantic status pill, next-action card, workflow summary, state facts, primary record surface, context rail, connected records, and internal follow-through sections.
 - Dashboard, Project, Schedule, Contract, Invoice, Job, and Daily Log surfaces now share grouped lifecycle language around `opportunity -> customer/project -> estimate/contract -> job/schedule -> invoice/payment`. Contract Workspace clarifies draft, approval, signature, decline, countersign, deposit, and downstream handoff context; Invoice Workspace clarifies draft, sent/open, partial, paid, void, billing-source, collection, payment, and upstream-readiness context; Job Workspace clarifies schedule, crew, field evidence, closeout, and downstream billing handoff; Daily Log Workspace clarifies project-day narrative, field notes, labor/time continuity, attachments, and upstream Project Workspace resolution. This is presentation-only and does not change signature, readiness, scheduling, time-card, billing, payment, portal, schema, RLS, or server-action behavior.
 - Projects, Estimates, Invoices, Jobs, Contracts, and Customers Manager Pages use the shared Manager Page rhythm with clearer status scanning, primary create actions, and compact continuity cues.
