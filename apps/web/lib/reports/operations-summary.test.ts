@@ -7,6 +7,7 @@ import {
   type ReportsFieldNoteInput,
   type ReportsInvoiceInput,
   type ReportsJobInput,
+  type ReportsPaymentInput,
   type ReportsProjectInput
 } from "./operations-summary";
 
@@ -68,6 +69,25 @@ function invoice(
   };
 }
 
+function payment(
+  overrides: Partial<ReportsPaymentInput> = {}
+): ReportsPaymentInput {
+  return {
+    id: overrides.id ?? "payment-1",
+    invoiceId: overrides.invoiceId ?? "invoice-1",
+    amount: overrides.amount ?? "100.00",
+    status: overrides.status ?? "recorded",
+    paymentDate: overrides.paymentDate ?? "2026-05-20",
+    createdAt: overrides.createdAt ?? "2026-05-20T12:00:00.000Z",
+    invoice: overrides.invoice ?? {
+      id: overrides.invoiceId ?? "invoice-1",
+      referenceNumber: "INV-001"
+    },
+    customer: overrides.customer ?? { name: "Customer One" },
+    project: overrides.project ?? { id: "project-1", name: "Project One" }
+  };
+}
+
 function fieldNote(
   overrides: Partial<ReportsFieldNoteInput> = {}
 ): ReportsFieldNoteInput {
@@ -96,6 +116,7 @@ function summary(
     scheduleWarnings: overrides.scheduleWarnings ?? [],
     contracts: overrides.contracts ?? [],
     invoices: overrides.invoices ?? [],
+    payments: overrides.payments ?? [],
     dailyLogs: overrides.dailyLogs ?? [],
     fieldNotes: overrides.fieldNotes ?? [],
     attachments: overrides.attachments ?? [],
@@ -251,6 +272,11 @@ void test("handles empty state without fake counts", () => {
         emptyTitle: "No ready-to-move handoffs are visible."
       },
       {
+        id: "executionToCash",
+        items: 0,
+        emptyTitle: "No execution-to-cash handoffs are visible."
+      },
+      {
         id: "ar",
         items: 0,
         emptyTitle: "No AR exposure is visible."
@@ -267,6 +293,120 @@ void test("handles empty state without fake counts", () => {
       }
     ]
   );
+});
+
+void test("execution-to-cash lane routes ready but unscheduled jobs to CrewBoard", () => {
+  const result = summary({
+    projects: [project()],
+    jobs: [job({ id: "ready-unscheduled", dispatchStatus: "unscheduled" })]
+  });
+  const lane = result.continuitySections.find(
+    (section) => section.id === "executionToCash"
+  );
+
+  assert.deepEqual(lane?.items, [
+    {
+      id: "execution-ready-unscheduled:ready-unscheduled",
+      title: "Project One",
+      subtitle: "Customer One",
+      meta: "Ready but unscheduled",
+      href: "/schedule?view=unscheduled&jobId=ready-unscheduled",
+      tone: "attention",
+      sourceLabel: "CrewBoard"
+    }
+  ]);
+});
+
+void test("execution-to-cash lane routes in-field blockers to Daily Logs", () => {
+  const result = summary({
+    projects: [project()],
+    jobs: [
+      job({
+        id: "in-field",
+        dispatchStatus: "in_progress",
+        scheduledDate: "2026-05-20"
+      })
+    ],
+    fieldNotes: [fieldNote({ id: "open-blocker" })]
+  });
+  const lane = result.continuitySections.find(
+    (section) => section.id === "executionToCash"
+  );
+
+  assert.deepEqual(lane?.items, [
+    {
+      id: "execution-field-blocked:in-field:open-blocker",
+      title: "Project One",
+      subtitle: "Customer One",
+      meta: "In field with open blockers",
+      href: "/daily-logs/daily-log-1",
+      tone: "blocked",
+      sourceLabel: "Daily Logs"
+    }
+  ]);
+});
+
+void test("execution-to-cash lane routes completed work with open invoices to Invoice Workspace", () => {
+  const result = summary({
+    projects: [project()],
+    jobs: [job({ id: "completed-job", dispatchStatus: "completed" })],
+    invoices: [invoice({ id: "open-invoice", balanceDueAmount: "425.00" })]
+  });
+  const lane = result.continuitySections.find(
+    (section) => section.id === "executionToCash"
+  );
+
+  assert.deepEqual(lane?.items, [
+    {
+      id: "execution-completed-open-invoice:completed-job:open-invoice",
+      title: "Project One",
+      subtitle: "Customer One",
+      meta: "Completed with open invoice",
+      href: "/invoices/open-invoice",
+      tone: "attention",
+      sourceLabel: "Invoice Workspace"
+    }
+  ]);
+});
+
+void test("execution-to-cash lane includes paid and recent payment movement without report-owned records", () => {
+  const result = summary({
+    projects: [project()],
+    payments: [
+      payment({
+        id: "recorded-payment",
+        amount: "425.00",
+        createdAt: "2026-05-22T10:00:00.000Z"
+      })
+    ]
+  });
+  const lane = result.continuitySections.find(
+    (section) => section.id === "executionToCash"
+  );
+  const recent = result.continuitySections.find(
+    (section) => section.id === "recent"
+  );
+
+  assert.deepEqual(lane?.items, [
+    {
+      id: "execution-paid:recorded-payment",
+      title: "INV-001",
+      subtitle: "Customer One / Project One",
+      meta: "Paid 425.00",
+      href: "/invoices/invoice-1",
+      tone: "good",
+      sourceLabel: "Invoice Workspace"
+    }
+  ]);
+  assert.deepEqual(recent?.items[0], {
+    id: "payment:recorded-payment",
+    title: "INV-001",
+    subtitle: "Customer One / Project One",
+    meta: "recorded",
+    href: "/invoices/invoice-1",
+    tone: "good",
+    sourceLabel: "Invoice Workspace"
+  });
 });
 
 void test("distinguishes operations continuity lanes and source links", () => {

@@ -1116,9 +1116,9 @@ Implemented now:
 - the Financials routes use a shared tenant-scoped collections read model over existing canonical records and do not introduce a new finance data model
 - `/reports` now exists as the first internal-beta reporting basics surface
 - Reports Home is read-only and intentionally narrow:
-  - operations and collections visibility across existing projects, jobs, job assignments, schedule warnings, contracts, invoices, Daily Job Logs, Job Notes, execution attachments, and the Financials collections read model
+  - operations and collections visibility across existing projects, jobs, job assignments, schedule warnings, contracts, invoices, payments, Daily Job Logs, Job Notes, execution attachments, and the Financials collections read model
   - company-level attention cards for open projects, Ready Check attention, scheduling gaps, missing crew, field blockers, waiting signature, open receivables, payment attention, and closeout attention
-  - short attention lists linking back to source Project, Schedule, Invoice, and Contract surfaces
+  - short attention and execution-to-cash lanes linking readiness, schedule, field execution, invoices, payments, and recent movement back to source Project, Schedule, Invoice, Contract, Job, Payment, and Daily Log surfaces
   - lead pipeline summary by canonical opportunity status
   - estimate summary by canonical estimate status
   - invoice summary and aging from canonical invoice balances and due dates
@@ -2857,10 +2857,11 @@ Implemented UI behavior now:
   collections visibility workspace over existing projects, jobs, schedule
   warnings, contracts, invoices, payments, Daily Job Logs, Job Notes, field
   evidence, closeout, and proof signals. The operations view now separates
-  attention, ready-to-move handoffs, AR exposure, field execution, and recent
-  source-record movement while linking rows back to Project Workspace,
-  CrewBoard, Invoice Workspace, Contract Workspace, Job Workspace, or Daily
-  Logs. It does not add an analytics warehouse, report builder, fake metrics,
+  attention, ready-to-move handoffs, execution-to-cash continuity, AR exposure,
+  field execution, and recent source-record movement while linking rows back to
+  Project Workspace, CrewBoard, Invoice Workspace, Contract Workspace, Job
+  Workspace, Payment surfaces, or Daily Logs. It does not add an analytics
+  warehouse, report builder, fake metrics,
   export system, automation, AI, schema, migrations, reporting persistence, or
   payment/signature behavior.
 - Estimate, Contract, Invoice, Job, and Project Workspaces share the same baseline grammar: compact header band, semantic status pill, next-action card, workflow summary, state facts, primary record surface, context rail, connected records, and internal follow-through sections.
