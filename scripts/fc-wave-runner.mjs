@@ -48,7 +48,7 @@ Commands:
   push-stream  Push one stream branch after readiness checks
   merge-pushed Merge approved pushed_unmerged streams one at a time
   generate     Generate a schema-validated proposed next wave
-  approve      Create approved.json after successful review
+  approve      Create runtime approved.json after successful review
   merge        Merge approved streams into main
 
 Options:
@@ -364,6 +364,14 @@ function runtimePath(waveDir, fileName) {
   return join(runtimeDirForWave(waveDir), fileName);
 }
 
+function runtimeApprovalPath(waveDir) {
+  return runtimePath(waveDir, "approved.json");
+}
+
+function legacyApprovalPath(waveDir) {
+  return join(waveDir, "approved.json");
+}
+
 function saveManifest(waveDir, manifest) {
   writeFileSync(
     join(waveDir, "wave.json"),
@@ -580,6 +588,12 @@ function latestProductCommitHash(productCommits) {
   return latestCommit.split(/\s+/)[0] || "";
 }
 
+function validationAllowsMergedCompletion(validation) {
+  if (validation?.status === "passed") return true;
+  if (validation?.status !== "skipped") return false;
+  return /merged|reachable/i.test(validation.reason || "");
+}
+
 function nextCommandForClassification(waveName, classification, stream) {
   switch (classification) {
     case "merged":
@@ -644,6 +658,9 @@ function classifyStream(manifest, stream, streamStatus = {}) {
   const worktreeDirty = worktreeExists ? isDirty(stream.worktree) : false;
   const worktreeDirtyFiles = worktreeExists ? dirtyFiles(stream.worktree) : [];
   const validationStatus = streamStatus.validation?.status || "not_run";
+  const validationAllowsMerged = validationAllowsMergedCompletion(
+    streamStatus.validation
+  );
   const agentExitCode = streamStatus.agentExitCode;
   const lastAgentStatus =
     agentExitCode === undefined
@@ -692,7 +709,11 @@ function classifyStream(manifest, stream, streamStatus = {}) {
     classification = "not_started";
   } else if (worktreeDirty) {
     classification = "dirty_uncommitted";
-  } else if (hasProductCommits && latestProductCommitReachableFromMain) {
+  } else if (
+    hasProductCommits &&
+    latestProductCommitReachableFromMain &&
+    validationAllowsMerged
+  ) {
     classification = "merged";
   } else if (lastAgentStatus === "failed") {
     classification = "failed_agent";
@@ -740,6 +761,7 @@ function classifyStream(manifest, stream, streamStatus = {}) {
       latestProductCommitReachableFromMain,
     lastAgentStatus,
     validationStatus,
+    validationAllowsMergedCompletion: validationAllowsMerged,
     nextCommand: nextCommandForClassification(
       manifest.name,
       classification,
@@ -762,6 +784,36 @@ function refreshStreamCompletion(manifest, status, options = {}) {
     });
   }
   return status;
+}
+
+function summarizeWaveCompletion(manifest, status) {
+  const streamSummaries = manifest.streams.map((stream) => {
+    const streamStatus = status.streams?.[stream.name] || {};
+    const completion =
+      streamStatus.completion || classifyStream(manifest, stream, streamStatus);
+    return {
+      stream: stream.name,
+      classification: completion.classification,
+      recommendedAction: completion.recommendedAction,
+      nextCommand: completion.nextCommand
+    };
+  });
+  const remainingStreams = streamSummaries
+    .filter((stream) => stream.classification !== "merged")
+    .map((stream) => stream.stream);
+  const complete = streamSummaries.length > 0 && remainingStreams.length === 0;
+
+  return {
+    status: complete ? "complete" : "incomplete",
+    remainingStreams,
+    recommendedAction: complete
+      ? "Generate the next wave when ready."
+      : "Resolve remaining streams before finalizing this wave.",
+    nextCommand: complete
+      ? `pnpm fc:wave:generate --wave ${manifest.name}`
+      : `pnpm fc:wave:status --wave ${manifest.name}`,
+    streams: streamSummaries
+  };
 }
 
 function prepareWave(manifest, waveDir, options) {
@@ -1106,12 +1158,16 @@ function loadMergeApproval(waveDir, options, action = "merge") {
   if (!options.approved) {
     throw new Error(`Refusing ${action} without --approved.`);
   }
-  const approvalPath = join(waveDir, "approved.json");
-  if (!existsSync(approvalPath)) {
+  const approvalPath = runtimeApprovalPath(waveDir);
+  const fallbackApprovalPath = legacyApprovalPath(waveDir);
+  const approvalSource = existsSync(approvalPath)
+    ? approvalPath
+    : fallbackApprovalPath;
+  if (!existsSync(approvalSource)) {
     throw new Error(`Refusing ${action}: missing ${approvalPath}`);
   }
 
-  const approval = JSON.parse(readFileSync(approvalPath, "utf8"));
+  const approval = JSON.parse(readFileSync(approvalSource, "utf8"));
   if (!approval.approved) {
     throw new Error(
       `Refusing ${action}: approved.json does not mark the wave approved.`
@@ -1122,6 +1178,7 @@ function loadMergeApproval(waveDir, options, action = "merge") {
       "Refusing push: approved.json was not created with push approval."
     );
   }
+  approval.sourcePath = approvalSource;
   return approval;
 }
 
@@ -2724,6 +2781,8 @@ function reportWave(manifest, waveDir) {
   status.base = manifest.base;
   status.baseCommit =
     tryGit(["rev-parse", manifest.base]) || status.baseCommit || "";
+  const waveCompletion = summarizeWaveCompletion(manifest, status);
+  status.waveCompletion = waveCompletion;
 
   const nextProposalPath = generateNextWaveProposal(manifest, waveDir, status);
   status.nextWaveProposalPath = nextProposalPath;
@@ -2807,6 +2866,16 @@ ${formatValidation(validation)}
   )
     ? "Human review required before approval. Do not merge until validation and product-stride concerns are resolved."
     : "Streams are eligible for human approval if the diff review confirms scope and product value.";
+  const exactCommands =
+    waveCompletion.status === "complete"
+      ? `pnpm fc:wave:status --wave ${manifest.name}
+pnpm fc:wave:report --wave ${manifest.name}
+pnpm fc:wave:generate --wave ${manifest.name}`
+      : `pnpm fc:wave:status --wave ${manifest.name}
+pnpm fc:wave:approve --wave ${manifest.name}
+pnpm fc:wave:merge --wave ${manifest.name} --approved
+# Optional after explicit approval:
+pnpm fc:wave:merge --wave ${manifest.name} --approved --push`;
   const generation = status.generation;
   const generationSection = generation
     ? `- Status: ${generation.status}
@@ -2835,6 +2904,13 @@ Base commit: ${status.baseCommit || ""}
 ## Goal
 
 ${manifest.goal}
+
+## Wave Completion
+
+- Wave completion: ${waveCompletion.status}
+- Remaining streams: ${waveCompletion.remainingStreams.length > 0 ? waveCompletion.remainingStreams.join(", ") : "none"}
+- Recommended next action: ${waveCompletion.recommendedAction}
+- Recommended next command: ${waveCompletion.nextCommand}
 
 ## Stream Summary
 
@@ -2886,11 +2962,7 @@ ${mergeRecommendation}
 ## Exact Commands To Run Next
 
 \`\`\`powershell
-pnpm fc:wave:status --wave ${manifest.name}
-pnpm fc:wave:approve --wave ${manifest.name}
-pnpm fc:wave:merge --wave ${manifest.name} --approved
-# Optional after explicit approval:
-pnpm fc:wave:merge --wave ${manifest.name} --approved --push
+${exactCommands}
 \`\`\`
 `;
 
@@ -3011,11 +3083,15 @@ function approveWave(manifest, waveDir, options) {
     force: Boolean(options.force)
   };
 
+  mkdirSync(runtimeDirForWave(waveDir), { recursive: true });
   writeFileSync(
-    join(waveDir, "approved.json"),
+    runtimeApprovalPath(waveDir),
     `${JSON.stringify(approval, null, 2)}\n`
   );
-  status.approval = approval;
+  status.approval = {
+    ...approval,
+    runtimePath: runtimeApprovalPath(waveDir)
+  };
   saveStatus(waveDir, status);
   return status;
 }
@@ -3184,6 +3260,8 @@ function printStatus(manifest, waveDir, options = {}) {
   validateManifestShape(manifest, { allowHighRisk: true });
   const status = loadStatus(waveDir);
   refreshStreamCompletion(manifest, status, options);
+  const waveCompletion = summarizeWaveCompletion(manifest, status);
+  status.waveCompletion = waveCompletion;
   console.log(`Wave: ${manifest.name}`);
   console.log(`Goal: ${manifest.goal}`);
   console.log(`Base: ${manifest.base}`);
@@ -3199,6 +3277,16 @@ function printStatus(manifest, waveDir, options = {}) {
   console.log(
     `Merge approval: ${status.approval?.approved ? "approved" : "not approved"}`
   );
+  console.log(`Wave completion: ${waveCompletion.status}`);
+  console.log(
+    `Remaining streams: ${
+      waveCompletion.remainingStreams.length > 0
+        ? waveCompletion.remainingStreams.join(", ")
+        : "none"
+    }`
+  );
+  console.log(`Recommended next action: ${waveCompletion.recommendedAction}`);
+  console.log(`Recommended next command: ${waveCompletion.nextCommand}`);
   console.log("");
   for (const stream of selectStreams(manifest, options)) {
     const streamStatus = status.streams?.[stream.name] || {};

@@ -106,8 +106,10 @@ The runner classifies every stream so partial waves can recover cleanly:
 
 `no_op_validation_only` means validation passed but no stream-specific product
 commit or changed files exist. Treat it as not completed. `merged` means the
-stream has product commits and its branch head is reachable from `origin/main`.
-Activation-only branches should not be treated as completed.
+stream has product commits, the latest product commit is reachable from
+`origin/main`, the worktree is clean, and validation passed or was skipped
+because the stream already merged. Activation-only branches should not be
+treated as completed.
 
 Use per-stream commands when recovering one lane:
 
@@ -130,6 +132,17 @@ merge-check first, then `pnpm fc:wave:merge-pushed --wave <wave> --approved`
 after human approval. The sequential merge command merges only approved
 `pushed_unmerged` streams, one at a time, and runs manifest `mainValidation`
 after each merge.
+
+When every stream is `merged`, status/report show:
+
+- `Wave completion: complete`
+- `Remaining streams: none`
+- recommended next command:
+  `pnpm fc:wave:generate --wave <wave>`
+
+Normal merge approval is written to ignored runtime state:
+`.codex/waves/<wave>/.tmp/runtime/approved.json`. Tracked `approved.json` files
+are legacy/snapshot artifacts, not the default approval path.
 
 Do not run `pnpm fc:wave:merge --wave <name> --approved` until a human has
 reviewed the report and created approval with `pnpm fc:wave:approve`.

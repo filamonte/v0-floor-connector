@@ -177,9 +177,16 @@ That prevents activation-only branches from being reported as completed just
 because their branch head is reachable from `origin/main`.
 
 Clean Git completion evidence wins over stale runtime failure state. If a clean
-stream has product commits and the latest product commit is reachable from
-`origin/main`, status/report classify it as `merged` even when ignored runtime
-status still contains an older `agent_failed` or failed validation marker.
+stream has product commits, the latest product commit is reachable from
+`origin/main`, and validation has passed or was skipped because the stream is
+already merged, status/report classify it as `merged` even when ignored runtime
+status still contains an older `agent_failed`, `failed_validation`,
+`manual_agent_required`, or `prepared` marker.
+
+When every stream is classified as `merged`, status/report show `Wave
+completion: complete`, `Remaining streams: none`, and recommend generating the
+next wave with `pnpm fc:wave:generate --wave <wave>` instead of rerunning or
+merging completed streams.
 
 Validation passing is not enough to mark a stream completed. A validation pass
 without stream-specific commits or changed files is classified as
@@ -545,6 +552,11 @@ pnpm fc:wave:approve --wave ops-core-next
 pnpm fc:wave:merge --wave ops-core-next --approved
 ```
 
+Normal merge approval is runtime state. `pnpm fc:wave:approve --wave <wave>`
+writes `.codex/waves/<wave>/.tmp/runtime/approved.json`, which is ignored by
+Git. Tracked approval files are only legacy/snapshot artifacts; the default
+approval path should not dirty `main`.
+
 For recovery waves with pushed/unmerged stream branches, prefer the sequential
 merge command:
 
@@ -572,6 +584,17 @@ validation, stops on conflict or validation failure, and never pushes unless
 The `merge-pushed` command is narrower: it merges only approved streams that
 are still classified as `pushed_unmerged`, skips merged/dirty/prepared/no-op
 streams, and validates after each individual merge.
+
+For a completed wave:
+
+```powershell
+pnpm fc:wave:status --wave ops-core-next
+pnpm fc:wave:report --wave ops-core-next
+pnpm fc:wave:generate --wave ops-core-next
+```
+
+Do not run old stream prompts again once the wave completion summary is
+`complete`; use the generated next-wave proposal flow instead.
 
 ## Handling Failures
 
