@@ -116,12 +116,52 @@ void test("project timeline sorts mixed records by customer-safe timeline date",
         latestPaymentEventType: "payment_succeeded",
         latestPaymentEventAt: "2026-05-22T10:00:00.000Z"
       }
+    ],
+    sharedEvidence: [
+      {
+        grantId: "grant-1",
+        title: "Closeout photo",
+        sourceCategory: "Project photo",
+        sharedAt: "2026-05-23T10:00:00.000Z",
+        href: "/portal/projects/project-1/evidence/grant-1/download"
+      }
     ]
   });
 
   assert.deepEqual(
     timeline.timelineItems.map((item) => item.source),
-    ["invoice", "change_order", "contract", "estimate", "project"]
+    ["evidence", "invoice", "change_order", "contract", "estimate", "project"]
+  );
+});
+
+void test("project timeline includes only explicitly portal-shared evidence", () => {
+  const timeline = derivePortalProjectTimeline({
+    sharedEvidence: [
+      {
+        key: "execution-attachment:attachment-1",
+        grantId: "grant-1",
+        title: "Finished floor photo",
+        sourceCategory: "Project photo",
+        sharedAt: "2026-05-24T10:00:00.000Z",
+        href: "/portal/projects/project-1/evidence/grant-1/download",
+        deliveryProof: {
+          acknowledgedAt: "2026-05-24T11:00:00.000Z",
+          statusLabel: "Acknowledged"
+        }
+      }
+    ]
+  });
+
+  assert.equal(timeline.timelineItems[0]?.label, "Project evidence shared");
+  assert.equal(timeline.timelineItems[0]?.source, "evidence");
+  assert.equal(timeline.timelineItems[0]?.tone, "complete");
+  assert.equal(
+    timeline.timelineItems[0]?.href,
+    "/portal/projects/project-1/evidence/grant-1/download"
+  );
+  assert.match(
+    timeline.timelineItems[0]?.description ?? "",
+    /explicitly shared in this portal/
   );
 });
 
@@ -148,6 +188,11 @@ void test("project timeline ignores unexpected internal-only fields", () => {
         {
           label: "Internal proof item"
         }
+      ],
+      sharedEvidence: [
+        {
+          title: "Unshared crew photo"
+        }
       ]
     } as never
   });
@@ -156,5 +201,30 @@ void test("project timeline ignores unexpected internal-only fields", () => {
     .join(" ");
 
   assert.equal(timeline.timelineItems.length, 1);
-  assert.doesNotMatch(renderedText, /Job Notes|Proof Center|internal proof/i);
+  assert.doesNotMatch(
+    renderedText,
+    /Job Notes|Proof Center|internal proof|crew photo/i
+  );
+});
+
+void test("project timeline uses deterministic customer-safe appointment labels", () => {
+  const timeline = derivePortalProjectTimeline({
+    appointments: [
+      {
+        id: "appointment-1",
+        title: "Internal crew queue follow-up",
+        appointmentType: "site_visit",
+        status: "scheduled",
+        updatedAt: "2026-05-25T10:00:00.000Z"
+      }
+    ]
+  });
+
+  const renderedText = timeline.timelineItems
+    .map((item) => `${item.label} ${item.description}`)
+    .join(" ");
+
+  assert.equal(timeline.timelineItems[0]?.label, "Appointment shared");
+  assert.match(renderedText, /site visit appointment/i);
+  assert.doesNotMatch(renderedText, /internal|crew queue|follow-up/i);
 });

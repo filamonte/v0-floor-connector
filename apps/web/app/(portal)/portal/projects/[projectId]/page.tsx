@@ -363,7 +363,8 @@ export default async function PortalProjectDetailPage({
     changeOrders,
     invoices,
     appointments,
-    warrantyDocuments
+    warrantyDocuments,
+    sharedEvidence: sharedEvidence.items
   });
   const sharedDocuments = derivePortalSharedDocuments({
     estimates,
@@ -944,8 +945,8 @@ export default async function PortalProjectDetailPage({
         </DetailPanel>
 
         <DetailPanel
-          title="Project Timeline"
-          description="Recent shared project moments and customer-facing actions from records available in this portal."
+          title="Project trust thread"
+          description="Customer-safe status, approvals, invoices, shared documents, and explicitly shared evidence from records available in this portal."
         >
           {timeline.timelineItems.length > 0 ? (
             <div className="space-y-3">

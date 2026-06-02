@@ -11,6 +11,7 @@ export type PortalProjectTimelineSource =
   | "change_order"
   | "project"
   | "appointment"
+  | "evidence"
   | "warranty"
   | "none";
 
@@ -104,6 +105,22 @@ type PortalTimelineWarrantyDocument = {
   updatedAt?: string | null;
 };
 
+type PortalTimelineSharedEvidence = {
+  key?: string | null;
+  grantId: string;
+  title?: string | null;
+  sourceCategory?: string | null;
+  sharedAt: string;
+  href?: string | null;
+  statusLabel?: string | null;
+  deliveryProof?: {
+    acknowledgedAt?: string | null;
+    lastDownloadedAt?: string | null;
+    lastViewedAt?: string | null;
+    statusLabel?: string | null;
+  } | null;
+};
+
 export type PortalProjectTimelineInput = {
   project?: PortalTimelineProject | null;
   estimates?: PortalTimelineEstimate[];
@@ -112,6 +129,7 @@ export type PortalProjectTimelineInput = {
   changeOrders?: PortalTimelineChangeOrder[];
   appointments?: PortalTimelineAppointment[];
   warrantyDocuments?: PortalTimelineWarrantyDocument[];
+  sharedEvidence?: PortalTimelineSharedEvidence[];
 };
 
 export type PortalProjectTimeline = {
@@ -143,12 +161,14 @@ function getSourceRank(source: PortalProjectTimelineSource) {
       return 3;
     case "appointment":
       return 4;
-    case "warranty":
+    case "evidence":
       return 5;
-    case "project":
+    case "warranty":
       return 6;
-    case "none":
+    case "project":
       return 7;
+    case "none":
+      return 8;
   }
 }
 
@@ -440,12 +460,12 @@ function changeOrderTimelineItem(
 function appointmentTimelineItem(
   appointment: PortalTimelineAppointment
 ): PortalProjectTimelineItem {
+  const appointmentType = formatStatusLabel(appointment.appointmentType);
+
   return {
     key: `appointment-${appointment.id}-shared`,
     label: "Appointment shared",
-    description:
-      appointment.title?.trim() ||
-      `${formatStatusLabel(appointment.appointmentType)} appointment is visible on this project.`,
+    description: `${appointmentType} appointment is visible on this project.`,
     occurredAt: appointment.updatedAt ?? appointment.createdAt,
     tone: "neutral",
     source: "appointment"
@@ -506,6 +526,31 @@ function warrantyTimelineItem(
   };
 }
 
+function sharedEvidenceTimelineItem(
+  item: PortalTimelineSharedEvidence
+): PortalProjectTimelineItem {
+  const proof = item.deliveryProof ?? null;
+  const latestCustomerActivity =
+    proof?.acknowledgedAt ?? proof?.lastDownloadedAt ?? proof?.lastViewedAt;
+  const statusLabel = proof?.statusLabel ?? item.statusLabel ?? "Shared";
+
+  return {
+    key: item.key ?? `shared-evidence-${item.grantId}`,
+    label: "Project evidence shared",
+    description: `${item.title?.trim() || item.sourceCategory || "Customer-safe project evidence"} is explicitly shared in this portal. ${statusLabel}.`,
+    occurredAt: latestCustomerActivity ?? item.sharedAt,
+    tone: proof?.acknowledgedAt ? "complete" : "neutral",
+    href: item.href ?? undefined,
+    source: "evidence"
+  };
+}
+
+function isExplicitlySharedEvidence(
+  item: Partial<PortalTimelineSharedEvidence>
+): item is PortalTimelineSharedEvidence {
+  return Boolean(item.grantId && item.sharedAt);
+}
+
 function projectTimelineItem(
   project: PortalTimelineProject
 ): PortalProjectTimelineItem {
@@ -531,6 +576,9 @@ export function derivePortalProjectTimeline(
     ...(input.changeOrders ?? []).map(changeOrderTimelineItem),
     ...(input.invoices ?? []).map(invoiceTimelineItem),
     ...(input.appointments ?? []).map(appointmentTimelineItem),
+    ...(input.sharedEvidence ?? [])
+      .filter(isExplicitlySharedEvidence)
+      .map(sharedEvidenceTimelineItem),
     ...(input.warrantyDocuments ?? []).map(warrantyTimelineItem),
     ...(input.project ? [projectTimelineItem(input.project)] : [])
   ]);
@@ -538,6 +586,6 @@ export function derivePortalProjectTimeline(
   return {
     timelineItems,
     emptyStateMessage:
-      "No timeline activity yet. Shared estimates, contracts, invoices, change orders, appointments, or warranty documents will appear here when available."
+      "No timeline activity yet. Shared estimates, contracts, invoices, change orders, appointments, warranty documents, or explicitly shared evidence will appear here when available."
   };
 }

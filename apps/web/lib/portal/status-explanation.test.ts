@@ -64,6 +64,28 @@ void test("portal-safe status explains invoice payment in progress", () => {
   assert.equal(explanation.customerActionHref, "/portal/invoices/invoice-1");
 });
 
+void test("portal-safe status explains failed payment without provider internals", () => {
+  const explanation = derivePortalSafeStatusExplanation({
+    projectId: "project-1",
+    invoices: [
+      {
+        id: "invoice-1",
+        status: "sent",
+        balanceDueAmount: "500.00",
+        latestPaymentEventType: "payment_failed"
+      }
+    ]
+  });
+
+  assert.equal(explanation.headline, "Payment needs review");
+  assert.equal(explanation.sourceCategory, "payment");
+  assert.equal(explanation.customerActionHref, "/portal/invoices/invoice-1");
+  assert.doesNotMatch(
+    `${explanation.shortExplanation} ${explanation.safeNextStep}`,
+    /provider|stripe|checkout session|payment intent|failure code/i
+  );
+});
+
 void test("portal-safe status explains partially paid invoice", () => {
   const explanation = derivePortalSafeStatusExplanation({
     projectId: "project-1",
@@ -147,15 +169,17 @@ void test("portal-safe status ignores internal blocker-like data not accepted by
     // This intentionally simulates accidental caller noise. The helper only
     // accepts canonical portal-safe records and should ignore this data.
     internalBlockers: [{ label: "Crew missing" }],
-    fieldNotes: [{ body: "Internal field note" }]
+    fieldNotes: [{ body: "Internal field note" }],
+    unsharedEvidence: [{ title: "Internal field photo" }]
   } as Parameters<typeof derivePortalSafeStatusExplanation>[0] & {
     internalBlockers: Array<{ label: string }>;
     fieldNotes: Array<{ body: string }>;
+    unsharedEvidence: Array<{ title: string }>;
   });
 
   assert.equal(explanation.headline, "Project records are being prepared");
   assert.doesNotMatch(
     `${explanation.shortExplanation} ${explanation.safeNextStep}`,
-    /Crew missing|Internal field note|blocker/i
+    /Crew missing|Internal field note|Internal field photo|blocker/i
   );
 });
