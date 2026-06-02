@@ -1,5 +1,5 @@
 {
-  "state": "proposed",
+  "state": "active",
   "name": "ops-core-continuity-v4",
   "goal": "Deepen FloorConnector operating continuity across field execution, collections follow-up, portal trust, and reporting using existing canonical records only.",
   "rationale": "The completed ops-core-continuity-v3 wave connected major operating surfaces to canonical records. The next bounded wave should turn that continuity into clearer operator/customer decision context without creating new state, changing schema, or altering protected workflow behavior.",
@@ -106,5 +106,6 @@
         "git diff --check"
       ]
     }
-  ]
+  ],
+  "activatedAt": "2026-06-02T16:58:55.879Z"
 }
