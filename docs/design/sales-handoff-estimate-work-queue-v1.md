@@ -40,8 +40,11 @@ completion.
   estimate handoff Work Items connected by estimate, project, or linked
   opportunity context. The panel can use the existing assignee-or-manager Work
   Item actions to mark work in progress, save a blocker reason, or complete the
-  Work Item, and its rows separate assigned owner, requester, and current
-  waiting/blocked/review state without adding role persistence.
+  Work Item. It also exposes a compact Reassign control for open rows that
+  updates only the existing `work_items.assigned_person_id` field after
+  validating the selected active assignable Person in the current organization.
+  Rows separate assigned owner, requester, and current waiting/blocked/review
+  state without adding role persistence.
 - Estimate Workspace now also has compact Request Missing Info and Request
   Review shortcuts. These shortcuts prefill the existing internal Work Item
   creation form with `kind = estimate_follow_up`, source-locked estimate
@@ -73,6 +76,9 @@ completion.
 - No portal/customer surface reads these internal Work Items.
 - No separate handoff-packet persistence, source snapshot, project-owned task
   board, or estimate-generation state is added.
+- Reassignment does not create notification events, portal visibility,
+  commission ownership, payroll ownership, send-as behavior, or a separate task
+  assignment model.
 - No onsite rep, relationship owner, sales credit owner, commission owner,
   payroll owner, or send-as user is inferred from task assignment or requester
   display.
@@ -81,7 +87,7 @@ completion.
   next-action editing on existing Work Items, send-as workflow, and commission
   ownership remain planned follow-up behavior unless a later slice adds safe
   canonical mutations for them.
-- Project Workspace estimate handoff continuity is read-only in V1; it does not
+- Project Workspace estimate handoff continuity remains read-only; it does not
   add project-local Work Item actions or a project-owned task board.
 
 ## Role Model Direction

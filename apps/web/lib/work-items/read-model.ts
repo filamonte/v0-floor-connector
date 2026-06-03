@@ -71,6 +71,13 @@ export type WorkItemOwnershipDisplay = {
   compactLabel: string;
 };
 
+export type WorkItemAssignmentCandidate = {
+  id: PersonId;
+  displayName: string;
+  isActive: boolean;
+  isAssignable: boolean;
+};
+
 const priorityRank: Record<WorkItemPriority, number> = {
   urgent: 0,
   high: 1,
@@ -244,6 +251,18 @@ export function canActOnAssignedWorkItem(input: {
   }
 
   return ["owner", "admin", "manager"].includes(input.membershipRole);
+}
+
+export function selectWorkItemAssignmentCandidates<
+  T extends WorkItemAssignmentCandidate
+>(people: T[]) {
+  return people
+    .filter((person) => person.isActive && person.isAssignable)
+    .map((person) => ({
+      id: person.id,
+      displayName: person.displayName
+    }))
+    .sort((left, right) => left.displayName.localeCompare(right.displayName));
 }
 
 export function getWorkItemDueState(

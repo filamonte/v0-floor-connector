@@ -17,6 +17,7 @@ import {
   groupMobileAssignedWorkItems,
   isEstimateWorkItem,
   selectEstimateWorkspaceHandoffWorkItems,
+  selectWorkItemAssignmentCandidates,
   selectProjectEstimateHandoffWorkItems,
   selectAssignedWorkItems,
   selectBlockedWorkItems,
@@ -25,7 +26,7 @@ import {
   selectOpenWorkItemsByProject,
   selectOverdueWorkItems
 } from "./read-model";
-import { workItemCreateSchema } from "./schemas";
+import { workItemAssignmentSchema, workItemCreateSchema } from "./schemas";
 
 const baseWorkItem = {
   id: "11111111-1111-4111-8111-111111111111",
@@ -380,6 +381,63 @@ void test("work item ownership display does not infer owner from unrelated conte
   assert.equal(ownership.assignedOwnerLabel, "Assigned owner: not assigned");
   assert.equal(ownership.requesterLabel, "Requested by: not captured");
   assert.equal(ownership.stateLabel, "Blocked");
+});
+
+void test("work item assignment candidates keep only active assignable people", () => {
+  const candidates = selectWorkItemAssignmentCandidates([
+    {
+      id: "33333333-3333-4333-8333-333333333333",
+      displayName: "Zoe Estimator",
+      isActive: true,
+      isAssignable: true
+    },
+    {
+      id: "44444444-4444-4444-8444-444444444444",
+      displayName: "Inactive Person",
+      isActive: false,
+      isAssignable: true
+    },
+    {
+      id: "55555555-5555-4555-8555-555555555555",
+      displayName: "Office Contact",
+      isActive: true,
+      isAssignable: false
+    },
+    {
+      id: "66666666-6666-4666-8666-666666666666",
+      displayName: "Ava Writer",
+      isActive: true,
+      isAssignable: true
+    }
+  ]);
+
+  assert.deepEqual(candidates, [
+    {
+      id: "66666666-6666-4666-8666-666666666666",
+      displayName: "Ava Writer"
+    },
+    {
+      id: "33333333-3333-4333-8333-333333333333",
+      displayName: "Zoe Estimator"
+    }
+  ]);
+});
+
+void test("work item assignment schema accepts reassignment and unassignment payloads", () => {
+  assert.equal(
+    workItemAssignmentSchema.safeParse({
+      workItemId: "11111111-1111-4111-8111-111111111111",
+      assignedPersonId: "33333333-3333-4333-8333-333333333333"
+    }).success,
+    true
+  );
+
+  const unassigned = workItemAssignmentSchema.parse({
+    workItemId: "11111111-1111-4111-8111-111111111111",
+    assignedPersonId: ""
+  });
+
+  assert.equal(unassigned.assignedPersonId, null);
 });
 
 void test("context-rich work item preview surfaces instructions measurements and due state", () => {

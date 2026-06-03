@@ -27,7 +27,11 @@ import {
   sortWorkItemsForQueue,
   type WorkItemFieldState
 } from "./read-model";
-import type { WorkItemCreateInput, WorkItemUpdateInput } from "./schemas";
+import type {
+  WorkItemAssignmentInput,
+  WorkItemCreateInput,
+  WorkItemUpdateInput
+} from "./schemas";
 
 type WorkItemScope = {
   userId: ProfileId;
@@ -909,6 +913,64 @@ export async function updateWorkItem(input: WorkItemUpdateInput) {
 
   if (response.error) {
     throw new Error(`Unable to update work item: ${response.error.message}`);
+  }
+
+  if (!response.data) {
+    throw new Error("Work item was not found or is no longer open.");
+  }
+
+  return mapWorkItem(response.data as WorkItemRow);
+}
+
+export async function updateWorkItemAssignment(
+  input: WorkItemAssignmentInput & { next?: string }
+) {
+  const scope = await requireWorkItemScope(input.next ?? "/dashboard");
+  const currentPerson = await getCurrentUserWorkItemPerson(
+    input.next ?? "/dashboard"
+  );
+  const existing = await getScopedWorkItem(input.workItemId, scope);
+
+  if (!existing) {
+    throw new Error("Work item was not found.");
+  }
+
+  if (existing.status !== "open") {
+    throw new Error("Only open work items can be reassigned.");
+  }
+
+  if (
+    !canActOnAssignedWorkItem({
+      workItem: existing,
+      currentPersonId: currentPerson?.id ?? null,
+      membershipRole: scope.membershipRole
+    })
+  ) {
+    throw new Error(
+      "Only the current assignee or a manager can reassign this work item."
+    );
+  }
+
+  await assertScopedActiveAssignablePerson(
+    scope.organizationId,
+    input.assignedPersonId
+  );
+
+  const supabase = await getSupabaseServerClient();
+  const response = await supabase
+    .from("work_items")
+    .update({
+      assigned_person_id: input.assignedPersonId,
+      updated_by: scope.userId
+    })
+    .eq("company_id", scope.organizationId)
+    .eq("id", input.workItemId)
+    .eq("status", "open")
+    .select(workItemSelect)
+    .maybeSingle();
+
+  if (response.error) {
+    throw new Error(`Unable to reassign work item: ${response.error.message}`);
   }
 
   if (!response.data) {

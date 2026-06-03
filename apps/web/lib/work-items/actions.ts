@@ -12,11 +12,13 @@ import {
   createWorkItem,
   dismissWorkItem,
   updateAssignedWorkItemFieldState,
+  updateWorkItemAssignment,
   updateWorkItem
 } from "./data";
 import {
   assignedWorkItemCompletionSchema,
   assignedWorkItemFieldStateSchema,
+  workItemAssignmentSchema,
   workItemCreateSchema,
   workItemIdSchema,
   workItemUpdateSchema
@@ -184,6 +186,42 @@ export async function updateWorkItemAction(formData: FormData) {
   }
 
   redirect(buildRedirect(returnTo, { message: "Work item updated." }));
+}
+
+export async function updateWorkItemAssignmentAction(formData: FormData) {
+  const returnTo = getReturnTo(formData);
+  const result = workItemAssignmentSchema.safeParse({
+    workItemId: getFieldValue(formData, "workItemId"),
+    assignedPersonId: getFieldValue(formData, "assignedPersonId")
+  });
+
+  if (!result.success) {
+    redirect(
+      buildRedirect(returnTo, {
+        error:
+          result.error.issues[0]?.message ?? "Unable to reassign work item."
+      })
+    );
+  }
+
+  try {
+    await updateWorkItemAssignment({
+      ...result.data,
+      next: returnTo
+    });
+    revalidateWorkItemSurfaces(returnTo);
+  } catch (error) {
+    redirect(
+      buildRedirect(returnTo, {
+        error:
+          error instanceof Error
+            ? error.message
+            : "Unable to reassign work item."
+      })
+    );
+  }
+
+  redirect(buildRedirect(returnTo, { message: "Work item reassigned." }));
 }
 
 export async function completeWorkItemAction(formData: FormData) {

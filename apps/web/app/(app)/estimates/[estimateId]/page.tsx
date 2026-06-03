@@ -83,6 +83,7 @@ import {
   completeWorkItemAction,
   createWorkItemAction,
   dismissWorkItemAction,
+  updateWorkItemAssignmentAction,
   updateAssignedWorkItemFieldStateAction
 } from "@/lib/work-items/actions";
 import {
@@ -101,6 +102,7 @@ import {
   getWorkItemBlockerReason,
   getWorkItemDueState,
   getWorkItemFieldState,
+  selectWorkItemAssignmentCandidates,
   selectEstimateWorkspaceHandoffWorkItems
 } from "@/lib/work-items/read-model";
 import {
@@ -248,11 +250,16 @@ function EstimateHandoffActionButton({
 function EstimateHandoffPanel({
   workItems,
   returnTo,
-  shortcutBaseHref
+  shortcutBaseHref,
+  assignablePeople
 }: {
   workItems: WorkItemListItem[];
   returnTo: string;
   shortcutBaseHref: string;
+  assignablePeople: Array<{
+    id: string;
+    displayName: string;
+  }>;
 }) {
   const nowIso = new Date().toISOString();
 
@@ -359,6 +366,51 @@ function EstimateHandoffPanel({
                   </div>
 
                   <div className="flex shrink-0 flex-wrap gap-2">
+                    <details className="relative">
+                      <summary className="inline-flex h-8 cursor-pointer list-none items-center justify-center border border-slate-300 bg-white px-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-600 transition hover:border-[#d8731f] hover:text-slate-950">
+                        Reassign
+                      </summary>
+                      <form
+                        action={updateWorkItemAssignmentAction}
+                        className="mt-2 grid w-64 gap-2 rounded-lg border border-slate-200 bg-white p-3 shadow-sm"
+                      >
+                        <input
+                          type="hidden"
+                          name="workItemId"
+                          value={workItem.id}
+                        />
+                        <input type="hidden" name="returnTo" value={returnTo} />
+                        <label className="grid gap-1">
+                          <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">
+                            Assigned to
+                          </span>
+                          <select
+                            name="assignedPersonId"
+                            defaultValue={workItem.assignedPersonId ?? ""}
+                            className="h-9 border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none transition focus:border-[#d8731f]"
+                          >
+                            <option value="">Unassigned</option>
+                            {assignablePeople.map((person) => (
+                              <option key={person.id} value={person.id}>
+                                {person.displayName}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+                        {assignablePeople.length === 0 ? (
+                          <p className="text-xs leading-5 text-slate-500">
+                            No active assignable people are available for this
+                            organization yet.
+                          </p>
+                        ) : null}
+                        <button
+                          type="submit"
+                          className="inline-flex h-8 items-center justify-center border border-slate-300 bg-white px-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-600 transition hover:border-[#d8731f] hover:text-slate-950"
+                        >
+                          Save assignment
+                        </button>
+                      </form>
+                    </details>
                     <EstimateHandoffActionButton
                       workItemId={workItem.id}
                       returnTo={returnTo}
@@ -1080,12 +1132,7 @@ export default async function EstimateDetailPage({
     sourceId: estimate.id,
     linkPath: `/estimates/${estimate.id}`
   };
-  const assignablePeople = people
-    .filter((person) => person.isActive && person.isAssignable)
-    .map((person) => ({
-      id: person.id,
-      displayName: person.displayName
-    }));
+  const assignablePeople = selectWorkItemAssignmentCandidates(people);
   const nextAction = getEstimateNextAction({
     estimateStatus: estimate.status,
     projectId: estimate.projectId,
@@ -1990,6 +2037,7 @@ export default async function EstimateDetailPage({
                   workItems={estimateHandoffWorkItems}
                   returnTo={`/estimates/${estimate.id}#work-items`}
                   shortcutBaseHref={`/estimates/${estimate.id}`}
+                  assignablePeople={assignablePeople}
                 />
               </div>
 
