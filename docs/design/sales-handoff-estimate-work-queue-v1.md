@@ -38,6 +38,11 @@ completion.
   opportunity context. The panel can use the existing assignee-or-manager Work
   Item actions to mark work in progress, save a blocker reason, or complete the
   Work Item.
+- Project Workspace now shows read-only estimate handoff continuity for open
+  estimate-production Work Items connected to the project, its estimates, or
+  linked opportunity. The project panel summarizes open, blocked,
+  ready-for-review, and follow-up-due work and links back to the canonical Work
+  Item, estimate, or source record.
 - Work Items remain internal-only and must be submitted by a contractor.
 
 ## Boundaries
@@ -52,6 +57,8 @@ completion.
   creation shortcuts, send-as workflow, and commission ownership remain planned
   follow-up behavior unless a later slice adds safe canonical Work Item
   mutations for them.
+- Project Workspace estimate handoff continuity is read-only in V1; it does not
+  add project-local Work Item actions or a project-owned task board.
 
 ## Role Model Direction
 

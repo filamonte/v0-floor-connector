@@ -177,8 +177,21 @@ import {
   createWorkItemAction,
   dismissWorkItemAction
 } from "@/lib/work-items/actions";
-import { listWorkItemsForProject } from "@/lib/work-items/data";
+import {
+  listWorkItemsForProject,
+  listWorkItemsForSource,
+  type WorkItemListItem
+} from "@/lib/work-items/data";
 import { buildProjectGuidanceWorkItemPrefill } from "@/lib/work-items/prefill";
+import {
+  buildProjectEstimateHandoffSummary,
+  getEstimateWorkItemType,
+  getWorkItemBlockerReason,
+  getWorkItemDueState,
+  getWorkItemFieldState,
+  selectProjectEstimateHandoffWorkItems,
+  type ProjectEstimateHandoffSummary
+} from "@/lib/work-items/read-model";
 import {
   normalizeWorkflowGuidancePreferences,
   shouldShowAiCopilotSummaries,
@@ -357,6 +370,59 @@ function formatUpdatedActivity(value: string | null | undefined) {
   return value ? `Updated ${formatDateTime(value)}` : null;
 }
 
+function getMetadataString(value: unknown) {
+  return typeof value === "string" && value.trim().length > 0
+    ? value.trim()
+    : null;
+}
+
+function getProjectEstimateWorkLabel(workItem: WorkItemListItem) {
+  switch (getEstimateWorkItemType(workItem)) {
+    case "generate_estimate":
+      return "Estimate Work";
+    case "review_estimate":
+    case "approve_send":
+      return "Ready for Review";
+    case "request_missing_info":
+      return "Missing Info";
+    case "follow_up_customer":
+      return "Follow-up";
+    default:
+      return "Estimate Work";
+  }
+}
+
+function getProjectEstimateWorkDueLabel(
+  workItem: WorkItemListItem,
+  nowIso: string
+) {
+  const dueState = getWorkItemDueState(workItem, nowIso);
+
+  if (!workItem.dueAt) {
+    return "No due date";
+  }
+
+  return `${dueState === "overdue" ? "Overdue" : "Due"} ${formatDateTime(
+    workItem.dueAt
+  )}`;
+}
+
+function getProjectEstimateWorkNextAction(workItem: WorkItemListItem) {
+  return (
+    getMetadataString(workItem.metadata.nextAction) ??
+    getMetadataString(workItem.metadata.nextActionText) ??
+    getMetadataString(workItem.metadata.safeNextAction)
+  );
+}
+
+function getProjectEstimateWorkEstimateId(workItem: WorkItemListItem) {
+  if (workItem.sourceType === "estimate" && workItem.sourceId) {
+    return workItem.sourceId;
+  }
+
+  return getMetadataString(workItem.metadata.estimateId);
+}
+
 function formatDuration(minutes: number) {
   if (minutes <= 0) {
     return "No labor time";
@@ -475,6 +541,180 @@ function SectionOverview({
         </Link>
       </div>
     </div>
+  );
+}
+
+function ProjectEstimateHandoffContinuityPanel({
+  workItems,
+  summary,
+  estimates
+}: {
+  workItems: WorkItemListItem[];
+  summary: ProjectEstimateHandoffSummary<WorkItemListItem>;
+  estimates: ProjectEstimateListItem[];
+}) {
+  const nowIso = new Date().toISOString();
+  const estimateById = new Map(
+    estimates.map((estimate) => [estimate.id, estimate])
+  );
+
+  return (
+    <section
+      aria-labelledby="project-estimate-handoff-title"
+      className="rounded-lg border border-slate-200 bg-white px-4 py-4 sm:px-5"
+    >
+      <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+        <div>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">
+            Estimate Work
+          </p>
+          <h3
+            id="project-estimate-handoff-title"
+            className="mt-1 text-base font-semibold text-slate-950"
+          >
+            Estimate handoff continuity
+          </h3>
+          <p className="mt-1 max-w-[68ch] text-sm leading-6 text-slate-600">
+            Open estimate-production Work Items linked to this project, project
+            estimates, or the linked opportunity. This is project continuity
+            only; the focused estimate and Work Item surfaces own edits.
+          </p>
+        </div>
+        <div className="grid grid-cols-2 gap-2 text-sm md:w-[22rem]">
+          <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">
+              Open
+            </p>
+            <p className="text-xl font-semibold text-slate-950">
+              {summary.totalOpen}
+            </p>
+          </div>
+          <div className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-rose-700">
+              Blocked
+            </p>
+            <p className="text-xl font-semibold text-rose-950">
+              {summary.blockedCount}
+            </p>
+          </div>
+          <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-amber-700">
+              Ready
+            </p>
+            <p className="text-xl font-semibold text-amber-950">
+              {summary.readyForReviewCount}
+            </p>
+          </div>
+          <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">
+              Follow-up
+            </p>
+            <p className="text-xl font-semibold text-slate-950">
+              {summary.followUpsDueCount}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {summary.nextItem ? (
+        <div className="mt-4 rounded-lg border border-[var(--border-warm)] bg-[var(--highlight)] px-4 py-3 text-sm leading-6 text-[var(--text-secondary)]">
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--copper)]">
+            Next most urgent estimate item
+          </p>
+          <p className="mt-1 font-semibold text-[var(--text-primary)]">
+            {summary.nextItem.title}
+          </p>
+          <p className="mt-1">
+            {getProjectEstimateWorkDueLabel(summary.nextItem, nowIso)} ·{" "}
+            {summary.nextItem.assignedPerson?.displayName ?? "Unassigned"}
+          </p>
+        </div>
+      ) : null}
+
+      <div className="mt-4 space-y-3">
+        {workItems.length > 0 ? (
+          workItems.slice(0, 5).map((workItem) => {
+            const fieldState = getWorkItemFieldState(workItem);
+            const blockerReason = getWorkItemBlockerReason(workItem);
+            const nextAction = getProjectEstimateWorkNextAction(workItem);
+            const estimateId = getProjectEstimateWorkEstimateId(workItem);
+            const estimate = estimateId ? estimateById.get(estimateId) : null;
+
+            return (
+              <article
+                key={workItem.id}
+                className="rounded-lg border border-slate-200 bg-slate-50/80 px-4 py-3"
+              >
+                <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Link
+                        href={`/field/work-items/${workItem.id}`}
+                        className="text-sm font-semibold text-slate-950 transition hover:text-brand-700"
+                      >
+                        {workItem.title}
+                      </Link>
+                      <span className="inline-flex rounded-full border border-amber-200 bg-amber-50 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-amber-900">
+                        {getProjectEstimateWorkLabel(workItem)}
+                      </span>
+                      {fieldState === "blocked" ? (
+                        <span className="inline-flex rounded-full border border-rose-200 bg-rose-50 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-rose-900">
+                          Blocked
+                        </span>
+                      ) : null}
+                    </div>
+                    <p className="mt-1 text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
+                      {formatStatusLabel(workItem.status)} ·{" "}
+                      {getProjectEstimateWorkDueLabel(workItem, nowIso)} ·{" "}
+                      {workItem.assignedPerson?.displayName ?? "Unassigned"}
+                    </p>
+                    {blockerReason ? (
+                      <p className="mt-2 text-sm leading-6 text-rose-800">
+                        Blocker: {blockerReason}
+                      </p>
+                    ) : null}
+                    {nextAction ? (
+                      <p className="mt-2 text-sm leading-6 text-slate-700">
+                        Next action: {nextAction}
+                      </p>
+                    ) : null}
+                  </div>
+                  <div className="flex shrink-0 flex-wrap gap-2">
+                    {estimate ? (
+                      <Link
+                        href={`/estimates/${estimate.id}`}
+                        className="inline-flex h-8 items-center border border-slate-300 bg-white px-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-600 transition hover:border-[#d8731f] hover:text-slate-950"
+                      >
+                        {estimate.referenceNumber}
+                      </Link>
+                    ) : null}
+                    {workItem.linkPath ? (
+                      <Link
+                        href={workItem.linkPath}
+                        className="inline-flex h-8 items-center border border-slate-300 bg-white px-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-600 transition hover:border-[#d8731f] hover:text-slate-950"
+                      >
+                        Open source
+                      </Link>
+                    ) : null}
+                  </div>
+                </div>
+              </article>
+            );
+          })
+        ) : (
+          <div className="rounded-lg border border-dashed border-slate-300 bg-slate-50 px-4 py-5">
+            <p className="text-sm font-semibold text-slate-950">
+              No open estimate handoff work is linked to this project.
+            </p>
+            <p className="mt-2 text-sm leading-6 text-slate-500">
+              Estimate work appears here only after an internal Work Item is
+              connected to this project, one of its estimates, or the linked
+              opportunity.
+            </p>
+          </div>
+        )}
+      </div>
+    </section>
   );
 }
 
@@ -3137,6 +3377,7 @@ export default async function ProjectDetailPage({
     projectEstimateAttachments,
     fieldNotes,
     linkedWorkItems,
+    opportunityWorkItems,
     projectAttentionCues,
     people,
     projectServiceTickets,
@@ -3147,6 +3388,12 @@ export default async function ProjectDetailPage({
     listProjectEstimateAttachments(project.id, `/projects/${projectId}`),
     listFieldNotes(),
     listWorkItemsForProject(project.id, `/projects/${projectId}`),
+    projectOpportunity
+      ? listWorkItemsForSource({
+          sourceType: "opportunity",
+          sourceId: projectOpportunity.id
+        })
+      : Promise.resolve([]),
     getOperationalCuesForProject({
       organizationId: project.organizationId,
       projectId: project.id,
@@ -3167,6 +3414,16 @@ export default async function ProjectDetailPage({
   const projectEstimates = estimates.filter(
     (estimate) => estimate.projectId === project.id
   );
+  const estimateHandoffWorkItems = selectProjectEstimateHandoffWorkItems({
+    workItems: [...linkedWorkItems, ...opportunityWorkItems],
+    projectId: project.id,
+    estimateIds: projectEstimates.map((estimate) => estimate.id),
+    opportunityId: projectOpportunity?.id ?? null
+  });
+  const estimateHandoffSummary = buildProjectEstimateHandoffSummary({
+    workItems: estimateHandoffWorkItems,
+    nowIso: new Date().toISOString()
+  });
   const approvedEstimate = projectEstimates.find(
     (estimate) => estimate.status === "approved"
   );
@@ -5269,6 +5526,12 @@ export default async function ProjectDetailPage({
                 )}
               />
             ) : null}
+
+            <ProjectEstimateHandoffContinuityPanel
+              workItems={estimateHandoffWorkItems}
+              summary={estimateHandoffSummary}
+              estimates={projectEstimates}
+            />
 
             <section
               id="work-items"

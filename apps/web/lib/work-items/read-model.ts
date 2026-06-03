@@ -50,6 +50,14 @@ export type EstimateWorkQueue<T extends WorkItem = WorkItem> = {
   followUpsDue: T[];
 };
 
+export type ProjectEstimateHandoffSummary<T extends WorkItem = WorkItem> = {
+  totalOpen: number;
+  blockedCount: number;
+  readyForReviewCount: number;
+  followUpsDueCount: number;
+  nextItem: T | null;
+};
+
 const priorityRank: Record<WorkItemPriority, number> = {
   urgent: 0,
   high: 1,
@@ -409,6 +417,84 @@ export function selectEstimateWorkspaceHandoffWorkItems<
   }
 
   return sortWorkItemsForQueue([...selected.values()]);
+}
+
+export function selectProjectEstimateHandoffWorkItems<
+  T extends WorkItem
+>(input: {
+  workItems: T[];
+  projectId: string;
+  estimateIds: string[];
+  opportunityId?: string | null;
+}) {
+  const estimateIds = new Set(input.estimateIds);
+  const selected = new Map<string, T>();
+
+  for (const workItem of input.workItems) {
+    if (!isOpenWorkItem(workItem) || !isEstimateWorkItem(workItem)) {
+      continue;
+    }
+
+    const projectEstimateWork = workItem.projectId === input.projectId;
+    const sourceMatchesEstimate =
+      workItem.sourceType === "estimate" &&
+      Boolean(workItem.sourceId && estimateIds.has(workItem.sourceId));
+    const metadataEstimateId =
+      typeof workItem.metadata.estimateId === "string"
+        ? workItem.metadata.estimateId
+        : null;
+    const metadataMatchesEstimate = Boolean(
+      metadataEstimateId && estimateIds.has(metadataEstimateId)
+    );
+    const sourceMatchesOpportunity =
+      Boolean(input.opportunityId) &&
+      workItem.sourceType === "opportunity" &&
+      workItem.sourceId === input.opportunityId;
+    const metadataMatchesOpportunity =
+      Boolean(input.opportunityId) &&
+      workItem.metadata.opportunityId === input.opportunityId;
+
+    if (
+      projectEstimateWork ||
+      sourceMatchesEstimate ||
+      metadataMatchesEstimate ||
+      sourceMatchesOpportunity ||
+      metadataMatchesOpportunity
+    ) {
+      selected.set(workItem.id, workItem);
+    }
+  }
+
+  return sortWorkItemsForQueue([...selected.values()]);
+}
+
+export function buildProjectEstimateHandoffSummary<T extends WorkItem>(input: {
+  workItems: T[];
+  nowIso: string;
+}): ProjectEstimateHandoffSummary<T> {
+  const sortedWorkItems = sortWorkItemsForQueue(input.workItems);
+
+  return {
+    totalOpen: sortedWorkItems.length,
+    blockedCount: sortedWorkItems.filter(
+      (workItem) => getWorkItemFieldState(workItem) === "blocked"
+    ).length,
+    readyForReviewCount: sortedWorkItems.filter((workItem) => {
+      const type = getEstimateWorkItemType(workItem);
+
+      return (
+        type === "review_estimate" ||
+        type === "approve_send" ||
+        workItem.metadata.estimateWorkStatus === "ready_for_review"
+      );
+    }).length,
+    followUpsDueCount: sortedWorkItems.filter(
+      (workItem) =>
+        getEstimateWorkItemType(workItem) === "follow_up_customer" &&
+        isDueWorkItem(workItem, input.nowIso)
+    ).length,
+    nextItem: sortedWorkItems[0] ?? null
+  };
 }
 
 function isSameDateKey(leftIso: string, rightIso: string) {

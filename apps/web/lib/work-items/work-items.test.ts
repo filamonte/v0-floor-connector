@@ -7,6 +7,7 @@ import { executionAttachmentSubjectTypeSchema } from "../execution-attachments/s
 import {
   buildContextRichWorkItemPreview,
   buildEstimateWorkQueue,
+  buildProjectEstimateHandoffSummary,
   canActOnAssignedWorkItem,
   filterDashboardWorkItems,
   getEstimateWorkItemType,
@@ -15,6 +16,7 @@ import {
   groupMobileAssignedWorkItems,
   isEstimateWorkItem,
   selectEstimateWorkspaceHandoffWorkItems,
+  selectProjectEstimateHandoffWorkItems,
   selectAssignedWorkItems,
   selectBlockedWorkItems,
   selectDashboardWorkItemQueue,
@@ -534,6 +536,129 @@ void test("estimate workspace handoff selector keeps only connected open estimat
       "Blocked project estimate info"
     ]
   );
+});
+
+void test("project estimate handoff selector summarizes connected estimate work", () => {
+  const workItems: WorkItem[] = [
+    {
+      ...baseWorkItem,
+      id: "a7a7a7a7-a7a7-4a7a-8a7a-a7a7a7a7a7a7",
+      title: "Blocked project estimate packet",
+      kind: "estimate_follow_up",
+      sourceType: "project",
+      sourceId: "project-1",
+      projectId: "project-1",
+      dueAt: "2026-05-07T12:00:00.000Z",
+      metadata: {
+        estimateWork: true,
+        estimateWorkType: "request_missing_info",
+        fieldState: "blocked",
+        blockerReason: "Need moisture readings."
+      }
+    },
+    {
+      ...baseWorkItem,
+      id: "b8b8b8b8-b8b8-4b8b-8b8b-b8b8b8b8b8b8",
+      title: "Review project estimate",
+      kind: "estimate_follow_up",
+      sourceType: "estimate",
+      sourceId: "estimate-1",
+      projectId: "project-1",
+      dueAt: "2026-05-08T12:00:00.000Z",
+      metadata: {
+        estimateWorkType: "review_estimate",
+        estimateWorkStatus: "ready_for_review"
+      }
+    },
+    {
+      ...baseWorkItem,
+      id: "c9c9c9c9-c9c9-4c9c-8c9c-c9c9c9c9c9c9",
+      title: "Follow up customer",
+      kind: "estimate_follow_up",
+      sourceType: "estimate",
+      sourceId: "estimate-1",
+      projectId: "project-1",
+      dueAt: "2026-05-09T12:00:00.000Z",
+      metadata: {
+        estimateWorkType: "follow_up_customer"
+      }
+    },
+    {
+      ...baseWorkItem,
+      id: "d0d0d0d0-d0d0-4d0d-8d0d-d0d0d0d0d0d0",
+      title: "Opportunity estimate handoff",
+      kind: "estimate_follow_up",
+      sourceType: "opportunity",
+      sourceId: "opportunity-1",
+      projectId: null,
+      dueAt: "2026-05-10T12:00:00.000Z",
+      metadata: {
+        estimateWork: true,
+        estimateWorkType: "generate_estimate",
+        opportunityId: "opportunity-1"
+      }
+    },
+    {
+      ...baseWorkItem,
+      id: "e1e1e1e1-e1e1-4e1e-8e1e-e1e1e1e1e1e1",
+      title: "Regular project task",
+      kind: "manual",
+      sourceType: "project",
+      sourceId: "project-1",
+      projectId: "project-1"
+    },
+    {
+      ...baseWorkItem,
+      id: "f2f2f2f2-f2f2-4f2f-8f2f-f2f2f2f2f2f2",
+      title: "Completed estimate handoff",
+      status: "completed",
+      kind: "estimate_follow_up",
+      sourceType: "estimate",
+      sourceId: "estimate-1",
+      projectId: "project-1",
+      metadata: {
+        estimateWorkType: "review_estimate"
+      }
+    },
+    {
+      ...baseWorkItem,
+      id: "abababab-abab-4aba-8aba-abababababab",
+      title: "Other project estimate",
+      kind: "estimate_follow_up",
+      sourceType: "estimate",
+      sourceId: "estimate-2",
+      projectId: "project-2",
+      metadata: {
+        estimateWorkType: "review_estimate"
+      }
+    }
+  ];
+
+  const selected = selectProjectEstimateHandoffWorkItems({
+    workItems,
+    projectId: "project-1",
+    estimateIds: ["estimate-1"],
+    opportunityId: "opportunity-1"
+  });
+  const summary = buildProjectEstimateHandoffSummary({
+    workItems: selected,
+    nowIso: "2026-05-10T12:00:00.000Z"
+  });
+
+  assert.deepEqual(
+    selected.map((item) => item.title),
+    [
+      "Blocked project estimate packet",
+      "Review project estimate",
+      "Follow up customer",
+      "Opportunity estimate handoff"
+    ]
+  );
+  assert.equal(summary.totalOpen, 4);
+  assert.equal(summary.blockedCount, 1);
+  assert.equal(summary.readyForReviewCount, 1);
+  assert.equal(summary.followUpsDueCount, 1);
+  assert.equal(summary.nextItem?.title, "Blocked project estimate packet");
 });
 
 void test("work item read model filters by project job assignee overdue and blocked context", () => {
