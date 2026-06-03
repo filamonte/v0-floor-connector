@@ -2209,6 +2209,7 @@ Wave rules:
 Every promptBody must include:
 
 - Chat: <stream title>
+- ## FloorConnector Codex Prompt Baseline Safeguards
 - Start by checking git status, current branch, and ahead/behind state.
 - Run git fetch origin.
 - Avoid staging unrelated changes.
@@ -2222,6 +2223,8 @@ Required promptBody boundaries:
 - Read the required FloorConnector docs first.
 - Use existing canonical records.
 - Do not create duplicate business models.
+- Do not create schema, migrations, Supabase policy, RLS, auth, env var, route-protection, payment math, provider, portal-owned, dispatch-only, communications-only, financial-only, or AI-only runtime changes unless explicitly approved.
+- Keep customer-facing sends, signatures, payments, scheduling commitments, provider calls, and portal visibility changes human-approved.
 - Do not change schema, migrations, Supabase policies, RLS, auth, env vars, route protection, payment math, provider behavior, or business logic outside the named product outcome.
 
 Current wave: ${manifest.name}
@@ -2364,6 +2367,8 @@ Read these before implementation:
 - \`.codex/worktree-rules.md\`
 - \`.codex/active-stream-plan.md\`
 
+${buildPromptBaselineSafeguards()}
+
 ## Boundaries
 
 ${stream.boundaries.map((boundary) => `- ${boundary}`).join("\n")}
@@ -2383,6 +2388,8 @@ ${stream.boundaries.map((boundary) => `- ${boundary}`).join("\n")}
 
 - Preserve existing repo conventions and canonical records.
 - Keep the slice bounded to the named product outcome.
+- Stay inside expected file boundaries and do not sweep unrelated files.
+- Keep PRs draft by default; do not mark ready for review, auto-merge, push, or merge unless explicitly requested and approved.
 - Update docs only if implemented behavior changes.
 
 ## Acceptance Criteria
@@ -2402,6 +2409,19 @@ ${stream.validation.join("\n")}
 Report branch name, starting status, final status, commit hash and message, files changed, validation results, and limitations.
 Also report skipped checks, assumptions, and follow-up dependencies when applicable.
 `;
+}
+
+function buildPromptBaselineSafeguards() {
+  return `## FloorConnector Codex Prompt Baseline Safeguards
+
+- Session/chat name: start the prompt with \`# Chat: <bounded stream name>\`.
+- Git start: check git status, current branch, and ahead/behind state; fetch origin before editing; preserve unrelated dirty files; stage only intended files.
+- Scope: implement only the named stream outcome; keep changes small, reviewable, and inside expected file boundaries.
+- Architecture safety: use existing canonical records, tenant-safe loaders/actions, and shared read models; do not add schema, migrations, new tables, new columns, Supabase policies, RLS, auth, env vars, route protection, payment math, provider behavior, duplicate persistence, portal-only copies, dispatch-only systems, disconnected communication models, disconnected scheduling models, disconnected financial models, or AI-only operational truth unless explicitly approved.
+- Human approval: do not send customer-facing messages, request signatures, start payments, mutate invoices/payments/signatures/jobs/schedules, call providers, or expose new portal data without explicit human-reviewed workflow support.
+- Dependencies: state whether the stream is independent, depends on another stream, or should merge after another stream; avoid shared readiness/helper rewrites unless this stream owns them.
+- Validation: run \`pnpm.cmd --filter @floorconnector/web typecheck\`, \`pnpm.cmd --filter @floorconnector/web lint\`, \`pnpm.cmd fc:preflight:fast\`, \`git diff --check\`, and focused unit/read-model tests when business shaping logic changes; if no tests are added, explain why existing coverage or presentation-only scope is sufficient.
+- Commit/reporting: commit the completed slice, keep PRs draft unless explicitly instructed otherwise, do not auto-merge, and report branch, worktree, starting status, final status, ahead/behind, commit hash/message, changed files, validation results, tests added or why none, schema/migration confirmation, canonical/no-silo confirmation, customer-facing/human-approval confirmation, dependency status, risks, and follow-ups.`;
 }
 
 function titleFromSlug(slug) {

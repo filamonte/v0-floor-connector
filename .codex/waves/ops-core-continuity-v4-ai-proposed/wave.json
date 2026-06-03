@@ -1,0 +1,146 @@
+{
+  "state": "proposed",
+  "name": "ops-core-continuity-v4-ai-proposed",
+  "displayName": "Ops Core Continuity V4",
+  "goal": "Advance FloorConnector operational continuity across Project Workspace, CrewBoard field handoff, and customer-safe portal trust without schema changes.",
+  "rationale": "Template fallback selected high-value operational strides from current docs and wave context while preserving canonical records, project-centered workflow continuity, and human approval. The folder name is retained for generated-proposal compatibility; this is an operational-continuity wave, not an autonomous AI implementation wave.",
+  "governanceNote": "Operational-first and AI-ready only. This wave must not introduce autonomous AI behavior, AI-owned operational truth, schema changes, duplicate persistence, or customer-facing actions without human approval.",
+  "base": "origin/main",
+  "worktreeRoot": "C:/FC-worktrees",
+  "maxConcurrency": 2,
+  "mainValidation": [
+    "pnpm.cmd --filter @floorconnector/web typecheck",
+    "pnpm.cmd --filter @floorconnector/web lint",
+    "pnpm.cmd fc:preflight:fast",
+    "git diff --check"
+  ],
+  "productStrideCriteria": [
+    "Improves daily contractor operations",
+    "Connects to canonical workflow records",
+    "Reduces manual decision friction",
+    "Creates visible user-facing capability",
+    "Avoids duplicate models and module silos"
+  ],
+  "operationalSafeguards": [
+    "Do not change schema, migrations, Supabase policies, RLS, auth, env vars, route protection, payment math, provider behavior, or unrelated business logic.",
+    "Do not add new tables, new columns, new persistence, duplicate read/write models, portal-only copies, a separate dispatch subsystem, disconnected communications, disconnected scheduling, disconnected financial models, or AI-only operational truth.",
+    "Use canonical records, tenant-safe loaders/actions, and shared read models.",
+    "Preserve project-centered workflow continuity across contractor and portal surfaces on the same canonical system.",
+    "Require human approval for customer-facing sends, signature requests, payments, scheduling commitments, provider calls, and portal visibility changes."
+  ],
+  "dependencyAndMergeSequencing": [
+    "Run project-readiness-stride-v1 first; it owns the readiness language source for this wave.",
+    "crewboard-field-handoff-stride-v1 may run in parallel only if it avoids shared readiness helper rewrites and stays within schedule/job/field-handoff presentation and read-model scope.",
+    "portal-operational-trust-stride-v1 should run after project-readiness-stride-v1 where practical, or avoid redefining readiness rules.",
+    "Keep maxConcurrency at 2.",
+    "Only one stream should edit broad docs such as docs/current-state.md at a time; other streams should narrow or defer current-state edits.",
+    "Avoid overlapping docs edits across streams and avoid changing shared prompt/template/worktree governance files from feature streams unless that governance work is explicitly assigned.",
+    "If active-waves.md or docs/current-state.md conflicts with a planning doc, preserve implemented truth and do not claim target-only capabilities are built."
+  ],
+  "mergeReadiness": [
+    "Merge after validation passes, merge-check passes, the remote branch is synced, the worktree is clean, and human approval is recorded.",
+    "Open PRs as draft unless explicitly instructed otherwise.",
+    "Do not mark a PR ready until validation passes and the final stream report is complete.",
+    "If validation fails, commit only when the partial work is still useful and report the failure; otherwise stop and report.",
+    "Do not auto-merge."
+  ],
+  "finalStreamReportRequiredFields": [
+    "branch",
+    "worktree",
+    "starting git status",
+    "final git status",
+    "ahead/behind",
+    "commit hash/message",
+    "changed files",
+    "validation commands/results",
+    "tests added/updated or reason none",
+    "schema/migration confirmation",
+    "canonical/no-silo confirmation",
+    "customer-facing action/human-approval confirmation",
+    "dependency status",
+    "risks/follow-ups"
+  ],
+  "streams": [
+    {
+      "name": "project-readiness-stride-v1",
+      "branch": "stream/project-readiness-stride-v1",
+      "worktree": "C:/FC-worktrees/project-readiness-stride",
+      "prompt": ".codex/waves/ops-core-continuity-v4-ai-proposed/prompts/project-readiness-stride-v1.md",
+      "risk": "medium",
+      "productOutcome": "Tighten Project Workspace readiness and next-action continuity over existing project, estimate, contract, job, invoice, and payment records.",
+      "expectedFiles": [
+        "apps/web/app/(app)/projects",
+        "apps/web/lib/projects",
+        "docs/current-state.md"
+      ],
+      "fileBoundaries": [
+        "Project detail/workspace components.",
+        "Project readiness and next-action read models.",
+        "Do not sweep unrelated project, financial, schedule, portal, or docs files.",
+        "Owns this wave's shared readiness language."
+      ],
+      "validation": [
+        "pnpm.cmd --filter @floorconnector/web typecheck",
+        "pnpm.cmd --filter @floorconnector/web lint",
+        "pnpm.cmd fc:preflight:fast",
+        "git diff --check"
+      ],
+      "additionalValidationGuidance": "Run focused unit/read-model tests when business shaping logic changes; if no tests are added, explain why presentation-only or existing coverage is sufficient.",
+      "dependencyStatus": "source stream; should run first"
+    },
+    {
+      "name": "crewboard-field-handoff-stride-v1",
+      "branch": "stream/crewboard-field-handoff-stride-v1",
+      "worktree": "C:/FC-worktrees/crewboard-field-handoff-stride",
+      "prompt": ".codex/waves/ops-core-continuity-v4-ai-proposed/prompts/crewboard-field-handoff-stride-v1.md",
+      "risk": "medium",
+      "productOutcome": "Improve CrewBoard to field execution handoff clarity using canonical jobs, job assignments, daily logs, field notes, and project context.",
+      "expectedFiles": [
+        "apps/web/app/(app)/schedule",
+        "apps/web/lib/schedule",
+        "docs/current-state.md"
+      ],
+      "fileBoundaries": [
+        "Schedule route/components.",
+        "Schedule, job, and field-handoff read models.",
+        "Do not rewrite shared readiness helpers unless coordinated with project-readiness-stride-v1.",
+        "Do not sweep unrelated schedule, project, portal, or docs files."
+      ],
+      "validation": [
+        "pnpm.cmd --filter @floorconnector/web typecheck",
+        "pnpm.cmd --filter @floorconnector/web lint",
+        "pnpm.cmd fc:preflight:fast",
+        "git diff --check"
+      ],
+      "additionalValidationGuidance": "Run focused unit/read-model tests when business shaping logic changes; if no tests are added, explain why presentation-only or existing coverage is sufficient.",
+      "dependencyStatus": "may run in parallel only if it avoids shared readiness helper rewrites; should merge after project-readiness-stride-v1 when readiness language overlaps"
+    },
+    {
+      "name": "portal-operational-trust-stride-v1",
+      "branch": "stream/portal-operational-trust-stride-v1",
+      "worktree": "C:/FC-worktrees/portal-operational-trust-stride",
+      "prompt": ".codex/waves/ops-core-continuity-v4-ai-proposed/prompts/portal-operational-trust-stride-v1.md",
+      "risk": "medium",
+      "productOutcome": "Clarify customer-safe portal continuity across project, contract, invoice, payment, and shared document review paths.",
+      "expectedFiles": [
+        "apps/web/app/portal",
+        "apps/web/lib/portal",
+        "docs/current-state.md"
+      ],
+      "fileBoundaries": [
+        "Portal routes/components.",
+        "Portal tenant-safe read/display helpers.",
+        "Do not redefine readiness rules; consume or mirror project-readiness language only after the project stream establishes it.",
+        "Do not sweep unrelated portal, project, financial, auth, or docs files."
+      ],
+      "validation": [
+        "pnpm.cmd --filter @floorconnector/web typecheck",
+        "pnpm.cmd --filter @floorconnector/web lint",
+        "pnpm.cmd fc:preflight:fast",
+        "git diff --check"
+      ],
+      "additionalValidationGuidance": "Run focused unit/read-model tests when business shaping logic changes; if no tests are added, explain why presentation-only or existing coverage is sufficient.",
+      "dependencyStatus": "prefer after project-readiness-stride-v1; independent only when it does not define readiness behavior"
+    }
+  ]
+}

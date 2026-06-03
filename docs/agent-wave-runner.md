@@ -382,6 +382,13 @@ first, start with git status and fetch, use existing canonical records, avoid
 schema unless explicitly approved, run validation, commit only the completed
 slice, and report final status honestly.
 
+Generated and hand-written stream prompts should carry the reusable
+`## FloorConnector Codex Prompt Baseline Safeguards` section from
+`.codex/waves/templates/stream-prompt.md`. The section standardizes the session
+name, git start, narrow scope, architecture safety, dependency, validation,
+draft PR, commit, and final-report requirements that each future Codex stream
+must report.
+
 ## AI-Driven Generation
 
 Wave Runner V1.5 adds a separate proposed-wave generator:
@@ -484,6 +491,10 @@ The runner also applies additional local validation:
   risk was explicitly allowed
 - every stream must include a clear product outcome, acceptance criteria,
   validation commands, and git completion requirements in `promptBody`
+- every `promptBody` should include the
+  `## FloorConnector Codex Prompt Baseline Safeguards` section so future agents
+  get the shared no-schema, no-silo, dependency, human-approval, draft PR, and
+  final-reporting rules in the prompt itself
 - every `promptBody` must include the exact git and validation guardrails:
   `Start by checking git status, current branch, and ahead/behind state.`,
   `Run git fetch origin.`, `Avoid staging unrelated changes.`,

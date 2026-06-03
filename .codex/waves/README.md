@@ -16,6 +16,11 @@ Node runner, approval gate, and merge process.
 - Human review remains required before merge.
 - Wave files are coordination inputs, not permission to implement outside the
   named scope.
+- New or generated stream prompts should include the reusable
+  `## FloorConnector Codex Prompt Baseline Safeguards` section from
+  `.codex/waves/templates/stream-prompt.md`. That block carries the required
+  session name, git start, scope, architecture safety, dependency, validation,
+  draft PR, commit, and final-reporting rules for future Codex work.
 
 ## Draft PR Rule
 
@@ -208,7 +213,8 @@ the runner's additional safety validation. Valid AI proposals must contain 3 to
 avoid blocked-file-write/docs-read/cleanup-check/validation-only/sandbox
 themes, keep branches under `stream/<kebab-case-name>`, keep worktrees under
 `C:/FC-worktrees/`, and include prompt bodies with the exact required git,
-validation, staging, commit, and final reporting sentences. Before final
+validation, staging, commit, final reporting sentences, and the
+`FloorConnector Codex Prompt Baseline Safeguards` section. Before final
 validation, the runner may inject a `## Required Git And Validation Workflow`
 block only into otherwise-valid product stream prompts that used equivalent
 wording but missed the exact required sentences. This normalization does not
