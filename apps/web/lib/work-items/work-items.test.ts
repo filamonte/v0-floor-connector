@@ -5,6 +5,7 @@ import type { WorkItem } from "@floorconnector/types";
 
 import { executionAttachmentSubjectTypeSchema } from "../execution-attachments/schemas";
 import {
+  buildWorkItemOwnershipDisplay,
   buildContextRichWorkItemPreview,
   buildEstimateWorkQueue,
   buildProjectEstimateHandoffSummary,
@@ -312,6 +313,73 @@ void test("dashboard work item selector prefers assigned items when available", 
     selected.items.map((item) => item.title),
     ["Assigned follow-up"]
   );
+});
+
+void test("work item ownership display distinguishes assigned owner from requester", () => {
+  const ownership = buildWorkItemOwnershipDisplay({
+    workItem: {
+      ...baseWorkItem,
+      assignedPersonId: "person-estimator",
+      createdByUserId: "user-requester",
+      metadata: {
+        estimateWorkType: "review_estimate"
+      }
+    },
+    assignedPerson: {
+      displayName: "Erin Estimator"
+    },
+    createdByPerson: {
+      displayName: "Oscar Owner"
+    }
+  });
+
+  assert.equal(ownership.assignedOwnerName, "Erin Estimator");
+  assert.equal(ownership.requesterName, "Oscar Owner");
+  assert.equal(ownership.assignedOwnerLabel, "Assigned owner: Erin Estimator");
+  assert.equal(ownership.requesterLabel, "Requested by: Oscar Owner");
+  assert.equal(ownership.stateLabel, "Ready for review");
+});
+
+void test("work item ownership display reports truthful missing owner fallback", () => {
+  const ownership = buildWorkItemOwnershipDisplay({
+    workItem: {
+      ...baseWorkItem,
+      assignedPersonId: null,
+      createdByUserId: null,
+      metadata: {}
+    },
+    assignedPerson: null,
+    createdByPerson: null
+  });
+
+  assert.equal(ownership.assignedOwnerName, null);
+  assert.equal(ownership.requesterName, null);
+  assert.equal(ownership.assignedOwnerLabel, "Assigned owner: not assigned");
+  assert.equal(ownership.requesterLabel, "Requested by: not captured");
+  assert.equal(ownership.stateLabel, "Open");
+});
+
+void test("work item ownership display does not infer owner from unrelated context", () => {
+  const ownership = buildWorkItemOwnershipDisplay({
+    workItem: {
+      ...baseWorkItem,
+      assignedPersonId: null,
+      createdByUserId: null,
+      metadata: {
+        customerName: "Taylor Customer",
+        projectName: "Garage floor",
+        blockerReason: "Need updated moisture readings."
+      }
+    },
+    assignedPerson: null,
+    createdByPerson: null
+  });
+
+  assert.equal(ownership.assignedOwnerName, null);
+  assert.equal(ownership.requesterName, null);
+  assert.equal(ownership.assignedOwnerLabel, "Assigned owner: not assigned");
+  assert.equal(ownership.requesterLabel, "Requested by: not captured");
+  assert.equal(ownership.stateLabel, "Blocked");
 });
 
 void test("context-rich work item preview surfaces instructions measurements and due state", () => {

@@ -96,6 +96,7 @@ import {
   getOperationalCueWorkItemBridgeAction
 } from "@/lib/work-items/prefill";
 import {
+  buildWorkItemOwnershipDisplay,
   getEstimateWorkItemType,
   getWorkItemBlockerReason,
   getWorkItemDueState,
@@ -293,6 +294,11 @@ function EstimateHandoffPanel({
             const fieldState = getWorkItemFieldState(workItem);
             const blockerReason = getWorkItemBlockerReason(workItem);
             const nextAction = getEstimateWorkNextAction(workItem);
+            const ownership = buildWorkItemOwnershipDisplay({
+              workItem,
+              assignedPerson: workItem.assignedPerson,
+              createdByPerson: workItem.createdByPerson
+            });
 
             return (
               <article
@@ -320,8 +326,12 @@ function EstimateHandoffPanel({
                     <p className="mt-1 text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
                       {formatStatusLabel(workItem.status)} ·{" "}
                       {getEstimateWorkDueLabel(workItem, nowIso)} ·{" "}
-                      {workItem.assignedPerson?.displayName ?? "Unassigned"}
+                      {ownership.stateLabel}
                     </p>
+                    <div className="mt-2 grid gap-2 text-xs font-semibold uppercase tracking-[0.12em] text-slate-500 sm:grid-cols-2">
+                      <span>{ownership.assignedOwnerLabel}</span>
+                      <span>{ownership.requesterLabel}</span>
+                    </div>
                     <p className="mt-1 text-sm leading-6 text-slate-600">
                       {workItem.customer?.name ??
                         workItem.project?.name ??
@@ -467,7 +477,19 @@ function EstimateHandoffPacketPanel({
         </div>
       </div>
 
-      <div className="mt-4 grid gap-3 md:grid-cols-3">
+      <div className="mt-4 grid gap-3 md:grid-cols-4">
+        <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-3">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+            Source owner
+          </p>
+          <p className="mt-2 text-sm font-semibold text-slate-950">
+            {packet.sourceOwner.name ?? "Source owner not captured yet"}
+          </p>
+          <p className="mt-1 text-xs leading-5 text-slate-500">
+            Derived only from the linked opportunity creator when it maps to a
+            person.
+          </p>
+        </div>
         <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-3">
           <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
             Site assessment
@@ -1020,6 +1042,12 @@ export default async function EstimateDetailPage({
           name: estimate.project.name,
           status: estimate.project.status
         }
+      : null,
+    sourceOwner: sourceOpportunity?.createdByUserId
+      ? (people.find(
+          (person) =>
+            person.membershipUserId === sourceOpportunity.createdByUserId
+        ) ?? null)
       : null
   });
   const estimateHandoffWorkItems = selectEstimateWorkspaceHandoffWorkItems({

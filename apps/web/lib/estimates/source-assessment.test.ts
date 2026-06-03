@@ -117,6 +117,9 @@ void test("buildEstimateHandoffPacket derives site assessment scope story and li
     estimate: {
       id: "estimate-1",
       referenceNumber: "EST-100"
+    },
+    sourceOwner: {
+      displayName: "Sam Site Assessor"
     }
   });
 
@@ -124,6 +127,8 @@ void test("buildEstimateHandoffPacket derives site assessment scope story and li
   assert.equal(packet.estimate?.href, "/estimates/estimate-1");
   assert.equal(packet.project?.href, "/projects/project-1");
   assert.equal(packet.customer?.name, "Taylor Customer");
+  assert.equal(packet.sourceOwner.name, "Sam Site Assessor");
+  assert.equal(packet.sourceOwner.isCaptured, true);
   assert.equal(packet.siteAssessment.isCaptured, true);
   assert.equal(
     packet.scopeNotes.requirementsSummary,
@@ -168,6 +173,8 @@ void test("buildEstimateHandoffPacket reports truthful missing optional context"
 
   assert.equal(packet.siteAssessment.isCaptured, false);
   assert.equal(packet.project?.name, "Fallback project");
+  assert.equal(packet.sourceOwner.name, null);
+  assert.equal(packet.sourceOwner.isCaptured, false);
   assert.equal(packet.scopeNotes.requirementsSummary, null);
   assert.equal(packet.measurements.groups.length, 0);
   assert.equal(packet.attachments.count, 0);

@@ -57,6 +57,7 @@ import {
 } from "@/lib/work-items/actions";
 import { listWorkItems, type WorkItemListItem } from "@/lib/work-items/data";
 import {
+  buildWorkItemOwnershipDisplay,
   buildEstimateWorkQueue,
   filterDashboardWorkItems,
   getEstimateWorkItemType,
@@ -358,9 +359,11 @@ function buildEstimateWorkDashboardItem(
     getMetadataString(workItem.metadata.safeNextAction) ??
     null;
   const dueLabel = formatWorkItemDueState(workItem, nowIso);
-  const assigneeLabel = workItem.assignedPerson?.displayName
-    ? `Owner: ${workItem.assignedPerson.displayName}`
-    : "Owner: unassigned";
+  const ownership = buildWorkItemOwnershipDisplay({
+    workItem,
+    assignedPerson: workItem.assignedPerson,
+    createdByPerson: workItem.createdByPerson
+  });
   const sourceLabel = workItem.sourceType
     ? `${labelize(workItem.sourceType)} source`
     : "Internal source";
@@ -371,7 +374,9 @@ function buildEstimateWorkDashboardItem(
     .filter(Boolean)
     .join(" - ");
   const supportingMeta = [
-    assigneeLabel,
+    ownership.assignedOwnerLabel,
+    ownership.requesterLabel,
+    `State: ${ownership.stateLabel}`,
     blockerReason ? `Blocked: ${blockerReason}` : null,
     nextAction ? `Next action: ${nextAction}` : null
   ].filter(Boolean);
@@ -394,7 +399,9 @@ function buildEstimateWorkDashboardItem(
       workItem.description,
       workTypeLabel,
       dueLabel,
-      assigneeLabel,
+      ownership.assignedOwnerLabel,
+      ownership.requesterLabel,
+      ownership.stateLabel,
       blockerReason,
       nextAction,
       workItem.customer?.name,

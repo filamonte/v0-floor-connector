@@ -58,6 +58,19 @@ export type ProjectEstimateHandoffSummary<T extends WorkItem = WorkItem> = {
   nextItem: T | null;
 };
 
+type WorkItemPersonDisplay = {
+  displayName: string;
+} | null;
+
+export type WorkItemOwnershipDisplay = {
+  assignedOwnerLabel: string;
+  assignedOwnerName: string | null;
+  requesterLabel: string;
+  requesterName: string | null;
+  stateLabel: string;
+  compactLabel: string;
+};
+
 const priorityRank: Record<WorkItemPriority, number> = {
   urgent: 0,
   high: 1,
@@ -163,6 +176,53 @@ export function getWorkItemFieldState(
 
 export function getWorkItemBlockerReason(workItem: Pick<WorkItem, "metadata">) {
   return trimString(workItem.metadata.blockerReason);
+}
+
+export function buildWorkItemOwnershipDisplay(input: {
+  workItem: Pick<WorkItem, "assignedPersonId" | "createdByUserId" | "metadata">;
+  assignedPerson?: WorkItemPersonDisplay;
+  createdByPerson?: WorkItemPersonDisplay;
+}): WorkItemOwnershipDisplay {
+  const assignedOwnerName = trimString(input.assignedPerson?.displayName);
+  const requesterName = trimString(input.createdByPerson?.displayName);
+  const fieldState = getWorkItemFieldState({
+    metadata: input.workItem.metadata,
+    status: "open"
+  });
+  const workType = getEstimateWorkItemType(input.workItem);
+  const waitingOnCurrentOwner =
+    input.workItem.metadata.waitingOnCurrentOwner === true;
+  const stateLabel =
+    fieldState === "blocked"
+      ? "Blocked"
+      : workType === "review_estimate" ||
+          workType === "approve_send" ||
+          input.workItem.metadata.estimateWorkStatus === "ready_for_review"
+        ? "Ready for review"
+        : waitingOnCurrentOwner
+          ? "Waiting on owner"
+          : "Open";
+
+  return {
+    assignedOwnerLabel: assignedOwnerName
+      ? `Assigned owner: ${assignedOwnerName}`
+      : "Assigned owner: not assigned",
+    assignedOwnerName,
+    requesterLabel: requesterName
+      ? `Requested by: ${requesterName}`
+      : input.workItem.createdByUserId
+        ? "Requested by: captured user"
+        : "Requested by: not captured",
+    requesterName,
+    stateLabel,
+    compactLabel: [
+      assignedOwnerName ?? "Not assigned",
+      requesterName ? `requested by ${requesterName}` : null,
+      stateLabel
+    ]
+      .filter(Boolean)
+      .join(" | ")
+  };
 }
 
 export function getWorkItemCompletionNote(

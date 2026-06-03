@@ -32,12 +32,16 @@ completion.
   ready-for-review, blocked, and follow-ups-due queues.
 - Dashboard `My Work` now consumes those same selectors and shows explicit
   estimate handoff lenses for assigned estimate work, waiting on me, ready for
-  review, blocked estimate work, and customer follow-ups due.
+  review, blocked estimate work, and customer follow-ups due. Rows now clarify
+  assigned owner, requester when the creating user maps to an existing Person,
+  waiting/blocked/review state, due state, blocker reason, and next action from
+  existing Work Item context only.
 - Estimate Workspace now shows a compact Estimate Work panel for open
   estimate handoff Work Items connected by estimate, project, or linked
   opportunity context. The panel can use the existing assignee-or-manager Work
   Item actions to mark work in progress, save a blocker reason, or complete the
-  Work Item.
+  Work Item, and its rows separate assigned owner, requester, and current
+  waiting/blocked/review state without adding role persistence.
 - Estimate Workspace now also has compact Request Missing Info and Request
   Review shortcuts. These shortcuts prefill the existing internal Work Item
   creation form with `kind = estimate_follow_up`, source-locked estimate
@@ -49,12 +53,14 @@ completion.
   site-assessment state, requirements, notes, reviewed measurement groups,
   observations, attachments, customer/project context, and current estimate
   link. It flags missing source context for estimate production without writing
-  new state.
+  new state, and shows source owner only when the linked opportunity creator
+  maps to an existing Person.
 - Project Workspace now shows read-only estimate handoff continuity for open
   estimate-production Work Items connected to the project, its estimates, or
   linked opportunity. The project panel summarizes open, blocked,
-  ready-for-review, and follow-up-due work and links back to the canonical Work
-  Item, estimate, or source record.
+  ready-for-review, follow-up-due, next-most-urgent work, assigned owner, and
+  requester context and links back to the canonical Work Item, estimate, or
+  source record.
 - Work Items remain internal-only and must be submitted by a contractor.
 
 ## Boundaries
@@ -67,6 +73,9 @@ completion.
 - No portal/customer surface reads these internal Work Items.
 - No separate handoff-packet persistence, source snapshot, project-owned task
   board, or estimate-generation state is added.
+- No onsite rep, relationship owner, sales credit owner, commission owner,
+  payroll owner, or send-as user is inferred from task assignment or requester
+  display.
 - Dedicated missing-info and review-request creation shortcuts are implemented
   as Work Item form prefills only. Ready-for-review estimate status transitions,
   next-action editing on existing Work Items, send-as workflow, and commission

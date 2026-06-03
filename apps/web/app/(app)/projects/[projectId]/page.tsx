@@ -184,6 +184,7 @@ import {
 } from "@/lib/work-items/data";
 import { buildProjectGuidanceWorkItemPrefill } from "@/lib/work-items/prefill";
 import {
+  buildWorkItemOwnershipDisplay,
   buildProjectEstimateHandoffSummary,
   getEstimateWorkItemType,
   getWorkItemBlockerReason,
@@ -626,7 +627,13 @@ function ProjectEstimateHandoffContinuityPanel({
           </p>
           <p className="mt-1">
             {getProjectEstimateWorkDueLabel(summary.nextItem, nowIso)} ·{" "}
-            {summary.nextItem.assignedPerson?.displayName ?? "Unassigned"}
+            {
+              buildWorkItemOwnershipDisplay({
+                workItem: summary.nextItem,
+                assignedPerson: summary.nextItem.assignedPerson,
+                createdByPerson: summary.nextItem.createdByPerson
+              }).assignedOwnerLabel
+            }
           </p>
         </div>
       ) : null}
@@ -639,6 +646,11 @@ function ProjectEstimateHandoffContinuityPanel({
             const nextAction = getProjectEstimateWorkNextAction(workItem);
             const estimateId = getProjectEstimateWorkEstimateId(workItem);
             const estimate = estimateId ? estimateById.get(estimateId) : null;
+            const ownership = buildWorkItemOwnershipDisplay({
+              workItem,
+              assignedPerson: workItem.assignedPerson,
+              createdByPerson: workItem.createdByPerson
+            });
 
             return (
               <article
@@ -666,8 +678,12 @@ function ProjectEstimateHandoffContinuityPanel({
                     <p className="mt-1 text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
                       {formatStatusLabel(workItem.status)} ·{" "}
                       {getProjectEstimateWorkDueLabel(workItem, nowIso)} ·{" "}
-                      {workItem.assignedPerson?.displayName ?? "Unassigned"}
+                      {ownership.stateLabel}
                     </p>
+                    <div className="mt-2 grid gap-2 text-xs font-semibold uppercase tracking-[0.12em] text-slate-500 sm:grid-cols-2">
+                      <span>{ownership.assignedOwnerLabel}</span>
+                      <span>{ownership.requesterLabel}</span>
+                    </div>
                     {blockerReason ? (
                       <p className="mt-2 text-sm leading-6 text-rose-800">
                         Blocker: {blockerReason}

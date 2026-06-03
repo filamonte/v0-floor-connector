@@ -8,6 +8,7 @@ import type {
   OpportunityAttachment as OpportunityAttachmentRecord,
   OpportunityObservation as OpportunityObservationRecord,
   OpportunityMeasurement as OpportunityMeasurementRecord,
+  ProfileId,
   SiteAssessmentStatus
 } from "@floorconnector/types";
 
@@ -58,6 +59,7 @@ type OpportunityRow = {
   qualified_at: string | null;
   converted_at: string | null;
   lost_at: string | null;
+  created_by: string | null;
   created_at: string;
   updated_at: string;
   customers?: {
@@ -183,6 +185,7 @@ type CustomerContactLookupRow = {
 };
 
 export type OpportunityListItem = OpportunityRecord & {
+  createdByUserId: ProfileId | null;
   primaryContact: Awaited<ReturnType<typeof listContactsByIds>> extends Map<
     string,
     infer T
@@ -263,6 +266,7 @@ const opportunitySelect = `
   qualified_at,
   converted_at,
   lost_at,
+  created_by,
   created_at,
   updated_at,
   customers (
@@ -528,7 +532,7 @@ function isIdRow(value: unknown): value is IdRow {
 function mapOpportunity(
   row: OpportunityRow,
   primaryContact?: OpportunityListItem["primaryContact"]
-): OpportunityRecord {
+): OpportunityRecord & { createdByUserId: ProfileId | null } {
   const resolvedContact = primaryContact ?? null;
 
   return {
@@ -570,6 +574,7 @@ function mapOpportunity(
     qualifiedAt: row.qualified_at,
     convertedAt: row.converted_at,
     lostAt: row.lost_at,
+    createdByUserId: row.created_by,
     createdAt: row.created_at,
     updatedAt: row.updated_at
   };

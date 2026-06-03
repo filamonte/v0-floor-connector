@@ -26,6 +26,7 @@ type SourceOpportunity = {
     name: string;
     companyName?: string | null;
   } | null;
+  createdByUserId?: string | null;
   project?: {
     id: string;
     name: string;
@@ -99,6 +100,10 @@ export type EstimateHandoffPacket = {
     id: string;
     name: string;
   } | null;
+  sourceOwner: {
+    name: string | null;
+    isCaptured: boolean;
+  };
   siteAssessment: {
     status: string | null;
     scheduledAt: string | null;
@@ -297,6 +302,9 @@ export function buildEstimateHandoffPacket(input: {
     name: string;
     status?: string | null;
   } | null;
+  sourceOwner?: {
+    displayName: string;
+  } | null;
 }): EstimateHandoffPacket {
   const opportunity = input.opportunity ?? null;
   const assessmentContext = buildEstimateSourceAssessmentContext(opportunity);
@@ -371,6 +379,10 @@ export function buildEstimateHandoffPacket(input: {
           name: customer.name
         }
       : null,
+    sourceOwner: {
+      name: trimToNull(input.sourceOwner?.displayName),
+      isCaptured: Boolean(trimToNull(input.sourceOwner?.displayName))
+    },
     siteAssessment: {
       status: opportunity?.siteAssessmentStatus ?? null,
       scheduledAt: opportunity?.siteAssessmentScheduledAt ?? null,

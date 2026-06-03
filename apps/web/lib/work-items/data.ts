@@ -114,6 +114,13 @@ export type WorkItemListItem = WorkItem & {
     isAssignable: boolean;
     membershipUserId: ProfileId | null;
   } | null;
+  createdByPerson: {
+    id: PersonId;
+    displayName: string;
+    isActive: boolean;
+    isAssignable: boolean;
+    membershipUserId: ProfileId | null;
+  } | null;
   customer: {
     id: CustomerId;
     name: string;
@@ -319,6 +326,7 @@ function mapWorkItem(row: WorkItemRow): WorkItemListItem {
           membershipUserId: assignedPerson.membership_user_id
         }
       : null,
+    createdByPerson: null,
     customer: customer
       ? {
           id: customer.id,
@@ -338,6 +346,64 @@ function mapWorkItem(row: WorkItemRow): WorkItemListItem {
 
 function unwrapOne<T>(value: T | T[] | null | undefined): T | null {
   return Array.isArray(value) ? (value[0] ?? null) : (value ?? null);
+}
+
+function mapWorkItemPersonRelation(
+  row: WorkItemPersonRelation
+): WorkItemListItem["createdByPerson"] {
+  return {
+    id: row.id,
+    displayName: row.display_name,
+    isActive: row.is_active,
+    isAssignable: row.is_assignable,
+    membershipUserId: row.membership_user_id
+  };
+}
+
+async function hydrateWorkItemRequesterPeople(
+  organizationId: string,
+  workItems: WorkItemListItem[]
+) {
+  const requesterUserIds = Array.from(
+    new Set(
+      workItems
+        .map((workItem) => workItem.createdByUserId)
+        .filter((value): value is ProfileId => Boolean(value))
+    )
+  );
+
+  if (requesterUserIds.length === 0) {
+    return workItems;
+  }
+
+  const supabase = await getSupabaseServerClient();
+  const response = await supabase
+    .from("people")
+    .select("id, display_name, is_active, is_assignable, membership_user_id")
+    .eq("company_id", organizationId)
+    .in("membership_user_id", requesterUserIds);
+
+  if (response.error) {
+    throw new Error(
+      `Unable to load work item requesters: ${response.error.message}`
+    );
+  }
+
+  const peopleByUserId = new Map(
+    ((response.data ?? []) as WorkItemPersonRelation[])
+      .filter((person) => person.membership_user_id)
+      .map((person) => [
+        person.membership_user_id as ProfileId,
+        mapWorkItemPersonRelation(person)
+      ])
+  );
+
+  return workItems.map((workItem) => ({
+    ...workItem,
+    createdByPerson: workItem.createdByUserId
+      ? (peopleByUserId.get(workItem.createdByUserId) ?? null)
+      : null
+  }));
 }
 
 async function assertRecordBelongsToCompany(input: {
@@ -549,7 +615,10 @@ export const listWorkItems = cache(
     }
 
     return sortWorkItemsForQueue(
-      ((response.data ?? []) as WorkItemRow[]).map(mapWorkItem)
+      await hydrateWorkItemRequesterPeople(
+        scope.organizationId,
+        ((response.data ?? []) as WorkItemRow[]).map(mapWorkItem)
+      )
     );
   }
 );
@@ -599,7 +668,10 @@ export async function listAssignedWorkItemsForCurrentUser(
 
   return {
     currentPerson,
-    workItems: ((response.data ?? []) as WorkItemRow[]).map(mapWorkItem)
+    workItems: await hydrateWorkItemRequesterPeople(
+      scope.organizationId,
+      ((response.data ?? []) as WorkItemRow[]).map(mapWorkItem)
+    )
   };
 }
 
@@ -664,7 +736,10 @@ export async function listWorkItemsForSource(input: {
     );
   }
 
-  return ((response.data ?? []) as WorkItemRow[]).map(mapWorkItem);
+  return hydrateWorkItemRequesterPeople(
+    scope.organizationId,
+    ((response.data ?? []) as WorkItemRow[]).map(mapWorkItem)
+  );
 }
 
 export async function listWorkItemsForProject(
@@ -697,7 +772,10 @@ export async function listWorkItemsForProject(
     );
   }
 
-  return ((response.data ?? []) as WorkItemRow[]).map(mapWorkItem);
+  return hydrateWorkItemRequesterPeople(
+    scope.organizationId,
+    ((response.data ?? []) as WorkItemRow[]).map(mapWorkItem)
+  );
 }
 
 export async function listWorkItemsForJob(jobId: string, next = "/dashboard") {
@@ -727,7 +805,10 @@ export async function listWorkItemsForJob(jobId: string, next = "/dashboard") {
     throw new Error(`Unable to load job work items: ${response.error.message}`);
   }
 
-  return ((response.data ?? []) as WorkItemRow[]).map(mapWorkItem);
+  return hydrateWorkItemRequesterPeople(
+    scope.organizationId,
+    ((response.data ?? []) as WorkItemRow[]).map(mapWorkItem)
+  );
 }
 
 export async function createWorkItem(input: WorkItemCreateInput) {
