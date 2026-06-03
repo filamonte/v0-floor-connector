@@ -353,6 +353,97 @@ export function buildEstimateHandoffWorkItemPrefill(input: {
   };
 }
 
+function getEstimateWorkspaceShortcutTitle(input: {
+  type: Extract<
+    EstimateHandoffWorkItemType,
+    "request_missing_info" | "review_estimate"
+  >;
+  estimateReference: string;
+}) {
+  switch (input.type) {
+    case "request_missing_info":
+      return `Request missing info for ${input.estimateReference}`;
+    case "review_estimate":
+      return `Review ${input.estimateReference} before send`;
+  }
+}
+
+function getEstimateWorkspaceShortcutNextAction(
+  type: Extract<
+    EstimateHandoffWorkItemType,
+    "request_missing_info" | "review_estimate"
+  >
+) {
+  switch (type) {
+    case "request_missing_info":
+      return "Collect the missing photos, measurements, coating condition, customer approval, or scope details blocking estimate completion.";
+    case "review_estimate":
+      return "Review estimate scope, pricing, exclusions, and send readiness before the estimate is sent to the customer.";
+  }
+}
+
+export function buildEstimateWorkspaceShortcutWorkItemPrefill(input: {
+  estimateId: string;
+  estimateReference: string;
+  estimateStatus: string;
+  projectId: string;
+  projectName?: string | null;
+  customerName?: string | null;
+  opportunityId?: string | null;
+  type: Extract<
+    EstimateHandoffWorkItemType,
+    "request_missing_info" | "review_estimate"
+  >;
+}): CueWorkItemPrefill & {
+  sourceType: WorkItemSourceType;
+  sourceId: string;
+  linkPath: string;
+} {
+  const nextAction = getEstimateWorkspaceShortcutNextAction(input.type);
+
+  return {
+    title: getEstimateWorkspaceShortcutTitle({
+      type: input.type,
+      estimateReference: input.estimateReference
+    }),
+    description: compactDescription([
+      "Created from the Estimate Workspace handoff shortcuts. Confirm the owner, due date, and context before submitting this internal Work Item.",
+      input.customerName ? `Customer: ${input.customerName}` : null,
+      input.projectName ? `Project: ${input.projectName}` : null,
+      `Estimate: ${input.estimateReference}`,
+      `Estimate status: ${labelize(input.estimateStatus)}`,
+      `Next action: ${nextAction}`
+    ]),
+    dueAt: null,
+    priority: input.type === "request_missing_info" ? "high" : "normal",
+    kind: "estimate_follow_up",
+    dedupeKey: `estimate:${input.estimateId}:estimate_handoff:${input.type}`,
+    sourceType: "estimate",
+    sourceId: input.estimateId,
+    linkPath: `/estimates/${input.estimateId}`,
+    metadata: {
+      cue: "estimate_workspace_shortcut",
+      estimateWork: true,
+      estimateWorkType: input.type,
+      estimateWorkStatus:
+        input.type === "review_estimate" ? "ready_for_review" : "open",
+      sourceRecordType: "estimate",
+      estimateId: input.estimateId,
+      projectId: input.projectId,
+      opportunityId: input.opportunityId ?? null,
+      nextAction,
+      roleSlots: {
+        onsiteRepPersonId: null,
+        relationshipOwnerPersonId: null,
+        estimateWriterPersonId: null,
+        followUpOwnerPersonId: null,
+        salesCreditOwnerPersonId: null,
+        sendAsUserId: null
+      }
+    }
+  };
+}
+
 export function buildAppointmentCueWorkItemPrefill(input: {
   appointmentId: string;
   title: string;

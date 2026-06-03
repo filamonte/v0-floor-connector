@@ -86,6 +86,7 @@ import {
   type WorkItemListItem
 } from "@/lib/work-items/data";
 import {
+  buildEstimateWorkspaceShortcutWorkItemPrefill,
   buildOperationalCueWorkItemPrefill,
   getOperationalCueWorkItemBridgeAction
 } from "@/lib/work-items/prefill";
@@ -240,10 +241,12 @@ function EstimateHandoffActionButton({
 
 function EstimateHandoffPanel({
   workItems,
-  returnTo
+  returnTo,
+  shortcutBaseHref
 }: {
   workItems: WorkItemListItem[];
   returnTo: string;
+  shortcutBaseHref: string;
 }) {
   const nowIso = new Date().toISOString();
 
@@ -262,6 +265,21 @@ function EstimateHandoffPanel({
         <span className="inline-flex w-fit rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-slate-600">
           {workItems.length} open
         </span>
+      </div>
+
+      <div className="mt-4 flex flex-wrap gap-2">
+        <Link
+          href={`${shortcutBaseHref}?workItemShortcut=request_missing_info#work-items`}
+          className="inline-flex h-8 items-center justify-center border border-amber-200 bg-white px-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-amber-900 transition hover:border-[#d8731f] hover:text-slate-950"
+        >
+          Request missing info
+        </Link>
+        <Link
+          href={`${shortcutBaseHref}?workItemShortcut=review_estimate#work-items`}
+          className="inline-flex h-8 items-center justify-center border border-slate-300 bg-white px-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-600 transition hover:border-[#d8731f] hover:text-slate-950"
+        >
+          Request review
+        </Link>
       </div>
 
       <div className="mt-4 space-y-3">
@@ -565,6 +583,7 @@ type EstimateDetailPageProps = {
     message?: string;
     showNextSteps?: string;
     workItemCue?: string;
+    workItemShortcut?: string;
   }>;
 };
 
@@ -736,7 +755,19 @@ export default async function EstimateDetailPage({
     ) ?? null;
   const estimateWorkItemPrefill = selectedWorkItemCue
     ? buildOperationalCueWorkItemPrefill({ cue: selectedWorkItemCue })
-    : null;
+    : resolvedSearchParams.workItemShortcut === "request_missing_info" ||
+        resolvedSearchParams.workItemShortcut === "review_estimate"
+      ? buildEstimateWorkspaceShortcutWorkItemPrefill({
+          estimateId: estimate.id,
+          estimateReference: estimate.referenceNumber,
+          estimateStatus: estimate.status,
+          projectId: estimate.projectId,
+          projectName: estimate.project?.name ?? null,
+          customerName: estimate.customer?.name ?? null,
+          opportunityId: estimate.opportunity?.id ?? null,
+          type: resolvedSearchParams.workItemShortcut
+        })
+      : null;
   const defaultEstimateWorkItemSource = estimateWorkItemPrefill ?? {
     sourceType: "estimate" as const,
     sourceId: estimate.id,
@@ -1650,6 +1681,7 @@ export default async function EstimateDetailPage({
                 <EstimateHandoffPanel
                   workItems={estimateHandoffWorkItems}
                   returnTo={`/estimates/${estimate.id}#work-items`}
+                  shortcutBaseHref={`/estimates/${estimate.id}`}
                 />
               </div>
 
@@ -1672,7 +1704,7 @@ export default async function EstimateDetailPage({
                   <div className="mt-4">
                     <p className="mb-4 text-sm leading-6 text-slate-600">
                       {estimateWorkItemPrefill
-                        ? "Prefilled from a deterministic estimate cue. Review the owner, due date, and context; nothing is created until you submit."
+                        ? "Prefilled from an estimate handoff cue or shortcut. Review the owner, due date, and context; nothing is created until you submit."
                         : "Use this form when estimate follow-through needs an owner, due date, and explicit completion state."}
                     </p>
                     <WorkItemCreateForm

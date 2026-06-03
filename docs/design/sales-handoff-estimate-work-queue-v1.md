@@ -38,6 +38,12 @@ completion.
   opportunity context. The panel can use the existing assignee-or-manager Work
   Item actions to mark work in progress, save a blocker reason, or complete the
   Work Item.
+- Estimate Workspace now also has compact Request Missing Info and Request
+  Review shortcuts. These shortcuts prefill the existing internal Work Item
+  creation form with `kind = estimate_follow_up`, source-locked estimate
+  context, estimate/project/opportunity metadata where available, and
+  `estimateWorkType = request_missing_info` or `review_estimate`. The Work Item
+  is created only after a contractor submits the existing form.
 - Project Workspace now shows read-only estimate handoff continuity for open
   estimate-production Work Items connected to the project, its estimates, or
   linked opportunity. The project panel summarizes open, blocked,
@@ -53,10 +59,11 @@ completion.
 - No calendar appointment is created by the Work Item.
 - No commission, payroll, or legal wage behavior is implemented.
 - No portal/customer surface reads these internal Work Items.
-- Ready-for-review transitions, next-action editing, dedicated missing-info
-  creation shortcuts, send-as workflow, and commission ownership remain planned
-  follow-up behavior unless a later slice adds safe canonical Work Item
-  mutations for them.
+- Dedicated missing-info and review-request creation shortcuts are implemented
+  as Work Item form prefills only. Ready-for-review estimate status transitions,
+  next-action editing on existing Work Items, send-as workflow, and commission
+  ownership remain planned follow-up behavior unless a later slice adds safe
+  canonical mutations for them.
 - Project Workspace estimate handoff continuity is read-only in V1; it does not
   add project-local Work Item actions or a project-owned task board.
 

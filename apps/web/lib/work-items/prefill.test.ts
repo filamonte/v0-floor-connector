@@ -4,6 +4,7 @@ import test from "node:test";
 import {
   buildAppointmentCueWorkItemPrefill,
   buildEstimateHandoffWorkItemPrefill,
+  buildEstimateWorkspaceShortcutWorkItemPrefill,
   buildOperationalCueWorkItemPrefill,
   buildOpportunityFollowUpWorkItemPrefill,
   buildProjectGuidanceWorkItemPrefill,
@@ -179,6 +180,98 @@ void test("estimate handoff prefill carries site assessment context without crea
     customerId: "",
     projectId: projectId,
     linkPath: `/leads/${opportunityId}`,
+    visibility: "internal",
+    dedupeKey: prefill.dedupeKey,
+    metadata: prefill.metadata
+  });
+
+  assert.equal(parsed.success, true);
+});
+
+void test("estimate workspace missing-info shortcut creates estimate source-locked prefill", () => {
+  const prefill = buildEstimateWorkspaceShortcutWorkItemPrefill({
+    estimateId,
+    estimateReference: "EST-100",
+    estimateStatus: "draft",
+    projectId,
+    projectName: "Garage floor",
+    customerName: "Taylor Customer",
+    opportunityId,
+    type: "request_missing_info"
+  });
+
+  assert.equal(prefill.kind, "estimate_follow_up");
+  assert.equal(prefill.priority, "high");
+  assert.equal(prefill.sourceType, "estimate");
+  assert.equal(prefill.sourceId, estimateId);
+  assert.equal(prefill.linkPath, `/estimates/${estimateId}`);
+  assert.equal(
+    prefill.dedupeKey,
+    `estimate:${estimateId}:estimate_handoff:request_missing_info`
+  );
+  assert.match(prefill.title, /Request missing info/);
+  assert.match(prefill.description ?? "", /Next action:/);
+  assert.equal(prefill.metadata.cue, "estimate_workspace_shortcut");
+  assert.equal(prefill.metadata.estimateWork, true);
+  assert.equal(prefill.metadata.estimateWorkType, "request_missing_info");
+  assert.equal(prefill.metadata.estimateWorkStatus, "open");
+  assert.equal(prefill.metadata.estimateId, estimateId);
+  assert.equal(prefill.metadata.projectId, projectId);
+  assert.equal(prefill.metadata.opportunityId, opportunityId);
+
+  const parsed = workItemCreateSchema.safeParse({
+    title: prefill.title,
+    description: prefill.description,
+    priority: prefill.priority,
+    kind: prefill.kind,
+    dueAt: prefill.dueAt,
+    assignedPersonId: "",
+    sourceType: prefill.sourceType,
+    sourceId: prefill.sourceId,
+    customerId: "",
+    projectId,
+    linkPath: prefill.linkPath,
+    visibility: "internal",
+    dedupeKey: prefill.dedupeKey,
+    metadata: prefill.metadata
+  });
+
+  assert.equal(parsed.success, true);
+});
+
+void test("estimate workspace review shortcut marks review work ready without mutating estimate status", () => {
+  const prefill = buildEstimateWorkspaceShortcutWorkItemPrefill({
+    estimateId,
+    estimateReference: "EST-100",
+    estimateStatus: "draft",
+    projectId,
+    projectName: "Garage floor",
+    customerName: "Taylor Customer",
+    type: "review_estimate"
+  });
+
+  assert.equal(prefill.kind, "estimate_follow_up");
+  assert.equal(prefill.priority, "normal");
+  assert.match(prefill.title, /Review EST-100 before send/);
+  assert.match(prefill.description ?? "", /scope, pricing, exclusions/);
+  assert.equal(prefill.metadata.estimateWorkType, "review_estimate");
+  assert.equal(prefill.metadata.estimateWorkStatus, "ready_for_review");
+  assert.equal(prefill.metadata.sourceRecordType, "estimate");
+  assert.equal(prefill.metadata.estimateId, estimateId);
+  assert.equal(prefill.metadata.projectId, projectId);
+
+  const parsed = workItemCreateSchema.safeParse({
+    title: prefill.title,
+    description: prefill.description,
+    priority: prefill.priority,
+    kind: prefill.kind,
+    dueAt: prefill.dueAt,
+    assignedPersonId: "",
+    sourceType: prefill.sourceType,
+    sourceId: prefill.sourceId,
+    customerId: "",
+    projectId,
+    linkPath: prefill.linkPath,
     visibility: "internal",
     dedupeKey: prefill.dedupeKey,
     metadata: prefill.metadata
