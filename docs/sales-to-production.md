@@ -217,9 +217,13 @@ Current implementation note:
   the opportunity or estimate context. The Lead Workspace can prefill an
   estimate handoff item from site-assessment and Scope Intake context, and pure
   read-model selectors can group estimate work by assigned, waiting-on-me,
-  ready-for-review, blocked, and follow-up-due lenses. This does not create an
-  estimate, send an estimate, create calendar events, assign commission,
-  calculate payroll, or replace canonical estimate status.
+  ready-for-review, blocked, and follow-up-due lenses. Estimate Workspace also
+  shows a read-only handoff packet derived from the linked opportunity's
+  site-assessment state, requirements, notes, measurement groups, observations,
+  attachments, and customer/project context. This does not create an estimate,
+  send an estimate, create calendar events, assign commission, calculate
+  payroll, add handoff-packet persistence, or replace canonical estimate
+  status.
 
 In the future flow, Measurements, Takeoff, and AI Capture should produce reviewed quantities and scope items that flow through System Templates and reusable catalog/cost items before generating estimate line items. The estimate remains where the contractor decides what to charge. Human review and approval are required before generated line items become part of a customer-facing estimate.
 

@@ -52,9 +52,14 @@ import {
   listEstimateCustomerEvents,
   listEstimatePortalRecipients
 } from "@/lib/estimates/data";
+import {
+  buildEstimateHandoffPacket,
+  type EstimateHandoffPacket
+} from "@/lib/estimates/source-assessment";
 import { listInvoices } from "@/lib/invoices/data";
 import { listJobAssignmentsByJobIds, listJobs } from "@/lib/jobs/data";
 import { getOperationalCuesForSubject } from "@/lib/operational-cues/data";
+import { getOpportunityById } from "@/lib/opportunities/data";
 import { getCueStateActionSupport } from "@/lib/cue-states/apply";
 import { buildOperationalCueIdentity } from "@/lib/cue-states/identity";
 import { getActiveOrganizationContext } from "@/lib/organizations/active-context";
@@ -419,6 +424,258 @@ function EstimateHandoffPanel({
   );
 }
 
+function EstimateHandoffPacketPanel({
+  packet
+}: {
+  packet: EstimateHandoffPacket;
+}) {
+  const siteAssessmentDetail = packet.siteAssessment.completedAt
+    ? `Completed ${formatDateTime(packet.siteAssessment.completedAt)}`
+    : packet.siteAssessment.scheduledAt
+      ? `Scheduled ${formatDateTime(packet.siteAssessment.scheduledAt)}`
+      : "No site assessment timing captured";
+
+  return (
+    <section className="rounded-lg border border-slate-200 bg-white px-4 py-4">
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+        <div>
+          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-500">
+            Estimate Handoff Packet
+          </p>
+          <p className="mt-2 max-w-[72ch] text-sm leading-6 text-slate-600">
+            Field story carried from the linked opportunity into estimate
+            production. This is derived from existing source records only.
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {packet.opportunity ? (
+            <Link
+              href={packet.opportunity.href}
+              className="inline-flex h-8 items-center justify-center border border-[#e2d4c5] bg-[#fbf5ee] px-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-[#5f4d40] transition hover:border-[#caac88] hover:bg-white hover:text-[#2b2118]"
+            >
+              Open lead
+            </Link>
+          ) : null}
+          {packet.project ? (
+            <Link
+              href={packet.project.href}
+              className="inline-flex h-8 items-center justify-center border border-slate-300 bg-white px-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-600 transition hover:border-[#d8731f] hover:text-slate-950"
+            >
+              Open project
+            </Link>
+          ) : null}
+        </div>
+      </div>
+
+      <div className="mt-4 grid gap-3 md:grid-cols-3">
+        <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-3">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+            Site assessment
+          </p>
+          <p className="mt-2 text-sm font-semibold capitalize text-slate-950">
+            {packet.siteAssessment.status
+              ? formatStatusLabel(packet.siteAssessment.status)
+              : "No packet captured"}
+          </p>
+          <p className="mt-1 text-xs leading-5 text-slate-500">
+            {siteAssessmentDetail}
+          </p>
+        </div>
+        <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-3">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+            Measurements
+          </p>
+          <p className="mt-2 text-sm font-semibold text-slate-950">
+            {packet.measurements.groups.length > 0
+              ? `${packet.measurements.groups.length} area${packet.measurements.groups.length === 1 ? "" : "s"}`
+              : "No reviewed measurements"}
+          </p>
+          <p className="mt-1 text-xs leading-5 text-slate-500">
+            {packet.measurements.count} raw measurement
+            {packet.measurements.count === 1 ? "" : "s"} linked
+          </p>
+        </div>
+        <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-3">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+            Photos/files
+          </p>
+          <p className="mt-2 text-sm font-semibold text-slate-950">
+            {packet.attachments.count > 0
+              ? `${packet.attachments.photoCount} photo${packet.attachments.photoCount === 1 ? "" : "s"} / ${packet.attachments.fileCount} file${packet.attachments.fileCount === 1 ? "" : "s"}`
+              : "No photos/files linked"}
+          </p>
+          <p className="mt-1 text-xs leading-5 text-slate-500">
+            {packet.attachments.count} source attachment
+            {packet.attachments.count === 1 ? "" : "s"}
+          </p>
+        </div>
+      </div>
+
+      <div className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
+        <div className="space-y-3">
+          <div className="rounded-lg border border-slate-200 bg-slate-50/80 px-4 py-3">
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+              Scope notes
+            </p>
+            <p className="mt-2 text-sm leading-6 text-slate-700">
+              {packet.scopeNotes.requirementsSummary ??
+                "No scope notes or requirements summary have been captured yet."}
+            </p>
+          </div>
+
+          <div className="rounded-lg border border-slate-200 bg-slate-50/80 px-4 py-3">
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+              Assumptions/exclusions
+            </p>
+            <p className="mt-2 text-sm leading-6 text-slate-700">
+              {packet.scopeNotes.internalNotes ??
+                "No internal assumptions or exclusions are captured in the linked lead notes yet."}
+            </p>
+          </div>
+
+          <div className="rounded-lg border border-slate-200 bg-slate-50/80 px-4 py-3">
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+              Measurements
+            </p>
+            {packet.measurements.groups.length > 0 ? (
+              <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                {packet.measurements.groups.slice(0, 4).map((group) => (
+                  <div
+                    key={group.key}
+                    className="rounded-md border border-slate-200 bg-white px-3 py-2"
+                  >
+                    <p className="text-sm font-semibold text-slate-950">
+                      {group.areaLabel}
+                    </p>
+                    <p className="mt-1 text-xs leading-5 text-slate-500">
+                      {[
+                        group.squareFootage
+                          ? `${group.squareFootage} sqft`
+                          : null,
+                        group.linearFootage
+                          ? `${group.linearFootage} lf`
+                          : null,
+                        group.count ? `${group.count} ea` : null
+                      ]
+                        .filter(Boolean)
+                        .join(" / ")}
+                    </p>
+                    {group.notes.length > 0 ? (
+                      <p className="mt-1 text-xs leading-5 text-slate-600">
+                        {group.notes.slice(0, 2).join(" ")}
+                      </p>
+                    ) : null}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="mt-2 text-sm leading-6 text-slate-500">
+                No reviewed measurements are linked yet.
+              </p>
+            )}
+          </div>
+        </div>
+
+        <div className="space-y-3">
+          <div className="rounded-lg border border-slate-200 bg-slate-50/80 px-4 py-3">
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+              Surface condition / prep needs
+            </p>
+            {packet.observations.items.length > 0 ? (
+              <div className="mt-3 space-y-2">
+                {packet.observations.items.map((observation) => (
+                  <div
+                    key={observation.id}
+                    className="rounded-md border border-slate-200 bg-white px-3 py-2"
+                  >
+                    <p className="text-sm font-semibold text-slate-950">
+                      {observation.title}
+                    </p>
+                    <p className="mt-1 text-xs leading-5 text-slate-500">
+                      {[
+                        observation.observationType
+                          ? formatStatusLabel(observation.observationType)
+                          : null,
+                        observation.severity
+                          ? formatStatusLabel(observation.severity)
+                          : null
+                      ]
+                        .filter(Boolean)
+                        .join(" / ") || "Observation"}
+                    </p>
+                    {observation.body ? (
+                      <p className="mt-1 text-sm leading-6 text-slate-600">
+                        {observation.body}
+                      </p>
+                    ) : null}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="mt-2 text-sm leading-6 text-slate-500">
+                No surface-condition observations are linked yet.
+              </p>
+            )}
+          </div>
+
+          <div className="rounded-lg border border-slate-200 bg-slate-50/80 px-4 py-3">
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+              Photos/files
+            </p>
+            {packet.attachments.items.length > 0 ? (
+              <div className="mt-3 space-y-2">
+                {packet.attachments.items.map((attachment) => (
+                  <div
+                    key={attachment.id}
+                    className="rounded-md border border-slate-200 bg-white px-3 py-2"
+                  >
+                    <p className="truncate text-sm font-semibold text-slate-950">
+                      {attachment.fileName}
+                    </p>
+                    <p className="mt-1 text-xs uppercase tracking-[0.14em] text-slate-500">
+                      {formatStatusLabel(attachment.attachmentType)}
+                      {attachment.tag
+                        ? ` / ${formatStatusLabel(attachment.tag)}`
+                        : ""}
+                    </p>
+                    {attachment.caption ? (
+                      <p className="mt-1 text-sm leading-6 text-slate-600">
+                        {attachment.caption}
+                      </p>
+                    ) : null}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="mt-2 text-sm leading-6 text-slate-500">
+                No photos/files are linked yet.
+              </p>
+            )}
+          </div>
+
+          <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3">
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-amber-900">
+              Missing info
+            </p>
+            {packet.missingInfo.length > 0 ? (
+              <ul className="mt-2 list-disc space-y-1 pl-5 text-sm leading-6 text-amber-950">
+                {packet.missingInfo.map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
+            ) : (
+              <p className="mt-2 text-sm leading-6 text-amber-950">
+                No missing information is currently flagged by the source
+                packet.
+              </p>
+            )}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 function getEstimateNextAction(input: {
   estimateStatus: string;
   projectId: string;
@@ -728,21 +985,43 @@ export default async function EstimateDetailPage({
     organizationId: estimate.organizationId,
     projectId: estimate.projectId
   });
-  const [estimateAttentionCues, linkedWorkItems, projectWorkItems, people] =
-    await Promise.all([
-      getOperationalCuesForSubject({
-        organizationId: estimate.organizationId,
-        subjectType: "estimate",
-        subjectId: estimate.id,
-        currentUserId: user.id
-      }),
-      listWorkItemsForSource({
-        sourceType: "estimate",
-        sourceId: estimate.id
-      }),
-      listWorkItemsForProject(estimate.projectId, `/estimates/${estimate.id}`),
-      listPeople()
-    ]);
+  const [
+    estimateAttentionCues,
+    linkedWorkItems,
+    projectWorkItems,
+    people,
+    sourceOpportunity
+  ] = await Promise.all([
+    getOperationalCuesForSubject({
+      organizationId: estimate.organizationId,
+      subjectType: "estimate",
+      subjectId: estimate.id,
+      currentUserId: user.id
+    }),
+    listWorkItemsForSource({
+      sourceType: "estimate",
+      sourceId: estimate.id
+    }),
+    listWorkItemsForProject(estimate.projectId, `/estimates/${estimate.id}`),
+    listPeople(),
+    estimate.opportunity
+      ? getOpportunityById(estimate.opportunity.id, `/estimates/${estimate.id}`)
+      : Promise.resolve(null)
+  ]);
+  const estimateHandoffPacket = buildEstimateHandoffPacket({
+    opportunity: sourceOpportunity,
+    estimate: {
+      id: estimate.id,
+      referenceNumber: estimate.referenceNumber
+    },
+    project: estimate.project
+      ? {
+          id: estimate.project.id,
+          name: estimate.project.name,
+          status: estimate.project.status
+        }
+      : null
+  });
   const estimateHandoffWorkItems = selectEstimateWorkspaceHandoffWorkItems({
     workItems: [...linkedWorkItems, ...projectWorkItems],
     estimateId: estimate.id,
@@ -1677,7 +1956,8 @@ export default async function EstimateDetailPage({
                 </div>
               </div>
 
-              <div className="mt-5">
+              <div className="mt-5 grid gap-5 xl:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
+                <EstimateHandoffPacketPanel packet={estimateHandoffPacket} />
                 <EstimateHandoffPanel
                   workItems={estimateHandoffWorkItems}
                   returnTo={`/estimates/${estimate.id}#work-items`}

@@ -44,6 +44,12 @@ completion.
   context, estimate/project/opportunity metadata where available, and
   `estimateWorkType = request_missing_info` or `review_estimate`. The Work Item
   is created only after a contractor submits the existing form.
+- Estimate Workspace now shows a read-only Estimate Handoff Packet beside the
+  Estimate Work controls. The packet is derived from the linked opportunity's
+  site-assessment state, requirements, notes, reviewed measurement groups,
+  observations, attachments, customer/project context, and current estimate
+  link. It flags missing source context for estimate production without writing
+  new state.
 - Project Workspace now shows read-only estimate handoff continuity for open
   estimate-production Work Items connected to the project, its estimates, or
   linked opportunity. The project panel summarizes open, blocked,
@@ -59,6 +65,8 @@ completion.
 - No calendar appointment is created by the Work Item.
 - No commission, payroll, or legal wage behavior is implemented.
 - No portal/customer surface reads these internal Work Items.
+- No separate handoff-packet persistence, source snapshot, project-owned task
+  board, or estimate-generation state is added.
 - Dedicated missing-info and review-request creation shortcuts are implemented
   as Work Item form prefills only. Ready-for-review estimate status transitions,
   next-action editing on existing Work Items, send-as workflow, and commission
