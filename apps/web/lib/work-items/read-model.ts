@@ -42,12 +42,12 @@ export type ContextRichWorkItemPreview = {
   attachmentCount: number | null;
 };
 
-export type EstimateWorkQueue = {
-  assigned: WorkItem[];
-  waitingOnMe: WorkItem[];
-  readyForReview: WorkItem[];
-  blocked: WorkItem[];
-  followUpsDue: WorkItem[];
+export type EstimateWorkQueue<T extends WorkItem = WorkItem> = {
+  assigned: T[];
+  waitingOnMe: T[];
+  readyForReview: T[];
+  blocked: T[];
+  followUpsDue: T[];
 };
 
 const priorityRank: Record<WorkItemPriority, number> = {
@@ -316,12 +316,12 @@ export function selectBlockedWorkItems<T extends WorkItem>(input: {
   );
 }
 
-export function buildEstimateWorkQueue(input: {
-  workItems: WorkItem[];
+export function buildEstimateWorkQueue<T extends WorkItem>(input: {
+  workItems: T[];
   currentPersonId?: string | null;
   nowIso: string;
   limit?: number;
-}): EstimateWorkQueue {
+}): EstimateWorkQueue<T> {
   const limit = input.limit ?? 5;
   const estimateWorkItems = input.workItems.filter(
     (workItem) => isOpenWorkItem(workItem) && isEstimateWorkItem(workItem)

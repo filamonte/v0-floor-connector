@@ -30,6 +30,9 @@ completion.
   - `follow_up_customer`
 - Pure read-model selectors group estimate work into assigned, waiting-on-me,
   ready-for-review, blocked, and follow-ups-due queues.
+- Dashboard `My Work` now consumes those same selectors and shows explicit
+  estimate handoff lenses for assigned estimate work, waiting on me, ready for
+  review, blocked estimate work, and customer follow-ups due.
 - Work Items remain internal-only and must be submitted by a contractor.
 
 ## Boundaries

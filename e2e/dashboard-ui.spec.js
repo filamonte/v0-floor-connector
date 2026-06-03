@@ -39,9 +39,7 @@ test("dashboard renders decision-center UI", async ({ page }) => {
   await expect(
     page.getByRole("heading", { name: "Pipeline and execution snapshot" })
   ).toBeVisible();
-  await expect(
-    page.getByRole("button", { name: "Universal create" })
-  ).toBeVisible();
+  await expect(page.getByRole("button", { name: "Create" })).toBeVisible();
   await expect(page.locator('a[href="/projects"]').first()).toBeVisible();
   expect(consoleErrors).toEqual([]);
 });

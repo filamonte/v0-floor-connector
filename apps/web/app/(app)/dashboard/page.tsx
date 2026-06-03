@@ -55,8 +55,17 @@ import {
   completeWorkItemAction,
   dismissWorkItemAction
 } from "@/lib/work-items/actions";
-import { listDashboardWorkItems } from "@/lib/work-items/data";
-import { selectDashboardWorkItemQueue } from "@/lib/work-items/read-model";
+import { listWorkItems, type WorkItemListItem } from "@/lib/work-items/data";
+import {
+  buildEstimateWorkQueue,
+  filterDashboardWorkItems,
+  getEstimateWorkItemType,
+  getWorkItemBlockerReason,
+  getWorkItemDueState,
+  getWorkItemFieldState,
+  selectDashboardWorkItemQueue,
+  type EstimateWorkQueue
+} from "@/lib/work-items/read-model";
 
 function formatCurrency(value: number | string, maximumFractionDigits = 0) {
   return Number(value).toLocaleString("en-US", {
@@ -106,6 +115,12 @@ function addDaysDateKey(dateKey: string, days: number) {
 
 function buildSearchText(...parts: Array<string | null | undefined>) {
   return parts.filter(Boolean).join(" ");
+}
+
+function getMetadataString(value: unknown) {
+  return typeof value === "string" && value.trim().length > 0
+    ? value.trim()
+    : null;
 }
 
 function formatCueThresholdLabel(label: string | null) {
@@ -305,6 +320,197 @@ function buildMyWorkDashboardWidgets(cues: OperationalCue[]) {
         "Ready unscheduled jobs and near-term scheduled jobs missing crew will appear here.",
       items: groups.jobs.slice(0, 5).map(mapOperationalCueToDashboardItem)
     }
+  ];
+}
+
+const estimateWorkTypeLabels = {
+  generate_estimate: "Generate estimate",
+  review_estimate: "Review estimate",
+  request_missing_info: "Request info",
+  approve_send: "Approve send",
+  follow_up_customer: "Customer follow-up"
+} as const;
+
+function formatWorkItemDueState(workItem: WorkItemListItem, nowIso: string) {
+  const dueState = getWorkItemDueState(workItem, nowIso);
+
+  if (!workItem.dueAt) {
+    return "No due date";
+  }
+
+  return `${dueState === "overdue" ? "Overdue" : "Due"} ${formatDateTime(
+    workItem.dueAt
+  )}`;
+}
+
+function buildEstimateWorkDashboardItem(
+  workItem: WorkItemListItem,
+  nowIso: string
+) {
+  const workType = getEstimateWorkItemType(workItem);
+  const workTypeLabel = workType
+    ? estimateWorkTypeLabels[workType]
+    : "Estimate work";
+  const blockerReason = getWorkItemBlockerReason(workItem);
+  const nextAction =
+    getMetadataString(workItem.metadata.nextAction) ??
+    getMetadataString(workItem.metadata.nextActionText) ??
+    getMetadataString(workItem.metadata.safeNextAction) ??
+    null;
+  const dueLabel = formatWorkItemDueState(workItem, nowIso);
+  const assigneeLabel = workItem.assignedPerson?.displayName
+    ? `Owner: ${workItem.assignedPerson.displayName}`
+    : "Owner: unassigned";
+  const sourceLabel = workItem.sourceType
+    ? `${labelize(workItem.sourceType)} source`
+    : "Internal source";
+  const contextLabel = [
+    workItem.customer?.name ?? null,
+    workItem.project?.name ?? null
+  ]
+    .filter(Boolean)
+    .join(" - ");
+  const supportingMeta = [
+    assigneeLabel,
+    blockerReason ? `Blocked: ${blockerReason}` : null,
+    nextAction ? `Next action: ${nextAction}` : null
+  ].filter(Boolean);
+
+  return {
+    id: workItem.id,
+    workItemId: workItem.id,
+    title: workItem.title,
+    subtitle: contextLabel || sourceLabel,
+    meta: `${workTypeLabel} - ${dueLabel}`,
+    supportingMeta: supportingMeta.join(" - "),
+    href: `/field/work-items/${workItem.id}`,
+    actionLabel: "Open",
+    badge:
+      getWorkItemFieldState(workItem) === "blocked" ? "Blocked" : workTypeLabel,
+    contextHref: workItem.linkPath,
+    contextLabel: workItem.linkPath ? "Open source" : null,
+    searchText: buildSearchText(
+      workItem.title,
+      workItem.description,
+      workTypeLabel,
+      dueLabel,
+      assigneeLabel,
+      blockerReason,
+      nextAction,
+      workItem.customer?.name,
+      workItem.project?.name,
+      workItem.sourceType
+    )
+  };
+}
+
+function buildEstimateWorkDashboardWidget(input: {
+  key: string;
+  eyebrow: string;
+  title: string;
+  description: string;
+  items: WorkItemListItem[];
+  nowIso: string;
+  emptyTitle: string;
+  emptyDescription: string;
+}) {
+  return {
+    key: input.key,
+    eyebrow: input.eyebrow,
+    title: input.title,
+    description: input.description,
+    href: "/field/work-items",
+    actionLabel: "Open work queue",
+    emptyTitle: input.emptyTitle,
+    emptyDescription: input.emptyDescription,
+    items: input.items.map((item) =>
+      buildEstimateWorkDashboardItem(item, input.nowIso)
+    )
+  };
+}
+
+function buildEstimateWorkDashboardWidgets(input: {
+  queue: EstimateWorkQueue<WorkItemListItem>;
+  mode: MyWorkQueueMode;
+  nowIso: string;
+}) {
+  return [
+    buildEstimateWorkDashboardWidget({
+      key: `estimate-assigned-${input.mode}`,
+      eyebrow: "Estimate work",
+      title: "Assigned estimate work",
+      description:
+        "Source-linked estimate Work Items assigned to your linked people record.",
+      items: input.queue.assigned,
+      nowIso: input.nowIso,
+      emptyTitle: "No estimate handoff work is assigned to you.",
+      emptyDescription:
+        "Estimate handoff rows appear after a contractor submits an internal source-linked Work Item from the Lead or Estimate workspace."
+    }),
+    buildEstimateWorkDashboardWidget({
+      key: `estimate-waiting-${input.mode}`,
+      eyebrow: "Waiting on me",
+      title: "Estimate work waiting on me",
+      description:
+        "Assigned estimate handoff Work Items that need generation, review, approve/send, or owner follow-through.",
+      items: input.queue.waitingOnMe,
+      nowIso: input.nowIso,
+      emptyTitle: "No estimate work is waiting on you.",
+      emptyDescription:
+        "Generate, review, approve/send, or owner-follow-through estimate Work Items appear here when assigned to your linked people record."
+    }),
+    buildEstimateWorkDashboardWidget({
+      key: `estimate-review-${input.mode}`,
+      eyebrow: "Estimate review",
+      title: "Ready for review",
+      description:
+        "Review and approve/send estimate Work Items that are ready for a human handoff.",
+      items: input.queue.readyForReview,
+      nowIso: input.nowIso,
+      emptyTitle: "No estimate Work Items are ready for review.",
+      emptyDescription:
+        "Review work appears here when an estimate handoff Work Item is marked review or approve/send."
+    }),
+    buildEstimateWorkDashboardWidget({
+      key: `estimate-blocked-${input.mode}`,
+      eyebrow: "Blocked work",
+      title: "Blocked estimate work",
+      description:
+        "Estimate Work Items with a blocker state or blocker reason that needs human follow-through.",
+      items: input.queue.blocked,
+      nowIso: input.nowIso,
+      emptyTitle: "No estimate handoff work is blocked.",
+      emptyDescription:
+        "Blocked estimate Work Items appear here when the field state or blocker reason is saved on the Work Item metadata."
+    }),
+    buildEstimateWorkDashboardWidget({
+      key: `estimate-follow-up-${input.mode}`,
+      eyebrow: "Follow-ups due",
+      title: "Customer follow-ups due",
+      description:
+        "Due customer follow-up Work Items tied to estimate handoff or estimate source records.",
+      items: input.queue.followUpsDue,
+      nowIso: input.nowIso,
+      emptyTitle: "No estimate customer follow-ups are due.",
+      emptyDescription:
+        "Customer follow-up Work Items appear here when their due date is reached."
+    })
+  ];
+}
+
+function buildMyWorkDashboardWidgetsWithEstimateWork(input: {
+  cues: OperationalCue[];
+  estimateWorkQueue: EstimateWorkQueue<WorkItemListItem>;
+  mode: MyWorkQueueMode;
+  nowIso: string;
+}) {
+  return [
+    ...buildEstimateWorkDashboardWidgets({
+      queue: input.estimateWorkQueue,
+      mode: input.mode,
+      nowIso: input.nowIso
+    }),
+    ...buildMyWorkDashboardWidgets(input.cues)
   ];
 }
 
@@ -522,9 +728,14 @@ export default async function DashboardPage({
 
     return `/dashboard?${params.toString()}`;
   };
-  const companyWorkItems = await listDashboardWorkItems({ limit: 5 });
+  const openWorkItems = await listWorkItems({ status: "open" });
+  const companyWorkItems = filterDashboardWorkItems({
+    workItems: openWorkItems,
+    limit: 5
+  });
   const assignedWorkItems = currentUserPerson
-    ? await listDashboardWorkItems({
+    ? filterDashboardWorkItems({
+        workItems: openWorkItems,
         assignedPersonId: currentUserPerson.id,
         limit: 5
       })
@@ -536,6 +747,12 @@ export default async function DashboardPage({
   });
   const showingCompanyWorkItems =
     dashboardWorkItemQueue.mode === "company_fallback";
+  const estimateWorkQueue = buildEstimateWorkQueue({
+    workItems: openWorkItems,
+    currentPersonId: currentUserPerson?.id ?? null,
+    nowIso,
+    limit: 5
+  });
   const upcomingAppointments =
     dashboardOverviewReadModel.assignedUpcomingAppointments;
   const companyUpcomingAppointments =
@@ -1557,9 +1774,12 @@ export default async function DashboardPage({
             emptyDescription:
               "Company remains the full organization safety net for derived Next Move suggestions.",
             count: myWorkQueueModes.counts.company,
-            widgets: buildMyWorkDashboardWidgets(
-              myWorkQueueModes.queues.company.cues
-            )
+            widgets: buildMyWorkDashboardWidgetsWithEstimateWork({
+              cues: myWorkQueueModes.queues.company.cues,
+              estimateWorkQueue,
+              mode: "company",
+              nowIso
+            })
           },
           {
             mode: "mine",
@@ -1570,9 +1790,12 @@ export default async function DashboardPage({
             emptyDescription:
               "Mine is a convenience filter over responsibility metadata, not task assignment.",
             count: myWorkQueueModes.counts.mine,
-            widgets: buildMyWorkDashboardWidgets(
-              myWorkQueueModes.queues.mine.cues
-            )
+            widgets: buildMyWorkDashboardWidgetsWithEstimateWork({
+              cues: myWorkQueueModes.queues.mine.cues,
+              estimateWorkQueue,
+              mode: "mine",
+              nowIso
+            })
           },
           {
             mode: "unresolved",
@@ -1584,9 +1807,12 @@ export default async function DashboardPage({
             emptyDescription:
               "Unresolved shows strategy-only, organization queue, and unavailable record-owner fallbacks.",
             count: myWorkQueueModes.counts.unresolved,
-            widgets: buildMyWorkDashboardWidgets(
-              myWorkQueueModes.queues.unresolved.cues
-            )
+            widgets: buildMyWorkDashboardWidgetsWithEstimateWork({
+              cues: myWorkQueueModes.queues.unresolved.cues,
+              estimateWorkQueue,
+              mode: "unresolved",
+              nowIso
+            })
           }
         ]
       }}
