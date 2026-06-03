@@ -368,6 +368,49 @@ export function buildEstimateWorkQueue<T extends WorkItem>(input: {
   };
 }
 
+export function selectEstimateWorkspaceHandoffWorkItems<
+  T extends WorkItem
+>(input: {
+  workItems: T[];
+  estimateId: string;
+  projectId: string;
+  opportunityId?: string | null;
+}) {
+  const selected = new Map<string, T>();
+
+  for (const workItem of input.workItems) {
+    if (!isOpenWorkItem(workItem) || !isEstimateWorkItem(workItem)) {
+      continue;
+    }
+
+    const sourceMatchesEstimate =
+      workItem.sourceType === "estimate" &&
+      workItem.sourceId === input.estimateId;
+    const metadataMatchesEstimate =
+      workItem.metadata.estimateId === input.estimateId;
+    const projectEstimateWork = workItem.projectId === input.projectId;
+    const sourceMatchesOpportunity =
+      Boolean(input.opportunityId) &&
+      workItem.sourceType === "opportunity" &&
+      workItem.sourceId === input.opportunityId;
+    const metadataMatchesOpportunity =
+      Boolean(input.opportunityId) &&
+      workItem.metadata.opportunityId === input.opportunityId;
+
+    if (
+      sourceMatchesEstimate ||
+      metadataMatchesEstimate ||
+      projectEstimateWork ||
+      sourceMatchesOpportunity ||
+      metadataMatchesOpportunity
+    ) {
+      selected.set(workItem.id, workItem);
+    }
+  }
+
+  return sortWorkItemsForQueue([...selected.values()]);
+}
+
 function isSameDateKey(leftIso: string, rightIso: string) {
   return leftIso.slice(0, 10) === rightIso.slice(0, 10);
 }

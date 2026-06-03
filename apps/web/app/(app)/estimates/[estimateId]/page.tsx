@@ -74,15 +74,28 @@ import {
 } from "@/lib/schedule/summary";
 import { getIncludedEstimateScopeItems } from "@/lib/estimates/workspace";
 import {
+  completeAssignedWorkItemAction,
   completeWorkItemAction,
   createWorkItemAction,
-  dismissWorkItemAction
+  dismissWorkItemAction,
+  updateAssignedWorkItemFieldStateAction
 } from "@/lib/work-items/actions";
-import { listWorkItemsForSource } from "@/lib/work-items/data";
+import {
+  listWorkItemsForProject,
+  listWorkItemsForSource,
+  type WorkItemListItem
+} from "@/lib/work-items/data";
 import {
   buildOperationalCueWorkItemPrefill,
   getOperationalCueWorkItemBridgeAction
 } from "@/lib/work-items/prefill";
+import {
+  getEstimateWorkItemType,
+  getWorkItemBlockerReason,
+  getWorkItemDueState,
+  getWorkItemFieldState,
+  selectEstimateWorkspaceHandoffWorkItems
+} from "@/lib/work-items/read-model";
 import {
   ActionBar,
   ProjectStateSummary,
@@ -103,6 +116,19 @@ function formatMoney(amount: string | number) {
     style: "currency",
     currency: "USD"
   });
+}
+
+function formatDateTime(value: string | null) {
+  if (!value) {
+    return "No due date";
+  }
+
+  return new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit"
+  }).format(new Date(value));
 }
 
 function formatAddress(parts: Array<string | null | undefined>) {
@@ -141,6 +167,238 @@ function formatReadinessLabel(status: string | null) {
   }
 
   return status.replaceAll("_", " ");
+}
+
+function getMetadataString(value: unknown) {
+  return typeof value === "string" && value.trim().length > 0
+    ? value.trim()
+    : null;
+}
+
+function getEstimateWorkTypeLabel(workItem: WorkItemListItem) {
+  switch (getEstimateWorkItemType(workItem)) {
+    case "generate_estimate":
+      return "Estimate Work";
+    case "review_estimate":
+      return "Ready for Review";
+    case "request_missing_info":
+      return "Missing Info";
+    case "approve_send":
+      return "Ready for Review";
+    case "follow_up_customer":
+      return "Follow-up";
+    default:
+      return "Estimate Work";
+  }
+}
+
+function getEstimateWorkDueLabel(workItem: WorkItemListItem, nowIso: string) {
+  const dueState = getWorkItemDueState(workItem, nowIso);
+
+  if (!workItem.dueAt) {
+    return "No due date";
+  }
+
+  return `${dueState === "overdue" ? "Overdue" : "Due"} ${formatDateTime(
+    workItem.dueAt
+  )}`;
+}
+
+function getEstimateWorkNextAction(workItem: WorkItemListItem) {
+  return (
+    getMetadataString(workItem.metadata.nextAction) ??
+    getMetadataString(workItem.metadata.nextActionText) ??
+    getMetadataString(workItem.metadata.safeNextAction)
+  );
+}
+
+function EstimateHandoffActionButton({
+  workItemId,
+  returnTo,
+  label,
+  fieldState
+}: {
+  workItemId: string;
+  returnTo: string;
+  label: string;
+  fieldState: "not_started" | "in_progress";
+}) {
+  return (
+    <form action={updateAssignedWorkItemFieldStateAction}>
+      <input type="hidden" name="workItemId" value={workItemId} />
+      <input type="hidden" name="returnTo" value={returnTo} />
+      <input type="hidden" name="fieldState" value={fieldState} />
+      <button
+        type="submit"
+        className="inline-flex h-8 items-center justify-center border border-slate-300 bg-white px-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-600 transition hover:border-[#d8731f] hover:text-slate-950"
+      >
+        {label}
+      </button>
+    </form>
+  );
+}
+
+function EstimateHandoffPanel({
+  workItems,
+  returnTo
+}: {
+  workItems: WorkItemListItem[];
+  returnTo: string;
+}) {
+  const nowIso = new Date().toISOString();
+
+  return (
+    <section className="rounded-lg border border-slate-200 bg-slate-50/80 px-4 py-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-500">
+            Estimate Work
+          </p>
+          <p className="mt-2 text-sm leading-6 text-slate-600">
+            Open handoff work connected to this estimate, project, or linked
+            opportunity. Actions update the existing internal Work Item only.
+          </p>
+        </div>
+        <span className="inline-flex w-fit rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-slate-600">
+          {workItems.length} open
+        </span>
+      </div>
+
+      <div className="mt-4 space-y-3">
+        {workItems.length > 0 ? (
+          workItems.map((workItem) => {
+            const fieldState = getWorkItemFieldState(workItem);
+            const blockerReason = getWorkItemBlockerReason(workItem);
+            const nextAction = getEstimateWorkNextAction(workItem);
+
+            return (
+              <article
+                key={workItem.id}
+                className="rounded-lg border border-slate-200 bg-white px-4 py-3"
+              >
+                <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Link
+                        href={`/field/work-items/${workItem.id}`}
+                        className="text-sm font-semibold text-slate-950 transition hover:text-brand-700"
+                      >
+                        {workItem.title}
+                      </Link>
+                      <span className="inline-flex rounded-full border border-amber-200 bg-amber-50 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-amber-900">
+                        {getEstimateWorkTypeLabel(workItem)}
+                      </span>
+                      {fieldState === "blocked" ? (
+                        <span className="inline-flex rounded-full border border-rose-200 bg-rose-50 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-rose-900">
+                          Blocked
+                        </span>
+                      ) : null}
+                    </div>
+                    <p className="mt-1 text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
+                      {formatStatusLabel(workItem.status)} ·{" "}
+                      {getEstimateWorkDueLabel(workItem, nowIso)} ·{" "}
+                      {workItem.assignedPerson?.displayName ?? "Unassigned"}
+                    </p>
+                    <p className="mt-1 text-sm leading-6 text-slate-600">
+                      {workItem.customer?.name ??
+                        workItem.project?.name ??
+                        "Estimate handoff context"}
+                      {workItem.project ? ` · ${workItem.project.name}` : ""}
+                    </p>
+                    {blockerReason ? (
+                      <p className="mt-2 text-sm leading-6 text-rose-800">
+                        Blocker: {blockerReason}
+                      </p>
+                    ) : null}
+                    {nextAction ? (
+                      <p className="mt-2 text-sm leading-6 text-slate-700">
+                        Next action: {nextAction}
+                      </p>
+                    ) : null}
+                    {workItem.linkPath ? (
+                      <Link
+                        href={workItem.linkPath}
+                        className="mt-3 inline-flex text-xs font-semibold uppercase tracking-[0.12em] text-[#9b4f16] transition hover:text-slate-950"
+                      >
+                        Open source record
+                      </Link>
+                    ) : null}
+                  </div>
+
+                  <div className="flex shrink-0 flex-wrap gap-2">
+                    <EstimateHandoffActionButton
+                      workItemId={workItem.id}
+                      returnTo={returnTo}
+                      fieldState="in_progress"
+                      label="In progress"
+                    />
+                    <details className="relative">
+                      <summary className="inline-flex h-8 cursor-pointer list-none items-center justify-center border border-slate-300 bg-white px-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-600 transition hover:border-[#d8731f] hover:text-slate-950">
+                        Block
+                      </summary>
+                      <form
+                        action={updateAssignedWorkItemFieldStateAction}
+                        className="mt-2 grid w-64 gap-2 rounded-lg border border-slate-200 bg-white p-3 shadow-sm"
+                      >
+                        <input
+                          type="hidden"
+                          name="workItemId"
+                          value={workItem.id}
+                        />
+                        <input type="hidden" name="returnTo" value={returnTo} />
+                        <input
+                          type="hidden"
+                          name="fieldState"
+                          value="blocked"
+                        />
+                        <input
+                          type="text"
+                          name="blockerReason"
+                          placeholder="Blocker reason"
+                          defaultValue={blockerReason ?? ""}
+                          className="h-9 border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-[#d8731f]"
+                        />
+                        <button
+                          type="submit"
+                          className="inline-flex h-8 items-center justify-center border border-rose-200 bg-rose-50 px-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-rose-900 transition hover:bg-white"
+                        >
+                          Save blocker
+                        </button>
+                      </form>
+                    </details>
+                    <form action={completeAssignedWorkItemAction}>
+                      <input
+                        type="hidden"
+                        name="workItemId"
+                        value={workItem.id}
+                      />
+                      <input type="hidden" name="returnTo" value={returnTo} />
+                      <button
+                        type="submit"
+                        className="inline-flex h-8 items-center justify-center border border-emerald-200 bg-emerald-50 px-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-emerald-900 transition hover:bg-white"
+                      >
+                        Complete
+                      </button>
+                    </form>
+                  </div>
+                </div>
+              </article>
+            );
+          })
+        ) : (
+          <div className="rounded-lg border border-dashed border-slate-300 bg-white px-4 py-5">
+            <p className="text-sm font-semibold text-slate-950">
+              No estimate handoff work is open for this estimate.
+            </p>
+            <p className="mt-2 text-sm leading-6 text-slate-500">
+              Handoff rows appear here only after an internal Work Item is
+              connected to this estimate, project, or linked opportunity.
+            </p>
+          </div>
+        )}
+      </div>
+    </section>
+  );
 }
 
 function getEstimateNextAction(input: {
@@ -451,19 +709,27 @@ export default async function EstimateDetailPage({
     organizationId: estimate.organizationId,
     projectId: estimate.projectId
   });
-  const [estimateAttentionCues, linkedWorkItems, people] = await Promise.all([
-    getOperationalCuesForSubject({
-      organizationId: estimate.organizationId,
-      subjectType: "estimate",
-      subjectId: estimate.id,
-      currentUserId: user.id
-    }),
-    listWorkItemsForSource({
-      sourceType: "estimate",
-      sourceId: estimate.id
-    }),
-    listPeople()
-  ]);
+  const [estimateAttentionCues, linkedWorkItems, projectWorkItems, people] =
+    await Promise.all([
+      getOperationalCuesForSubject({
+        organizationId: estimate.organizationId,
+        subjectType: "estimate",
+        subjectId: estimate.id,
+        currentUserId: user.id
+      }),
+      listWorkItemsForSource({
+        sourceType: "estimate",
+        sourceId: estimate.id
+      }),
+      listWorkItemsForProject(estimate.projectId, `/estimates/${estimate.id}`),
+      listPeople()
+    ]);
+  const estimateHandoffWorkItems = selectEstimateWorkspaceHandoffWorkItems({
+    workItems: [...linkedWorkItems, ...projectWorkItems],
+    estimateId: estimate.id,
+    projectId: estimate.projectId,
+    opportunityId: estimate.opportunity?.id ?? null
+  });
   const selectedWorkItemCue =
     estimateAttentionCues.find(
       (cue) => cue.cueKey === resolvedSearchParams.workItemCue
@@ -1378,6 +1644,13 @@ export default async function EstimateDetailPage({
                     }
                   </p>
                 </div>
+              </div>
+
+              <div className="mt-5">
+                <EstimateHandoffPanel
+                  workItems={estimateHandoffWorkItems}
+                  returnTo={`/estimates/${estimate.id}#work-items`}
+                />
               </div>
 
               <div className="mt-5 grid gap-5 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">

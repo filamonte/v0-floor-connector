@@ -33,6 +33,11 @@ completion.
 - Dashboard `My Work` now consumes those same selectors and shows explicit
   estimate handoff lenses for assigned estimate work, waiting on me, ready for
   review, blocked estimate work, and customer follow-ups due.
+- Estimate Workspace now shows a compact Estimate Work panel for open
+  estimate handoff Work Items connected by estimate, project, or linked
+  opportunity context. The panel can use the existing assignee-or-manager Work
+  Item actions to mark work in progress, save a blocker reason, or complete the
+  Work Item.
 - Work Items remain internal-only and must be submitted by a contractor.
 
 ## Boundaries
@@ -43,6 +48,10 @@ completion.
 - No calendar appointment is created by the Work Item.
 - No commission, payroll, or legal wage behavior is implemented.
 - No portal/customer surface reads these internal Work Items.
+- Ready-for-review transitions, next-action editing, dedicated missing-info
+  creation shortcuts, send-as workflow, and commission ownership remain planned
+  follow-up behavior unless a later slice adds safe canonical Work Item
+  mutations for them.
 
 ## Role Model Direction
 

@@ -14,6 +14,7 @@ import {
   getWorkItemFieldState,
   groupMobileAssignedWorkItems,
   isEstimateWorkItem,
+  selectEstimateWorkspaceHandoffWorkItems,
   selectAssignedWorkItems,
   selectBlockedWorkItems,
   selectDashboardWorkItemQueue,
@@ -440,6 +441,98 @@ void test("estimate work queue groups source-linked estimate handoff items by me
   assert.deepEqual(
     queue.followUpsDue.map((item) => item.title),
     ["Follow up customer"]
+  );
+});
+
+void test("estimate workspace handoff selector keeps only connected open estimate work", () => {
+  const workItems: WorkItem[] = [
+    {
+      ...baseWorkItem,
+      id: "f1f1f1f1-f1f1-4f1f-8f1f-f1f1f1f1f1f1",
+      title: "Review linked estimate",
+      kind: "estimate_follow_up",
+      sourceType: "estimate",
+      sourceId: "estimate-1",
+      projectId: "project-1",
+      dueAt: "2026-05-08T12:00:00.000Z",
+      metadata: { estimateWorkType: "review_estimate" }
+    },
+    {
+      ...baseWorkItem,
+      id: "f2f2f2f2-f2f2-4f2f-8f2f-f2f2f2f2f2f2",
+      title: "Generate from lead handoff",
+      kind: "estimate_follow_up",
+      sourceType: "opportunity",
+      sourceId: "opportunity-1",
+      projectId: "project-1",
+      dueAt: "2026-05-07T12:00:00.000Z",
+      metadata: {
+        estimateWork: true,
+        estimateWorkType: "generate_estimate",
+        opportunityId: "opportunity-1"
+      }
+    },
+    {
+      ...baseWorkItem,
+      id: "f3f3f3f3-f3f3-4f3f-8f3f-f3f3f3f3f3f3",
+      title: "Blocked project estimate info",
+      kind: "estimate_follow_up",
+      sourceType: "project",
+      sourceId: "project-1",
+      projectId: "project-1",
+      dueAt: "2026-05-09T12:00:00.000Z",
+      metadata: {
+        estimateWork: true,
+        estimateWorkType: "request_missing_info",
+        fieldState: "blocked"
+      }
+    },
+    {
+      ...baseWorkItem,
+      id: "f4f4f4f4-f4f4-4f4f-8f4f-f4f4f4f4f4f4",
+      title: "Completed estimate work",
+      status: "completed",
+      kind: "estimate_follow_up",
+      sourceType: "estimate",
+      sourceId: "estimate-1",
+      projectId: "project-1",
+      metadata: { estimateWorkType: "review_estimate" }
+    },
+    {
+      ...baseWorkItem,
+      id: "f5f5f5f5-f5f5-4f5f-8f5f-f5f5f5f5f5f5",
+      title: "Unrelated project task",
+      kind: "manual",
+      sourceType: "project",
+      sourceId: "project-1",
+      projectId: "project-1"
+    },
+    {
+      ...baseWorkItem,
+      id: "f6f6f6f6-f6f6-4f6f-8f6f-f6f6f6f6f6f6",
+      title: "Other estimate work",
+      kind: "estimate_follow_up",
+      sourceType: "estimate",
+      sourceId: "estimate-2",
+      projectId: "project-2",
+      metadata: { estimateWorkType: "review_estimate" }
+    }
+  ];
+
+  const selected = selectEstimateWorkspaceHandoffWorkItems({
+    workItems,
+    estimateId: "estimate-1",
+    projectId: "project-1",
+    opportunityId: "opportunity-1"
+  });
+
+  assert.deepEqual(
+    selected.map((item) => item.title),
+    [
+      "Generate from lead handoff",
+      "Review linked estimate",
+      "Blocked project estimate info"
+    ]
   );
 });
 

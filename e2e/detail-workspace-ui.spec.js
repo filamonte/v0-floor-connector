@@ -209,7 +209,7 @@ test("project and estimate detail render decision-first primitives", async ({
     page.getByRole("region", { name: "Current state and next action" })
   ).toBeVisible();
   await expect(
-    page.getByRole("region", { name: "Estimate workflow" })
+    page.getByRole("region", { name: "Estimate workflow", exact: true })
   ).toBeVisible();
   await expect(
     page.getByRole("region", { name: "Estimate state summary" })
