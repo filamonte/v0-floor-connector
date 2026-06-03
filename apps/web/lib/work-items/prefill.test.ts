@@ -3,6 +3,7 @@ import test from "node:test";
 
 import {
   buildAppointmentCueWorkItemPrefill,
+  buildEstimateHandoffWorkItemPrefill,
   buildOperationalCueWorkItemPrefill,
   buildOpportunityFollowUpWorkItemPrefill,
   buildProjectGuidanceWorkItemPrefill,
@@ -48,7 +49,8 @@ function buildOperationalCue(
     actionHref: `/estimates/${estimateId}`,
     actionLabel: "Open estimate",
     reason: "Sent 7 days ago.",
-    explanation: "Estimate was sent 7 days ago. This rule triggers after 5 days.",
+    explanation:
+      "Estimate was sent 7 days ago. This rule triggers after 5 days.",
     sourceLabel: "Estimate sent date",
     sourceValue: "May 4, 2026",
     thresholdLabel: "Rule threshold: 5 days",
@@ -101,6 +103,90 @@ void test("opportunity follow-up cue prefill creates a source-locked work item d
   assert.equal(parsed.success, true);
 });
 
+void test("estimate handoff prefill carries site assessment context without creating estimate state", () => {
+  const prefill = buildEstimateHandoffWorkItemPrefill({
+    opportunityId,
+    opportunityTitle: "Garage flake floor",
+    customerName: "Taylor Customer",
+    projectName: "Garage floor",
+    contactName: "Taylor Rep",
+    requirementsSummary: "Decorative flake system with crack repair.",
+    notes: "Customer wants weekend timing.",
+    siteAssessmentStatus: "completed",
+    siteAssessmentScheduledAt: "2026-05-04T15:00:00.000Z",
+    siteAssessmentCompletedAt: "2026-05-04T16:00:00.000Z",
+    measurements: [
+      {
+        id: "measurement-1",
+        organizationId: "77777777-7777-4777-8777-777777777777",
+        opportunityId,
+        areaLabel: "Garage",
+        measurementType: "floor_area",
+        valueNumeric: "480.00",
+        unit: "sqft",
+        quantity: null,
+        captureMethod: "manual",
+        notes: "Verify apron edge.",
+        createdAt: "2026-05-04T16:00:00.000Z",
+        updatedAt: "2026-05-04T16:00:00.000Z"
+      }
+    ],
+    observations: [
+      {
+        id: "observation-1",
+        organizationId: "77777777-7777-4777-8777-777777777777",
+        opportunityId,
+        observationType: "surface_condition",
+        title: "Existing coating",
+        body: "Peeling near door.",
+        severity: "medium",
+        relatedAttachmentId: null,
+        createdByUserId: null,
+        updatedByUserId: null,
+        createdAt: "2026-05-04T16:00:00.000Z",
+        updatedAt: "2026-05-04T16:00:00.000Z"
+      }
+    ],
+    attachmentCount: 3
+  });
+
+  assert.equal(prefill.kind, "estimate_follow_up");
+  assert.equal(prefill.priority, "normal");
+  assert.equal(
+    prefill.dedupeKey,
+    `opportunity:${opportunityId}:estimate_handoff:generate_estimate`
+  );
+  assert.match(prefill.title, /Generate estimate/);
+  assert.match(prefill.description ?? "", /Decorative flake system/);
+  assert.match(prefill.description ?? "", /Garage - 480.00 sqft/);
+  assert.match(
+    prefill.description ?? "",
+    /Photos \/ files attached to lead: 3/
+  );
+  assert.equal(prefill.metadata.estimateWork, true);
+  assert.equal(prefill.metadata.estimateWorkType, "generate_estimate");
+  assert.equal(prefill.metadata.estimateWorkStatus, "open");
+
+  const parsed = workItemCreateSchema.safeParse({
+    title: prefill.title,
+    description: prefill.description,
+    priority: prefill.priority,
+    kind: prefill.kind,
+    dueAt: prefill.dueAt,
+    assignedPersonId: "",
+    sourceType: "opportunity",
+    sourceId: opportunityId,
+    customerId: "",
+    projectId: projectId,
+    linkPath: `/leads/${opportunityId}`,
+    visibility: "internal",
+    dedupeKey: prefill.dedupeKey,
+    metadata: prefill.metadata
+  });
+
+  assert.equal(parsed.success, true);
+});
+
 void test("appointment cue prefill creates confirmation prep for scheduled appointments", () => {
   const prefill = buildAppointmentCueWorkItemPrefill({
     appointmentId,
@@ -116,7 +202,10 @@ void test("appointment cue prefill creates confirmation prep for scheduled appoi
 
   assert.equal(prefill.kind, "appointment_confirmation_prep");
   assert.equal(prefill.priority, "normal");
-  assert.equal(prefill.assignedPersonId, "33333333-3333-4333-8333-333333333333");
+  assert.equal(
+    prefill.assignedPersonId,
+    "33333333-3333-4333-8333-333333333333"
+  );
   assert.equal(prefill.dueAt, "2026-05-08T15:00:00.000Z");
   assert.match(prefill.title, /Confirm appointment/);
 

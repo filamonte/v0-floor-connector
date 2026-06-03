@@ -30,7 +30,10 @@ import {
   dismissWorkItemAction
 } from "@/lib/work-items/actions";
 import { listWorkItemsForSource } from "@/lib/work-items/data";
-import { buildOpportunityFollowUpWorkItemPrefill } from "@/lib/work-items/prefill";
+import {
+  buildEstimateHandoffWorkItemPrefill,
+  buildOpportunityFollowUpWorkItemPrefill
+} from "@/lib/work-items/prefill";
 
 type LeadDetailPageProps = {
   params: Promise<{
@@ -237,7 +240,7 @@ export default async function LeadDetailPage({
   const canStartEstimate = opportunity.status !== "lost";
   const leadAppointmentHref = `/appointments?compose=1&opportunityId=${opportunity.id}${opportunity.customerId ? `&customerId=${opportunity.customerId}` : ""}${opportunity.projectId ? `&projectId=${opportunity.projectId}` : ""}#appointment-create`;
   const leadWorkspaceHref = `/leads/${opportunity.id}`;
-  const leadWorkItemPrefill =
+  const leadFollowUpWorkItemPrefill =
     resolvedSearchParams.workItemCue === "follow_up"
       ? buildOpportunityFollowUpWorkItemPrefill({
           opportunityId: opportunity.id,
@@ -254,6 +257,27 @@ export default async function LeadDetailPage({
           lastCommunicationAt: communicationMessages.at(-1)?.createdAt ?? null
         })
       : null;
+  const estimateHandoffWorkItemPrefill =
+    resolvedSearchParams.workItemCue === "estimate_handoff"
+      ? buildEstimateHandoffWorkItemPrefill({
+          opportunityId: opportunity.id,
+          opportunityTitle: opportunity.title,
+          customerName: opportunity.customer?.name ?? null,
+          projectName: opportunity.project?.name ?? null,
+          contactName:
+            opportunity.primaryContact?.displayName ?? opportunity.prospectName,
+          requirementsSummary: opportunity.requirementsSummary,
+          notes: opportunity.notes,
+          siteAssessmentStatus: opportunity.siteAssessmentStatus,
+          siteAssessmentScheduledAt: opportunity.siteAssessmentScheduledAt,
+          siteAssessmentCompletedAt: opportunity.siteAssessmentCompletedAt,
+          measurements: opportunity.measurements,
+          observations: opportunity.observations,
+          attachmentCount: opportunity.attachments.length
+        })
+      : null;
+  const leadWorkItemPrefill =
+    estimateHandoffWorkItemPrefill ?? leadFollowUpWorkItemPrefill;
   const assignablePeople = people
     .filter((person) => person.isActive && person.isAssignable)
     .map((person) => ({
@@ -841,12 +865,13 @@ export default async function LeadDetailPage({
                     Work Items
                   </p>
                   <h2 className="mt-3 text-2xl font-semibold tracking-tight text-slate-950">
-                    Internal lead actions
+                    Internal lead and estimate actions
                   </h2>
                   <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
-                    Manually assign follow-up work tied to this opportunity.
-                    These items are internal-only and do not change the lead
-                    follow-up date or customer-visible communication.
+                    Assign lead follow-up or estimate handoff work tied to this
+                    opportunity. These items are internal-only and do not change
+                    the lead follow-up date, estimate state, send behavior, or
+                    customer-visible communication.
                   </p>
                 </div>
                 <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-600 md:w-72">
@@ -890,6 +915,7 @@ export default async function LeadDetailPage({
                       defaultPriority={leadWorkItemPrefill?.priority}
                       dedupeKey={leadWorkItemPrefill?.dedupeKey}
                       metadata={leadWorkItemPrefill?.metadata}
+                      boundaryCopy="Work items are internal-only. Creating this item does not create an estimate, send customer communication, assign commission, change opportunity status, or mutate project readiness."
                       assignablePeople={assignablePeople}
                     />
                   </div>
@@ -906,7 +932,7 @@ export default async function LeadDetailPage({
                       completeAction={completeWorkItemAction}
                       dismissAction={dismissWorkItemAction}
                       emptyTitle="No work items are linked to this lead yet."
-                      emptyDescription="Create a manual internal work item when a lead action needs an owner, due date, or explicit completion state."
+                      emptyDescription="Create an internal work item when lead follow-up or estimate handoff work needs an owner, due date, blocker note, or explicit completion state."
                     />
                   </div>
                 </section>
@@ -1029,6 +1055,20 @@ export default async function LeadDetailPage({
               estimate creation links the customer and project before commercial
               scope is sent.
             </p>
+            <div className="mt-5 flex flex-wrap gap-2.5">
+              <Link
+                href={`${leadWorkspaceHref}?workItemCue=estimate_handoff#work-items`}
+                className="inline-flex items-center rounded-full border border-[#e2d4c5] bg-[#fbf5ee] px-3.5 py-2 text-sm font-medium text-[#5f4d40] transition hover:border-[#caac88] hover:bg-white hover:text-[#2b2118]"
+              >
+                Create estimate handoff item
+              </Link>
+              <Link
+                href="#work-items"
+                className="inline-flex items-center rounded-full border border-slate-300 px-3.5 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:bg-white"
+              >
+                Review linked work
+              </Link>
+            </div>
             {canStartEstimate ? (
               <div className="mt-6 rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-sm leading-6 text-emerald-900">
                 Use the primary action in the header to start estimate from this

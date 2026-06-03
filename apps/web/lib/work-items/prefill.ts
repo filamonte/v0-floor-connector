@@ -1,6 +1,8 @@
 import type {
   AppointmentStatus,
   AppointmentType,
+  OpportunityMeasurement,
+  OpportunityObservation,
   OperationalCueKey,
   OpportunityStatus,
   WorkItemKind,
@@ -13,6 +15,12 @@ import type { OperationalCue } from "../operational-cues/types";
 import type { ProjectCueWorkItemBridge } from "../projects/cues";
 
 export type ProjectGuidanceWorkItemCue = "open_blocker_field_notes";
+export type EstimateHandoffWorkItemType =
+  | "generate_estimate"
+  | "review_estimate"
+  | "request_missing_info"
+  | "approve_send"
+  | "follow_up_customer";
 
 export type CueWorkItemPrefill = {
   title: string;
@@ -81,6 +89,71 @@ function getOperationalCueBridgeConfig(
   }
 }
 
+function getEstimateHandoffTitle(input: {
+  type: EstimateHandoffWorkItemType;
+  opportunityTitle: string;
+}) {
+  switch (input.type) {
+    case "generate_estimate":
+      return `Generate estimate for ${input.opportunityTitle}`;
+    case "review_estimate":
+      return `Review estimate handoff for ${input.opportunityTitle}`;
+    case "request_missing_info":
+      return `Request missing estimate info for ${input.opportunityTitle}`;
+    case "approve_send":
+      return `Approve estimate send for ${input.opportunityTitle}`;
+    case "follow_up_customer":
+      return `Follow up on estimate for ${input.opportunityTitle}`;
+  }
+}
+
+function getEstimateHandoffPriority(type: EstimateHandoffWorkItemType) {
+  switch (type) {
+    case "request_missing_info":
+    case "approve_send":
+      return "high" as const;
+    case "generate_estimate":
+    case "review_estimate":
+    case "follow_up_customer":
+      return "normal" as const;
+  }
+}
+
+function summarizeMeasurements(measurements: OpportunityMeasurement[]) {
+  if (measurements.length === 0) {
+    return null;
+  }
+
+  return measurements
+    .slice(0, 5)
+    .map((measurement) =>
+      [
+        measurement.areaLabel ?? measurement.measurementType,
+        `${measurement.valueNumeric} ${measurement.unit}`,
+        measurement.quantity ? `qty ${measurement.quantity}` : null,
+        measurement.notes
+      ]
+        .filter(Boolean)
+        .join(" - ")
+    )
+    .join("\n");
+}
+
+function summarizeObservations(observations: OpportunityObservation[]) {
+  if (observations.length === 0) {
+    return null;
+  }
+
+  return observations
+    .slice(0, 5)
+    .map((observation) =>
+      [observation.title, observation.body, observation.severity]
+        .filter(Boolean)
+        .join(" - ")
+    )
+    .join("\n");
+}
+
 export function getOperationalCueWorkItemBridgeAction(cue: OperationalCue) {
   const config = getOperationalCueBridgeConfig(cue.cueKey);
 
@@ -96,11 +169,13 @@ export function getOperationalCueWorkItemBridgeAction(cue: OperationalCue) {
 
 export function buildOperationalCueWorkItemPrefill(input: {
   cue: OperationalCue;
-}): (CueWorkItemPrefill & {
-  sourceType: WorkItemSourceType;
-  sourceId: string;
-  linkPath: string;
-}) | null {
+}):
+  | (CueWorkItemPrefill & {
+      sourceType: WorkItemSourceType;
+      sourceId: string;
+      linkPath: string;
+    })
+  | null {
   const { cue } = input;
   const config = getOperationalCueBridgeConfig(cue.cueKey);
 
@@ -117,7 +192,9 @@ export function buildOperationalCueWorkItemPrefill(input: {
       `Reason: ${cue.reason}`,
       cue.customerName ? `Customer: ${cue.customerName}` : null,
       cue.projectName ? `Project: ${cue.projectName}` : null,
-      cue.sourceValue ? `${cue.sourceLabel}: ${cue.sourceValue}` : cue.sourceLabel,
+      cue.sourceValue
+        ? `${cue.sourceLabel}: ${cue.sourceValue}`
+        : cue.sourceLabel,
       cue.thresholdLabel,
       cue.triggeredAtLabel,
       `Workflow handoff: ${cue.actionHref}`
@@ -169,9 +246,11 @@ export function buildOpportunityFollowUpWorkItemPrefill(input: {
     title,
     description: compactDescription([
       "Created from a visible lead follow-up cue. Confirm the owner, due date, and context before creating this internal work item.",
-      input.nextFollowUpNote ? `Follow-up note: ${input.nextFollowUpNote}` : null,
+      input.nextFollowUpNote
+        ? `Follow-up note: ${input.nextFollowUpNote}`
+        : null,
       input.contactName ? `Contact: ${input.contactName}` : null,
-      input.customerName ?? input.companyName
+      (input.customerName ?? input.companyName)
         ? `Account: ${input.customerName ?? input.companyName}`
         : null,
       input.lastCommunicationAt
@@ -191,6 +270,85 @@ export function buildOpportunityFollowUpWorkItemPrefill(input: {
       leadFollowUpBucket: bucket,
       nextFollowUpAt: input.nextFollowUpAt,
       lastCommunicationAt: input.lastCommunicationAt ?? null
+    }
+  };
+}
+
+export function buildEstimateHandoffWorkItemPrefill(input: {
+  opportunityId: string;
+  opportunityTitle: string;
+  customerName?: string | null;
+  projectName?: string | null;
+  contactName?: string | null;
+  requirementsSummary?: string | null;
+  notes?: string | null;
+  siteAssessmentStatus: string;
+  siteAssessmentScheduledAt?: string | null;
+  siteAssessmentCompletedAt?: string | null;
+  measurements: OpportunityMeasurement[];
+  observations: OpportunityObservation[];
+  attachmentCount: number;
+  type?: EstimateHandoffWorkItemType;
+}): CueWorkItemPrefill {
+  const type = input.type ?? "generate_estimate";
+  const measurementSummary = summarizeMeasurements(input.measurements);
+  const observationSummary = summarizeObservations(input.observations);
+
+  return {
+    title: getEstimateHandoffTitle({
+      type,
+      opportunityTitle: input.opportunityTitle
+    }),
+    description: compactDescription([
+      "Created from the Sales Handoff / Estimate Work Queue foundation. Confirm the estimate writer, due date, blocker state, and source context before submitting this internal work item.",
+      input.customerName ? `Customer: ${input.customerName}` : null,
+      input.projectName ? `Project: ${input.projectName}` : null,
+      input.contactName
+        ? `Relationship / onsite context: ${input.contactName}`
+        : null,
+      `Site assessment: ${labelize(input.siteAssessmentStatus)}`,
+      input.siteAssessmentScheduledAt
+        ? `Site visit scheduled: ${new Date(input.siteAssessmentScheduledAt).toLocaleString()}`
+        : null,
+      input.siteAssessmentCompletedAt
+        ? `Site visit completed: ${new Date(input.siteAssessmentCompletedAt).toLocaleString()}`
+        : null,
+      input.requirementsSummary
+        ? `Requirements summary: ${input.requirementsSummary}`
+        : null,
+      input.notes ? `Internal notes: ${input.notes}` : null,
+      measurementSummary ? `Measurements:\n${measurementSummary}` : null,
+      observationSummary ? `Observations:\n${observationSummary}` : null,
+      `Photos / files attached to lead: ${input.attachmentCount}`
+    ]),
+    dueAt: null,
+    priority: getEstimateHandoffPriority(type),
+    kind: "estimate_follow_up",
+    dedupeKey: `opportunity:${input.opportunityId}:estimate_handoff:${type}`,
+    metadata: {
+      cue: "estimate_handoff",
+      estimateWork: true,
+      estimateWorkType: type,
+      estimateWorkStatus:
+        type === "review_estimate" || type === "approve_send"
+          ? "ready_for_review"
+          : "open",
+      sourceRecordType: "opportunity",
+      opportunityId: input.opportunityId,
+      siteAssessmentStatus: input.siteAssessmentStatus,
+      siteAssessmentScheduledAt: input.siteAssessmentScheduledAt ?? null,
+      siteAssessmentCompletedAt: input.siteAssessmentCompletedAt ?? null,
+      measurementCount: input.measurements.length,
+      observationCount: input.observations.length,
+      attachmentCount: input.attachmentCount,
+      roleSlots: {
+        onsiteRepPersonId: null,
+        relationshipOwnerPersonId: null,
+        estimateWriterPersonId: null,
+        followUpOwnerPersonId: null,
+        salesCreditOwnerPersonId: null,
+        sendAsUserId: null
+      }
     }
   };
 }
@@ -219,7 +377,8 @@ export function buildAppointmentCueWorkItemPrefill(input: {
   const kind = isFollowUpCue
     ? "appointment_follow_up"
     : "appointment_confirmation_prep";
-  const contextLabel = input.customerName ?? input.opportunityTitle ?? "appointment";
+  const contextLabel =
+    input.customerName ?? input.opportunityTitle ?? "appointment";
   const statusLabel = labelize(input.status);
   const typeLabel = labelize(input.appointmentType);
 
@@ -233,7 +392,9 @@ export function buildAppointmentCueWorkItemPrefill(input: {
       `Appointment: ${input.title}`,
       `Type: ${typeLabel}`,
       `Status: ${statusLabel}`,
-      input.startsAt ? `Scheduled time: ${new Date(input.startsAt).toLocaleString()}` : null,
+      input.startsAt
+        ? `Scheduled time: ${new Date(input.startsAt).toLocaleString()}`
+        : null,
       contextLabel !== "appointment" ? `Context: ${contextLabel}` : null
     ]),
     dueAt: input.startsAt,

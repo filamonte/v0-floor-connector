@@ -80,8 +80,13 @@ Roadmap sequencing should account for these future areas without turning them in
   View v1 now adds `/field/work-items` as a linked-person field queue with
   detail pages for instructions, measurement notes, internal evidence previews,
   safe field-state metadata, and completion notes without source-record or
-  portal mutation. Comments, richer statuses, assignee-side uploads, reminders,
-  and portal-safe sharing remain future depth documented in
+  portal mutation. Sales Handoff / Estimate Work Queue V1 now reuses the same
+  Work Item foundation for opportunity-linked estimate handoff items and pure
+  estimate-work queue selectors without schema, estimate mutation, customer
+  sends, or commission calculation; see
+  [docs/design/sales-handoff-estimate-work-queue-v1.md](C:/FloorConnector/docs/design/sales-handoff-estimate-work-queue-v1.md).
+  Comments, richer statuses, assignee-side uploads, reminders,
+  portal-safe sharing, and audited commission ownership remain future depth documented in
   [docs/design/context-rich-work-items-and-assignments.md](C:/FloorConnector/docs/design/context-rich-work-items-and-assignments.md)
 - Universal Capture + Assistant Action Layer as future operational continuity
   infrastructure: users should eventually capture callbacks, reminders,

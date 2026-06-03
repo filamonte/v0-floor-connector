@@ -12,6 +12,12 @@ export type WorkItemFieldState =
   | "in_progress"
   | "blocked"
   | "completed";
+export type EstimateWorkItemType =
+  | "generate_estimate"
+  | "review_estimate"
+  | "request_missing_info"
+  | "approve_send"
+  | "follow_up_customer";
 export type MobileAssignedWorkItemGroupKey =
   | "blocked"
   | "overdue"
@@ -34,6 +40,14 @@ export type ContextRichWorkItemPreview = {
   customerId: string | null;
   projectId: string | null;
   attachmentCount: number | null;
+};
+
+export type EstimateWorkQueue = {
+  assigned: WorkItem[];
+  waitingOnMe: WorkItem[];
+  readyForReview: WorkItem[];
+  blocked: WorkItem[];
+  followUpsDue: WorkItem[];
 };
 
 const priorityRank: Record<WorkItemPriority, number> = {
@@ -73,6 +87,16 @@ function getMetadataNumber(value: unknown) {
     : null;
 }
 
+function isEstimateWorkItemType(value: unknown): value is EstimateWorkItemType {
+  return (
+    value === "generate_estimate" ||
+    value === "review_estimate" ||
+    value === "request_missing_info" ||
+    value === "approve_send" ||
+    value === "follow_up_customer"
+  );
+}
+
 export function getWorkItemMeasurementNotes(
   workItem: Pick<WorkItem, "metadata">
 ) {
@@ -83,6 +107,26 @@ export function getWorkItemAttachmentCount(
   workItem: Pick<WorkItem, "metadata">
 ) {
   return getMetadataNumber(workItem.metadata.attachmentCount);
+}
+
+export function getEstimateWorkItemType(
+  workItem: Pick<WorkItem, "metadata">
+): EstimateWorkItemType | null {
+  return isEstimateWorkItemType(workItem.metadata.estimateWorkType)
+    ? workItem.metadata.estimateWorkType
+    : null;
+}
+
+export function isEstimateWorkItem(
+  workItem: Pick<WorkItem, "kind" | "metadata" | "sourceType">
+) {
+  return (
+    getEstimateWorkItemType(workItem) !== null ||
+    workItem.metadata.estimateWork === true ||
+    (workItem.kind === "estimate_follow_up" &&
+      (workItem.sourceType === "opportunity" ||
+        workItem.sourceType === "estimate"))
+  );
 }
 
 export function getWorkItemFieldState(
@@ -270,6 +314,58 @@ export function selectBlockedWorkItems<T extends WorkItem>(input: {
           typeof workItem.metadata.blockerReason === "string")
     )
   );
+}
+
+export function buildEstimateWorkQueue(input: {
+  workItems: WorkItem[];
+  currentPersonId?: string | null;
+  nowIso: string;
+  limit?: number;
+}): EstimateWorkQueue {
+  const limit = input.limit ?? 5;
+  const estimateWorkItems = input.workItems.filter(
+    (workItem) => isOpenWorkItem(workItem) && isEstimateWorkItem(workItem)
+  );
+  const assigned = input.currentPersonId
+    ? estimateWorkItems.filter(
+        (workItem) => workItem.assignedPersonId === input.currentPersonId
+      )
+    : [];
+  const waitingOnMe = assigned.filter((workItem) => {
+    const type = getEstimateWorkItemType(workItem);
+
+    return (
+      type === "generate_estimate" ||
+      type === "review_estimate" ||
+      type === "approve_send" ||
+      workItem.metadata.waitingOnCurrentOwner === true
+    );
+  });
+  const readyForReview = estimateWorkItems.filter((workItem) => {
+    const type = getEstimateWorkItemType(workItem);
+
+    return (
+      type === "review_estimate" ||
+      type === "approve_send" ||
+      workItem.metadata.estimateWorkStatus === "ready_for_review"
+    );
+  });
+  const blocked = estimateWorkItems.filter(
+    (workItem) => getWorkItemFieldState(workItem) === "blocked"
+  );
+  const followUpsDue = estimateWorkItems.filter(
+    (workItem) =>
+      getEstimateWorkItemType(workItem) === "follow_up_customer" &&
+      isDueWorkItem(workItem, input.nowIso)
+  );
+
+  return {
+    assigned: sortWorkItemsForQueue(assigned).slice(0, limit),
+    waitingOnMe: sortWorkItemsForQueue(waitingOnMe).slice(0, limit),
+    readyForReview: sortWorkItemsForQueue(readyForReview).slice(0, limit),
+    blocked: sortWorkItemsForQueue(blocked).slice(0, limit),
+    followUpsDue: sortWorkItemsForQueue(followUpsDue).slice(0, limit)
+  };
 }
 
 function isSameDateKey(leftIso: string, rightIso: string) {

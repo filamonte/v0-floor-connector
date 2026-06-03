@@ -6,11 +6,14 @@ import type { WorkItem } from "@floorconnector/types";
 import { executionAttachmentSubjectTypeSchema } from "../execution-attachments/schemas";
 import {
   buildContextRichWorkItemPreview,
+  buildEstimateWorkQueue,
   canActOnAssignedWorkItem,
   filterDashboardWorkItems,
+  getEstimateWorkItemType,
   getWorkItemCompletionNote,
   getWorkItemFieldState,
   groupMobileAssignedWorkItems,
+  isEstimateWorkItem,
   selectAssignedWorkItems,
   selectBlockedWorkItems,
   selectDashboardWorkItemQueue,
@@ -338,6 +341,106 @@ void test("context-rich work item preview surfaces instructions measurements and
   );
   assert.equal(preview.dueState, "overdue");
   assert.equal(preview.attachmentCount, null);
+});
+
+void test("estimate work queue groups source-linked estimate handoff items by metadata", () => {
+  const workItems: WorkItem[] = [
+    {
+      ...baseWorkItem,
+      id: "a1a1a1a1-a1a1-4a1a-8a1a-a1a1a1a1a1a1",
+      title: "Generate estimate",
+      kind: "estimate_follow_up",
+      sourceType: "opportunity",
+      sourceId: "opportunity-1",
+      assignedPersonId: "person-1",
+      dueAt: "2026-05-08T12:00:00.000Z",
+      metadata: {
+        estimateWork: true,
+        estimateWorkType: "generate_estimate"
+      }
+    },
+    {
+      ...baseWorkItem,
+      id: "b2b2b2b2-b2b2-4b2b-8b2b-b2b2b2b2b2b2",
+      title: "Review estimate",
+      kind: "estimate_follow_up",
+      sourceType: "estimate",
+      sourceId: "estimate-1",
+      assignedPersonId: "person-1",
+      dueAt: "2026-05-09T12:00:00.000Z",
+      metadata: {
+        estimateWork: true,
+        estimateWorkType: "review_estimate",
+        estimateWorkStatus: "ready_for_review"
+      }
+    },
+    {
+      ...baseWorkItem,
+      id: "c3c3c3c3-c3c3-4c3c-8c3c-c3c3c3c3c3c3",
+      title: "Request missing info",
+      kind: "estimate_follow_up",
+      sourceType: "opportunity",
+      sourceId: "opportunity-1",
+      assignedPersonId: "person-2",
+      dueAt: "2026-05-07T12:00:00.000Z",
+      metadata: {
+        estimateWork: true,
+        estimateWorkType: "request_missing_info",
+        fieldState: "blocked",
+        blockerReason: "Missing moisture reading."
+      }
+    },
+    {
+      ...baseWorkItem,
+      id: "d4d4d4d4-d4d4-4d4d-8d4d-d4d4d4d4d4d4",
+      title: "Follow up customer",
+      kind: "estimate_follow_up",
+      sourceType: "estimate",
+      sourceId: "estimate-1",
+      dueAt: "2026-05-06T12:00:00.000Z",
+      metadata: {
+        estimateWork: true,
+        estimateWorkType: "follow_up_customer"
+      }
+    },
+    {
+      ...baseWorkItem,
+      id: "e5e5e5e5-e5e5-4e5e-8e5e-e5e5e5e5e5e5",
+      title: "Invoice follow-up",
+      kind: "invoice_follow_up",
+      sourceType: "invoice",
+      sourceId: "invoice-1"
+    }
+  ];
+
+  const queue = buildEstimateWorkQueue({
+    workItems,
+    currentPersonId: "person-1",
+    nowIso: "2026-05-10T12:00:00.000Z"
+  });
+
+  assert.equal(getEstimateWorkItemType(workItems[0]), "generate_estimate");
+  assert.equal(isEstimateWorkItem(workItems[4]), false);
+  assert.deepEqual(
+    queue.assigned.map((item) => item.title),
+    ["Generate estimate", "Review estimate"]
+  );
+  assert.deepEqual(
+    queue.waitingOnMe.map((item) => item.title),
+    ["Generate estimate", "Review estimate"]
+  );
+  assert.deepEqual(
+    queue.readyForReview.map((item) => item.title),
+    ["Review estimate"]
+  );
+  assert.deepEqual(
+    queue.blocked.map((item) => item.title),
+    ["Request missing info"]
+  );
+  assert.deepEqual(
+    queue.followUpsDue.map((item) => item.title),
+    ["Follow up customer"]
+  );
 });
 
 void test("work item read model filters by project job assignee overdue and blocked context", () => {
