@@ -129,6 +129,10 @@ void test("surfaces overdue unpaid invoices with payment reminder drafts", () =>
   assert.equal(item.priority, "high");
   assert.equal(item.paymentState, "unpaid");
   assert.equal(item.amountDue, "725.00");
+  assert.match(item.nextContactBrief.summary, /Acme Flooring/);
+  assert.match(item.nextContactBrief.summary, /INV-OVERDUE/);
+  assert.match(item.nextContactBrief.invoiceContext, /725.00 due/);
+  assert.match(item.nextContactBrief.agingContext, /19 days past due/);
   assert.equal(item.draftAction?.actionType, "payment_reminder");
   assert.match(item.communicationHandoffHref ?? "", /copilotDraft=1/);
   assert.match(item.communicationHandoffHref ?? "", /payment_reminder/);
@@ -165,6 +169,8 @@ void test("surfaces partially paid invoices with balance follow-up drafts", () =
 
   assert.equal(item.category, "partially_paid");
   assert.equal(item.paymentState, "partially_paid");
+  assert.match(item.nextContactBrief.paymentContext, /recorded payment/);
+  assert.match(item.nextContactBrief.summary, /remaining balance/);
   assert.equal(item.draftAction?.actionType, "partial_balance_follow_up");
 });
 
@@ -221,6 +227,54 @@ void test("surfaces checkout and payment in-progress before a duplicate nudge", 
   assert.equal(item.category, "payment_in_progress");
   assert.equal(item.paymentState, "payment_in_progress");
   assert.equal(item.recommendedNextStep, "Review payment progress");
+  assert.match(item.nextContactBrief.paymentContext, /checkout started/);
+});
+
+void test("marks next-contact briefs as recently active when canonical activity is fresh", () => {
+  const item = onlyItem({
+    invoices: [
+      invoice({
+        updatedAt: "2026-05-01T12:00:00.000Z"
+      })
+    ],
+    paymentEvents: [
+      event({
+        eventType: "payment_requested",
+        occurredAt: "2026-05-19T12:00:00.000Z"
+      })
+    ]
+  });
+
+  assert.equal(item.nextContactBrief.activityRecency, "recent_activity");
+  assert.match(item.nextContactBrief.lastActivityContext, /Activity is recent/);
+  assert.match(
+    item.nextContactBrief.sourceRecordContext.join(" "),
+    /Payment Trail event event-1/
+  );
+});
+
+void test("marks next-contact briefs when no recent activity exists", () => {
+  const item = onlyItem({
+    invoices: [
+      invoice({
+        updatedAt: "2026-05-01T12:00:00.000Z"
+      })
+    ]
+  });
+
+  assert.equal(item.nextContactBrief.activityRecency, "no_recent_activity");
+  assert.match(
+    item.nextContactBrief.lastActivityContext,
+    /No recent activity in 19 days/
+  );
+  assert.match(
+    item.nextContactBrief.sourceRecordContext.join(" "),
+    /No payment record/
+  );
+  assert.match(
+    item.nextContactBrief.sourceRecordContext.join(" "),
+    /No Payment Trail event/
+  );
 });
 
 void test("uses internal review drafts when customer or project context is incomplete", () => {

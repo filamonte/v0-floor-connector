@@ -697,6 +697,29 @@ export default async function AccountsReceivablePage() {
                         <p className="mt-1 text-xs uppercase tracking-[0.12em] text-slate-400">
                           {formatStatusLabel(item.invoiceStatus)}
                         </p>
+                        <div className="mt-3 border border-[#e5e5e5] bg-[#f8f8f8] px-3 py-2">
+                          <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#666666]">
+                            Next-contact brief
+                          </p>
+                          <p className="mt-1 text-sm leading-5 text-slate-600">
+                            {item.nextContactBrief.summary}
+                          </p>
+                          <div className="mt-2 grid gap-2 text-xs leading-5 text-slate-500 sm:grid-cols-2">
+                            <p>{item.nextContactBrief.customerContext}</p>
+                            <p>{item.nextContactBrief.projectContext}</p>
+                            <p>{item.nextContactBrief.invoiceContext}</p>
+                            <p>{item.nextContactBrief.paymentContext}</p>
+                            <p>{item.nextContactBrief.agingContext}</p>
+                            <p>{item.nextContactBrief.lastActivityContext}</p>
+                          </div>
+                          <p className="mt-2 text-xs leading-5 text-slate-500">
+                            Source context:{" "}
+                            {item.nextContactBrief.sourceRecordContext.join(
+                              " / "
+                            )}
+                            .
+                          </p>
+                        </div>
                       </div>
 
                       <div className="flex flex-wrap gap-2 lg:justify-end">
