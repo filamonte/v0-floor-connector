@@ -964,6 +964,184 @@ void test("project estimate handoff selector summarizes connected estimate work"
   assert.equal(summary.nextItem?.title, "Blocked project estimate packet");
 });
 
+void test("estimate handoff chain uses canonical work item metadata across lead dashboard estimate and project lenses", () => {
+  const workItems: WorkItem[] = [
+    {
+      ...baseWorkItem,
+      id: "01010101-0101-4101-8101-010101010101",
+      title: "Generate estimate from lead packet",
+      kind: "estimate_follow_up",
+      sourceType: "opportunity",
+      sourceId: "opportunity-chain",
+      projectId: "project-chain",
+      assignedPersonId: "person-writer",
+      createdByUserId: "user-site-assessor",
+      dueAt: "2026-06-03T12:00:00.000Z",
+      metadata: {
+        estimateWork: true,
+        estimateWorkType: "generate_estimate",
+        estimateWorkStatus: "open",
+        opportunityId: "opportunity-chain",
+        projectId: "project-chain",
+        estimateId: "estimate-chain",
+        nextActionText: "Old generated fallback",
+        nextAction: "Draft estimate from captured source packet."
+      }
+    },
+    {
+      ...baseWorkItem,
+      id: "02020202-0202-4202-8202-020202020202",
+      title: "Review generated estimate",
+      kind: "estimate_follow_up",
+      sourceType: "estimate",
+      sourceId: "estimate-chain",
+      projectId: "project-chain",
+      assignedPersonId: "person-reviewer",
+      dueAt: "2026-06-04T12:00:00.000Z",
+      metadata: {
+        estimateWork: true,
+        estimateWorkType: "review_estimate",
+        estimateWorkStatus: "ready_for_review",
+        opportunityId: "opportunity-chain",
+        projectId: "project-chain",
+        estimateId: "estimate-chain"
+      }
+    },
+    {
+      ...baseWorkItem,
+      id: "03030303-0303-4303-8303-030303030303",
+      title: "Resolve missing moisture reading",
+      kind: "estimate_follow_up",
+      sourceType: "project",
+      sourceId: "project-chain",
+      projectId: "project-chain",
+      assignedPersonId: "person-writer",
+      dueAt: "2026-06-02T12:00:00.000Z",
+      metadata: {
+        estimateWork: true,
+        estimateWorkType: "request_missing_info",
+        fieldState: "blocked",
+        blockerReason: "Need moisture reading before review.",
+        opportunityId: "opportunity-chain",
+        projectId: "project-chain",
+        estimateId: "estimate-chain"
+      }
+    },
+    {
+      ...baseWorkItem,
+      id: "04040404-0404-4404-8404-040404040404",
+      title: "Unrelated project task",
+      kind: "manual",
+      sourceType: "project",
+      sourceId: "project-chain",
+      projectId: "project-chain"
+    },
+    {
+      ...baseWorkItem,
+      id: "05050505-0505-4505-8505-050505050505",
+      title: "Other estimate handoff",
+      kind: "estimate_follow_up",
+      sourceType: "estimate",
+      sourceId: "estimate-other",
+      projectId: "project-other",
+      metadata: {
+        estimateWork: true,
+        estimateWorkType: "generate_estimate",
+        estimateId: "estimate-other"
+      }
+    }
+  ];
+
+  const leadLinkedItems = workItems.filter(
+    (workItem) =>
+      workItem.sourceType === "opportunity" &&
+      workItem.sourceId === "opportunity-chain"
+  );
+  const leadOpenHandoffs = selectOpenEstimateHandoffWorkItems({
+    workItems: leadLinkedItems,
+    opportunityId: "opportunity-chain",
+    projectId: "project-chain",
+    estimateId: "estimate-chain"
+  });
+  const dashboardQueue = buildEstimateWorkQueue({
+    workItems,
+    currentPersonId: "person-writer",
+    nowIso: "2026-06-05T12:00:00.000Z"
+  });
+  const estimateWorkspaceItems = selectEstimateWorkspaceHandoffWorkItems({
+    workItems,
+    estimateId: "estimate-chain",
+    projectId: "project-chain",
+    opportunityId: "opportunity-chain"
+  });
+  const projectItems = selectProjectEstimateHandoffWorkItems({
+    workItems,
+    projectId: "project-chain",
+    estimateIds: ["estimate-chain"],
+    opportunityId: "opportunity-chain"
+  });
+  const projectSummary = buildProjectEstimateHandoffSummary({
+    workItems: projectItems,
+    nowIso: "2026-06-05T12:00:00.000Z"
+  });
+  const ownership = buildWorkItemOwnershipDisplay({
+    workItem: workItems[0],
+    assignedPerson: {
+      displayName: "Erin Estimate Writer"
+    },
+    createdByPerson: {
+      displayName: "Sam Site Assessor"
+    }
+  });
+
+  assert.deepEqual(
+    leadOpenHandoffs.map((item) => item.title),
+    ["Generate estimate from lead packet"]
+  );
+  assert.deepEqual(
+    dashboardQueue.assigned.map((item) => item.title),
+    ["Resolve missing moisture reading", "Generate estimate from lead packet"]
+  );
+  assert.deepEqual(
+    dashboardQueue.waitingOnMe.map((item) => item.title),
+    ["Generate estimate from lead packet"]
+  );
+  assert.deepEqual(
+    dashboardQueue.readyForReview.map((item) => item.title),
+    ["Review generated estimate"]
+  );
+  assert.deepEqual(
+    estimateWorkspaceItems.map((item) => item.title),
+    [
+      "Resolve missing moisture reading",
+      "Generate estimate from lead packet",
+      "Review generated estimate"
+    ]
+  );
+  assert.deepEqual(
+    projectItems.map((item) => item.title),
+    [
+      "Resolve missing moisture reading",
+      "Generate estimate from lead packet",
+      "Review generated estimate"
+    ]
+  );
+  assert.equal(projectSummary.totalOpen, 3);
+  assert.equal(projectSummary.blockedCount, 1);
+  assert.equal(projectSummary.readyForReviewCount, 1);
+  assert.equal(
+    projectSummary.nextItem?.title,
+    "Resolve missing moisture reading"
+  );
+  assert.equal(
+    getWorkItemNextAction(workItems[0]),
+    "Draft estimate from captured source packet."
+  );
+  assert.equal(ownership.assignedOwnerName, "Erin Estimate Writer");
+  assert.equal(ownership.requesterName, "Sam Site Assessor");
+  assert.equal(ownership.stateLabel, "Open");
+});
+
 void test("work item read model filters by project job assignee overdue and blocked context", () => {
   const workItems: WorkItem[] = [
     {

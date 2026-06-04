@@ -206,6 +206,30 @@ void test("estimate handoff prefill carries site assessment context without crea
   assert.equal(parsed.success, true);
 });
 
+void test("estimate handoff prefill does not invent a source owner when none is provided", () => {
+  const prefill = buildEstimateHandoffWorkItemPrefill({
+    opportunityId,
+    opportunityTitle: "Unassigned garage estimate",
+    customerName: "Taylor Customer",
+    projectName: "Garage floor",
+    contactName: null,
+    requirementsSummary: null,
+    notes: null,
+    siteAssessmentStatus: "scheduled",
+    siteAssessmentScheduledAt: "2026-05-04T15:00:00.000Z",
+    siteAssessmentCompletedAt: null,
+    measurements: [],
+    observations: [],
+    attachmentCount: 0
+  });
+
+  assert.doesNotMatch(prefill.description ?? "", /Source owner:/);
+  assert.equal(prefill.metadata.sourceOwnerUserId, null);
+  assert.equal(prefill.metadata.sourceOwnerName, null);
+  assert.equal(prefill.metadata.estimateWork, true);
+  assert.equal(prefill.metadata.opportunityId, opportunityId);
+});
+
 void test("estimate workspace missing-info shortcut creates estimate source-locked prefill", () => {
   const prefill = buildEstimateWorkspaceShortcutWorkItemPrefill({
     estimateId,
