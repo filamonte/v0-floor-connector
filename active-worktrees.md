@@ -106,3 +106,26 @@ is complete. Do not treat these rows as implementation authorization.
 The detailed ownership, dependency, UX / IA, canonical model, conflict, and
 verification audit for these streams lives in
 [docs/parallel-development-governance.md](C:/FloorConnector/docs/parallel-development-governance.md).
+
+## Operational Command Center V1 Stream Gate
+
+Gate date: 2026-06-04.
+
+Wave: `operational-command-center-v1`.
+
+Architecture Coordination approval is recorded for the next implementation
+stream set below. Jeff approval remains pending explicit approval, so these
+streams must not begin implementation until that approval is recorded.
+
+| Worktree                       | Branch                                | Gate status                          | Activation condition                                               |
+| ------------------------------ | ------------------------------------- | ------------------------------------ | ------------------------------------------------------------------ |
+| `project-workspace-v2`         | `stream/project-workspace-v2`         | Architecture approved / Jeff pending | Jeff explicitly approves starting `operational-command-center-v1`. |
+| `field-command-center-v1`      | `stream/field-command-center-v1`      | Architecture approved / Jeff pending | Jeff explicitly approves starting `operational-command-center-v1`. |
+| `communications-continuity-v2` | `stream/communications-continuity-v2` | Architecture approved / Jeff pending | Jeff explicitly approves starting `operational-command-center-v1`. |
+| `financial-command-center-v1`  | `stream/financial-command-center-v1`  | Architecture approved / Jeff pending | Jeff explicitly approves starting `operational-command-center-v1`. |
+| `verification-v2`              | `stream/verification-v2`              | Architecture approved / Jeff pending | Jeff explicitly approves starting `operational-command-center-v1`. |
+
+UX Architecture / Architecture Coordination remains the governance referee.
+Dashboard prioritizes, Project Workspace diagnoses, owning workspaces act,
+Settings owns tenant configuration, Super Admin owns platform policy, and Portal
+remains customer-safe review/action only.

@@ -60,6 +60,45 @@ The detailed audit for ownership, dependencies, UX / IA impact, canonical model
 risk, overlap/conflict, verification expectations, and merge readiness lives in
 [docs/parallel-development-governance.md](C:/FloorConnector/docs/parallel-development-governance.md).
 
+## Operational Command Center V1 Gate
+
+Gate date: 2026-06-04.
+
+Wave name: `operational-command-center-v1`.
+
+Wave goal: Strengthen FloorConnector's operational command center model by
+making Project Workspace diagnose operational state, Field own execution action,
+Communications own conversation action, Financials own AR/payment action, and
+Verification protect the ownership model.
+
+Architecture Coordination approval: Approved.
+
+Jeff approval gate: Pending explicit approval. This prompt did not explicitly
+say "approved, start the next wave," so implementation prompts may not begin
+yet.
+
+Approved stream set once Jeff approval is recorded:
+
+- `stream/project-workspace-v2`
+- `stream/field-command-center-v1`
+- `stream/communications-continuity-v2`
+- `stream/financial-command-center-v1`
+- `stream/verification-v2`
+
+Governance rule:
+
+- Dashboard prioritizes.
+- Project Workspace diagnoses.
+- Owning workspace acts.
+- Settings owns tenant configuration.
+- Super Admin owns platform policy.
+- Portal remains customer-safe review/action only.
+
+UX Architecture / Architecture Coordination remains the governance referee.
+Agents may plan, build, validate, and prepare review packets under human review
+gate rules after Jeff approval is recorded, but may not auto-merge or continue
+indefinitely without Jeff approval.
+
 ## Merged Streams
 
 These streams have merged to `main` and their local worktrees are retained

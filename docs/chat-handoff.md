@@ -38,6 +38,13 @@ Work -> Verification -> Integration Review Packet -> Jeff Approval -> Continue.
 Agents may prepare scoped work and review packets, but may not auto-merge,
 auto-continue, or bypass Jeff approval.
 
+Current wave gate note: `operational-command-center-v1` has Architecture
+Coordination approval recorded for `stream/project-workspace-v2`,
+`stream/field-command-center-v1`, `stream/communications-continuity-v2`,
+`stream/financial-command-center-v1`, and `stream/verification-v2`. Jeff approval
+is still pending explicit approval, so implementation prompts should not begin
+until Jeff says to start the next wave.
+
 ## Required First Reads
 
 Read these before implementation or documentation work:

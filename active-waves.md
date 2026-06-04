@@ -111,3 +111,49 @@ These names are current review candidates, not active wave authorization:
 | `communications-continuity-v2` | Record-linked communication follow-up continuity                 | Confirm provider-dark behavior and source-record handoff ownership.                       |
 | `financial-command-center-v1`  | Financial command center and collections continuity              | Confirm financial math/payment-state test strategy and no detached billing truth.         |
 | `verification-v2`              | Review packet and merge-gate verification framework              | Confirm evidence requirements for every approved stream.                                  |
+
+## Operational Command Center V1 Gate
+
+Wave name: `operational-command-center-v1`.
+
+Wave goal: Strengthen FloorConnector's operational command center model by
+making Project Workspace diagnose operational state, Field own execution action,
+Communications own conversation action, Financials own AR/payment action, and
+Verification protect the ownership model.
+
+Governance rule:
+
+- Dashboard prioritizes.
+- Project Workspace diagnoses.
+- Owning workspace acts.
+- Settings owns tenant configuration.
+- Super Admin owns platform policy.
+- Portal remains customer-safe review/action only.
+
+Gate status as of 2026-06-04:
+
+| Gate item                              | Status                    | Evidence / note                                                                   |
+| -------------------------------------- | ------------------------- | --------------------------------------------------------------------------------- |
+| Architecture Coordination approval     | Approved                  | Ownership boundaries and stream set are recorded in this registry and plan.       |
+| Jeff approval gate                     | Pending explicit approval | This prompt did not explicitly say "approved, start the next wave."               |
+| Human review gate rules                | Required                  | Agents may plan, build, validate, and prepare review packets only after approval. |
+| Autonomous merge / indefinite continue | Not allowed               | Merge, next-wave continuation, and destructive cleanup require Jeff approval.     |
+
+Architecture-approved implementation stream set:
+
+- `stream/project-workspace-v2`
+- `stream/field-command-center-v1`
+- `stream/communications-continuity-v2`
+- `stream/financial-command-center-v1`
+- `stream/verification-v2`
+
+Governance referee:
+
+- UX Architecture / Architecture Coordination remains the governance referee for
+  ownership, dependency, UX / IA, canonical model, verification, and merge-order
+  decisions.
+
+Remaining gate:
+
+- Jeff must explicitly approve starting `operational-command-center-v1` before
+  implementation prompts begin.
