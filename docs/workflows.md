@@ -57,6 +57,15 @@ In practical terms:
   role-slot metadata when those People resolve in the tenant, but those chips do
   not imply crew assignment, Sales Credit Owner visibility, commission/payroll
   behavior, notifications, portal exposure, or new schedule state.
+- CrewBoard selected-job context includes a read-only Field Handoff Packet for
+  scheduled/dispatch jobs. It summarizes canonical job basics, schedule window,
+  assigned crew, project/customer scope context, linked estimate and readiness
+  contract context when available, readiness blockers, schedule warnings,
+  Onsite Rep, Relationship Owner, Follow-Up Owner, Daily Log and field-note
+  state, and canonical links back to Job, Project, Estimate, Contract, and Daily
+  Log surfaces. Missing scope, contract, owner, or field activity is labeled
+  truthfully. The packet is a projection over existing records, not a persisted
+  field model or a notification/reminder workflow.
 - Reports is the current company-level operations/collections visibility
   surface on `/reports`; it summarizes source records and routes users back to
   Project Workspace, CrewBoard, Invoice Workspace, and Contract Workspace.

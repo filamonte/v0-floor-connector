@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import type {
   ScheduleFieldHandoffCommandLane,
   ScheduleFieldHandoffCommandView,
+  ScheduleFieldHandoffPacket,
   ScheduleFieldHandoffSummary
 } from "@/lib/schedule/field-handoff-read-model";
 import {
@@ -461,6 +462,7 @@ function formatFieldActivityDate(value: string | null) {
 
 export function ScheduleFieldHandoffPanel(input: {
   handoff: ScheduleFieldHandoffSummary;
+  packet?: ScheduleFieldHandoffPacket | null;
   compact?: boolean;
 }) {
   const statClassName =
@@ -557,6 +559,135 @@ export function ScheduleFieldHandoffPanel(input: {
           </Link>
         ) : null}
       </div>
+
+      {!input.compact && input.packet ? (
+        <div className="mt-4 border-t border-current/20 pt-4">
+          <div className="grid gap-3 lg:grid-cols-2">
+            <div className={statClassName}>
+              <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--text-tertiary)]">
+                Job packet
+              </p>
+              <dl className="mt-2 space-y-2">
+                <div>
+                  <dt className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--text-tertiary)]">
+                    Status
+                  </dt>
+                  <dd className="mt-0.5 font-medium text-[var(--text-primary)]">
+                    {input.packet.statusLabel}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--text-tertiary)]">
+                    Schedule
+                  </dt>
+                  <dd className="mt-0.5 font-medium text-[var(--text-primary)]">
+                    {input.packet.scheduleLabel}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--text-tertiary)]">
+                    Assigned crew
+                  </dt>
+                  <dd className="mt-0.5 font-medium text-[var(--text-primary)]">
+                    {input.packet.crewLabel}
+                  </dd>
+                </div>
+              </dl>
+            </div>
+
+            <div className={statClassName}>
+              <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--text-tertiary)]">
+                Scope context
+              </p>
+              <dl className="mt-2 space-y-2">
+                <div>
+                  <dt className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--text-tertiary)]">
+                    Project / customer
+                  </dt>
+                  <dd className="mt-0.5 font-medium text-[var(--text-primary)]">
+                    {input.packet.scope.customerLabel} ·{" "}
+                    {input.packet.scope.projectLabel}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--text-tertiary)]">
+                    Estimate
+                  </dt>
+                  <dd className="mt-0.5 font-medium text-[var(--text-primary)]">
+                    {input.packet.scope.estimateLabel}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--text-tertiary)]">
+                    Contract
+                  </dt>
+                  <dd className="mt-0.5 font-medium text-[var(--text-primary)]">
+                    {input.packet.scope.contractLabel}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--text-tertiary)]">
+                    Notes
+                  </dt>
+                  <dd className="mt-0.5 font-medium text-[var(--text-primary)]">
+                    {input.packet.scope.scheduleNotesLabel}
+                  </dd>
+                </div>
+              </dl>
+            </div>
+
+            <div className={statClassName}>
+              <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--text-tertiary)]">
+                Readiness
+              </p>
+              <p className="mt-1 font-semibold text-[var(--text-primary)]">
+                {input.packet.readiness.label}
+              </p>
+              <p className="mt-1 text-sm leading-6">
+                {input.packet.readiness.detail}
+              </p>
+              <p className="mt-1 text-sm font-medium">
+                {input.packet.readiness.warningLabel}
+              </p>
+              <p className="mt-2 text-sm leading-6">
+                {input.packet.fieldNotes.dailyLogLabel} ·{" "}
+                {input.packet.fieldNotes.blockersLabel} ·{" "}
+                {input.packet.fieldNotes.latestActivityLabel}
+              </p>
+            </div>
+
+            <div className={statClassName}>
+              <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--text-tertiary)]">
+                Owners
+              </p>
+              <dl className="mt-2 space-y-2">
+                {input.packet.owners.map((owner) => (
+                  <div key={owner.id}>
+                    <dt className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--text-tertiary)]">
+                      {owner.label}
+                    </dt>
+                    <dd className="mt-0.5 font-medium text-[var(--text-primary)]">
+                      {owner.value}
+                    </dd>
+                  </div>
+                ))}
+              </dl>
+            </div>
+          </div>
+
+          <div className="mt-3 flex flex-wrap gap-2">
+            {input.packet.links.map((link) => (
+              <Link
+                key={`${link.label}-${link.href}`}
+                href={link.href}
+                className={actionClassName}
+              >
+                {link.label}
+              </Link>
+            ))}
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

@@ -2,16 +2,43 @@ import {
   buildDailyLogCaptureHref,
   buildDailyLogSectionHref
 } from "../daily-logs/links";
+import {
+  buildScheduleWarningDisplaySummary,
+  type ScheduleWarningDisplayTone
+} from "./read-model";
+import type { ScheduleWarningSummary } from "./warnings";
 
 export type ScheduleFieldHandoffJob = {
   id: string;
   projectId: string;
   scheduledDate: string | null;
+  scheduledStartAt?: string | null;
+  scheduledEndAt?: string | null;
+  scheduleNotes?: string | null;
   dispatchStatus: string;
   assignmentCount: number;
+  crewSummary?: string[];
+  crewVendor?: { name: string } | null;
   title?: string | null;
   customerName?: string | null;
   projectName?: string | null;
+  project?: {
+    id: string;
+    name: string;
+    onsiteRepPersonId: string | null;
+    relationshipOwnerPersonId: string | null;
+    followUpOwnerPersonId: string | null;
+  } | null;
+  estimate?: {
+    id: string;
+    referenceNumber: string;
+    status: string;
+  } | null;
+  serviceTicket?: {
+    id: string;
+    title: string;
+    status: string;
+  } | null;
 };
 
 export type ScheduleFieldHandoffDailyLog = {
@@ -101,6 +128,63 @@ export type ScheduleFieldHandoffCommandView = {
   recentFieldActivity: ScheduleFieldHandoffCommandLane;
 };
 
+export type ScheduleFieldHandoffPacketPerson = {
+  id: string;
+  displayName: string;
+};
+
+export type ScheduleFieldHandoffReadinessContext = {
+  isReadyToSchedule: boolean;
+  blockers: string[];
+  estimateId: string | null;
+  estimateStatus: string | null;
+  contractId: string | null;
+  contractStatus: string | null;
+  contractSignedAt: string | null;
+};
+
+export type ScheduleFieldHandoffPacketOwner = {
+  id: "onsite_rep" | "relationship_owner" | "follow_up_owner";
+  label: string;
+  value: string;
+  detail: string;
+  href: string | null;
+};
+
+export type ScheduleFieldHandoffPacketLink = {
+  label: string;
+  href: string;
+};
+
+export type ScheduleFieldHandoffPacket = {
+  title: string;
+  statusLabel: string;
+  scheduleLabel: string;
+  crewLabel: string;
+  scope: {
+    projectLabel: string;
+    customerLabel: string;
+    locationLabel: string;
+    estimateLabel: string;
+    contractLabel: string;
+    scheduleNotesLabel: string;
+    serviceTicketLabel: string | null;
+  };
+  readiness: {
+    label: string;
+    detail: string;
+    tone: ScheduleWarningDisplayTone | "ready";
+    warningLabel: string;
+  };
+  owners: ScheduleFieldHandoffPacketOwner[];
+  fieldNotes: {
+    dailyLogLabel: string;
+    blockersLabel: string;
+    latestActivityLabel: string;
+  };
+  links: ScheduleFieldHandoffPacketLink[];
+};
+
 function sortLatestByDate<T extends { logDate: string; updatedAt: string }>(
   rows: T[]
 ) {
@@ -149,6 +233,254 @@ function getContextLabel(job: ScheduleFieldHandoffJob) {
   }
 
   return projectName ?? customerName ?? "Project context";
+}
+
+function formatStatusLabel(value: string | null | undefined) {
+  return value ? value.replaceAll("_", " ") : "Not linked";
+}
+
+function formatScheduleDate(value: string | null | undefined) {
+  return value
+    ? new Date(`${value}T00:00:00`).toLocaleDateString()
+    : "No schedule date";
+}
+
+function formatScheduleDateTime(value: string | null | undefined) {
+  return value ? new Date(value).toLocaleString() : null;
+}
+
+function formatScheduleWindow(job: ScheduleFieldHandoffJob) {
+  const date = formatScheduleDate(job.scheduledDate);
+  const start = formatScheduleDateTime(job.scheduledStartAt);
+  const end = formatScheduleDateTime(job.scheduledEndAt);
+
+  if (start && end) {
+    return `${date} · ${start} to ${end}`;
+  }
+
+  if (start) {
+    return `${date} · starts ${start}`;
+  }
+
+  return date;
+}
+
+function formatLatestActivity(value: string | null) {
+  return value ? new Date(value).toLocaleString() : "No field activity yet";
+}
+
+function getCrewLabel(job: ScheduleFieldHandoffJob) {
+  if (job.crewSummary && job.crewSummary.length > 0) {
+    return job.crewSummary.join(", ");
+  }
+
+  if (job.crewVendor?.name) {
+    return job.crewVendor.name;
+  }
+
+  if (job.assignmentCount > 0) {
+    return `${job.assignmentCount} assignment${
+      job.assignmentCount === 1 ? "" : "s"
+    }`;
+  }
+
+  return "No crew assigned";
+}
+
+function findPersonName(
+  people: ScheduleFieldHandoffPacketPerson[],
+  personId: string | null | undefined
+) {
+  if (!personId) {
+    return null;
+  }
+
+  return people.find((person) => person.id === personId)?.displayName ?? null;
+}
+
+function buildOwner(input: {
+  id: ScheduleFieldHandoffPacketOwner["id"];
+  label: string;
+  detail: string;
+  personId: string | null | undefined;
+  people: ScheduleFieldHandoffPacketPerson[];
+  projectHref: string | null;
+}): ScheduleFieldHandoffPacketOwner {
+  const name = findPersonName(input.people, input.personId);
+  const value = input.personId
+    ? (name ?? "Person not available")
+    : "Not captured yet";
+
+  return {
+    id: input.id,
+    label: input.label,
+    value,
+    detail: input.detail,
+    href: input.projectHref
+  };
+}
+
+function getReadinessDetail(input: {
+  readiness: ScheduleFieldHandoffReadinessContext | null | undefined;
+  warnings: ScheduleWarningSummary[];
+}) {
+  if (!input.readiness) {
+    return {
+      label: "Readiness not loaded",
+      detail:
+        "Open Project Workspace to confirm commercial readiness before field work.",
+      tone: "neutral" as const
+    };
+  }
+
+  if (!input.readiness.isReadyToSchedule) {
+    const blockerLabel =
+      input.readiness.blockers.length > 0
+        ? input.readiness.blockers.map(formatStatusLabel).join(", ")
+        : "Project readiness blocker";
+
+    return {
+      label: "Readiness blocked",
+      detail: blockerLabel,
+      tone: "blocked" as const
+    };
+  }
+
+  if (input.warnings.length > 0) {
+    return {
+      label: "Ready with schedule warnings",
+      detail: buildScheduleWarningDisplaySummary({
+        warnings: input.warnings
+      }).detailLabel,
+      tone: "warning" as const
+    };
+  }
+
+  return {
+    label: "Ready for field handoff",
+    detail:
+      "Project readiness and schedule warnings do not currently block the handoff.",
+    tone: "ready" as const
+  };
+}
+
+export function buildScheduleFieldHandoffPacket(input: {
+  job: ScheduleFieldHandoffJob;
+  handoff: ScheduleFieldHandoffSummary | null;
+  readiness?: ScheduleFieldHandoffReadinessContext | null;
+  warnings?: ScheduleWarningSummary[];
+  people?: ScheduleFieldHandoffPacketPerson[];
+}): ScheduleFieldHandoffPacket {
+  const warnings = input.warnings ?? [];
+  const projectHref = input.job.projectId
+    ? `/projects/${input.job.projectId}`
+    : null;
+  const jobHref = `/jobs/${input.job.id}`;
+  const estimate = input.job.estimate;
+  const readiness = input.readiness;
+  const estimateLabel = estimate
+    ? `Estimate ${estimate.referenceNumber} · ${formatStatusLabel(estimate.status)}`
+    : readiness?.estimateStatus
+      ? `Estimate context · ${formatStatusLabel(readiness.estimateStatus)}`
+      : "No estimate scope summary linked.";
+  const contractLabel = readiness?.contractId
+    ? `Contract · ${formatStatusLabel(readiness.contractStatus)}`
+    : "No contract context linked.";
+  const readinessDetail = getReadinessDetail({ readiness, warnings });
+  const warningSummary = buildScheduleWarningDisplaySummary({
+    warnings,
+    readinessBlocked: readiness ? !readiness.isReadyToSchedule : false
+  });
+  const warningLabel = warningSummary.hasWarnings
+    ? warningSummary.compactLabel
+    : "No schedule warnings";
+  const project = input.job.project;
+  const people = input.people ?? [];
+  const owners: ScheduleFieldHandoffPacketOwner[] = [
+    buildOwner({
+      id: "onsite_rep",
+      label: "Onsite Rep",
+      detail: "Person who gathered or owns onsite production context.",
+      personId: project?.onsiteRepPersonId,
+      people,
+      projectHref
+    }),
+    buildOwner({
+      id: "relationship_owner",
+      label: "Relationship Owner",
+      detail: "Person who owns customer relationship context.",
+      personId: project?.relationshipOwnerPersonId,
+      people,
+      projectHref
+    }),
+    buildOwner({
+      id: "follow_up_owner",
+      label: "Follow-Up Owner",
+      detail: "Internal owner for follow-through after field execution.",
+      personId: project?.followUpOwnerPersonId,
+      people,
+      projectHref
+    })
+  ];
+  const links: ScheduleFieldHandoffPacketLink[] = [
+    { label: "Job", href: jobHref },
+    ...(projectHref ? [{ label: "Project", href: projectHref }] : []),
+    ...(estimate
+      ? [{ label: "Estimate", href: `/estimates/${estimate.id}` }]
+      : []),
+    ...(readiness?.contractId
+      ? [{ label: "Contract", href: `/contracts/${readiness.contractId}` }]
+      : []),
+    ...(input.handoff
+      ? [
+          {
+            label: input.handoff.dailyLog ? "Daily Log" : "Start Daily Log",
+            href: input.handoff.dailyLogHref
+          }
+        ]
+      : [])
+  ];
+
+  return {
+    title: getJobTitle(input.job),
+    statusLabel: formatStatusLabel(input.job.dispatchStatus),
+    scheduleLabel: formatScheduleWindow(input.job),
+    crewLabel: getCrewLabel(input.job),
+    scope: {
+      projectLabel:
+        input.job.projectName ?? project?.name ?? "No project name linked.",
+      customerLabel: input.job.customerName ?? "No customer linked.",
+      locationLabel: "No field location summary linked.",
+      estimateLabel,
+      contractLabel,
+      scheduleNotesLabel:
+        input.job.scheduleNotes?.trim() || "No schedule notes captured.",
+      serviceTicketLabel: input.job.serviceTicket
+        ? `${input.job.serviceTicket.title} · ${formatStatusLabel(
+            input.job.serviceTicket.status
+          )}`
+        : null
+    },
+    readiness: {
+      ...readinessDetail,
+      warningLabel
+    },
+    owners,
+    fieldNotes: {
+      dailyLogLabel: input.handoff?.dailyLog
+        ? `Daily Log ${formatStatusLabel(input.handoff.dailyLog.status)}`
+        : "No Daily Log yet.",
+      blockersLabel: input.handoff
+        ? `${input.handoff.openBlockerCount} open field blocker${
+            input.handoff.openBlockerCount === 1 ? "" : "s"
+          }`
+        : "No field handoff activity loaded.",
+      latestActivityLabel: formatLatestActivity(
+        input.handoff?.latestFieldActivityAt ?? null
+      )
+    },
+    links
+  };
 }
 
 function getHandoffState(input: {

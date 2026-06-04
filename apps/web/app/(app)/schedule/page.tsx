@@ -55,7 +55,10 @@ import {
   type ScheduleViewKey
 } from "@/lib/schedule/links";
 import { listScheduleFieldHandoffsByJobIds } from "@/lib/schedule/field-handoff-data";
-import { buildScheduleFieldHandoffCommandView } from "@/lib/schedule/field-handoff-read-model";
+import {
+  buildScheduleFieldHandoffCommandView,
+  buildScheduleFieldHandoffPacket
+} from "@/lib/schedule/field-handoff-read-model";
 import {
   buildScheduleBoardReadModel,
   buildScheduleItems,
@@ -1620,6 +1623,39 @@ export default async function SchedulePage({
     : [];
   const selectedJobFieldHandoff = selectedJob
     ? (fieldHandoffsByJobId.get(selectedJob.id) ?? null)
+    : null;
+  const selectedJobFieldHandoffPacket = selectedJob
+    ? buildScheduleFieldHandoffPacket({
+        job: {
+          id: selectedJob.id,
+          projectId: selectedJob.projectId,
+          scheduledDate: selectedJob.scheduledDate,
+          scheduledStartAt: selectedJob.scheduledStartAt,
+          scheduledEndAt: selectedJob.scheduledEndAt,
+          scheduleNotes: selectedJob.scheduleNotes,
+          dispatchStatus: selectedJob.dispatchStatus,
+          assignmentCount: selectedJobAssignments.length,
+          crewSummary: selectedJobAssignments
+            .slice(0, 4)
+            .map(
+              (assignment) =>
+                assignment.person?.displayName ??
+                assignment.vendor?.name ??
+                "Crew assignment"
+            ),
+          crewVendor: selectedJob.crewVendor,
+          title: getScheduleJobTitle(selectedJob),
+          customerName: selectedJob.customer?.name ?? null,
+          projectName: selectedJob.project?.name ?? null,
+          project: selectedJob.project,
+          estimate: selectedJob.estimate,
+          serviceTicket: selectedJob.serviceTicket
+        },
+        handoff: selectedJobFieldHandoff,
+        readiness: selectedJobReadiness,
+        warnings: selectedJobScheduleWarnings,
+        people: assignablePeople
+      })
     : null;
   const selectedJobNeedsScheduleBeforeCrew =
     selectedAction === "assign" &&
@@ -4858,7 +4894,10 @@ export default async function SchedulePage({
                 })}
               />
               {selectedJobFieldHandoff ? (
-                <ScheduleFieldHandoffPanel handoff={selectedJobFieldHandoff} />
+                <ScheduleFieldHandoffPanel
+                  handoff={selectedJobFieldHandoff}
+                  packet={selectedJobFieldHandoffPacket}
+                />
               ) : null}
               {selectedJobCrewState ? (
                 <div className="rounded-[6px] border border-[var(--border-warm)] bg-white px-4 py-3 text-sm leading-6 text-[var(--text-secondary)]">
