@@ -101,6 +101,49 @@ A new stream may only be created when all conditions are satisfied:
 
 If any condition is not met, the stream remains Proposed or Architecture Review.
 
+## Wave Proposal Gate
+
+No wave may begin until all gate items are recorded:
+
+1. Architecture Coordination approves stream ownership.
+2. Upstream and downstream dependencies are documented.
+3. Ownership conflicts are checked.
+4. UX / IA impact is reviewed.
+5. Verification scope is defined.
+6. Merge order is proposed.
+7. Active wave registry is updated.
+8. Jeff approval gate is recorded.
+
+If any item is missing, the wave remains a proposal. Agents may draft the wave,
+stream brief, and review packet requirements, but they may not create or activate
+the stream worktree until the gate is complete.
+
+## Current Stream Governance Audit
+
+Audit date: 2026-06-04.
+
+This audit records the local stream topology visible from `main`. It is
+governance truth, not implemented product truth. A local worktree directory does
+not make a stream active; active status requires registry approval in
+[active-worktrees.md](C:/FloorConnector/active-worktrees.md),
+[active-waves.md](C:/FloorConnector/active-waves.md), and
+[.codex/active-stream-plan.md](C:/FloorConnector/.codex/active-stream-plan.md).
+
+| Stream                         | Worktree                                       | Branch                                | Ownership area                                                 | Upstream dependencies                                     | Downstream dependencies                              | UX / IA impact                                            | Canonical model risk                                                                     | Overlap / conflict check                                                                                                                         | Verification expectations                                                            | Merge readiness gate                                                                                     | Lifecycle status                                                                         |
+| ------------------------------ | ---------------------------------------------- | ------------------------------------- | -------------------------------------------------------------- | --------------------------------------------------------- | ---------------------------------------------------- | --------------------------------------------------------- | ---------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| `ux-architecture`              | `C:\FC-worktrees\ux-architecture`              | `stream/ux-architecture`              | Product architecture, IA ownership, governance references      | Current `main`, current-state, roadmap, target IA         | All proposed feature streams                         | High; owns IA and UX ownership review                     | Medium if it rewrites implemented truth or treats target IA as built                     | Replaces or absorbs most future-facing architecture-coordination responsibilities when explicitly approved                                       | Docs validation, link checks, registry consistency, no product runtime diff          | Jeff and Architecture Coordination approve replacement of current governance cleanup stream              | Architecture Review; local clean worktree exists, not yet registered as active on `main` |
+| `project-workspace-v2`         | `C:\FC-worktrees\project-workspace-v2`         | `stream/project-workspace-v2`         | Project Workspace continuity and next-action depth             | UX architecture approval, current Project Workspace truth | Field, communications, financial, portal continuity  | High; Project remains operational root                    | High if it creates project-local activity, task, financial, or AI truth                  | Must not conflict with field-command, communications, financial, or portal ownership                                                             | Focused read-model tests, typecheck/lint, protected Project Workspace smoke          | UX ownership, canonical model review, and verification-v2 evidence complete                              | Architecture Review; local clean worktree exists, not yet registered as active on `main` |
+| `field-command-center-v1`      | `C:\FC-worktrees\field-command-center-v1`      | `stream/field-command-center-v1`      | Field execution command layer over jobs, daily logs, evidence  | Project Workspace v2 ownership, scheduling/job context    | Portal closeout, reports, verification               | Medium/high; Field surfaces must remain execution-focused | High if it forks jobs, daily logs, execution attachments, work items, or portal evidence | Must coordinate with project-workspace-v2 and portal before exposing customer-safe proof                                                         | Focused helper/action tests, typecheck/lint, field route smoke when UI changes       | Field data ownership and portal-safe evidence boundaries explicitly approved                             | Architecture Review; local clean worktree exists, not yet registered as active on `main` |
+| `communications-continuity-v2` | `C:\FC-worktrees\communications-continuity-v2` | `stream/communications-continuity-v2` | Record-linked communication continuity and follow-up review    | UX architecture, current communications v1 truth          | Project, financial, portal, AI draft handoffs        | Medium; communications must stay record-linked            | High if it creates disconnected inboxes, provider truth, or AI-only message memory       | Must coordinate with project-workspace-v2, financial-command-center-v1, and portal customer-safe scope                                           | Focused communication helper/action tests, typecheck/lint, route smoke where changed | Provider-dark or adapter-reviewed behavior, no autonomous send, no portal leakage                        | Architecture Review; local clean worktree exists, not yet registered as active on `main` |
+| `financial-command-center-v1`  | `C:\FC-worktrees\financial-command-center-v1`  | `stream/financial-command-center-v1`  | AR, collections, billing command-center continuity             | UX architecture, current financial/AR truth               | Reports, communications follow-up, Project Workspace | Medium/high; Financials owns cross-project billing review | Very high if it changes invoice math, payment state, ledgers, or provider reconciliation | Must coordinate with communications and project-workspace-v2 for follow-up handoffs                                                              | Financial lineage/math/payment-state tests, typecheck/lint, protected route smoke    | Targeted financial tests pass and no detached ledger/payment truth is introduced                         | Architecture Review; local clean worktree exists, not yet registered as active on `main` |
+| `verification-v2`              | `C:\FC-worktrees\verification-v2`              | `stream/verification-v2`              | Verification framework, review packets, merge-gate evidence    | Governance docs, active stream briefs, current QA rules   | Every feature stream and integration review          | Medium; owns QA method, not product IA                    | Medium if it mutates fixtures or claims unauthenticated smoke as success                 | Must remain independent of feature implementation and must not manufacture QA data                                                               | Docs checks, targeted smoke harness checks, saved-auth guardrails, honest blockers   | Review-packet standard adopted and stream-specific evidence requirements are explicit                    | Architecture Review; local clean worktree exists, not yet registered as active on `main` |
+| `architecture-coordination`    | `C:\FC-worktrees\architecture-coordination`    | `stream/architecture-coordination`    | Current permanent governance cleanup, registries, prompt rules | Current `main`, active registries                         | Proposed `ux-architecture` replacement/continuation  | High; owns governance and IA drift detection              | Medium if it edits product truth or creates feature behavior                             | Current registry lists this as the only active cleanup stream; future governance may be represented by `ux-architecture` after explicit approval | Docs validation, registry consistency, no app code/schema/runtime changes            | Either merge/retire current cleanup stream or explicitly replace it with `ux-architecture` in registries | Active cleanup stream in current `main` registry                                         |
+
+Any stream with missing ownership, dependency, UX / IA, canonical model, or
+verification detail stays in Architecture Review. The next-generation stream
+names above are allowed to appear in planning docs and review packets, but they
+are not active feature authorization until the wave proposal gate is complete.
+
 ## Permanent Architecture Coordination Stream
 
 Architecture Coordination is a permanent governance stream. It never owns
@@ -146,6 +189,33 @@ Responsibilities:
 
 The Product Director function creates or updates wave proposals. Architecture
 Coordination decides whether a proposed stream is structurally safe to run.
+
+### Product Director Planning Loop
+
+Before proposing a next wave, the Product Director must review:
+
+- [docs/current-state.md](C:/FloorConnector/docs/current-state.md)
+- [docs/Roadmap.md](C:/FloorConnector/docs/Roadmap.md)
+- [docs/target-ia.md](C:/FloorConnector/docs/target-ia.md)
+- [docs/operational-architecture-v1.md](C:/FloorConnector/docs/operational-architecture-v1.md)
+- [active-waves.md](C:/FloorConnector/active-waves.md)
+- [active-worktrees.md](C:/FloorConnector/active-worktrees.md)
+- recent completed review packets
+- Jeff feedback from the current thread or recorded handoff
+
+The recommendation must pass these tests:
+
+- Does this improve daily contractor operations?
+- Does this strengthen the Operational Command Center?
+- Does this reduce workflow friction?
+- Does this deepen canonical lifecycle continuity?
+- Does this avoid module sprawl?
+- Does this preserve project-centered workflow?
+- Does this avoid duplicate models?
+- Does this have a clear verification path?
+
+The output is a wave proposal, not implementation authorization. Architecture
+Coordination still owns stream approval and conflict review.
 
 ## Verification Stream Responsibilities
 
@@ -212,6 +282,39 @@ It checks:
 
 Integration Review does not replace human review or automated CI.
 
+## Automated Review Packet Standard
+
+Every completed wave must produce a review packet before Jeff review. The
+packet must include:
+
+- executive summary
+- streams completed
+- commits by stream
+- files changed by stream
+- product capabilities added
+- workflow improvements
+- user-facing changes
+- docs updated
+- validation results
+- governance review
+- ownership conflict result
+- duplicate model check
+- IA / navigation drift check
+- merge order recommendation
+- risks / follow-ups
+- next recommended wave
+- Jeff review decision options:
+  - approve merge
+  - request correction
+  - defer stream
+  - continue to next wave
+
+Review packets must separate implemented behavior from planning direction. They
+must not claim route, schema, provider, AI, portal, financial, signature, or
+payment behavior is implemented unless the current branch and
+[docs/current-state.md](C:/FloorConnector/docs/current-state.md) support that
+claim.
+
 ## Required Stream Brief Fields
 
 Every approved stream brief must include:
@@ -232,6 +335,76 @@ Every approved stream brief must include:
 - merge criteria
 - docs to update
 - retirement condition
+
+## Stream Proposal Template
+
+Use this template before creating or approving a stream:
+
+```markdown
+# Stream Proposal: <stream name>
+
+- Stream name:
+- Branch name:
+- Worktree path:
+- Problem being solved:
+- Ownership area:
+- Explicit non-goals:
+- Upstream dependencies:
+- Downstream dependencies:
+- Touched routes/components/docs:
+- Forbidden areas:
+- UX / IA impact:
+- Canonical model impact:
+- Ownership conflict check:
+- Validation commands:
+- Expected commit/report format:
+- Lifecycle status:
+- Architecture Coordination approval:
+- Jeff approval:
+```
+
+## Wave Plan Template
+
+Use this template before beginning a wave:
+
+```markdown
+# Wave Plan: <wave name>
+
+- Goal:
+- Rationale:
+- Base branch:
+- Streams:
+- Dependencies:
+- Merge order:
+- Validation plan:
+- Governance checklist:
+- Review packet requirements:
+- Rollback / correction plan:
+- Architecture Coordination approval:
+- Jeff approval:
+```
+
+## Automation Readiness
+
+Status: Ready With Human Review Gate.
+
+FloorConnector is ready for governed automated parallel development only when
+the wave proposal gate is complete. Agents may plan, build scoped slices,
+validate, prepare review packets, and recommend merge order. Agents may not
+auto-merge, mark PRs ready without review, continue indefinitely, bypass Jeff
+approval, or perform destructive cleanup without explicit approval.
+
+The allowed readiness statuses are:
+
+- Not Ready
+- Partially Ready
+- Ready With Human Review Gate
+- Fully Autonomous Not Allowed
+
+`Fully Autonomous Not Allowed` is a permanent constraint for merge, provider,
+customer-facing, financial, signature, tenant-access, destructive cleanup, and
+other risky product decisions unless Jeff explicitly approves a narrower
+human-reviewed automation policy later.
 
 ## Non-Negotiable Stop Conditions
 

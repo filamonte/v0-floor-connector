@@ -89,6 +89,11 @@ documentation synchronization, and AI prompt governance.
 
 It never owns feature work.
 
+Before any wave begins, Architecture Coordination must confirm stream
+ownership, dependency mapping, conflict review, UX / IA impact, verification
+scope, merge order, registry updates, and Jeff approval. Local worktree
+existence alone is not approval to begin a stream.
+
 ### Feature Streams
 
 Feature streams implement approved slices only. They must have defined
@@ -118,6 +123,32 @@ Jeff
 
 This loop should make parallel work safer by putting ownership and verification
 before merge, not by allowing more uncoordinated feature branches.
+
+## Automated Development Readiness
+
+Current status: Ready With Human Review Gate.
+
+This means AI agents may prepare plans, create scoped implementation slices,
+run validation, draft review packets, and recommend merge order after the
+governance gate is satisfied. It does not allow autonomous merging, automatic
+stream continuation, customer-facing provider actions, financial or signature
+state mutation, tenant-access changes, destructive cleanup, or indefinite
+development loops without Jeff review.
+
+The review loop remains:
+
+```text
+Jeff Review
+  -> Product Director Recommendation
+  -> Architecture Coordination Approval
+  -> Wave Proposal
+  -> Stream Creation
+  -> Parallel Feature Work
+  -> Verification
+  -> Integration Review Packet
+  -> Jeff Approval
+  -> Continue
+```
 
 ## Information Architecture Guardrails
 

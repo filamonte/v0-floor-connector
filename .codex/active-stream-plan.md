@@ -20,6 +20,9 @@ and
 New streams must follow the lifecycle Proposed -> Architecture Review ->
 Approved -> Active -> Verification -> Merged -> Retired, and Architecture
 Coordination must approve stream creation before any new worktree is created.
+The wave proposal gate also requires dependency documentation, ownership
+conflict review, UX / IA impact review, verification scope, proposed merge
+order, active registry update, and recorded Jeff approval before a wave begins.
 
 ## Active Streams
 
@@ -35,6 +38,27 @@ Coordination must approve stream creation before any new worktree is created.
   behavior, runtime changes, broad source-of-truth rewrites.
 - Current wave: permanent governance layer, stream lifecycle, registry truth,
   and next-wave prompt discipline.
+
+## Architecture Review Queue
+
+Audit date: 2026-06-04.
+
+The local worktrees below exist and were clean at audit time, but current
+`main` does not yet register them as Active. They are next-generation review
+candidates only until Architecture Coordination and Jeff approve the wave gate.
+
+| Stream                         | Branch                                | Worktree                                       | Proposed ownership area                                        | Lifecycle status    |
+| ------------------------------ | ------------------------------------- | ---------------------------------------------- | -------------------------------------------------------------- | ------------------- |
+| `ux-architecture`              | `stream/ux-architecture`              | `C:\FC-worktrees\ux-architecture`              | Product architecture, UX / IA ownership, governance references | Architecture Review |
+| `project-workspace-v2`         | `stream/project-workspace-v2`         | `C:\FC-worktrees\project-workspace-v2`         | Project Workspace continuity and next-action depth             | Architecture Review |
+| `field-command-center-v1`      | `stream/field-command-center-v1`      | `C:\FC-worktrees\field-command-center-v1`      | Field execution command layer over canonical execution records | Architecture Review |
+| `communications-continuity-v2` | `stream/communications-continuity-v2` | `C:\FC-worktrees\communications-continuity-v2` | Record-linked communication continuity and follow-up review    | Architecture Review |
+| `financial-command-center-v1`  | `stream/financial-command-center-v1`  | `C:\FC-worktrees\financial-command-center-v1`  | AR, collections, billing command-center continuity             | Architecture Review |
+| `verification-v2`              | `stream/verification-v2`              | `C:\FC-worktrees\verification-v2`              | Verification framework, review packets, merge-gate evidence    | Architecture Review |
+
+The detailed audit for ownership, dependencies, UX / IA impact, canonical model
+risk, overlap/conflict, verification expectations, and merge readiness lives in
+[docs/parallel-development-governance.md](C:/FloorConnector/docs/parallel-development-governance.md).
 
 ## Merged Streams
 
@@ -207,7 +231,9 @@ cleanup.
 ## Recommended Next Prompt Order
 
 1. Merge or retire `stream/architecture-coordination` after review.
-2. Run `pnpm worktree:finish <name>` only for streams the owner explicitly
+2. Decide whether `ux-architecture` replaces or absorbs the remaining
+   Architecture Coordination governance function for the next generation.
+3. Run `pnpm worktree:finish <name>` only for streams the owner explicitly
    approves retiring.
-3. Start the next feature stream from current `main` and update this registry
+4. Start the next feature stream from current `main` and update this registry
    before opening parallel work.

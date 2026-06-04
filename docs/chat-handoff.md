@@ -31,6 +31,13 @@ when a task needs the permanent Operational Command Center principle, product
 operating layers, planning functions, and source-record continuity rules that
 future waves must preserve.
 
+Current automation readiness is Ready With Human Review Gate. Future waves must
+follow the loop Jeff Review -> Product Director Recommendation -> Architecture
+Coordination Approval -> Wave Proposal -> Stream Creation -> Parallel Feature
+Work -> Verification -> Integration Review Packet -> Jeff Approval -> Continue.
+Agents may prepare scoped work and review packets, but may not auto-merge,
+auto-continue, or bypass Jeff approval.
+
 ## Required First Reads
 
 Read these before implementation or documentation work:

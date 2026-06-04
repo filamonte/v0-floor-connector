@@ -13,6 +13,9 @@ Worktree root: `C:\FC-worktrees`
 
 Statuses:
 
+- `Architecture Review`: local or planned stream exists, but stream ownership,
+  dependency mapping, conflict review, UX / IA review, verification scope,
+  merge order, registry update, and Jeff approval are not all complete.
 - `Active`: open production-acceleration stream receiving implementation,
   verification, or coordination work.
 - `Integration`: canonical integration branch, not a production-acceleration
@@ -80,3 +83,26 @@ Expectations:
 Use `pnpm worktree:status` for compact live branch health,
 `pnpm worktree:reconcile` for the morning reconciliation view, and
 `pnpm codex:streams` for the active stream operating summary.
+
+## Next Generation Stream Review Queue
+
+Audit date: 2026-06-04.
+
+The following local worktrees exist and were clean at audit time, but current
+`main` does not yet register them as active streams. They remain in Architecture
+Review until the wave proposal gate in
+[docs/parallel-development-governance.md](C:/FloorConnector/docs/parallel-development-governance.md)
+is complete. Do not treat these rows as implementation authorization.
+
+| Worktree                       | Branch                                | Proposed ownership area                                        | Lifecycle status    | Gate before activation                                                                |
+| ------------------------------ | ------------------------------------- | -------------------------------------------------------------- | ------------------- | ------------------------------------------------------------------------------------- |
+| `ux-architecture`              | `stream/ux-architecture`              | Product architecture, UX / IA ownership, governance references | Architecture Review | Decide whether it replaces current `architecture-coordination` governance ownership.  |
+| `project-workspace-v2`         | `stream/project-workspace-v2`         | Project Workspace continuity and next-action depth             | Architecture Review | Approve UX ownership, canonical model boundaries, and downstream stream dependencies. |
+| `field-command-center-v1`      | `stream/field-command-center-v1`      | Field execution command layer over canonical field records     | Architecture Review | Confirm job/daily-log/evidence ownership and portal-safe evidence boundaries.         |
+| `communications-continuity-v2` | `stream/communications-continuity-v2` | Record-linked communication continuity and follow-up review    | Architecture Review | Confirm provider-dark behavior, portal visibility, and Project/Financials handoffs.   |
+| `financial-command-center-v1`  | `stream/financial-command-center-v1`  | AR, collections, billing command-center continuity             | Architecture Review | Confirm invoice/payment math protection, tests, and no detached ledger/payment truth. |
+| `verification-v2`              | `stream/verification-v2`              | Verification framework, review packets, merge-gate evidence    | Architecture Review | Adopt the automated review packet standard and stream-specific evidence requirements. |
+
+The detailed ownership, dependency, UX / IA, canonical model, conflict, and
+verification audit for these streams lives in
+[docs/parallel-development-governance.md](C:/FloorConnector/docs/parallel-development-governance.md).

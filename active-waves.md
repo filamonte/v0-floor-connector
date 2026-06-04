@@ -22,6 +22,8 @@ Permanent stream governance is defined in
 Future waves may not create new streams until Ownership Area, Dependency
 Analysis, Ownership Conflict Check, UX / IA Review, Canonical Model Review,
 Verification Strategy, and Architecture Coordination Approval are complete.
+Future waves also require documented merge order, active registry update, and a
+recorded Jeff approval gate before stream creation or activation.
 
 The governing product architecture principle is defined in
 [docs/operational-architecture-v1.md](C:/FloorConnector/docs/operational-architecture-v1.md):
@@ -85,3 +87,27 @@ Shared guardrails:
 - keep Financials on canonical invoices, payments, payment events, and
   source-record financial readiness without duplicate ledgers or portal-owned
   billing state
+
+## Automation Readiness
+
+Status: Ready With Human Review Gate.
+
+Agents may draft wave proposals, stream briefs, validation plans, and review
+packets from this registry. Agents may not begin a new wave, create active
+streams, continue to the next wave, or merge without Architecture Coordination
+approval and Jeff review.
+
+## Next Generation Wave Candidates
+
+Audit date: 2026-06-04.
+
+These names are current review candidates, not active wave authorization:
+
+| Candidate stream               | Proposed wave role                                               | Required gate before work begins                                                          |
+| ------------------------------ | ---------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| `ux-architecture`              | Architecture and IA governance for the next stream generation    | Decide whether it replaces or absorbs `architecture-coordination` in the active registry. |
+| `project-workspace-v2`         | Project-centered continuity and next-action depth                | Approve ownership against Field, Communications, Financials, and Portal.                  |
+| `field-command-center-v1`      | Field command-center continuity over canonical execution records | Confirm job, daily-log, execution evidence, and portal-safe proof boundaries.             |
+| `communications-continuity-v2` | Record-linked communication follow-up continuity                 | Confirm provider-dark behavior and source-record handoff ownership.                       |
+| `financial-command-center-v1`  | Financial command center and collections continuity              | Confirm financial math/payment-state test strategy and no detached billing truth.         |
+| `verification-v2`              | Review packet and merge-gate verification framework              | Confirm evidence requirements for every approved stream.                                  |
