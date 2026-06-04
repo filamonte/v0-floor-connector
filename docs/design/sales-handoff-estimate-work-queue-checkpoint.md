@@ -17,7 +17,7 @@ opportunity/project/estimate records.
   open handoff instead of preloading a duplicate handoff draft.
 - Dashboard / My Work shows estimate handoff lenses for assigned estimate work,
   waiting on me, ready for review, blocked estimate work, and customer follow-up
-  work due.
+  work due, with compact internal due-state nudges.
 - Estimate Workspace has a compact Estimate Work panel for connected open
   estimate-production Work Items, including in-progress, blocker, complete,
   reassign, ready-for-review, and next-action editing controls on existing
@@ -36,6 +36,9 @@ opportunity/project/estimate records.
 - Work Item read models, actions, schemas, and prefills now carry the internal
   estimate-work metadata used by those surfaces without adding another task or
   estimate-production persistence model.
+- Work Item due-date nudges classify existing `work_items.due_at` values as
+  `Overdue`, `Due today`, `Due soon`, `Later`, or `No due date` for internal
+  visibility only.
 
 ## Surfaces
 
@@ -86,7 +89,8 @@ browser coverage:
 - focused Work Item and source-assessment tests cover prefill context,
   duplicate-aware handoff selection, real-owner fallback, assignment candidate
   filtering, ready-for-review metadata, next-action metadata cleanup, dashboard
-  and project selectors, and unrelated-task exclusion
+  and project selectors, due-date nudge classification, and unrelated-task
+  exclusion
 - `pnpm.cmd --filter @floorconnector/web typecheck` passed
 - `pnpm.cmd --filter @floorconnector/web lint` passed
 - `git diff --check` passed, with only Windows CRLF warnings where noted
@@ -98,25 +102,22 @@ browser coverage:
 
 ## Recommended Next Options
 
-1. Work Item reminders / due-date nudges:
-   Keep reminders internal and Work Item based; do not add provider sends until
-   notification policy is explicitly scoped.
-2. Configurable role slots:
+1. Configurable role slots:
    Plan onsite rep, relationship owner, and estimate writer role slots as
    canonical internal metadata before adding UI mutation surfaces.
-3. Sales credit owner metadata planning:
+2. Sales credit owner metadata planning:
    Keep this planning-only until commercial, commission, payroll, and ledger
    boundaries are approved.
-4. Project Workspace mutation controls:
+3. Project Workspace mutation controls:
    Add only if managers need project-context handoff action controls; preserve
    the same assignee-or-manager Work Item policy.
-5. Dashboard mutation controls:
+4. Dashboard mutation controls:
    Consider compact action controls after the Estimate Workspace behavior stays
    stable; avoid turning Dashboard into a full task manager.
-6. Notifications later:
+5. Notifications later:
    Use the existing notification foundation only after internal reminder/send
    policy is defined.
-7. Commission preview later:
+6. Commission preview later:
    Derive from canonical lifecycle state and approved commercial owner fields,
    not from Work Item assignment.
 

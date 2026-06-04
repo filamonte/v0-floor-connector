@@ -102,7 +102,7 @@ import {
   buildWorkItemOwnershipDisplay,
   getEstimateWorkItemType,
   getWorkItemBlockerReason,
-  getWorkItemDueState,
+  getWorkItemDueStateLabel,
   getWorkItemFieldState,
   getWorkItemNextAction,
   selectWorkItemAssignmentCandidates,
@@ -199,15 +199,7 @@ function getEstimateWorkTypeLabel(workItem: WorkItemListItem) {
 }
 
 function getEstimateWorkDueLabel(workItem: WorkItemListItem, nowIso: string) {
-  const dueState = getWorkItemDueState(workItem, nowIso);
-
-  if (!workItem.dueAt) {
-    return "No due date";
-  }
-
-  return `${dueState === "overdue" ? "Overdue" : "Due"} ${formatDateTime(
-    workItem.dueAt
-  )}`;
+  return getWorkItemDueStateLabel(workItem, nowIso);
 }
 
 function getEstimateWorkNextAction(workItem: WorkItemListItem) {

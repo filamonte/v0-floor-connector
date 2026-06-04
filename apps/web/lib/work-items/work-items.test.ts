@@ -15,6 +15,8 @@ import {
   filterDashboardWorkItems,
   getEstimateWorkItemType,
   getWorkItemCompletionNote,
+  getWorkItemDueState,
+  getWorkItemDueStateLabel,
   getWorkItemFieldState,
   getWorkItemNextAction,
   groupMobileAssignedWorkItems,
@@ -224,6 +226,61 @@ void test("work item create schema requires source type and id together", () => 
   });
 
   assert.equal(result.success, false);
+});
+
+void test("work item due-date nudge classifier returns contractor-friendly internal states", () => {
+  const nowIso = "2026-06-04T15:00:00.000Z";
+  const cases: Array<{
+    title: string;
+    dueAt: string | null;
+    expectedState: ReturnType<typeof getWorkItemDueState>;
+    expectedLabel: string;
+  }> = [
+    {
+      title: "Overdue",
+      dueAt: "2026-06-03T23:30:00.000Z",
+      expectedState: "overdue",
+      expectedLabel: "Overdue"
+    },
+    {
+      title: "Due today",
+      dueAt: "2026-06-04T23:59:00.000Z",
+      expectedState: "due_today",
+      expectedLabel: "Due today"
+    },
+    {
+      title: "Due soon",
+      dueAt: "2026-06-07T08:00:00.000Z",
+      expectedState: "due_soon",
+      expectedLabel: "Due soon"
+    },
+    {
+      title: "Later",
+      dueAt: "2026-06-08T08:00:00.000Z",
+      expectedState: "scheduled_later",
+      expectedLabel: "Later"
+    },
+    {
+      title: "No due date",
+      dueAt: null,
+      expectedState: "no_due_date",
+      expectedLabel: "No due date"
+    }
+  ];
+
+  for (const testCase of cases) {
+    const workItem = {
+      ...baseWorkItem,
+      title: testCase.title,
+      dueAt: testCase.dueAt
+    };
+
+    assert.equal(getWorkItemDueState(workItem, nowIso), testCase.expectedState);
+    assert.equal(
+      getWorkItemDueStateLabel(workItem, nowIso),
+      testCase.expectedLabel
+    );
+  }
 });
 
 void test("dashboard work item helper returns open assigned items in due order", () => {

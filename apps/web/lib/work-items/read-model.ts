@@ -6,7 +6,12 @@ import type {
 } from "@floorconnector/types";
 
 export type WorkItemQueueFilter = "open" | "assigned" | "due" | "all";
-export type WorkItemDueState = "none" | "upcoming" | "overdue";
+export type WorkItemDueState =
+  | "overdue"
+  | "due_today"
+  | "due_soon"
+  | "scheduled_later"
+  | "no_due_date";
 export type WorkItemFieldState =
   | "not_started"
   | "in_progress"
@@ -95,6 +100,8 @@ const priorityRank: Record<WorkItemPriority, number> = {
   normal: 2,
   low: 3
 };
+const dueSoonWindowDays = 3;
+const millisecondsPerDay = 24 * 60 * 60 * 1000;
 
 function dueSortValue(value: string | null) {
   return value ?? "9999-12-31T23:59:59.999Z";
@@ -370,10 +377,43 @@ export function getWorkItemDueState(
   nowIso: string
 ): WorkItemDueState {
   if (workItem.status !== "open" || !workItem.dueAt) {
-    return "none";
+    return "no_due_date";
   }
 
-  return workItem.dueAt < nowIso ? "overdue" : "upcoming";
+  const dueDate = getIsoDateKeyTime(workItem.dueAt);
+  const nowDate = getIsoDateKeyTime(nowIso);
+
+  if (dueDate < nowDate) {
+    return "overdue";
+  }
+
+  if (dueDate === nowDate) {
+    return "due_today";
+  }
+
+  if (dueDate <= nowDate + dueSoonWindowDays * millisecondsPerDay) {
+    return "due_soon";
+  }
+
+  return "scheduled_later";
+}
+
+export function getWorkItemDueStateLabel(
+  workItem: Pick<WorkItem, "status" | "dueAt">,
+  nowIso: string
+) {
+  switch (getWorkItemDueState(workItem, nowIso)) {
+    case "overdue":
+      return "Overdue";
+    case "due_today":
+      return "Due today";
+    case "due_soon":
+      return "Due soon";
+    case "scheduled_later":
+      return "Later";
+    case "no_due_date":
+      return "No due date";
+  }
 }
 
 export function buildContextRichWorkItemPreview(
@@ -678,6 +718,10 @@ export function buildProjectEstimateHandoffSummary<T extends WorkItem>(input: {
 
 function isSameDateKey(leftIso: string, rightIso: string) {
   return leftIso.slice(0, 10) === rightIso.slice(0, 10);
+}
+
+function getIsoDateKeyTime(value: string) {
+  return Date.parse(`${value.slice(0, 10)}T00:00:00.000Z`);
 }
 
 function sortCompletedWorkItems<

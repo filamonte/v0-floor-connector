@@ -62,7 +62,7 @@ import {
   filterDashboardWorkItems,
   getEstimateWorkItemType,
   getWorkItemBlockerReason,
-  getWorkItemDueState,
+  getWorkItemDueStateLabel,
   getWorkItemFieldState,
   selectDashboardWorkItemQueue,
   type EstimateWorkQueue
@@ -333,15 +333,7 @@ const estimateWorkTypeLabels = {
 } as const;
 
 function formatWorkItemDueState(workItem: WorkItemListItem, nowIso: string) {
-  const dueState = getWorkItemDueState(workItem, nowIso);
-
-  if (!workItem.dueAt) {
-    return "No due date";
-  }
-
-  return `${dueState === "overdue" ? "Overdue" : "Due"} ${formatDateTime(
-    workItem.dueAt
-  )}`;
+  return getWorkItemDueStateLabel(workItem, nowIso);
 }
 
 function buildEstimateWorkDashboardItem(

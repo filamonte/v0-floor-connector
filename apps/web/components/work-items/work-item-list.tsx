@@ -7,7 +7,11 @@ import type {
 
 import type { WorkItemListItem } from "@/lib/work-items/data";
 import type { ExecutionAttachmentPreviewListItem } from "@/lib/execution-attachments/data";
-import { buildContextRichWorkItemPreview } from "@/lib/work-items/read-model";
+import {
+  buildContextRichWorkItemPreview,
+  getWorkItemDueStateLabel,
+  type WorkItemDueState
+} from "@/lib/work-items/read-model";
 
 type WorkItemListProps = {
   workItems: WorkItemListItem[];
@@ -83,16 +87,28 @@ function statusClasses(status: WorkItemStatus) {
   }
 }
 
-function dueClasses(dueState: "none" | "upcoming" | "overdue") {
+function dueClasses(dueState: WorkItemDueState) {
   switch (dueState) {
     case "overdue":
       return "text-rose-700";
-    case "upcoming":
+    case "due_today":
+      return "text-amber-700";
+    case "due_soon":
+      return "text-orange-700";
+    case "scheduled_later":
       return "text-slate-600";
-    case "none":
+    case "no_due_date":
     default:
       return "text-slate-500";
   }
+}
+
+function formatDueNudge(workItem: WorkItemListItem, nowIso: string) {
+  const label = getWorkItemDueStateLabel(workItem, nowIso);
+
+  return workItem.dueAt
+    ? `${label} · ${formatDateTime(workItem.dueAt)}`
+    : label;
 }
 
 function WorkItemActionButton({
@@ -182,8 +198,7 @@ export function WorkItemList({
                   <p className="mt-1 text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
                     {formatKind(workItem.kind)} ·{" "}
                     <span className={dueClasses(preview.dueState)}>
-                      {preview.dueState === "overdue" ? "Overdue " : ""}
-                      {formatDateTime(workItem.dueAt)}
+                      {formatDueNudge(workItem, nowIso)}
                     </span>
                     {workItem.assignedPerson
                       ? ` · ${workItem.assignedPerson.displayName}`

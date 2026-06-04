@@ -188,7 +188,7 @@ import {
   buildProjectEstimateHandoffSummary,
   getEstimateWorkItemType,
   getWorkItemBlockerReason,
-  getWorkItemDueState,
+  getWorkItemDueStateLabel,
   getWorkItemFieldState,
   selectProjectEstimateHandoffWorkItems,
   type ProjectEstimateHandoffSummary
@@ -397,15 +397,7 @@ function getProjectEstimateWorkDueLabel(
   workItem: WorkItemListItem,
   nowIso: string
 ) {
-  const dueState = getWorkItemDueState(workItem, nowIso);
-
-  if (!workItem.dueAt) {
-    return "No due date";
-  }
-
-  return `${dueState === "overdue" ? "Overdue" : "Due"} ${formatDateTime(
-    workItem.dueAt
-  )}`;
+  return getWorkItemDueStateLabel(workItem, nowIso);
 }
 
 function getProjectEstimateWorkNextAction(workItem: WorkItemListItem) {
