@@ -1,0 +1,139 @@
+# Sales Handoff Estimate Work Queue Checkpoint
+
+Status: Checkpoint
+Doc Type: QA / Planning
+
+## Purpose
+
+This checkpoint closes the Sales Handoff / Estimate Work Queue mini-wave before
+additional product behavior is added. The implemented chain keeps sales handoff
+work on canonical internal `work_items` connected to the existing
+opportunity/project/estimate records.
+
+## Implemented
+
+- Lead Detail can prefill an internal estimate handoff Work Item from real
+  opportunity/site-assessment context and now points users back to an existing
+  open handoff instead of preloading a duplicate handoff draft.
+- Dashboard / My Work shows estimate handoff lenses for assigned estimate work,
+  waiting on me, ready for review, blocked estimate work, and customer follow-up
+  work due.
+- Estimate Workspace has a compact Estimate Work panel for connected open
+  estimate-production Work Items, including in-progress, blocker, complete,
+  reassign, ready-for-review, and next-action editing controls on existing
+  Work Items.
+- Estimate Workspace can prefill request-missing-info and request-review Work
+  Items from the current estimate context. The user still submits the existing
+  Work Item form.
+- Estimate Workspace shows a read-only handoff packet from linked opportunity
+  context: site assessment, requirements, notes, measurement groups,
+  observations, attachments, customer/project/estimate links, and source owner
+  when the opportunity creator maps to an existing Person.
+- Project Workspace shows read-only estimate handoff continuity for connected
+  open estimate-production Work Items, including open, blocked,
+  ready-for-review, follow-up-due, next-most-urgent work, assigned owner, and
+  requester context.
+- Work Item read models, actions, schemas, and prefills now carry the internal
+  estimate-work metadata used by those surfaces without adding another task or
+  estimate-production persistence model.
+
+## Surfaces
+
+- Lead Detail:
+  - creates only a prefilled Work Item draft until the contractor submits it
+  - includes opportunity/site-assessment packet context in instructions and
+    metadata
+  - uses duplicate-aware open-handoff detection over existing Work Items
+  - uses tenant-scoped active assignable People for assignment options
+- Dashboard / My Work:
+  - derives widgets from the shared estimate Work Item queue selectors
+  - shows owner, requester, due state, blocker, next action, and source links
+    from existing Work Item context
+- Estimate Workspace:
+  - is the main mutation surface for estimate-production Work Item follow-through
+  - updates Work Item metadata/assignee/status fields only
+  - keeps customer-facing estimate lifecycle state separate
+- Project Workspace:
+  - summarizes estimate handoff continuity read-only
+  - links back to canonical Work Items, estimates, and source records
+  - does not add project-local task actions in this mini-wave
+- Work Item helpers:
+  - `prefill.ts` builds source-locked Work Item drafts
+  - `read-model.ts` selects connected Lead/Dashboard/Estimate/Project handoff
+    work from canonical metadata
+  - `actions.ts` mutates existing `work_items` only
+  - tests cover prefill, selector, owner, assignment, ready-review, next-action,
+    and connected-chain behavior
+
+## Out Of Scope
+
+- no schema, enum, RLS, or migration changes
+- no notifications, reminders, provider sends, or customer-visible messages
+- no portal/customer exposure for internal Work Items
+- no customer-facing `estimates.status` mutation from internal handoff work
+- no send-as workflow
+- no commission, sales-credit, payroll, payable, or ledger behavior
+- no fake owners or inferred legal/commercial ownership
+- no autonomous AI behavior or AI-owned workflow state
+- no new task, handoff-packet, source snapshot, project task board, or estimate
+  production table
+
+## Validation Summary
+
+The mini-wave was closed with a pure regression net rather than new protected
+browser coverage:
+
+- focused Work Item and source-assessment tests cover prefill context,
+  duplicate-aware handoff selection, real-owner fallback, assignment candidate
+  filtering, ready-for-review metadata, next-action metadata cleanup, dashboard
+  and project selectors, and unrelated-task exclusion
+- `pnpm.cmd --filter @floorconnector/web typecheck` passed
+- `pnpm.cmd --filter @floorconnector/web lint` passed
+- `git diff --check` passed, with only Windows CRLF warnings where noted
+- `pnpm.cmd fc:preflight:fast` passed
+- protected Playwright dashboard/detail e2e was deferred during the final QA
+  consolidation because recent protected-route checks were susceptible to
+  Supabase Auth rate limiting; future browser validation should use the
+  existing protected auth fixture and stop on `over_request_rate_limit`
+
+## Recommended Next Options
+
+1. Work Item reminders / due-date nudges:
+   Keep reminders internal and Work Item based; do not add provider sends until
+   notification policy is explicitly scoped.
+2. Configurable role slots:
+   Plan onsite rep, relationship owner, and estimate writer role slots as
+   canonical internal metadata before adding UI mutation surfaces.
+3. Sales credit owner metadata planning:
+   Keep this planning-only until commercial, commission, payroll, and ledger
+   boundaries are approved.
+4. Project Workspace mutation controls:
+   Add only if managers need project-context handoff action controls; preserve
+   the same assignee-or-manager Work Item policy.
+5. Dashboard mutation controls:
+   Consider compact action controls after the Estimate Workspace behavior stays
+   stable; avoid turning Dashboard into a full task manager.
+6. Notifications later:
+   Use the existing notification foundation only after internal reminder/send
+   policy is defined.
+7. Commission preview later:
+   Derive from canonical lifecycle state and approved commercial owner fields,
+   not from Work Item assignment.
+
+## Risks And Cleanup
+
+- The connected surfaces now depend on consistent metadata keys
+  (`estimateWork`, `estimateWorkType`, `estimateWorkStatus`, `opportunityId`,
+  `projectId`, `estimateId`, and `nextAction`). Future changes should update
+  the pure regression tests before changing those keys.
+- Lead duplicate detection is a read-model guard, not a database uniqueness
+  guarantee. Server-side idempotency can be revisited if duplicate handoffs
+  become operationally common.
+- Assignment is internal Work Item ownership only. It must not be interpreted
+  as onsite role, sales credit, commission owner, payroll owner, or send-as
+  identity.
+- Project Workspace remains read-only for this chain. That is intentional until
+  project-context mutation controls are deliberately scoped.
+- Protected e2e should be refreshed when Supabase Auth is not rate-limited to
+  verify the Lead/Dashboard/Estimate/Project visual chain with the existing
+  authenticated fixture.

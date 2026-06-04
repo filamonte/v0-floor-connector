@@ -14,6 +14,9 @@ appointments can show when a site visit happens, but Work Items carry the
 internal work: owner, source record, due state, next action, blocker state, and
 completion.
 
+Mini-wave checkpoint:
+[sales-handoff-estimate-work-queue-checkpoint.md](sales-handoff-estimate-work-queue-checkpoint.md).
+
 ## Implemented V1
 
 - Lead Workspace Estimate Plan can prefill an internal estimate handoff Work
