@@ -84,6 +84,7 @@ import {
   createWorkItemAction,
   dismissWorkItemAction,
   markAssignedWorkItemReadyForReviewAction,
+  updateAssignedWorkItemDueDateAction,
   updateAssignedWorkItemFieldStateAction,
   updateAssignedWorkItemNextActionAction,
   updateWorkItemAssignmentAction
@@ -141,6 +142,10 @@ function formatDateTime(value: string | null) {
     hour: "numeric",
     minute: "2-digit"
   }).format(new Date(value));
+}
+
+function formatDateInputValue(value: string | null) {
+  return value ? value.slice(0, 10) : "";
 }
 
 function formatAddress(parts: Array<string | null | undefined>) {
@@ -455,6 +460,56 @@ function EstimateHandoffPanel({
                         </button>
                       </form>
                     </details>
+                    <details className="relative">
+                      <summary className="inline-flex h-8 cursor-pointer list-none items-center justify-center border border-slate-300 bg-white px-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-600 transition hover:border-[#d8731f] hover:text-slate-950">
+                        Set due date
+                      </summary>
+                      <form
+                        action={updateAssignedWorkItemDueDateAction}
+                        className="mt-2 grid w-64 gap-2 rounded-lg border border-slate-200 bg-white p-3 shadow-sm"
+                      >
+                        <input
+                          type="hidden"
+                          name="workItemId"
+                          value={workItem.id}
+                        />
+                        <input type="hidden" name="returnTo" value={returnTo} />
+                        <label className="grid gap-1">
+                          <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">
+                            Due date
+                          </span>
+                          <input
+                            type="date"
+                            name="dueAt"
+                            defaultValue={formatDateInputValue(workItem.dueAt)}
+                            className="h-9 border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none transition focus:border-[#d8731f]"
+                          />
+                        </label>
+                        <button
+                          type="submit"
+                          className="inline-flex h-8 items-center justify-center border border-slate-300 bg-white px-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-600 transition hover:border-[#d8731f] hover:text-slate-950"
+                        >
+                          Set due date
+                        </button>
+                      </form>
+                    </details>
+                    {workItem.dueAt ? (
+                      <form action={updateAssignedWorkItemDueDateAction}>
+                        <input
+                          type="hidden"
+                          name="workItemId"
+                          value={workItem.id}
+                        />
+                        <input type="hidden" name="returnTo" value={returnTo} />
+                        <input type="hidden" name="dueAt" value="" />
+                        <button
+                          type="submit"
+                          className="inline-flex h-8 items-center justify-center border border-slate-300 bg-white px-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-600 transition hover:border-[#d8731f] hover:text-slate-950"
+                        >
+                          Clear due date
+                        </button>
+                      </form>
+                    ) : null}
                     <details className="relative">
                       <summary className="inline-flex h-8 cursor-pointer list-none items-center justify-center border border-slate-300 bg-white px-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-600 transition hover:border-[#d8731f] hover:text-slate-950">
                         Block

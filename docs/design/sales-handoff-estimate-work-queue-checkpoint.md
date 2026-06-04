@@ -20,8 +20,8 @@ opportunity/project/estimate records.
   work due, with compact internal due-state nudges.
 - Estimate Workspace has a compact Estimate Work panel for connected open
   estimate-production Work Items, including in-progress, blocker, complete,
-  reassign, ready-for-review, and next-action editing controls on existing
-  Work Items.
+  reassign, ready-for-review, next-action editing, and due-date set/clear
+  controls on existing Work Items.
 - Estimate Workspace can prefill request-missing-info and request-review Work
   Items from the current estimate context. The user still submits the existing
   Work Item form.
@@ -39,6 +39,8 @@ opportunity/project/estimate records.
 - Work Item due-date nudges classify existing `work_items.due_at` values as
   `Overdue`, `Due today`, `Due soon`, `Later`, or `No due date` for internal
   visibility only.
+- Estimate Workspace due-date editing updates only the existing
+  `work_items.due_at` field for eligible open estimate handoff Work Items.
 
 ## Surfaces
 
@@ -54,7 +56,7 @@ opportunity/project/estimate records.
     from existing Work Item context
 - Estimate Workspace:
   - is the main mutation surface for estimate-production Work Item follow-through
-  - updates Work Item metadata/assignee/status fields only
+  - updates Work Item metadata/assignee/status/due-date fields only
   - keeps customer-facing estimate lifecycle state separate
 - Project Workspace:
   - summarizes estimate handoff continuity read-only
@@ -66,7 +68,7 @@ opportunity/project/estimate records.
     work from canonical metadata
   - `actions.ts` mutates existing `work_items` only
   - tests cover prefill, selector, owner, assignment, ready-review, next-action,
-    and connected-chain behavior
+    due-date editing payloads, and connected-chain behavior
 
 ## Out Of Scope
 

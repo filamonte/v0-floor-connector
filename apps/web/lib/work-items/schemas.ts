@@ -142,6 +142,11 @@ export const workItemNextActionSchema = z.object({
   nextAction: trimmedNullableString(500)
 });
 
+export const workItemDueDateSchema = z.object({
+  workItemId: z.string().uuid("Select a valid work item."),
+  dueAt: nullableDateTimeField("Enter a valid due date.")
+});
+
 export const assignedWorkItemFieldStateSchema = z.object({
   workItemId: z.string().uuid("Select a valid work item."),
   fieldState: z.enum(["not_started", "in_progress", "blocked"]),
@@ -161,6 +166,7 @@ export type WorkItemReadyForReviewInput = z.infer<
   typeof workItemReadyForReviewSchema
 >;
 export type WorkItemNextActionInput = z.infer<typeof workItemNextActionSchema>;
+export type WorkItemDueDateInput = z.infer<typeof workItemDueDateSchema>;
 export type AssignedWorkItemFieldStateInput = z.infer<
   typeof assignedWorkItemFieldStateSchema
 >;

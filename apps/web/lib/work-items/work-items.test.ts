@@ -35,6 +35,7 @@ import {
 import {
   workItemAssignmentSchema,
   workItemCreateSchema,
+  workItemDueDateSchema,
   workItemNextActionSchema,
   workItemReadyForReviewSchema
 } from "./schemas";
@@ -504,6 +505,52 @@ void test("work item assignment schema accepts reassignment and unassignment pay
   });
 
   assert.equal(unassigned.assignedPersonId, null);
+});
+
+void test("work item due date schema accepts set and clear payloads", () => {
+  const setDueDate = workItemDueDateSchema.parse({
+    workItemId: "11111111-1111-4111-8111-111111111111",
+    dueAt: "2026-06-05"
+  });
+
+  assert.equal(setDueDate.workItemId, "11111111-1111-4111-8111-111111111111");
+  assert.equal(setDueDate.dueAt, "2026-06-05T00:00:00.000Z");
+
+  const clearedDueDate = workItemDueDateSchema.parse({
+    workItemId: "11111111-1111-4111-8111-111111111111",
+    dueAt: ""
+  });
+
+  assert.equal(clearedDueDate.dueAt, null);
+  assert.equal(
+    workItemDueDateSchema.safeParse({
+      workItemId: "11111111-1111-4111-8111-111111111111",
+      dueAt: "not-a-date"
+    }).success,
+    false
+  );
+});
+
+void test("work item due-date nudges update after due date set or clear", () => {
+  const nowIso = "2026-06-04T15:00:00.000Z";
+  const setDueDate = {
+    ...baseWorkItem,
+    dueAt: "2026-06-05T00:00:00.000Z"
+  };
+  const clearedDueDate = {
+    ...setDueDate,
+    dueAt: null
+  };
+  const closedDueDate = {
+    ...setDueDate,
+    status: "completed" as const
+  };
+
+  assert.equal(getWorkItemDueState(setDueDate, nowIso), "due_soon");
+  assert.equal(getWorkItemDueStateLabel(setDueDate, nowIso), "Due soon");
+  assert.equal(getWorkItemDueState(clearedDueDate, nowIso), "no_due_date");
+  assert.equal(getWorkItemDueStateLabel(clearedDueDate, nowIso), "No due date");
+  assert.equal(getWorkItemDueState(closedDueDate, nowIso), "no_due_date");
 });
 
 void test("ready for review schema accepts only work item payload", () => {

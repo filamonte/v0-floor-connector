@@ -34,6 +34,7 @@ import {
 import type {
   WorkItemAssignmentInput,
   WorkItemCreateInput,
+  WorkItemDueDateInput,
   WorkItemNextActionInput,
   WorkItemReadyForReviewInput,
   WorkItemUpdateInput
@@ -1210,6 +1211,44 @@ export async function updateAssignedWorkItemNextAction(
   if (response.error) {
     throw new Error(
       `Unable to update work item next action: ${response.error.message}`
+    );
+  }
+
+  if (!response.data) {
+    throw new Error("Work item was not found or is no longer open.");
+  }
+
+  return mapWorkItem(response.data as WorkItemRow);
+}
+
+export async function updateAssignedWorkItemDueDate(
+  input: WorkItemDueDateInput & { next?: string }
+) {
+  const { scope, existing } = await requireAssignedWorkItemActionScope({
+    workItemId: input.workItemId,
+    next: input.next
+  });
+
+  if (!isEstimateWorkItem(existing)) {
+    throw new Error("Only estimate handoff work items can update due dates.");
+  }
+
+  const supabase = await getSupabaseServerClient();
+  const response = await supabase
+    .from("work_items")
+    .update({
+      due_at: input.dueAt,
+      updated_by: scope.userId
+    })
+    .eq("company_id", scope.organizationId)
+    .eq("id", input.workItemId)
+    .eq("status", "open")
+    .select(workItemSelect)
+    .maybeSingle();
+
+  if (response.error) {
+    throw new Error(
+      `Unable to update work item due date: ${response.error.message}`
     );
   }
 

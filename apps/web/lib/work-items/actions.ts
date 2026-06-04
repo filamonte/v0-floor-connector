@@ -13,6 +13,7 @@ import {
   dismissWorkItem,
   markAssignedWorkItemReadyForReview,
   updateAssignedWorkItemFieldState,
+  updateAssignedWorkItemDueDate,
   updateAssignedWorkItemNextAction,
   updateWorkItemAssignment,
   updateWorkItem
@@ -22,6 +23,7 @@ import {
   assignedWorkItemFieldStateSchema,
   workItemAssignmentSchema,
   workItemCreateSchema,
+  workItemDueDateSchema,
   workItemIdSchema,
   workItemNextActionSchema,
   workItemReadyForReviewSchema,
@@ -393,6 +395,43 @@ export async function updateAssignedWorkItemNextActionAction(
   redirect(
     buildRedirect(returnTo, { message: "Work item next action updated." })
   );
+}
+
+export async function updateAssignedWorkItemDueDateAction(formData: FormData) {
+  const returnTo = getReturnTo(formData);
+  const result = workItemDueDateSchema.safeParse({
+    workItemId: getFieldValue(formData, "workItemId"),
+    dueAt: getFieldValue(formData, "dueAt")
+  });
+
+  if (!result.success) {
+    redirect(
+      buildRedirect(returnTo, {
+        error:
+          result.error.issues[0]?.message ??
+          "Unable to update work item due date."
+      })
+    );
+  }
+
+  try {
+    await updateAssignedWorkItemDueDate({
+      ...result.data,
+      next: returnTo
+    });
+    revalidateWorkItemSurfaces(returnTo);
+  } catch (error) {
+    redirect(
+      buildRedirect(returnTo, {
+        error:
+          error instanceof Error
+            ? error.message
+            : "Unable to update work item due date."
+      })
+    );
+  }
+
+  redirect(buildRedirect(returnTo, { message: "Work item due date updated." }));
 }
 
 export async function completeAssignedWorkItemAction(formData: FormData) {
