@@ -30,7 +30,8 @@ import { selectRoleSlotPersonOptions } from "@/lib/role-slots/read-model";
 import {
   completeWorkItemAction,
   createWorkItemAction,
-  dismissWorkItemAction
+  dismissWorkItemAction,
+  updateWorkItemAssignmentAction
 } from "@/lib/work-items/actions";
 import { listWorkItemsForSource } from "@/lib/work-items/data";
 import {
@@ -148,7 +149,9 @@ function getStatusClasses(status: string) {
 function getLeadNextAction(input: {
   opportunity: NonNullable<Awaited<ReturnType<typeof getOpportunityById>>>;
   appointmentHref: string;
+  estimateHandoffHref: string;
   canStartEstimate: boolean;
+  estimateWriterName: string | null;
 }) {
   if (input.opportunity.status === "lost") {
     return {
@@ -184,6 +187,26 @@ function getLeadNextAction(input: {
         "A site visit is scheduled. Capture the inspection outcome and requirements summary here before estimating.",
       href: "#site-visit",
       label: "Update site visit",
+      kind: "link" as const
+    };
+  }
+
+  if (
+    input.opportunity.status === "site_assessment_complete" ||
+    input.opportunity.status === "estimating" ||
+    input.opportunity.siteAssessmentStatus === "completed"
+  ) {
+    return {
+      title: input.estimateWriterName
+        ? "Continue estimating handoff"
+        : "Assign Estimate Writer",
+      description: input.estimateWriterName
+        ? `${input.estimateWriterName} is assigned to write the estimate. Keep the handoff, source notes, and estimate start action on this lead.`
+        : "The site assessment is ready for estimating. Assign the estimate writer from this lead before or alongside starting the estimate flow.",
+      href: input.estimateHandoffHref,
+      label: input.estimateWriterName
+        ? "Open estimating handoff"
+        : "Assign Estimate Writer",
       kind: "link" as const
     };
   }
@@ -320,9 +343,16 @@ export default async function LeadDetailPage({
   const existingEstimateHandoffNextAction = existingOpenEstimateHandoff
     ? getWorkItemNextAction(existingOpenEstimateHandoff)
     : null;
+  const estimatingHandoffHref = existingOpenEstimateHandoff
+    ? "#project-handoff"
+    : `${leadWorkspaceHref}?workItemCue=estimate_handoff#work-items`;
+  const estimateWriterName =
+    existingOpenEstimateHandoff?.assignedPerson?.displayName ?? null;
   const nextAction = getLeadNextAction({
     opportunity,
     appointmentHref: leadAppointmentHref,
+    estimateHandoffHref: estimatingHandoffHref,
+    estimateWriterName,
     canStartEstimate
   });
   const estimatingReadiness = opportunity.projectId
@@ -953,8 +983,18 @@ export default async function LeadDetailPage({
               <div className="mt-6 grid gap-6 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
                 <section className="rounded-2xl border border-slate-200 bg-slate-50/80 px-5 py-5">
                   <p className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-500">
-                    Create internal work item
+                    {estimateHandoffCueRequested
+                      ? "Assign Estimate Writer"
+                      : "Create internal work item"}
                   </p>
+                  {estimateHandoffCueRequested ? (
+                    <p className="mt-2 text-sm leading-6 text-slate-600">
+                      Create one internal estimating handoff tied to this
+                      opportunity. The assignee is the estimate writer for this
+                      handoff until an actual estimate exists and can carry its
+                      own Estimate Writer role slot.
+                    </p>
+                  ) : null}
                   <div className="mt-4">
                     {estimateHandoffCueRequested &&
                     existingOpenEstimateHandoff ? (
@@ -974,6 +1014,19 @@ export default async function LeadDetailPage({
                       projectId={opportunity.projectId}
                       defaultKind={
                         leadWorkItemPrefill?.kind ?? "lead_follow_up"
+                      }
+                      kindOptions={
+                        estimateHandoffCueRequested
+                          ? [
+                              {
+                                value: "estimate_follow_up",
+                                label: "Estimate handoff"
+                              }
+                            ]
+                          : undefined
+                      }
+                      defaultAssignedPersonId={
+                        leadWorkItemPrefill?.assignedPersonId
                       }
                       defaultTitle={leadWorkItemPrefill?.title}
                       defaultDescription={leadWorkItemPrefill?.description}
@@ -1134,7 +1187,7 @@ export default async function LeadDetailPage({
                   href={`${leadWorkspaceHref}?workItemCue=estimate_handoff#work-items`}
                   className="inline-flex items-center rounded-full border border-[#e2d4c5] bg-[#fbf5ee] px-3.5 py-2 text-sm font-medium text-[#5f4d40] transition hover:border-[#caac88] hover:bg-white hover:text-[#2b2118]"
                 >
-                  Create estimate handoff item
+                  Assign Estimate Writer
                 </Link>
               )}
               <Link
@@ -1158,12 +1211,12 @@ export default async function LeadDetailPage({
 
             {existingOpenEstimateHandoff ? (
               <div className="mt-6 rounded-2xl border border-amber-200 bg-amber-50 px-5 py-4 text-sm leading-6 text-amber-950">
-                <p className="font-semibold">Existing open handoff</p>
+                <p className="font-semibold">Estimating handoff</p>
                 <p className="mt-1 text-amber-900">
                   {existingOpenEstimateHandoff.title}
                 </p>
                 <p className="mt-2 text-xs font-semibold uppercase tracking-[0.14em] text-amber-800">
-                  Assigned to{" "}
+                  Estimate Writer{" "}
                   {existingOpenEstimateHandoff.assignedPerson?.displayName ??
                     "Unassigned"}
                 </p>
@@ -1172,6 +1225,46 @@ export default async function LeadDetailPage({
                     Next action: {existingEstimateHandoffNextAction}
                   </p>
                 ) : null}
+                <form
+                  action={updateWorkItemAssignmentAction}
+                  className="mt-4 grid gap-3 border-t border-amber-200 pt-4 sm:grid-cols-[minmax(0,1fr)_auto]"
+                >
+                  <input
+                    type="hidden"
+                    name="workItemId"
+                    value={existingOpenEstimateHandoff.id}
+                  />
+                  <input
+                    type="hidden"
+                    name="returnTo"
+                    value={leadWorkspaceHref}
+                  />
+                  <label className="block">
+                    <span className="text-xs font-semibold uppercase tracking-[0.14em] text-amber-800">
+                      Assign Estimate Writer
+                    </span>
+                    <select
+                      name="assignedPersonId"
+                      defaultValue={
+                        existingOpenEstimateHandoff.assignedPersonId ?? ""
+                      }
+                      className="mt-2 h-9 w-full border border-amber-200 bg-white px-3 text-sm text-slate-900 outline-none transition focus:border-[#d8731f]"
+                    >
+                      <option value="">Unassigned</option>
+                      {assignablePeople.map((person) => (
+                        <option key={person.id} value={person.id}>
+                          {person.displayName}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <button
+                    type="submit"
+                    className="inline-flex h-9 items-center justify-center self-end rounded-full bg-brand-700 px-4 text-sm font-medium text-white transition hover:bg-brand-900"
+                  >
+                    Save assignment
+                  </button>
+                </form>
               </div>
             ) : null}
 

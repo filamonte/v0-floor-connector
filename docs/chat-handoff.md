@@ -229,6 +229,11 @@ Current operating-core surfaces include:
   jobs/Daily Logs/Job Notes/source records. Structured measurement tables,
   comments, richer field statuses, vendor/team assignment, assignee-side
   uploads, reminders, and portal-safe sharing remain future-only.
+- Lead Workspace estimating handoff now has a direct "Assign Estimate Writer"
+  path. It creates the existing opportunity-linked estimate Work Item with an
+  assignee/due/note or reassigns the existing open handoff Work Item; it does
+  not add an opportunity estimate-writer column, create an estimate, mutate
+  estimate status, create notifications, or change commission/payroll behavior.
 - Future Universal Capture + Assistant Action Layer planning is now locked into
   the roadmap/workflow docs as planned capability only. The idea is to capture
   callbacks, reminders, follow-ups, site-visit intent, estimate scheduling
