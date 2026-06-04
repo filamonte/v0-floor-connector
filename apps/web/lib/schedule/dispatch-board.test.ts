@@ -26,7 +26,11 @@ const baseJob = {
   },
   project: {
     id: "44444444-4444-4444-8444-444444444444",
-    name: "Warehouse floor"
+    name: "Warehouse floor",
+    onsiteRepPersonId: null,
+    relationshipOwnerPersonId: null,
+    followUpOwnerPersonId: null,
+    salesCreditOwnerPersonId: null
   },
   estimate: null,
   serviceTicket: null,

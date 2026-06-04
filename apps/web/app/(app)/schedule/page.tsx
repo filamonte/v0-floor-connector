@@ -59,6 +59,7 @@ import { buildScheduleFieldHandoffCommandView } from "@/lib/schedule/field-hando
 import {
   buildScheduleBoardReadModel,
   buildScheduleItems,
+  buildScheduleRoleSlotIndicators,
   type ScheduleDispatchAttentionTone,
   type ScheduleItem
 } from "@/lib/schedule/read-model";
@@ -984,10 +985,18 @@ function buildScheduleOperationalIndicators(input: {
   job: {
     id: string;
     projectId: string;
+    project: {
+      onsiteRepPersonId: string | null;
+      relationshipOwnerPersonId: string | null;
+    } | null;
     dispatchStatus: string;
     scheduledDate: string | null;
     assignmentCount: number;
   };
+  roleSlotPeople: Array<{
+    id: string;
+    displayName: string;
+  }>;
   readiness: ProjectFinancialReadinessSnapshot | null | undefined;
   warnings: ScheduleWarningSummary[];
   todayDateKey: string;
@@ -1058,6 +1067,14 @@ function buildScheduleOperationalIndicators(input: {
       tone: input.job.dispatchStatus === "in_progress" ? "warning" : "neutral"
     });
   }
+
+  indicators.push(
+    ...buildScheduleRoleSlotIndicators({
+      project: input.job.project,
+      people: input.roleSlotPeople,
+      projectHref: `/projects/${input.job.projectId}`
+    })
+  );
 
   for (const warning of input.warnings.slice(0, 2)) {
     indicators.push({
@@ -1591,6 +1608,7 @@ export default async function SchedulePage({
   const selectedJobOperationalIndicators = selectedJob
     ? buildScheduleOperationalIndicators({
         job: selectedJob,
+        roleSlotPeople: assignablePeople,
         readiness: projectReadinessByProjectId.get(selectedJob.projectId),
         warnings: selectedJobScheduleWarnings,
         todayDateKey
@@ -3970,6 +3988,7 @@ export default async function SchedulePage({
                                   const operationalIndicators =
                                     buildScheduleOperationalIndicators({
                                       job,
+                                      roleSlotPeople: assignablePeople,
                                       readiness:
                                         projectReadinessByProjectId.get(
                                           job.projectId
@@ -4330,6 +4349,7 @@ export default async function SchedulePage({
                               const operationalIndicators =
                                 buildScheduleOperationalIndicators({
                                   job,
+                                  roleSlotPeople: assignablePeople,
                                   readiness: projectReadinessByProjectId.get(
                                     job.projectId
                                   ),
@@ -4618,6 +4638,7 @@ export default async function SchedulePage({
                   const operationalIndicators =
                     buildScheduleOperationalIndicators({
                       job,
+                      roleSlotPeople: assignablePeople,
                       readiness: projectReadinessByProjectId.get(job.projectId),
                       warnings: jobWarnings,
                       todayDateKey

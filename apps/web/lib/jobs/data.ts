@@ -42,6 +42,10 @@ type JobRow = {
   projects?: {
     id: string;
     name: string;
+    onsite_rep_person_id: string | null;
+    relationship_owner_person_id: string | null;
+    follow_up_owner_person_id: string | null;
+    sales_credit_owner_person_id: string | null;
   } | null;
   estimates?: {
     id: string;
@@ -121,6 +125,10 @@ export type JobListItem = JobRecord & {
   project: {
     id: string;
     name: string;
+    onsiteRepPersonId: string | null;
+    relationshipOwnerPersonId: string | null;
+    followUpOwnerPersonId: string | null;
+    salesCreditOwnerPersonId: string | null;
   } | null;
   estimate: {
     id: string;
@@ -205,7 +213,11 @@ const jobSelect = `
   ),
   projects (
     id,
-    name
+    name,
+    onsite_rep_person_id,
+    relationship_owner_person_id,
+    follow_up_owner_person_id,
+    sales_credit_owner_person_id
   ),
   estimates (
     id,
@@ -248,7 +260,11 @@ const scheduleJobSelect = `
   ),
   projects (
     id,
-    name
+    name,
+    onsite_rep_person_id,
+    relationship_owner_person_id,
+    follow_up_owner_person_id,
+    sales_credit_owner_person_id
   ),
   estimates (
     id,
@@ -445,7 +461,11 @@ function mapJobListItem(row: JobRow): JobListItem {
     project: row.projects
       ? {
           id: row.projects.id,
-          name: row.projects.name
+          name: row.projects.name,
+          onsiteRepPersonId: row.projects.onsite_rep_person_id,
+          relationshipOwnerPersonId: row.projects.relationship_owner_person_id,
+          followUpOwnerPersonId: row.projects.follow_up_owner_person_id,
+          salesCreditOwnerPersonId: row.projects.sales_credit_owner_person_id
         }
       : null,
     estimate: row.estimates
@@ -500,7 +520,11 @@ function mapScheduleJobSummary(row: ScheduleJobRow): ScheduleJobSummary {
     project: row.projects
       ? {
           id: row.projects.id,
-          name: row.projects.name
+          name: row.projects.name,
+          onsiteRepPersonId: row.projects.onsite_rep_person_id,
+          relationshipOwnerPersonId: row.projects.relationship_owner_person_id,
+          followUpOwnerPersonId: row.projects.follow_up_owner_person_id,
+          salesCreditOwnerPersonId: row.projects.sales_credit_owner_person_id
         }
       : null,
     estimate: row.estimates

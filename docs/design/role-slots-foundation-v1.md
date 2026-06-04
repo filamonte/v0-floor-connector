@@ -24,6 +24,7 @@ All role slots are nullable same-organization references to existing active assi
 - Lead Detail shows editable Onsite Rep and Relationship Owner role slots.
 - Project Workspace shows editable Onsite Rep, Relationship Owner, Follow-Up Owner, and Sales Credit Owner role slots.
 - Estimate Workspace shows editable Estimate Writer plus read-only Relationship Owner and Sales Credit Owner context from the linked project.
+- CrewBoard shows read-only Onsite Rep and Relationship Owner context from the linked project on schedule cards and selected-job context when those role slots resolve to existing active assignable People.
 
 Truthful empty states such as `Not assigned` and `Not captured yet` are used when no valid person is set. The UI does not create fake owners.
 
@@ -36,6 +37,7 @@ Role slots are business ownership metadata only. They are distinct from:
 - commission calculation
 - payroll or payout handling
 - ledger behavior
+- crew assignment or dispatch ownership
 - notifications
 - portal/customer behavior
 - AI ownership inference or automation

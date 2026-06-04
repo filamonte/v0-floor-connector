@@ -4,6 +4,7 @@ import test from "node:test";
 import {
   buildScheduleBoardReadModel,
   buildScheduleItems,
+  buildScheduleRoleSlotIndicators,
   deriveScheduleOperatingModeSummaries,
   deriveScheduleBoardQueues,
   filterUpcomingAssignedAppointments
@@ -32,7 +33,11 @@ const baseJob = {
   },
   project: {
     id: "44444444-4444-4444-8444-444444444444",
-    name: "Warehouse floor"
+    name: "Warehouse floor",
+    onsiteRepPersonId: null,
+    relationshipOwnerPersonId: null,
+    followUpOwnerPersonId: null,
+    salesCreditOwnerPersonId: null
   },
   estimate: null,
   serviceTicket: null,
@@ -157,6 +162,48 @@ void test("upcoming appointment helper respects assigned person when mapping exi
 
   assert.equal(appointments.length, 1);
   assert.equal(appointments[0].id, baseAppointment.id);
+});
+
+void test("schedule role slot indicators show explicit project ownership context", () => {
+  const indicators = buildScheduleRoleSlotIndicators({
+    project: {
+      onsiteRepPersonId: "11111111-1111-4111-8111-111111111111",
+      relationshipOwnerPersonId: "22222222-2222-4222-8222-222222222222"
+    },
+    people: [
+      {
+        id: "11111111-1111-4111-8111-111111111111",
+        displayName: "Onsite Rep"
+      },
+      {
+        id: "22222222-2222-4222-8222-222222222222",
+        displayName: "Relationship Owner"
+      }
+    ],
+    projectHref: "/projects/44444444-4444-4444-8444-444444444444"
+  });
+
+  assert.deepEqual(
+    indicators.map((indicator) => indicator.label),
+    ["Onsite: Onsite Rep", "Relationship: Relationship Owner"]
+  );
+  assert.equal(
+    indicators[0].href,
+    "/projects/44444444-4444-4444-8444-444444444444"
+  );
+});
+
+void test("schedule role slot indicators do not invent missing owners", () => {
+  const indicators = buildScheduleRoleSlotIndicators({
+    project: {
+      onsiteRepPersonId: "11111111-1111-4111-8111-111111111111",
+      relationshipOwnerPersonId: null
+    },
+    people: [],
+    projectHref: "/projects/44444444-4444-4444-8444-444444444444"
+  });
+
+  assert.deepEqual(indicators, []);
 });
 
 void test("schedule board read model derives canonical job operating queues", () => {

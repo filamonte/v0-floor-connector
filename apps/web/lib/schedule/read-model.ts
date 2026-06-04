@@ -7,6 +7,7 @@ import type {
   ScheduleJobSummary
 } from "@/lib/jobs/data";
 import type { ScheduleWarningSummary } from "@/lib/schedule/warnings";
+import type { PersonId } from "@floorconnector/types";
 
 export type ScheduleJobSource = ScheduleJobSummary & {
   assignments?: ScheduleJobAssignmentSummary[];
@@ -113,6 +114,24 @@ export type ScheduleDispatchAttentionItem<TJob extends ScheduleBoardJobSource> =
   };
 
 export type ScheduleOperatingModeKey = "triage" | "plan" | "dispatch";
+
+export type ScheduleRoleSlotPerson = {
+  id: PersonId;
+  displayName: string;
+};
+
+export type ScheduleRoleSlotProject = {
+  onsiteRepPersonId: PersonId | null;
+  relationshipOwnerPersonId: PersonId | null;
+};
+
+export type ScheduleRoleSlotIndicator = {
+  id: string;
+  label: string;
+  detail: string;
+  href: string;
+  tone: "neutral";
+};
 
 export type ScheduleOperatingModeSummary<TJob extends ScheduleBoardJobSource> =
   {
@@ -237,6 +256,60 @@ function getScheduledSortTime(job: {
 
 function getAssignmentCount(job: ScheduleJobSource) {
   return job.assignmentCount ?? job.assignments?.length ?? 0;
+}
+
+function findPersonName(
+  people: ScheduleRoleSlotPerson[],
+  personId: PersonId | null
+) {
+  if (!personId) {
+    return null;
+  }
+
+  return people.find((person) => person.id === personId)?.displayName ?? null;
+}
+
+export function buildScheduleRoleSlotIndicators(input: {
+  project: ScheduleRoleSlotProject | null;
+  people: ScheduleRoleSlotPerson[];
+  projectHref: string;
+}): ScheduleRoleSlotIndicator[] {
+  if (!input.project) {
+    return [];
+  }
+
+  const onsiteRepName = findPersonName(
+    input.people,
+    input.project.onsiteRepPersonId
+  );
+  const relationshipOwnerName = findPersonName(
+    input.people,
+    input.project.relationshipOwnerPersonId
+  );
+  const indicators: ScheduleRoleSlotIndicator[] = [];
+
+  if (onsiteRepName) {
+    indicators.push({
+      id: "role-slot:onsite-rep",
+      label: `Onsite: ${onsiteRepName}`,
+      detail: "Project role slot: person who gathered onsite context.",
+      href: input.projectHref,
+      tone: "neutral"
+    });
+  }
+
+  if (relationshipOwnerName) {
+    indicators.push({
+      id: "role-slot:relationship-owner",
+      label: `Relationship: ${relationshipOwnerName}`,
+      detail:
+        "Project role slot: person who owns customer relationship context.",
+      href: input.projectHref,
+      tone: "neutral"
+    });
+  }
+
+  return indicators;
 }
 
 function getDateKey(value: Date) {

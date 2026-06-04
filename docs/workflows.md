@@ -49,7 +49,11 @@ In practical terms:
   model derives daily/weekly operating lanes, ready-to-schedule jobs,
   readiness-review items, crew gaps, and advisory schedule warnings from
   canonical jobs and `job_assignments` without creating a second dispatch source
-  of truth.
+  of truth. CrewBoard can also show read-only Onsite Rep and Relationship Owner
+  chips from explicit project role-slot metadata when those People resolve in
+  the tenant, but those chips do not imply crew assignment, Sales Credit Owner
+  visibility, commission/payroll behavior, notifications, portal exposure, or
+  new schedule state.
 - Reports is the current company-level operations/collections visibility
   surface on `/reports`; it summarizes source records and routes users back to
   Project Workspace, CrewBoard, Invoice Workspace, and Contract Workspace.
