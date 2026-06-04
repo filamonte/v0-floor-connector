@@ -114,18 +114,20 @@ Gate date: 2026-06-04.
 Wave: `operational-command-center-v1`.
 
 Architecture Coordination approval is recorded for the next implementation
-stream set below. Jeff approval remains pending explicit approval, so these
-streams must not begin implementation until that approval is recorded.
+stream set below. Jeff approval is also recorded, so these streams may begin
+implementation under the human review gate.
 
-| Worktree                       | Branch                                | Gate status                          | Activation condition                                               |
-| ------------------------------ | ------------------------------------- | ------------------------------------ | ------------------------------------------------------------------ |
-| `project-workspace-v2`         | `stream/project-workspace-v2`         | Architecture approved / Jeff pending | Jeff explicitly approves starting `operational-command-center-v1`. |
-| `field-command-center-v1`      | `stream/field-command-center-v1`      | Architecture approved / Jeff pending | Jeff explicitly approves starting `operational-command-center-v1`. |
-| `communications-continuity-v2` | `stream/communications-continuity-v2` | Architecture approved / Jeff pending | Jeff explicitly approves starting `operational-command-center-v1`. |
-| `financial-command-center-v1`  | `stream/financial-command-center-v1`  | Architecture approved / Jeff pending | Jeff explicitly approves starting `operational-command-center-v1`. |
-| `verification-v2`              | `stream/verification-v2`              | Architecture approved / Jeff pending | Jeff explicitly approves starting `operational-command-center-v1`. |
+| Worktree                       | Branch                                | Gate status                           | Activation condition                        |
+| ------------------------------ | ------------------------------------- | ------------------------------------- | ------------------------------------------- |
+| `project-workspace-v2`         | `stream/project-workspace-v2`         | Architecture approved / Jeff approved | Ready to begin under the human review gate. |
+| `field-command-center-v1`      | `stream/field-command-center-v1`      | Architecture approved / Jeff approved | Ready to begin under the human review gate. |
+| `communications-continuity-v2` | `stream/communications-continuity-v2` | Architecture approved / Jeff approved | Ready to begin under the human review gate. |
+| `financial-command-center-v1`  | `stream/financial-command-center-v1`  | Architecture approved / Jeff approved | Ready to begin under the human review gate. |
+| `verification-v2`              | `stream/verification-v2`              | Architecture approved / Jeff approved | Ready to begin under the human review gate. |
 
 UX Architecture / Architecture Coordination remains the governance referee.
 Dashboard prioritizes, Project Workspace diagnoses, owning workspaces act,
 Settings owns tenant configuration, Super Admin owns platform policy, and Portal
-remains customer-safe review/action only.
+remains customer-safe review/action only. Agents may plan, build, validate, and
+prepare review packets, but may not auto-merge or continue indefinitely without
+Jeff approval.

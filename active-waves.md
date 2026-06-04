@@ -132,12 +132,12 @@ Governance rule:
 
 Gate status as of 2026-06-04:
 
-| Gate item                              | Status                    | Evidence / note                                                                   |
-| -------------------------------------- | ------------------------- | --------------------------------------------------------------------------------- |
-| Architecture Coordination approval     | Approved                  | Ownership boundaries and stream set are recorded in this registry and plan.       |
-| Jeff approval gate                     | Pending explicit approval | This prompt did not explicitly say "approved, start the next wave."               |
-| Human review gate rules                | Required                  | Agents may plan, build, validate, and prepare review packets only after approval. |
-| Autonomous merge / indefinite continue | Not allowed               | Merge, next-wave continuation, and destructive cleanup require Jeff approval.     |
+| Gate item                              | Status      | Evidence / note                                                               |
+| -------------------------------------- | ----------- | ----------------------------------------------------------------------------- |
+| Architecture Coordination approval     | Approved    | Ownership boundaries and stream set are recorded in this registry and plan.   |
+| Jeff approval gate                     | Approved    | Jeff explicitly approved starting `operational-command-center-v1`.            |
+| Human review gate rules                | Required    | Agents may plan, build, validate, and prepare review packets.                 |
+| Autonomous merge / indefinite continue | Not allowed | Merge, next-wave continuation, and destructive cleanup require Jeff approval. |
 
 Architecture-approved implementation stream set:
 
@@ -153,7 +153,11 @@ Governance referee:
   ownership, dependency, UX / IA, canonical model, verification, and merge-order
   decisions.
 
-Remaining gate:
+Remaining gates:
 
-- Jeff must explicitly approve starting `operational-command-center-v1` before
-  implementation prompts begin.
+- No start gate remains for the approved stream set.
+- Merge, next-wave continuation, provider/customer-facing risky actions,
+  destructive cleanup, and any scope outside the approved stream briefs still
+  require human review and approval.
+
+Wave status: Approved to begin under the human review gate.

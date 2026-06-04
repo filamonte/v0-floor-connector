@@ -41,9 +41,10 @@ auto-continue, or bypass Jeff approval.
 Current wave gate note: `operational-command-center-v1` has Architecture
 Coordination approval recorded for `stream/project-workspace-v2`,
 `stream/field-command-center-v1`, `stream/communications-continuity-v2`,
-`stream/financial-command-center-v1`, and `stream/verification-v2`. Jeff approval
-is still pending explicit approval, so implementation prompts should not begin
-until Jeff says to start the next wave.
+`stream/financial-command-center-v1`, and `stream/verification-v2`. Jeff has
+explicitly approved starting the wave, so implementation prompts may begin under
+the human review gate. Agents may plan, build, validate, and prepare review
+packets, but may not auto-merge or continue indefinitely without Jeff approval.
 
 ## Required First Reads
 

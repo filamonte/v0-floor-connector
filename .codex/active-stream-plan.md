@@ -73,11 +73,10 @@ Verification protect the ownership model.
 
 Architecture Coordination approval: Approved.
 
-Jeff approval gate: Pending explicit approval. This prompt did not explicitly
-say "approved, start the next wave," so implementation prompts may not begin
-yet.
+Jeff approval gate: Approved. Jeff explicitly approved starting
+`operational-command-center-v1`.
 
-Approved stream set once Jeff approval is recorded:
+Approved stream set ready to begin under the human review gate:
 
 - `stream/project-workspace-v2`
 - `stream/field-command-center-v1`
@@ -96,8 +95,15 @@ Governance rule:
 
 UX Architecture / Architecture Coordination remains the governance referee.
 Agents may plan, build, validate, and prepare review packets under human review
-gate rules after Jeff approval is recorded, but may not auto-merge or continue
-indefinitely without Jeff approval.
+gate rules, but may not auto-merge or continue indefinitely without Jeff
+approval.
+
+Remaining gates:
+
+- No start gate remains for the approved stream set.
+- Merge, next-wave continuation, provider/customer-facing risky actions,
+  destructive cleanup, and any scope outside the approved stream briefs still
+  require human review and approval.
 
 ## Merged Streams
 
