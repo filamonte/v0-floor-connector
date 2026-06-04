@@ -237,13 +237,14 @@ export function buildFieldCommandCenterSections<
   }>;
   handoffsByJobId?: Map<string, ScheduleFieldHandoffSummary>;
 }): FieldCommandCenterSection<TJob>[] {
-  const warningsByJobId = new Map(
+  const warningsByJobId = new Map<string, ScheduleWarningSummary[]>(
     (input.warningSummaries ?? []).map((summary) => [
       summary.jobId,
       summary.warnings
     ])
   );
-  const handoffsByJobId = input.handoffsByJobId ?? new Map();
+  const handoffsByJobId =
+    input.handoffsByJobId ?? new Map<string, ScheduleFieldHandoffSummary>();
   const toItems = (jobs: TJob[]) =>
     uniqueById(jobs).map((job) =>
       buildFieldCommandItem(job, {
