@@ -13,6 +13,7 @@ import {
   dismissWorkItem,
   markAssignedWorkItemReadyForReview,
   updateAssignedWorkItemFieldState,
+  updateAssignedWorkItemNextAction,
   updateWorkItemAssignment,
   updateWorkItem
 } from "./data";
@@ -22,6 +23,7 @@ import {
   workItemAssignmentSchema,
   workItemCreateSchema,
   workItemIdSchema,
+  workItemNextActionSchema,
   workItemReadyForReviewSchema,
   workItemUpdateSchema
 } from "./schemas";
@@ -350,6 +352,47 @@ export async function markAssignedWorkItemReadyForReviewAction(
   }
 
   redirect(buildRedirect(returnTo, { message: "Work item ready for review." }));
+}
+
+export async function updateAssignedWorkItemNextActionAction(
+  formData: FormData
+) {
+  const returnTo = getReturnTo(formData);
+  const result = workItemNextActionSchema.safeParse({
+    workItemId: getFieldValue(formData, "workItemId"),
+    nextAction: getFieldValue(formData, "nextAction")
+  });
+
+  if (!result.success) {
+    redirect(
+      buildRedirect(returnTo, {
+        error:
+          result.error.issues[0]?.message ??
+          "Unable to update work item next action."
+      })
+    );
+  }
+
+  try {
+    await updateAssignedWorkItemNextAction({
+      ...result.data,
+      next: returnTo
+    });
+    revalidateWorkItemSurfaces(returnTo);
+  } catch (error) {
+    redirect(
+      buildRedirect(returnTo, {
+        error:
+          error instanceof Error
+            ? error.message
+            : "Unable to update work item next action."
+      })
+    );
+  }
+
+  redirect(
+    buildRedirect(returnTo, { message: "Work item next action updated." })
+  );
 }
 
 export async function completeAssignedWorkItemAction(formData: FormData) {

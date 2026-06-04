@@ -84,8 +84,9 @@ import {
   createWorkItemAction,
   dismissWorkItemAction,
   markAssignedWorkItemReadyForReviewAction,
-  updateWorkItemAssignmentAction,
-  updateAssignedWorkItemFieldStateAction
+  updateAssignedWorkItemFieldStateAction,
+  updateAssignedWorkItemNextActionAction,
+  updateWorkItemAssignmentAction
 } from "@/lib/work-items/actions";
 import {
   listWorkItemsForProject,
@@ -103,6 +104,7 @@ import {
   getWorkItemBlockerReason,
   getWorkItemDueState,
   getWorkItemFieldState,
+  getWorkItemNextAction,
   selectWorkItemAssignmentCandidates,
   selectEstimateWorkspaceHandoffWorkItems
 } from "@/lib/work-items/read-model";
@@ -179,12 +181,6 @@ function formatReadinessLabel(status: string | null) {
   return status.replaceAll("_", " ");
 }
 
-function getMetadataString(value: unknown) {
-  return typeof value === "string" && value.trim().length > 0
-    ? value.trim()
-    : null;
-}
-
 function getEstimateWorkTypeLabel(workItem: WorkItemListItem) {
   switch (getEstimateWorkItemType(workItem)) {
     case "generate_estimate":
@@ -215,11 +211,7 @@ function getEstimateWorkDueLabel(workItem: WorkItemListItem, nowIso: string) {
 }
 
 function getEstimateWorkNextAction(workItem: WorkItemListItem) {
-  return (
-    getMetadataString(workItem.metadata.nextAction) ??
-    getMetadataString(workItem.metadata.nextActionText) ??
-    getMetadataString(workItem.metadata.safeNextAction)
-  );
+  return getWorkItemNextAction(workItem);
 }
 
 function EstimateHandoffActionButton({
@@ -436,6 +428,41 @@ function EstimateHandoffPanel({
                         </button>
                       </form>
                     ) : null}
+                    <details className="relative">
+                      <summary className="inline-flex h-8 cursor-pointer list-none items-center justify-center border border-slate-300 bg-white px-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-600 transition hover:border-[#d8731f] hover:text-slate-950">
+                        Next action
+                      </summary>
+                      <form
+                        action={updateAssignedWorkItemNextActionAction}
+                        className="mt-2 grid w-72 gap-2 rounded-lg border border-slate-200 bg-white p-3 shadow-sm"
+                      >
+                        <input
+                          type="hidden"
+                          name="workItemId"
+                          value={workItem.id}
+                        />
+                        <input type="hidden" name="returnTo" value={returnTo} />
+                        <label className="grid gap-1">
+                          <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">
+                            Next action
+                          </span>
+                          <textarea
+                            name="nextAction"
+                            rows={3}
+                            maxLength={500}
+                            defaultValue={nextAction ?? ""}
+                            placeholder="Confirm moisture test before review"
+                            className="border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-[#d8731f]"
+                          />
+                        </label>
+                        <button
+                          type="submit"
+                          className="inline-flex h-8 items-center justify-center border border-slate-300 bg-white px-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-600 transition hover:border-[#d8731f] hover:text-slate-950"
+                        >
+                          Save next action
+                        </button>
+                      </form>
+                    </details>
                     <details className="relative">
                       <summary className="inline-flex h-8 cursor-pointer list-none items-center justify-center border border-slate-300 bg-white px-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-600 transition hover:border-[#d8731f] hover:text-slate-950">
                         Block

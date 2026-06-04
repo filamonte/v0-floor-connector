@@ -6,6 +6,7 @@ import type { WorkItem } from "@floorconnector/types";
 import { executionAttachmentSubjectTypeSchema } from "../execution-attachments/schemas";
 import {
   buildEstimateReadyForReviewMetadata,
+  buildWorkItemNextActionMetadata,
   buildWorkItemOwnershipDisplay,
   buildContextRichWorkItemPreview,
   buildEstimateWorkQueue,
@@ -15,6 +16,7 @@ import {
   getEstimateWorkItemType,
   getWorkItemCompletionNote,
   getWorkItemFieldState,
+  getWorkItemNextAction,
   groupMobileAssignedWorkItems,
   isEstimateWorkItem,
   selectEstimateWorkspaceHandoffWorkItems,
@@ -30,6 +32,7 @@ import {
 import {
   workItemAssignmentSchema,
   workItemCreateSchema,
+  workItemNextActionSchema,
   workItemReadyForReviewSchema
 } from "./schemas";
 
@@ -479,6 +482,55 @@ void test("ready for review metadata preserves work item state without estimate 
   assert.equal(metadata.readyForReviewAt, "2026-06-03T14:00:00.000Z");
   assert.equal(metadata.readyForReviewBy, "user-1");
   assert.equal(Object.hasOwn(metadata, "estimateStatus"), false);
+});
+
+void test("next action schema trims and accepts clearing payloads", () => {
+  const parsed = workItemNextActionSchema.parse({
+    workItemId: "11111111-1111-4111-8111-111111111111",
+    nextAction: "  Confirm moisture test before review  "
+  });
+
+  assert.deepEqual(parsed, {
+    workItemId: "11111111-1111-4111-8111-111111111111",
+    nextAction: "Confirm moisture test before review"
+  });
+
+  const cleared = workItemNextActionSchema.parse({
+    workItemId: "11111111-1111-4111-8111-111111111111",
+    nextAction: ""
+  });
+
+  assert.equal(cleared.nextAction, null);
+});
+
+void test("next action metadata writes the display key and clears stale fallbacks", () => {
+  const metadata = buildWorkItemNextActionMetadata({
+    existing: {
+      estimateWork: true,
+      estimateWorkType: "generate_estimate",
+      nextActionText: "Old generated text",
+      safeNextAction: "Old safe fallback"
+    },
+    nextAction: "Review exclusions with estimator."
+  });
+
+  assert.equal(metadata.nextAction, "Review exclusions with estimator.");
+  assert.equal(Object.hasOwn(metadata, "nextActionText"), false);
+  assert.equal(Object.hasOwn(metadata, "safeNextAction"), false);
+  assert.equal(
+    getWorkItemNextAction({
+      metadata
+    }),
+    "Review exclusions with estimator."
+  );
+
+  const cleared = buildWorkItemNextActionMetadata({
+    existing: metadata,
+    nextAction: null
+  });
+
+  assert.equal(getWorkItemNextAction({ metadata: cleared }), null);
+  assert.equal(Object.hasOwn(cleared, "nextAction"), false);
 });
 
 void test("context-rich work item preview surfaces instructions measurements and due state", () => {

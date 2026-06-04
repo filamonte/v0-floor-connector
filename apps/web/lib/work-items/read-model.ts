@@ -84,6 +84,11 @@ export type EstimateReadyForReviewMetadataInput = {
   markedByUserId: string;
 };
 
+export type WorkItemNextActionMetadataInput = {
+  existing: Record<string, unknown>;
+  nextAction: string | null;
+};
+
 const priorityRank: Record<WorkItemPriority, number> = {
   urgent: 0,
   high: 1,
@@ -189,6 +194,34 @@ export function getWorkItemFieldState(
 
 export function getWorkItemBlockerReason(workItem: Pick<WorkItem, "metadata">) {
   return trimString(workItem.metadata.blockerReason);
+}
+
+export function getWorkItemNextAction(workItem: Pick<WorkItem, "metadata">) {
+  return (
+    trimString(workItem.metadata.nextAction) ??
+    trimString(workItem.metadata.nextActionText) ??
+    trimString(workItem.metadata.safeNextAction)
+  );
+}
+
+export function buildWorkItemNextActionMetadata(
+  input: WorkItemNextActionMetadataInput
+) {
+  const metadata = { ...input.existing };
+
+  if (input.nextAction) {
+    metadata.nextAction = input.nextAction;
+    delete metadata.nextActionText;
+    delete metadata.safeNextAction;
+
+    return metadata;
+  }
+
+  delete metadata.nextAction;
+  delete metadata.nextActionText;
+  delete metadata.safeNextAction;
+
+  return metadata;
 }
 
 export function buildEstimateReadyForReviewMetadata(

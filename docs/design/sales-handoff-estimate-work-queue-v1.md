@@ -47,6 +47,9 @@ completion.
   for internal review; this writes `metadata.estimateWorkStatus =
 ready_for_review` on the same Work Item while keeping `work_items.status =
 open`.
+  The panel can also edit the row's next action by updating the existing
+  `metadata.nextAction` field on that same Work Item, so daily handoff changes
+  do not require duplicate Work Items.
   Rows separate assigned owner, requester, and current waiting/blocked/review
   state without adding role persistence.
 - Estimate Workspace now also has compact Request Missing Info and Request
@@ -82,6 +85,8 @@ open`.
 - No portal/customer surface reads these internal Work Items.
 - No separate handoff-packet persistence, source snapshot, project-owned task
   board, or estimate-generation state is added.
+- Next-action editing updates existing Work Item metadata only; it does not
+  create a new Work Item, notification, reminder, or customer-visible message.
 - Reassignment does not create notification events, portal visibility,
   commission ownership, payroll ownership, send-as behavior, or a separate task
   assignment model.
