@@ -7,9 +7,14 @@ import type {
   ScheduleFieldHandoffPacket,
   ScheduleFieldHandoffSummary
 } from "@/lib/schedule/field-handoff-read-model";
+import type {
+  FieldCommandCenterItem,
+  FieldCommandCenterSection
+} from "@/lib/schedule/dispatch-board";
 import {
   buildScheduleWarningDisplaySummary,
   buildSelectedScheduleWarningDetails,
+  type ScheduleBoardJobSource,
   type ScheduleWarningDisplayTone
 } from "@/lib/schedule/read-model";
 import type { ScheduleWarningSummary } from "@/lib/schedule/warnings";
@@ -314,6 +319,157 @@ export function ScheduleResourceLoadPanel(input: {
         </div>
       ))}
     </div>
+  );
+}
+
+function getFieldCommandActionLabel(
+  action: FieldCommandCenterItem<ScheduleBoardJobSource>["recommendedAction"]
+) {
+  switch (action) {
+    case "schedule_job":
+      return "Set schedule";
+    case "assign_crew":
+      return "Assign crew";
+    case "open_daily_log":
+      return "Daily Log";
+    case "review_project":
+      return "Project";
+    default:
+      return "Job";
+  }
+}
+
+export function ScheduleFieldCommandCenter(input: {
+  sections: FieldCommandCenterSection<ScheduleBoardJobSource>[];
+  getActionHref: (
+    item: FieldCommandCenterItem<ScheduleBoardJobSource>
+  ) => string;
+}) {
+  return (
+    <section className="rounded-[6px] border border-[var(--border-warm)] bg-white shadow-sm">
+      <div className="border-b border-[var(--border-warm)] bg-[var(--highlight)] px-5 py-4 sm:px-6">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
+          Field Command Center
+        </p>
+        <h2 className="mt-1 text-lg font-semibold tracking-tight text-[var(--text-primary)]">
+          Cross-project execution lanes
+        </h2>
+        <p className="mt-1 text-sm leading-6 text-[var(--text-secondary)]">
+          Act on today&apos;s scheduled work, ready unscheduled jobs, crew gaps,
+          active execution, handoff context, and warnings from the existing job
+          and field records.
+        </p>
+      </div>
+      <div className="grid gap-4 px-5 py-4 sm:px-6 xl:grid-cols-3">
+        {input.sections.map((section) => (
+          <section
+            key={section.key}
+            className="rounded-[6px] border border-[var(--border-warm)] bg-white"
+          >
+            <div className="border-b border-[var(--border-warm)] bg-[var(--highlight)] px-4 py-3">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <h3 className="text-sm font-semibold text-[var(--text-primary)]">
+                    {section.title}
+                  </h3>
+                  <p className="mt-1 text-sm leading-6 text-[var(--text-secondary)]">
+                    {section.description}
+                  </p>
+                </div>
+                <span className="inline-flex shrink-0 items-center rounded-full border border-[var(--border-warm)] bg-white px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--text-secondary)]">
+                  {section.items.length}
+                </span>
+              </div>
+            </div>
+
+            <div className="space-y-3 px-4 py-4">
+              {section.items.length > 0 ? (
+                section.items.slice(0, 5).map((item) => (
+                  <article
+                    key={`${section.key}-${item.id}`}
+                    className="rounded-[4px] border border-[var(--border-warm)] bg-[var(--highlight)] px-3 py-3 text-sm leading-6"
+                  >
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                      <div className="min-w-0">
+                        <Link
+                          href={`/jobs/${item.job.id}`}
+                          className="font-semibold text-[var(--text-primary)] transition hover:text-[var(--copper)]"
+                        >
+                          {item.job.project?.name ??
+                            `Job ${item.job.id.slice(0, 8)}`}
+                        </Link>
+                        <p className="mt-1 text-xs font-medium text-[var(--text-secondary)]">
+                          {item.job.customer?.name ?? "Unknown customer"} ·{" "}
+                          {item.statusLabel}
+                        </p>
+                      </div>
+                      <span
+                        className={[
+                          "inline-flex shrink-0 items-center rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em]",
+                          item.hasCrewAssigned
+                            ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                            : "border-amber-200 bg-amber-50 text-amber-800"
+                        ].join(" ")}
+                      >
+                        {item.hasCrewAssigned ? "Crew set" : "Needs crew"}
+                      </span>
+                    </div>
+
+                    <p className="mt-2 text-sm leading-6 text-[var(--text-secondary)]">
+                      {item.detail}
+                    </p>
+                    <p className="mt-1 text-xs font-medium text-[var(--text-secondary)]">
+                      {item.crewLabel}
+                      {item.warnings.length > 0
+                        ? ` · ${item.warnings.length} warning${
+                            item.warnings.length === 1 ? "" : "s"
+                          }`
+                        : ""}
+                    </p>
+
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <Link
+                        href={input.getActionHref(item)}
+                        className={`inline-flex items-center rounded-[4px] border px-2.5 py-1.5 text-xs font-semibold uppercase tracking-[0.14em] transition ${scheduleSecondaryActionToneClassName}`}
+                      >
+                        {getFieldCommandActionLabel(item.recommendedAction)}
+                      </Link>
+                      <Link
+                        href={`/jobs/${item.job.id}`}
+                        className={scheduleCompactLinkClassName}
+                      >
+                        Job
+                      </Link>
+                      <Link
+                        href={`/projects/${item.job.projectId}`}
+                        className={scheduleCompactLinkClassName}
+                      >
+                        Project
+                      </Link>
+                      {item.handoff ? (
+                        <Link
+                          href={item.handoff.dailyLogHref}
+                          className={scheduleCompactLinkClassName}
+                        >
+                          Daily Log
+                        </Link>
+                      ) : null}
+                    </div>
+                  </article>
+                ))
+              ) : (
+                <div className="rounded-[4px] border border-dashed border-[var(--border-warm)] bg-[var(--highlight)] px-3 py-4 text-sm leading-6 text-[var(--text-secondary)]">
+                  <p className="font-semibold text-[var(--text-primary)]">
+                    {section.emptyTitle}
+                  </p>
+                  <p className="mt-1">{section.emptyDescription}</p>
+                </div>
+              )}
+            </div>
+          </section>
+        ))}
+      </div>
+    </section>
   );
 }
 

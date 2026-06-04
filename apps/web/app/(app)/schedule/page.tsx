@@ -16,6 +16,7 @@ import { ManagerDashboardCard } from "@/components/manager-dashboard-card";
 import { ScheduleCrewAssignmentForm } from "@/components/schedule-crew-assignment-form";
 import {
   ScheduleDispatchBoardShell,
+  ScheduleFieldCommandCenter,
   ScheduleFieldHandoffCommandView,
   ScheduleFieldHandoffPanel,
   ScheduleJobActionLinks,
@@ -67,7 +68,10 @@ import {
   type ScheduleDispatchAttentionTone,
   type ScheduleItem
 } from "@/lib/schedule/read-model";
-import { buildScheduleDispatchBoardSections } from "@/lib/schedule/dispatch-board";
+import {
+  buildFieldCommandCenterSections,
+  buildScheduleDispatchBoardSections
+} from "@/lib/schedule/dispatch-board";
 import {
   buildCrewBoardDropTargetFromSearch,
   createCrewBoardDateDropTarget,
@@ -1511,6 +1515,11 @@ export default async function SchedulePage({
   const dispatchBoardSections = buildScheduleDispatchBoardSections({
     board: scheduleBoard,
     warningSummaries: scheduleWarningSummaries
+  });
+  const fieldCommandCenterSections = buildFieldCommandCenterSections({
+    board: scheduleBoard,
+    warningSummaries: scheduleWarningSummaries,
+    handoffsByJobId: fieldHandoffsByJobId
   });
   const getDispatchBoardSection = (
     key: (typeof dispatchBoardSections)[number]["key"]
@@ -2979,6 +2988,40 @@ export default async function SchedulePage({
               </div>
             </section>
           ) : null}
+
+          <ScheduleFieldCommandCenter
+            sections={fieldCommandCenterSections}
+            getActionHref={(item) => {
+              if (item.recommendedAction === "open_daily_log") {
+                return (
+                  item.handoff?.dailyLogHref ??
+                  buildDailyLogCaptureHref({
+                    projectId: item.job.projectId,
+                    jobId: item.job.id,
+                    logDate: item.job.scheduledDate
+                  })
+                );
+              }
+
+              if (item.recommendedAction === "review_project") {
+                return `/projects/${item.job.projectId}`;
+              }
+
+              if (item.recommendedAction === "open_job") {
+                return `/jobs/${item.job.id}`;
+              }
+
+              return (
+                buildCurrentScheduleHref({
+                  action:
+                    item.recommendedAction === "assign_crew"
+                      ? "assign"
+                      : "schedule",
+                  jobId: item.job.id
+                }) + "#schedule-action"
+              );
+            }}
+          />
 
           <ScheduleFieldHandoffCommandView
             commandView={fieldHandoffCommandView}
