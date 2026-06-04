@@ -2,12 +2,15 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  buildScheduleWarningDisplaySummary,
   buildScheduleBoardReadModel,
   buildScheduleItems,
   buildScheduleRoleSlotIndicators,
+  buildSelectedScheduleWarningDetails,
   deriveScheduleOperatingModeSummaries,
   deriveScheduleBoardQueues,
-  filterUpcomingAssignedAppointments
+  filterUpcomingAssignedAppointments,
+  getScheduleWarningDisplayLabel
 } from "./read-model";
 
 const baseJob = {
@@ -46,6 +49,100 @@ const baseJob = {
   assignmentCount: 0,
   crewSummary: []
 };
+
+const baseScheduleWarning = {
+  id: "11111111-1111-4111-8111-111111111111:missing-crew",
+  jobId: "11111111-1111-4111-8111-111111111111",
+  kind: "missing_crew" as const,
+  label: "Missing crew",
+  detail: "This scheduled job has no crew.",
+  relatedJobIds: []
+};
+
+void test("schedule warning display labels map derived warnings to contractor-friendly copy", () => {
+  assert.equal(getScheduleWarningDisplayLabel("missing_crew"), "Missing crew");
+  assert.equal(
+    getScheduleWarningDisplayLabel("missing_end_time"),
+    "Missing end time"
+  );
+  assert.equal(getScheduleWarningDisplayLabel("overlap"), "Time overlap");
+  assert.equal(
+    getScheduleWarningDisplayLabel("same_day_capacity"),
+    "Capacity warning"
+  );
+});
+
+void test("schedule warning display summary keeps board cards compact", () => {
+  const summary = buildScheduleWarningDisplaySummary({
+    warnings: [
+      baseScheduleWarning,
+      {
+        ...baseScheduleWarning,
+        id: "11111111-1111-4111-8111-111111111111:overlap",
+        kind: "overlap" as const,
+        label: "Schedule overlap"
+      }
+    ]
+  });
+
+  assert.equal(summary.hasWarnings, true);
+  assert.equal(summary.count, 2);
+  assert.equal(summary.primaryLabel, "Missing crew");
+  assert.equal(summary.compactLabel, "Missing crew +1");
+  assert.equal(summary.detailLabel, "2 schedule issues");
+  assert.equal(summary.tone, "warning");
+});
+
+void test("schedule warning display summary exposes readiness-blocked state without fake warnings", () => {
+  const summary = buildScheduleWarningDisplaySummary({
+    warnings: [],
+    readinessBlocked: true
+  });
+
+  assert.equal(summary.hasWarnings, true);
+  assert.equal(summary.count, 1);
+  assert.equal(summary.primaryLabel, "Readiness blocked");
+  assert.equal(summary.compactLabel, "Readiness blocked");
+  assert.equal(summary.tone, "blocked");
+});
+
+void test("selected schedule warning details include plain-language fixes", () => {
+  const details = buildSelectedScheduleWarningDetails({
+    warnings: [
+      {
+        ...baseScheduleWarning,
+        id: "11111111-1111-4111-8111-111111111111:same-day-capacity",
+        kind: "same_day_capacity" as const,
+        label: "Same-day capacity",
+        detail: "Jordan Crew is also assigned to another job.",
+        relatedJobIds: ["33333333-3333-4333-8333-333333333333"]
+      }
+    ],
+    readinessBlocked: true,
+    readinessDetail: "Contract still needs signature."
+  });
+
+  assert.deepEqual(
+    details.map((detail) => detail.label),
+    ["Readiness blocked", "Capacity warning"]
+  );
+  assert.equal(details[0].tone, "blocked");
+  assert.match(details[0].recommendedFix, /readiness blocker/);
+  assert.match(details[1].recommendedFix, /Confirm crew load/);
+  assert.deepEqual(details[1].relatedJobIds, [
+    "33333333-3333-4333-8333-333333333333"
+  ]);
+});
+
+void test("schedule warning display helpers do not infer fake no-warning issues", () => {
+  const summary = buildScheduleWarningDisplaySummary({ warnings: [] });
+  const details = buildSelectedScheduleWarningDetails({ warnings: [] });
+
+  assert.equal(summary.hasWarnings, false);
+  assert.equal(summary.count, 0);
+  assert.equal(summary.compactLabel, "No warnings");
+  assert.deepEqual(details, []);
+});
 
 const baseAppointment = {
   id: "55555555-5555-4555-8555-555555555555",

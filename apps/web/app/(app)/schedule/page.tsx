@@ -60,6 +60,7 @@ import {
   buildScheduleBoardReadModel,
   buildScheduleItems,
   buildScheduleRoleSlotIndicators,
+  getScheduleWarningDisplayLabel,
   type ScheduleDispatchAttentionTone,
   type ScheduleItem
 } from "@/lib/schedule/read-model";
@@ -1079,7 +1080,7 @@ function buildScheduleOperationalIndicators(input: {
   for (const warning of input.warnings.slice(0, 2)) {
     indicators.push({
       id: `warning:${warning.id}`,
-      label: warning.label,
+      label: getScheduleWarningDisplayLabel(warning.kind),
       detail: warning.detail,
       tone: "warning"
     });
@@ -1605,11 +1606,14 @@ export default async function SchedulePage({
   const selectedJobScheduleWarnings = selectedJob
     ? (scheduleWarningsByJobId.get(selectedJob.id) ?? [])
     : [];
+  const selectedJobReadiness = selectedJob
+    ? projectReadinessByProjectId.get(selectedJob.projectId)
+    : null;
   const selectedJobOperationalIndicators = selectedJob
     ? buildScheduleOperationalIndicators({
         job: selectedJob,
         roleSlotPeople: assignablePeople,
-        readiness: projectReadinessByProjectId.get(selectedJob.projectId),
+        readiness: selectedJobReadiness,
         warnings: selectedJobScheduleWarnings,
         todayDateKey
       })
@@ -3337,7 +3341,9 @@ export default async function SchedulePage({
                               key={warning.id}
                               className="rounded-[4px] border border-amber-200 bg-amber-50 px-3 py-2 text-sm leading-6 text-amber-900"
                             >
-                              <p className="font-semibold">{warning.label}</p>
+                              <p className="font-semibold">
+                                {getScheduleWarningDisplayLabel(warning.kind)}
+                              </p>
                               <p>{warning.detail}</p>
                             </div>
                           ))}
@@ -4872,7 +4878,28 @@ export default async function SchedulePage({
 
               <ScheduleNotesPreview notes={selectedJob.scheduleNotes} />
 
-              <ScheduleWarningDetails warnings={selectedJobScheduleWarnings} />
+              <ScheduleWarningDetails
+                warnings={selectedJobScheduleWarnings}
+                readinessBlocked={
+                  selectedJobReadiness
+                    ? !selectedJobReadiness.isReadyToSchedule
+                    : false
+                }
+                readinessDetail={
+                  selectedJobReadiness &&
+                  !selectedJobReadiness.isReadyToSchedule
+                    ? selectedJobReadiness.blockers
+                        .slice(0, 2)
+                        .map((blocker) =>
+                          getReadinessBlockerDetail(
+                            blocker,
+                            selectedJobReadiness
+                          )
+                        )
+                        .join(" ")
+                    : null
+                }
+              />
 
               {selectedJobEquipmentReadiness ? (
                 <div className="rounded-[6px] border border-[var(--border-warm)] bg-white px-4 py-3 text-sm leading-6 text-[var(--text-secondary)]">

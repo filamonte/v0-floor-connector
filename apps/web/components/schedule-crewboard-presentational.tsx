@@ -6,6 +6,11 @@ import type {
   ScheduleFieldHandoffCommandView,
   ScheduleFieldHandoffSummary
 } from "@/lib/schedule/field-handoff-read-model";
+import {
+  buildScheduleWarningDisplaySummary,
+  buildSelectedScheduleWarningDetails,
+  type ScheduleWarningDisplayTone
+} from "@/lib/schedule/read-model";
 import type { ScheduleWarningSummary } from "@/lib/schedule/warnings";
 
 const scheduleSecondaryActionToneClassName =
@@ -46,6 +51,17 @@ function getIndicatorClassName(tone: ScheduleOperationalIndicator["tone"]) {
   switch (tone) {
     case "ready":
       return "border-emerald-200 bg-emerald-50 text-emerald-700";
+    case "blocked":
+      return "border-rose-200 bg-rose-50 text-rose-700";
+    case "warning":
+      return "border-amber-200 bg-amber-50 text-amber-800";
+    default:
+      return "border-[var(--border-warm)] bg-white text-[var(--text-secondary)]";
+  }
+}
+
+function getScheduleWarningToneClassName(tone: ScheduleWarningDisplayTone) {
+  switch (tone) {
     case "blocked":
       return "border-rose-200 bg-rose-50 text-rose-700";
     case "warning":
@@ -156,33 +172,28 @@ export function ScheduleDispatchBoardShell(input: {
 export function ScheduleWarningBadges(input: {
   warnings: ScheduleWarningSummary[];
   limit?: number;
+  readinessBlocked?: boolean;
 }) {
-  const visibleWarnings = input.warnings.slice(0, input.limit ?? 2);
-  const hiddenCount = Math.max(
-    input.warnings.length - visibleWarnings.length,
-    0
-  );
+  const summary = buildScheduleWarningDisplaySummary({
+    warnings: input.warnings,
+    readinessBlocked: input.readinessBlocked
+  });
 
-  if (input.warnings.length === 0) {
+  if (!summary.hasWarnings) {
     return null;
   }
 
   return (
     <div className="mt-3 flex flex-wrap gap-2">
-      {visibleWarnings.map((warning) => (
-        <span
-          key={warning.id}
-          className="inline-flex items-center rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-amber-800"
-          title={warning.detail}
-        >
-          {warning.label}
-        </span>
-      ))}
-      {hiddenCount > 0 ? (
-        <span className="inline-flex items-center rounded-full border border-[var(--border-warm)] bg-white px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--text-secondary)]">
-          +{hiddenCount}
-        </span>
-      ) : null}
+      <span
+        className={[
+          "inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em]",
+          getScheduleWarningToneClassName(summary.tone)
+        ].join(" ")}
+        title={summary.detailLabel}
+      >
+        {summary.compactLabel}
+      </span>
     </div>
   );
 }
@@ -612,8 +623,16 @@ export function ScheduleSelectedJobPanelSummary(input: {
 
 export function ScheduleWarningDetails(input: {
   warnings: ScheduleWarningSummary[];
+  readinessBlocked?: boolean;
+  readinessDetail?: string | null;
 }) {
-  if (input.warnings.length === 0) {
+  const details = buildSelectedScheduleWarningDetails({
+    warnings: input.warnings,
+    readinessBlocked: input.readinessBlocked,
+    readinessDetail: input.readinessDetail
+  });
+
+  if (details.length === 0) {
     return (
       <div className="rounded-[6px] border border-[var(--border-warm)] bg-white px-4 py-3 text-sm leading-6 text-[var(--text-secondary)]">
         No schedule warnings found for this job.
@@ -627,10 +646,13 @@ export function ScheduleWarningDetails(input: {
         Schedule warnings
       </p>
       <ul className="mt-2 space-y-2">
-        {input.warnings.map((warning) => (
-          <li key={warning.id}>
-            <span className="font-semibold">{warning.label}:</span>{" "}
-            {warning.detail}
+        {details.map((detail) => (
+          <li key={detail.id}>
+            <span className="font-semibold">{detail.label}:</span>{" "}
+            {detail.detail}
+            <span className="mt-1 block text-xs leading-5">
+              Fix: {detail.recommendedFix}
+            </span>
           </li>
         ))}
       </ul>

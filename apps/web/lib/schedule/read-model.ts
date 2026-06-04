@@ -6,7 +6,10 @@ import type {
   ScheduleJobAssignmentSummary,
   ScheduleJobSummary
 } from "@/lib/jobs/data";
-import type { ScheduleWarningSummary } from "@/lib/schedule/warnings";
+import type {
+  ScheduleWarningKind,
+  ScheduleWarningSummary
+} from "@/lib/schedule/warnings";
 import type { PersonId } from "@floorconnector/types";
 
 export type ScheduleJobSource = ScheduleJobSummary & {
@@ -131,6 +134,26 @@ export type ScheduleRoleSlotIndicator = {
   detail: string;
   href: string;
   tone: "neutral";
+};
+
+export type ScheduleWarningDisplayTone = "warning" | "blocked" | "neutral";
+
+export type ScheduleWarningDisplaySummary = {
+  hasWarnings: boolean;
+  count: number;
+  primaryLabel: string;
+  compactLabel: string;
+  detailLabel: string;
+  tone: ScheduleWarningDisplayTone;
+};
+
+export type ScheduleWarningDetailItem = {
+  id: string;
+  label: string;
+  detail: string;
+  recommendedFix: string;
+  tone: ScheduleWarningDisplayTone;
+  relatedJobIds: string[];
 };
 
 export type ScheduleOperatingModeSummary<TJob extends ScheduleBoardJobSource> =
@@ -267,6 +290,98 @@ function findPersonName(
   }
 
   return people.find((person) => person.id === personId)?.displayName ?? null;
+}
+
+const scheduleWarningDisplayLabels: Record<ScheduleWarningKind, string> = {
+  missing_crew: "Missing crew",
+  missing_end_time: "Missing end time",
+  overlap: "Time overlap",
+  same_day_capacity: "Capacity warning"
+};
+
+const scheduleWarningFixLabels: Record<ScheduleWarningKind, string> = {
+  missing_crew: "Assign people or a labor-provider vendor before dispatch.",
+  missing_end_time:
+    "Set an end time so dispatch can compare the job against other crew commitments.",
+  overlap:
+    "Review the overlapping job windows and move one job or change the crew before committing the plan.",
+  same_day_capacity:
+    "Confirm crew load, travel, and timing manually before committing the field plan."
+};
+
+export function getScheduleWarningDisplayLabel(kind: ScheduleWarningKind) {
+  return scheduleWarningDisplayLabels[kind];
+}
+
+export function buildScheduleWarningDisplaySummary(input: {
+  warnings: ScheduleWarningSummary[];
+  readinessBlocked?: boolean;
+}): ScheduleWarningDisplaySummary {
+  const count = input.warnings.length + (input.readinessBlocked ? 1 : 0);
+
+  if (count === 0) {
+    return {
+      hasWarnings: false,
+      count: 0,
+      primaryLabel: "No warnings",
+      compactLabel: "No warnings",
+      detailLabel: "No schedule warnings found.",
+      tone: "neutral"
+    };
+  }
+
+  const primaryLabel = input.readinessBlocked
+    ? "Readiness blocked"
+    : getScheduleWarningDisplayLabel(input.warnings[0].kind);
+  const hiddenCount = count - 1;
+
+  return {
+    hasWarnings: true,
+    count,
+    primaryLabel,
+    compactLabel:
+      hiddenCount > 0 ? `${primaryLabel} +${hiddenCount}` : primaryLabel,
+    detailLabel:
+      count === 1
+        ? primaryLabel
+        : `${count} schedule issue${count === 1 ? "" : "s"}`,
+    tone: input.readinessBlocked ? "blocked" : "warning"
+  };
+}
+
+export function buildSelectedScheduleWarningDetails(input: {
+  warnings: ScheduleWarningSummary[];
+  readinessBlocked?: boolean;
+  readinessDetail?: string | null;
+}): ScheduleWarningDetailItem[] {
+  const details: ScheduleWarningDetailItem[] = [];
+
+  if (input.readinessBlocked) {
+    details.push({
+      id: "readiness-blocked",
+      label: "Readiness blocked",
+      detail:
+        input.readinessDetail ??
+        "Project readiness says this job should not be committed to the schedule yet.",
+      recommendedFix:
+        "Resolve the upstream project readiness blocker before committing schedule changes.",
+      tone: "blocked",
+      relatedJobIds: []
+    });
+  }
+
+  for (const warning of input.warnings) {
+    details.push({
+      id: warning.id,
+      label: getScheduleWarningDisplayLabel(warning.kind),
+      detail: warning.detail,
+      recommendedFix: scheduleWarningFixLabels[warning.kind],
+      tone: "warning",
+      relatedJobIds: warning.relatedJobIds
+    });
+  }
+
+  return details;
 }
 
 export function buildScheduleRoleSlotIndicators(input: {
