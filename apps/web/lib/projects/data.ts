@@ -20,6 +20,10 @@ type ProjectRow = {
   id: string;
   company_id: string;
   customer_id: string;
+  onsite_rep_person_id: string | null;
+  relationship_owner_person_id: string | null;
+  follow_up_owner_person_id: string | null;
+  sales_credit_owner_person_id: string | null;
   name: string;
   status: ProjectStatus;
   commercial_readiness_status: CommercialReadinessStatus;
@@ -35,15 +39,13 @@ type ProjectRow = {
   country_code: string | null;
   created_at: string;
   updated_at: string;
-  customers?:
-    | {
-        id: string;
-        name: string;
-        company_name: string | null;
-        is_tax_exempt: boolean;
-        retainage_percentage_default: string | number;
-      }
-    | null;
+  customers?: {
+    id: string;
+    name: string;
+    company_name: string | null;
+    is_tax_exempt: boolean;
+    retainage_percentage_default: string | number;
+  } | null;
 };
 
 export type ProjectListItem = ProjectRecord & {
@@ -60,6 +62,10 @@ const projectSelect = `
   id,
   company_id,
   customer_id,
+  onsite_rep_person_id,
+  relationship_owner_person_id,
+  follow_up_owner_person_id,
+  sales_credit_owner_person_id,
   name,
   status,
   commercial_readiness_status,
@@ -100,6 +106,14 @@ function isProjectRow(value: unknown): value is ProjectRow {
     typeof row.id === "string" &&
     typeof row.company_id === "string" &&
     typeof row.customer_id === "string" &&
+    (row.onsite_rep_person_id === null ||
+      typeof row.onsite_rep_person_id === "string") &&
+    (row.relationship_owner_person_id === null ||
+      typeof row.relationship_owner_person_id === "string") &&
+    (row.follow_up_owner_person_id === null ||
+      typeof row.follow_up_owner_person_id === "string") &&
+    (row.sales_credit_owner_person_id === null ||
+      typeof row.sales_credit_owner_person_id === "string") &&
     typeof row.name === "string" &&
     typeof row.status === "string" &&
     typeof row.commercial_readiness_status === "string" &&
@@ -116,7 +130,9 @@ function isProjectRowArray(value: unknown): value is ProjectRow[] {
 }
 
 function isOperationalProjectStatus(status: ProjectStatus) {
-  return status === "scheduled" || status === "in_progress" || status === "completed";
+  return (
+    status === "scheduled" || status === "in_progress" || status === "completed"
+  );
 }
 
 function assertProjectLifecycleStatus(input: {
@@ -142,6 +158,10 @@ function mapProject(row: ProjectRow): ProjectRecord {
     id: row.id,
     organizationId: row.company_id,
     customerId: row.customer_id,
+    onsiteRepPersonId: row.onsite_rep_person_id,
+    relationshipOwnerPersonId: row.relationship_owner_person_id,
+    followUpOwnerPersonId: row.follow_up_owner_person_id,
+    salesCreditOwnerPersonId: row.sales_credit_owner_person_id,
     name: row.name,
     status: row.status,
     commercialReadinessStatus: row.commercial_readiness_status,
@@ -160,7 +180,9 @@ function mapProject(row: ProjectRow): ProjectRecord {
   };
 }
 
-async function getProjectScope(next = "/projects"): Promise<ProjectScope | null> {
+async function getProjectScope(
+  next = "/projects"
+): Promise<ProjectScope | null> {
   const user = await requireAuthenticatedUser(next);
   const organizationContext = await getActiveOrganizationContext(user.id);
 
@@ -226,7 +248,10 @@ export const listProjects = cache(async (): Promise<ProjectListItem[]> => {
         : null
     }))
     .sort((left, right) => {
-      const statusComparison = compareProjectStatuses(left.status, right.status);
+      const statusComparison = compareProjectStatuses(
+        left.status,
+        right.status
+      );
 
       if (statusComparison !== 0) {
         return statusComparison;
@@ -236,7 +261,10 @@ export const listProjects = cache(async (): Promise<ProjectListItem[]> => {
     });
 });
 
-export async function listProjectsByCustomer(customerId: string, next = "/customers") {
+export async function listProjectsByCustomer(
+  customerId: string,
+  next = "/customers"
+) {
   const scope = await requireProjectScope(next);
   const supabase = await getSupabaseServerClient();
   const response = await supabase
@@ -272,7 +300,10 @@ export async function listProjectsByCustomer(customerId: string, next = "/custom
         : null
     }))
     .sort((left, right) => {
-      const statusComparison = compareProjectStatuses(left.status, right.status);
+      const statusComparison = compareProjectStatuses(
+        left.status,
+        right.status
+      );
 
       if (statusComparison !== 0) {
         return statusComparison;
@@ -304,7 +335,7 @@ export async function getProjectById(projectId: string, next = "/projects") {
 
   return {
     ...mapProject(data),
-      customer: data.customers
+    customer: data.customers
       ? {
           id: data.customers.id,
           name: data.customers.name,
@@ -363,7 +394,10 @@ export async function createProject(input: ProjectInput) {
 
 export async function updateProject(projectId: string, input: ProjectInput) {
   const scope = await requireProjectScope(`/projects/${projectId}`);
-  const currentProject = await getProjectById(projectId, `/projects/${projectId}`);
+  const currentProject = await getProjectById(
+    projectId,
+    `/projects/${projectId}`
+  );
 
   if (!currentProject) {
     throw new Error("Project not found for this organization.");

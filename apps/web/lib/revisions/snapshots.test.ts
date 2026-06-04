@@ -2,10 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import { buildEstimateRevisionSnapshot } from "./snapshots";
-import {
-  getNextRevisionNumber,
-  parseRecordRevisionSubjectType
-} from "./types";
+import { getNextRevisionNumber, parseRecordRevisionSubjectType } from "./types";
 
 void test("initial revision number is 1", () => {
   assert.equal(getNextRevisionNumber([]), 1);
@@ -26,6 +23,7 @@ void test("estimate snapshot includes selected line items", () => {
     opportunityId: "opportunity-1",
     customerId: "customer-1",
     projectId: "project-1",
+    estimateWriterPersonId: null,
     templateId: null,
     referenceNumber: "EST-001",
     title: "Garage floor",

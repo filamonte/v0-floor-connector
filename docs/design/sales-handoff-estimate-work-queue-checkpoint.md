@@ -104,12 +104,15 @@ browser coverage:
 
 ## Recommended Next Options
 
-1. Configurable role slots:
-   Plan onsite rep, relationship owner, and estimate writer role slots as
-   canonical internal metadata before adding UI mutation surfaces.
-2. Sales credit owner metadata planning:
-   Keep this planning-only until commercial, commission, payroll, and ledger
-   boundaries are approved.
+1. Role-slot policy depth:
+   Role Slots Foundation V1 is implemented as nullable canonical ownership
+   metadata for Onsite Rep, Relationship Owner, Follow-Up Owner, Sales Credit
+   Owner, and Estimate Writer. Future work can add organization policy,
+   reporting filters, or setup guidance without treating Work Item assignment
+   as business ownership.
+2. Sales credit owner planning beyond metadata:
+   Keep commission, payroll, payout, wage, ledger, and financial reporting
+   behavior deferred until commercial boundaries are approved.
 3. Project Workspace mutation controls:
    Add only if managers need project-context handoff action controls; preserve
    the same assignee-or-manager Work Item policy.
@@ -134,7 +137,8 @@ browser coverage:
   become operationally common.
 - Assignment is internal Work Item ownership only. It must not be interpreted
   as onsite role, sales credit, commission owner, payroll owner, or send-as
-  identity.
+  identity. Role slots are explicit canonical metadata and Sales Credit Owner
+  remains metadata only.
 - Project Workspace remains read-only for this chain. That is intentional until
   project-context mutation controls are deliberately scoped.
 - Protected e2e should be refreshed when Supabase Auth is not rate-limited to

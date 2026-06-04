@@ -32,6 +32,8 @@ type OpportunityRow = {
   primary_contact_id: string | null;
   customer_id: string | null;
   project_id: string | null;
+  onsite_rep_person_id: string | null;
+  relationship_owner_person_id: string | null;
   status: OpportunityRecord["status"];
   title: string;
   source: string | null;
@@ -239,6 +241,8 @@ const opportunitySelect = `
   primary_contact_id,
   customer_id,
   project_id,
+  onsite_rep_person_id,
+  relationship_owner_person_id,
   status,
   title,
   source,
@@ -383,6 +387,10 @@ function isOpportunityRow(value: unknown): value is OpportunityRow {
       typeof row.primary_contact_id === "string") &&
     (row.customer_id === null || typeof row.customer_id === "string") &&
     (row.project_id === null || typeof row.project_id === "string") &&
+    (row.onsite_rep_person_id === null ||
+      typeof row.onsite_rep_person_id === "string") &&
+    (row.relationship_owner_person_id === null ||
+      typeof row.relationship_owner_person_id === "string") &&
     typeof row.status === "string" &&
     typeof row.title === "string" &&
     typeof row.prospect_name === "string" &&
@@ -541,6 +549,8 @@ function mapOpportunity(
     primaryContactId: row.primary_contact_id,
     customerId: row.customer_id,
     projectId: row.project_id,
+    onsiteRepPersonId: row.onsite_rep_person_id,
+    relationshipOwnerPersonId: row.relationship_owner_person_id,
     status: row.status,
     title: buildOpportunityDisplayTitle({
       title: row.title,
@@ -1606,6 +1616,8 @@ export async function ensureOpportunityEstimateFlow(opportunityId: string) {
         state_region: opportunity.stateRegion,
         postal_code: opportunity.postalCode,
         country_code: opportunity.countryCode,
+        onsite_rep_person_id: opportunity.onsiteRepPersonId,
+        relationship_owner_person_id: opportunity.relationshipOwnerPersonId,
         created_by: scope.userId,
         updated_by: scope.userId
       })
@@ -1634,6 +1646,42 @@ export async function ensureOpportunityEstimateFlow(opportunityId: string) {
     if (projectSeedResponse.error) {
       throw new Error(
         `Unable to carry assessment context into the project: ${projectSeedResponse.error.message}`
+      );
+    }
+  }
+
+  if (projectId && opportunity.onsiteRepPersonId) {
+    const onsiteRoleResponse = await supabase
+      .from("projects")
+      .update({
+        onsite_rep_person_id: opportunity.onsiteRepPersonId,
+        updated_by: scope.userId
+      })
+      .eq("company_id", scope.organizationId)
+      .eq("id", projectId)
+      .is("onsite_rep_person_id", null);
+
+    if (onsiteRoleResponse.error) {
+      throw new Error(
+        `Unable to carry onsite rep ownership into the project: ${onsiteRoleResponse.error.message}`
+      );
+    }
+  }
+
+  if (projectId && opportunity.relationshipOwnerPersonId) {
+    const relationshipRoleResponse = await supabase
+      .from("projects")
+      .update({
+        relationship_owner_person_id: opportunity.relationshipOwnerPersonId,
+        updated_by: scope.userId
+      })
+      .eq("company_id", scope.organizationId)
+      .eq("id", projectId)
+      .is("relationship_owner_person_id", null);
+
+    if (relationshipRoleResponse.error) {
+      throw new Error(
+        `Unable to carry relationship ownership into the project: ${relationshipRoleResponse.error.message}`
       );
     }
   }

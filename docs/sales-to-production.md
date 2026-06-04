@@ -224,6 +224,15 @@ Current implementation note:
   send an estimate, create calendar events, assign commission, calculate
   payroll, add handoff-packet persistence, or replace canonical estimate
   status.
+- Role Slots Foundation V1 now distinguishes business ownership metadata from
+  Work Item assignment. Lead Detail can capture Onsite Rep and Relationship
+  Owner; Project Workspace can capture Onsite Rep, Relationship Owner,
+  Follow-Up Owner, and Sales Credit Owner; Estimate Workspace can capture
+  Estimate Writer while showing Relationship Owner and Sales Credit Owner from
+  the linked project. These role slots are nullable tenant-scoped references to
+  existing active assignable People. Sales Credit Owner is metadata only here;
+  it does not calculate commission, payroll, payout, wage, ledger, or financial
+  reporting behavior.
 
 In the future flow, Measurements, Takeoff, and AI Capture should produce reviewed quantities and scope items that flow through System Templates and reusable catalog/cost items before generating estimate line items. The estimate remains where the contractor decides what to charge. Human review and approval are required before generated line items become part of a customer-facing estimate.
 

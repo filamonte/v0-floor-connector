@@ -25,6 +25,7 @@ import { NeedsAttentionPanel } from "@/components/operational-cues/needs-attenti
 import { CueStateControls } from "@/components/cue-states/cue-state-controls";
 import { RelatedConversationsCard } from "@/components/related-conversations-card";
 import { RevisionTimeline } from "@/components/revisions/revision-timeline";
+import { RoleSlotControls } from "@/components/role-slots/role-slot-controls";
 import {
   ScheduleContextActions,
   ScheduleContextFocusCard,
@@ -66,6 +67,8 @@ import { getActiveOrganizationContext } from "@/lib/organizations/active-context
 import { isOrganizationActivatedForProductionAction } from "@/lib/organizations/activation-guard";
 import { listPeople } from "@/lib/people/data";
 import { getProjectFinancialReadinessSnapshot } from "@/lib/projects/readiness";
+import { updateEstimateRoleSlotsAction } from "@/lib/role-slots/actions";
+import { buildEstimateRoleSlotContext } from "@/lib/role-slots/read-model";
 import {
   ensureInitialRecordRevision,
   listRecordRevisions
@@ -1226,6 +1229,10 @@ export default async function EstimateDetailPage({
     linkPath: `/estimates/${estimate.id}`
   };
   const assignablePeople = selectWorkItemAssignmentCandidates(people);
+  const estimateRoleSlotContext = buildEstimateRoleSlotContext({
+    estimate,
+    project: estimate.project
+  });
   const nextAction = getEstimateNextAction({
     estimateStatus: estimate.status,
     projectId: estimate.projectId,
@@ -2090,6 +2097,35 @@ export default async function EstimateDetailPage({
               sourceLabel={`Estimate ${estimate.referenceNumber}`}
               sourceHref={`/estimates/${estimate.id}`}
               boundaryCopy="Manual entries record evidence only. The Send review link action writes send_requested plus sent or failed provider evidence; provider email delivery never approves the estimate, creates contracts or invoices, or mutates payment state."
+            />
+
+            <RoleSlotControls
+              title="Ownership Roles"
+              description="Internal estimate ownership context. Estimate Writer is editable here; relationship and sales-credit ownership come from the linked project and do not change estimate lifecycle or commission behavior."
+              recordIdName="estimateId"
+              recordId={estimate.id}
+              returnTo={`/estimates/${estimate.id}`}
+              action={updateEstimateRoleSlotsAction}
+              people={assignablePeople}
+              controls={[
+                {
+                  role: "estimate_writer",
+                  fieldName: "estimateWriterPersonId",
+                  personId: estimateRoleSlotContext.estimateWriterPersonId
+                },
+                {
+                  role: "relationship_owner",
+                  fieldName: "relationshipOwnerPersonId",
+                  personId: estimateRoleSlotContext.relationshipOwnerPersonId,
+                  readOnly: true
+                },
+                {
+                  role: "sales_credit_owner",
+                  fieldName: "salesCreditOwnerPersonId",
+                  personId: estimateRoleSlotContext.salesCreditOwnerPersonId,
+                  readOnly: true
+                }
+              ]}
             />
 
             <section

@@ -9,6 +9,7 @@ import { NextActionCard } from "@/components/next-action-card";
 import { OpportunityCommunicationLogForm } from "@/components/opportunity-communication-log-form";
 import { OpportunityForm } from "@/components/opportunity-form";
 import { OpportunityFollowUpForm } from "@/components/opportunity-follow-up-form";
+import { RoleSlotControls } from "@/components/role-slots/role-slot-controls";
 import { WorkItemCreateForm } from "@/components/work-items/work-item-create-form";
 import { WorkItemList } from "@/components/work-items/work-item-list";
 import { StandardWorkspaceLayout } from "@/components/workspace/standard-workspace-layout";
@@ -24,6 +25,8 @@ import {
 } from "@/lib/opportunities/actions";
 import { getOpportunityById } from "@/lib/opportunities/data";
 import { listPeople } from "@/lib/people/data";
+import { updateOpportunityRoleSlotsAction } from "@/lib/role-slots/actions";
+import { selectRoleSlotPersonOptions } from "@/lib/role-slots/read-model";
 import {
   completeWorkItemAction,
   createWorkItemAction,
@@ -313,6 +316,7 @@ export default async function LeadDetailPage({
   const leadWorkItemPrefill =
     estimateHandoffWorkItemPrefill ?? leadFollowUpWorkItemPrefill;
   const assignablePeople = selectWorkItemAssignmentCandidates(people);
+  const roleSlotPeople = selectRoleSlotPersonOptions(people);
   const existingEstimateHandoffNextAction = existingOpenEstimateHandoff
     ? getWorkItemNextAction(existingOpenEstimateHandoff)
     : null;
@@ -613,6 +617,28 @@ export default async function LeadDetailPage({
                   </div>
                 </dl>
               </section>
+
+              <RoleSlotControls
+                title="Ownership Roles"
+                description="Internal role metadata for who gathered onsite context and who owns the customer relationship. Work Item assignment remains separate."
+                recordIdName="opportunityId"
+                recordId={opportunity.id}
+                returnTo={leadWorkspaceHref}
+                action={updateOpportunityRoleSlotsAction}
+                people={roleSlotPeople}
+                controls={[
+                  {
+                    role: "onsite_rep",
+                    fieldName: "onsiteRepPersonId",
+                    personId: opportunity.onsiteRepPersonId
+                  },
+                  {
+                    role: "relationship_owner",
+                    fieldName: "relationshipOwnerPersonId",
+                    personId: opportunity.relationshipOwnerPersonId
+                  }
+                ]}
+              />
 
               <section
                 id="qualification"

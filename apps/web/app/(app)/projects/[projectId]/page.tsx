@@ -62,6 +62,7 @@ import {
 } from "@/components/project-production-hub-section";
 import { ReadyToScheduleActionPanel } from "@/components/ready-to-schedule-action-panel";
 import { RecordLinkedCommunicationComposer } from "@/components/record-linked-communication-composer";
+import { RoleSlotControls } from "@/components/role-slots/role-slot-controls";
 import { ServiceWarrantyContinuityPanel } from "@/components/service-warranty-continuity-panel";
 import { WorkItemCreateForm } from "@/components/work-items/work-item-create-form";
 import { WorkItemList } from "@/components/work-items/work-item-list";
@@ -143,6 +144,7 @@ import { updateProjectAction } from "@/lib/projects/actions";
 import { buildProjectCues, type ProjectCue } from "@/lib/projects/cues";
 import { buildProjectNextActions } from "@/lib/projects/project-next-actions";
 import { getProjectById } from "@/lib/projects/data";
+import { updateProjectRoleSlotsAction } from "@/lib/role-slots/actions";
 import {
   deriveProjectOperationalWorkspaceSummary,
   type ProjectOperationalSeverity,
@@ -5433,6 +5435,38 @@ export default async function ProjectDetailPage({
             <ProjectStateSummary
               title="Project state summary"
               items={projectStateItems}
+            />
+
+            <RoleSlotControls
+              title="Ownership Roles"
+              description="Internal role metadata for customer ownership, onsite context, follow-up, and later sales-credit attribution. This does not calculate commissions or change Work Item assignment."
+              recordIdName="projectId"
+              recordId={project.id}
+              returnTo={`/projects/${project.id}`}
+              action={updateProjectRoleSlotsAction}
+              people={assignablePeople}
+              controls={[
+                {
+                  role: "onsite_rep",
+                  fieldName: "onsiteRepPersonId",
+                  personId: project.onsiteRepPersonId
+                },
+                {
+                  role: "relationship_owner",
+                  fieldName: "relationshipOwnerPersonId",
+                  personId: project.relationshipOwnerPersonId
+                },
+                {
+                  role: "follow_up_owner",
+                  fieldName: "followUpOwnerPersonId",
+                  personId: project.followUpOwnerPersonId
+                },
+                {
+                  role: "sales_credit_owner",
+                  fieldName: "salesCreditOwnerPersonId",
+                  personId: project.salesCreditOwnerPersonId
+                }
+              ]}
             />
 
             <OperationalCommandCenter

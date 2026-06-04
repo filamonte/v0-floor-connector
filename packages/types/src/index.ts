@@ -717,6 +717,8 @@ export interface Opportunity {
   primaryContactId: ContactId | null;
   customerId: CustomerId | null;
   projectId: ProjectId | null;
+  onsiteRepPersonId: PersonId | null;
+  relationshipOwnerPersonId: PersonId | null;
   status: OpportunityStatus;
   title: string;
   source: string | null;
@@ -944,6 +946,10 @@ export interface Project {
   id: ProjectId;
   organizationId: OrganizationId;
   customerId: CustomerId;
+  onsiteRepPersonId: PersonId | null;
+  relationshipOwnerPersonId: PersonId | null;
+  followUpOwnerPersonId: PersonId | null;
+  salesCreditOwnerPersonId: PersonId | null;
   name: string;
   status: ProjectStatus;
   description: string | null;
@@ -967,6 +973,7 @@ export interface Estimate {
   opportunityId: OpportunityId;
   customerId: CustomerId;
   projectId: ProjectId;
+  estimateWriterPersonId: PersonId | null;
   templateId: TemplateId | null;
   referenceNumber: string;
   title: string | null;

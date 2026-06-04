@@ -88,6 +88,7 @@ type EstimateRow = {
   opportunity_id: string;
   customer_id: string;
   project_id: string;
+  estimate_writer_person_id: string | null;
   template_id: string | null;
   reference_number: string;
   title: string | null;
@@ -148,6 +149,8 @@ type EstimateRow = {
     state_region: string | null;
     postal_code: string | null;
     country_code: string | null;
+    relationship_owner_person_id: string | null;
+    sales_credit_owner_person_id: string | null;
   } | null;
 };
 
@@ -337,6 +340,8 @@ export type EstimateDetail = EstimateListItem & {
     stateRegion: string | null;
     postalCode: string | null;
     countryCode: string | null;
+    relationshipOwnerPersonId: string | null;
+    salesCreditOwnerPersonId: string | null;
   } | null;
   lineItems: EstimateLineItem[];
   attachments: EstimateAttachmentListItem[];
@@ -391,6 +396,7 @@ const estimateSelect = `
   opportunity_id,
   customer_id,
   project_id,
+  estimate_writer_person_id,
   template_id,
   reference_number,
   title,
@@ -450,7 +456,9 @@ const estimateSelect = `
     city,
     state_region,
     postal_code,
-    country_code
+    country_code,
+    relationship_owner_person_id,
+    sales_credit_owner_person_id
   )
 `;
 
@@ -467,6 +475,8 @@ function isEstimateRow(value: unknown): value is EstimateRow {
     typeof row.opportunity_id === "string" &&
     typeof row.customer_id === "string" &&
     typeof row.project_id === "string" &&
+    (row.estimate_writer_person_id === null ||
+      typeof row.estimate_writer_person_id === "string") &&
     (row.template_id === null || typeof row.template_id === "string") &&
     typeof row.reference_number === "string" &&
     (row.title === null || typeof row.title === "string") &&
@@ -700,6 +710,7 @@ function mapEstimate(row: EstimateRow): EstimateRecord {
     opportunityId: row.opportunity_id,
     customerId: row.customer_id,
     projectId: row.project_id,
+    estimateWriterPersonId: row.estimate_writer_person_id,
     templateId: row.template_id,
     referenceNumber: row.reference_number,
     title: row.title,
@@ -2521,7 +2532,11 @@ export async function getEstimateById(
           city: estimate.projects.city,
           stateRegion: estimate.projects.state_region,
           postalCode: estimate.projects.postal_code,
-          countryCode: estimate.projects.country_code
+          countryCode: estimate.projects.country_code,
+          relationshipOwnerPersonId:
+            estimate.projects.relationship_owner_person_id,
+          salesCreditOwnerPersonId:
+            estimate.projects.sales_credit_owner_person_id
         }
       : null,
     lineItems,

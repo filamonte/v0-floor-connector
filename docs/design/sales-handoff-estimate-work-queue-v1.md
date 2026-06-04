@@ -124,10 +124,13 @@ Future work should distinguish:
 - send-as user
 - actual sender / audit user
 
-The V1 metadata includes planned role slots only. Dedicated owner fields should
-be added later only through an approved canonical commercial/financial slice
-with audit rules, tenant-safe migrations, and clear downstream calculation
-policy.
+Role Slots Foundation V1 now stores dedicated nullable Person references for
+Onsite Rep, Relationship Owner, Follow-Up Owner, Sales Credit Owner, and
+Estimate Writer on canonical opportunity/project/estimate records. Sales Credit
+Owner remains metadata only. Any downstream commission, payroll, payout, wage,
+ledger, or financial reporting behavior still requires an approved canonical
+commercial/financial slice with audit rules, tenant-safe migrations, and clear
+calculation policy.
 
 ## Commission Direction
 
