@@ -17,6 +17,17 @@ The first production-acceleration stream set has merged to `main`; the remaining
 active cleanup stream is `architecture-coordination`. Field/Mobile and Portal
 remain planning/downstream wave docs until the active registry says otherwise.
 
+Permanent stream governance is defined in
+[docs/parallel-development-governance.md](C:/FloorConnector/docs/parallel-development-governance.md).
+Future waves may not create new streams until Ownership Area, Dependency
+Analysis, Ownership Conflict Check, UX / IA Review, Canonical Model Review,
+Verification Strategy, and Architecture Coordination Approval are complete.
+
+The governing product architecture principle is defined in
+[docs/operational-architecture-v1.md](C:/FloorConnector/docs/operational-architecture-v1.md):
+future waves must make FloorConnector feel more like one operational command
+center and less like disconnected modules.
+
 ## Operational Capability Waves v1
 
 Use

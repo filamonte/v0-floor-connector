@@ -13,18 +13,28 @@ to `main`; `architecture-coordination` is the remaining active cleanup stream.
 Broader stream inventories in planning docs are reference topology only when
 they conflict with this registry.
 
+Permanent governance now lives in
+[docs/parallel-development-governance.md](C:/FloorConnector/docs/parallel-development-governance.md)
+and
+[docs/operational-architecture-v1.md](C:/FloorConnector/docs/operational-architecture-v1.md).
+New streams must follow the lifecycle Proposed -> Architecture Review ->
+Approved -> Active -> Verification -> Merged -> Retired, and Architecture
+Coordination must approve stream creation before any new worktree is created.
+
 ## Active Streams
 
 ### architecture-coordination
 
 - Branch: `stream/architecture-coordination`
 - Worktree: `C:\FC-worktrees\architecture-coordination`
-- Owns: sequencing, hotspot ownership, next-wave prompt generation, merge
-  review, coordination docs.
+- Owns: permanent stream ownership governance, dependency mapping, duplicate
+  capability/workflow/data-model detection, navigation drift detection, UX
+  consistency review, documentation synchronization, merge sequencing, release
+  coordination, AI prompt governance, and next-wave prompt generation.
 - Must avoid: feature implementation, schema, routes, server actions, UI
   behavior, runtime changes, broad source-of-truth rewrites.
-- Current wave: post-merge stream hygiene, registry truth, and next-wave prompt
-  discipline.
+- Current wave: permanent governance layer, stream lifecycle, registry truth,
+  and next-wave prompt discipline.
 
 ## Merged Streams
 

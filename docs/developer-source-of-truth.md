@@ -103,6 +103,8 @@ Execution:
 
 - docs/chat-handoff.md
 - docs/ai/README.md
+- docs/parallel-development-governance.md
+- docs/operational-architecture-v1.md
 - docs/documentation-standards.md
 
 ---
@@ -126,6 +128,8 @@ Execution:
 - Treat [docs/enterprise-ui-system-audit.md](C:/FloorConnector/docs/enterprise-ui-system-audit.md) as the latest route-by-route visual audit and drift-watch note. Future UI work must preserve the Estimate-led Graphite/Copper/neutral visual system and must not count protected route QA unless the correct authenticated role actually loaded the secured page.
 - Treat portal/customer Golden Workflow QA as a real-auth, real-grant smoke path. Portal checks must use a valid portal customer session backed by canonical `portal_access_grants` and `portal_project_access`; `/login`, accidental 404s, access-denied pages, or missing fixtures are not successful portal QA unless intentionally asserted as the expected unauthorized result
 - Treat customer portal access as contact-centered for new contractor-created invites: the customer account is the business relationship, the customer contact is the person, Supabase Auth proves identity, `portal_access_grants` authorize access, and `portal_project_access` scopes visible projects. Project visibility is explicit per customer contact; do not silently grant every contact the primary contact's projects. Null-contact grants are legacy compatibility only.
+- Treat [docs/parallel-development-governance.md](C:/FloorConnector/docs/parallel-development-governance.md) as the permanent stream lifecycle and stream creation rule before creating, approving, activating, verifying, merging, or retiring AI-native development streams.
+- Treat [docs/operational-architecture-v1.md](C:/FloorConnector/docs/operational-architecture-v1.md) as the governing Operational Command Center architecture principle: future work must make FloorConnector feel more like one connected operating command center and less like disconnected modules.
 - Treat lead/customer intake as the source of the primary customer contact: when a flow captures the first customer person with a customer, project, or opportunity, it should create or link the canonical `contacts` and `customer_contacts` rows and mark that relationship primary where existing schema supports it. Do not treat `customers.email` or `customers.phone` as a replacement person model; those account fields remain compatibility and commercial fallback fields.
 - Treat portal invite email as delivery only: app-managed invite tokens remain the portal acceptance path, Supabase Auth remains the identity layer, and branded provider email is sent or resent only when configuration and activation guard allow it. Missing/locked provider email must show truthful no-send status plus copy-link fallback.
 - Treat portal account onboarding as Supabase-authenticated and customer-owned: invite links should guide the invited contact to signup, sign-in, or password reset with a safe return path, and contractors must not set permanent customer portal passwords. The implemented temporary credential support is a server-side, owner/admin-only fallback that creates or updates a real Supabase Auth user, shows the generated temporary password once, stores only audit/status fields, and forces the portal customer through `/update-password` before continuing.

@@ -20,12 +20,25 @@ Use [docs/ai-native-development-architecture.md](C:/FloorConnector/docs/ai-nativ
 when a task involves parallel agents, worktrees, stream ownership, capability
 waves, hotspot governance, merge sequencing, or QA/verification coordination.
 
+Use [docs/parallel-development-governance.md](C:/FloorConnector/docs/parallel-development-governance.md)
+when a task proposes, approves, activates, verifies, merges, or retires a
+stream. It defines the permanent stream lifecycle, stream creation rule,
+Architecture Coordination responsibilities, Product Director function,
+Verification responsibilities, and AI-native operating loop.
+
+Use [docs/operational-architecture-v1.md](C:/FloorConnector/docs/operational-architecture-v1.md)
+when a task needs the permanent Operational Command Center principle, product
+operating layers, planning functions, and source-record continuity rules that
+future waves must preserve.
+
 ## Required First Reads
 
 Read these before implementation or documentation work:
 
 - [docs/developer-source-of-truth.md](C:/FloorConnector/docs/developer-source-of-truth.md)
 - [docs/current-state.md](C:/FloorConnector/docs/current-state.md)
+- [docs/parallel-development-governance.md](C:/FloorConnector/docs/parallel-development-governance.md)
+- [docs/operational-architecture-v1.md](C:/FloorConnector/docs/operational-architecture-v1.md)
 - [docs/ai-native-development-architecture.md](C:/FloorConnector/docs/ai-native-development-architecture.md)
 - [docs/feature-build-status.md](C:/FloorConnector/docs/feature-build-status.md)
 - [docs/floorconnector-build-list-and-completion-timeline.md](C:/FloorConnector/docs/floorconnector-build-list-and-completion-timeline.md)
