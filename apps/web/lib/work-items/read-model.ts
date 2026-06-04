@@ -78,6 +78,12 @@ export type WorkItemAssignmentCandidate = {
   isAssignable: boolean;
 };
 
+export type EstimateReadyForReviewMetadataInput = {
+  existing: Record<string, unknown>;
+  markedAt: string;
+  markedByUserId: string;
+};
+
 const priorityRank: Record<WorkItemPriority, number> = {
   urgent: 0,
   high: 1,
@@ -183,6 +189,19 @@ export function getWorkItemFieldState(
 
 export function getWorkItemBlockerReason(workItem: Pick<WorkItem, "metadata">) {
   return trimString(workItem.metadata.blockerReason);
+}
+
+export function buildEstimateReadyForReviewMetadata(
+  input: EstimateReadyForReviewMetadataInput
+) {
+  return {
+    ...input.existing,
+    fieldState: "in_progress",
+    estimateWorkStatus: "ready_for_review",
+    waitingOnCurrentOwner: false,
+    readyForReviewAt: input.markedAt,
+    readyForReviewBy: input.markedByUserId
+  };
 }
 
 export function buildWorkItemOwnershipDisplay(input: {

@@ -43,6 +43,10 @@ completion.
   Work Item. It also exposes a compact Reassign control for open rows that
   updates only the existing `work_items.assigned_person_id` field after
   validating the selected active assignable Person in the current organization.
+  Estimate writers can mark eligible open estimate-production Work Items ready
+  for internal review; this writes `metadata.estimateWorkStatus =
+ready_for_review` on the same Work Item while keeping `work_items.status =
+open`.
   Rows separate assigned owner, requester, and current waiting/blocked/review
   state without adding role persistence.
 - Estimate Workspace now also has compact Request Missing Info and Request
@@ -71,6 +75,8 @@ completion.
 - No schema or enum migration is added in this slice.
 - No estimate is created by the Work Item itself.
 - No estimate is sent, approved, reviewed, or customer-exposed by the Work Item.
+- Internal ready-for-review state does not mutate `estimates.status`; customer
+  lifecycle state remains on the canonical Estimate record.
 - No calendar appointment is created by the Work Item.
 - No commission, payroll, or legal wage behavior is implemented.
 - No portal/customer surface reads these internal Work Items.

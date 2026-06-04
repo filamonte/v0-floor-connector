@@ -22,14 +22,18 @@ import { getActiveOrganizationContext } from "@/lib/organizations/active-context
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 
 import {
+  buildEstimateReadyForReviewMetadata,
   canActOnAssignedWorkItem,
   filterDashboardWorkItems,
+  getWorkItemFieldState,
+  isEstimateWorkItem,
   sortWorkItemsForQueue,
   type WorkItemFieldState
 } from "./read-model";
 import type {
   WorkItemAssignmentInput,
   WorkItemCreateInput,
+  WorkItemReadyForReviewInput,
   WorkItemUpdateInput
 } from "./schemas";
 
@@ -1112,6 +1116,56 @@ export async function updateAssignedWorkItemFieldState(input: {
   if (response.error) {
     throw new Error(
       `Unable to update work item field status: ${response.error.message}`
+    );
+  }
+
+  if (!response.data) {
+    throw new Error("Work item was not found or is no longer open.");
+  }
+
+  return mapWorkItem(response.data as WorkItemRow);
+}
+
+export async function markAssignedWorkItemReadyForReview(
+  input: WorkItemReadyForReviewInput & { next?: string }
+) {
+  const { scope, existing } = await requireAssignedWorkItemActionScope({
+    workItemId: input.workItemId,
+    next: input.next
+  });
+
+  if (!isEstimateWorkItem(existing)) {
+    throw new Error("Only estimate handoff work items can be marked ready.");
+  }
+
+  if (getWorkItemFieldState(existing) === "blocked") {
+    throw new Error(
+      "Blocked estimate work must be unblocked before it is marked ready for review."
+    );
+  }
+
+  const nowIso = new Date().toISOString();
+  const metadata = buildEstimateReadyForReviewMetadata({
+    existing: existing.metadata,
+    markedAt: nowIso,
+    markedByUserId: scope.userId
+  });
+  const supabase = await getSupabaseServerClient();
+  const response = await supabase
+    .from("work_items")
+    .update({
+      metadata,
+      updated_by: scope.userId
+    })
+    .eq("company_id", scope.organizationId)
+    .eq("id", input.workItemId)
+    .eq("status", "open")
+    .select(workItemSelect)
+    .maybeSingle();
+
+  if (response.error) {
+    throw new Error(
+      `Unable to mark work item ready for review: ${response.error.message}`
     );
   }
 

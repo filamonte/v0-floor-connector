@@ -133,6 +133,10 @@ export const workItemAssignmentSchema = z.object({
   assignedPersonId: optionalUuidField("Select a valid assigned person.")
 });
 
+export const workItemReadyForReviewSchema = z.object({
+  workItemId: z.string().uuid("Select a valid work item.")
+});
+
 export const assignedWorkItemFieldStateSchema = z.object({
   workItemId: z.string().uuid("Select a valid work item."),
   fieldState: z.enum(["not_started", "in_progress", "blocked"]),
@@ -148,6 +152,9 @@ export type WorkItemCreateInput = z.infer<typeof workItemCreateSchema>;
 export type WorkItemUpdateInput = z.infer<typeof workItemUpdateSchema>;
 export type WorkItemSourceInput = z.infer<typeof workItemSourceSchema>;
 export type WorkItemAssignmentInput = z.infer<typeof workItemAssignmentSchema>;
+export type WorkItemReadyForReviewInput = z.infer<
+  typeof workItemReadyForReviewSchema
+>;
 export type AssignedWorkItemFieldStateInput = z.infer<
   typeof assignedWorkItemFieldStateSchema
 >;

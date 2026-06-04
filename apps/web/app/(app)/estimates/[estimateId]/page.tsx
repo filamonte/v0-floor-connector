@@ -83,6 +83,7 @@ import {
   completeWorkItemAction,
   createWorkItemAction,
   dismissWorkItemAction,
+  markAssignedWorkItemReadyForReviewAction,
   updateWorkItemAssignmentAction,
   updateAssignedWorkItemFieldStateAction
 } from "@/lib/work-items/actions";
@@ -306,6 +307,8 @@ function EstimateHandoffPanel({
               assignedPerson: workItem.assignedPerson,
               createdByPerson: workItem.createdByPerson
             });
+            const isReadyForReview =
+              ownership.stateLabel === "Ready for review";
 
             return (
               <article
@@ -417,6 +420,22 @@ function EstimateHandoffPanel({
                       fieldState="in_progress"
                       label="In progress"
                     />
+                    {!isReadyForReview && fieldState !== "blocked" ? (
+                      <form action={markAssignedWorkItemReadyForReviewAction}>
+                        <input
+                          type="hidden"
+                          name="workItemId"
+                          value={workItem.id}
+                        />
+                        <input type="hidden" name="returnTo" value={returnTo} />
+                        <button
+                          type="submit"
+                          className="inline-flex h-8 items-center justify-center border border-sky-200 bg-sky-50 px-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-sky-900 transition hover:bg-white"
+                        >
+                          Ready for review
+                        </button>
+                      </form>
+                    ) : null}
                     <details className="relative">
                       <summary className="inline-flex h-8 cursor-pointer list-none items-center justify-center border border-slate-300 bg-white px-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-600 transition hover:border-[#d8731f] hover:text-slate-950">
                         Block

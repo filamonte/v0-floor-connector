@@ -11,6 +11,7 @@ import {
   completeWorkItem,
   createWorkItem,
   dismissWorkItem,
+  markAssignedWorkItemReadyForReview,
   updateAssignedWorkItemFieldState,
   updateWorkItemAssignment,
   updateWorkItem
@@ -21,6 +22,7 @@ import {
   workItemAssignmentSchema,
   workItemCreateSchema,
   workItemIdSchema,
+  workItemReadyForReviewSchema,
   workItemUpdateSchema
 } from "./schemas";
 
@@ -316,6 +318,38 @@ export async function updateAssignedWorkItemFieldStateAction(
   }
 
   redirect(buildRedirect(returnTo, { message: "Work item status updated." }));
+}
+
+export async function markAssignedWorkItemReadyForReviewAction(
+  formData: FormData
+) {
+  const returnTo = getReturnTo(formData);
+  const result = workItemReadyForReviewSchema.safeParse({
+    workItemId: getFieldValue(formData, "workItemId")
+  });
+
+  if (!result.success) {
+    redirect(buildRedirect(returnTo, { error: "Select a valid work item." }));
+  }
+
+  try {
+    await markAssignedWorkItemReadyForReview({
+      ...result.data,
+      next: returnTo
+    });
+    revalidateWorkItemSurfaces(returnTo);
+  } catch (error) {
+    redirect(
+      buildRedirect(returnTo, {
+        error:
+          error instanceof Error
+            ? error.message
+            : "Unable to mark work item ready for review."
+      })
+    );
+  }
+
+  redirect(buildRedirect(returnTo, { message: "Work item ready for review." }));
 }
 
 export async function completeAssignedWorkItemAction(formData: FormData) {

@@ -5,6 +5,7 @@ import type { WorkItem } from "@floorconnector/types";
 
 import { executionAttachmentSubjectTypeSchema } from "../execution-attachments/schemas";
 import {
+  buildEstimateReadyForReviewMetadata,
   buildWorkItemOwnershipDisplay,
   buildContextRichWorkItemPreview,
   buildEstimateWorkQueue,
@@ -26,7 +27,11 @@ import {
   selectOpenWorkItemsByProject,
   selectOverdueWorkItems
 } from "./read-model";
-import { workItemAssignmentSchema, workItemCreateSchema } from "./schemas";
+import {
+  workItemAssignmentSchema,
+  workItemCreateSchema,
+  workItemReadyForReviewSchema
+} from "./schemas";
 
 const baseWorkItem = {
   id: "11111111-1111-4111-8111-111111111111",
@@ -440,6 +445,42 @@ void test("work item assignment schema accepts reassignment and unassignment pay
   assert.equal(unassigned.assignedPersonId, null);
 });
 
+void test("ready for review schema accepts only work item payload", () => {
+  const parsed = workItemReadyForReviewSchema.parse({
+    workItemId: "11111111-1111-4111-8111-111111111111",
+    estimateStatus: "sent"
+  });
+
+  assert.deepEqual(parsed, {
+    workItemId: "11111111-1111-4111-8111-111111111111"
+  });
+  assert.equal(
+    workItemReadyForReviewSchema.safeParse({ workItemId: "not-a-uuid" })
+      .success,
+    false
+  );
+});
+
+void test("ready for review metadata preserves work item state without estimate lifecycle fields", () => {
+  const metadata = buildEstimateReadyForReviewMetadata({
+    existing: {
+      estimateWork: true,
+      estimateWorkType: "generate_estimate",
+      estimateId: "estimate-1",
+      waitingOnCurrentOwner: true
+    },
+    markedAt: "2026-06-03T14:00:00.000Z",
+    markedByUserId: "user-1"
+  });
+
+  assert.equal(metadata.estimateWorkStatus, "ready_for_review");
+  assert.equal(metadata.fieldState, "in_progress");
+  assert.equal(metadata.waitingOnCurrentOwner, false);
+  assert.equal(metadata.readyForReviewAt, "2026-06-03T14:00:00.000Z");
+  assert.equal(metadata.readyForReviewBy, "user-1");
+  assert.equal(Object.hasOwn(metadata, "estimateStatus"), false);
+});
+
 void test("context-rich work item preview surfaces instructions measurements and due state", () => {
   const preview = buildContextRichWorkItemPreview(
     {
@@ -486,6 +527,21 @@ void test("estimate work queue groups source-linked estimate handoff items by me
       metadata: {
         estimateWork: true,
         estimateWorkType: "generate_estimate"
+      }
+    },
+    {
+      ...baseWorkItem,
+      id: "a9a9a9a9-a9a9-4a9a-8a9a-a9a9a9a9a9a9",
+      title: "Generated draft ready for review",
+      kind: "estimate_follow_up",
+      sourceType: "estimate",
+      sourceId: "estimate-1",
+      assignedPersonId: "person-2",
+      dueAt: "2026-05-08T18:00:00.000Z",
+      metadata: {
+        estimateWork: true,
+        estimateWorkType: "generate_estimate",
+        estimateWorkStatus: "ready_for_review"
       }
     },
     {
@@ -549,7 +605,7 @@ void test("estimate work queue groups source-linked estimate handoff items by me
   });
 
   assert.equal(getEstimateWorkItemType(workItems[0]), "generate_estimate");
-  assert.equal(isEstimateWorkItem(workItems[4]), false);
+  assert.equal(isEstimateWorkItem(workItems[5]), false);
   assert.deepEqual(
     queue.assigned.map((item) => item.title),
     ["Generate estimate", "Review estimate"]
@@ -560,7 +616,7 @@ void test("estimate work queue groups source-linked estimate handoff items by me
   );
   assert.deepEqual(
     queue.readyForReview.map((item) => item.title),
-    ["Review estimate"]
+    ["Generated draft ready for review", "Review estimate"]
   );
   assert.deepEqual(
     queue.blocked.map((item) => item.title),
