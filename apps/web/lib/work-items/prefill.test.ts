@@ -107,10 +107,15 @@ void test("opportunity follow-up cue prefill creates a source-locked work item d
 void test("estimate handoff prefill carries site assessment context without creating estimate state", () => {
   const prefill = buildEstimateHandoffWorkItemPrefill({
     opportunityId,
+    projectId,
+    estimateId,
     opportunityTitle: "Garage flake floor",
     customerName: "Taylor Customer",
     projectName: "Garage floor",
     contactName: "Taylor Rep",
+    sourceOwnerUserId: "99999999-9999-4999-8999-999999999999",
+    sourceOwnerName: "Sam Site Assessor",
+    nextAction: "Draft the estimate from the captured site assessment packet.",
     requirementsSummary: "Decorative flake system with crack repair.",
     notes: "Customer wants weekend timing.",
     siteAssessmentStatus: "completed",
@@ -158,6 +163,8 @@ void test("estimate handoff prefill carries site assessment context without crea
     `opportunity:${opportunityId}:estimate_handoff:generate_estimate`
   );
   assert.match(prefill.title, /Generate estimate/);
+  assert.match(prefill.description ?? "", /Source owner: Sam Site Assessor/);
+  assert.match(prefill.description ?? "", /Next action:/);
   assert.match(prefill.description ?? "", /Decorative flake system/);
   assert.match(prefill.description ?? "", /Garage - 480.00 sqft/);
   assert.match(
@@ -167,6 +174,17 @@ void test("estimate handoff prefill carries site assessment context without crea
   assert.equal(prefill.metadata.estimateWork, true);
   assert.equal(prefill.metadata.estimateWorkType, "generate_estimate");
   assert.equal(prefill.metadata.estimateWorkStatus, "open");
+  assert.equal(prefill.metadata.projectId, projectId);
+  assert.equal(prefill.metadata.estimateId, estimateId);
+  assert.equal(
+    prefill.metadata.sourceOwnerUserId,
+    "99999999-9999-4999-8999-999999999999"
+  );
+  assert.equal(prefill.metadata.sourceOwnerName, "Sam Site Assessor");
+  assert.equal(
+    prefill.metadata.nextAction,
+    "Draft the estimate from the captured site assessment packet."
+  );
 
   const parsed = workItemCreateSchema.safeParse({
     title: prefill.title,

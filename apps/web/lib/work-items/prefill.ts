@@ -276,10 +276,15 @@ export function buildOpportunityFollowUpWorkItemPrefill(input: {
 
 export function buildEstimateHandoffWorkItemPrefill(input: {
   opportunityId: string;
+  projectId?: string | null;
+  estimateId?: string | null;
   opportunityTitle: string;
   customerName?: string | null;
   projectName?: string | null;
   contactName?: string | null;
+  sourceOwnerUserId?: string | null;
+  sourceOwnerName?: string | null;
+  nextAction?: string | null;
   requirementsSummary?: string | null;
   notes?: string | null;
   siteAssessmentStatus: string;
@@ -303,9 +308,11 @@ export function buildEstimateHandoffWorkItemPrefill(input: {
       "Created from the Sales Handoff / Estimate Work Queue foundation. Confirm the estimate writer, due date, blocker state, and source context before submitting this internal work item.",
       input.customerName ? `Customer: ${input.customerName}` : null,
       input.projectName ? `Project: ${input.projectName}` : null,
+      input.sourceOwnerName ? `Source owner: ${input.sourceOwnerName}` : null,
       input.contactName
         ? `Relationship / onsite context: ${input.contactName}`
         : null,
+      input.nextAction ? `Next action: ${input.nextAction}` : null,
       `Site assessment: ${labelize(input.siteAssessmentStatus)}`,
       input.siteAssessmentScheduledAt
         ? `Site visit scheduled: ${new Date(input.siteAssessmentScheduledAt).toLocaleString()}`
@@ -335,6 +342,11 @@ export function buildEstimateHandoffWorkItemPrefill(input: {
           : "open",
       sourceRecordType: "opportunity",
       opportunityId: input.opportunityId,
+      projectId: input.projectId ?? null,
+      estimateId: input.estimateId ?? null,
+      sourceOwnerUserId: input.sourceOwnerUserId ?? null,
+      sourceOwnerName: input.sourceOwnerName ?? null,
+      nextAction: input.nextAction ?? null,
       siteAssessmentStatus: input.siteAssessmentStatus,
       siteAssessmentScheduledAt: input.siteAssessmentScheduledAt ?? null,
       siteAssessmentCompletedAt: input.siteAssessmentCompletedAt ?? null,

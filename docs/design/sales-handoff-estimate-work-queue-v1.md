@@ -20,7 +20,12 @@ completion.
   Item from the current opportunity.
 - The prefill copies real site-assessment status, requirements, notes,
   measurement summaries, observation summaries, and attachment counts into the
-  internal instructions and safe metadata.
+  internal instructions and safe metadata. When available, it also carries the
+  linked project/estimate ids, a source owner only when the opportunity creator
+  maps to an existing Person, and a safe next-action prompt.
+- Lead Workspace detects an existing open estimate handoff Work Item for the
+  same opportunity/project/estimate context and points users back to that
+  existing Work Item instead of preloading another estimate handoff draft.
 - Estimate handoff uses existing `kind = estimate_follow_up` and metadata
   `estimateWorkType` values:
   - `generate_estimate`
@@ -85,6 +90,9 @@ open`.
 - No portal/customer surface reads these internal Work Items.
 - No separate handoff-packet persistence, source snapshot, project-owned task
   board, or estimate-generation state is added.
+- Existing open handoff detection is a read-model guard over canonical
+  `work_items`; it does not add duplicate-prevention persistence or create a
+  new task model.
 - Next-action editing updates existing Work Item metadata only; it does not
   create a new Work Item, notification, reminder, or customer-visible message.
 - Reassignment does not create notification events, portal visibility,

@@ -20,6 +20,7 @@ import {
   groupMobileAssignedWorkItems,
   isEstimateWorkItem,
   selectEstimateWorkspaceHandoffWorkItems,
+  selectOpenEstimateHandoffWorkItems,
   selectWorkItemAssignmentCandidates,
   selectProjectEstimateHandoffWorkItems,
   selectAssignedWorkItems,
@@ -769,6 +770,74 @@ void test("estimate workspace handoff selector keeps only connected open estimat
       "Review linked estimate",
       "Blocked project estimate info"
     ]
+  );
+});
+
+void test("open estimate handoff selector finds existing lead handoff without completed or unrelated work", () => {
+  const workItems: WorkItem[] = [
+    {
+      ...baseWorkItem,
+      id: "11111111-aaaa-4111-8111-111111111111",
+      title: "Generate lead estimate",
+      kind: "estimate_follow_up",
+      sourceType: "opportunity",
+      sourceId: "opportunity-1",
+      projectId: "project-1",
+      dueAt: "2026-05-07T12:00:00.000Z",
+      metadata: {
+        estimateWork: true,
+        estimateWorkType: "generate_estimate",
+        opportunityId: "opportunity-1",
+        projectId: "project-1"
+      }
+    },
+    {
+      ...baseWorkItem,
+      id: "22222222-aaaa-4222-8222-222222222222",
+      title: "Completed lead estimate",
+      status: "completed",
+      kind: "estimate_follow_up",
+      sourceType: "opportunity",
+      sourceId: "opportunity-1",
+      projectId: "project-1",
+      metadata: {
+        estimateWorkType: "generate_estimate",
+        opportunityId: "opportunity-1"
+      }
+    },
+    {
+      ...baseWorkItem,
+      id: "33333333-aaaa-4333-8333-333333333333",
+      title: "Lead follow-up",
+      kind: "lead_follow_up",
+      sourceType: "opportunity",
+      sourceId: "opportunity-1",
+      projectId: "project-1"
+    },
+    {
+      ...baseWorkItem,
+      id: "44444444-aaaa-4444-8444-444444444444",
+      title: "Other opportunity estimate",
+      kind: "estimate_follow_up",
+      sourceType: "opportunity",
+      sourceId: "opportunity-2",
+      projectId: "project-2",
+      metadata: {
+        estimateWorkType: "generate_estimate",
+        opportunityId: "opportunity-2"
+      }
+    }
+  ];
+
+  const selected = selectOpenEstimateHandoffWorkItems({
+    workItems,
+    opportunityId: "opportunity-1",
+    projectId: "project-1"
+  });
+
+  assert.deepEqual(
+    selected.map((item) => item.title),
+    ["Generate lead estimate"]
   );
 });
 

@@ -317,6 +317,54 @@ export function selectWorkItemAssignmentCandidates<
     .sort((left, right) => left.displayName.localeCompare(right.displayName));
 }
 
+export function selectOpenEstimateHandoffWorkItems<T extends WorkItem>(input: {
+  workItems: T[];
+  opportunityId?: string | null;
+  projectId?: string | null;
+  estimateId?: string | null;
+}) {
+  const selected = new Map<string, T>();
+
+  for (const workItem of input.workItems) {
+    if (!isOpenWorkItem(workItem) || !isEstimateWorkItem(workItem)) {
+      continue;
+    }
+
+    const sourceMatchesOpportunity =
+      Boolean(input.opportunityId) &&
+      workItem.sourceType === "opportunity" &&
+      workItem.sourceId === input.opportunityId;
+    const metadataMatchesOpportunity =
+      Boolean(input.opportunityId) &&
+      workItem.metadata.opportunityId === input.opportunityId;
+    const projectMatches =
+      Boolean(input.projectId) && workItem.projectId === input.projectId;
+    const metadataMatchesProject =
+      Boolean(input.projectId) &&
+      workItem.metadata.projectId === input.projectId;
+    const sourceMatchesEstimate =
+      Boolean(input.estimateId) &&
+      workItem.sourceType === "estimate" &&
+      workItem.sourceId === input.estimateId;
+    const metadataMatchesEstimate =
+      Boolean(input.estimateId) &&
+      workItem.metadata.estimateId === input.estimateId;
+
+    if (
+      sourceMatchesOpportunity ||
+      metadataMatchesOpportunity ||
+      projectMatches ||
+      metadataMatchesProject ||
+      sourceMatchesEstimate ||
+      metadataMatchesEstimate
+    ) {
+      selected.set(workItem.id, workItem);
+    }
+  }
+
+  return sortWorkItemsForQueue([...selected.values()]);
+}
+
 export function getWorkItemDueState(
   workItem: Pick<WorkItem, "status" | "dueAt">,
   nowIso: string

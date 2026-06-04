@@ -34,6 +34,11 @@ import {
   buildEstimateHandoffWorkItemPrefill,
   buildOpportunityFollowUpWorkItemPrefill
 } from "@/lib/work-items/prefill";
+import {
+  getWorkItemNextAction,
+  selectOpenEstimateHandoffWorkItems,
+  selectWorkItemAssignmentCandidates
+} from "@/lib/work-items/read-model";
 
 type LeadDetailPageProps = {
   params: Promise<{
@@ -240,6 +245,29 @@ export default async function LeadDetailPage({
   const canStartEstimate = opportunity.status !== "lost";
   const leadAppointmentHref = `/appointments?compose=1&opportunityId=${opportunity.id}${opportunity.customerId ? `&customerId=${opportunity.customerId}` : ""}${opportunity.projectId ? `&projectId=${opportunity.projectId}` : ""}#appointment-create`;
   const leadWorkspaceHref = `/leads/${opportunity.id}`;
+  const sourceOwnerPerson = opportunity.createdByUserId
+    ? (people.find(
+        (person) => person.membershipUserId === opportunity.createdByUserId
+      ) ?? null)
+    : null;
+  const estimateHandoffWorkItems = selectOpenEstimateHandoffWorkItems({
+    workItems: linkedWorkItems,
+    opportunityId: opportunity.id,
+    projectId: opportunity.projectId
+  });
+  const existingOpenEstimateHandoff = estimateHandoffWorkItems[0] ?? null;
+  const estimateHandoffCueRequested =
+    resolvedSearchParams.workItemCue === "estimate_handoff";
+  const estimateHandoffNextAction =
+    opportunity.siteAssessmentStatus === "completed" ||
+    opportunity.measurements.length > 0 ||
+    opportunity.observations.length > 0 ||
+    opportunity.attachments.length > 0 ||
+    Boolean(opportunity.requirementsSummary?.trim())
+      ? "Draft the estimate from the captured site assessment packet."
+      : opportunity.siteAssessmentStatus === "scheduled"
+        ? "Complete the scheduled site visit, then draft the estimate from captured context."
+        : "Capture requirements and measurements before drafting the estimate.";
   const leadFollowUpWorkItemPrefill =
     resolvedSearchParams.workItemCue === "follow_up"
       ? buildOpportunityFollowUpWorkItemPrefill({
@@ -258,14 +286,20 @@ export default async function LeadDetailPage({
         })
       : null;
   const estimateHandoffWorkItemPrefill =
-    resolvedSearchParams.workItemCue === "estimate_handoff"
+    estimateHandoffCueRequested && !existingOpenEstimateHandoff
       ? buildEstimateHandoffWorkItemPrefill({
           opportunityId: opportunity.id,
+          projectId: opportunity.projectId,
           opportunityTitle: opportunity.title,
           customerName: opportunity.customer?.name ?? null,
           projectName: opportunity.project?.name ?? null,
           contactName:
             opportunity.primaryContact?.displayName ?? opportunity.prospectName,
+          sourceOwnerUserId: sourceOwnerPerson
+            ? opportunity.createdByUserId
+            : null,
+          sourceOwnerName: sourceOwnerPerson?.displayName ?? null,
+          nextAction: estimateHandoffNextAction,
           requirementsSummary: opportunity.requirementsSummary,
           notes: opportunity.notes,
           siteAssessmentStatus: opportunity.siteAssessmentStatus,
@@ -278,12 +312,10 @@ export default async function LeadDetailPage({
       : null;
   const leadWorkItemPrefill =
     estimateHandoffWorkItemPrefill ?? leadFollowUpWorkItemPrefill;
-  const assignablePeople = people
-    .filter((person) => person.isActive && person.isAssignable)
-    .map((person) => ({
-      id: person.id,
-      displayName: person.displayName
-    }));
+  const assignablePeople = selectWorkItemAssignmentCandidates(people);
+  const existingEstimateHandoffNextAction = existingOpenEstimateHandoff
+    ? getWorkItemNextAction(existingOpenEstimateHandoff)
+    : null;
   const nextAction = getLeadNextAction({
     opportunity,
     appointmentHref: leadAppointmentHref,
@@ -898,6 +930,14 @@ export default async function LeadDetailPage({
                     Create internal work item
                   </p>
                   <div className="mt-4">
+                    {estimateHandoffCueRequested &&
+                    existingOpenEstimateHandoff ? (
+                      <div className="mb-4 rounded-[8px] border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-950">
+                        An open estimate handoff already exists for this lead.
+                        Continue the linked Work Item instead of creating a
+                        duplicate estimate handoff.
+                      </div>
+                    ) : null}
                     <WorkItemCreateForm
                       action={createWorkItemAction}
                       returnTo={leadWorkspaceHref}
@@ -1056,12 +1096,21 @@ export default async function LeadDetailPage({
               scope is sent.
             </p>
             <div className="mt-5 flex flex-wrap gap-2.5">
-              <Link
-                href={`${leadWorkspaceHref}?workItemCue=estimate_handoff#work-items`}
-                className="inline-flex items-center rounded-full border border-[#e2d4c5] bg-[#fbf5ee] px-3.5 py-2 text-sm font-medium text-[#5f4d40] transition hover:border-[#caac88] hover:bg-white hover:text-[#2b2118]"
-              >
-                Create estimate handoff item
-              </Link>
+              {existingOpenEstimateHandoff ? (
+                <Link
+                  href="#work-items"
+                  className="inline-flex items-center rounded-full border border-[#e2d4c5] bg-[#fbf5ee] px-3.5 py-2 text-sm font-medium text-[#5f4d40] transition hover:border-[#caac88] hover:bg-white hover:text-[#2b2118]"
+                >
+                  Open existing handoff
+                </Link>
+              ) : (
+                <Link
+                  href={`${leadWorkspaceHref}?workItemCue=estimate_handoff#work-items`}
+                  className="inline-flex items-center rounded-full border border-[#e2d4c5] bg-[#fbf5ee] px-3.5 py-2 text-sm font-medium text-[#5f4d40] transition hover:border-[#caac88] hover:bg-white hover:text-[#2b2118]"
+                >
+                  Create estimate handoff item
+                </Link>
+              )}
               <Link
                 href="#work-items"
                 className="inline-flex items-center rounded-full border border-slate-300 px-3.5 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:bg-white"
@@ -1080,6 +1129,25 @@ export default async function LeadDetailPage({
                 status is reopened.
               </div>
             )}
+
+            {existingOpenEstimateHandoff ? (
+              <div className="mt-6 rounded-2xl border border-amber-200 bg-amber-50 px-5 py-4 text-sm leading-6 text-amber-950">
+                <p className="font-semibold">Existing open handoff</p>
+                <p className="mt-1 text-amber-900">
+                  {existingOpenEstimateHandoff.title}
+                </p>
+                <p className="mt-2 text-xs font-semibold uppercase tracking-[0.14em] text-amber-800">
+                  Assigned to{" "}
+                  {existingOpenEstimateHandoff.assignedPerson?.displayName ??
+                    "Unassigned"}
+                </p>
+                {existingEstimateHandoffNextAction ? (
+                  <p className="mt-2 text-amber-900">
+                    Next action: {existingEstimateHandoffNextAction}
+                  </p>
+                ) : null}
+              </div>
+            ) : null}
 
             <div className="mt-6 rounded-2xl border border-slate-200 bg-slate-50 px-5 py-4 text-sm leading-6 text-slate-600">
               Requirements summary:
