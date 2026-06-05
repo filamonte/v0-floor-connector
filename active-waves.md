@@ -110,7 +110,7 @@ Recommended wave: `sales-to-production-readiness-v1`.
 Review packet:
 [docs/review-packets/next-wave-recommendation.md](C:/FloorConnector/docs/review-packets/next-wave-recommendation.md).
 
-Status: Proposed / Jeff Review Required.
+Status: Approved / Not Started.
 
 Rationale: after `operational-command-center-v1`, the highest-leverage next
 step is tightening the opportunity-to-estimate-to-contract-to-schedule handoff
@@ -124,9 +124,80 @@ Proposed streams:
 - `schedule-readiness-handoff-v1`
 - `verification-sales-to-production-v1`
 
-This recommendation does not authorize stream creation, implementation,
-schema/migrations, provider actions, customer-facing sends, autonomous AI
-behavior, or work in dirty/out-of-scope worktrees.
+This recommendation now has Jeff approval for stream/worktree creation only. It
+does not authorize implementation, schema/migrations, provider actions,
+customer-facing sends, autonomous AI behavior, or work in dirty/out-of-scope
+worktrees.
+
+## Sales To Production Readiness V1 Approval Gate
+
+Gate date: 2026-06-05.
+
+Wave name: `sales-to-production-readiness-v1`.
+
+Wave goal: tighten the contractor sales-to-production handoff from
+opportunity/site assessment through estimate, contract, deposit/readiness, and
+schedule handoff.
+
+Gate status:
+
+| Gate item                              | Status      | Evidence / note                                                                                    |
+| -------------------------------------- | ----------- | -------------------------------------------------------------------------------------------------- |
+| Architecture Coordination approval     | Approved    | Approved from the next-wave recommendation and recorded in active governance docs.                 |
+| Jeff approval gate                     | Approved    | Jeff explicitly approved `sales-to-production-readiness-v1` for stream/worktree creation.          |
+| Stream creation                        | Approved    | The approved stream set may be created from current `main`.                                        |
+| Implementation start                   | Not started | A later explicit start command is required before feature work, tests, route edits, or UI changes. |
+| Human review gate                      | Required    | Agents may not auto-merge, open PRs, or continue to another wave without Jeff approval.            |
+| Autonomous merge / indefinite continue | Not allowed | This approval only prepares the wave for a later start command.                                    |
+
+Approved stream set:
+
+| Stream                                | Ownership area                                                                                                         | Mission                                                                        | Status                 |
+| ------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ | ---------------------- |
+| `sales-readiness-command-v1`          | Opportunity, lead, site assessment, requirements capture, and upstream estimating readiness.                           | Make sales readiness clearer before estimate work begins.                      | Approved / Not Started |
+| `estimate-contract-readiness-v1`      | Estimate approval, contract generation, contract send/signature readiness, and blockers between estimate and contract. | Make estimate-to-contract progression clearer and reduce handoff confusion.    | Approved / Not Started |
+| `schedule-readiness-handoff-v1`       | Commercial/financial readiness handoff into scheduling and Field.                                                      | Make ready-to-schedule truthful, visible, and connected into Field.            | Approved / Not Started |
+| `verification-sales-to-production-v1` | Verification for the sales-to-production handoff.                                                                      | Protect the opportunity -> estimate -> contract -> readiness -> schedule flow. | Approved / Not Started |
+
+Approved stream branches:
+
+- `stream/sales-readiness-command-v1`
+- `stream/estimate-contract-readiness-v1`
+- `stream/schedule-readiness-handoff-v1`
+- `stream/verification-sales-to-production-v1`
+
+Approved worktrees:
+
+- `C:\FC-worktrees\sales-readiness-command-v1`
+- `C:\FC-worktrees\estimate-contract-readiness-v1`
+- `C:\FC-worktrees\schedule-readiness-handoff-v1`
+- `C:\FC-worktrees\verification-sales-to-production-v1`
+
+Required future stream startup checks:
+
+```powershell
+pnpm.cmd worktree:doctor
+pnpm.cmd tooling:baseline -CommandsOnly
+```
+
+Required implementation validation unless a later prompt narrows scope:
+
+```powershell
+pnpm.cmd --filter @floorconnector/web typecheck
+pnpm.cmd --filter @floorconnector/web lint
+pnpm.cmd fc:preflight:fast
+git diff --check
+```
+
+Shared non-goals:
+
+- no implementation from this approval task;
+- no schema or migration work unless a later prompt explicitly approves it;
+- no production code changes except explicitly scoped future implementation;
+- no provider/customer-facing sends;
+- no autonomous AI, scheduling, dispatching, signature, or financial actions;
+- no work in dirty/out-of-scope worktrees, including
+  `C:\FC-worktrees\project-next-actions`.
 
 ## Next Generation Wave Candidates
 

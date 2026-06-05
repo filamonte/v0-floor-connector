@@ -41,10 +41,110 @@ wave. The proposed streams are:
 - `stream/schedule-readiness-handoff-v1`
 - `stream/verification-sales-to-production-v1`
 
-Status: Proposed / Jeff Review Required. This is not stream activation. Do not
-create worktrees, start implementation, touch schema/migrations, perform
-provider/customer-facing actions, or use dirty/out-of-scope worktrees from this
-recommendation alone.
+Status: Approved / Not Started. Jeff has approved stream/worktree creation, but
+this is not implementation authorization. Do not start implementation, touch
+schema/migrations, perform provider/customer-facing actions, open PRs, merge, or
+use dirty/out-of-scope worktrees from this approval alone.
+
+## Sales To Production Readiness V1 Gate
+
+Gate date: 2026-06-05.
+
+Wave name: `sales-to-production-readiness-v1`.
+
+Architecture Coordination approval: Approved.
+
+Jeff approval gate: Approved. Jeff explicitly approved stream/worktree creation
+for `sales-to-production-readiness-v1`.
+
+Wave status: Approved to create streams; not yet implementing.
+
+Approved stream set:
+
+- `stream/sales-readiness-command-v1`
+- `stream/estimate-contract-readiness-v1`
+- `stream/schedule-readiness-handoff-v1`
+- `stream/verification-sales-to-production-v1`
+
+Required future startup checks:
+
+```powershell
+pnpm.cmd worktree:doctor
+pnpm.cmd tooling:baseline -CommandsOnly
+```
+
+Implementation streams should also run:
+
+```powershell
+pnpm.cmd --filter @floorconnector/web typecheck
+pnpm.cmd --filter @floorconnector/web lint
+pnpm.cmd fc:preflight:fast
+git diff --check
+```
+
+Human review gate remains required. Agents may plan, build, validate, and
+prepare review packets only after a later explicit start command. Agents may not
+auto-merge, open PRs, continue to another wave, perform schema/migration work,
+or use dirty/out-of-scope worktrees from this approval alone.
+
+### sales-readiness-command-v1
+
+- Branch: `stream/sales-readiness-command-v1`
+- Worktree: `C:\FC-worktrees\sales-readiness-command-v1`
+- Owns: opportunity, lead, site assessment, requirements capture, and upstream
+  estimating readiness.
+- Mission: make sales readiness clearer before estimate work begins.
+- Future allowed work, not now: clarify opportunity/site assessment state,
+  improve requirements capture visibility, show what is missing before estimate
+  creation, link to Project diagnosis where needed, and avoid duplicate
+  customer/project records.
+- Must avoid: dashboard sprawl, new opportunity/customer/project schema,
+  duplicate intake models, AI autonomous scheduling, and portal behavior
+  changes.
+- Status: Approved / Not Started.
+
+### estimate-contract-readiness-v1
+
+- Branch: `stream/estimate-contract-readiness-v1`
+- Worktree: `C:\FC-worktrees\estimate-contract-readiness-v1`
+- Owns: estimate approval, contract generation, contract send/signature
+  readiness, and readiness blockers between estimate and contract.
+- Mission: make estimate-to-contract progression clearer and reduce handoff
+  confusion.
+- Future allowed work, not now: clarify approved estimate next steps, contract
+  readiness, missing blockers before signature/send, Settings links for
+  workflow defaults, and canonical estimate/contract/project readiness.
+- Must avoid: duplicate contract/signature models, schema changes, settings
+  mutation leakage on operational pages, and portal behavior changes unless
+  later explicitly approved.
+- Status: Approved / Not Started.
+
+### schedule-readiness-handoff-v1
+
+- Branch: `stream/schedule-readiness-handoff-v1`
+- Worktree: `C:\FC-worktrees\schedule-readiness-handoff-v1`
+- Owns: commercial/financial readiness handoff into scheduling and Field.
+- Mission: make ready-to-schedule truthful, visible, and connected from
+  project/contract/deposit state into Field.
+- Future allowed work, not now: clarify deposit/readiness blockers, link
+  schedule action to Field ownership, make handoff context visible, and preserve
+  Project as diagnosis and Field as action.
+- Must avoid: duplicate schedule/dispatch models, new job schema, autonomous
+  dispatching, route optimization, and dashboard work.
+- Status: Approved / Not Started.
+
+### verification-sales-to-production-v1
+
+- Branch: `stream/verification-sales-to-production-v1`
+- Worktree: `C:\FC-worktrees\verification-sales-to-production-v1`
+- Owns: verification for the sales-to-production handoff.
+- Mission: protect the opportunity -> estimate -> contract -> readiness ->
+  schedule workflow.
+- Future allowed work, not now: add focused tests, update verification
+  matrices, protect the canonical lifecycle, and verify ownership boundaries.
+- Must avoid: feature work, schema changes, UI redesign, and loosening existing
+  checks.
+- Status: Approved / Not Started.
 
 ## Active Streams
 

@@ -62,6 +62,15 @@ operational wave. It is recommendation-only and still requires Jeff approval
 before stream creation, worktree creation, implementation, schema/migration
 work, provider/customer-facing actions, or continuation.
 
+Approval update: Jeff has approved `sales-to-production-readiness-v1` for
+stream/worktree creation only. The approved streams are
+`sales-readiness-command-v1`, `estimate-contract-readiness-v1`,
+`schedule-readiness-handoff-v1`, and
+`verification-sales-to-production-v1`. Wave status is Approved / Not Started:
+agents may not begin implementation, edit schema/migrations, open PRs, merge,
+or continue to another wave until a later explicit start command and human
+review gate.
+
 ## Required First Reads
 
 Read these before implementation or documentation work:
