@@ -101,6 +101,33 @@ packets from this registry. Agents may not begin a new wave, create active
 streams, continue to the next wave, or merge without Architecture Coordination
 approval and Jeff review.
 
+## Next Recommended Wave
+
+Recommendation date: 2026-06-05.
+
+Recommended wave: `sales-to-production-readiness-v1`.
+
+Review packet:
+[docs/review-packets/next-wave-recommendation.md](C:/FloorConnector/docs/review-packets/next-wave-recommendation.md).
+
+Status: Proposed / Jeff Review Required.
+
+Rationale: after `operational-command-center-v1`, the highest-leverage next
+step is tightening the opportunity-to-estimate-to-contract-to-schedule handoff
+so downstream Project Workspace, Schedule, Field, Financials, Portal, Reporting,
+and future automation surfaces consume clearer readiness truth.
+
+Proposed streams:
+
+- `sales-readiness-command-v1`
+- `estimate-contract-readiness-v1`
+- `schedule-readiness-handoff-v1`
+- `verification-sales-to-production-v1`
+
+This recommendation does not authorize stream creation, implementation,
+schema/migrations, provider actions, customer-facing sends, autonomous AI
+behavior, or work in dirty/out-of-scope worktrees.
+
 ## Next Generation Wave Candidates
 
 Audit date: 2026-06-04.

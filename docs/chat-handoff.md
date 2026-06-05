@@ -55,6 +55,13 @@ The dirty out-of-scope `C:\FC-worktrees\project-next-actions` worktree was
 preserved untouched. The next wave is not approved from this handoff; agents may
 not auto-continue without Jeff approval.
 
+Next-wave planning note: as of 2026-06-05,
+[docs/review-packets/next-wave-recommendation.md](C:/FloorConnector/docs/review-packets/next-wave-recommendation.md)
+recommends `sales-to-production-readiness-v1` as the next highest-leverage
+operational wave. It is recommendation-only and still requires Jeff approval
+before stream creation, worktree creation, implementation, schema/migration
+work, provider/customer-facing actions, or continuation.
+
 ## Required First Reads
 
 Read these before implementation or documentation work:

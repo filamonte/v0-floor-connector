@@ -28,6 +28,24 @@ Wave-launch prompts must also require `pnpm.cmd worktree:doctor` and use
 for local tooling, Playwright, optional CLI, worktree-link, and validation
 guidance.
 
+## Next Wave Recommendation
+
+Recommendation date: 2026-06-05.
+
+`docs/review-packets/next-wave-recommendation.md` recommends
+`sales-to-production-readiness-v1` as the next highest-leverage operational
+wave. The proposed streams are:
+
+- `stream/sales-readiness-command-v1`
+- `stream/estimate-contract-readiness-v1`
+- `stream/schedule-readiness-handoff-v1`
+- `stream/verification-sales-to-production-v1`
+
+Status: Proposed / Jeff Review Required. This is not stream activation. Do not
+create worktrees, start implementation, touch schema/migrations, perform
+provider/customer-facing actions, or use dirty/out-of-scope worktrees from this
+recommendation alone.
+
 ## Active Streams
 
 ### architecture-coordination
