@@ -15,6 +15,7 @@ export type ProjectNextActionItem = {
   id: string;
   projectId: string;
   currentStage: string;
+  owningWorkspace: string;
   headline: string;
   reason: string;
   severity: ProjectNextActionSeverity;
@@ -227,6 +228,7 @@ export function buildProjectNextActions(
       id: `${input.project.id}:open-field-blocker`,
       projectId: input.project.id,
       currentStage: "Field blocker",
+      owningWorkspace: "Daily Log / FieldTrail",
       headline: "Resolve the open field blocker",
       reason:
         openBlockers.length === 1
@@ -253,6 +255,7 @@ export function buildProjectNextActions(
       id: `${input.project.id}:approved-estimate-no-contract`,
       projectId: input.project.id,
       currentStage: "Contract handoff",
+      owningWorkspace: "Contract Workspace",
       headline: "Generate the contract from approved scope",
       reason: approvedEstimate.referenceNumber
         ? `Estimate ${approvedEstimate.referenceNumber} is approved, but no canonical contract exists yet.`
@@ -282,6 +285,7 @@ export function buildProjectNextActions(
       id: `${input.project.id}:contract-prep`,
       projectId: input.project.id,
       currentStage: "Contract prep",
+      owningWorkspace: "Contract Workspace",
       headline:
         latestContract.internalApprovalStatus === "pending"
           ? "Clear internal contract approval"
@@ -313,6 +317,7 @@ export function buildProjectNextActions(
       id: `${input.project.id}:signature-pending`,
       projectId: input.project.id,
       currentStage: "Signature",
+      owningWorkspace: "Contract Workspace",
       headline:
         latestContract.status === "viewed"
           ? "Follow up on the viewed unsigned contract"
@@ -354,6 +359,10 @@ export function buildProjectNextActions(
       id: `${input.project.id}:financial-readiness`,
       projectId: input.project.id,
       currentStage: "Financial readiness",
+      owningWorkspace:
+        financialBlocker === "deposit_required" && depositInvoice
+          ? "Invoice Workspace"
+          : "Project Readiness",
       headline:
         financialBlocker === "deposit_required"
           ? "Resolve deposit readiness"
@@ -399,6 +408,7 @@ export function buildProjectNextActions(
       id: `${input.project.id}:ready-no-job`,
       projectId: input.project.id,
       currentStage: "Job creation",
+      owningWorkspace: "Jobs Manager",
       headline: "Create the first job",
       reason:
         "Commercial readiness is clear, but no canonical job exists for scheduling or field execution.",
@@ -434,6 +444,7 @@ export function buildProjectNextActions(
       id: `${input.project.id}:unscheduled-job`,
       projectId: input.project.id,
       currentStage: "Scheduling",
+      owningWorkspace: "CrewBoard",
       headline: "Schedule the ready job work",
       reason:
         unscheduledJobs.length === 1
@@ -461,6 +472,7 @@ export function buildProjectNextActions(
       id: `${input.project.id}:today-or-active-job`,
       projectId: input.project.id,
       currentStage: activeJobs.length > 0 ? "Execution" : "Scheduled today",
+      owningWorkspace: activeJobs.length > 0 ? "Job Workspace" : "CrewBoard",
       headline:
         activeJobs.length > 0
           ? "Monitor active field work"
@@ -495,16 +507,26 @@ export function buildProjectNextActions(
       id: `${input.project.id}:open-ar`,
       projectId: input.project.id,
       currentStage: "Accounts receivable",
+      owningWorkspace:
+        openInvoices.length === 1 ? "Invoice Workspace" : "Accounts Receivable",
       headline: "Follow the open project balance",
       reason:
         openInvoices.length === 1
           ? `${formatMoney(invoice.balanceDueAmount)} remains open on ${invoice.referenceNumber ?? "the project invoice"}.`
           : `${formatMoney(totalOpen)} remains open across ${openInvoices.length} project invoices.`,
       severity: "attention",
-      primaryActionLabel: "Open invoice",
-      primaryHref: `/invoices/${invoice.id}`,
-      secondaryActionLabel: "Open Accounts Receivable",
-      secondaryHref: "/financials/accounts-receivable",
+      primaryActionLabel:
+        openInvoices.length === 1 ? "Open invoice" : "Open Accounts Receivable",
+      primaryHref:
+        openInvoices.length === 1
+          ? `/invoices/${invoice.id}`
+          : "/financials/accounts-receivable",
+      secondaryActionLabel:
+        openInvoices.length === 1 ? "Open Accounts Receivable" : "Open invoice",
+      secondaryHref:
+        openInvoices.length === 1
+          ? "/financials/accounts-receivable"
+          : `/invoices/${invoice.id}`,
       linkedRecords: openInvoices.slice(0, 3).map((item) =>
         linkedRecord({
           id: item.id,
@@ -522,6 +544,7 @@ export function buildProjectNextActions(
       id: `${input.project.id}:review-project`,
       projectId: input.project.id,
       currentStage: "Project review",
+      owningWorkspace: "Project Workspace",
       headline: "Review project continuity",
       reason:
         "No blocking next action is visible from the loaded project records. Continue from the Project Workspace or linked record lanes.",

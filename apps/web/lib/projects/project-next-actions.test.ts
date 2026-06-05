@@ -38,6 +38,7 @@ void test("project next actions route approved estimates without contracts to co
   });
 
   assert.equal(summary.headline.id, "project-1:approved-estimate-no-contract");
+  assert.equal(summary.headline.owningWorkspace, "Contract Workspace");
   assert.equal(
     summary.headline.primaryHref,
     "/contracts?estimateId=estimate-1"
@@ -57,6 +58,7 @@ void test("project next actions route ready projects without jobs to canonical j
   });
 
   assert.equal(summary.headline.id, "project-1:ready-no-job");
+  assert.equal(summary.headline.owningWorkspace, "Jobs Manager");
   assert.equal(
     summary.headline.primaryHref,
     "/jobs?projectId=project-1&compose=1&estimateId=estimate-1&contractId=contract-1"
@@ -76,6 +78,7 @@ void test("project next actions route unscheduled jobs to CrewBoard handoff", ()
   });
 
   assert.equal(summary.headline.id, "project-1:unscheduled-job");
+  assert.equal(summary.headline.owningWorkspace, "CrewBoard");
   assert.equal(
     summary.headline.primaryHref,
     "/schedule?projectId=project-1&view=unscheduled&action=schedule&jobId=job-1"
@@ -105,6 +108,7 @@ void test("project next actions surface open invoice AR handoff", () => {
   });
 
   assert.equal(summary.headline.id, "project-1:open-ar");
+  assert.equal(summary.headline.owningWorkspace, "Invoice Workspace");
   assert.equal(summary.headline.primaryHref, "/invoices/invoice-1");
   assert.equal(
     summary.headline.secondaryHref,
@@ -140,6 +144,7 @@ void test("project next actions prioritize open blocker field notes", () => {
   });
 
   assert.equal(summary.headline.id, "project-1:open-field-blocker");
+  assert.equal(summary.headline.owningWorkspace, "Daily Log / FieldTrail");
   assert.equal(
     summary.headline.primaryHref,
     "/daily-logs/daily-log-1#job-notes"
@@ -147,4 +152,38 @@ void test("project next actions prioritize open blocker field notes", () => {
   assert.ok(
     summary.actions.some((action) => action.id === "project-1:open-ar")
   );
+});
+
+void test("project next actions route multi-invoice AR review to Accounts Receivable", () => {
+  const summary = buildProjectNextActions({
+    project,
+    todayIsoDate: "2026-06-01",
+    readinessSnapshot: readiness({ isReadyToSchedule: true }),
+    estimates: [],
+    contracts: [],
+    invoices: [
+      {
+        id: "invoice-1",
+        status: "sent",
+        workflowRole: "standard",
+        referenceNumber: "INV-100",
+        balanceDueAmount: "750.00"
+      },
+      {
+        id: "invoice-2",
+        status: "sent",
+        workflowRole: "standard",
+        referenceNumber: "INV-101",
+        balanceDueAmount: "250.00"
+      }
+    ],
+    jobs: [
+      { id: "job-1", dispatchStatus: "scheduled", scheduledDate: "2026-06-03" }
+    ]
+  });
+
+  assert.equal(summary.headline.id, "project-1:open-ar");
+  assert.equal(summary.headline.owningWorkspace, "Accounts Receivable");
+  assert.equal(summary.headline.primaryHref, "/financials/accounts-receivable");
+  assert.equal(summary.headline.secondaryHref, "/invoices/invoice-1");
 });

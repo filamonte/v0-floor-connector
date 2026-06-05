@@ -54,6 +54,9 @@ export function ProjectNextActionsPanel({
             <p className="mt-2 max-w-[72ch] text-sm leading-6 text-[var(--text-secondary)]">
               {headline.reason}
             </p>
+            <p className="mt-3 inline-flex rounded-full border border-[var(--border-warm)] bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-[var(--text-secondary)]">
+              Act in {headline.owningWorkspace}
+            </p>
           </div>
           <div className="flex flex-col gap-2 sm:flex-row lg:flex-col lg:items-end">
             <SeverityBadge severity={headline.severity}>
@@ -82,6 +85,10 @@ export function ProjectNextActionsPanel({
           <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--text-tertiary)]">
             Source records
           </p>
+          <p className="mt-2 text-sm leading-6 text-[var(--text-secondary)]">
+            Project diagnoses the current handoff; the source records below are
+            the canonical records that explain the action.
+          </p>
           {headline.linkedRecords.length > 0 ? (
             <div className="mt-3 grid gap-2 sm:grid-cols-2">
               {headline.linkedRecords.map((record) => (
@@ -109,6 +116,10 @@ export function ProjectNextActionsPanel({
         <article className="bg-white px-4 py-4 sm:px-5">
           <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--text-tertiary)]">
             Supporting actions
+          </p>
+          <p className="mt-2 text-sm leading-6 text-[var(--text-secondary)]">
+            These are secondary handoffs to the workspace that owns the next
+            move, not dashboard queues or project-local workflow copies.
           </p>
           {supportingActions.length > 0 ? (
             <div className="mt-3 space-y-3">
@@ -142,6 +153,9 @@ function ProjectNextActionRow({ action }: { action: ProjectNextActionItem }) {
           {action.currentStage}
         </SeverityBadge>
       </div>
+      <p className="mt-2 text-xs font-semibold uppercase tracking-[0.14em] text-[var(--text-tertiary)]">
+        Act in {action.owningWorkspace}
+      </p>
       <div className="mt-3 flex flex-wrap gap-2">
         <Link href={action.primaryHref} className={secondaryActionClassName}>
           {action.primaryActionLabel}
