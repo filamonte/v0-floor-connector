@@ -24,6 +24,10 @@ Analysis, Ownership Conflict Check, UX / IA Review, Canonical Model Review,
 Verification Strategy, and Architecture Coordination Approval are complete.
 Future waves also require documented merge order, active registry update, and a
 recorded Jeff approval gate before stream creation or activation.
+Before starting stream work, future wave prompts must require
+`pnpm.cmd worktree:doctor` and should reference
+[docs/automation-tooling-baseline.md](C:/FloorConnector/docs/automation-tooling-baseline.md)
+for local dependency, Playwright, optional CLI, and validation-command guidance.
 
 The governing product architecture principle is defined in
 [docs/operational-architecture-v1.md](C:/FloorConnector/docs/operational-architecture-v1.md):

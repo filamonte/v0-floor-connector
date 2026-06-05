@@ -31,6 +31,12 @@ when a task needs the permanent Operational Command Center principle, product
 operating layers, planning functions, and source-record continuity rules that
 future waves must preserve.
 
+Use [docs/automation-tooling-baseline.md](C:/FloorConnector/docs/automation-tooling-baseline.md)
+before launching or validating governed waves. Start with
+`pnpm.cmd worktree:doctor`, repair shared worktree tool links with
+`pnpm.cmd devtools:link` when needed, and prefer repo-local validation commands
+over global PATH tools.
+
 Current automation readiness is Ready With Human Review Gate. Future waves must
 follow the loop Jeff Review -> Product Director Recommendation -> Architecture
 Coordination Approval -> Wave Proposal -> Stream Creation -> Parallel Feature
@@ -57,6 +63,7 @@ Read these before implementation or documentation work:
 - [docs/current-state.md](C:/FloorConnector/docs/current-state.md)
 - [docs/parallel-development-governance.md](C:/FloorConnector/docs/parallel-development-governance.md)
 - [docs/operational-architecture-v1.md](C:/FloorConnector/docs/operational-architecture-v1.md)
+- [docs/automation-tooling-baseline.md](C:/FloorConnector/docs/automation-tooling-baseline.md)
 - [docs/ai-native-development-architecture.md](C:/FloorConnector/docs/ai-native-development-architecture.md)
 - [docs/feature-build-status.md](C:/FloorConnector/docs/feature-build-status.md)
 - [docs/floorconnector-build-list-and-completion-timeline.md](C:/FloorConnector/docs/floorconnector-build-list-and-completion-timeline.md)

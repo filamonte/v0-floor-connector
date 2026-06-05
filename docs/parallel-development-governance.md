@@ -15,6 +15,7 @@ Use this with:
 - [docs/workflows.md](C:/FloorConnector/docs/workflows.md)
 - [docs/ai-native-development-architecture.md](C:/FloorConnector/docs/ai-native-development-architecture.md)
 - [docs/operational-architecture-v1.md](C:/FloorConnector/docs/operational-architecture-v1.md)
+- [docs/automation-tooling-baseline.md](C:/FloorConnector/docs/automation-tooling-baseline.md)
 - [active-worktrees.md](C:/FloorConnector/active-worktrees.md)
 - [active-waves.md](C:/FloorConnector/active-waves.md)
 - [.codex/active-stream-plan.md](C:/FloorConnector/.codex/active-stream-plan.md)
@@ -113,6 +114,8 @@ No wave may begin until all gate items are recorded:
 6. Merge order is proposed.
 7. Active wave registry is updated.
 8. Jeff approval gate is recorded.
+9. Tooling baseline is checked with `pnpm.cmd worktree:doctor` and any required
+   worktree dev-tool links are repaired before stream work begins.
 
 If any item is missing, the wave remains a proposal. Agents may draft the wave,
 stream brief, and review packet requirements, but they may not create or activate
@@ -429,9 +432,9 @@ Before starting stream work:
 ```powershell
 git status
 git fetch origin
-pnpm worktree:doctor
-pnpm worktree:audit
-pnpm worktree:reconcile
+pnpm.cmd worktree:doctor
+pnpm.cmd worktree:audit
+pnpm.cmd worktree:reconcile
 ```
 
 During active waves:

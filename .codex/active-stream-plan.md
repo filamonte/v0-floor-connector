@@ -23,6 +23,10 @@ Coordination must approve stream creation before any new worktree is created.
 The wave proposal gate also requires dependency documentation, ownership
 conflict review, UX / IA impact review, verification scope, proposed merge
 order, active registry update, and recorded Jeff approval before a wave begins.
+Wave-launch prompts must also require `pnpm.cmd worktree:doctor` and use
+[docs/automation-tooling-baseline.md](C:/FloorConnector/docs/automation-tooling-baseline.md)
+for local tooling, Playwright, optional CLI, worktree-link, and validation
+guidance.
 
 ## Active Streams
 

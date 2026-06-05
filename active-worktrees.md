@@ -40,6 +40,9 @@ Expectations:
 - Run `pnpm worktree:reconcile` and `pnpm worktree:audit` at the start of the
   day.
 - Run `pnpm worktree:doctor` before every Codex task.
+- Use `docs/automation-tooling-baseline.md` for the current local tooling
+  baseline, optional CLI handling, Playwright checks, and standard validation
+  sequences.
 - Keep stream branches small enough to review and merge.
 - Update this registry when a worktree is created, repurposed, merged, paused,
   or archived.

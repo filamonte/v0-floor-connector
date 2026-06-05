@@ -27,6 +27,7 @@
     "demo:data:seed:validate-target": "node scripts/seed-staging-demo-data.mjs --validate-target",
     "devtools:link": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/link-worktree-dev-tools.ps1",
     "devtools:link:fix": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/link-worktree-dev-tools.ps1 -Fix",
+    "tooling:baseline": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/tooling-baseline.ps1",
     "setup:gh": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/setup-github-cli.ps1",
     "worktree:doctor": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/worktree-doctor.ps1",
     "worktree:create": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/create-worktree.ps1",
