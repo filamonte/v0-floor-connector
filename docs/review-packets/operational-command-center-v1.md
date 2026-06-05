@@ -12,36 +12,35 @@ Workspace diagnoses, owning workspaces act, Settings owns tenant configuration,
 Super Admin owns platform policy, and Portal remains customer-safe review/action
 only.
 
-The stale stream alignment blocker has been resolved. `stream/project-workspace-v2`
-and `stream/verification-v2` were both rebased onto current `origin/main` after
-the review packet landed, both now include the current governance docs at
-`docs/operational-architecture-v1.md` and
-`docs/parallel-development-governance.md`, and both passed their reconciliation
-validation stacks. `stream/communications-continuity-v2` and
-`stream/financial-command-center-v1` remain current one-commit candidates.
-`stream/field-command-center-v1` is already merged on `main` as `6df16ed1`.
+The stale stream alignment blocker has been resolved. All remaining unmerged
+candidate streams have been rebased onto current `origin/main`, now satisfy the
+`0` behind / `1` ahead merge preflight condition, include the current governance
+docs at `docs/operational-architecture-v1.md` and
+`docs/parallel-development-governance.md`, and passed their final pre-merge
+validation stacks. `stream/field-command-center-v1` is already merged on `main`
+as `6df16ed1`.
 
 This packet is a review artifact only. It does not grant Jeff approval, merge
 streams, open PRs, rebase branches, or start a new wave.
 
 ## Streams Completed
 
-| Stream                       | Worktree                                       | Branch                                | Commit                                                                          | Live branch state                                                                    | Readiness                         |
-| ---------------------------- | ---------------------------------------------- | ------------------------------------- | ------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ | --------------------------------- |
-| Project Workspace V2         | `C:\FC-worktrees\project-workspace-v2`         | `stream/project-workspace-v2`         | `a175247a feat: clarify project operational command center`                     | Clean, `0` behind / `1` ahead of `origin/main`; governance docs present after rebase | Ready                             |
-| Field Command Center V1      | `C:\FC-worktrees\field-command-center-v1`      | `stream/field-command-center-v1`      | `6df16ed1 feat: shape field command center (#15)`                               | Clean, `0` behind / `0` ahead; commit already on `origin/main`                       | Already on main / no merge needed |
-| Communications Continuity V2 | `C:\FC-worktrees\communications-continuity-v2` | `stream/communications-continuity-v2` | `04bd6565 feat: strengthen communications continuity workspace`                 | Clean, `0` behind / `1` ahead; governance docs present                               | Ready                             |
-| Financial Command Center V1  | `C:\FC-worktrees\financial-command-center-v1`  | `stream/financial-command-center-v1`  | `69ec2daf5c6cb853d3456ee731f17a3ba0fb7b97 feat: shape financial command center` | Clean, `0` behind / `1` ahead; governance docs present                               | Ready                             |
-| Verification V2              | `C:\FC-worktrees\verification-v2`              | `stream/verification-v2`              | `b921d0ba test: protect operational ownership model`                            | Clean, `0` behind / `1` ahead of `origin/main`; governance docs present after rebase | Ready                             |
+| Stream                       | Worktree                                       | Branch                                | Commit                                                          | Live branch state                                                                    | Readiness                         |
+| ---------------------------- | ---------------------------------------------- | ------------------------------------- | --------------------------------------------------------------- | ------------------------------------------------------------------------------------ | --------------------------------- |
+| Project Workspace V2         | `C:\FC-worktrees\project-workspace-v2`         | `stream/project-workspace-v2`         | `6a74813e feat: clarify project operational command center`     | Clean, `0` behind / `1` ahead of `origin/main`; governance docs present after rebase | Ready                             |
+| Field Command Center V1      | `C:\FC-worktrees\field-command-center-v1`      | `stream/field-command-center-v1`      | `6df16ed1 feat: shape field command center (#15)`               | Clean, `0` behind / `0` ahead; commit already on `origin/main`                       | Already on main / no merge needed |
+| Communications Continuity V2 | `C:\FC-worktrees\communications-continuity-v2` | `stream/communications-continuity-v2` | `70875ecf feat: strengthen communications continuity workspace` | Clean, `0` behind / `1` ahead of `origin/main`; governance docs present after rebase | Ready                             |
+| Financial Command Center V1  | `C:\FC-worktrees\financial-command-center-v1`  | `stream/financial-command-center-v1`  | `59ed4596 feat: shape financial command center`                 | Clean, `0` behind / `1` ahead of `origin/main`; governance docs present after rebase | Ready                             |
+| Verification V2              | `C:\FC-worktrees\verification-v2`              | `stream/verification-v2`              | `0c90ff89 test: protect operational ownership model`            | Clean, `0` behind / `1` ahead of `origin/main`; governance docs present after rebase | Ready                             |
 
 ## Commits By Stream
 
-- Project Workspace V2: `a175247a feat: clarify project operational command center`
+- Project Workspace V2: `6a74813e feat: clarify project operational command center`
 - Field Command Center V1: `6df16ed1 feat: shape field command center (#15)`
-- Communications Continuity V2: `04bd6565 feat: strengthen communications continuity workspace`
-- Financial Command Center V1:
-  `69ec2daf5c6cb853d3456ee731f17a3ba0fb7b97 feat: shape financial command center`
-- Verification V2: `b921d0ba test: protect operational ownership model`
+- Communications Continuity V2:
+  `70875ecf feat: strengthen communications continuity workspace`
+- Financial Command Center V1: `59ed4596 feat: shape financial command center`
+- Verification V2: `0c90ff89 test: protect operational ownership model`
 
 ## Files Changed By Stream
 
@@ -127,13 +126,13 @@ streams, open PRs, rebase branches, or start a new wave.
 
 ## Validation Results Reported By Streams
 
-| Stream                       | Reported validation                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
-| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Project Workspace V2         | Rebased cleanly onto current `origin/main` as `a175247a`; `docs/operational-architecture-v1.md` and `docs/parallel-development-governance.md` present; `pnpm.cmd --filter @floorconnector/web typecheck` passed; `pnpm.cmd --filter @floorconnector/web lint` passed; `pnpm.cmd fc:preflight:fast` passed; `git diff --check` passed; `pnpm.cmd --filter @floorconnector/web exec tsx --test lib/projects/project-next-actions.test.ts` passed, 6 tests                                                                                                                               |
-| Field Command Center V1      | typecheck passed; lint passed; `dispatch-board` test passed; `git diff --check` passed; `fc:preflight:fast` passed                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
-| Communications Continuity V2 | typecheck passed; lint passed; `fc:preflight:fast` passed; `git diff --check` passed                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
-| Financial Command Center V1  | typecheck passed; lint passed; `fc:preflight:fast` passed; `git diff --check` passed                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
-| Verification V2              | Rebased cleanly onto current `origin/main` as `b921d0ba`; `docs/operational-architecture-v1.md` and `docs/parallel-development-governance.md` present; `pnpm.cmd --filter @floorconnector/web typecheck` passed; `pnpm.cmd --filter @floorconnector/web lint` passed; `pnpm.cmd fc:preflight:fast` passed; `git diff --check` passed; `pnpm.cmd --filter @floorconnector/web exec tsx --test lib/verification/operational-ownership.test.ts` passed, 4 tests; `pnpm.cmd --filter @floorconnector/web exec tsx --test lib/verification/golden-workflow-checks.test.ts` passed, 5 tests |
+| Stream                       | Reported validation                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Project Workspace V2         | Rebased cleanly onto current `origin/main` as `6a74813e`; `0` behind / `1` ahead; `docs/operational-architecture-v1.md` and `docs/parallel-development-governance.md` present; `pnpm.cmd --filter @floorconnector/web typecheck` passed; `pnpm.cmd --filter @floorconnector/web lint` passed; `pnpm.cmd fc:preflight:fast` passed; `git diff --check` passed; `pnpm.cmd --filter @floorconnector/web exec tsx --test lib/projects/project-next-actions.test.ts` passed, 6 tests                                                                                                                               |
+| Field Command Center V1      | typecheck passed; lint passed; `dispatch-board` test passed; `git diff --check` passed; `fc:preflight:fast` passed                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| Communications Continuity V2 | Rebased cleanly onto current `origin/main` as `70875ecf`; `0` behind / `1` ahead; governance docs present; `pnpm.cmd --filter @floorconnector/web typecheck` passed; `pnpm.cmd --filter @floorconnector/web lint` passed; `pnpm.cmd fc:preflight:fast` passed; `git diff --check` passed; `pnpm.cmd --filter @floorconnector/web exec tsx --test lib/communications/workspace-summary.test.ts` passed, 11 tests                                                                                                                                                                                               |
+| Financial Command Center V1  | Rebased cleanly onto current `origin/main` as `59ed4596`; `0` behind / `1` ahead; governance docs present; `pnpm.cmd --filter @floorconnector/web typecheck` passed; `pnpm.cmd --filter @floorconnector/web lint` passed; `pnpm.cmd fc:preflight:fast` passed; `git diff --check` passed; no dedicated focused financial test exists in this packet, so validation relies on typecheck, lint, preflight, and diff check                                                                                                                                                                                       |
+| Verification V2              | Rebased cleanly onto current `origin/main` as `0c90ff89`; `0` behind / `1` ahead; `docs/operational-architecture-v1.md` and `docs/parallel-development-governance.md` present; `pnpm.cmd --filter @floorconnector/web typecheck` passed; `pnpm.cmd --filter @floorconnector/web lint` passed; `pnpm.cmd fc:preflight:fast` passed; `git diff --check` passed; `pnpm.cmd --filter @floorconnector/web exec tsx --test lib/verification/operational-ownership.test.ts` passed, 4 tests; `pnpm.cmd --filter @floorconnector/web exec tsx --test lib/verification/golden-workflow-checks.test.ts` passed, 5 tests |
 
 These validations should be rerun if any stream is changed again before merge.
 
@@ -190,12 +189,13 @@ No blocking IA drift was found.
 
 ## Reconciliation Results
 
-Project Workspace V2 and Verification V2 were reconciled on 2026-06-04.
+All remaining unmerged candidate streams were reconciled onto current
+`origin/main` before merge approval.
 
 Project Workspace V2:
 
 - Rebase result: clean rebase onto current `origin/main`; no conflicts.
-- Current commit: `a175247a feat: clarify project operational command center`.
+- Current commit: `6a74813e feat: clarify project operational command center`.
 - Final branch state: clean, `0` behind / `1` ahead of `origin/main`.
 - Governance docs present:
   `docs/operational-architecture-v1.md` and
@@ -207,10 +207,35 @@ Project Workspace V2:
 - Validation: typecheck passed, lint passed, `fc:preflight:fast` passed,
   `git diff --check` passed, focused `project-next-actions` test passed.
 
+Communications Continuity V2:
+
+- Rebase result: clean rebase onto current `origin/main`; no conflicts.
+- Current commit:
+  `70875ecf feat: strengthen communications continuity workspace`.
+- Final branch state: clean, `0` behind / `1` ahead of `origin/main`.
+- Candidate changes still present:
+  `apps/web/app/(app)/communications/page.tsx`,
+  `apps/web/lib/communications/workspace-summary.ts`, and
+  `apps/web/lib/communications/workspace-summary.test.ts`.
+- Validation: typecheck passed, lint passed, `fc:preflight:fast` passed,
+  `git diff --check` passed, focused `workspace-summary` test passed.
+
+Financial Command Center V1:
+
+- Rebase result: clean rebase onto current `origin/main`; no conflicts.
+- Current commit: `59ed4596 feat: shape financial command center`.
+- Final branch state: clean, `0` behind / `1` ahead of `origin/main`.
+- Candidate changes still present:
+  `apps/web/app/(app)/financials/page.tsx`,
+  `apps/web/app/(app)/invoices/page.tsx`, and `docs/current-state.md`.
+- Validation: typecheck passed, lint passed, `fc:preflight:fast` passed, and
+  `git diff --check` passed. No dedicated focused financial test exists in this
+  packet.
+
 Verification V2:
 
 - Rebase result: clean rebase onto current `origin/main`; no conflicts.
-- Current commit: `b921d0ba test: protect operational ownership model`.
+- Current commit: `0c90ff89 test: protect operational ownership model`.
 - Final branch state: clean, `0` behind / `1` ahead of `origin/main`.
 - Governance docs present:
   `docs/operational-architecture-v1.md` and
