@@ -133,15 +133,15 @@ worktree retirement, or authorize destructive cleanup.
 
 ## Validation Results Reported By Streams
 
-| Stream                       | Reported validation                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
-| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Project Workspace V2         | Rebased cleanly onto current `origin/main` as `6a74813e`; `0` behind / `1` ahead; `docs/operational-architecture-v1.md` and `docs/parallel-development-governance.md` present; `pnpm.cmd --filter @floorconnector/web typecheck` passed; `pnpm.cmd --filter @floorconnector/web lint` passed; `pnpm.cmd fc:preflight:fast` passed; `git diff --check` passed; `pnpm.cmd --filter @floorconnector/web exec tsx --test lib/projects/project-next-actions.test.ts` passed, 6 tests                                                                                                                               |
-| Field Command Center V1      | typecheck passed; lint passed; `dispatch-board` test passed; `git diff --check` passed; `fc:preflight:fast` passed                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
-| Communications Continuity V2 | Rebased cleanly onto current `origin/main` as `70875ecf`; `0` behind / `1` ahead; governance docs present; `pnpm.cmd --filter @floorconnector/web typecheck` passed; `pnpm.cmd --filter @floorconnector/web lint` passed; `pnpm.cmd fc:preflight:fast` passed; `git diff --check` passed; `pnpm.cmd --filter @floorconnector/web exec tsx --test lib/communications/workspace-summary.test.ts` passed, 11 tests                                                                                                                                                                                               |
-| Financial Command Center V1  | Rebased cleanly onto current `origin/main` as `59ed4596`; `0` behind / `1` ahead; governance docs present; `pnpm.cmd --filter @floorconnector/web typecheck` passed; `pnpm.cmd --filter @floorconnector/web lint` passed; `pnpm.cmd fc:preflight:fast` passed; `git diff --check` passed; no dedicated focused financial test exists in this packet, so validation relies on typecheck, lint, preflight, and diff check                                                                                                                                                                                       |
-| Verification V2              | Rebased cleanly onto current `origin/main` as `0c90ff89`; `0` behind / `1` ahead; `docs/operational-architecture-v1.md` and `docs/parallel-development-governance.md` present; `pnpm.cmd --filter @floorconnector/web typecheck` passed; `pnpm.cmd --filter @floorconnector/web lint` passed; `pnpm.cmd fc:preflight:fast` passed; `git diff --check` passed; `pnpm.cmd --filter @floorconnector/web exec tsx --test lib/verification/operational-ownership.test.ts` passed, 4 tests; `pnpm.cmd --filter @floorconnector/web exec tsx --test lib/verification/golden-workflow-checks.test.ts` passed, 5 tests |
+| Stream                       | Reported validation                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Project Workspace V2         | Final-rebased cleanly onto current `origin/main` as `db94468d`; `0` behind / `1` ahead before merge; `docs/operational-architecture-v1.md` and `docs/parallel-development-governance.md` present; post-merge `pnpm.cmd --filter @floorconnector/web typecheck` passed; `pnpm.cmd --filter @floorconnector/web lint` passed; `pnpm.cmd fc:preflight:fast` passed; `git diff --check` passed; `pnpm.cmd --filter @floorconnector/web exec tsx --test lib/projects/project-next-actions.test.ts` passed, 6 tests                                                                                                                               |
+| Field Command Center V1      | typecheck passed; lint passed; `dispatch-board` test passed; `git diff --check` passed; `fc:preflight:fast` passed                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| Communications Continuity V2 | Final-rebased cleanly onto current `origin/main` as `8fd48b97`; `0` behind / `1` ahead before merge; governance docs present; post-merge `pnpm.cmd --filter @floorconnector/web typecheck` passed; `pnpm.cmd --filter @floorconnector/web lint` passed; `pnpm.cmd fc:preflight:fast` passed; `git diff --check` passed; `pnpm.cmd --filter @floorconnector/web exec tsx --test lib/communications/workspace-summary.test.ts` passed, 11 tests                                                                                                                                                                                               |
+| Financial Command Center V1  | Final-rebased cleanly onto current `origin/main` as `f0844a28`; `0` behind / `1` ahead before merge; governance docs present; post-merge `pnpm.cmd --filter @floorconnector/web typecheck` passed; `pnpm.cmd --filter @floorconnector/web lint` passed; `pnpm.cmd fc:preflight:fast` passed; `git diff --check` passed; no dedicated focused financial test exists in this packet, so validation relies on typecheck, lint, preflight, and diff check                                                                                                                                                                                       |
+| Verification V2              | Final-rebased cleanly onto current `origin/main` as `9a8bf24d`; `0` behind / `1` ahead before merge; `docs/operational-architecture-v1.md` and `docs/parallel-development-governance.md` present; post-merge `pnpm.cmd --filter @floorconnector/web typecheck` passed; `pnpm.cmd --filter @floorconnector/web lint` passed; `pnpm.cmd fc:preflight:fast` passed; `git diff --check` passed; `pnpm.cmd --filter @floorconnector/web exec tsx --test lib/verification/operational-ownership.test.ts` passed, 4 tests; `pnpm.cmd --filter @floorconnector/web exec tsx --test lib/verification/golden-workflow-checks.test.ts` passed, 5 tests |
 
-These validations should be rerun if any stream is changed again before merge.
+These validations were rerun after merge during post-merge verification.
 
 ## Controlled Merge Validation
 
@@ -224,13 +224,14 @@ No blocking IA drift was found.
 ## Reconciliation Results
 
 All remaining unmerged candidate streams were reconciled onto current
-`origin/main` before merge approval.
+`origin/main` before merge.
 
 Project Workspace V2:
 
 - Rebase result: clean rebase onto current `origin/main`; no conflicts.
-- Current commit: `6a74813e feat: clarify project operational command center`.
-- Final branch state: clean, `0` behind / `1` ahead of `origin/main`.
+- Current commit: `db94468d feat: clarify project operational command center`.
+- Final branch state before merge: clean, `0` behind / `1` ahead of
+  `origin/main`.
 - Governance docs present:
   `docs/operational-architecture-v1.md` and
   `docs/parallel-development-governance.md`.
@@ -245,8 +246,9 @@ Communications Continuity V2:
 
 - Rebase result: clean rebase onto current `origin/main`; no conflicts.
 - Current commit:
-  `70875ecf feat: strengthen communications continuity workspace`.
-- Final branch state: clean, `0` behind / `1` ahead of `origin/main`.
+  `8fd48b97 feat: strengthen communications continuity workspace`.
+- Final branch state before merge: clean, `0` behind / `1` ahead of
+  `origin/main`.
 - Candidate changes still present:
   `apps/web/app/(app)/communications/page.tsx`,
   `apps/web/lib/communications/workspace-summary.ts`, and
@@ -257,8 +259,9 @@ Communications Continuity V2:
 Financial Command Center V1:
 
 - Rebase result: clean rebase onto current `origin/main`; no conflicts.
-- Current commit: `59ed4596 feat: shape financial command center`.
-- Final branch state: clean, `0` behind / `1` ahead of `origin/main`.
+- Current commit: `f0844a28 feat: shape financial command center`.
+- Final branch state before merge: clean, `0` behind / `1` ahead of
+  `origin/main`.
 - Candidate changes still present:
   `apps/web/app/(app)/financials/page.tsx`,
   `apps/web/app/(app)/invoices/page.tsx`, and `docs/current-state.md`.
@@ -269,8 +272,9 @@ Financial Command Center V1:
 Verification V2:
 
 - Rebase result: clean rebase onto current `origin/main`; no conflicts.
-- Current commit: `0c90ff89 test: protect operational ownership model`.
-- Final branch state: clean, `0` behind / `1` ahead of `origin/main`.
+- Current commit: `9a8bf24d test: protect operational ownership model`.
+- Final branch state before merge: clean, `0` behind / `1` ahead of
+  `origin/main`.
 - Governance docs present:
   `docs/operational-architecture-v1.md` and
   `docs/parallel-development-governance.md`.
@@ -285,17 +289,16 @@ Verification V2:
 
 ## Minimum Validation After Reconciliation
 
-Run the narrow targeted tests first:
+The narrow targeted tests were rerun after merge:
 
 ```powershell
-pnpm.cmd --filter @floorconnector/web exec tsx lib/projects/project-next-actions.test.ts
-pnpm.cmd --filter @floorconnector/web exec tsx lib/schedule/dispatch-board.test.ts
-pnpm.cmd --filter @floorconnector/web exec tsx lib/communications/workspace-summary.test.ts
-pnpm.cmd --filter @floorconnector/web exec tsx lib/verification/operational-ownership.test.ts
-pnpm.cmd --filter @floorconnector/web exec tsx lib/verification/golden-workflow-checks.test.ts
+pnpm.cmd --filter @floorconnector/web exec tsx --test lib/projects/project-next-actions.test.ts
+pnpm.cmd --filter @floorconnector/web exec tsx --test lib/communications/workspace-summary.test.ts
+pnpm.cmd --filter @floorconnector/web exec tsx --test lib/verification/operational-ownership.test.ts
+pnpm.cmd --filter @floorconnector/web exec tsx --test lib/verification/golden-workflow-checks.test.ts
 ```
 
-Then run the merge-gate checks:
+The merge-gate checks were rerun after merge:
 
 ```powershell
 pnpm.cmd --filter @floorconnector/web typecheck
@@ -361,11 +364,10 @@ Architecture Coordination approval and Jeff review.
 
 ## Jeff Review Decision Options
 
-- Approve merge: the stale streams are now rebased and validated; Jeff can
-  approve the recommended merge order when ready.
+- Approve closeout: the stale streams were rebased, validated, and merged in
+  the approved order.
 - Request correction: if post-rebase review finds ownership drift, duplicate
   models, test failure, or IA/navigation drift.
-- Defer stream: if a candidate remains behind, dirty, unvalidated, or blocked by
-  auth/fixture constraints.
-- Continue to next wave: only after the merge wave lands and Jeff explicitly
-  approves continuation.
+- Plan cleanup: worktree retirement can be planned only after explicit owner
+  approval.
+- Continue to next wave: only after Jeff explicitly approves continuation.
