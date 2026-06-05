@@ -43,9 +43,10 @@ under Jeff's controlled merge approval. Project Workspace V2 merged as
 `c809186c`, Field Command Center V1 was already on `main` as `6df16ed1`,
 Communications Continuity V2 merged as `890bfbad`, Financial Command Center V1
 merged as `5844f52e`, and Verification V2 merged as `f7caf1db`. The local
-worktrees remain retained pending explicit retirement approval. The next wave is
-not approved from this handoff; agents may not auto-continue or perform
-destructive cleanup without Jeff approval.
+worktrees are retirement candidates retained pending explicit cleanup approval;
+Field's remote stream branch also requires explicit approval before deletion.
+The next wave is not approved from this handoff; agents may not auto-continue or
+perform destructive cleanup without Jeff approval.
 
 ## Required First Reads
 

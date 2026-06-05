@@ -94,14 +94,14 @@ Review until the wave proposal gate in
 [docs/parallel-development-governance.md](C:/FloorConnector/docs/parallel-development-governance.md)
 is complete. Do not treat these rows as implementation authorization.
 
-| Worktree                       | Branch                                | Proposed ownership area                                        | Lifecycle status    | Gate before activation                                                               |
-| ------------------------------ | ------------------------------------- | -------------------------------------------------------------- | ------------------- | ------------------------------------------------------------------------------------ |
-| `ux-architecture`              | `stream/ux-architecture`              | Product architecture, UX / IA ownership, governance references | Architecture Review | Decide whether it replaces current `architecture-coordination` governance ownership. |
-| `project-workspace-v2`         | `stream/project-workspace-v2`         | Project Workspace continuity and next-action depth             | Merged              | Merged to `main` as `c809186c`; worktree retained pending explicit retirement.       |
-| `field-command-center-v1`      | `stream/field-command-center-v1`      | Field execution command layer over canonical field records     | Merged              | Already on `main` as `6df16ed1`; worktree retained pending explicit retirement.      |
-| `communications-continuity-v2` | `stream/communications-continuity-v2` | Record-linked communication continuity and follow-up review    | Merged              | Merged to `main` as `890bfbad`; worktree retained pending explicit retirement.       |
-| `financial-command-center-v1`  | `stream/financial-command-center-v1`  | AR, collections, billing command-center continuity             | Merged              | Merged to `main` as `5844f52e`; worktree retained pending explicit retirement.       |
-| `verification-v2`              | `stream/verification-v2`              | Verification framework, review packets, merge-gate evidence    | Merged              | Merged to `main` as `f7caf1db`; worktree retained pending explicit retirement.       |
+| Worktree                       | Branch                                | Proposed ownership area                                        | Lifecycle status    | Gate before activation                                                                                                |
+| ------------------------------ | ------------------------------------- | -------------------------------------------------------------- | ------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| `ux-architecture`              | `stream/ux-architecture`              | Product architecture, UX / IA ownership, governance references | Architecture Review | Decide whether it replaces current `architecture-coordination` governance ownership.                                  |
+| `project-workspace-v2`         | `stream/project-workspace-v2`         | Project Workspace continuity and next-action depth             | Merged              | Retirement candidate; merged to `main` as `c809186c`; worktree retained pending explicit approval.                    |
+| `field-command-center-v1`      | `stream/field-command-center-v1`      | Field execution command layer over canonical field records     | Merged              | Retirement candidate; already on `main` as `6df16ed1`; worktree and remote branch retained pending explicit approval. |
+| `communications-continuity-v2` | `stream/communications-continuity-v2` | Record-linked communication continuity and follow-up review    | Merged              | Retirement candidate; merged to `main` as `890bfbad`; worktree retained pending explicit approval.                    |
+| `financial-command-center-v1`  | `stream/financial-command-center-v1`  | AR, collections, billing command-center continuity             | Merged              | Retirement candidate; merged to `main` as `5844f52e`; worktree retained pending explicit approval.                    |
+| `verification-v2`              | `stream/verification-v2`              | Verification framework, review packets, merge-gate evidence    | Merged              | Retirement candidate; merged to `main` as `f7caf1db`; worktree retained pending explicit approval.                    |
 
 The detailed ownership, dependency, UX / IA, canonical model, conflict, and
 verification audit for these streams lives in
@@ -117,13 +117,13 @@ Architecture Coordination approval and Jeff approval were recorded for the
 implementation stream set below. The approved streams have merged to `main`;
 their local worktrees are retained pending explicit retirement approval.
 
-| Worktree                       | Branch                                | Gate status | Activation condition                                |
-| ------------------------------ | ------------------------------------- | ----------- | --------------------------------------------------- |
-| `project-workspace-v2`         | `stream/project-workspace-v2`         | Merged      | Merged to `main` as `c809186c`; worktree retained.  |
-| `field-command-center-v1`      | `stream/field-command-center-v1`      | Merged      | Already on `main` as `6df16ed1`; worktree retained. |
-| `communications-continuity-v2` | `stream/communications-continuity-v2` | Merged      | Merged to `main` as `890bfbad`; worktree retained.  |
-| `financial-command-center-v1`  | `stream/financial-command-center-v1`  | Merged      | Merged to `main` as `5844f52e`; worktree retained.  |
-| `verification-v2`              | `stream/verification-v2`              | Merged      | Merged to `main` as `f7caf1db`; worktree retained.  |
+| Worktree                       | Branch                                | Gate status | Activation condition                                   |
+| ------------------------------ | ------------------------------------- | ----------- | ------------------------------------------------------ |
+| `project-workspace-v2`         | `stream/project-workspace-v2`         | Merged      | Retirement candidate; merged to `main` as `c809186c`.  |
+| `field-command-center-v1`      | `stream/field-command-center-v1`      | Merged      | Retirement candidate; already on `main` as `6df16ed1`. |
+| `communications-continuity-v2` | `stream/communications-continuity-v2` | Merged      | Retirement candidate; merged to `main` as `890bfbad`.  |
+| `financial-command-center-v1`  | `stream/financial-command-center-v1`  | Merged      | Retirement candidate; merged to `main` as `5844f52e`.  |
+| `verification-v2`              | `stream/verification-v2`              | Merged      | Retirement candidate; merged to `main` as `f7caf1db`.  |
 
 UX Architecture / Architecture Coordination remains the governance referee.
 Dashboard prioritizes, Project Workspace diagnoses, owning workspaces act,
