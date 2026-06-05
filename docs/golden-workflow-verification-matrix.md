@@ -31,6 +31,27 @@ Verification spine for this V1:
   Supabase Auth rate limit is blocked/skipped evidence unless the denial is the
   expected assertion.
 
+## Operational Ownership Model Checks
+
+Operational Command Center verification also protects the current surface
+ownership model:
+
+| Surface           | Must verify                         | Must not own                                                                         | Verification evidence                                                                 |
+| ----------------- | ----------------------------------- | ------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------- |
+| Dashboard         | Prioritizes source-record attention | Source of truth, workflow mutation, tenant configuration, platform policy            | Pure ownership helper plus dashboard route/read-model smoke evidence                  |
+| Project Workspace | Diagnoses linked-record state       | Source of truth, workflow mutation, tenant configuration, platform policy            | Pure ownership helper plus Project Workspace command-center/readiness evidence        |
+| Owning Workspace  | Acts on its source record           | Duplicate record model, portal-owned state, platform policy                          | Pure ownership helper plus focused record workspace/action coverage                   |
+| Settings          | Owns tenant configuration           | Workflow mutation, source-record ownership, platform policy                          | Pure ownership helper plus settings/operational-intelligence configuration coverage   |
+| Super Admin       | Owns platform policy                | Tenant source-record ownership, contractor workflow mutation, portal-owned state     | Pure ownership helper plus platform-admin read/write authorization coverage           |
+| Portal            | Customer-safe review/action only    | Contractor internal truth, tenant configuration, platform policy, portal-owned state | Pure ownership helper plus portal auth/grant/project-access and customer-safe reviews |
+
+The helper for this matrix is
+`apps/web/lib/verification/operational-ownership.ts`. It does not query the
+database, write state, create routes, create authorization policy, or replace
+the underlying route-level tests. It makes ownership drift reviewable by
+requiring each surface to prove its bounded job and the absence of forbidden
+ownership responsibilities.
+
 ## Matrix
 
 | Stage                      | Required inputs                                                                      | Expected outputs                                                         | Readiness gates                                                                                   | Failure conditions                                                                           | Verification owner                     | Existing coverage                                                                                                                                                                                              | Missing coverage                                                                                  |
@@ -58,6 +79,9 @@ The V1 helper layer lives in `apps/web/lib/verification/`:
   gates into a pure read-model verification summary.
 - `golden-workflow-checks.ts` combines workflow, readiness, and coverage
   evidence into a developer-facing health summary.
+- `operational-ownership.ts` checks that dashboard, Project Workspace, focused
+  owning workspaces, Settings, Super Admin, and Portal preserve their bounded
+  responsibilities while keeping the canonical lifecycle order intact.
 
 These helpers do not query the database, write state, create records, bypass
 RLS, create routes, or replace server-side workflow guards.
@@ -88,6 +112,9 @@ RLS, create routes, or replace server-side workflow guards.
 - `apps/web/lib/verification/golden-workflow-checks.test.ts` verifies the V1
   pure helper layer for continuity, readiness bypass detection, signature
   completion, invoice/payment gates, portal linkage, and health confidence.
+- `apps/web/lib/verification/operational-ownership.test.ts` verifies the
+  operational ownership model, including dashboard/portal source-of-truth drift,
+  partial settings evidence, and canonical lifecycle order drift.
 
 ## Fixture And Auth Notes
 

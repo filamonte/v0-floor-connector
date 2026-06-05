@@ -15,18 +15,19 @@ that every workflow transition is submitted through production UI forms.
 
 ## Coverage Status
 
-| Area                          | Status                     | Current evidence                                                                                                                                                 | Remaining gap                                                                              |
-| ----------------------------- | -------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
-| Canonical workflow linkage    | Verified for fixture chain | `e2e/golden-workflow-verification.spec.js` asserts one opportunity/customer/project/estimate/contract/job/invoice/payment chain plus helper unit coverage        | UI-submitted lead conversion and contract generation remain outside this spec              |
-| Readiness gates               | Partial                    | Golden browser spec asserts no job/standard invoice before signature readiness and allows both after signed readiness; helper wraps domain gates                 | Needs focused UI refusal tests for blocked job and blocked invoice creation                |
-| Contract progression          | Partial                    | Golden browser spec asserts approved estimate -> contract lineage and contractor workspace visibility; portal contract actions cover customer actions            | Protected UI contract generation from approved estimate remains separate                   |
-| Signature progression         | Partial                    | Golden browser spec asserts canonical signer/events and signed contract readiness; portal contract actions verify sign/decline/already-signed paths              | Contractor-side onsite signature action remains outside the golden verification suite      |
-| Job creation enforcement      | Partial                    | Golden browser spec asserts no job exists while blocked and one canonical job exists after readiness; Project cue bridge and schedule handoff verify ready paths | Dedicated UI refusal test for blocked project -> job creation is still missing             |
-| Invoice creation enforcement  | Partial                    | Golden browser spec asserts no standard invoice exists while blocked and one standard invoice exists after commercial readiness                                  | Dedicated UI refusal test for blocked standard invoice is still missing                    |
-| Payment progression           | Verified for fixture chain | Golden browser spec records canonical payment/payment_event and verifies invoice paid state; webhook reconciliation remains separately covered                   | Provider webhook completion is not embedded inside the golden browser spec                 |
-| Portal continuity             | Partial                    | Golden browser spec optionally compares portal project/contract/invoice routes for the same records when portal auth exists                                      | Comparison is fixture-limited when portal auth state or portal E2E credentials are missing |
-| Schedule readiness visibility | Verified for fixture chain | Golden browser spec opens `/schedule` with exact post-signature project/job context; schedule handoff spec covers ready handoffs                                 | Deposit/financing readiness variants remain separate                                       |
-| Project continuity summaries  | Partial                    | Project detail, ProjectPulse, operational workspace, timeline, MessageCenter/Proof/Closeout read models                                                          | Needs health summary generated from live golden fixture records                            |
+| Area                          | Status                     | Current evidence                                                                                                                                                                                                                                                                                              | Remaining gap                                                                                                                |
+| ----------------------------- | -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| Canonical workflow linkage    | Verified for fixture chain | `e2e/golden-workflow-verification.spec.js` asserts one opportunity/customer/project/estimate/contract/job/invoice/payment chain plus helper unit coverage                                                                                                                                                     | UI-submitted lead conversion and contract generation remain outside this spec                                                |
+| Readiness gates               | Partial                    | Golden browser spec asserts no job/standard invoice before signature readiness and allows both after signed readiness; helper wraps domain gates                                                                                                                                                              | Needs focused UI refusal tests for blocked job and blocked invoice creation                                                  |
+| Contract progression          | Partial                    | Golden browser spec asserts approved estimate -> contract lineage and contractor workspace visibility; portal contract actions cover customer actions                                                                                                                                                         | Protected UI contract generation from approved estimate remains separate                                                     |
+| Signature progression         | Partial                    | Golden browser spec asserts canonical signer/events and signed contract readiness; portal contract actions verify sign/decline/already-signed paths                                                                                                                                                           | Contractor-side onsite signature action remains outside the golden verification suite                                        |
+| Job creation enforcement      | Partial                    | Golden browser spec asserts no job exists while blocked and one canonical job exists after readiness; Project cue bridge and schedule handoff verify ready paths                                                                                                                                              | Dedicated UI refusal test for blocked project -> job creation is still missing                                               |
+| Invoice creation enforcement  | Partial                    | Golden browser spec asserts no standard invoice exists while blocked and one standard invoice exists after commercial readiness                                                                                                                                                                               | Dedicated UI refusal test for blocked standard invoice is still missing                                                      |
+| Payment progression           | Verified for fixture chain | Golden browser spec records canonical payment/payment_event and verifies invoice paid state; webhook reconciliation remains separately covered                                                                                                                                                                | Provider webhook completion is not embedded inside the golden browser spec                                                   |
+| Portal continuity             | Partial                    | Golden browser spec optionally compares portal project/contract/invoice routes for the same records when portal auth exists                                                                                                                                                                                   | Comparison is fixture-limited when portal auth state or portal E2E credentials are missing                                   |
+| Schedule readiness visibility | Verified for fixture chain | Golden browser spec opens `/schedule` with exact post-signature project/job context; schedule handoff spec covers ready handoffs                                                                                                                                                                              | Deposit/financing readiness variants remain separate                                                                         |
+| Project continuity summaries  | Partial                    | Project detail, ProjectPulse, operational workspace, timeline, MessageCenter/Proof/Closeout read models                                                                                                                                                                                                       | Needs health summary generated from live golden fixture records                                                              |
+| Operational ownership model   | Verified at helper level   | `apps/web/lib/verification/operational-ownership.test.ts` verifies dashboard prioritization, Project Workspace diagnosis, owning workspace action, Settings tenant configuration, Super Admin platform policy, Portal customer-safe review/action, forbidden ownership absence, and canonical lifecycle order | Route-specific ownership assertions remain distributed across existing protected, portal, settings, and platform-admin specs |
 
 ## Verified Workflow Stages
 
@@ -43,6 +44,9 @@ that every workflow transition is submitted through production UI forms.
 - New V1 helper spine: canonical linkage, readiness bypass detection,
   signature completion, invoice payment gate, portal continuity, and coverage
   confidence now have unit coverage.
+- New ownership helper spine: the operational ownership model now has pure
+  verification coverage for Dashboard, Project Workspace, owning workspaces,
+  Settings, Super Admin, and Portal without adding feature behavior.
 - New browser proof chain: `e2e/golden-workflow-verification.spec.js` creates a
   disposable canonical chain, checks blocked pre-signature state, signs the
   contract through canonical signer/event state, creates the post-readiness job
@@ -62,6 +66,10 @@ that every workflow transition is submitted through production UI forms.
 - Browser negative-path coverage for blocked job creation and blocked standard
   invoice creation is still limited to "no downstream record before readiness"
   assertions, not UI refusal submissions.
+- Operational ownership route evidence remains distributed. The new helper
+  proves the review contract, but it does not replace protected browser checks
+  for dashboard, project, owning workspace, settings, super-admin, or portal
+  routes.
 - Portal comparison depends on existing portal auth state or portal E2E
   credentials. Without those prerequisites, the spec records the limitation
   instead of counting portal comparison as passed.
@@ -85,6 +93,7 @@ that every workflow transition is submitted through production UI forms.
 | Payment                    | High       | Golden browser fixture proves paid invoice state after canonical payment; webhook spec covers provider completion |
 | Portal continuity          | Medium     | Real auth/grant coverage exists; side-by-side contractor/portal state comparison remains                          |
 | Project continuity summary | Medium     | Multiple read models are covered; live fixture health report generation remains                                   |
+| Operational ownership      | Medium     | Pure helper coverage now protects surface responsibilities; route-specific assertions remain distributed          |
 
 ## V1 Implementation Notes
 
@@ -92,6 +101,8 @@ that every workflow transition is submitted through production UI forms.
 - Added `apps/web/lib/verification/readiness-verification.ts`.
 - Added `apps/web/lib/verification/golden-workflow-checks.ts`.
 - Added `apps/web/lib/verification/golden-workflow-checks.test.ts`.
+- Added `apps/web/lib/verification/operational-ownership.ts`.
+- Added `apps/web/lib/verification/operational-ownership.test.ts`.
 - Added `e2e/golden-workflow-verification.spec.js`.
 - Updated `playwright.config.js` so the new spec runs under
   `chromium-protected`.
