@@ -139,6 +139,84 @@ export default async function FinancialsHomePage() {
           : "neutral"
     }
   ];
+  const commandCenterActionLanes = [
+    {
+      id: "collect-now",
+      label: "Collect now",
+      title: "Open AR and overdue pressure",
+      href: "/financials/accounts-receivable",
+      value: formatMoney(financialControl.openReceivablesAmount),
+      detail:
+        financialControl.openInvoiceCount > 0
+          ? `${financialControl.openInvoiceCount} open invoice${financialControl.openInvoiceCount === 1 ? "" : "s"} with ${financialControl.overdueInvoiceCount} overdue.`
+          : "No open invoice balance is currently collectible.",
+      tone:
+        financialControl.overdueInvoiceCount > 0
+          ? "warning"
+          : financialControl.openInvoiceCount > 0
+            ? "attention"
+            : "neutral"
+    },
+    {
+      id: "deposits-readiness",
+      label: "Unlock readiness",
+      title: "Deposit and readiness invoices",
+      href: "/financials/accounts-receivable",
+      value: formatMoney(financialControl.depositReceivablesAmount),
+      detail:
+        Number(financialControl.depositReceivablesAmount) > 0
+          ? "Deposit-role invoices still carry balance due before financial readiness can move cleanly."
+          : "No open deposit receivable is currently blocking readiness signals.",
+      tone:
+        Number(financialControl.depositReceivablesAmount) > 0
+          ? "attention"
+          : "neutral"
+    },
+    {
+      id: "payment-exceptions",
+      label: "Resolve evidence",
+      title: "Payment failures and pending events",
+      href: "/payments",
+      value: String(paymentTrailAttentionCount),
+      detail:
+        paymentTrailAttentionCount > 0
+          ? "Failed, voided, requested, checkout, or stale pending payment evidence needs review."
+          : "Payment Trail has no open exception signal in the current read model.",
+      tone: paymentTrailAttentionCount > 0 ? "warning" : "neutral"
+    },
+    {
+      id: "partial-balances",
+      label: "Finish balances",
+      title: "Partially paid invoices",
+      href: "/invoices?status=open",
+      value: String(financialControl.partiallyPaidCount),
+      detail:
+        financialControl.partiallyPaidCount > 0
+          ? "Partial payments left remaining balances for collections follow-through."
+          : "No partially paid invoices have a remaining balance right now.",
+      tone: financialControl.partiallyPaidCount > 0 ? "attention" : "neutral"
+    }
+  ];
+  const financialSettingsLinks = [
+    {
+      href: "/settings/financial",
+      title: "Tax and retainage defaults",
+      detail:
+        "Organization-owned financial defaults belong in Settings, then invoice records snapshot the applied values."
+    },
+    {
+      href: "/settings/workflows",
+      title: "Deposit, numbering, and workflow defaults",
+      detail:
+        "Ready Check behavior, deposit requirements, and next invoice numbers stay in workflow settings."
+    },
+    {
+      href: "/settings/templates",
+      title: "Invoice templates",
+      detail:
+        "Document templates are managed as organization-owned configuration, not edited inside collections queues."
+    }
+  ];
 
   return (
     <ContractorWorkspacePage
@@ -233,6 +311,68 @@ export default async function FinancialsHomePage() {
               Open next move
             </Link>
           </div>
+        </section>
+
+        <section className="border border-[#d6d6d6] bg-white">
+          <div className="border-b border-[#e5e5e5] px-4 py-3 sm:px-5">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#8f5b32]">
+              Financial Command Center
+            </p>
+            <h2 className="mt-1 text-xl font-semibold tracking-tight text-[#171717]">
+              Cross-project finance action lanes
+            </h2>
+            <p className="mt-1 max-w-[78ch] text-sm leading-6 text-slate-500">
+              Dashboard can prioritize and Project Workspace can explain
+              context, but AR, collections, billing follow-through, and cash
+              pressure are worked here against canonical invoices, payments,
+              payment events, projects, and customers.
+            </p>
+          </div>
+          <div className="grid gap-px bg-[#e5e5e5] md:grid-cols-2 xl:grid-cols-4">
+            {commandCenterActionLanes.map((lane) => (
+              <Link
+                key={lane.id}
+                href={lane.href}
+                className="min-w-0 bg-white px-4 py-4 transition hover:bg-[#f8f8f8]"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#666666]">
+                    {lane.label}
+                  </p>
+                  <span
+                    className={
+                      lane.tone === "warning"
+                        ? "rounded-full border border-red-200 bg-red-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-red-700"
+                        : lane.tone === "attention"
+                          ? "rounded-full border border-[#e4d7ca] bg-[#fffcf7] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#8f5b32]"
+                          : "rounded-full border border-[#d6d6d6] bg-[#f8f8f8] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-500"
+                    }
+                  >
+                    {lane.tone}
+                  </span>
+                </div>
+                <h3 className="mt-3 text-[17px] font-semibold tracking-tight text-[#171717]">
+                  {lane.title}
+                </h3>
+                <p className="mt-2 text-xl font-semibold tracking-tight text-[#171717]">
+                  {lane.value}
+                </p>
+                <p className="mt-2 text-sm leading-5 text-slate-500">
+                  {lane.detail}
+                </p>
+              </Link>
+            ))}
+          </div>
+          {financialControl.openInvoiceCount === 0 &&
+          paymentTrailAttentionCount === 0 &&
+          Number(financialControl.depositReceivablesAmount) === 0 ? (
+            <div className="border-t border-[#e5e5e5] bg-[#f8f8f8] px-4 py-4 text-sm leading-6 text-slate-500 sm:px-5">
+              No cross-project finance action is active right now. New open
+              balances, deposit invoices, partial payments, overdue invoices,
+              and Payment Trail exceptions will appear here when canonical
+              records carry that pressure.
+            </div>
+          ) : null}
         </section>
 
         <section className="border border-[#d6d6d6] bg-white">
@@ -332,6 +472,38 @@ export default async function FinancialsHomePage() {
                 </p>
                 <p className="mt-2 text-xs leading-5 text-slate-500">
                   {signal.detail}
+                </p>
+              </Link>
+            ))}
+          </div>
+        </section>
+
+        <section className="border border-[#d6d6d6] bg-white">
+          <div className="border-b border-[#e5e5e5] px-4 py-3 sm:px-5">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#666666]">
+              Settings boundary
+            </p>
+            <h2 className="mt-1 text-xl font-semibold tracking-tight text-[#171717]">
+              Configuration lives in Settings
+            </h2>
+            <p className="mt-1 max-w-[78ch] text-sm leading-6 text-slate-500">
+              This workspace acts on existing financial records. Tax, retainage,
+              template, numbering, deposit, and workflow defaults remain
+              administrative configuration.
+            </p>
+          </div>
+          <div className="grid gap-px bg-[#e5e5e5] md:grid-cols-3">
+            {financialSettingsLinks.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className="min-w-0 bg-white px-4 py-4 transition hover:bg-[#f8f8f8]"
+              >
+                <h3 className="text-sm font-semibold text-[#171717]">
+                  {item.title}
+                </h3>
+                <p className="mt-2 text-sm leading-5 text-slate-500">
+                  {item.detail}
                 </p>
               </Link>
             ))}

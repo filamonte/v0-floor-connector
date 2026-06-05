@@ -587,13 +587,14 @@ export default async function InvoicesPage({
             <section className="flex h-full flex-col border border-[#e2e5e9] bg-white">
               <div className="border-b border-[#e2e5e9] bg-[#f8fafc] px-4 py-3">
                 <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">
-                  Billing context
+                  Settings boundary
                 </p>
                 <h3 className="mt-1 text-[17px] font-semibold tracking-tight text-slate-950">
                   Billing posture
                 </h3>
                 <p className="mt-1 text-xs leading-5 text-slate-500">
-                  Compact finance context for the invoice register.
+                  Invoice work happens here. Tax, retainage, templates, and
+                  workflow defaults stay in Settings.
                 </p>
               </div>
 
@@ -626,6 +627,27 @@ export default async function InvoicesPage({
                       {readModel.counts.partially_paid} invoices
                     </p>
                   </div>
+                </div>
+
+                <div className="grid gap-2 sm:grid-cols-3">
+                  <Link
+                    href="/settings/financial"
+                    className="rounded-md border border-[#e2e5e9] bg-[#f8fafc] px-3 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-white hover:text-slate-950"
+                  >
+                    Financial defaults
+                  </Link>
+                  <Link
+                    href="/settings/workflows"
+                    className="rounded-md border border-[#e2e5e9] bg-[#f8fafc] px-3 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-white hover:text-slate-950"
+                  >
+                    Workflow defaults
+                  </Link>
+                  <Link
+                    href="/settings/templates"
+                    className="rounded-md border border-[#e2e5e9] bg-[#f8fafc] px-3 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-white hover:text-slate-950"
+                  >
+                    Invoice templates
+                  </Link>
                 </div>
 
                 <div className="space-y-3">

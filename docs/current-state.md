@@ -1074,6 +1074,13 @@ Implemented now:
   invoices, payments, and payment events; each route returns the user to the
   owning Invoice, Payments, Progress Billing, AR, Project, Customer, or
   Accounting Readiness workspace.
+- Financials Home now more explicitly owns cross-project finance action lanes
+  for open AR, overdue pressure, deposits/readiness invoices, payment exceptions
+  and pending events, and partial balances. Dashboard remains prioritization,
+  Project Workspace remains context/diagnosis, and Financials is the action
+  workspace. Tax, retainage, invoice templates, numbering, deposit, and workflow
+  defaults link back to Settings instead of becoming editable configuration on
+  invoice or collections action surfaces.
 - `/financials/accounts-receivable` is now a read-only AR Control Room over
   canonical invoices, payments, and immutable payment events, with
   command-center summary cards for open AR balance, urgent/attention count,
