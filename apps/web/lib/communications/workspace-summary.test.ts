@@ -152,6 +152,77 @@ void test("communication workspace groups canonical threads into operating lanes
     summary.lanes.find((lane) => lane.key === "internal")?.boundaryLabel,
     "Internal-only"
   );
+  assert.equal(summary.recordOwnershipGroups.length, 6);
+  assert.equal(
+    summary.recordOwnershipGroups.find((group) => group.key === "customer")
+      ?.count,
+    1
+  );
+  assert.equal(
+    summary.recordOwnershipGroups.find((group) => group.key === "invoice")
+      ?.href,
+    "/communications?source=invoice&threadId=invoice-thread"
+  );
+  assert.equal(
+    summary.recordOwnershipGroups.find((group) => group.key === "project")
+      ?.internalCount,
+    1
+  );
+});
+
+void test("communication workspace exposes record ownership groups without creating placeholder threads", () => {
+  const threads = [
+    buildThread({
+      id: "contract-needs-response",
+      needsResponse: true,
+      unreadCount: 1,
+      subject: {
+        type: "contract",
+        id: "contract-1",
+        label: "Contract C-1001",
+        href: "/contracts/contract-1"
+      },
+      lastActivityAt: "2026-05-28T17:00:00.000Z"
+    }),
+    buildThread({
+      id: "older-contract",
+      subject: {
+        type: "contract",
+        id: "contract-2",
+        label: "Contract C-1000",
+        href: "/contracts/contract-2"
+      },
+      lastActivityAt: "2026-05-27T17:00:00.000Z"
+    })
+  ];
+  const summary = deriveCommunicationWorkspaceSummary({
+    threads,
+    threadSummary: { ...baseSummary, totalCount: threads.length },
+    contextEvents: [],
+    notificationCount: 0,
+    now: new Date("2026-05-29T00:00:00.000Z")
+  });
+  const contractGroup = summary.recordOwnershipGroups.find(
+    (group) => group.key === "contract"
+  );
+  const changeOrderGroup = summary.recordOwnershipGroups.find(
+    (group) => group.key === "change_order"
+  );
+
+  assert.equal(contractGroup?.count, 2);
+  assert.equal(contractGroup?.needsResponseCount, 1);
+  assert.equal(contractGroup?.unreadCount, 1);
+  assert.equal(contractGroup?.latestThreadLabel, "Contract C-1001");
+  assert.equal(
+    contractGroup?.href,
+    "/communications?source=contract&threadId=contract-needs-response"
+  );
+  assert.equal(changeOrderGroup?.count, 0);
+  assert.equal(changeOrderGroup?.href, "/communications?source=change_order");
+  assert.match(
+    changeOrderGroup?.emptyDetail ?? "",
+    /No change-order conversations/
+  );
 });
 
 void test("communication workspace derives follow-up attention without creating tasks", () => {

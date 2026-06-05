@@ -719,6 +719,88 @@ export default async function CommunicationsPage({
             ))}
           </div>
 
+          <section className="mt-5 rounded-[4px] border border-[#e5e5e5] bg-white px-4 py-4">
+            <div className="flex flex-wrap items-end justify-between gap-3">
+              <div>
+                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#666666]">
+                  Conversations by linked record
+                </p>
+                <h3 className="mt-2 text-lg font-semibold tracking-tight text-slate-950">
+                  Communications owns the action surface
+                </h3>
+                <p className="mt-1 max-w-[76ch] text-sm leading-6 text-slate-500">
+                  These groups are derived from existing canonical communication
+                  threads. Record workspaces can show compact evidence, but
+                  message review, replies, unread triage, and portal-safe
+                  boundaries stay here.
+                </p>
+              </div>
+              <span className="rounded-full border border-[#d6d6d6] bg-[#f8f8f8] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-600">
+                No duplicate thread model
+              </span>
+            </div>
+
+            <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+              {workspaceSummary.recordOwnershipGroups.map((group) => (
+                <Link
+                  key={group.key}
+                  href={group.href}
+                  className="rounded-[4px] border border-[#e5e5e5] bg-[#f8f8f8] px-3 py-3 transition hover:border-[#ef7d32] hover:bg-white"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#666666]">
+                        {group.label}
+                      </p>
+                      <p className="mt-2 text-sm font-semibold text-slate-950">
+                        {group.count > 0
+                          ? group.latestThreadLabel
+                          : "No conversations yet"}
+                      </p>
+                      <p className="mt-1 text-sm leading-6 text-slate-500">
+                        {group.count > 0 ? group.detail : group.emptyDetail}
+                      </p>
+                    </div>
+                    <div className="shrink-0 text-right">
+                      <p className="text-xl font-semibold text-slate-950">
+                        {group.count}
+                      </p>
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400">
+                        Threads
+                      </p>
+                    </div>
+                  </div>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {group.needsResponseCount > 0 ? (
+                      <span className="inline-flex rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-amber-800">
+                        {group.needsResponseCount} needs response
+                      </span>
+                    ) : null}
+                    {group.unreadCount > 0 ? (
+                      <span className="inline-flex rounded-full border border-[#d6d6d6] bg-white px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-600">
+                        {group.unreadCount} unread
+                      </span>
+                    ) : null}
+                    <span className="inline-flex rounded-full border border-[#d6d6d6] bg-white px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-600">
+                      {group.customerVisibleCount} customer-visible
+                    </span>
+                    <span className="inline-flex rounded-full border border-[#d6d6d6] bg-white px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-600">
+                      {group.internalCount} internal
+                    </span>
+                  </div>
+                  <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+                    <span className="text-xs leading-5 text-slate-500">
+                      Latest: {formatDateTime(group.latestActivityAt)}
+                    </span>
+                    <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#8f5b32]">
+                      {group.actionLabel}
+                    </span>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </section>
+
           <div className="mt-5 grid gap-4 lg:grid-cols-2">
             <div className="rounded-[4px] border border-[#e5e5e5] bg-[#fffcf7] px-4 py-4">
               <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#8f5b32]">

@@ -59,6 +59,28 @@ export type CommunicationDeliveryProofReviewSummary = {
   sourceLabels: string[];
 };
 
+export type CommunicationRecordOwnershipGroup = {
+  key:
+    | "project"
+    | "customer"
+    | "estimate"
+    | "contract"
+    | "invoice"
+    | "change_order";
+  label: string;
+  count: number;
+  needsResponseCount: number;
+  unreadCount: number;
+  customerVisibleCount: number;
+  internalCount: number;
+  latestActivityAt: string | null;
+  latestThreadLabel: string;
+  href: string;
+  actionLabel: string;
+  detail: string;
+  emptyDetail: string;
+};
+
 export type CommunicationWorkspaceSummary = {
   primaryStatus: string;
   primaryDetail: string;
@@ -83,6 +105,7 @@ export type CommunicationWorkspaceSummary = {
   lanes: CommunicationWorkspaceLane[];
   attentionItems: CommunicationWorkspaceAttentionItem[];
   recentContextEvents: ContractorCommunicationContextEvent[];
+  recordOwnershipGroups: CommunicationRecordOwnershipGroup[];
   deliveryProofRecordGroups: CommunicationDeliveryProofRecordGroup[];
   deliveryProofReviewSummary: CommunicationDeliveryProofReviewSummary;
 };
@@ -323,6 +346,104 @@ function getDeliveryProofCommunicationHref(
   return `/communications?source=${sourceType}`;
 }
 
+const RECORD_OWNERSHIP_GROUPS = [
+  {
+    key: "project",
+    label: "Project",
+    actionLabel: "Act in Communications",
+    detail: "Project threads are the operational conversation handoff.",
+    emptyDetail:
+      "No project-linked conversation history exists yet. Project pages should keep compact evidence and route action here."
+  },
+  {
+    key: "customer",
+    label: "Customer",
+    actionLabel: "Review relationship thread",
+    detail: "Customer threads carry account and relationship continuity.",
+    emptyDetail:
+      "No customer relationship threads exist yet. Customer Workspace remains summary-only until communication history is present."
+  },
+  {
+    key: "estimate",
+    label: "Estimate",
+    actionLabel: "Review proposal conversation",
+    detail:
+      "Estimate threads keep proposal conversation beside the source record.",
+    emptyDetail:
+      "No estimate conversations exist yet. Estimate delivery proof stays evidence, not message truth."
+  },
+  {
+    key: "contract",
+    label: "Contract",
+    actionLabel: "Review signature conversation",
+    detail:
+      "Contract threads keep signature and customer decision context record-linked.",
+    emptyDetail:
+      "No contract conversations exist yet. Contract pages should link here when conversation action is needed."
+  },
+  {
+    key: "invoice",
+    label: "Invoice",
+    actionLabel: "Review billing conversation",
+    detail:
+      "Invoice threads keep collections and billing follow-up in Communications.",
+    emptyDetail:
+      "No invoice conversations exist yet. Payment and delivery proof remain read-only evidence."
+  },
+  {
+    key: "change_order",
+    label: "Change Order",
+    actionLabel: "Review scope-change conversation",
+    detail:
+      "Change-order threads keep scope-change decisions tied to the canonical record.",
+    emptyDetail:
+      "No change-order conversations exist yet. Scope-change action should not be duplicated on record panels."
+  }
+] as const;
+
+function getRecordOwnershipThreadLabel(
+  thread: ContractorCommunicationThreadListItem | null
+) {
+  return thread?.subject.label ?? "No thread selected";
+}
+
+function buildRecordOwnershipGroups(
+  threads: ReadonlyArray<ContractorCommunicationThreadListItem>
+): CommunicationRecordOwnershipGroup[] {
+  return RECORD_OWNERSHIP_GROUPS.map((group) => {
+    const groupThreads = threads
+      .filter((thread) => thread.subject.type === group.key)
+      .sort((left, right) =>
+        right.lastActivityAt.localeCompare(left.lastActivityAt)
+      );
+    const latestThread = groupThreads[0] ?? null;
+
+    return {
+      key: group.key,
+      label: group.label,
+      count: groupThreads.length,
+      needsResponseCount: groupThreads.filter((thread) => thread.needsResponse)
+        .length,
+      unreadCount: groupThreads.filter((thread) => thread.unreadCount > 0)
+        .length,
+      customerVisibleCount: groupThreads.filter(
+        (thread) => thread.lastMessageVisibility === "customer_visible"
+      ).length,
+      internalCount: groupThreads.filter(
+        (thread) => thread.lastMessageVisibility === "internal"
+      ).length,
+      latestActivityAt: latestThread?.lastActivityAt ?? null,
+      latestThreadLabel: getRecordOwnershipThreadLabel(latestThread),
+      href: latestThread
+        ? `/communications?source=${group.key}&threadId=${latestThread.id}`
+        : `/communications?source=${group.key}`,
+      actionLabel: group.actionLabel,
+      detail: group.detail,
+      emptyDetail: group.emptyDetail
+    };
+  });
+}
+
 export function deriveDeliveryProofRecordGroups(
   events: ReadonlyArray<ContractorCommunicationContextEvent>
 ): CommunicationDeliveryProofRecordGroup[] {
@@ -481,6 +602,7 @@ export function deriveCommunicationWorkspaceSummary(input: {
   const deliveryProofRecordGroups = deriveDeliveryProofRecordGroups(
     input.contextEvents
   );
+  const recordOwnershipGroups = buildRecordOwnershipGroups(input.threads);
   const deliveryProofReviewSummary = deriveDeliveryProofReviewSummary(
     deliveryProofRecordGroups
   );
@@ -615,6 +737,7 @@ export function deriveCommunicationWorkspaceSummary(input: {
     lanes,
     attentionItems,
     recentContextEvents: input.contextEvents.slice(0, 6),
+    recordOwnershipGroups,
     deliveryProofRecordGroups,
     deliveryProofReviewSummary
   };
