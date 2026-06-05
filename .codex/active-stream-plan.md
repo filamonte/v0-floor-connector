@@ -107,8 +107,8 @@ Remaining gates:
 ## Merged Streams
 
 These streams have merged to `main`. Completed
-`operational-command-center-v1` worktrees are retirement candidates retained
-until explicit cleanup approval:
+`operational-command-center-v1` worktrees and eligible branches were retired
+after explicit cleanup approval:
 
 ### verification
 
@@ -168,7 +168,7 @@ until explicit cleanup approval:
 - Must avoid: duplicate project/action models, scheduling ownership, financial
   action ownership, communication ownership, portal-owned operational state.
 - Merged: `c809186c feat: clarify project operational command center`.
-- Cleanup: retirement candidate; do not remove without explicit approval.
+- Cleanup: worktree and local branch removed after explicit approval.
 
 ### field-command-center-v1
 
@@ -178,8 +178,8 @@ until explicit cleanup approval:
 - Must avoid: duplicate dispatch models, readiness bypasses, mobile-only
   schedule state, portal-owned execution truth.
 - Merged: `6df16ed1 feat: shape field command center (#15)`.
-- Cleanup: retirement candidate; do not remove local worktree or remote branch
-  without explicit approval.
+- Cleanup: worktree, local branch, and remote branch removed after explicit
+  approval.
 
 ### communications-continuity-v2
 
@@ -189,7 +189,7 @@ until explicit cleanup approval:
 - Must avoid: detached inbox truth, provider-owned business truth, hidden sends,
   portal leakage, duplicate message models.
 - Merged: `890bfbad feat: strengthen communications continuity workspace`.
-- Cleanup: retirement candidate; do not remove without explicit approval.
+- Cleanup: worktree and local branch removed after explicit approval.
 
 ### financial-command-center-v1
 
@@ -199,7 +199,7 @@ until explicit cleanup approval:
 - Must avoid: duplicate ledgers, detached invoice/payment truth, unscoped
   financial math changes, provider mutation, schema changes.
 - Merged: `5844f52e feat: shape financial command center`.
-- Cleanup: retirement candidate; do not remove without explicit approval.
+- Cleanup: worktree and local branch removed after explicit approval.
 
 ### verification-v2
 
@@ -210,7 +210,7 @@ until explicit cleanup approval:
 - Must avoid: feature implementation, schema, routes, runtime behavior, hidden
   local-only workflow state.
 - Merged: `f7caf1db test: protect operational ownership model`.
-- Cleanup: retirement candidate; do not remove without explicit approval.
+- Cleanup: worktree and local branch removed after explicit approval.
 
 ## Completed Merge Order
 

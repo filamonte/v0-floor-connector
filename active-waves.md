@@ -168,5 +168,6 @@ Remaining gates:
   cleanup, and any scope outside the approved stream briefs still require human
   review and approval.
 
-Wave status: Merged to `main`; completed wave worktrees are retirement
-candidates retained pending explicit cleanup approval.
+Wave status: Merged to `main`; completed wave worktrees and eligible branches
+were retired after explicit cleanup approval. No next wave is approved by this
+cleanup.
