@@ -38,13 +38,14 @@ Work -> Verification -> Integration Review Packet -> Jeff Approval -> Continue.
 Agents may prepare scoped work and review packets, but may not auto-merge,
 auto-continue, or bypass Jeff approval.
 
-Current wave gate note: `operational-command-center-v1` has Architecture
-Coordination approval recorded for `stream/project-workspace-v2`,
-`stream/field-command-center-v1`, `stream/communications-continuity-v2`,
-`stream/financial-command-center-v1`, and `stream/verification-v2`. Jeff has
-explicitly approved starting the wave, so implementation prompts may begin under
-the human review gate. Agents may plan, build, validate, and prepare review
-packets, but may not auto-merge or continue indefinitely without Jeff approval.
+Current wave gate note: `operational-command-center-v1` has merged to `main`
+under Jeff's controlled merge approval. Project Workspace V2 merged as
+`c809186c`, Field Command Center V1 was already on `main` as `6df16ed1`,
+Communications Continuity V2 merged as `890bfbad`, Financial Command Center V1
+merged as `5844f52e`, and Verification V2 merged as `f7caf1db`. The local
+worktrees remain retained pending explicit retirement approval. The next wave is
+not approved from this handoff; agents may not auto-continue or perform
+destructive cleanup without Jeff approval.
 
 ## Required First Reads
 

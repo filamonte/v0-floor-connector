@@ -1,8 +1,8 @@
 # Operational Command Center V1 Review Packet
 
-Status: Integration Review
+Status: Merged
 Doc Type: Review Packet
-Review date: 2026-06-04
+Review date: 2026-06-05
 
 ## Executive Summary
 
@@ -12,35 +12,42 @@ Workspace diagnoses, owning workspaces act, Settings owns tenant configuration,
 Super Admin owns platform policy, and Portal remains customer-safe review/action
 only.
 
-The stale stream alignment blocker has been resolved. All remaining unmerged
-candidate streams have been rebased onto current `origin/main`, now satisfy the
-`0` behind / `1` ahead merge preflight condition, include the current governance
-docs at `docs/operational-architecture-v1.md` and
-`docs/parallel-development-governance.md`, and passed their final pre-merge
-validation stacks. `stream/field-command-center-v1` is already merged on `main`
-as `6df16ed1`.
+The stale stream alignment blocker was resolved, Jeff approved the controlled
+merge, and all approved streams have landed on `main`. Project Workspace V2,
+Communications Continuity V2, Financial Command Center V1, and Verification V2
+were final-rebased onto current `origin/main`, confirmed clean at `0` behind /
+`1` ahead, and squash-merged in the approved order. Field Command Center V1 was
+already merged on `main` as `6df16ed1`.
 
-This packet is a review artifact only. It does not grant Jeff approval, merge
-streams, open PRs, rebase branches, or start a new wave.
+This packet is now the closeout record. It does not start a new wave, approve
+worktree retirement, or authorize destructive cleanup.
 
 ## Streams Completed
 
-| Stream                       | Worktree                                       | Branch                                | Commit                                                          | Live branch state                                                                    | Readiness                         |
-| ---------------------------- | ---------------------------------------------- | ------------------------------------- | --------------------------------------------------------------- | ------------------------------------------------------------------------------------ | --------------------------------- |
-| Project Workspace V2         | `C:\FC-worktrees\project-workspace-v2`         | `stream/project-workspace-v2`         | `6a74813e feat: clarify project operational command center`     | Clean, `0` behind / `1` ahead of `origin/main`; governance docs present after rebase | Ready                             |
-| Field Command Center V1      | `C:\FC-worktrees\field-command-center-v1`      | `stream/field-command-center-v1`      | `6df16ed1 feat: shape field command center (#15)`               | Clean, `0` behind / `0` ahead; commit already on `origin/main`                       | Already on main / no merge needed |
-| Communications Continuity V2 | `C:\FC-worktrees\communications-continuity-v2` | `stream/communications-continuity-v2` | `70875ecf feat: strengthen communications continuity workspace` | Clean, `0` behind / `1` ahead of `origin/main`; governance docs present after rebase | Ready                             |
-| Financial Command Center V1  | `C:\FC-worktrees\financial-command-center-v1`  | `stream/financial-command-center-v1`  | `59ed4596 feat: shape financial command center`                 | Clean, `0` behind / `1` ahead of `origin/main`; governance docs present after rebase | Ready                             |
-| Verification V2              | `C:\FC-worktrees\verification-v2`              | `stream/verification-v2`              | `0c90ff89 test: protect operational ownership model`            | Clean, `0` behind / `1` ahead of `origin/main`; governance docs present after rebase | Ready                             |
+| Stream                       | Worktree                                       | Branch                                | Commit                                                          | Live branch state                                              | Readiness                         |
+| ---------------------------- | ---------------------------------------------- | ------------------------------------- | --------------------------------------------------------------- | -------------------------------------------------------------- | --------------------------------- |
+| Project Workspace V2         | `C:\FC-worktrees\project-workspace-v2`         | `stream/project-workspace-v2`         | `db94468d feat: clarify project operational command center`     | Rebased cleanly, then merged to `main` as `c809186c`           | Merged                            |
+| Field Command Center V1      | `C:\FC-worktrees\field-command-center-v1`      | `stream/field-command-center-v1`      | `6df16ed1 feat: shape field command center (#15)`               | Clean, `0` behind / `0` ahead; commit already on `origin/main` | Already on main / no merge needed |
+| Communications Continuity V2 | `C:\FC-worktrees\communications-continuity-v2` | `stream/communications-continuity-v2` | `8fd48b97 feat: strengthen communications continuity workspace` | Rebased cleanly, then merged to `main` as `890bfbad`           | Merged                            |
+| Financial Command Center V1  | `C:\FC-worktrees\financial-command-center-v1`  | `stream/financial-command-center-v1`  | `f0844a28 feat: shape financial command center`                 | Rebased cleanly, then merged to `main` as `5844f52e`           | Merged                            |
+| Verification V2              | `C:\FC-worktrees\verification-v2`              | `stream/verification-v2`              | `9a8bf24d test: protect operational ownership model`            | Rebased cleanly, then merged to `main` as `f7caf1db`           | Merged                            |
 
 ## Commits By Stream
 
-- Project Workspace V2: `6a74813e feat: clarify project operational command center`
+- Project Workspace V2: `db94468d feat: clarify project operational command center`
 - Field Command Center V1: `6df16ed1 feat: shape field command center (#15)`
 - Communications Continuity V2:
-  `70875ecf feat: strengthen communications continuity workspace`
-- Financial Command Center V1: `59ed4596 feat: shape financial command center`
-- Verification V2: `0c90ff89 test: protect operational ownership model`
+  `8fd48b97 feat: strengthen communications continuity workspace`
+- Financial Command Center V1: `f0844a28 feat: shape financial command center`
+- Verification V2: `9a8bf24d test: protect operational ownership model`
+
+## Main Merge Commits
+
+- Project Workspace V2: `c809186c feat: clarify project operational command center`
+- Communications Continuity V2:
+  `890bfbad feat: strengthen communications continuity workspace`
+- Financial Command Center V1: `5844f52e feat: shape financial command center`
+- Verification V2: `f7caf1db test: protect operational ownership model`
 
 ## Files Changed By Stream
 
@@ -135,6 +142,33 @@ streams, open PRs, rebase branches, or start a new wave.
 | Verification V2              | Rebased cleanly onto current `origin/main` as `0c90ff89`; `0` behind / `1` ahead; `docs/operational-architecture-v1.md` and `docs/parallel-development-governance.md` present; `pnpm.cmd --filter @floorconnector/web typecheck` passed; `pnpm.cmd --filter @floorconnector/web lint` passed; `pnpm.cmd fc:preflight:fast` passed; `git diff --check` passed; `pnpm.cmd --filter @floorconnector/web exec tsx --test lib/verification/operational-ownership.test.ts` passed, 4 tests; `pnpm.cmd --filter @floorconnector/web exec tsx --test lib/verification/golden-workflow-checks.test.ts` passed, 5 tests |
 
 These validations should be rerun if any stream is changed again before merge.
+
+## Controlled Merge Validation
+
+After each squash merge on `main`, the following checks passed:
+
+- `pnpm.cmd --filter @floorconnector/web typecheck`
+- `pnpm.cmd --filter @floorconnector/web lint`
+- `pnpm.cmd fc:preflight:fast`
+- `git diff --check`
+
+Targeted tests after all merges passed:
+
+- `pnpm.cmd --filter @floorconnector/web exec tsx --test lib/projects/project-next-actions.test.ts`
+  passed, 6 tests.
+- `pnpm.cmd --filter @floorconnector/web exec tsx --test lib/communications/workspace-summary.test.ts`
+  passed, 11 tests.
+- `pnpm.cmd --filter @floorconnector/web exec tsx --test lib/verification/operational-ownership.test.ts`
+  passed, 4 tests.
+- `pnpm.cmd --filter @floorconnector/web exec tsx --test lib/verification/golden-workflow-checks.test.ts`
+  passed, 5 tests.
+
+Final validation after all merges passed:
+
+- `pnpm.cmd --filter @floorconnector/web typecheck`
+- `pnpm.cmd --filter @floorconnector/web lint`
+- `pnpm.cmd fc:preflight:fast`
+- `git diff --check`
 
 ## Governance Review
 
@@ -282,17 +316,17 @@ with saved contractor auth and report auth/rate-limit blockers honestly:
 /invoices
 ```
 
-## Merge Readiness Recommendation
+## Merge Result
 
-| Stream                       | Decision                          | Reason                                                                                                                                   |
-| ---------------------------- | --------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| Field Command Center V1      | Already on main / no merge needed | `6df16ed1` is contained in `origin/main`; branch has no diff against `origin/main`.                                                      |
-| Project Workspace V2         | Ready                             | Rebased cleanly onto current `origin/main`, governance docs are present, candidate changes remain, and reconciliation validation passed. |
-| Communications Continuity V2 | Ready                             | Clean one-commit candidate, current with `origin/main`, no duplicate communication model found.                                          |
-| Financial Command Center V1  | Ready                             | Clean one-commit candidate, current with `origin/main`, no financial model/math drift found.                                             |
-| Verification V2              | Ready                             | Rebased cleanly onto current `origin/main`, governance docs are present, candidate changes remain, and reconciliation validation passed. |
+| Stream                       | Decision                          | Reason                                                            |
+| ---------------------------- | --------------------------------- | ----------------------------------------------------------------- |
+| Field Command Center V1      | Already on main / no merge needed | `6df16ed1` is contained in `main`.                                |
+| Project Workspace V2         | Merged                            | Final-rebased as `db94468d`, then merged to `main` as `c809186c`. |
+| Communications Continuity V2 | Merged                            | Final-rebased as `8fd48b97`, then merged to `main` as `890bfbad`. |
+| Financial Command Center V1  | Merged                            | Final-rebased as `f0844a28`, then merged to `main` as `5844f52e`. |
+| Verification V2              | Merged                            | Final-rebased as `9a8bf24d`, then merged to `main` as `f7caf1db`. |
 
-Recommended merge order after reconciliation:
+Completed merge order after reconciliation:
 
 1. Field Command Center V1: already on `main`, no merge.
 2. Project Workspace V2.
@@ -300,17 +334,14 @@ Recommended merge order after reconciliation:
 4. Financial Command Center V1.
 5. Verification V2.
 
-This order keeps Project's diagnostic handoff in place before the owning
-workspace expansions and lets Verification land after it can see the reconciled
-ownership model.
+This order kept Project's diagnostic handoff in place before the owning
+workspace expansions and let Verification land after it could see the
+reconciled ownership model.
 
 ## Risks / Follow-Ups
 
-- Project Workspace V2 and Verification V2 have been rebased cleanly, but their
-  validation should be rerun if any additional edits occur before merge.
-- Communications and Financials should still rerun their focused helper tests,
-  typecheck, lint, and preflight after merge sequencing, even though their
-  branch alignment is clean now.
+- Local worktrees for the merged streams are still retained and should only be
+  retired after explicit owner approval.
 - Browser route smoke remains useful for the user-facing pages, but any missing
   auth state, missing fixture, redirect to `/login`, 404, access denial, or
   Supabase Auth rate limit must be reported as blocked/skipped evidence rather

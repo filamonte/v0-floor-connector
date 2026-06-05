@@ -50,11 +50,11 @@ candidates only until Architecture Coordination and Jeff approve the wave gate.
 | Stream                         | Branch                                | Worktree                                       | Proposed ownership area                                        | Lifecycle status    |
 | ------------------------------ | ------------------------------------- | ---------------------------------------------- | -------------------------------------------------------------- | ------------------- |
 | `ux-architecture`              | `stream/ux-architecture`              | `C:\FC-worktrees\ux-architecture`              | Product architecture, UX / IA ownership, governance references | Architecture Review |
-| `project-workspace-v2`         | `stream/project-workspace-v2`         | `C:\FC-worktrees\project-workspace-v2`         | Project Workspace continuity and next-action depth             | Architecture Review |
-| `field-command-center-v1`      | `stream/field-command-center-v1`      | `C:\FC-worktrees\field-command-center-v1`      | Field execution command layer over canonical execution records | Architecture Review |
-| `communications-continuity-v2` | `stream/communications-continuity-v2` | `C:\FC-worktrees\communications-continuity-v2` | Record-linked communication continuity and follow-up review    | Architecture Review |
-| `financial-command-center-v1`  | `stream/financial-command-center-v1`  | `C:\FC-worktrees\financial-command-center-v1`  | AR, collections, billing command-center continuity             | Architecture Review |
-| `verification-v2`              | `stream/verification-v2`              | `C:\FC-worktrees\verification-v2`              | Verification framework, review packets, merge-gate evidence    | Architecture Review |
+| `project-workspace-v2`         | `stream/project-workspace-v2`         | `C:\FC-worktrees\project-workspace-v2`         | Project Workspace continuity and next-action depth             | Merged              |
+| `field-command-center-v1`      | `stream/field-command-center-v1`      | `C:\FC-worktrees\field-command-center-v1`      | Field execution command layer over canonical execution records | Merged              |
+| `communications-continuity-v2` | `stream/communications-continuity-v2` | `C:\FC-worktrees\communications-continuity-v2` | Record-linked communication continuity and follow-up review    | Merged              |
+| `financial-command-center-v1`  | `stream/financial-command-center-v1`  | `C:\FC-worktrees\financial-command-center-v1`  | AR, collections, billing command-center continuity             | Merged              |
+| `verification-v2`              | `stream/verification-v2`              | `C:\FC-worktrees\verification-v2`              | Verification framework, review packets, merge-gate evidence    | Merged              |
 
 The detailed audit for ownership, dependencies, UX / IA impact, canonical model
 risk, overlap/conflict, verification expectations, and merge readiness lives in
@@ -76,7 +76,7 @@ Architecture Coordination approval: Approved.
 Jeff approval gate: Approved. Jeff explicitly approved starting
 `operational-command-center-v1`.
 
-Approved stream set ready to begin under the human review gate:
+Approved stream set merged to `main` under Jeff's controlled merge approval:
 
 - `stream/project-workspace-v2`
 - `stream/field-command-center-v1`
@@ -94,16 +94,15 @@ Governance rule:
 - Portal remains customer-safe review/action only.
 
 UX Architecture / Architecture Coordination remains the governance referee.
-Agents may plan, build, validate, and prepare review packets under human review
-gate rules, but may not auto-merge or continue indefinitely without Jeff
-approval.
+Agents may not auto-continue to the next wave or perform destructive cleanup
+without Jeff approval.
 
 Remaining gates:
 
-- No start gate remains for the approved stream set.
-- Merge, next-wave continuation, provider/customer-facing risky actions,
-  destructive cleanup, and any scope outside the approved stream briefs still
-  require human review and approval.
+- No start or merge gate remains for the approved stream set.
+- Next-wave continuation, provider/customer-facing risky actions, destructive
+  cleanup, and any scope outside the approved stream briefs still require human
+  review and approval.
 
 ## Merged Streams
 
@@ -159,6 +158,52 @@ temporarily until explicit retirement:
 - Must avoid: duplicate ledgers, accounting-provider truth, invoice/payment math
   changes unless explicitly scoped, job-costing mutation before inputs mature.
 - Merged: Financials AR / Reporting Control Room V1.
+
+### project-workspace-v2
+
+- Branch: `stream/project-workspace-v2`
+- Worktree: `C:\FC-worktrees\project-workspace-v2`
+- Owns: Project Workspace continuity and next-action ownership clarity.
+- Must avoid: duplicate project/action models, scheduling ownership, financial
+  action ownership, communication ownership, portal-owned operational state.
+- Merged: `c809186c feat: clarify project operational command center`.
+
+### field-command-center-v1
+
+- Branch: `stream/field-command-center-v1`
+- Worktree: `C:\FC-worktrees\field-command-center-v1`
+- Owns: field execution command layer over canonical execution records.
+- Must avoid: duplicate dispatch models, readiness bypasses, mobile-only
+  schedule state, portal-owned execution truth.
+- Merged: `6df16ed1 feat: shape field command center (#15)`.
+
+### communications-continuity-v2
+
+- Branch: `stream/communications-continuity-v2`
+- Worktree: `C:\FC-worktrees\communications-continuity-v2`
+- Owns: record-linked communication continuity and follow-up review.
+- Must avoid: detached inbox truth, provider-owned business truth, hidden sends,
+  portal leakage, duplicate message models.
+- Merged: `890bfbad feat: strengthen communications continuity workspace`.
+
+### financial-command-center-v1
+
+- Branch: `stream/financial-command-center-v1`
+- Worktree: `C:\FC-worktrees\financial-command-center-v1`
+- Owns: AR, collections, billing command-center continuity.
+- Must avoid: duplicate ledgers, detached invoice/payment truth, unscoped
+  financial math changes, provider mutation, schema changes.
+- Merged: `5844f52e feat: shape financial command center`.
+
+### verification-v2
+
+- Branch: `stream/verification-v2`
+- Worktree: `C:\FC-worktrees\verification-v2`
+- Owns: operational ownership verification framework and review-packet
+  evidence.
+- Must avoid: feature implementation, schema, routes, runtime behavior, hidden
+  local-only workflow state.
+- Merged: `f7caf1db test: protect operational ownership model`.
 
 ## Completed Merge Order
 

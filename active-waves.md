@@ -130,14 +130,14 @@ Governance rule:
 - Super Admin owns platform policy.
 - Portal remains customer-safe review/action only.
 
-Gate status as of 2026-06-04:
+Gate status as of 2026-06-05:
 
-| Gate item                              | Status      | Evidence / note                                                               |
-| -------------------------------------- | ----------- | ----------------------------------------------------------------------------- |
-| Architecture Coordination approval     | Approved    | Ownership boundaries and stream set are recorded in this registry and plan.   |
-| Jeff approval gate                     | Approved    | Jeff explicitly approved starting `operational-command-center-v1`.            |
-| Human review gate rules                | Required    | Agents may plan, build, validate, and prepare review packets.                 |
-| Autonomous merge / indefinite continue | Not allowed | Merge, next-wave continuation, and destructive cleanup require Jeff approval. |
+| Gate item                              | Status      | Evidence / note                                                             |
+| -------------------------------------- | ----------- | --------------------------------------------------------------------------- |
+| Architecture Coordination approval     | Approved    | Ownership boundaries and stream set are recorded in this registry and plan. |
+| Jeff approval gate                     | Approved    | Jeff explicitly approved starting `operational-command-center-v1`.          |
+| Human review gate rules                | Satisfied   | Jeff approved the controlled final rebase-and-merge prompt.                 |
+| Autonomous merge / indefinite continue | Not allowed | Next-wave continuation and destructive cleanup still require Jeff approval. |
 
 Architecture-approved implementation stream set:
 
@@ -153,11 +153,20 @@ Governance referee:
   ownership, dependency, UX / IA, canonical model, verification, and merge-order
   decisions.
 
+Merge result:
+
+- Project Workspace V2 merged to `main` as `c809186c`.
+- Field Command Center V1 was already on `main` as `6df16ed1`.
+- Communications Continuity V2 merged to `main` as `890bfbad`.
+- Financial Command Center V1 merged to `main` as `5844f52e`.
+- Verification V2 merged to `main` as `f7caf1db`.
+
 Remaining gates:
 
-- No start gate remains for the approved stream set.
-- Merge, next-wave continuation, provider/customer-facing risky actions,
-  destructive cleanup, and any scope outside the approved stream briefs still
-  require human review and approval.
+- No start or merge gate remains for the approved stream set.
+- Next-wave continuation, provider/customer-facing risky actions, destructive
+  cleanup, and any scope outside the approved stream briefs still require human
+  review and approval.
 
-Wave status: Approved to begin under the human review gate.
+Wave status: Merged to `main`; local worktrees retained pending explicit
+retirement approval.
