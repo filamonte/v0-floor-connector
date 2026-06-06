@@ -3,74 +3,78 @@
 Status date: 2026-06-06
 
 Status source: live Git/worktree inspection from `C:\FloorConnector` on `main`
-after `git fetch origin`, plus the active governance docs listed in the task.
+after `git fetch origin`, `git push origin main`, stream rebase onto current
+`origin/main`, implementation recovery, and validation.
 
 ## Wave Status
 
-`sales-to-production-readiness-v1` is partially started locally, but it is not
-ready for verification.
+`sales-to-production-readiness-v1` implementation recovery is complete for the
+three approved implementation streams.
 
-Governance docs still define the wave as approved for stream/worktree creation,
-with human review required before merge, PR creation, or continuation. Live Git
-shows that three streams remain at the wave-approval commit and are behind
-current `origin/main`. One stream, `schedule-readiness-handoff-v1`, has a local
-implementation commit and a clean worktree, but it is also behind current
-`origin/main` and no accessible recent Codex thread summary/final report was
-found for it.
+The streams were rebased onto current `origin/main` after `origin/main` advanced
+to `e47cd029 docs: harden AI operational governance`. Each implementation
+stream is clean, has one implementation commit ahead of `origin/main`, and has
+current validation evidence. The wave verification stream has not started and
+should be rebased before work begins.
 
 `main` status after fetch:
 
 - Branch: `main`
 - Clean: yes
 - Ahead/behind `origin/main`: `0 ahead / 0 behind`
-- Latest `main` commit: `051e2843 docs: add guided project capture strategy`
+- Latest `main` commit: `e47cd029 docs: harden AI operational governance`
 
 ## Stream Status Table
 
-| Stream                                | Worktree exists | Branch                                       | Clean / dirty | Ahead / behind `origin/main` | Latest commit                                               | Implementation appears complete                                                                                         | Final report found                        | Verification should start                                        |
-| ------------------------------------- | --------------- | -------------------------------------------- | ------------- | ---------------------------- | ----------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- | ----------------------------------------- | ---------------------------------------------------------------- |
-| `sales-readiness-command-v1`          | Yes             | `stream/sales-readiness-command-v1`          | Clean         | `0 ahead / 1 behind`         | `226b9a3b docs: approve sales to production readiness wave` | No; no stream-specific commit beyond approval docs                                                                      | No accessible recent thread summary found | No                                                               |
-| `estimate-contract-readiness-v1`      | Yes             | `stream/estimate-contract-readiness-v1`      | Clean         | `0 ahead / 1 behind`         | `226b9a3b docs: approve sales to production readiness wave` | No; no stream-specific commit beyond approval docs                                                                      | No accessible recent thread summary found | No                                                               |
-| `schedule-readiness-handoff-v1`       | Yes             | `stream/schedule-readiness-handoff-v1`       | Clean         | `1 ahead / 1 behind`         | `e4d989de feat: clarify schedule readiness handoff`         | Partially evidenced; Git shows a committed local implementation, but no final report or validation transcript was found | No accessible recent thread summary found | Not yet; rebase/refresh and validation evidence are needed first |
-| `verification-sales-to-production-v1` | Yes             | `stream/verification-sales-to-production-v1` | Clean         | `0 ahead / 1 behind`         | `226b9a3b docs: approve sales to production readiness wave` | No; verification stream has not started                                                                                 | No accessible recent thread summary found | No                                                               |
+| Stream                                | Worktree exists | Branch                                       | Clean / dirty | Ahead / behind `origin/main` | Latest commit                                               | Implementation appears complete                                | Final report found                                          | Verification should start                                          |
+| ------------------------------------- | --------------- | -------------------------------------------- | ------------- | ---------------------------- | ----------------------------------------------------------- | -------------------------------------------------------------- | ----------------------------------------------------------- | ------------------------------------------------------------------ |
+| `sales-readiness-command-v1`          | Yes             | `stream/sales-readiness-command-v1`          | Clean         | `1 ahead / 0 behind`         | `75f89ef1 feat: clarify sales readiness command`            | Yes; sales estimate-readiness helper, tests, and lead UI added | No separate stream final report found                       | Yes, as part of wave verification after verification stream rebase |
+| `estimate-contract-readiness-v1`      | Yes             | `stream/estimate-contract-readiness-v1`      | Clean         | `1 ahead / 0 behind`         | `15d1fe41 feat: clarify estimate contract readiness`        | Yes; estimate-to-contract handoff helper, tests, and UI added  | No separate stream final report found                       | Yes, as part of wave verification after verification stream rebase |
+| `schedule-readiness-handoff-v1`       | Yes             | `stream/schedule-readiness-handoff-v1`       | Clean         | `1 ahead / 0 behind`         | `24f3d93e feat: clarify schedule readiness handoff`         | Yes; committed schedule readiness handoff slice remains clean  | No separate stream final report found in accessible history | Yes, as part of wave verification after verification stream rebase |
+| `verification-sales-to-production-v1` | Yes             | `stream/verification-sales-to-production-v1` | Clean         | `0 ahead / 4 behind`         | `226b9a3b docs: approve sales to production readiness wave` | Not started; intentionally held until implementation completed | Not applicable; verification has not started                | Yes; rebase onto `origin/main` first, then start verification only |
 
 ## Implementation Completion Status
 
-- `sales-readiness-command-v1`: not implemented in the inspected worktree.
-- `estimate-contract-readiness-v1`: not implemented in the inspected worktree.
-- `schedule-readiness-handoff-v1`: local implementation commit exists, but it
-  has not been proven merge-ready in this status pass.
-- `verification-sales-to-production-v1`: not started.
+- `sales-readiness-command-v1`: complete. The lead workspace now derives a
+  sales-to-estimate readiness summary from existing opportunity, customer,
+  project, site-assessment, scope, attachment, and estimate-owner context.
+- `estimate-contract-readiness-v1`: complete. The estimate workspace now
+  derives estimate-to-contract handoff readiness from the canonical estimate
+  and project readiness state, and routes workflow-default review back to
+  Settings.
+- `schedule-readiness-handoff-v1`: complete. The existing committed slice was
+  rebased and revalidated; it clarifies ready-to-schedule ownership and Field
+  handoff without adding duplicate schedule/job records.
+- `verification-sales-to-production-v1`: not started. It is now eligible to
+  start after rebasing onto current `origin/main`.
 
-Overall implementation status: incomplete. Verification should not begin as the
-wave-level verification pass because upstream implementation streams are
-unfinished and one implemented stream is behind current `origin/main`.
+Overall implementation status: complete for the three approved implementation
+streams. Verification is ready to start as the next wave action after rebasing
+the verification worktree.
 
 ## Commits By Stream
 
-| Stream                                | Commit hash                                | Commit message                                     |
-| ------------------------------------- | ------------------------------------------ | -------------------------------------------------- |
-| `sales-readiness-command-v1`          | `226b9a3b81efe3863e86e0724a80ca0511af607f` | `docs: approve sales to production readiness wave` |
-| `estimate-contract-readiness-v1`      | `226b9a3b81efe3863e86e0724a80ca0511af607f` | `docs: approve sales to production readiness wave` |
-| `schedule-readiness-handoff-v1`       | `e4d989de32366b4185b7b54508448f2bfcc36017` | `feat: clarify schedule readiness handoff`         |
-| `verification-sales-to-production-v1` | `226b9a3b81efe3863e86e0724a80ca0511af607f` | `docs: approve sales to production readiness wave` |
-
-`origin/main` contains one commit not in the four stream bases:
-`051e2843 docs: add guided project capture strategy`.
+| Stream                           | Commit hash                                | Commit message                              |
+| -------------------------------- | ------------------------------------------ | ------------------------------------------- |
+| `sales-readiness-command-v1`     | `75f89ef1841772061911073c1c5426a3799aecbb` | `feat: clarify sales readiness command`     |
+| `estimate-contract-readiness-v1` | `15d1fe4109d91d49a8b23c80156b30e72c5a1453` | `feat: clarify estimate contract readiness` |
+| `schedule-readiness-handoff-v1`  | `24f3d93eb796e85469ac84714f5faefc9189b57a` | `feat: clarify schedule readiness handoff`  |
 
 ## Files Changed By Stream
 
 ### `sales-readiness-command-v1`
 
-No files changed versus `origin/main`.
+- `apps/web/app/(app)/leads/[leadId]/page.tsx`
+- `apps/web/lib/opportunities/follow-up-read-model.test.ts`
+- `apps/web/lib/opportunities/follow-up-read-model.ts`
 
 ### `estimate-contract-readiness-v1`
 
-No files changed versus `origin/main`.
+- `apps/web/app/(app)/estimates/[estimateId]/page.tsx`
+- `apps/web/lib/document-readiness/readiness.test.ts`
+- `apps/web/lib/document-readiness/readiness.ts`
 
 ### `schedule-readiness-handoff-v1`
-
-Files changed versus `origin/main`:
 
 - `apps/web/app/(app)/schedule/page.tsx`
 - `apps/web/components/schedule-crewboard-presentational.tsx`
@@ -79,20 +83,20 @@ Files changed versus `origin/main`:
 - `apps/web/lib/schedule/read-model.test.ts`
 - `apps/web/lib/schedule/read-model.ts`
 
-Commit stat: 6 files changed, 357 insertions, 19 deletions.
-
 ### `verification-sales-to-production-v1`
 
-No files changed versus `origin/main`.
+No files changed. Verification has not started.
 
 ## Validations By Stream
 
-| Stream                                | Validation evidence found                                                                                                                                              |
-| ------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `sales-readiness-command-v1`          | None; no implementation commit found                                                                                                                                   |
-| `estimate-contract-readiness-v1`      | None; no implementation commit found                                                                                                                                   |
-| `schedule-readiness-handoff-v1`       | `git diff --check origin/main...HEAD` passed during this status pass; no typecheck/lint/test/final-report evidence found in accessible docs or recent thread summaries |
-| `verification-sales-to-production-v1` | None; verification not started                                                                                                                                         |
+| Stream                           | Validation results                                                                                                                                                                                                                                                                                                     |
+| -------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `sales-readiness-command-v1`     | Passed: `pnpm.cmd --filter @floorconnector/web exec tsx --test lib/opportunities/follow-up-read-model.test.ts` (7 tests); `pnpm.cmd --filter @floorconnector/web typecheck`; `pnpm.cmd --filter @floorconnector/web lint`; `pnpm.cmd fc:preflight:fast`; `git diff --check`; `git diff --cached --check` before commit |
+| `estimate-contract-readiness-v1` | Passed: `pnpm.cmd --filter @floorconnector/web exec tsx --test lib/document-readiness/readiness.test.ts` (11 tests); `pnpm.cmd --filter @floorconnector/web typecheck`; `pnpm.cmd --filter @floorconnector/web lint`; `pnpm.cmd fc:preflight:fast`; `git diff --check`; `git diff --cached --check` before commit      |
+| `schedule-readiness-handoff-v1`  | Passed: `pnpm.cmd --filter @floorconnector/web exec tsx --test lib/schedule/read-model.test.ts lib/schedule/dispatch-board.test.ts` (23 tests); `pnpm.cmd --filter @floorconnector/web typecheck`; `pnpm.cmd --filter @floorconnector/web lint`; `pnpm.cmd fc:preflight:fast`; `git diff --check`                      |
+
+All three implementation streams were revalidated after rebasing onto current
+`origin/main`.
 
 ## Dirty And Out-Of-Scope Worktrees
 
@@ -110,54 +114,36 @@ Dirty files in `project-next-actions`:
 - `apps/web/lib/communications/record-continuity.ts`
 - `docs/current-state.md`
 
-No active `sales-to-production-readiness-v1` stream currently touches the same
-files as the dirty `project-next-actions` worktree. The only stream with changed
-files is `schedule-readiness-handoff-v1`, and its changed files are all schedule
-page/component/read-model/test files.
+No active `sales-to-production-readiness-v1` implementation stream touches the
+same files as the dirty `project-next-actions` worktree.
 
 ## Blockers
 
-- `sales-readiness-command-v1` has not produced implementation work.
-- `estimate-contract-readiness-v1` has not produced implementation work.
-- `schedule-readiness-handoff-v1` is clean and committed, but it is behind
-  current `origin/main` and lacks accessible final-report and full validation
-  evidence.
-- `verification-sales-to-production-v1` should not begin wave verification until
-  the implementation streams have completed or Jeff explicitly narrows the
-  verification task.
+- No implementation blockers remain for the three approved implementation
+  streams.
+- `verification-sales-to-production-v1` is clean but `0 ahead / 4 behind`; it
+  must be rebased onto current `origin/main` before verification starts.
 - `project-next-actions` remains dirty and out of scope; it should remain
   untouched unless Jeff explicitly scopes it.
 
 ## Human Attention Needed
 
-Human attention is needed before verification or merge planning:
-
-- Decide whether `schedule-readiness-handoff-v1` should be rebased/refreshed on
-  current `origin/main` and asked for a final validation/report pass.
-- Decide whether to start or rerun `sales-readiness-command-v1` and
-  `estimate-contract-readiness-v1`, since both are currently no-op stream
-  worktrees.
-- Keep `project-next-actions` excluded unless Jeff explicitly changes the
-  scope.
+Human attention is needed to decide whether to start the verification stream
+now. The implementation prerequisites are met, but no merges or PRs should
+occur until verification is complete and Jeff explicitly approves the next
+step.
 
 ## Verification Readiness
 
-Verification is not ready to start as a wave-level final verification pass.
+Verification is ready to start as the next action for the wave.
 
-Reason: two implementation streams have no implementation commits, the only
-implemented stream is stale by one `origin/main` commit, and no complete
-validation/final-report evidence was found.
+Required first step: rebase `C:\FC-worktrees\verification-sales-to-production-v1`
+onto current `origin/main`, then run the verification-only pass against the
+three implementation commits listed above.
 
 ## Next Recommended Action
 
 Do not merge, open PRs, or start another wave.
 
-Recommended next action:
-
-1. Refresh or rerun `schedule-readiness-handoff-v1` against current
-   `origin/main`, then capture its validation and final report.
-2. Start or rerun `sales-readiness-command-v1`.
-3. Start or rerun `estimate-contract-readiness-v1`.
-4. Start `verification-sales-to-production-v1` only after the implementation
-   streams have completed and validation evidence is available, unless Jeff
-   explicitly asks for a narrower interim verification pass.
+Recommended next action: start `verification-sales-to-production-v1` only,
+after rebasing that verification worktree onto current `origin/main`.
