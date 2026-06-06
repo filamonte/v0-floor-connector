@@ -1,14 +1,15 @@
 # Sales To Production Readiness V1 Review Packet
 
-Status: Integration Review / Jeff Review Required
+Status: Merged to `main`
 Doc Type: Review Packet
 Review date: 2026-06-06
 Review source: live Git/worktree inspection from `C:\FloorConnector` on `main`
 after `git fetch origin`, required main preflight checks, stream worktree
 inspection, and diff review.
 
-This packet does not merge branches, open PRs, approve implementation, start a
-new wave, modify schema, or mark Jeff approval as granted.
+This packet records the approved controlled merge. It does not open PRs, start a
+new wave, modify schema, retire worktrees/branches, or mark any next wave as
+approved.
 
 ## Executive Summary
 
@@ -22,9 +23,9 @@ conflicts, focused tests were rerun, full validation passed, and no schema or
 migration files changed. The verification stream was then rebased and
 revalidated against the reconciled implementation-stream evidence.
 
-Overall recommendation: Jeff can approve the merge order now, with Verification
-still merging last. This packet does not record Jeff approval or perform any
-merge.
+Jeff approved the controlled merge order. The streams landed on `main` in the
+recommended order, with Verification merging last, and post-merge validation
+passed.
 
 ## Main Branch Preflight
 
@@ -51,12 +52,12 @@ pnpm.cmd fc:preflight:fast
 
 ## Streams Completed
 
-| Stream                              | Branch                                       | Worktree                                              | Live state                                | Readiness decision |
-| ----------------------------------- | -------------------------------------------- | ----------------------------------------------------- | ----------------------------------------- | ------------------ |
-| Sales Readiness Command V1          | `stream/sales-readiness-command-v1`          | `C:\FC-worktrees\sales-readiness-command-v1`          | Clean, `1 ahead / 0 behind` `origin/main` | Ready              |
-| Estimate Contract Readiness V1      | `stream/estimate-contract-readiness-v1`      | `C:\FC-worktrees\estimate-contract-readiness-v1`      | Clean, `1 ahead / 0 behind` `origin/main` | Ready              |
-| Schedule Readiness Handoff V1       | `stream/schedule-readiness-handoff-v1`       | `C:\FC-worktrees\schedule-readiness-handoff-v1`       | Clean, `1 ahead / 0 behind` `origin/main` | Ready              |
-| Verification Sales To Production V1 | `stream/verification-sales-to-production-v1` | `C:\FC-worktrees\verification-sales-to-production-v1` | Clean, `1 ahead / 0 behind` `origin/main` | Ready              |
+| Stream                              | Branch                                       | Worktree                                              | Live state                     | Readiness decision |
+| ----------------------------------- | -------------------------------------------- | ----------------------------------------------------- | ------------------------------ | ------------------ |
+| Sales Readiness Command V1          | `stream/sales-readiness-command-v1`          | `C:\FC-worktrees\sales-readiness-command-v1`          | Merged to `main` as `89275554` | Merged             |
+| Estimate Contract Readiness V1      | `stream/estimate-contract-readiness-v1`      | `C:\FC-worktrees\estimate-contract-readiness-v1`      | Merged to `main` as `b28fb457` | Merged             |
+| Schedule Readiness Handoff V1       | `stream/schedule-readiness-handoff-v1`       | `C:\FC-worktrees\schedule-readiness-handoff-v1`       | Merged to `main` as `09942b0b` | Merged             |
+| Verification Sales To Production V1 | `stream/verification-sales-to-production-v1` | `C:\FC-worktrees\verification-sales-to-production-v1` | Merged to `main` as `f4e31baf` | Merged             |
 
 All four worktrees exist, are on the expected branch, are clean, and contain the
 reported committed slice. Required governance/tooling docs exist in each
@@ -69,9 +70,9 @@ worktree:
 - `active-worktrees.md`
 - `.codex/active-stream-plan.md`
 
-Registry reconciliation remains required after the wave is accepted: the active
-registries on `main` still describe these streams as Approved / Not Started,
-while the stream worktrees now contain completed commits.
+Registry reconciliation is complete for merge status: active registries now mark
+the four streams as merged. Worktree/branch retirement remains a later explicit
+cleanup task.
 
 ## Commits By Stream
 
@@ -81,6 +82,15 @@ while the stream worktrees now contain completed commits.
 | Estimate Contract Readiness V1      | `cdd7e2f8e42cc9df26adbc63baf722b582a4d2a6` | `feat: clarify estimate contract readiness`   |
 | Schedule Readiness Handoff V1       | `efd81835a9f66724b954e65b48b487a8d2d7f5cc` | `feat: clarify schedule readiness handoff`    |
 | Verification Sales To Production V1 | `aee909e55d8241eb57ad3a498ed5031362fd2c66` | `test: protect sales to production readiness` |
+
+## Main Merge Commits
+
+| Stream                              | Main commit |
+| ----------------------------------- | ----------- |
+| Sales Readiness Command V1          | `89275554`  |
+| Estimate Contract Readiness V1      | `b28fb457`  |
+| Schedule Readiness Handoff V1       | `09942b0b`  |
+| Verification Sales To Production V1 | `f4e31baf`  |
 
 ## Files Changed By Stream
 
@@ -242,16 +252,16 @@ No IA or workflow drift was found.
 - Readiness summaries are connected to existing record workspaces and do not
   create disconnected summaries.
 
-## Merge Order Recommendation
+## Merge Order Result
 
-Recommended order remains:
+Merged order:
 
 1. Sales Readiness Command V1
 2. Estimate Contract Readiness V1
 3. Schedule Readiness Handoff V1
 4. Verification Sales To Production V1
 
-Rationale:
+Rationale preserved:
 
 - Sales readiness establishes upstream estimate handoff clarity first.
 - Estimate-contract readiness depends on clearer upstream commercial context.
@@ -308,8 +318,8 @@ on `main` after the candidate sequence is merged.
 
 - Required: keep `C:\FC-worktrees\project-next-actions` untouched unless Jeff
   explicitly scopes it.
-- Required after acceptance: reconcile active registries so stream lifecycle
-  status matches completed work and any approved merge state.
+- Required after acceptance: retire completed worktrees/branches only after
+  explicit approval.
 - Watch item: any future portal-facing readiness copy must remain
   customer-safe and must not expose contractor-only readiness internals.
 
@@ -330,9 +340,8 @@ after this wave merges, the next options to consider are:
 
 Jeff may choose one of:
 
-- Approve the merge order.
 - Request correction on a specific stream.
-- Defer one or more streams.
 - Continue to next wave only after this wave is merged and explicitly approved.
 
-Jeff approval to merge is not recorded in this packet.
+Jeff approval to merge was granted in the controlled merge prompt and satisfied
+for this wave only. No next-wave approval is recorded in this packet.

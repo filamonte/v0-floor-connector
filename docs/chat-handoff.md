@@ -68,21 +68,16 @@ The dirty out-of-scope `C:\FC-worktrees\project-next-actions` worktree was
 preserved untouched. The next wave is not approved from this handoff; agents may
 not auto-continue without Jeff approval.
 
-Next-wave planning note: as of 2026-06-05,
-[docs/review-packets/next-wave-recommendation.md](C:/FloorConnector/docs/review-packets/next-wave-recommendation.md)
-recommends `sales-to-production-readiness-v1` as the next highest-leverage
-operational wave. It is recommendation-only and still requires Jeff approval
-before stream creation, worktree creation, implementation, schema/migration
-work, provider/customer-facing actions, or continuation.
-
-Approval update: Jeff has approved `sales-to-production-readiness-v1` for
-stream/worktree creation only. The approved streams are
-`sales-readiness-command-v1`, `estimate-contract-readiness-v1`,
-`schedule-readiness-handoff-v1`, and
-`verification-sales-to-production-v1`. Wave status is Approved / Not Started:
-agents may not begin implementation, edit schema/migrations, open PRs, merge,
-or continue to another wave until a later explicit start command and human
-review gate.
+Current wave gate note: `sales-to-production-readiness-v1` has merged to `main`
+under Jeff's controlled merge approval. Sales Readiness Command V1 merged as
+`89275554`, Estimate Contract Readiness V1 merged as `b28fb457`, Schedule
+Readiness Handoff V1 merged as `09942b0b`, and Verification Sales To Production
+V1 merged as `f4e31baf`. Post-merge targeted tests, typecheck, lint,
+`pnpm.cmd fc:preflight:fast`, and `git diff --check` passed. The four completed
+wave worktrees are retained pending explicit retirement approval. The dirty
+out-of-scope `C:\FC-worktrees\project-next-actions` worktree was preserved
+untouched. The next wave is not approved from this handoff; agents may not
+auto-continue without Jeff approval.
 
 ## Required First Reads
 

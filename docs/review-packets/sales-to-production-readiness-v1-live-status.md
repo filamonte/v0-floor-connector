@@ -9,37 +9,37 @@ typecheck, lint, fast preflight, and diff checks.
 
 ## Wave Status
 
-`sales-to-production-readiness-v1` rebase/revalidation is complete.
+`sales-to-production-readiness-v1` controlled merge is complete.
 
-The three implementation streams were each rebased onto current `origin/main`
-with no conflicts. Each implementation stream is clean, has one implementation
-commit ahead of `origin/main`, has no schema/migration changes, and has current
-focused/full validation evidence.
+The three implementation streams landed on `main` in the approved order. Each
+stream kept its reviewed candidate changes, introduced no schema/migration
+changes, and passed required post-merge validation before the next stream
+merged.
 
-The verification stream was then rebased onto current `origin/main` with no
-conflicts. It is clean, has one verification commit ahead of `origin/main`, and
-has current verification/focused/full validation evidence.
+The verification stream landed last and passed required post-merge validation.
 
-`main` status after fetch:
+`main` status at merge preflight:
 
 - Branch: `main`
 - Clean: yes
 - Ahead/behind `origin/main`: `0 ahead / 0 behind`
-- Latest pushed review-packet commit:
-  `9679a280 docs: add sales to production readiness review packet`
+- Latest merged stream commit: `f4e31baf test: protect sales to production readiness`
 
-No merges, PRs, new waves, schema changes, migration edits, production-code
-changes from `main`, or work in `C:\FC-worktrees\project-next-actions` occurred
-as part of this rebase/revalidation pass.
+Local `main` is ahead of `origin/main` after the controlled local merge and
+governance closeout until Jeff pushes the completed sequence.
+
+No PRs, new waves, schema changes, migration edits, worktree/branch deletion, or
+work in `C:\FC-worktrees\project-next-actions` occurred as part of this
+controlled merge pass.
 
 ## Stream Status Table
 
-| Stream                                | Worktree exists | Branch                                       | Clean / dirty | Ahead / behind `origin/main` | Updated head                                           | Rebase result        | Merge readiness   |
-| ------------------------------------- | --------------- | -------------------------------------------- | ------------- | ---------------------------- | ------------------------------------------------------ | -------------------- | ----------------- |
-| `sales-readiness-command-v1`          | Yes             | `stream/sales-readiness-command-v1`          | Clean         | `1 ahead / 0 behind`         | `70c7251c feat: clarify sales readiness command`       | Passed, no conflicts | Ready             |
-| `estimate-contract-readiness-v1`      | Yes             | `stream/estimate-contract-readiness-v1`      | Clean         | `1 ahead / 0 behind`         | `cdd7e2f8 feat: clarify estimate contract readiness`   | Passed, no conflicts | Ready             |
-| `schedule-readiness-handoff-v1`       | Yes             | `stream/schedule-readiness-handoff-v1`       | Clean         | `1 ahead / 0 behind`         | `efd81835 feat: clarify schedule readiness handoff`    | Passed, no conflicts | Ready             |
-| `verification-sales-to-production-v1` | Yes             | `stream/verification-sales-to-production-v1` | Clean         | `1 ahead / 0 behind`         | `aee909e5 test: protect sales to production readiness` | Passed, no conflicts | Ready, merge last |
+| Stream                                | Worktree exists | Branch                                       | Clean / dirty | Ahead / behind `origin/main` | Updated head                                           | Rebase result        | Merge readiness |
+| ------------------------------------- | --------------- | -------------------------------------------- | ------------- | ---------------------------- | ------------------------------------------------------ | -------------------- | --------------- |
+| `sales-readiness-command-v1`          | Yes             | `stream/sales-readiness-command-v1`          | Clean         | `1 ahead / 1 behind`         | `70c7251c feat: clarify sales readiness command`       | Merged as `89275554` | Merged          |
+| `estimate-contract-readiness-v1`      | Yes             | `stream/estimate-contract-readiness-v1`      | Clean         | `1 ahead / 1 behind`         | `cdd7e2f8 feat: clarify estimate contract readiness`   | Merged as `b28fb457` | Merged          |
+| `schedule-readiness-handoff-v1`       | Yes             | `stream/schedule-readiness-handoff-v1`       | Clean         | `1 ahead / 1 behind`         | `efd81835 feat: clarify schedule readiness handoff`    | Merged as `09942b0b` | Merged          |
+| `verification-sales-to-production-v1` | Yes             | `stream/verification-sales-to-production-v1` | Clean         | `1 ahead / 1 behind`         | `aee909e5 test: protect sales to production readiness` | Merged as `f4e31baf` | Merged          |
 
 ## Updated Commits By Stream
 
@@ -96,11 +96,11 @@ earlier review-packet recommendation. The existing test path is
 
 No schema or migration files changed in any stream after rebase.
 
-## Merge Readiness
+## Merge Result
 
-All four streams are now merge-ready from the Integration Coordinator view.
+All four streams merged to `main` under Jeff's controlled merge approval.
 
-Recommended merge order:
+Actual merge order:
 
 1. `sales-readiness-command-v1`
 2. `estimate-contract-readiness-v1`
@@ -118,8 +118,9 @@ Rationale:
 - Verification should merge last because it documents and tests the combined
   sales-to-production readiness boundary.
 
-Jeff can approve the merge order now. Jeff approval to merge is not recorded in
-this packet, and no merge has occurred.
+Jeff approval to merge was satisfied for this wave only. No next-wave approval,
+worktree retirement, branch deletion, PR creation, schema change, or migration
+change occurred.
 
 ## Dirty And Out-Of-Scope Worktrees
 
@@ -127,11 +128,11 @@ this packet, and no merge has occurred.
 
 ## Blockers
 
-No rebase or validation blockers remain for this wave.
+No merge or validation blockers remain for this wave.
 
 ## Next Recommended Action
 
 Do not start another wave.
 
-Recommended next action: Jeff review and, if approved, run the controlled merge
-prompt using the merge order above.
+Recommended next action: push `main` after governance closeout review, then
+retire completed worktrees/branches only if Jeff explicitly approves cleanup.

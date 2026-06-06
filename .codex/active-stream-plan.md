@@ -41,10 +41,10 @@ wave. The proposed streams are:
 - `stream/schedule-readiness-handoff-v1`
 - `stream/verification-sales-to-production-v1`
 
-Status: Approved / Not Started. Jeff has approved stream/worktree creation, but
-this is not implementation authorization. Do not start implementation, touch
-schema/migrations, perform provider/customer-facing actions, open PRs, merge, or
-use dirty/out-of-scope worktrees from this approval alone.
+Status: Merged to `main`. Jeff approved controlled merge of the reviewed ready
+stream set. This does not approve schema/migrations, provider/customer-facing
+actions, PRs, next-wave continuation, destructive cleanup, or work in
+dirty/out-of-scope worktrees.
 
 ## Proposed Governance Infrastructure Stream
 
@@ -85,7 +85,8 @@ Architecture Coordination approval: Approved.
 Jeff approval gate: Approved. Jeff explicitly approved stream/worktree creation
 for `sales-to-production-readiness-v1`.
 
-Wave status: Approved to create streams; not yet implementing.
+Wave status: Merged to `main`; worktrees retained pending explicit retirement
+approval.
 
 Approved stream set:
 
@@ -110,10 +111,9 @@ pnpm.cmd fc:preflight:fast
 git diff --check
 ```
 
-Human review gate remains required. Agents may plan, build, validate, and
-prepare review packets only after a later explicit start command. Agents may not
-auto-merge, open PRs, continue to another wave, perform schema/migration work,
-or use dirty/out-of-scope worktrees from this approval alone.
+Human review gate satisfied for the approved merge set only. Agents may not
+continue to another wave, perform schema/migration work, delete branches or
+worktrees, or use dirty/out-of-scope worktrees from this approval.
 
 ### sales-readiness-command-v1
 
@@ -129,7 +129,7 @@ or use dirty/out-of-scope worktrees from this approval alone.
 - Must avoid: dashboard sprawl, new opportunity/customer/project schema,
   duplicate intake models, AI autonomous scheduling, and portal behavior
   changes.
-- Status: Approved / Not Started.
+- Status: Merged to `main` as `89275554`.
 
 ### estimate-contract-readiness-v1
 
@@ -145,7 +145,7 @@ or use dirty/out-of-scope worktrees from this approval alone.
 - Must avoid: duplicate contract/signature models, schema changes, settings
   mutation leakage on operational pages, and portal behavior changes unless
   later explicitly approved.
-- Status: Approved / Not Started.
+- Status: Merged to `main` as `b28fb457`.
 
 ### schedule-readiness-handoff-v1
 
@@ -159,7 +159,7 @@ or use dirty/out-of-scope worktrees from this approval alone.
   Project as diagnosis and Field as action.
 - Must avoid: duplicate schedule/dispatch models, new job schema, autonomous
   dispatching, route optimization, and dashboard work.
-- Status: Approved / Not Started.
+- Status: Merged to `main` as `09942b0b`.
 
 ### verification-sales-to-production-v1
 
@@ -172,7 +172,7 @@ or use dirty/out-of-scope worktrees from this approval alone.
   matrices, protect the canonical lifecycle, and verify ownership boundaries.
 - Must avoid: feature work, schema changes, UI redesign, and loosening existing
   checks.
-- Status: Approved / Not Started.
+- Status: Merged to `main` as `f4e31baf`.
 
 ## Active Streams
 
@@ -257,8 +257,51 @@ Remaining gates:
 ## Merged Streams
 
 These streams have merged to `main`. Completed
-`operational-command-center-v1` worktrees and eligible branches were retired
-after explicit cleanup approval:
+`sales-to-production-readiness-v1` worktrees are retained pending explicit
+retirement approval. Completed `operational-command-center-v1` worktrees and
+eligible branches were retired after explicit cleanup approval:
+
+### sales-readiness-command-v1
+
+- Branch: `stream/sales-readiness-command-v1`
+- Worktree: `C:\FC-worktrees\sales-readiness-command-v1`
+- Owns: opportunity, lead, site assessment, requirements capture, and upstream
+  estimating readiness.
+- Must avoid: dashboard sprawl, duplicate opportunity/customer/project schema,
+  duplicate intake models, autonomous scheduling, and portal behavior changes.
+- Merged: `89275554 feat: clarify sales readiness command`.
+- Cleanup: worktree and branch retained pending explicit retirement approval.
+
+### estimate-contract-readiness-v1
+
+- Branch: `stream/estimate-contract-readiness-v1`
+- Worktree: `C:\FC-worktrees\estimate-contract-readiness-v1`
+- Owns: estimate approval, contract generation, contract send/signature
+  readiness, and readiness blockers between estimate and contract.
+- Must avoid: duplicate contract/signature models, schema changes, settings
+  mutation leakage on operational pages, and unapproved portal behavior changes.
+- Merged: `b28fb457 feat: clarify estimate contract readiness`.
+- Cleanup: worktree and branch retained pending explicit retirement approval.
+
+### schedule-readiness-handoff-v1
+
+- Branch: `stream/schedule-readiness-handoff-v1`
+- Worktree: `C:\FC-worktrees\schedule-readiness-handoff-v1`
+- Owns: commercial/financial readiness handoff into scheduling and Field.
+- Must avoid: duplicate schedule/dispatch models, new job schema, autonomous
+  dispatching, route optimization, and dashboard work.
+- Merged: `09942b0b feat: clarify schedule readiness handoff`.
+- Cleanup: worktree and branch retained pending explicit retirement approval.
+
+### verification-sales-to-production-v1
+
+- Branch: `stream/verification-sales-to-production-v1`
+- Worktree: `C:\FC-worktrees\verification-sales-to-production-v1`
+- Owns: verification for the sales-to-production handoff.
+- Must avoid: feature work, schema changes, UI redesign, and loosening existing
+  checks.
+- Merged: `f4e31baf test: protect sales to production readiness`.
+- Cleanup: worktree and branch retained pending explicit retirement approval.
 
 ### verification
 
