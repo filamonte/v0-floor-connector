@@ -79,6 +79,20 @@ out-of-scope `C:\FC-worktrees\project-next-actions` worktree was preserved
 untouched. The next wave is not approved from this handoff; agents may not
 auto-continue without Jeff approval.
 
+Current wave gate note: Jeff explicitly approved
+`field-execution-depth-v1` for stream/worktree creation only. Branches and
+worktrees now exist for `field-handoff-packet-v1`,
+`daily-execution-command-v1`, `crew-execution-visibility-v1`, and
+`verification-field-execution-v1`, all created from current `main` at
+`9bad7a65`. The wave is `Approved / Not Started`; implementation still requires
+a later explicit start command. Do not implement feature work, schemas,
+migrations, PRs, merges, cleanup, provider/customer-facing behavior,
+autonomous AI, dispatch automation, portal work, or work in
+`C:\FC-worktrees\project-next-actions` from this approval alone. Use
+[docs/review-packets/field-execution-depth-v1-plan.md](C:/FloorConnector/docs/review-packets/field-execution-depth-v1-plan.md)
+for the ownership map, dependency map, validation plan, verification plan, and
+merge order.
+
 ## Required First Reads
 
 Read these before implementation or documentation work:

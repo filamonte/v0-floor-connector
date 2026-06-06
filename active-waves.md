@@ -101,6 +101,91 @@ packets from this registry. Agents may not begin a new wave, create active
 streams, continue to the next wave, or merge without Architecture Coordination
 approval and Jeff review.
 
+## Field Execution Depth V1 Approval Gate
+
+Gate date: 2026-06-06.
+
+Wave name: `field-execution-depth-v1`.
+
+Review packet:
+[docs/review-packets/field-execution-depth-v1-plan.md](C:/FloorConnector/docs/review-packets/field-execution-depth-v1-plan.md).
+
+Wave goal: deepen the canonical field execution path from Schedule to Crew,
+Daily Execution, Blockers, Photos, Notes, and Closeout without creating
+duplicate jobs, schedules, field reports, issue trackers, punch-list systems, or
+dashboard sprawl.
+
+Gate status:
+
+| Gate item                              | Status               | Evidence / note                                                                                  |
+| -------------------------------------- | -------------------- | ------------------------------------------------------------------------------------------------ |
+| Architecture Coordination approval     | Approved             | Stream ownership, dependency map, non-goals, validation, verification, and merge order recorded. |
+| Jeff approval gate                     | Approved             | Jeff explicitly approved `field-execution-depth-v1` for stream/worktree creation.                |
+| Stream creation                        | Complete             | Four branches and worktrees were created from current `main` at `9bad7a65`.                      |
+| Implementation start                   | Not started          | This approval task does not authorize feature work. A later explicit start command is required.  |
+| Human review gate                      | Required before work | Feature implementation, merge, cleanup, PRs, and next-wave continuation still require approval.  |
+| Autonomous merge / indefinite continue | Not allowed          | No merge, PR, schema, migration, provider action, or next wave is authorized by this gate.       |
+
+Approved stream set:
+
+| Stream                            | Ownership area                 | Mission                                                                                                      | Status                 |
+| --------------------------------- | ------------------------------ | ------------------------------------------------------------------------------------------------------------ | ---------------------- |
+| `field-handoff-packet-v1`         | Field handoff context          | Ensure every scheduled job arrives with complete execution context from canonical project, job, and records. | Approved / Not Started |
+| `daily-execution-command-v1`      | Daily execution workflow       | Strengthen daily logs, field notes, blockers, execution observations, photo visibility, and next actions.    | Approved / Not Started |
+| `crew-execution-visibility-v1`    | Cross-project field visibility | Improve visibility into active, blocked, incomplete, office-attention, and execution-warning work.           | Approved / Not Started |
+| `verification-field-execution-v1` | Field execution verification   | Protect canonical project chain, jobs, schedule, daily logs, field notes, and ownership boundaries.          | Approved / Not Started |
+
+Approved stream branches:
+
+- `stream/field-handoff-packet-v1`
+- `stream/daily-execution-command-v1`
+- `stream/crew-execution-visibility-v1`
+- `stream/verification-field-execution-v1`
+
+Approved worktrees:
+
+- `C:\FC-worktrees\field-handoff-packet-v1`
+- `C:\FC-worktrees\daily-execution-command-v1`
+- `C:\FC-worktrees\crew-execution-visibility-v1`
+- `C:\FC-worktrees\verification-field-execution-v1`
+
+Dependency and merge order:
+
+1. `field-handoff-packet-v1` establishes scheduled-job execution context.
+2. `daily-execution-command-v1` builds on handoff context for day-of-work
+   execution review.
+3. `crew-execution-visibility-v1` rolls canonical handoff and execution state
+   into cross-project field visibility.
+4. `verification-field-execution-v1` lands last after the implementation
+   streams are complete and validated.
+
+Shared non-goals:
+
+- no implementation from this approval task;
+- no schema or migration work unless a later prompt explicitly approves it;
+- no duplicate schedule, job, field report, issue tracker, punch-list, photo,
+  note, closeout, or dashboard model;
+- no portal work, dispatch automation, route optimization, customer-facing
+  provider action, autonomous AI, or financial/signature mutation;
+- no work in dirty/out-of-scope worktrees, including
+  `C:\FC-worktrees\project-next-actions`.
+
+Required future stream startup checks:
+
+```powershell
+pnpm.cmd worktree:doctor
+pnpm.cmd tooling:baseline -CommandsOnly
+```
+
+Required implementation validation unless a later prompt narrows scope:
+
+```powershell
+pnpm.cmd --filter @floorconnector/web typecheck
+pnpm.cmd --filter @floorconnector/web lint
+pnpm.cmd fc:preflight:fast
+git diff --check
+```
+
 ## Proposed Governance Infrastructure Stream
 
 Proposal date: 2026-06-06.

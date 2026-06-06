@@ -74,6 +74,115 @@ scripts, implement scripts, open a PR, or begin runtime/tooling changes until
 Architecture Coordination and Jeff approve stream creation and implementation
 start.
 
+## Field Execution Depth V1 Gate
+
+Gate date: 2026-06-06.
+
+Wave name: `field-execution-depth-v1`.
+
+Architecture Coordination approval: Approved.
+
+Jeff approval gate: Approved. Jeff explicitly approved stream/worktree creation
+for `field-execution-depth-v1`.
+
+Review packet:
+[docs/review-packets/field-execution-depth-v1-plan.md](C:/FloorConnector/docs/review-packets/field-execution-depth-v1-plan.md).
+
+Wave status: Approved / Not Started. Branches and worktrees have been created
+from current `main` at `9bad7a65`. Implementation has not started and requires
+a later explicit start command.
+
+Approved stream set:
+
+- `stream/field-handoff-packet-v1`
+- `stream/daily-execution-command-v1`
+- `stream/crew-execution-visibility-v1`
+- `stream/verification-field-execution-v1`
+
+Required future startup checks:
+
+```powershell
+pnpm.cmd worktree:doctor
+pnpm.cmd tooling:baseline -CommandsOnly
+```
+
+Implementation streams should also run focused tests for changed helpers,
+read-models, actions, or routes, then:
+
+```powershell
+pnpm.cmd --filter @floorconnector/web typecheck
+pnpm.cmd --filter @floorconnector/web lint
+pnpm.cmd fc:preflight:fast
+git diff --check
+git diff --cached --check
+```
+
+Human review gate remains required for implementation start, PRs, merges,
+worktree/branch cleanup, schema/migration work, provider/customer-facing
+actions, and next-wave continuation. Agents must not touch
+`C:\FC-worktrees\project-next-actions` unless Jeff explicitly scopes it.
+
+### field-handoff-packet-v1
+
+- Branch: `stream/field-handoff-packet-v1`
+- Worktree: `C:\FC-worktrees\field-handoff-packet-v1`
+- Owns: field handoff context for scheduled jobs.
+- Mission: ensure every scheduled job arrives with complete execution context,
+  including scope summary, estimate context, contract context, readiness
+  context, customer notes, project notes, execution notes, and field handoff
+  visibility where supported by canonical records.
+- Future allowed work, not now: improve scheduled-job handoff clarity over
+  existing job, project, estimate, contract, readiness, customer, note, Daily
+  Log, and field-note context.
+- Must avoid: new schedule model, new job model, portal work, dispatch
+  automation, route optimization, schema changes, migrations, and feature work
+  before a later start command.
+- Status: Approved / Not Started.
+
+### daily-execution-command-v1
+
+- Branch: `stream/daily-execution-command-v1`
+- Worktree: `C:\FC-worktrees\daily-execution-command-v1`
+- Owns: daily execution workflow.
+- Mission: strengthen daily logs, field notes, blockers, execution
+  observations, photo visibility, and execution next actions.
+- Future allowed work, not now: deepen existing Daily Log, field-note,
+  blocker, observation, execution attachment, and source-record handoff
+  workflows without creating a separate field subsystem.
+- Must avoid: separate field reporting system, duplicate issue tracker,
+  duplicate punch-list model, schema changes, migrations, portal behavior, and
+  feature work before a later start command.
+- Status: Approved / Not Started.
+
+### crew-execution-visibility-v1
+
+- Branch: `stream/crew-execution-visibility-v1`
+- Worktree: `C:\FC-worktrees\crew-execution-visibility-v1`
+- Owns: cross-project field visibility.
+- Mission: improve visibility into active work, blocked work, incomplete work,
+  office attention required, and execution warnings.
+- Future allowed work, not now: derive cross-project field visibility from
+  canonical jobs, schedule, assignments, Daily Logs, field notes, blockers,
+  evidence, and source-record handoff context.
+- Must avoid: route optimization, dispatch replacement, crew scheduling
+  replacement, dashboard sprawl, duplicate schedule/job/field models, schema
+  changes, migrations, and feature work before a later start command.
+- Status: Approved / Not Started.
+
+### verification-field-execution-v1
+
+- Branch: `stream/verification-field-execution-v1`
+- Worktree: `C:\FC-worktrees\verification-field-execution-v1`
+- Owns: verification for field execution depth.
+- Mission: protect the canonical project chain, canonical jobs, canonical
+  schedule, canonical Daily Logs, canonical field notes, and the operational
+  ownership model.
+- Future allowed work, not now: add focused verification helpers/tests/docs
+  after the implementation streams complete.
+- Must avoid: feature work, schema changes, UI redesign, loosening checks,
+  runtime behavior, and implementation before feature-stream evidence exists.
+- Status: Approved / Not Started.
+
 ## Sales To Production Readiness V1 Gate
 
 Gate date: 2026-06-05.
