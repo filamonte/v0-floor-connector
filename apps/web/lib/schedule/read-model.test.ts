@@ -5,6 +5,7 @@ import {
   buildScheduleWarningDisplaySummary,
   buildScheduleBoardReadModel,
   buildScheduleItems,
+  buildScheduleReadinessHandoffSummary,
   buildScheduleRoleSlotIndicators,
   buildSelectedScheduleWarningDetails,
   deriveScheduleOperatingModeSummaries,
@@ -301,6 +302,53 @@ void test("schedule role slot indicators do not invent missing owners", () => {
   });
 
   assert.deepEqual(indicators, []);
+});
+
+void test("schedule readiness handoff summary keeps blocked work owned by source records", () => {
+  const summary = buildScheduleReadinessHandoffSummary({
+    projectId: "44444444-4444-4444-8444-444444444444",
+    readiness: {
+      isReadyToSchedule: false,
+      blockers: ["contract_signature_pending", "deposit_required"],
+      contractId: "55555555-5555-4555-8555-555555555555",
+      contractStatus: "sent",
+      depositInvoiceId: "66666666-6666-4666-8666-666666666666",
+      depositInvoiceStatus: "sent"
+    }
+  });
+
+  assert.equal(summary.label, "Unsigned contract");
+  assert.equal(summary.tone, "blocked");
+  assert.equal(summary.nextOwner, "project");
+  assert.equal(
+    summary.primaryHref,
+    "/contracts/55555555-5555-4555-8555-555555555555"
+  );
+  assert.deepEqual(
+    summary.blockers.map((blocker) => blocker.href),
+    [
+      "/contracts/55555555-5555-4555-8555-555555555555",
+      "/invoices/66666666-6666-4666-8666-666666666666"
+    ]
+  );
+});
+
+void test("schedule readiness handoff summary hands clear work to schedule", () => {
+  const summary = buildScheduleReadinessHandoffSummary({
+    projectId: "44444444-4444-4444-8444-444444444444",
+    readiness: {
+      isReadyToSchedule: true,
+      blockers: []
+    }
+  });
+
+  assert.equal(summary.label, "Ready to schedule");
+  assert.equal(summary.tone, "ready");
+  assert.equal(summary.nextOwner, "schedule");
+  assert.equal(
+    summary.primaryHref,
+    "/schedule?projectId=44444444-4444-4444-8444-444444444444&view=unscheduled"
+  );
 });
 
 void test("schedule board read model derives canonical job operating queues", () => {

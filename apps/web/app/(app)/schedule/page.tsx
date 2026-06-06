@@ -1514,10 +1514,12 @@ export default async function SchedulePage({
   });
   const dispatchBoardSections = buildScheduleDispatchBoardSections({
     board: scheduleBoard,
+    readinessByProjectId: projectReadinessByProjectId,
     warningSummaries: scheduleWarningSummaries
   });
   const fieldCommandCenterSections = buildFieldCommandCenterSections({
     board: scheduleBoard,
+    readinessByProjectId: projectReadinessByProjectId,
     warningSummaries: scheduleWarningSummaries,
     handoffsByJobId: fieldHandoffsByJobId
   });
@@ -3004,7 +3006,7 @@ export default async function SchedulePage({
               }
 
               if (item.recommendedAction === "review_project") {
-                return `/projects/${item.job.projectId}`;
+                return item.readinessHandoff.primaryHref;
               }
 
               if (item.recommendedAction === "open_job") {

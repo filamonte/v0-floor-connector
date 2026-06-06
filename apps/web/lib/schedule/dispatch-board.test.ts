@@ -257,3 +257,54 @@ void test("field command center sections group execution lanes from canonical sc
     "open_daily_log"
   );
 });
+
+void test("field command center sends readiness-blocked jobs back to Project diagnosis", () => {
+  const blockedReadyJob = {
+    ...baseJob,
+    id: "66666666-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+    dispatchStatus: "unscheduled" as const,
+    projectId: "project-blocked",
+    scheduledDate: null,
+    scheduledStartAt: null,
+    scheduledEndAt: null
+  };
+  const board = buildScheduleBoardReadModel({
+    jobs: [blockedReadyJob],
+    today: new Date(2026, 4, 8),
+    readinessByProjectId: new Map([
+      [
+        "project-blocked",
+        {
+          isReadyToSchedule: false,
+          blockers: ["deposit_required"],
+          depositInvoiceId: "77777777-7777-4777-8777-777777777777",
+          depositInvoiceStatus: "sent"
+        }
+      ]
+    ])
+  });
+  const sections = buildFieldCommandCenterSections({
+    board,
+    readinessByProjectId: new Map([
+      [
+        "project-blocked",
+        {
+          isReadyToSchedule: false,
+          blockers: ["deposit_required"],
+          depositInvoiceId: "77777777-7777-4777-8777-777777777777",
+          depositInvoiceStatus: "sent"
+        }
+      ]
+    ])
+  });
+  const item = sections
+    .find((section) => section.key === "execution_warnings")
+    ?.items.find((candidate) => candidate.job.id === blockedReadyJob.id);
+
+  assert.equal(item?.recommendedAction, "review_project");
+  assert.equal(item?.readinessHandoff.label, "Unpaid deposit");
+  assert.equal(
+    item?.readinessHandoff.primaryHref,
+    "/invoices/77777777-7777-4777-8777-777777777777"
+  );
+});

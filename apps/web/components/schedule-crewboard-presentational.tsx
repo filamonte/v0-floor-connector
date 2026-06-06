@@ -402,16 +402,25 @@ export function ScheduleFieldCommandCenter(input: {
                           {item.job.customer?.name ?? "Unknown customer"} ·{" "}
                           {item.statusLabel}
                         </p>
+                        <p className="mt-1 text-xs font-medium text-[var(--text-secondary)]">
+                          {item.readinessHandoff.label}
+                        </p>
                       </div>
                       <span
                         className={[
                           "inline-flex shrink-0 items-center rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em]",
-                          item.hasCrewAssigned
-                            ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-                            : "border-amber-200 bg-amber-50 text-amber-800"
+                          item.readinessHandoff.tone === "blocked"
+                            ? "border-rose-200 bg-rose-50 text-rose-700"
+                            : item.hasCrewAssigned
+                              ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                              : "border-amber-200 bg-amber-50 text-amber-800"
                         ].join(" ")}
                       >
-                        {item.hasCrewAssigned ? "Crew set" : "Needs crew"}
+                        {item.readinessHandoff.tone === "blocked"
+                          ? "Blocked"
+                          : item.hasCrewAssigned
+                            ? "Crew set"
+                            : "Needs crew"}
                       </span>
                     </div>
 

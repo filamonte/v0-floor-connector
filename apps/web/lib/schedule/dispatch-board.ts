@@ -1,7 +1,10 @@
 import type {
   ScheduleBoardJobSource,
-  ScheduleBoardReadModel
+  ScheduleBoardReadModel,
+  ScheduleReadinessHandoffSnapshot,
+  ScheduleReadinessHandoffSummary
 } from "./read-model";
+import { buildScheduleReadinessHandoffSummary } from "./read-model";
 import type { ScheduleFieldHandoffSummary } from "./field-handoff-read-model";
 import type { ScheduleWarningSummary } from "./warnings";
 
@@ -15,6 +18,7 @@ export type ScheduleDispatchBoardItem<TJob extends ScheduleBoardJobSource> = {
   id: string;
   job: TJob;
   warnings: ScheduleWarningSummary[];
+  readinessHandoff: ScheduleReadinessHandoffSummary;
   hasCrewAssigned: boolean;
   crewLabel: string;
   recommendedAction: "open_job" | "schedule_job" | "assign_crew";
@@ -42,6 +46,7 @@ export type FieldCommandCenterItem<TJob extends ScheduleBoardJobSource> = {
   job: TJob;
   warnings: ScheduleWarningSummary[];
   handoff: ScheduleFieldHandoffSummary | null;
+  readinessHandoff: ScheduleReadinessHandoffSummary;
   hasCrewAssigned: boolean;
   crewLabel: string;
   recommendedAction:
@@ -103,15 +108,29 @@ function formatStatusLabel(value: string) {
 
 function buildItem<TJob extends ScheduleBoardJobSource>(
   job: TJob,
-  warningsByJobId: Map<string, ScheduleWarningSummary[]>
+  input: {
+    warningsByJobId: Map<string, ScheduleWarningSummary[]>;
+    readinessByProjectId: Map<string, ScheduleReadinessHandoffSnapshot | null>;
+  }
 ): ScheduleDispatchBoardItem<TJob> {
+  const readinessHandoff = buildScheduleReadinessHandoffSummary({
+    projectId: job.projectId,
+    readiness: input.readinessByProjectId.get(job.projectId)
+  });
+  const isKnownReadinessBlocked =
+    input.readinessByProjectId.has(job.projectId) &&
+    !readinessHandoff.isReadyToSchedule;
+
   return {
     id: job.id,
     job,
-    warnings: warningsByJobId.get(job.id) ?? [],
+    warnings: input.warningsByJobId.get(job.id) ?? [],
+    readinessHandoff,
     hasCrewAssigned: getAssignmentCount(job) > 0,
     crewLabel: getCrewLabel(job),
-    recommendedAction: getRecommendedAction(job),
+    recommendedAction: isKnownReadinessBlocked
+      ? "open_job"
+      : getRecommendedAction(job),
     statusLabel: formatStatusLabel(job.dispatchStatus)
   };
 }
@@ -121,13 +140,22 @@ function buildFieldCommandItem<TJob extends ScheduleBoardJobSource>(
   input: {
     warningsByJobId: Map<string, ScheduleWarningSummary[]>;
     handoffsByJobId: Map<string, ScheduleFieldHandoffSummary>;
+    readinessByProjectId: Map<string, ScheduleReadinessHandoffSnapshot | null>;
   }
 ): FieldCommandCenterItem<TJob> {
   const handoff = input.handoffsByJobId.get(job.id) ?? null;
   const warnings = input.warningsByJobId.get(job.id) ?? [];
+  const readinessHandoff = buildScheduleReadinessHandoffSummary({
+    projectId: job.projectId,
+    readiness: input.readinessByProjectId.get(job.projectId)
+  });
+  const isKnownReadinessBlocked =
+    input.readinessByProjectId.has(job.projectId) &&
+    !readinessHandoff.isReadyToSchedule;
   const hasCrewAssigned = getAssignmentCount(job) > 0;
-  const recommendedAction =
-    job.dispatchStatus === "unscheduled"
+  const recommendedAction = isKnownReadinessBlocked
+    ? "review_project"
+    : job.dispatchStatus === "unscheduled"
       ? "schedule_job"
       : !hasCrewAssigned && job.dispatchStatus !== "completed"
         ? "assign_crew"
@@ -142,15 +170,17 @@ function buildFieldCommandItem<TJob extends ScheduleBoardJobSource>(
     job,
     warnings,
     handoff,
+    readinessHandoff,
     hasCrewAssigned,
     crewLabel: getCrewLabel(job),
     recommendedAction,
     statusLabel: formatStatusLabel(job.dispatchStatus),
-    detail:
-      handoff?.detail ??
-      (warnings.length > 0
-        ? warnings[0].detail
-        : "No execution warnings are currently derived for this job.")
+    detail: isKnownReadinessBlocked
+      ? readinessHandoff.detail
+      : (handoff?.detail ??
+        (warnings.length > 0
+          ? warnings[0].detail
+          : "No execution warnings are currently derived for this job."))
   };
 }
 
@@ -174,6 +204,7 @@ export function buildScheduleDispatchBoardSections<
   TJob extends ScheduleBoardJobSource
 >(input: {
   board: ScheduleBoardReadModel<TJob>;
+  readinessByProjectId?: Map<string, ScheduleReadinessHandoffSnapshot | null>;
   warningSummaries?: Array<{
     jobId: string;
     warnings: ScheduleWarningSummary[];
@@ -185,8 +216,13 @@ export function buildScheduleDispatchBoardSections<
       summary.warnings
     ])
   );
+  const readinessByProjectId =
+    input.readinessByProjectId ??
+    new Map<string, ScheduleReadinessHandoffSnapshot | null>();
   const toItems = (jobs: TJob[]) =>
-    uniqueById(jobs).map((job) => buildItem(job, warningsByJobId));
+    uniqueById(jobs).map((job) =>
+      buildItem(job, { warningsByJobId, readinessByProjectId })
+    );
 
   return [
     {
@@ -231,6 +267,7 @@ export function buildFieldCommandCenterSections<
   TJob extends ScheduleBoardJobSource
 >(input: {
   board: ScheduleBoardReadModel<TJob>;
+  readinessByProjectId?: Map<string, ScheduleReadinessHandoffSnapshot | null>;
   warningSummaries?: Array<{
     jobId: string;
     warnings: ScheduleWarningSummary[];
@@ -245,11 +282,15 @@ export function buildFieldCommandCenterSections<
   );
   const handoffsByJobId =
     input.handoffsByJobId ?? new Map<string, ScheduleFieldHandoffSummary>();
+  const readinessByProjectId =
+    input.readinessByProjectId ??
+    new Map<string, ScheduleReadinessHandoffSnapshot | null>();
   const toItems = (jobs: TJob[]) =>
     uniqueById(jobs).map((job) =>
       buildFieldCommandItem(job, {
         warningsByJobId,
-        handoffsByJobId
+        handoffsByJobId,
+        readinessByProjectId
       })
     );
   const hasExecutionWarning = (job: TJob) =>
@@ -338,7 +379,12 @@ export function buildFieldCommandCenterSections<
       emptyTitle: "No execution warnings.",
       emptyDescription:
         "Readiness blockers, stale scheduled work, crew capacity warnings, and schedule warnings will appear here when derived from source records.",
-      items: toItems(input.board.scheduledJobs.filter(hasExecutionWarning))
+      items: toItems(
+        uniqueById([
+          ...input.board.unscheduledBlockedJobs,
+          ...input.board.scheduledJobs.filter(hasExecutionWarning)
+        ])
+      )
     }
   ];
 }

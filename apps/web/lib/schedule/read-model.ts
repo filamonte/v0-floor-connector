@@ -116,6 +116,37 @@ export type ScheduleDispatchAttentionItem<TJob extends ScheduleBoardJobSource> =
     detail: string;
   };
 
+export type ScheduleReadinessHandoffBlocker = {
+  key: string;
+  label: string;
+  detail: string;
+  href: string | null;
+};
+
+export type ScheduleReadinessHandoffSummary = {
+  projectId: string;
+  label: string;
+  detail: string;
+  tone: "ready" | "blocked" | "neutral";
+  isReadyToSchedule: boolean;
+  nextOwner: "schedule" | "project";
+  primaryHref: string;
+  blockers: ScheduleReadinessHandoffBlocker[];
+};
+
+export type ScheduleReadinessHandoffSnapshot = {
+  status?: string | null;
+  blockers?: string[];
+  isReadyToSchedule: boolean;
+  estimateId?: string | null;
+  estimateStatus?: string | null;
+  contractId?: string | null;
+  contractStatus?: string | null;
+  depositInvoiceId?: string | null;
+  depositInvoiceStatus?: string | null;
+  opportunityId?: string | null;
+};
+
 export type ScheduleOperatingModeKey = "triage" | "plan" | "dispatch";
 
 export type ScheduleRoleSlotPerson = {
@@ -221,6 +252,157 @@ export type ScheduleBoardQueues<TJob extends ScheduleBoardJobSource> = {
 
 function formatDateKeyFromIso(value: string) {
   return new Date(value).toISOString().slice(0, 10);
+}
+
+function formatStatusLabel(value: string | null | undefined) {
+  return value ? value.replaceAll("_", " ") : "not linked";
+}
+
+function formatReadinessBlockerLabel(blocker: string) {
+  switch (blocker) {
+    case "site_assessment_incomplete":
+      return "Site assessment incomplete";
+    case "estimate_not_approved":
+      return "Estimate approval missing";
+    case "contract_missing":
+      return "Contract missing";
+    case "contract_internal_approval_pending":
+      return "Contract approval pending";
+    case "contract_signature_pending":
+      return "Unsigned contract";
+    case "deposit_required":
+      return "Unpaid deposit";
+    case "financing_pending":
+      return "Financing pending";
+    case "financing_declined":
+      return "Financing declined";
+    default:
+      return formatStatusLabel(blocker);
+  }
+}
+
+function getReadinessBlockerHref(input: {
+  blocker: string;
+  readiness: ScheduleReadinessHandoffSnapshot;
+  projectId: string;
+}) {
+  switch (input.blocker) {
+    case "estimate_not_approved":
+      return input.readiness.estimateId
+        ? `/estimates/${input.readiness.estimateId}`
+        : `/projects/${input.projectId}`;
+    case "contract_missing":
+    case "contract_internal_approval_pending":
+    case "contract_signature_pending":
+      return input.readiness.contractId
+        ? `/contracts/${input.readiness.contractId}`
+        : `/projects/${input.projectId}`;
+    case "deposit_required":
+      return input.readiness.depositInvoiceId
+        ? `/invoices/${input.readiness.depositInvoiceId}`
+        : `/invoices?projectId=${input.projectId}&workflowRole=deposit`;
+    case "site_assessment_incomplete":
+      return input.readiness.opportunityId
+        ? `/leads/${input.readiness.opportunityId}`
+        : `/projects/${input.projectId}`;
+    case "financing_pending":
+    case "financing_declined":
+      return `/projects/${input.projectId}#project-details`;
+    default:
+      return `/projects/${input.projectId}`;
+  }
+}
+
+function getReadinessBlockerDetail(
+  blocker: string,
+  readiness: ScheduleReadinessHandoffSnapshot
+) {
+  switch (blocker) {
+    case "estimate_not_approved":
+      return readiness.estimateStatus
+        ? `Estimate is ${formatStatusLabel(readiness.estimateStatus)}.`
+        : "Approve the project estimate before scheduling.";
+    case "contract_missing":
+      return "Generate the project contract from approved scope.";
+    case "contract_internal_approval_pending":
+      return "Clear internal contract approval before the schedule handoff.";
+    case "contract_signature_pending":
+      return readiness.contractStatus
+        ? `Contract is ${formatStatusLabel(readiness.contractStatus)}.`
+        : "Complete signature before production scheduling.";
+    case "deposit_required":
+      return readiness.depositInvoiceStatus
+        ? `Deposit invoice is ${formatStatusLabel(readiness.depositInvoiceStatus)}.`
+        : "Create or collect the required deposit invoice.";
+    case "site_assessment_incomplete":
+      return "Complete the linked site assessment.";
+    case "financing_pending":
+      return "Financing must be approved before scheduling.";
+    case "financing_declined":
+      return "Resolve declined financing before committing work.";
+    default:
+      return "Open Project Workspace to resolve this readiness blocker.";
+  }
+}
+
+export function buildScheduleReadinessHandoffSummary(input: {
+  projectId: string;
+  readiness?: ScheduleReadinessHandoffSnapshot | null;
+}): ScheduleReadinessHandoffSummary {
+  const projectHref = `/projects/${input.projectId}`;
+
+  if (!input.readiness) {
+    return {
+      projectId: input.projectId,
+      label: "Readiness not loaded",
+      detail:
+        "Open Project Workspace to confirm commercial readiness before scheduling.",
+      tone: "neutral",
+      isReadyToSchedule: false,
+      nextOwner: "project",
+      primaryHref: projectHref,
+      blockers: []
+    };
+  }
+
+  if (input.readiness.isReadyToSchedule) {
+    return {
+      projectId: input.projectId,
+      label: "Ready to schedule",
+      detail:
+        "Project readiness is clear; Schedule owns date, crew, and field handoff planning.",
+      tone: "ready",
+      isReadyToSchedule: true,
+      nextOwner: "schedule",
+      primaryHref: `/schedule?projectId=${input.projectId}&view=unscheduled`,
+      blockers: []
+    };
+  }
+
+  const blockers = (input.readiness.blockers ?? []).map((blocker) => ({
+    key: blocker,
+    label: formatReadinessBlockerLabel(blocker),
+    detail: getReadinessBlockerDetail(blocker, input.readiness!),
+    href: getReadinessBlockerHref({
+      blocker,
+      readiness: input.readiness!,
+      projectId: input.projectId
+    })
+  }));
+  const firstBlocker = blockers[0];
+
+  return {
+    projectId: input.projectId,
+    label: firstBlocker?.label ?? "Readiness blocked",
+    detail:
+      firstBlocker?.detail ??
+      "Resolve upstream project readiness before committing field scheduling.",
+    tone: "blocked",
+    isReadyToSchedule: false,
+    nextOwner: "project",
+    primaryHref: firstBlocker?.href ?? projectHref,
+    blockers
+  };
 }
 
 function getJobDateKey(job: ScheduleJobSource) {
