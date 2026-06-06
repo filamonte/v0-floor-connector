@@ -3,7 +3,8 @@ import test from "node:test";
 
 import {
   buildLeadFollowUpQueue,
-  classifyLeadFollowUp
+  classifyLeadFollowUp,
+  deriveSalesEstimateReadiness
 } from "./follow-up-read-model";
 import type { LeadFollowUpOpportunity } from "./follow-up-read-model";
 
@@ -30,9 +31,18 @@ function opportunity(
 }
 
 void test("lead follow-up read model classifies overdue, today, upcoming, and missing follow-ups", () => {
-  assert.equal(classifyLeadFollowUp("2026-05-06T21:00:00.000Z", nowIso), "overdue");
-  assert.equal(classifyLeadFollowUp("2026-05-07T09:00:00.000Z", nowIso), "due_today");
-  assert.equal(classifyLeadFollowUp("2026-05-08T09:00:00.000Z", nowIso), "upcoming");
+  assert.equal(
+    classifyLeadFollowUp("2026-05-06T21:00:00.000Z", nowIso),
+    "overdue"
+  );
+  assert.equal(
+    classifyLeadFollowUp("2026-05-07T09:00:00.000Z", nowIso),
+    "due_today"
+  );
+  assert.equal(
+    classifyLeadFollowUp("2026-05-08T09:00:00.000Z", nowIso),
+    "upcoming"
+  );
   assert.equal(classifyLeadFollowUp(null, nowIso), "no_follow_up");
 });
 
@@ -120,4 +130,68 @@ void test("lead follow-up read model limits upcoming queue items to the configur
     queue.map((item) => item.opportunityId),
     ["soon"]
   );
+});
+
+void test("sales estimate readiness blocks missing assessment and canonical links", () => {
+  const readiness = deriveSalesEstimateReadiness({
+    status: "qualified",
+    customerId: null,
+    projectId: null,
+    siteAssessmentStatus: "pending",
+    requirementsSummary: null,
+    measurementCount: 0,
+    observationCount: 0,
+    attachmentCount: 0
+  });
+
+  assert.equal(readiness.statusTone, "blocked");
+  assert.equal(readiness.title, "Sales context needs work before estimating");
+  assert.ok(
+    readiness.blockers.some((blocker) =>
+      blocker.includes("site assessment requirements")
+    )
+  );
+  assert.ok(
+    readiness.blockers.some((blocker) => blocker.includes("canonical customer"))
+  );
+  assert.ok(
+    readiness.blockers.some((blocker) => blocker.includes("canonical project"))
+  );
+});
+
+void test("sales estimate readiness calls for estimate ownership after canonical context is ready", () => {
+  const readiness = deriveSalesEstimateReadiness({
+    status: "site_assessment_complete",
+    customerId: "customer-1",
+    projectId: "project-1",
+    siteAssessmentStatus: "completed",
+    requirementsSummary: "Repair cracks and install flake broadcast.",
+    measurementCount: 1,
+    observationCount: 0,
+    attachmentCount: 2
+  });
+
+  assert.equal(readiness.statusTone, "attention");
+  assert.equal(readiness.blockers.length, 0);
+  assert.equal(
+    readiness.recommendedNextAction,
+    "Assign Estimate Writer from this lead."
+  );
+});
+
+void test("sales estimate readiness marks handoff ready when ownership is assigned", () => {
+  const readiness = deriveSalesEstimateReadiness({
+    status: "estimating",
+    customerId: "customer-1",
+    projectId: "project-1",
+    siteAssessmentStatus: "completed",
+    requirementsSummary: null,
+    measurementCount: 0,
+    observationCount: 1,
+    attachmentCount: 0,
+    estimateWriterName: "Ada Lovelace"
+  });
+
+  assert.equal(readiness.statusTone, "ready");
+  assert.equal(readiness.title, "Ready for estimate handoff");
 });

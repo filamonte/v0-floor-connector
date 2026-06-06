@@ -24,6 +24,7 @@ import {
   updateOpportunityFollowUpAction
 } from "@/lib/opportunities/actions";
 import { getOpportunityById } from "@/lib/opportunities/data";
+import { deriveSalesEstimateReadiness } from "@/lib/opportunities/follow-up-read-model";
 import { listPeople } from "@/lib/people/data";
 import { updateOpportunityRoleSlotsAction } from "@/lib/role-slots/actions";
 import { selectRoleSlotPersonOptions } from "@/lib/role-slots/read-model";
@@ -143,6 +144,17 @@ function getStatusClasses(status: string) {
       return "border-rose-200 bg-rose-50 text-rose-900";
     default:
       return "border-amber-200 bg-amber-50 text-amber-900";
+  }
+}
+
+function getReadinessToneClasses(tone: "ready" | "attention" | "blocked") {
+  switch (tone) {
+    case "ready":
+      return "border-emerald-200 bg-emerald-50 text-emerald-900";
+    case "attention":
+      return "border-amber-200 bg-amber-50 text-amber-900";
+    case "blocked":
+      return "border-rose-200 bg-rose-50 text-rose-900";
   }
 }
 
@@ -348,6 +360,17 @@ export default async function LeadDetailPage({
     : `${leadWorkspaceHref}?workItemCue=estimate_handoff#work-items`;
   const estimateWriterName =
     existingOpenEstimateHandoff?.assignedPerson?.displayName ?? null;
+  const salesEstimateReadiness = deriveSalesEstimateReadiness({
+    status: opportunity.status,
+    customerId: opportunity.customerId,
+    projectId: opportunity.projectId,
+    siteAssessmentStatus: opportunity.siteAssessmentStatus,
+    requirementsSummary: opportunity.requirementsSummary,
+    measurementCount: opportunity.measurements.length,
+    observationCount: opportunity.observations.length,
+    attachmentCount: opportunity.attachments.length,
+    estimateWriterName
+  });
   const nextAction = getLeadNextAction({
     opportunity,
     appointmentHref: leadAppointmentHref,
@@ -800,10 +823,39 @@ export default async function LeadDetailPage({
 
             <div id="site-visit" className="mt-8">
               <div className="mb-6 rounded-2xl border border-brand-200 bg-brand-50/60 px-5 py-4 text-sm leading-6 text-slate-700">
-                <p className="font-medium text-slate-950">
-                  Site Visit / Scope Intake / Estimate Plan
-                </p>
-                <p className="mt-2">{estimatingReadiness}</p>
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                  <div>
+                    <p className="font-medium text-slate-950">
+                      Site Visit / Scope Intake / Estimate Plan
+                    </p>
+                    <p className="mt-2">{estimatingReadiness}</p>
+                  </div>
+                  <span
+                    className={`inline-flex w-fit rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] ${getReadinessToneClasses(
+                      salesEstimateReadiness.statusTone
+                    )}`}
+                  >
+                    {salesEstimateReadiness.statusTone}
+                  </span>
+                </div>
+                <div className="mt-4 rounded-2xl border border-white/70 bg-white/75 px-4 py-3">
+                  <p className="font-medium text-slate-950">
+                    {salesEstimateReadiness.title}
+                  </p>
+                  <p className="mt-1 text-sm leading-6 text-slate-600">
+                    {salesEstimateReadiness.description}
+                  </p>
+                  {salesEstimateReadiness.blockers.length > 0 ? (
+                    <ul className="mt-3 list-disc space-y-1 pl-5 text-sm leading-6 text-slate-700">
+                      {salesEstimateReadiness.blockers.map((blocker) => (
+                        <li key={blocker}>{blocker}</li>
+                      ))}
+                    </ul>
+                  ) : null}
+                  <p className="mt-3 text-sm font-medium text-slate-950">
+                    Next: {salesEstimateReadiness.recommendedNextAction}
+                  </p>
+                </div>
               </div>
               <div id="scope-intake">
                 <OpportunityForm
