@@ -5,7 +5,7 @@ Doc Type: Roadmap
 
 This roadmap frames FloorConnector around platform maturity, not early startup build timing. It is sequencing guidance only.
 
-For implemented truth, use [docs/current-state.md](C:/FloorConnector/docs/current-state.md). For the founder/product-owner build list, immediate build order, and horizon-based completion timeline, use [docs/floorconnector-build-list-and-completion-timeline.md](C:/FloorConnector/docs/floorconnector-build-list-and-completion-timeline.md). For concise maturity status, use [docs/platform-maturity.md](C:/FloorConnector/docs/platform-maturity.md), [docs/module-status.md](C:/FloorConnector/docs/module-status.md), and [docs/known-gaps.md](C:/FloorConnector/docs/known-gaps.md). For strategic sequencing, use [docs/platform-build-registry.md](C:/FloorConnector/docs/platform-build-registry.md) and [docs/platform-maturity-model.md](C:/FloorConnector/docs/platform-maturity-model.md). For strategic layer doctrine, use [docs/communications-layer.md](C:/FloorConnector/docs/communications-layer.md), [docs/reporting-and-metrics.md](C:/FloorConnector/docs/reporting-and-metrics.md), [docs/automation-layer.md](C:/FloorConnector/docs/automation-layer.md), [docs/intelligence-layer.md](C:/FloorConnector/docs/intelligence-layer.md), and [docs/agentic-operations-layer.md](C:/FloorConnector/docs/agentic-operations-layer.md).
+For implemented truth, use [docs/current-state.md](C:/FloorConnector/docs/current-state.md). For the founder/product-owner build list, immediate build order, and horizon-based completion timeline, use [docs/floorconnector-build-list-and-completion-timeline.md](C:/FloorConnector/docs/floorconnector-build-list-and-completion-timeline.md). For concise maturity status, use [docs/platform-maturity.md](C:/FloorConnector/docs/platform-maturity.md), [docs/module-status.md](C:/FloorConnector/docs/module-status.md), and [docs/known-gaps.md](C:/FloorConnector/docs/known-gaps.md). For strategic sequencing, use [docs/platform-build-registry.md](C:/FloorConnector/docs/platform-build-registry.md) and [docs/platform-maturity-model.md](C:/FloorConnector/docs/platform-maturity-model.md). For strategic layer doctrine, use [docs/communications-layer.md](C:/FloorConnector/docs/communications-layer.md), [docs/reporting-and-metrics.md](C:/FloorConnector/docs/reporting-and-metrics.md), [docs/automation-layer.md](C:/FloorConnector/docs/automation-layer.md), [docs/intelligence-layer.md](C:/FloorConnector/docs/intelligence-layer.md), [docs/agentic-operations-layer.md](C:/FloorConnector/docs/agentic-operations-layer.md), and [docs/contractor-success-platform.md](C:/FloorConnector/docs/contractor-success-platform.md).
 
 ## Roadmap Principles
 
@@ -21,6 +21,10 @@ For implemented truth, use [docs/current-state.md](C:/FloorConnector/docs/curren
 - Automation must extend the canonical workflow chain through deterministic evidence, readiness awareness, and approval boundaries before autonomous behavior.
 - Intelligence work must be canonical-first: no duplicate reporting truth, disconnected BI silo, manual metric-entry chain, or AI-only operational truth.
 - GateKeeper communications, operational memory, workflow reinforcement, and AI assistance are future platform layers over canonical records, not standalone products.
+- The long-term Specialty Contractor Success Platform vision is future-only
+  direction. Contractor technology services, maturity-model tooling, and
+  managed offerings must not become disconnected service silos or near-term
+  scope by implication.
 - Dates, week counts, and early-build timing are intentionally omitted.
 
 ## Strategic Build Stack
@@ -391,6 +395,55 @@ not a near-term implementation priority. It must remain canonical-record-safe:
 no duplicate jobs/projects, no public bidding exchange, no lead resale, and no
 external partner financial mutation by default. See
 [docs/contractor-collaboration-network.md](C:/FloorConnector/docs/contractor-collaboration-network.md).
+
+## 10. Specialty Contractor Success Platform
+
+Current status: Long-term platform vision only.
+
+Strategic reference: [docs/contractor-success-platform.md](C:/FloorConnector/docs/contractor-success-platform.md).
+
+Future direction:
+
+- help contractors mature from paper, spreadsheet, and email-driven operations
+  into digitized, connected, managed, and intelligent businesses
+- expand communications into workflow-connected intake, classification, work
+  item creation, and project continuity instead of a detached inbox
+- consider contractor technology services such as workspace integration, email
+  and domain provisioning assistance, websites, SEO, VoIP, SMS, AI
+  receptionist, MDM, fleet, camera/security, hardware, consulting, onboarding,
+  and training only where they strengthen contractor success
+- keep future revenue layers optional and long-term: software subscriptions,
+  communications services, AI services, onboarding/training, technology setup,
+  workspace provisioning, website services, phone services, and future managed
+  offerings
+
+This is not a near-term implementation roadmap. It does not authorize provider
+integrations, managed services, infrastructure, schema, packages, routes, APIs,
+or business-model changes without a separate approved slice.
+
+## Long-Term Roadmap Horizon
+
+Near-term horizon:
+
+- project continuity
+- scheduling
+- communications hub
+- workflow automation
+- operational visibility
+
+Mid-term horizon:
+
+- communication integrations
+- Google Workspace integration
+- voice intake
+- contractor technology integrations
+
+Long-term horizon:
+
+- contractor success platform
+- technology services ecosystem
+- maturity model tooling
+- intelligent contractor platform
 
 ## Cross-Cutting Governance
 

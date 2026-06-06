@@ -15,6 +15,7 @@ It is intended to guide future navigation, workspace structure, and route decisi
 - [docs/sales-to-production.md](C:/FloorConnector/docs/sales-to-production.md): target sales and commercial workflow direction
 - [docs/documentation-governance.md](C:/FloorConnector/docs/documentation-governance.md): documentation maintenance and archival rules
 - [docs/guided-project-capture-vision.md](C:/FloorConnector/docs/guided-project-capture-vision.md): future Guided Project Capture and Assessment Package direction
+- [docs/contractor-success-platform.md](C:/FloorConnector/docs/contractor-success-platform.md): future Specialty Contractor Success Platform direction
 
 This document describes the intended contractor app structure over time. It should not be read as the current route map or current implementation truth.
 
@@ -66,6 +67,8 @@ The target top-level contractor app navigation should be:
 - Field
 - Documents
 - Communications
+- Technology Services, if future approved platform services become a durable
+  contractor administration surface
 - AI Assistant, if implemented as a durable top-level operating surface later
 - Settings
 
@@ -99,6 +102,13 @@ The target IA should leave room for future contractor operating depth without cr
   and Communications for project-scoped contractor-to-contractor threads. This
   is future-only target direction; it should not be added as an immediate
   top-level nav item.
+- Future Contractor Technology Platform capabilities should also embed into
+  existing IA before they become standalone navigation: Settings for domains,
+  email, workspace, integrations, devices, and service configuration; Growth for
+  websites and SEO; Communications for phone/SMS/AI receptionist workflows;
+  Field for fleet, equipment, and camera/security visibility where relevant;
+  and Dashboard/Reports for maturity or operational health summaries. This is
+  future-only target direction and should not be read as current product scope.
 
 ## Top-Level Areas
 
@@ -318,6 +328,16 @@ Target AI intake behavior:
 - accepted intake should resolve into canonical opportunity/customer/project workflows
 - AI should not own separate lead, customer, project, estimate, calendar, website-content truth, marketing-contact, or communication records
 
+Target Communications Hub behavior:
+
+- email, SMS, voice, website forms, portal messages, and future AI voice intake
+  should flow into one workflow-connected Communications Hub where supported
+- the hub should support customer, lead/opportunity, and project matching;
+  classification; reviewable Work Item creation; and project continuity
+- Inbox Zero for Contractors should mean communication is converted into
+  record-linked work and follow-through, not that FloorConnector becomes a
+  disconnected inbox replacement
+
 ## Calendar / Schedule
 
 Calendar and schedule should become the cross-project time and capacity layer for contractor operations. The current `/schedule` surface is the good-enough scheduling command center: summary counts, schedule readiness review, a Ready work queue, grouped daily/weekly timing lanes, a Scheduled timeline, and a selected job action panel over canonical jobs and job assignments.
@@ -396,6 +416,9 @@ This area should include:
 - financial defaults
 - workflow guidance controls for Guided, Flexible, and Manual coaching intensity
 - AI assistance preferences that remain separate from workflow guidance
+- future contractor technology services configuration, if approved, such as
+  workspace/email/domain setup, provider connections, MDM, phone/SMS, website
+  service settings, and technology onboarding status
 - Templates & Systems administration later
 - reusable catalogs and starter items
 - automation settings later
@@ -423,6 +446,32 @@ Important boundary:
 - workflow guidance controls may adjust coaching visibility, but they must not weaken canonical records, readiness gates, financial/payment rules, signature history, portal access, or tenant security
 - AI assistance controls are preference/permission gates for future assistance and must not imply autonomous customer-facing or financial actions
 - platform-wide defaults and rollout policy belong in the separate super-admin surface
+
+## Technology Services
+
+Technology Services is a future target surface only, not a current route claim.
+
+If FloorConnector offers contractor technology platform services later, the IA
+should keep them vertically specialized and workflow-connected. Potential
+future services include Google Workspace, Microsoft 365, email provisioning,
+domain management, websites, SEO, VoIP, SMS, AI receptionist, mobile device
+management, fleet tracking, camera/security integrations, operational hardware,
+consulting, onboarding, and training.
+
+This area should answer:
+
+- which contractor technology services are connected or available
+- whether setup, onboarding, or training work is blocked
+- how communication, website, workspace, device, fleet, or phone services
+  strengthen canonical workflow continuity
+
+Boundary:
+
+- Technology Services must not become a generic MSP console.
+- It must not create duplicate customer, project, communication, schedule,
+  device, fleet, website, or AI business truth.
+- Operational action should still route back to Projects, Communications,
+  Field, Growth, Financials, Settings, or other canonical workspaces.
 
 ## Project As The Operational Root
 

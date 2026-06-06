@@ -14,6 +14,7 @@ It complements:
 - [docs/workflow-spec.md](C:/FloorConnector/docs/workflow-spec.md): primary guided contractor path
 - [docs/documentation-governance.md](C:/FloorConnector/docs/documentation-governance.md): documentation maintenance and archival rules
 - [docs/guided-project-capture-vision.md](C:/FloorConnector/docs/guided-project-capture-vision.md): future pre-estimate capture and Assessment Package strategy
+- [docs/contractor-success-platform.md](C:/FloorConnector/docs/contractor-success-platform.md): future Specialty Contractor Success Platform strategy
 
 Use [docs/workflows.md](C:/FloorConnector/docs/workflows.md) as the canonical current and near-term contractor workflow document. This file is the broader target commercial workflow framing.
 
@@ -71,6 +72,13 @@ FloorConnector should behave like one connected contractor workflow, not a stack
 
 That includes files, product selections, spec sheets, visualizer renders, delivery events, and communication history. These should be linkable across canonical records instead of trapped in module-specific silos.
 
+The same principle applies to future contractor technology services. Google
+Workspace, Microsoft 365, email, domains, websites, SEO, VoIP, SMS, AI voice,
+MDM, fleet, camera/security, hardware, consulting, onboarding, and training
+should only enter the platform where they reinforce the sales-to-production
+workflow. They must not become disconnected service silos or parallel operating
+worlds.
+
 ### 4. Financing And Financial Readiness Are Workflow Stages
 
 Financial readiness may include:
@@ -103,6 +111,8 @@ Possible sources:
 - manual sales entry
 - future estimator or scheduler entry points
 - future room visualizer or product/finish selection entry points
+- future contractor technology service touchpoints where they feed canonical
+  intake, communication, scheduling, project, or customer workflows
 
 Core intake data:
 
@@ -134,6 +144,18 @@ Future AI intake direction:
 - AI may classify the source, summarize the inquiry, identify missing qualification fields, and prepare follow-up or appointment suggestions
 - AI may help generate or maintain contractor-owned service/location/landing-page content later, but accepted intake and customer commitments must still flow through canonical records
 - AI should not create AI-only lead/customer/project records, separate marketing knowledge stores, disconnected website content truth, or customer-facing commitments without human confirmation and validated workflows
+
+Future communications hub direction:
+
+- email, SMS, voice, website forms, portal messages, and AI voice intake should
+  flow into a Communications Hub where they can be matched to customers, leads
+  or opportunities, and projects
+- matched communication should be classified, routed into reviewable Work Items
+  or approved handoffs where appropriate, and linked back to project continuity
+- the product goal is Inbox Zero for Contractors, meaning communication becomes
+  actionable workflow rather than a detached inbox
+- this is future direction only and does not imply provider-backed send/reply,
+  AI voice, or automated work-item creation is implemented
 
 Future Universal Capture + Assistant Action intake:
 
@@ -521,6 +543,10 @@ FloorConnector should avoid:
 - AI-only leads, customers, estimates, projects, calendars, or communication logs
 - AI-only website knowledge silos that diverge from canonical services, project proof, customer communication, or workflow history
 - AI-generated customer commitments, scheduling commitments, contract actions, invoices, payment requests, or permission changes without approved workflow confirmation
+- technology-service offerings that create independent operational worlds
+  outside the canonical lifecycle
+- generic MSP, generic help-desk, generic CRM, or generic website-agency
+  behavior that is not vertically specialized for specialty contractor success
 - duplicate project, estimate, catalog, invoice, or template models for takeoff or estimating
 - takeoff behavior that weakens tenant isolation or breaks canonical workflow continuity
 - generated estimate content with no source traceability back to System Template, measurement/takeoff input, and source file or photo where applicable
@@ -549,6 +575,11 @@ Future workflow expansion may include:
 - deeper production and field execution tooling
 - subcontractor handoff from financially ready project/job records
 - overflow work sharing and partner contractor collaboration after project, financial, permission, and compliance readiness are clear
+- future contractor technology platform services such as Google Workspace or
+  Microsoft 365 integration, email/domain assistance, website/SEO, VoIP/SMS,
+  AI receptionist services, MDM, fleet tracking, camera/security, operational
+  hardware packages, consulting, onboarding, and training, only where they
+  strengthen workflow continuity
 
 External partner access must be scoped and permissioned. Customer contact data, pricing, project files, and billing context should be hidden by default and shared intentionally only where the contractor organization has granted access for a specific project, job, or related record.
 

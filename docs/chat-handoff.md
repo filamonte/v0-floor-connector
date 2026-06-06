@@ -25,6 +25,13 @@ when a task mentions Guided Project Capture, Assessment Packages, project area
 capture, customer self-service estimate inputs, capture confidence, or future
 AI-assisted estimating inputs. It is target direction only.
 
+Use [docs/contractor-success-platform.md](C:/FloorConnector/docs/contractor-success-platform.md)
+when a task mentions Specialty Contractor Success Platform, contractor maturity,
+Inbox Zero for Contractors, Google Workspace, Microsoft 365, email/domain
+provisioning, websites/SEO, VoIP/SMS, AI receptionist, MDM, fleet, cameras,
+hardware, contractor technology services, onboarding, training, or future
+managed offerings. It is target direction only.
+
 Use [docs/parallel-development-governance.md](C:/FloorConnector/docs/parallel-development-governance.md)
 when a task proposes, approves, activates, verifies, merges, or retires a
 stream. It defines the permanent stream lifecycle, stream creation rule,
@@ -113,6 +120,7 @@ Read these before implementation or documentation work:
 - [docs/workflows.md](C:/FloorConnector/docs/workflows.md)
 - [docs/system-overview.md](C:/FloorConnector/docs/system-overview.md)
 - [docs/Roadmap.md](C:/FloorConnector/docs/Roadmap.md)
+- [docs/contractor-success-platform.md](C:/FloorConnector/docs/contractor-success-platform.md)
 - [docs/product-language.md](C:/FloorConnector/docs/product-language.md)
 - [docs/README.md](C:/FloorConnector/docs/README.md)
 - [docs/local-auth-qa-recovery.md](C:/FloorConnector/docs/local-auth-qa-recovery.md)
@@ -720,6 +728,20 @@ These layers are summaries, source-record handoffs, copy/hierarchy
 improvements, or existing-action presentation around canonical records. They do
 not create duplicate models or change core workflow behavior.
 
+## Long-Term Strategic Note
+
+FloorConnector is becoming a Specialty Contractor Success Platform. The mission
+is not merely managing projects. The mission is helping specialty contractors
+become more operationally mature, technologically capable, communication-ready,
+field-ready, financially controlled, organizationally manageable, and
+profitable.
+
+That long-term vision includes future contractor maturity tooling, workflow-
+connected communications, Inbox Zero for Contractors, contractor technology
+services, and intelligent operating guidance. These are future direction only
+unless [docs/current-state.md](C:/FloorConnector/docs/current-state.md)
+explicitly records an implemented slice.
+
 ## Staging And Demo Status
 
 Recent staging/demo work is remote-Supabase-first and no-write by default:
@@ -826,6 +848,15 @@ Recent staging/demo work is remote-Supabase-first and no-write by default:
   scheduler, inbox, payment system, workflow engine, or assistant memory source
   of truth. Current priority remains operational core maturity before
   autonomous AI.
+- Long-term direction now also includes the Specialty Contractor Success
+  Platform documented in
+  [docs/contractor-success-platform.md](C:/FloorConnector/docs/contractor-success-platform.md).
+  Do not describe Google Workspace, Microsoft 365, email/domain provisioning,
+  websites/SEO, VoIP/SMS, AI receptionist, MDM, fleet, camera/security,
+  hardware, consulting, onboarding, training, or managed offerings as current
+  scope unless current-state and code confirm it. Future technology services
+  must strengthen canonical workflow continuity, not become disconnected MSP,
+  CRM, help-desk, website-agency, or provider-owned business truth.
 - Customer portal copy should be simpler and customer-safe; do not expose
   contractor-only FieldTrail, Proof Center, internal blockers, provider
   details, or internal Job Notes as portal capability.

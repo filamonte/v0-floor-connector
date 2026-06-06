@@ -19,6 +19,7 @@ Related documents:
 - [docs/agentic-operations-layer.md](C:/FloorConnector/docs/agentic-operations-layer.md): future governed AI operating-layer strategy
 - [docs/platform-build-registry.md](C:/FloorConnector/docs/platform-build-registry.md): strategic build-priority registry
 - [docs/platform-maturity-model.md](C:/FloorConnector/docs/platform-maturity-model.md): staged build discipline
+- [docs/contractor-success-platform.md](C:/FloorConnector/docs/contractor-success-platform.md): future Specialty Contractor Success Platform strategy
 - [docs/gatekeeper-system-vision.md](C:/FloorConnector/docs/gatekeeper-system-vision.md): GateKeeper operational intelligence and communications doctrine
 - [docs/ai-assisted-operating-system.md](C:/FloorConnector/docs/ai-assisted-operating-system.md): long-term AI-assisted operating system direction
 - [docs/guided-project-capture-vision.md](C:/FloorConnector/docs/guided-project-capture-vision.md): future Guided Project Capture and Assessment Package strategy
@@ -80,6 +81,14 @@ In short:
 - what is executed should flow into what is billed and collected
 
 The long-term product direction can be described as a company brain: shared canonical data everywhere, no data silos, no fake or parallel records, and project-centered operational memory that makes the whole contractor workflow readable.
+
+The broader long-term platform direction can also be described as a Specialty
+Contractor Success Platform. FloorConnector should help specialty contractors
+become more operationally mature, technologically capable, communication-ready,
+sales-disciplined, field-ready, financially controlled, and organizationally
+manageable. That vision is documented in
+[docs/contractor-success-platform.md](C:/FloorConnector/docs/contractor-success-platform.md)
+and is future direction only.
 
 Guided Project Capture is a future expression of that company-brain direction.
 It should sit between lead intake and estimate creation, producing a
@@ -384,6 +393,29 @@ not become a separate chatbot, CRM, scheduler, inbox, payment tool, workflow
 engine, or assistant memory store that owns business truth. Detailed doctrine
 lives in [docs/agentic-operations-layer.md](C:/FloorConnector/docs/agentic-operations-layer.md).
 
+### 14. Specialty Contractor Success Platform Layer
+
+The long-term platform vision is broader than contractor software alone.
+FloorConnector should become a Specialty Contractor Success Platform that helps
+contractors move from paper, disconnected, email-driven work toward connected,
+managed, and intelligent operations.
+
+The platform should eventually support contractor maturity across operational,
+communication, technology, sales, field, financial, and organizational
+disciplines.
+
+Future contractor technology services may include Google Workspace or Microsoft
+365 integration, domain and email provisioning assistance, website hosting,
+SEO, VoIP, SMS, AI receptionist services, mobile device management, fleet
+tracking, camera/security integrations, operational hardware packages,
+consulting, onboarding, and training. These are future platform services only,
+not current product scope.
+
+The durable boundary is vertical specialization. FloorConnector should not
+become a generic MSP, generic CRM, generic help desk, or generic website
+agency. Technology services should exist only where they strengthen specialty
+contractor success and the canonical workflow.
+
 ## How The Platform Expands Beyond Today
 
 The current product already covers the core workflow from intake through payment recording. The long-term expansion is about deepening and connecting that system, not replacing it with unrelated modules.
@@ -401,6 +433,10 @@ The expansion path is:
 - then mature the Intelligence Layer from trusted reporting and workflow evidence
 - then extend outward into customer-facing experiences and external integrations
 - then extend the public acquisition layer through contractor-owned websites, tenant-owned domains, landing pages, SEO/service/location pages, public forms, campaign attribution, AI-assisted content generation, and review/reputation/project-proof loops that feed the same canonical opportunity and revenue chain
+- then mature into a Specialty Contractor Success Platform with workflow-connected
+  communications, contractor technology services, maturity-model tooling, and
+  intelligent operating guidance where those layers strengthen canonical
+  project continuity
 - then consider broader connected platform layers such as materials ecosystems, contractor network collaboration, or marketplace behavior where they align with the same job lifecycle
 
 That means future platform growth should feel like a widening circle around the same shared contractor workflow, not a collection of disconnected products.
@@ -419,6 +455,15 @@ It also does not imply that every future idea should be built. The product visio
 
 ## Vision Summary
 
-FloorConnector is meant to become the operating system specialty surface contractors use to run the business from public acquisition to follow-up, with one connected record chain across sales, operations, finance, customer experience, and growth.
+FloorConnector is meant to become the operating system and success platform
+specialty surface contractors use to run and mature the business from public
+acquisition to follow-up, with one connected record chain across sales,
+operations, communications, technology, field execution, finance, customer
+experience, and growth.
 
-The long-term opportunity is not just better estimating, better invoicing, or a website layer. It is a system where contractor-owned public acquisition, contractor work, financial activity, customer interaction, AI assistance, and future connected services all reinforce the same underlying project and job lifecycle.
+The long-term opportunity is not just better estimating, better invoicing, or a
+website layer. It is helping specialty contractors run better businesses. That
+means contractor-owned public acquisition, contractor work, financial activity,
+customer interaction, communications, AI assistance, future technology services,
+and future connected services should all reinforce the same underlying project
+and job lifecycle.

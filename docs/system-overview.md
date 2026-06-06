@@ -17,6 +17,13 @@ This document is a synthesis, not the implementation source of truth. When exact
 
 FloorConnector is one operating system for specialty flooring contractors, especially epoxy flooring, concrete polishing, and related surface-work businesses. It connects public acquisition, sales, contracts, billing, payments, workforce tracking, and field execution into one continuous workflow instead of forcing teams to manage the same job across disconnected tools.
 
+Long term, FloorConnector is also evolving toward a Specialty Contractor
+Success Platform: a platform that helps contractors become more operationally
+mature, technologically capable, communication-ready, field-ready, financially
+controlled, and profitable. That long-term vision is target direction only and
+is documented in
+[docs/contractor-success-platform.md](C:/FloorConnector/docs/contractor-success-platform.md).
+
 It is built for contractor organizations that need one system to carry work from commercial intake through customer approval, billing, payment, workforce tracking, and field execution.
 
 Why this is different is simple: most contractor software splits the same project across separate systems. Websites, forms, campaigns, and attribution live in one place. Leads live in another. Proposals in another. Contracts and signatures in another. Invoices and payments in another. Field execution and labor records somewhere else. Customers often experience the same project through PDFs, email threads, and isolated portals that are not connected back to the operating system.
@@ -32,6 +39,12 @@ That is the core product idea: one connected contractor workflow, not a collecti
 FloorConnector's implemented backbone already covers the core canonical chain from opportunity through payment, with workforce, field, portal, settings, super-admin, deterministic cues, and import/export foundations around it. The next product direction is not to copy Contractor Foreman feature-for-feature, but to cover serious contractor operating needs and then go deeper for specialty flooring and surface contractors.
 
 Planned deeper contractor operations include equipment management, real time-card/clocking depth, bid/RFP management, subcontractor management, document/submittal/spec-sheet workflows, service/warranty, weather-aware schedule guidance, inspections/checklists, punchlists, takeoff/plans, procurement/materials/POs, bills/AP, job costing, budget vs actual, reporting, mobile field depth, and accounting integrations.
+
+The long-term success-platform direction also leaves room for workflow-connected
+communications, Google Workspace or Microsoft 365 integration, domain and email
+provisioning assistance, websites/SEO, VoIP/SMS, AI receptionist services, MDM,
+fleet, camera/security, hardware, consulting, onboarding, and training. These
+are future platform services only; they are not current implementation claims.
 
 Guided Project Capture is a planned future layer between lead intake and
 estimate creation. It should let customers, sales representatives, estimators,
@@ -491,6 +504,21 @@ These are still later layers:
   coating failures, substrate concerns, and installation risks, with human
   review remaining authoritative
 
+#### Contractor Technology Platform
+
+- Google Workspace or Microsoft 365 integration
+- email provisioning assistance
+- domain management
+- website hosting and SEO services
+- VoIP, SMS, and AI receptionist services
+- mobile device management
+- fleet tracking, camera/security, and hardware integrations
+- contractor technology consulting, onboarding, and training
+
+These are long-term platform services only. They should not be described as
+built until [docs/current-state.md](C:/FloorConnector/docs/current-state.md)
+records an implemented slice.
+
 ### What This Means
 
 The product already has a connected operating core. What remains is not "basic functionality" in a vague sense. What remains is deeper workflow depth, automation, reporting, and adjacent layers around the core system.
@@ -541,6 +569,16 @@ The next layers should follow the current roadmap direction in a disciplined ord
 - contractor-facing AI copilot, communication drafting, scheduling suggestions, project summaries, collections assistance, and action approval queues on top of canonical records
 - FloorConnector-facing AI for marketing Q&A, demo support, onboarding/setup guidance, support triage, first-workflow activation, and migration/import help
 - contractor-facing public AI for website chat, intake qualification, service/location content support, AI receptionist/voice, and operational intelligence only after consent, provider, handoff, schedule, permission, and workflow safety rules are designed
+
+8. Specialty Contractor Success Platform horizon
+
+- maturity model tooling that helps contractors progress from paper workflows
+  to digitized, connected, managed, and intelligent operations
+- contractor technology integrations and services only where they reinforce
+  project-centered workflow continuity
+- optional long-term revenue layers such as communications services, AI
+  services, onboarding/training, technology setup, workspace provisioning,
+  website services, phone services, and future managed offerings
 
 This is a sequence of next layers, not speculation about a different product direction.
 
@@ -628,6 +666,9 @@ The biggest drift risks are still:
 - letting provider integrations become separate source-of-truth models
 - adding public websites, marketing attribution, scheduling, messaging, or reporting as disconnected modules instead of extensions of the shared opportunity/project/revenue chain
 - creating a separate marketing contact database, website lead store, portal-only customer copy, or AI-only knowledge silo
+- letting future contractor technology services become disconnected MSP,
+  website-agency, phone-system, device-management, or consulting silos beside
+  the canonical workflow
 - describing target capabilities as if they are already fully implemented
 
 ### The Discipline Going Forward

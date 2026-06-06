@@ -29,6 +29,8 @@ This workflow document assumes the supporting configuration model now has two la
 - status progression should guide next actions
 - shared files, selected finishes/specs, communication history, and delivery proof should attach to canonical records instead of creating module silos
 - public acquisition, contractor websites, forms, attribution, portals, communications, and future AI intake should feed the same canonical workflow graph instead of creating marketing, website, portal, or AI silos
+- future contractor technology services should strengthen workflow continuity
+  and contractor maturity instead of creating disconnected service silos
 
 In practical terms:
 
@@ -121,6 +123,15 @@ communications handoff foundations, but not a universal capture inbox, route
 grouping engine, autonomous assistant executor, or customer-facing booking
 assistant.
 
+Future Specialty Contractor Success Platform note: FloorConnector should
+eventually help contractors progress from paper and email-driven work toward
+digitized, connected, managed, and intelligent operations. Future technology
+services such as Google Workspace, Microsoft 365, email/domain assistance,
+websites, SEO, VoIP, SMS, AI receptionist, MDM, fleet, camera/security,
+hardware, consulting, onboarding, and training should only exist where they
+strengthen the canonical workflow and project-centered continuity. See
+[docs/contractor-success-platform.md](C:/FloorConnector/docs/contractor-success-platform.md).
+
 ## Canonical Records Vs Supporting Workflow Stages
 
 Canonical system records:
@@ -142,6 +153,9 @@ Canonical system records:
 Supporting workflow stages:
 
 - future public acquisition through contractor-owned websites, tenant-owned domains, landing pages, SEO/service/location pages, public forms, campaign attribution, and website AI intake
+- future contractor technology platform services when they reinforce canonical
+  intake, communication, scheduling, field, project, or administration
+  workflows
 - contact and qualification work
 - future pre-lead visual/product/finish selection
 - site assessment or inspection
@@ -244,6 +258,18 @@ Future Communication / Delivery Proof:
 - provider data is delivery telemetry, not the business source of truth
 - FloorConnector should store immutable delivery events tied back to canonical records
 - open and click tracking are useful signals, not perfect legal certainty
+
+Future Communications Hub expansion:
+
+- email, SMS, voice, website forms, portal messages, and AI voice intake should
+  resolve into one workflow-connected Communications Hub where those channels
+  are approved and implemented
+- the hub should match messages to customers, leads/opportunities, and projects;
+  classify the communication; prepare reviewable Work Items or handoffs where
+  appropriate; and preserve project continuity
+- the target concept is Inbox Zero for Contractors: communication becomes
+  record-linked work, not an independent inbox or provider-owned source of
+  truth
 
 Implemented communication and delivery visibility:
 
