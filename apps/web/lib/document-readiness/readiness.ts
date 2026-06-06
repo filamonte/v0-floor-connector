@@ -37,6 +37,25 @@ export type DocumentReadinessSummary = {
   sourceCategory: "document_readiness";
 };
 
+export type EstimateContractHandoffTone = "ready" | "attention" | "blocked";
+
+export type EstimateContractHandoffReadinessInput = {
+  estimateStatus: EstimateStatus;
+  estimateBlockers: string[];
+  contractId: string | null;
+  readinessStatus: string | null;
+  depositInvoiceId: string | null;
+};
+
+export type EstimateContractHandoffReadinessSummary = {
+  title: string;
+  description: string;
+  blockers: string[];
+  recommendedNextAction: string;
+  settingsHref: string;
+  statusTone: EstimateContractHandoffTone;
+};
+
 type BaseDocumentReadinessInput = {
   id: string;
   referenceNumber: string;
@@ -323,6 +342,90 @@ export function deriveContractDocumentReadiness(
           ? "ready"
           : "attention"
   });
+}
+
+export function deriveEstimateContractHandoffReadiness(
+  input: EstimateContractHandoffReadinessInput
+): EstimateContractHandoffReadinessSummary {
+  const settingsHref = "/settings/workflows";
+
+  if (input.estimateStatus === "draft" || input.estimateStatus === "rejected") {
+    return {
+      title: "Estimate must be review-ready first",
+      description:
+        "Finish scope, pricing, customer delivery context, and estimate review before contract readiness applies.",
+      blockers:
+        input.estimateBlockers.length > 0
+          ? input.estimateBlockers
+          : ["Send or approve the estimate before contract handoff."],
+      recommendedNextAction: "Resolve estimate readiness before contract work.",
+      settingsHref,
+      statusTone: "blocked"
+    };
+  }
+
+  if (input.estimateStatus === "sent") {
+    return {
+      title: "Waiting on customer estimate approval",
+      description:
+        "The contract chain stays blocked until the customer decision is recorded on the canonical estimate.",
+      blockers: ["Customer approval is still pending."],
+      recommendedNextAction: "Track estimate delivery and customer response.",
+      settingsHref,
+      statusTone: "attention"
+    };
+  }
+
+  if (input.estimateBlockers.length > 0) {
+    return {
+      title: "Approved estimate has document blockers",
+      description:
+        "Clear estimate document readiness before relying on the approved estimate for contract generation.",
+      blockers: input.estimateBlockers,
+      recommendedNextAction: "Resolve estimate document readiness.",
+      settingsHref,
+      statusTone: "blocked"
+    };
+  }
+
+  if (!input.contractId) {
+    return {
+      title: "Ready to generate the contract",
+      description:
+        "Approved scope can move into the canonical contract workflow. Review workflow defaults in Settings if contract template or deposit behavior needs adjustment.",
+      blockers: [],
+      recommendedNextAction:
+        "Generate the contract from this approved estimate.",
+      settingsHref,
+      statusTone: "ready"
+    };
+  }
+
+  if (
+    input.readinessStatus === "waiting_on_deposit" &&
+    input.depositInvoiceId
+  ) {
+    return {
+      title: "Contract exists; deposit is the active blocker",
+      description:
+        "The project readiness hub is tracking deposit collection before production scheduling can continue.",
+      blockers: ["Collect or resolve the deposit invoice."],
+      recommendedNextAction:
+        "Review the deposit invoice from project readiness.",
+      settingsHref,
+      statusTone: "blocked"
+    };
+  }
+
+  return {
+    title: "Contract handoff is in the project readiness hub",
+    description:
+      "Use the project workspace to clear contract, signature, and financial blockers in the approved order.",
+    blockers: [],
+    recommendedNextAction: "Open the project workspace for readiness.",
+    settingsHref,
+    statusTone: "attention"
+  };
 }
 
 export function deriveInvoiceDocumentReadiness(

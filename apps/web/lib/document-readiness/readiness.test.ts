@@ -3,6 +3,7 @@ import test from "node:test";
 
 import {
   deriveContractDocumentReadiness,
+  deriveEstimateContractHandoffReadiness,
   deriveEstimateDocumentReadiness,
   deriveInvoiceDocumentReadiness
 } from "./readiness";
@@ -59,6 +60,52 @@ void test("estimate readiness allows preview and review send when context and sc
     "Ready for customer review"
   );
   assert.equal(readiness.blockers.length, 0);
+});
+
+void test("estimate contract handoff blocks draft estimates before contract readiness", () => {
+  const readiness = deriveEstimateContractHandoffReadiness({
+    estimateStatus: "draft",
+    estimateBlockers: ["Estimate scope or pricing is empty"],
+    contractId: null,
+    readinessStatus: null,
+    depositInvoiceId: null
+  });
+
+  assert.equal(readiness.statusTone, "blocked");
+  assert.equal(readiness.title, "Estimate must be review-ready first");
+  assert.ok(readiness.blockers.includes("Estimate scope or pricing is empty"));
+  assert.equal(readiness.settingsHref, "/settings/workflows");
+});
+
+void test("estimate contract handoff marks approved estimates without contracts as ready", () => {
+  const readiness = deriveEstimateContractHandoffReadiness({
+    estimateStatus: "approved",
+    estimateBlockers: [],
+    contractId: null,
+    readinessStatus: null,
+    depositInvoiceId: null
+  });
+
+  assert.equal(readiness.statusTone, "ready");
+  assert.equal(readiness.title, "Ready to generate the contract");
+  assert.equal(readiness.blockers.length, 0);
+});
+
+void test("estimate contract handoff keeps deposit blockers in project readiness", () => {
+  const readiness = deriveEstimateContractHandoffReadiness({
+    estimateStatus: "approved",
+    estimateBlockers: [],
+    contractId: "contract-1",
+    readinessStatus: "waiting_on_deposit",
+    depositInvoiceId: "invoice-1"
+  });
+
+  assert.equal(readiness.statusTone, "blocked");
+  assert.equal(
+    readiness.title,
+    "Contract exists; deposit is the active blocker"
+  );
+  assert.ok(readiness.recommendedNextAction.includes("deposit invoice"));
 });
 
 void test("contract draft readiness catches approval and signer blockers", () => {

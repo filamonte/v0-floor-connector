@@ -41,7 +41,10 @@ import { quickCreateContractFromEstimateAction } from "@/lib/contracts/actions";
 import { listContracts } from "@/lib/contracts/data";
 import { getDocumentDeliveryState } from "@/lib/document-delivery/data";
 import { buildDocumentPrintHref } from "@/lib/document-engine/print";
-import { deriveEstimateDocumentReadiness } from "@/lib/document-readiness/readiness";
+import {
+  deriveEstimateContractHandoffReadiness,
+  deriveEstimateDocumentReadiness
+} from "@/lib/document-readiness/readiness";
 import {
   openOrCreateScheduleOfValuesAction,
   rebuildApprovedEstimateSnapshotAction,
@@ -187,6 +190,17 @@ function formatReadinessLabel(status: string | null) {
   }
 
   return status.replaceAll("_", " ");
+}
+
+function getHandoffToneClassName(tone: "ready" | "attention" | "blocked") {
+  switch (tone) {
+    case "ready":
+      return "border-emerald-200 bg-emerald-50 text-emerald-900";
+    case "attention":
+      return "border-amber-200 bg-amber-50 text-amber-900";
+    case "blocked":
+      return "border-rose-200 bg-rose-50 text-rose-900";
+  }
 }
 
 function getEstimateWorkTypeLabel(workItem: WorkItemListItem) {
@@ -1242,6 +1256,16 @@ export default async function EstimateDetailPage({
     readinessStatus: readinessSnapshot?.status ?? null,
     depositInvoiceId: readinessSnapshot?.depositInvoiceId ?? null
   });
+  const contractHandoffReadiness = deriveEstimateContractHandoffReadiness({
+    estimateStatus: estimate.status,
+    estimateBlockers: documentReadiness.blockers.map(
+      (blocker) => blocker.label
+    ),
+    contractId:
+      readinessSnapshot?.contractId ?? estimateContracts[0]?.id ?? null,
+    readinessStatus: readinessSnapshot?.status ?? null,
+    depositInvoiceId: readinessSnapshot?.depositInvoiceId ?? null
+  });
 
   const customerAddress = estimate.customer
     ? formatAddress([
@@ -1528,6 +1552,45 @@ export default async function EstimateDetailPage({
               </span>
             }
           />
+
+          <section className="rounded-[1.5rem] border border-[var(--border-warm)] bg-white px-5 py-4 text-sm leading-6 text-[var(--text-secondary)] shadow-sm">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--text-muted)]">
+                  Estimate to contract readiness
+                </p>
+                <h2 className="mt-2 text-lg font-semibold text-[var(--text-primary)]">
+                  {contractHandoffReadiness.title}
+                </h2>
+                <p className="mt-2">{contractHandoffReadiness.description}</p>
+              </div>
+              <span
+                className={`inline-flex w-fit rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] ${getHandoffToneClassName(
+                  contractHandoffReadiness.statusTone
+                )}`}
+              >
+                {contractHandoffReadiness.statusTone}
+              </span>
+            </div>
+            {contractHandoffReadiness.blockers.length > 0 ? (
+              <ul className="mt-3 list-disc space-y-1 pl-5">
+                {contractHandoffReadiness.blockers.map((blocker) => (
+                  <li key={blocker}>{blocker}</li>
+                ))}
+              </ul>
+            ) : null}
+            <div className="mt-4 flex flex-wrap items-center gap-3">
+              <p className="font-medium text-[var(--text-primary)]">
+                Next: {contractHandoffReadiness.recommendedNextAction}
+              </p>
+              <Link
+                href={contractHandoffReadiness.settingsHref}
+                className="inline-flex rounded-full border border-[var(--border-warm)] bg-[var(--highlight)] px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.16em] text-[var(--text-primary)] transition hover:border-[#caac88] hover:bg-white"
+              >
+                Workflow defaults
+              </Link>
+            </div>
+          </section>
 
           <WorkflowBar title="Estimate workflow" steps={workflowSteps} />
 
