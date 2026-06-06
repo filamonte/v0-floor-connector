@@ -12,21 +12,19 @@ new wave, modify schema, or mark Jeff approval as granted.
 
 ## Executive Summary
 
-`sales-to-production-readiness-v1` is structurally sound and aligned with the
-Operational Command Center model, but the three implementation streams are not
-merge-ready as-is because `origin/main` moved after their commits. They are
-clean and still contain their committed slices, but each is now `1 ahead / 2
-behind` `origin/main`.
+`sales-to-production-readiness-v1` is structurally sound, aligned with the
+Operational Command Center model, and current after rebase/revalidation. The
+three implementation streams and the verification stream are each clean and `1
+ahead / 0 behind` `origin/main`.
 
-The verification stream is clean, contains its reported verification commit,
-and is `1 ahead / 0 behind` `origin/main`. It should still merge last and should
-be rerun after the implementation streams are rebased and reconciled, because
-the verification evidence is intended to protect the final combined
-sales-to-production handoff.
+The implementation streams were rebased onto current `origin/main` with no
+conflicts, focused tests were rerun, full validation passed, and no schema or
+migration files changed. The verification stream was then rebased and
+revalidated against the reconciled implementation-stream evidence.
 
-Overall recommendation: do not approve immediate merges yet. Approve rebase and
-revalidation of the three implementation streams first, then run the final
-verification validation against the reconciled merge order.
+Overall recommendation: Jeff can approve the merge order now, with Verification
+still merging last. This packet does not record Jeff approval or perform any
+merge.
 
 ## Main Branch Preflight
 
@@ -53,12 +51,12 @@ pnpm.cmd fc:preflight:fast
 
 ## Streams Completed
 
-| Stream                              | Branch                                       | Worktree                                              | Live state                                | Readiness decision                                      |
-| ----------------------------------- | -------------------------------------------- | ----------------------------------------------------- | ----------------------------------------- | ------------------------------------------------------- |
-| Sales Readiness Command V1          | `stream/sales-readiness-command-v1`          | `C:\FC-worktrees\sales-readiness-command-v1`          | Clean, `1 ahead / 2 behind` `origin/main` | Ready after rebase                                      |
-| Estimate Contract Readiness V1      | `stream/estimate-contract-readiness-v1`      | `C:\FC-worktrees\estimate-contract-readiness-v1`      | Clean, `1 ahead / 2 behind` `origin/main` | Ready after rebase                                      |
-| Schedule Readiness Handoff V1       | `stream/schedule-readiness-handoff-v1`       | `C:\FC-worktrees\schedule-readiness-handoff-v1`       | Clean, `1 ahead / 2 behind` `origin/main` | Ready after rebase                                      |
-| Verification Sales To Production V1 | `stream/verification-sales-to-production-v1` | `C:\FC-worktrees\verification-sales-to-production-v1` | Clean, `1 ahead / 0 behind` `origin/main` | Ready after implementation rebases and final validation |
+| Stream                              | Branch                                       | Worktree                                              | Live state                                | Readiness decision |
+| ----------------------------------- | -------------------------------------------- | ----------------------------------------------------- | ----------------------------------------- | ------------------ |
+| Sales Readiness Command V1          | `stream/sales-readiness-command-v1`          | `C:\FC-worktrees\sales-readiness-command-v1`          | Clean, `1 ahead / 0 behind` `origin/main` | Ready              |
+| Estimate Contract Readiness V1      | `stream/estimate-contract-readiness-v1`      | `C:\FC-worktrees\estimate-contract-readiness-v1`      | Clean, `1 ahead / 0 behind` `origin/main` | Ready              |
+| Schedule Readiness Handoff V1       | `stream/schedule-readiness-handoff-v1`       | `C:\FC-worktrees\schedule-readiness-handoff-v1`       | Clean, `1 ahead / 0 behind` `origin/main` | Ready              |
+| Verification Sales To Production V1 | `stream/verification-sales-to-production-v1` | `C:\FC-worktrees\verification-sales-to-production-v1` | Clean, `1 ahead / 0 behind` `origin/main` | Ready              |
 
 All four worktrees exist, are on the expected branch, are clean, and contain the
 reported committed slice. Required governance/tooling docs exist in each
@@ -79,10 +77,10 @@ while the stream worktrees now contain completed commits.
 
 | Stream                              | Commit                                     | Message                                       |
 | ----------------------------------- | ------------------------------------------ | --------------------------------------------- |
-| Sales Readiness Command V1          | `75f89ef1`                                 | `feat: clarify sales readiness command`       |
-| Estimate Contract Readiness V1      | `15d1fe41`                                 | `feat: clarify estimate contract readiness`   |
-| Schedule Readiness Handoff V1       | `24f3d93e`                                 | `feat: clarify schedule readiness handoff`    |
-| Verification Sales To Production V1 | `80a90c3a5cdd4f3d420fe9e9c0a0623ebeaf9cb3` | `test: protect sales to production readiness` |
+| Sales Readiness Command V1          | `70c7251c031a367be70fea49b6ae4c060fe87fe9` | `feat: clarify sales readiness command`       |
+| Estimate Contract Readiness V1      | `cdd7e2f8e42cc9df26adbc63baf722b582a4d2a6` | `feat: clarify estimate contract readiness`   |
+| Schedule Readiness Handoff V1       | `efd81835a9f66724b954e65b48b487a8d2d7f5cc` | `feat: clarify schedule readiness handoff`    |
+| Verification Sales To Production V1 | `aee909e55d8241eb57ad3a498ed5031362fd2c66` | `test: protect sales to production readiness` |
 
 ## Files Changed By Stream
 
@@ -163,16 +161,18 @@ This review task adds:
 
 ## Validation Results
 
-Reported stream validation:
+Rebase/revalidation results:
 
-| Stream                              | Reported validation                                                                                                                                                                                                                                            |
-| ----------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Sales Readiness Command V1          | Focused tests passed, typecheck passed, lint passed, `fc:preflight:fast` passed, diff checks passed                                                                                                                                                            |
-| Estimate Contract Readiness V1      | Focused tests passed, typecheck passed, lint passed, `fc:preflight:fast` passed, diff checks passed                                                                                                                                                            |
-| Schedule Readiness Handoff V1       | Focused tests passed, typecheck passed, lint passed, `fc:preflight:fast` passed, diff checks passed                                                                                                                                                            |
-| Verification Sales To Production V1 | New verification helper tests: 12 passed; opportunities + document readiness: 12 passed; schedule read model + dispatch board: 20 passed; project next actions: 6 passed; typecheck passed; lint passed; `fc:preflight:fast` passed; `git diff --check` passed |
+| Stream                              | Reported validation                                                                                                                                                                                                                                                                        |
+| ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Sales Readiness Command V1          | Rebase passed with no conflicts; focused tests: 7 passed; typecheck passed; lint passed; `fc:preflight:fast` passed; `git diff --check` passed; no schema/migration files changed                                                                                                          |
+| Estimate Contract Readiness V1      | Rebase passed with no conflicts; focused tests: 11 passed; typecheck passed; lint passed; `fc:preflight:fast` passed; `git diff --check` passed; no schema/migration files changed                                                                                                         |
+| Schedule Readiness Handoff V1       | Rebase passed with no conflicts; focused tests: 23 passed; typecheck passed; lint passed; `fc:preflight:fast` passed; `git diff --check` passed; no schema/migration files changed                                                                                                         |
+| Verification Sales To Production V1 | Rebase passed with no conflicts; verification helper tests: 3 passed; opportunities + document readiness: 12 passed; schedule read model + dispatch board: 20 passed; project next actions: 6 passed; typecheck passed; lint passed; `fc:preflight:fast` passed; `git diff --check` passed |
 
-Current review-task validation is recorded in the final report for this task.
+Verification note: the project next-action test lives at
+`lib/projects/project-next-actions.test.ts`; the earlier recommendation used
+the stale path `lib/projects/next-actions.test.ts`.
 
 ## Governance Review
 
@@ -260,9 +260,10 @@ Rationale:
 - Verification should merge last after implementation streams are rebased,
   validated, and reconciled.
 
-## Minimum Required Validation After Final Rebase
+## Revalidation Completed
 
-Run in each implementation stream after rebase onto current `origin/main`:
+The following validation has now been completed in each implementation stream
+after rebase onto current `origin/main`:
 
 ```powershell
 pnpm.cmd worktree:doctor
@@ -277,8 +278,8 @@ git diff --check
 git diff --cached --check
 ```
 
-Run in the verification stream after implementation streams are rebased and the
-candidate merge order is fixed:
+The following validation has now been completed in the verification stream after
+implementation streams were rebased and the candidate merge order was fixed:
 
 ```powershell
 pnpm.cmd worktree:doctor
@@ -286,7 +287,7 @@ pnpm.cmd devtools:link
 pnpm.cmd --filter @floorconnector/web exec tsx --test lib/verification/sales-to-production-readiness.test.ts
 pnpm.cmd --filter @floorconnector/web exec tsx --test lib/opportunities/follow-up-read-model.test.ts lib/document-readiness/readiness.test.ts
 pnpm.cmd --filter @floorconnector/web exec tsx --test lib/schedule/read-model.test.ts lib/schedule/dispatch-board.test.ts
-pnpm.cmd --filter @floorconnector/web exec tsx --test lib/projects/next-actions.test.ts
+pnpm.cmd --filter @floorconnector/web exec tsx --test lib/projects/project-next-actions.test.ts
 pnpm.cmd --filter @floorconnector/web typecheck
 pnpm.cmd --filter @floorconnector/web lint
 pnpm.cmd fc:preflight:fast
@@ -294,27 +295,21 @@ git diff --check
 git diff --cached --check
 ```
 
-Optional but recommended before Jeff approves final merges:
+Optional post-merge checks after Jeff approves and the sequence lands:
 
 ```powershell
 pnpm.cmd worktree:doctor
 pnpm.cmd fc:preflight:fast
 ```
 
-on `main` after the candidate sequence is merged locally or in the final
-integration branch.
+on `main` after the candidate sequence is merged.
 
 ## Risks / Follow-Ups
 
-- Required: rebase the three implementation streams because they are each
-  behind `origin/main` by two commits.
-- Required: rerun focused and full validation after those rebases.
 - Required: keep `C:\FC-worktrees\project-next-actions` untouched unless Jeff
   explicitly scopes it.
 - Required after acceptance: reconcile active registries so stream lifecycle
   status matches completed work and any approved merge state.
-- Recommended: rerun verification after implementation streams are reconciled,
-  because the verification stream should prove the final combined behavior.
 - Watch item: any future portal-facing readiness copy must remain
   customer-safe and must not expose contractor-only readiness internals.
 
@@ -335,7 +330,7 @@ after this wave merges, the next options to consider are:
 
 Jeff may choose one of:
 
-- Approve rebase and final validation before merge approval.
+- Approve the merge order.
 - Request correction on a specific stream.
 - Defer one or more streams.
 - Continue to next wave only after this wave is merged and explicitly approved.
