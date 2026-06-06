@@ -13,6 +13,9 @@ Worktree root: `C:\FC-worktrees`
 
 Statuses:
 
+- `Proposed`: stream has been recommended, but ownership review, dependency
+  analysis, conflict review, approval, branch creation, and worktree creation
+  are not complete.
 - `Architecture Review`: local or planned stream exists, but stream ownership,
   dependency mapping, conflict review, UX / IA review, verification scope,
   merge order, registry update, and Jeff approval are not all complete.
@@ -93,6 +96,16 @@ Expectations:
 Use `pnpm worktree:status` for compact live branch health,
 `pnpm worktree:reconcile` for the morning reconciliation view, and
 `pnpm codex:streams` for the active stream operating summary.
+
+## Proposed Stream Queue
+
+These streams are proposed only. They must pass the stream creation rule in
+[docs/parallel-development-governance.md](C:/FloorConnector/docs/parallel-development-governance.md)
+before any branch or worktree is created.
+
+| Proposed stream         | Proposed branch                | Proposed worktree                       | Type                             | Priority | Ownership area                                                                                                                              | Lifecycle status | Gate before activation                                                                                                                                          |
+| ----------------------- | ------------------------------ | --------------------------------------- | -------------------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------- | ---------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `agent-verification-v1` | `stream/agent-verification-v1` | `C:\FC-worktrees\agent-verification-v1` | Governance Infrastructure Stream | High     | Executable AI governance verification tooling: `fc:startup-check`, `fc:stream-check`, `fc:completion-check`, and doctor integration review. | Proposed         | Architecture Coordination approval, ownership/dependency/conflict review, validation strategy approval, registry update, and Jeff approval for stream creation. |
 
 ## Next Generation Stream Review Queue
 

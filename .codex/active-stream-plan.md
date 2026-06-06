@@ -46,6 +46,34 @@ this is not implementation authorization. Do not start implementation, touch
 schema/migrations, perform provider/customer-facing actions, open PRs, merge, or
 use dirty/out-of-scope worktrees from this approval alone.
 
+## Proposed Governance Infrastructure Stream
+
+Proposal date: 2026-06-06.
+
+Proposed stream: `agent-verification-v1`.
+
+- Proposed branch: `stream/agent-verification-v1`
+- Proposed worktree: `C:\FC-worktrees\agent-verification-v1`
+- Type: Governance Infrastructure Stream
+- Priority: High
+- Review packet:
+  [docs/review-packets/agent-verification-v1.md](C:/FloorConnector/docs/review-packets/agent-verification-v1.md)
+- Goal: convert AI governance from documentation-only guidance into executable
+  verification tooling for Desktop Codex, Phone Codex, autonomous Codex runs,
+  future AI agents, and future Claude/Cursor-compatible workflows without
+  changing application behavior.
+
+Proposed executable checks:
+
+- `pnpm fc:startup-check`
+- `pnpm fc:stream-check`
+- `pnpm fc:completion-check`
+
+Status: Proposed. Do not create the branch, create the worktree, add package
+scripts, implement scripts, open a PR, or begin runtime/tooling changes until
+Architecture Coordination and Jeff approve stream creation and implementation
+start.
+
 ## Sales To Production Readiness V1 Gate
 
 Gate date: 2026-06-05.

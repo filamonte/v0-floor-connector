@@ -101,6 +101,46 @@ packets from this registry. Agents may not begin a new wave, create active
 streams, continue to the next wave, or merge without Architecture Coordination
 approval and Jeff review.
 
+## Proposed Governance Infrastructure Stream
+
+Proposal date: 2026-06-06.
+
+Proposed stream: `agent-verification-v1`.
+
+Review packet:
+[docs/review-packets/agent-verification-v1.md](C:/FloorConnector/docs/review-packets/agent-verification-v1.md).
+
+Status: Proposed.
+
+Rationale: FloorConnector now has mature AI governance documentation:
+`AGENTS.md`, `docs/agent-governance.md`,
+`docs/agent-startup-checklist.md`,
+`docs/autonomous-run-governance.md`, and `docs/ai-diagnostics.md`. The next
+governance maturity step is executable verification tooling so agents can
+verify startup, stream alignment, and completion state instead of relying only
+on written instructions.
+
+Proposed branch:
+
+- `stream/agent-verification-v1`
+
+Proposed worktree:
+
+- `C:\FC-worktrees\agent-verification-v1`
+
+Proposed scope:
+
+- `pnpm fc:startup-check`
+- `pnpm fc:stream-check`
+- `pnpm fc:completion-check`
+- review existing `pnpm worktree:doctor` overlap and integration opportunities
+- update `AGENTS.md` and autonomous-run guidance after the tooling exists
+
+This proposal does not authorize implementation, branch creation, worktree
+creation, package script changes, PR creation, merge, application-code changes,
+schema changes, UI changes, Supabase changes, business workflow changes,
+canonical-record changes, or financial logic changes.
+
 ## Next Recommended Wave
 
 Recommendation date: 2026-06-05.
