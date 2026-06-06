@@ -13,6 +13,7 @@ It complements:
 - [docs/workflows.md](C:/FloorConnector/docs/workflows.md): implemented and near-term workflow direction
 - [docs/workflow-spec.md](C:/FloorConnector/docs/workflow-spec.md): primary guided contractor path
 - [docs/documentation-governance.md](C:/FloorConnector/docs/documentation-governance.md): documentation maintenance and archival rules
+- [docs/guided-project-capture-vision.md](C:/FloorConnector/docs/guided-project-capture-vision.md): future pre-estimate capture and Assessment Package strategy
 
 Use [docs/workflows.md](C:/FloorConnector/docs/workflows.md) as the canonical current and near-term contractor workflow document. This file is the broader target commercial workflow framing.
 
@@ -44,6 +45,12 @@ That flow may tighten over time into a more project-centered UX, but the key rul
 - no visualizer-only, file-only, communication-only, or module-local records presented as business truth when the same context belongs on the shared chain
 
 Future pre-lead visual/product/finish selection may happen before a formal opportunity exists. That should extend the lifecycle concept, not replace it: selected finish/spec context can begin early, then attach to `opportunity -> customer -> project -> estimate -> contract -> change order -> job -> invoice -> payment` when the contractor accepts it into the operational workflow.
+
+Future Guided Project Capture should sit after lead intake and before estimate
+creation. It should turn customer, sales, estimator, or field-provided project
+information into a project-owned Assessment Package before pricing begins. The
+Assessment Package belongs to the Project, not to the Estimate, and should be
+reused downstream instead of re-entered.
 
 ### 2. Project As Operational Root
 
@@ -181,6 +188,34 @@ Input sources may be:
 - contractor-uploaded plans, photos, and site information later
 - future instant-estimate tooling
 - future pre-lead visualizer/product selection handoff
+
+Future Guided Project Capture:
+
+- acts as a structured pre-estimate workflow stage between lead intake and
+  estimate creation
+- creates or enriches a project-owned Assessment Package
+- may include measurements, area layouts, photos, videos, site conditions,
+  substrate information, moisture observations, cracks/joints, prep
+  requirements, product preferences, visualizer selections, financing interest,
+  customer goals, customer requirements, AI observations, and confidence scores
+- may support Area / Space Modeling for rooms or zones such as Living Room,
+  Kitchen, Basement, Bedroom 1, and Bedroom 2
+- may collect financing interest, prequalification signals, and budget
+  expectations so financial readiness can be evaluated earlier
+- may derive lead qualification signals such as capture completion, photo
+  completeness, measurement completeness, product-selection completion, and
+  financing interest
+
+Guided Project Capture is not the estimate. It prepares a reusable Assessment
+Package that can inform estimates, revised estimates, change orders, scheduling,
+production planning, field handoff, job execution, invoicing, and customer
+communication while preserving the estimate as the reviewed commercial scope and
+price.
+
+Future Assessment Confidence may classify Measurement Confidence, Condition
+Confidence, and Product Confidence to decide whether remote estimating is
+acceptable, estimator review is required, or an onsite visit is required. These
+signals are advisory and must not replace human review.
 
 Future Takeoff & Scope Intelligence:
 

@@ -14,6 +14,7 @@ It is intended to guide future navigation, workspace structure, and route decisi
 - [docs/Roadmap.md](C:/FloorConnector/docs/Roadmap.md): platform maturity roadmap
 - [docs/sales-to-production.md](C:/FloorConnector/docs/sales-to-production.md): target sales and commercial workflow direction
 - [docs/documentation-governance.md](C:/FloorConnector/docs/documentation-governance.md): documentation maintenance and archival rules
+- [docs/guided-project-capture-vision.md](C:/FloorConnector/docs/guided-project-capture-vision.md): future Guided Project Capture and Assessment Package direction
 
 This document describes the intended contractor app structure over time. It should not be read as the current route map or current implementation truth.
 
@@ -183,6 +184,9 @@ This area should include:
   FieldTrail, MessageCenter, CloseoutTrail, and Proof Center layers should stay
   project-scoped rather than becoming disconnected top-level modules
 - future takeoff status, generated quantities, linked estimate context, and scope summary
+- future Guided Project Capture status, project-owned Assessment Package
+  completeness, area/space capture, confidence signals, and estimate-readiness
+  handoff
 
 Projects should answer:
 
@@ -427,6 +431,7 @@ In UX terms, a project should become the primary record that organizes delivery 
 Target project workspace sections:
 
 - Overview
+- Guided Project Capture later
 - Takeoff & Scope later
 - Finish / System Spec later
 - Estimate
@@ -446,6 +451,30 @@ Additional sections can be added later, but this is the intended core workspace 
 ### Overview
 
 Summary of project health, stage, customer, location, assigned people, and current blockers.
+
+### Guided Project Capture
+
+Future pre-estimate project workspace section for structured customer, sales,
+estimator, or field capture before estimate creation.
+
+This section should manage project-owned Assessment Package context such as
+measurements, area layouts, photos, videos, site conditions, substrate
+information, moisture observations, cracks/joints, prep requirements, product
+preferences, visualizer selections, financing interest, customer goals,
+customer requirements, AI observations, and confidence scores.
+
+Guided Project Capture is not an estimating workspace. It should prepare
+estimate-ready project context, qualification signals, and Assessment
+Confidence so a human estimator can decide whether remote estimating,
+estimator review, or an onsite visit is appropriate. The Assessment Package
+belongs to the Project and may later be reused by estimates, revised estimates,
+change orders, scheduling, production planning, field handoff, job execution,
+invoicing, and customer communication.
+
+Future Area / Space Modeling may let a project organize capture by rooms or
+zones such as Living Room, Kitchen, Basement, Bedroom 1, and Bedroom 2. Area
+records should remain project-scoped capture context, not duplicate projects,
+estimate records, or field subsystems.
 
 ### Takeoff & Scope
 

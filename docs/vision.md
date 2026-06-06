@@ -21,6 +21,7 @@ Related documents:
 - [docs/platform-maturity-model.md](C:/FloorConnector/docs/platform-maturity-model.md): staged build discipline
 - [docs/gatekeeper-system-vision.md](C:/FloorConnector/docs/gatekeeper-system-vision.md): GateKeeper operational intelligence and communications doctrine
 - [docs/ai-assisted-operating-system.md](C:/FloorConnector/docs/ai-assisted-operating-system.md): long-term AI-assisted operating system direction
+- [docs/guided-project-capture-vision.md](C:/FloorConnector/docs/guided-project-capture-vision.md): future Guided Project Capture and Assessment Package strategy
 
 ## Who FloorConnector Is For
 
@@ -80,6 +81,15 @@ In short:
 
 The long-term product direction can be described as a company brain: shared canonical data everywhere, no data silos, no fake or parallel records, and project-centered operational memory that makes the whole contractor workflow readable.
 
+Guided Project Capture is a future expression of that company-brain direction.
+It should sit between lead intake and estimate creation, producing a
+project-owned Assessment Package before pricing begins. The package should
+collect information once, then make it reusable across estimating, revised
+estimates, change orders, scheduling, production planning, field handoff, job
+execution, invoicing, and customer communication. Guided Project Capture is not
+an estimating feature; it is a pre-estimate project-readiness stage. See
+[docs/guided-project-capture-vision.md](C:/FloorConnector/docs/guided-project-capture-vision.md).
+
 The current enterprise UX consolidation direction supports that thesis at the page level: People owns contact/access administration, Customer summarizes the account relationship, Project owns operational state, Estimate/Contract/Invoice own proposal/signature/billing review, and Portal keeps customer-facing review simple. See [docs/enterprise-ux-consolidation.md](C:/FloorConnector/docs/enterprise-ux-consolidation.md).
 
 ## Contractor Foreman Baseline, Not Destination
@@ -111,6 +121,12 @@ The durable rule is still one system of record:
 `opportunity -> customer -> project -> estimate -> contract -> change order -> job -> invoice -> payment`
 
 Future AI is an operating layer over that chain. It may draft, summarize, recommend, and prepare, but it must not create AI-only business truth or bypass human approval for risky customer-facing, financial, legal, scheduling, permission, or compliance actions.
+
+For future capture and estimating support, the preferred strategy is
+`Customer + AI + Human Estimator`, not `Customer + Fully Autonomous Estimate`.
+AI may interpret measurements, detect rooms or conditions, identify risk, suggest
+products, and prepare estimate inputs, but humans approve before customer-facing
+estimate content or commitments move forward.
 
 GateKeeper is the named future doctrine for that operating layer where communications, operational memory, workflow reinforcement, and human-governed AI assistance become one system layer over the same canonical workflow. GateKeeper is not implemented by this vision document; it is the target direction documented in [docs/gatekeeper-system-vision.md](C:/FloorConnector/docs/gatekeeper-system-vision.md).
 
@@ -379,6 +395,9 @@ The expansion path is:
 - then deepen scheduling, materials, execution, notifications, and financial controls
 - then strengthen communications continuity, canonical metrics, and deterministic workflow automation
 - then add project-scoped Takeoff & Scope Intelligence where plans, photos, and measurements feed catalog-mapped estimate line items
+- then add Guided Project Capture where customers, sales, estimators, and field
+  personnel can create project-owned Assessment Packages before estimate work
+  begins
 - then mature the Intelligence Layer from trusted reporting and workflow evidence
 - then extend outward into customer-facing experiences and external integrations
 - then extend the public acquisition layer through contractor-owned websites, tenant-owned domains, landing pages, SEO/service/location pages, public forms, campaign attribution, AI-assisted content generation, and review/reputation/project-proof loops that feed the same canonical opportunity and revenue chain

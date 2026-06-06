@@ -33,6 +33,16 @@ FloorConnector's implemented backbone already covers the core canonical chain fr
 
 Planned deeper contractor operations include equipment management, real time-card/clocking depth, bid/RFP management, subcontractor management, document/submittal/spec-sheet workflows, service/warranty, weather-aware schedule guidance, inspections/checklists, punchlists, takeoff/plans, procurement/materials/POs, bills/AP, job costing, budget vs actual, reporting, mobile field depth, and accounting integrations.
 
+Guided Project Capture is a planned future layer between lead intake and
+estimate creation. It should let customers, sales representatives, estimators,
+and field personnel create a project-owned Assessment Package before estimating
+begins. That package may include measurements, area layouts, photos, videos,
+site conditions, substrate and moisture observations, crack/joint observations,
+prep requirements, product preferences, visualizer selections, financing
+interest, customer goals, AI observations, and confidence scores. It is not an
+estimate and must not be described as implemented until current-state records an
+implemented slice.
+
 Another planned layer is Universal Capture + Assistant Action: an operating
 surface for capturing callbacks, reminders, follow-ups, site-visit intent,
 estimate scheduling needs, and route/geographic grouping intent from anywhere,
@@ -57,6 +67,8 @@ Those layers must preserve the data-management philosophy:
 - workflow stages extend canonical records
 - AI is an operating layer over canonical records, not a separate system
 - data is entered once and flows forward
+- information is collected once and reused across estimating, production,
+  billing, field, and customer workflows
 
 The anti-silo warning applies especially to future financial, signature, payment, field, document, equipment, procurement, warranty, weather, and AI layers. Each should attach to the same shared record chain instead of becoming a disconnected product beside it.
 
@@ -465,6 +477,20 @@ These are still later layers:
 - management dashboards
 - higher-level business intelligence views
 
+#### Guided Project Capture
+
+- customer mobile web capture before native mobile applications
+- project-owned Assessment Packages before estimate creation
+- Area / Space Modeling for room or zone-level measurements, conditions,
+  photos, product selections, and AI observations
+- Assessment Confidence signals for measurement, condition, and product
+  confidence
+- financing interest, prequalification signals, and budget expectations before
+  estimate labor is spent
+- AI-assisted risk detection for cracks, moisture concerns, prep requirements,
+  coating failures, substrate concerns, and installation risks, with human
+  review remaining authoritative
+
 ### What This Means
 
 The product already has a connected operating core. What remains is not "basic functionality" in a vague sense. What remains is deeper workflow depth, automation, reporting, and adjacent layers around the core system.
@@ -488,6 +514,9 @@ The next layers should follow the current roadmap direction in a disciplined ord
 3. Materials, reusable catalogs, and richer shared document tooling
 
 - deepen reusable operational content on the same canonical system
+- add Guided Project Capture and project-owned Assessment Packages before
+  estimate creation, keeping capture separate from pricing and estimate
+  approval
 
 4. External integrations
 
@@ -532,6 +561,12 @@ communication drafts from any context. The prepared action should resolve to
 canonical Work Items, opportunities, projects, appointments, communications, or
 schedule handoffs where possible, and should require contractor confirmation
 before any external send, booking, or customer-facing commitment.
+
+Future Guided Project Capture should connect customer self-service capture,
+estimator review, field assessment, AI-assisted observation, financing
+readiness, and lead qualification without creating a separate estimating
+workflow. The preferred AI posture is `Customer + AI + Human Estimator`, not
+fully autonomous customer-facing estimates.
 
 Future AI must preserve:
 
@@ -647,6 +682,12 @@ These systems read from canonical data without owning or duplicating records.
 ## Section 10 -- Mobile-First Field Workflow Direction
 
 Current field foundations should continue moving toward mobile-first UX. Future depth should support:
+
+- Customer mobile web Guided Project Capture before native applications
+
+- Photos, measurements, product selection, and Assessment Package creation
+
+- Estimator mobile workflows and onsite assessment support
 
 - Time tracking
 

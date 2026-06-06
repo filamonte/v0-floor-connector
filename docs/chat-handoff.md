@@ -20,6 +20,11 @@ Use [docs/ai-native-development-architecture.md](C:/FloorConnector/docs/ai-nativ
 when a task involves parallel agents, worktrees, stream ownership, capability
 waves, hotspot governance, merge sequencing, or QA/verification coordination.
 
+Use [docs/guided-project-capture-vision.md](C:/FloorConnector/docs/guided-project-capture-vision.md)
+when a task mentions Guided Project Capture, Assessment Packages, project area
+capture, customer self-service estimate inputs, capture confidence, or future
+AI-assisted estimating inputs. It is target direction only.
+
 Use [docs/parallel-development-governance.md](C:/FloorConnector/docs/parallel-development-governance.md)
 when a task proposes, approves, activates, verifies, merges, or retires a
 stream. It defines the permanent stream lifecycle, stream creation rule,
@@ -763,6 +768,14 @@ Recent staging/demo work is remote-Supabase-first and no-write by default:
   are direction unless current-state and code confirm implementation.
 - Do not add fake dashboards, demo-only protected data, local-only persistence,
   portal-only copies, duplicate jobs/projects, or module-local record models.
+- Do not describe Guided Project Capture, Assessment Packages, Area / Space
+  Modeling, capture confidence scoring, or AI-assisted capture as implemented
+  unless `docs/current-state.md` explicitly records an implemented slice.
+- Guided Project Capture is future pre-estimate project capture, not an
+  estimating feature. Assessment Packages belong to Projects, not Estimates.
+  The strategy is to collect information once and reuse it through estimating,
+  change orders, scheduling, production planning, field handoff, job execution,
+  invoicing, and customer communication.
 - Do not add local database seed workflows. FloorConnector demos and QA use real
   remote Supabase-backed canonical records; missing coverage should be created
   through app workflows or treated as a blocker.
