@@ -86,6 +86,35 @@ The V1 helper layer lives in `apps/web/lib/verification/`:
 These helpers do not query the database, write state, create records, bypass
 RLS, create routes, or replace server-side workflow guards.
 
+## Sales To Production Readiness V1 Verification
+
+The `sales-to-production-readiness-v1` wave adds a verification-only helper at
+`apps/web/lib/verification/sales-to-production-readiness.ts`. It composes the
+existing canonical workflow, readiness, and operational ownership helpers, then
+adds wave-specific boundary evidence for:
+
+- sales readiness from opportunity and site assessment inputs;
+- no duplicate customer/project creation during estimate handoff;
+- estimate-to-contract readiness on canonical estimate, contract, and project
+  data;
+- contract/signature readiness without duplicate signature models;
+- deposit and financial readiness on canonical invoice/payment state;
+- schedule handoff to Field ownership over canonical jobs;
+- Project Workspace diagnosis, Settings configuration ownership, and
+  customer-safe portal boundaries.
+
+| Verification area              | Automated evidence                                                                                                                                          | Manual / code-review check                                                                                         |
+| ------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| Sales readiness                | `sales-to-production-readiness.test.ts` requires opportunity and site assessment to stay upstream readiness inputs and forbids customer/project duplication | Confirm candidate stream only strengthens lead/opportunity readiness display and does not add dashboard sprawl     |
+| Estimate / contract readiness  | Helper coverage requires canonical estimate/contract/project boundaries and contract/signature readiness ownership                                          | Confirm estimate candidate routes Settings workflow-default review back to Settings and does not mutate settings   |
+| Deposit / financial readiness  | Helper coverage wraps `verifyReadinessContinuity` and catches deposit/readiness bypass before job, schedule, or standard invoice handoff                    | Confirm no financial math, detached invoice/payment state, provider call, or payment-state mutation was introduced |
+| Schedule handoff               | Helper coverage requires Field execution ownership and canonical job scheduling boundaries                                                                  | Confirm schedule candidate points blocked work back to source records and does not add dispatch tables/automation  |
+| Project / Settings / Portal IA | Helper coverage composes `verifyOperationalOwnership` and requires Project diagnosis, Settings configuration, and portal customer-safe boundaries           | Confirm no portal behavior changes and no customer-visible internal readiness language                             |
+
+This helper is intentionally pure verification. It does not import
+implementation-stream-only helpers, query data, add routes, add schema,
+exercise provider behavior, or perform feature work.
+
 ## Existing Test Surface
 
 - `playwright.config.js` defines setup, protected, portal, payment, and
@@ -115,6 +144,11 @@ RLS, create routes, or replace server-side workflow guards.
 - `apps/web/lib/verification/operational-ownership.test.ts` verifies the
   operational ownership model, including dashboard/portal source-of-truth drift,
   partial settings evidence, and canonical lifecycle order drift.
+- `apps/web/lib/verification/sales-to-production-readiness.test.ts` verifies
+  the approved sales-to-production wave boundaries across canonical workflow
+  continuity, readiness gates, operational ownership, no duplicate models,
+  deposit readiness, schedule handoff, Settings ownership, and portal
+  customer-safe boundaries.
 
 ## Fixture And Auth Notes
 
