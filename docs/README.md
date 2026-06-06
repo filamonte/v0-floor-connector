@@ -16,6 +16,18 @@ Canonical repository notes:
 
 Use these first for most implementation or documentation tasks:
 
+- [AGENTS.md](C:/FloorConnector/AGENTS.md): repository-level AI agent rulebook
+- [docs/agent-governance.md](C:/FloorConnector/docs/agent-governance.md):
+  AI instruction hierarchy, startup, worktree, mobile, approval, and reporting
+  governance
+- [docs/agent-startup-checklist.md](C:/FloorConnector/docs/agent-startup-checklist.md):
+  required pre-change checklist for AI-assisted work
+- [docs/autonomous-run-governance.md](C:/FloorConnector/docs/autonomous-run-governance.md):
+  safe autonomous work, human-approval boundaries, validation, reporting, and
+  rollback rules
+- [docs/ai-diagnostics.md](C:/FloorConnector/docs/ai-diagnostics.md):
+  troubleshooting for wrong repo, wrong branch, wrong worktree, stale origin,
+  validation failures, and conflicts
 - [docs/developer-source-of-truth.md](C:/FloorConnector/docs/developer-source-of-truth.md):
   primary development guardrails
 - [docs/current-state.md](C:/FloorConnector/docs/current-state.md):

@@ -19,6 +19,30 @@ context.
 Agents must read `AGENTS.md` before implementation, review, documentation, or
 coordination work.
 
+## Agent Instruction Hierarchy
+
+Recommended hierarchy:
+
+1. Personal/global agent guidance, such as `~/.codex/AGENTS.md`, for stable
+   user-wide defaults that apply before an agent enters any repository.
+2. Repository guidance at [AGENTS.md](C:/FloorConnector/AGENTS.md), which is
+   authoritative for all FloorConnector work.
+3. Subdirectory or stream-level `AGENTS.md` files only when a future area needs
+   durable, local rules that cannot be expressed clearly in the root rulebook.
+
+Do not create user-specific personal/global files from a repository task.
+Personal/global guidance should stay generic and should point agents into the
+repository checklist rather than duplicating FloorConnector-specific truth.
+
+Repository guidance wins for FloorConnector-specific rules. Stream-level or
+subdirectory guidance may narrow behavior for a local area, but it must not
+weaken canonical lifecycle, tenant isolation, auth/RLS, financial, signature,
+portal, provider, or human-review requirements from the root rulebook.
+
+Current recommendation: keep only the root `AGENTS.md` plus the governance docs
+in this repository. Add stream-level `AGENTS.md` files only after a repeated
+stream-specific failure proves that local guidance is needed.
+
 ## Supported AI Tools
 
 The governance model is intended for:
@@ -53,6 +77,9 @@ Then confirm the intended stream/worktree from
 [.codex/active-stream-plan.md](C:/FloorConnector/.codex/active-stream-plan.md).
 If the branch, stream, worktree, or repo root does not match the task, stop
 before editing.
+
+Use [docs/agent-startup-checklist.md](C:/FloorConnector/docs/agent-startup-checklist.md)
+as the complete pre-change checklist.
 
 ## Worktree Safety
 
@@ -90,6 +117,10 @@ Agents may plan, implement scoped approved slices, validate, prepare review
 packets, and recommend next steps. They may not bypass Jeff approval or the
 Architecture Coordination gate.
 
+Use [docs/autonomous-run-governance.md](C:/FloorConnector/docs/autonomous-run-governance.md)
+for safe autonomous work, human-approval boundaries, prohibited actions, merge
+requirements, validation, reporting, and rollback expectations.
+
 ## Mobile Usage Expectations
 
 Phone and desktop sessions may not have identical access to local files,
@@ -100,6 +131,15 @@ runtime cannot inspect or mutate the expected checkout.
 If a phone session cannot verify the repo root, branch, status, and active
 stream, it should avoid implementation and instead prepare a bounded prompt or
 handoff for a verified local run.
+
+Approval prompts are expected on phone and cloud sessions. Filesystem visibility
+and sandbox behavior may differ from desktop. The agent must still verify the
+repo root, branch, upstream state, and intended stream before changing files.
+If verification cannot be completed, the phone session should stay in planning
+or handoff mode.
+
+`AGENTS.md` remains the source of truth for FloorConnector even when the runtime
+started from outside the repository.
 
 ## Approval Expectations
 
@@ -135,6 +175,7 @@ payment, communication, scheduling, field, portal, or AI business records.
 Before completion, agents should report:
 
 - branch
+- worktree
 - commit hash, when committed
 - final git status
 - ahead/behind count relative to `origin/main`
@@ -147,3 +188,6 @@ For docs-only governance work, validation should at minimum confirm that the
 intended docs exist, links/references resolve, no application code changed, no
 schema/migration files changed, Prettier ran on changed supported files, and
 `git diff --check` passes.
+
+For common startup, worktree, branch, origin, validation, and merge-conflict
+failures, use [docs/ai-diagnostics.md](C:/FloorConnector/docs/ai-diagnostics.md).

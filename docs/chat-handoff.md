@@ -42,6 +42,14 @@ before launching or validating governed waves. Start with
 `pnpm.cmd devtools:link` when needed, and prefer repo-local validation commands
 over global PATH tools.
 
+Use [docs/agent-startup-checklist.md](C:/FloorConnector/docs/agent-startup-checklist.md)
+before any agent changes files. Use
+[docs/autonomous-run-governance.md](C:/FloorConnector/docs/autonomous-run-governance.md)
+for safe autonomous work versus human-approval boundaries. Use
+[docs/ai-diagnostics.md](C:/FloorConnector/docs/ai-diagnostics.md) when an
+agent appears to be in the wrong repository, branch, worktree, stale origin, or
+blocked validation state.
+
 Current automation readiness is Ready With Human Review Gate. Future waves must
 follow the loop Jeff Review -> Product Director Recommendation -> Architecture
 Coordination Approval -> Wave Proposal -> Stream Creation -> Parallel Feature
@@ -81,6 +89,10 @@ review gate.
 Read these before implementation or documentation work:
 
 - [AGENTS.md](C:/FloorConnector/AGENTS.md)
+- [docs/agent-governance.md](C:/FloorConnector/docs/agent-governance.md)
+- [docs/agent-startup-checklist.md](C:/FloorConnector/docs/agent-startup-checklist.md)
+- [docs/autonomous-run-governance.md](C:/FloorConnector/docs/autonomous-run-governance.md)
+- [docs/ai-diagnostics.md](C:/FloorConnector/docs/ai-diagnostics.md)
 - [docs/developer-source-of-truth.md](C:/FloorConnector/docs/developer-source-of-truth.md)
 - [docs/current-state.md](C:/FloorConnector/docs/current-state.md)
 - [docs/parallel-development-governance.md](C:/FloorConnector/docs/parallel-development-governance.md)

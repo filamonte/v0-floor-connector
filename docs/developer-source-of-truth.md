@@ -107,6 +107,9 @@ UI:
 Execution:
 
 - docs/agent-governance.md
+- docs/agent-startup-checklist.md
+- docs/autonomous-run-governance.md
+- docs/ai-diagnostics.md
 - docs/chat-handoff.md
 - docs/ai/README.md
 - docs/parallel-development-governance.md
@@ -209,6 +212,18 @@ Use these docs together:
 - [AGENTS.md](C:/FloorConnector/AGENTS.md): first operational document for AI
   agents, including startup checks, repo/worktree boundaries, and completion
   reporting
+- [docs/agent-governance.md](C:/FloorConnector/docs/agent-governance.md): AI
+  instruction hierarchy, startup, worktree, mobile, approval, and reporting
+  governance
+- [docs/agent-startup-checklist.md](C:/FloorConnector/docs/agent-startup-checklist.md):
+  pre-change checklist for repository, branch, worktree, upstream, stream, docs,
+  conflict, and scope verification
+- [docs/autonomous-run-governance.md](C:/FloorConnector/docs/autonomous-run-governance.md):
+  safe autonomous work, human approval boundaries, validation, reporting, and
+  rollback expectations
+- [docs/ai-diagnostics.md](C:/FloorConnector/docs/ai-diagnostics.md):
+  troubleshooting guide for wrong repo, wrong branch, detached HEAD, wrong
+  worktree, stale origin, validation failures, and conflicts
 - [docs/developer-source-of-truth.md](C:/FloorConnector/docs/developer-source-of-truth.md): primary development entry point and guardrails
 - [docs/current-state.md](C:/FloorConnector/docs/current-state.md): implemented truth
 - [docs/product-brain.md](C:/FloorConnector/docs/product-brain.md): high-signal product memory and anti-drift rules

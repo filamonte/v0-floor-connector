@@ -11,6 +11,10 @@ FloorConnector worktrees. It complements, but does not replace,
 
 Read these before implementation or documentation work:
 
+- `AGENTS.md`
+- `docs/agent-governance.md`
+- `docs/agent-startup-checklist.md`
+- `docs/autonomous-run-governance.md`
 - `docs/developer-source-of-truth.md`
 - `docs/current-state.md`
 - `docs/workflows.md`
@@ -60,6 +64,7 @@ surface, workflow, or planning stream.
 Final responses should include:
 
 - branch and final git status
+- worktree and upstream status
 - commit hash and message, when committed
 - files added
 - files modified

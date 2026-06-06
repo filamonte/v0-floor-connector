@@ -38,6 +38,12 @@ See [docs/agent-governance.md](C:/FloorConnector/docs/agent-governance.md) for
 startup sequence, mobile/runtime expectations, approval boundaries, and
 completion reporting.
 
+Operational agent checklists and troubleshooting live in:
+
+- [docs/agent-startup-checklist.md](C:/FloorConnector/docs/agent-startup-checklist.md)
+- [docs/autonomous-run-governance.md](C:/FloorConnector/docs/autonomous-run-governance.md)
+- [docs/ai-diagnostics.md](C:/FloorConnector/docs/ai-diagnostics.md)
+
 ## Run Locally
 
 Prerequisites:
@@ -110,6 +116,12 @@ Use these docs together:
   and startup checklist
 - [docs/agent-governance.md](C:/FloorConnector/docs/agent-governance.md): AI
   tool, worktree, autonomous-run, and completion-reporting governance
+- [docs/agent-startup-checklist.md](C:/FloorConnector/docs/agent-startup-checklist.md):
+  required pre-change checklist for AI-assisted work
+- [docs/autonomous-run-governance.md](C:/FloorConnector/docs/autonomous-run-governance.md):
+  safe autonomous work, approval boundaries, validation, and reporting rules
+- [docs/ai-diagnostics.md](C:/FloorConnector/docs/ai-diagnostics.md):
+  troubleshooting guide for common AI run failures
 - [docs/developer-source-of-truth.md](C:/FloorConnector/docs/developer-source-of-truth.md): primary developer entry point and implementation guardrail summary
 - [docs/current-state.md](C:/FloorConnector/docs/current-state.md): implemented truth on the current branch
 - [docs/platform-maturity.md](C:/FloorConnector/docs/platform-maturity.md): concise platform maturity framing

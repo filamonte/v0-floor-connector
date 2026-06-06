@@ -23,6 +23,9 @@ records. They must not fork core business truth.
 Read these before implementation, review, or coordination work:
 
 - `AGENTS.md`
+- `docs/agent-governance.md`
+- `docs/agent-startup-checklist.md`
+- `docs/autonomous-run-governance.md`
 - `docs/developer-source-of-truth.md`
 - `docs/current-state.md`
 - `docs/workflows.md`
@@ -59,6 +62,9 @@ Before implementation, review, or coordination work:
 
 If the intended stream, branch, repo root, or worktree is unclear, stop and ask
 for clarification before editing files.
+
+Use `docs/agent-startup-checklist.md` for the complete pre-change checklist and
+expected commands.
 
 ## Current Phase
 
@@ -111,6 +117,9 @@ Agents must:
 - treat dirty files and dirty worktrees as user-owned unless explicitly scoped
   into the current task
 - stage only intended files
+
+Every stream completion report must include branch, worktree, upstream status,
+files changed, validation executed, and final git status.
 
 ## Production-First Rules
 
@@ -307,6 +316,8 @@ pnpm worktree:reconcile
 - Run route smoke or E2E checks when touching protected workflows.
 - Do not share `.next`, `dist`, `coverage`, or `test-results` across
   worktrees.
+- For autonomous or multi-agent runs, follow
+  `docs/autonomous-run-governance.md` before beginning work.
 
 ## Git Expectations
 
