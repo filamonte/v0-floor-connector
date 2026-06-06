@@ -80,6 +80,7 @@ review gate.
 
 Read these before implementation or documentation work:
 
+- [AGENTS.md](C:/FloorConnector/AGENTS.md)
 - [docs/developer-source-of-truth.md](C:/FloorConnector/docs/developer-source-of-truth.md)
 - [docs/current-state.md](C:/FloorConnector/docs/current-state.md)
 - [docs/parallel-development-governance.md](C:/FloorConnector/docs/parallel-development-governance.md)
@@ -763,6 +764,8 @@ Recent staging/demo work is remote-Supabase-first and no-write by default:
 
 ## Guardrails
 
+- All AI agents must read [AGENTS.md](C:/FloorConnector/AGENTS.md) before
+  beginning work.
 - `docs/current-state.md` owns implemented truth.
 - `docs/Roadmap.md`, `docs/vision.md`, `docs/target-ia.md`, and feature plans
   are direction unless current-state and code confirm implementation.

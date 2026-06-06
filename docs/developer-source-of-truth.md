@@ -7,6 +7,10 @@ Doc Type: Governance
 
 This file is the primary entry point for all development.
 
+For AI-assisted work, read [AGENTS.md](C:/FloorConnector/AGENTS.md) first. It
+defines repository-level startup verification, worktree safety, and completion
+reporting before this implementation guardrail document is applied.
+
 You must:
 
 - Read this file first
@@ -82,6 +86,7 @@ Consistency here is required for:
 
 Core:
 
+- AGENTS.md
 - docs/developer-source-of-truth.md
 - docs/current-state.md
 - docs/platform-maturity.md
@@ -101,6 +106,7 @@ UI:
 
 Execution:
 
+- docs/agent-governance.md
 - docs/chat-handoff.md
 - docs/ai/README.md
 - docs/parallel-development-governance.md
@@ -111,10 +117,11 @@ Execution:
 
 ## HOW TO WORK
 
-1. Read this file
-2. Read current-state.md + workflows.md
-3. Follow rules strictly
-4. Ask if anything is unclear
+1. Read AGENTS.md for repository startup, worktree, and agent governance rules
+2. Read this file
+3. Read current-state.md + workflows.md
+4. Follow rules strictly
+5. Ask if anything is unclear
 
 ---
 
@@ -199,6 +206,9 @@ Use this file as the primary developer entry point and short guardrail summary f
 
 Use these docs together:
 
+- [AGENTS.md](C:/FloorConnector/AGENTS.md): first operational document for AI
+  agents, including startup checks, repo/worktree boundaries, and completion
+  reporting
 - [docs/developer-source-of-truth.md](C:/FloorConnector/docs/developer-source-of-truth.md): primary development entry point and guardrails
 - [docs/current-state.md](C:/FloorConnector/docs/current-state.md): implemented truth
 - [docs/product-brain.md](C:/FloorConnector/docs/product-brain.md): high-signal product memory and anti-drift rules

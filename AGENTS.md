@@ -22,6 +22,7 @@ records. They must not fork core business truth.
 
 Read these before implementation, review, or coordination work:
 
+- `AGENTS.md`
 - `docs/developer-source-of-truth.md`
 - `docs/current-state.md`
 - `docs/workflows.md`
@@ -34,7 +35,30 @@ Read these before implementation, review, or coordination work:
 - canonical GitHub repo: `https://github.com/filamonte/v0-floor-connector.git`
 - canonical collaboration branch: `main`
 - canonical local workspace root: `C:\FloorConnector`
+- canonical worktree root: `C:\FC-worktrees\<stream>`
 - local web app env source of truth: `C:\FloorConnector\.env.local`
+
+Agents must never perform FloorConnector development work outside
+`C:\FloorConnector` or an approved `C:\FC-worktrees\<stream>` worktree.
+Do not create shadow repositories, duplicate project folders, or working copies
+on Desktop, Downloads, temp folders, or other untracked locations.
+
+## Startup Verification
+
+Before implementation, review, or coordination work:
+
+1. Print the working directory.
+2. Run `git status --short --branch`.
+3. Run `git branch --show-current`.
+4. Run `git remote -v`.
+5. Run `git fetch origin`.
+6. Run `git rev-list --left-right --count HEAD...origin/main`.
+7. Confirm the repo root with `git rev-parse --show-toplevel`.
+8. Confirm the intended stream, branch, and worktree from the task and active
+   registry.
+
+If the intended stream, branch, repo root, or worktree is unclear, stop and ask
+for clarification before editing files.
 
 ## Current Phase
 
@@ -72,6 +96,21 @@ Agents must:
 - always list the files changed
 - always list commands the user should run when relevant
 - always note required environment variables when they change
+
+## Worktree Safety
+
+FloorConnector uses one stream, one branch, and one worktree.
+
+Agents must:
+
+- never reuse another stream's worktree for unrelated work
+- never create a stream without ownership review, dependency review,
+  architecture approval, and active-stream conflict checks
+- use `C:\FloorConnector` for canonical `main` work and
+  `C:\FC-worktrees\<stream>` for approved stream work
+- treat dirty files and dirty worktrees as user-owned unless explicitly scoped
+  into the current task
+- stage only intended files
 
 ## Production-First Rules
 
@@ -275,6 +314,8 @@ pnpm worktree:reconcile
 - Stage only intended files.
 - Commit the completed slice.
 - Report validation.
+- Report branch, commit hash, final git status, ahead/behind count, and files
+  changed before completion.
 
 ## Definition Of Done
 

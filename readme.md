@@ -14,6 +14,30 @@ Current branch highlights include the normalized contractor shell, shared quick-
 - `supabase/`: migrations and Supabase project assets
 - `docs/`: active documentation and archived reference docs
 
+## AI Agent Governance
+
+FloorConnector uses [AGENTS.md](C:/FloorConnector/AGENTS.md) as the
+repository-level operating guide for Codex and future AI-assisted development
+tools. Agents must read it before implementation, review, documentation, or
+coordination work.
+
+The governed workflow is one stream, one branch, and one worktree:
+
+- canonical checkout: `C:\FloorConnector`
+- stream worktrees: `C:\FC-worktrees\<stream>`
+- active stream registry: [active-worktrees.md](C:/FloorConnector/active-worktrees.md)
+  and [.codex/active-stream-plan.md](C:/FloorConnector/.codex/active-stream-plan.md)
+
+Before work, agents verify working directory, git status, branch, remotes,
+ahead/behind state, repo root, and intended stream/worktree. Autonomous runs
+remain human-reviewed: no auto-merge, no auto-continuation to another wave, no
+provider/customer-facing actions, and no schema/migration work unless a later
+approved task explicitly scopes it.
+
+See [docs/agent-governance.md](C:/FloorConnector/docs/agent-governance.md) for
+startup sequence, mobile/runtime expectations, approval boundaries, and
+completion reporting.
+
 ## Run Locally
 
 Prerequisites:
@@ -82,6 +106,10 @@ That command checks local repo structure, package scripts, Node/pnpm availabilit
 
 Use these docs together:
 
+- [AGENTS.md](C:/FloorConnector/AGENTS.md): repository-level AI agent rulebook
+  and startup checklist
+- [docs/agent-governance.md](C:/FloorConnector/docs/agent-governance.md): AI
+  tool, worktree, autonomous-run, and completion-reporting governance
 - [docs/developer-source-of-truth.md](C:/FloorConnector/docs/developer-source-of-truth.md): primary developer entry point and implementation guardrail summary
 - [docs/current-state.md](C:/FloorConnector/docs/current-state.md): implemented truth on the current branch
 - [docs/platform-maturity.md](C:/FloorConnector/docs/platform-maturity.md): concise platform maturity framing
