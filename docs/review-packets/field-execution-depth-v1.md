@@ -20,13 +20,13 @@ context without creating duplicate jobs, schedules, dispatch records, Daily Log
 records, field-note records, issue trackers, punch-list models, portal-owned
 operational state, schema changes, or migrations.
 
-The three implementation streams are clean, contain the reported committed
-slices, and are each `1 ahead / 1 behind` `origin/main`. They are ready for
-review but must be rebased onto current `origin/main` before merge. The
-verification stream is clean, contains the reported committed slice, and is `1
-ahead / 0 behind` `origin/main`; it should still land last after the
-implementation streams and should be revalidated after the implementation merge
-order is reconciled.
+The three implementation streams were rebased cleanly onto current
+`origin/main`, remain clean, contain the reported committed slices, and are each
+`1 ahead / 0 behind` `origin/main`. The verification stream was also rebased
+cleanly onto current `origin/main`, remains clean, contains the reported
+verification slice, and is `1 ahead / 0 behind` `origin/main`. All streams were
+revalidated after the final rebase pass. The merge order remains implementation
+streams first and verification last.
 
 ## Main Branch Preflight
 
@@ -54,9 +54,9 @@ pnpm.cmd fc:preflight:fast
 
 | Stream                          | Branch                                   | Worktree                                          | Live state                  | Readiness decision |
 | ------------------------------- | ---------------------------------------- | ------------------------------------------------- | --------------------------- | ------------------ |
-| Field Handoff Packet V1         | `stream/field-handoff-packet-v1`         | `C:\FC-worktrees\field-handoff-packet-v1`         | Clean, `1 ahead / 1 behind` | Ready after rebase |
-| Daily Execution Command V1      | `stream/daily-execution-command-v1`      | `C:\FC-worktrees\daily-execution-command-v1`      | Clean, `1 ahead / 1 behind` | Ready after rebase |
-| Crew Execution Visibility V1    | `stream/crew-execution-visibility-v1`    | `C:\FC-worktrees\crew-execution-visibility-v1`    | Clean, `1 ahead / 1 behind` | Ready after rebase |
+| Field Handoff Packet V1         | `stream/field-handoff-packet-v1`         | `C:\FC-worktrees\field-handoff-packet-v1`         | Clean, `1 ahead / 0 behind` | Ready              |
+| Daily Execution Command V1      | `stream/daily-execution-command-v1`      | `C:\FC-worktrees\daily-execution-command-v1`      | Clean, `1 ahead / 0 behind` | Ready              |
+| Crew Execution Visibility V1    | `stream/crew-execution-visibility-v1`    | `C:\FC-worktrees\crew-execution-visibility-v1`    | Clean, `1 ahead / 0 behind` | Ready              |
 | Verification Field Execution V1 | `stream/verification-field-execution-v1` | `C:\FC-worktrees\verification-field-execution-v1` | Clean, `1 ahead / 0 behind` | Ready, merge last  |
 
 All four worktrees exist, are on the expected branch, are clean, and contain the
@@ -72,10 +72,10 @@ worktree:
 
 | Stream                          | Commit     | Message                                     |
 | ------------------------------- | ---------- | ------------------------------------------- |
-| Field Handoff Packet V1         | `e731b664` | `feat: deepen field handoff packet`         |
-| Daily Execution Command V1      | `16a2422b` | `feat: strengthen daily execution workflow` |
-| Crew Execution Visibility V1    | `a5ce27f7` | `feat: improve crew execution visibility`   |
-| Verification Field Execution V1 | `3c687475` | `test: protect field execution workflow`    |
+| Field Handoff Packet V1         | `ab7a7bac` | `feat: deepen field handoff packet`         |
+| Daily Execution Command V1      | `c20fdf92` | `feat: strengthen daily execution workflow` |
+| Crew Execution Visibility V1    | `16631580` | `feat: improve crew execution visibility`   |
+| Verification Field Execution V1 | `575a16d7` | `test: protect field execution workflow`    |
 
 ## Files Changed By Stream
 
@@ -156,7 +156,7 @@ streams actually merge to `main`.
 
 ## Validation Results
 
-Reported stream validation:
+Final rebase and stream validation:
 
 | Stream                          | Reported validation                                                                                                                |
 | ------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
@@ -170,7 +170,7 @@ Live integration review confirmed:
 - each worktree exists;
 - each stream is on the expected branch;
 - each stream is clean;
-- each reported commit is present;
+- each rebased stream head is present;
 - changed files match the reported stream scope;
 - no stream includes `supabase/migrations` changes.
 
@@ -205,9 +205,9 @@ No ownership conflict was found.
   presentation over canonical schedule/job state.
 - Verification Field Execution V1 stays in pure verification helpers/tests.
 
-The only required reconciliation before merge is branch freshness: the three
-implementation streams are behind current `origin/main` by one commit and
-should be rebased before merge. Do not merge them as-is.
+Final branch freshness reconciliation passed: all four streams rebased cleanly
+onto current `origin/main`, remain clean, and validated successfully. Do not
+merge without Jeff's explicit merge approval.
 
 ## Duplicate Model Check
 
@@ -239,9 +239,9 @@ No IA or workflow drift was found.
 - Field summaries remain connected to canonical source records instead of
   becoming disconnected field reporting summaries.
 
-## Validation Recommendation Before Merge Approval
+## Final Revalidation Before Merge Approval
 
-Minimum required revalidation after rebasing the implementation streams:
+Completed final revalidation after rebasing the implementation streams:
 
 ```powershell
 pnpm.cmd worktree:doctor
@@ -293,10 +293,10 @@ Rationale:
 
 ## Risks / Follow-Ups
 
-- Required before merge: rebase the three implementation streams onto current
-  `origin/main`; each is currently `1 ahead / 1 behind`.
+- Required before merge: Jeff must explicitly approve the controlled merge
+  order.
 - Required before verification merge: refresh/revalidate verification after the
-  implementation streams land.
+  implementation streams land, if `main` changes during the merge sequence.
 - Required after acceptance: update active registries and current-state docs
   only after the stream set merges to `main`.
 - Required after acceptance: retire completed worktrees/branches only after
