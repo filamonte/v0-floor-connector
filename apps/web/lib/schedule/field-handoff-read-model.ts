@@ -156,6 +156,21 @@ export type ScheduleFieldHandoffPacketLink = {
   href: string;
 };
 
+export type ScheduleFieldHandoffPacketChecklistItem = {
+  id:
+    | "scope"
+    | "estimate"
+    | "contract"
+    | "readiness"
+    | "schedule_notes"
+    | "daily_log"
+    | "field_blockers";
+  label: string;
+  detail: string;
+  status: "complete" | "attention" | "missing";
+  href: string | null;
+};
+
 export type ScheduleFieldHandoffPacket = {
   title: string;
   statusLabel: string;
@@ -182,6 +197,7 @@ export type ScheduleFieldHandoffPacket = {
     blockersLabel: string;
     latestActivityLabel: string;
   };
+  executionChecklist: ScheduleFieldHandoffPacketChecklistItem[];
   links: ScheduleFieldHandoffPacketLink[];
 };
 
@@ -364,6 +380,113 @@ function getReadinessDetail(input: {
   };
 }
 
+function buildChecklistItem(input: ScheduleFieldHandoffPacketChecklistItem) {
+  return input;
+}
+
+function buildExecutionChecklist(input: {
+  job: ScheduleFieldHandoffJob;
+  handoff: ScheduleFieldHandoffSummary | null;
+  readiness: ScheduleFieldHandoffReadinessContext | null | undefined;
+  warnings: ScheduleWarningSummary[];
+  projectHref: string | null;
+  jobHref: string;
+}): ScheduleFieldHandoffPacketChecklistItem[] {
+  const hasScope =
+    Boolean(input.job.projectName?.trim() || input.job.project?.name.trim()) &&
+    Boolean(input.job.customerName?.trim());
+  const hasEstimate =
+    Boolean(input.job.estimate) || Boolean(input.readiness?.estimateId);
+  const hasContract =
+    Boolean(input.readiness?.contractId) ||
+    Boolean(input.readiness?.contractStatus);
+  const readinessBlocked =
+    input.readiness !== null &&
+    input.readiness !== undefined &&
+    !input.readiness.isReadyToSchedule;
+  const hasScheduleNotes = Boolean(input.job.scheduleNotes?.trim());
+
+  return [
+    buildChecklistItem({
+      id: "scope",
+      label: "Scope context",
+      detail: hasScope
+        ? "Customer and project scope labels are linked to the scheduled job."
+        : "Customer or project scope labels are missing from the scheduled job.",
+      status: hasScope ? "complete" : "missing",
+      href: input.projectHref
+    }),
+    buildChecklistItem({
+      id: "estimate",
+      label: "Estimate context",
+      detail: hasEstimate
+        ? "Estimate context is available for the field handoff."
+        : "Estimate context is not linked to this field handoff.",
+      status: hasEstimate ? "complete" : "missing",
+      href: input.job.estimate ? `/estimates/${input.job.estimate.id}` : null
+    }),
+    buildChecklistItem({
+      id: "contract",
+      label: "Contract context",
+      detail: hasContract
+        ? "Contract readiness context is available before field execution."
+        : "Contract context is not linked to this field handoff.",
+      status: hasContract ? "complete" : "missing",
+      href: input.readiness?.contractId
+        ? `/contracts/${input.readiness.contractId}`
+        : null
+    }),
+    buildChecklistItem({
+      id: "readiness",
+      label: "Readiness",
+      detail: input.readiness
+        ? readinessBlocked
+          ? "Project readiness still has blockers that should be reviewed before execution."
+          : input.warnings.length > 0
+            ? "Project readiness is clear, but schedule warnings still need human review."
+            : "Project readiness is clear for field handoff."
+        : "Readiness context is not loaded for this field handoff.",
+      status: input.readiness
+        ? readinessBlocked || input.warnings.length > 0
+          ? "attention"
+          : "complete"
+        : "missing",
+      href: input.projectHref
+    }),
+    buildChecklistItem({
+      id: "schedule_notes",
+      label: "Schedule notes",
+      detail: hasScheduleNotes
+        ? "Schedule notes are captured on the canonical job."
+        : "No schedule notes are captured for this job.",
+      status: hasScheduleNotes ? "complete" : "attention",
+      href: input.jobHref
+    }),
+    buildChecklistItem({
+      id: "daily_log",
+      label: "Daily Log",
+      detail: input.handoff?.dailyLog
+        ? "Daily Log is linked for the scheduled field date."
+        : "Daily Log has not started for the scheduled field date.",
+      status: input.handoff?.dailyLog ? "complete" : "attention",
+      href: input.handoff?.dailyLogHref ?? null
+    }),
+    buildChecklistItem({
+      id: "field_blockers",
+      label: "Field blockers",
+      detail:
+        input.handoff && input.handoff.openBlockerCount > 0
+          ? `${input.handoff.openBlockerCount} open field blocker or issue note needs review.`
+          : "No open field blocker notes are linked to this job.",
+      status:
+        input.handoff && input.handoff.openBlockerCount > 0
+          ? "attention"
+          : "complete",
+      href: input.handoff?.blockerHref ?? input.handoff?.dailyLogHref ?? null
+    })
+  ];
+}
+
 export function buildScheduleFieldHandoffPacket(input: {
   job: ScheduleFieldHandoffJob;
   handoff: ScheduleFieldHandoffSummary | null;
@@ -479,6 +602,14 @@ export function buildScheduleFieldHandoffPacket(input: {
         input.handoff?.latestFieldActivityAt ?? null
       )
     },
+    executionChecklist: buildExecutionChecklist({
+      job: input.job,
+      handoff: input.handoff,
+      readiness,
+      warnings,
+      projectHref,
+      jobHref
+    }),
     links
   };
 }

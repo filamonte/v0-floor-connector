@@ -838,6 +838,51 @@ export function ScheduleFieldHandoffPanel(input: {
                 ))}
               </dl>
             </div>
+
+            <div className={`${statClassName} lg:col-span-2`}>
+              <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--text-tertiary)]">
+                Execution context checklist
+              </p>
+              <div className="mt-3 grid gap-2 md:grid-cols-2">
+                {input.packet.executionChecklist.map((item) => (
+                  <div
+                    key={item.id}
+                    className="rounded-[4px] border border-[var(--border-warm)] bg-[var(--highlight)] px-3 py-2"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold text-[var(--text-primary)]">
+                          {item.label}
+                        </p>
+                        <p className="mt-1 text-xs leading-5 text-[var(--text-secondary)]">
+                          {item.detail}
+                        </p>
+                      </div>
+                      <span
+                        className={[
+                          "inline-flex shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em]",
+                          item.status === "complete"
+                            ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                            : item.status === "attention"
+                              ? "border-amber-200 bg-amber-50 text-amber-800"
+                              : "border-rose-200 bg-rose-50 text-rose-700"
+                        ].join(" ")}
+                      >
+                        {item.status}
+                      </span>
+                    </div>
+                    {item.href ? (
+                      <Link
+                        href={item.href}
+                        className="mt-2 inline-flex text-xs font-semibold text-[var(--text-secondary)] transition hover:text-[var(--text-primary)]"
+                      >
+                        Open source
+                      </Link>
+                    ) : null}
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
 
           <div className="mt-3 flex flex-wrap gap-2">

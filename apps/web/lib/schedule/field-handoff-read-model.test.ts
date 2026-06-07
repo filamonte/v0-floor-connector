@@ -226,6 +226,18 @@ void test("schedule field handoff packet derives job project crew owner and sour
     packet.links.map((link) => link.label),
     ["Job", "Project", "Estimate", "Contract", "Daily Log"]
   );
+  assert.deepEqual(
+    packet.executionChecklist.map((item) => [item.id, item.status]),
+    [
+      ["scope", "complete"],
+      ["estimate", "complete"],
+      ["contract", "complete"],
+      ["readiness", "complete"],
+      ["schedule_notes", "complete"],
+      ["daily_log", "complete"],
+      ["field_blockers", "complete"]
+    ]
+  );
 });
 
 void test("schedule field handoff packet reports missing estimate contract and owners truthfully", () => {
@@ -304,5 +316,17 @@ void test("schedule field handoff packet maps readiness blockers and warning sum
   assert.equal(
     packet.links.some((link) => link.href.includes("other-job")),
     false
+  );
+  assert.deepEqual(
+    packet.executionChecklist.map((item) => [item.id, item.status]),
+    [
+      ["scope", "missing"],
+      ["estimate", "complete"],
+      ["contract", "missing"],
+      ["readiness", "attention"],
+      ["schedule_notes", "attention"],
+      ["daily_log", "attention"],
+      ["field_blockers", "complete"]
+    ]
   );
 });
