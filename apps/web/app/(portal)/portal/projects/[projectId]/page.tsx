@@ -878,9 +878,62 @@ export default async function PortalProjectDetailPage({
 
         <DetailPanel
           title="Project Communication"
-          description="Customer-visible project conversation history shared through this portal."
+          description="Customer-visible project conversation history and reply status shared through this portal."
         >
           <div id="project-communication" className="grid gap-5">
+            <section className={portalStatePanelClassName}>
+              <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                <div className="min-w-0">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.26em] text-slate-500">
+                    Communication trust
+                  </p>
+                  <h2 className="mt-2 text-lg font-semibold tracking-tight text-slate-950">
+                    {projectCommunication.primaryStatusLabel}
+                  </h2>
+                  <p className="mt-2 text-sm leading-6 text-slate-600">
+                    {projectCommunication.primaryStatusDetail}
+                  </p>
+                </div>
+                <PortalStatusBadge
+                  status={
+                    projectCommunication.customerActionCount > 0
+                      ? "attention"
+                      : projectCommunication.contractorReviewCount > 0
+                        ? "complete"
+                        : "neutral"
+                  }
+                  className="shrink-0"
+                >
+                  {projectCommunication.customerActionCount > 0
+                    ? "Waiting on you"
+                    : projectCommunication.contractorReviewCount > 0
+                      ? "Reply recorded"
+                      : "History only"}
+                </PortalStatusBadge>
+              </div>
+
+              <div className="mt-5 grid gap-2 text-sm leading-6 text-slate-600 sm:grid-cols-4">
+                <p className="rounded-md border border-slate-200 bg-white px-3 py-2">
+                  Conversations: {projectCommunication.conversationCount}
+                </p>
+                <p className="rounded-md border border-slate-200 bg-white px-3 py-2">
+                  Messages: {projectCommunication.messageCount}
+                </p>
+                <p className="rounded-md border border-slate-200 bg-white px-3 py-2">
+                  Waiting on you: {projectCommunication.customerActionCount}
+                </p>
+                <p className="rounded-md border border-slate-200 bg-white px-3 py-2">
+                  Latest:{" "}
+                  {projectCommunication.latestMessageAt
+                    ? formatDateTime(projectCommunication.latestMessageAt)
+                    : "Not yet"}
+                </p>
+              </div>
+              <p className="mt-3 text-xs leading-5 text-slate-500">
+                {projectCommunication.historyBoundaryMessage}
+              </p>
+            </section>
+
             {projectCommunication.conversations.length > 0 ? (
               projectCommunication.conversations.map((conversation) => (
                 <section
@@ -898,14 +951,29 @@ export default async function PortalProjectDetailPage({
                           : "Customer-visible conversation"}
                       </h2>
                       <p className="mt-2 text-sm leading-6 text-slate-600">
-                        Replies are saved to your project communication history.
-                        This does not send a separate email or SMS.
+                        {conversation.statusDetail}
                       </p>
                     </div>
-                    <PortalStatusBadge status="neutral">
-                      {conversation.messages.length} message
-                      {conversation.messages.length === 1 ? "" : "s"}
-                    </PortalStatusBadge>
+                    <div className="flex shrink-0 flex-col items-start gap-2 sm:items-end">
+                      <PortalStatusBadge status={conversation.statusTone}>
+                        {conversation.statusLabel}
+                      </PortalStatusBadge>
+                      <p className="text-xs text-slate-500">
+                        {conversation.messages.length} message
+                        {conversation.messages.length === 1 ? "" : "s"}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    {conversation.trustIndicators.map((indicator) => (
+                      <span
+                        key={indicator}
+                        className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-medium text-slate-600"
+                      >
+                        {indicator}
+                      </span>
+                    ))}
                   </div>
 
                   <div className="mt-5 space-y-3">
@@ -928,6 +996,13 @@ export default async function PortalProjectDetailPage({
                       </article>
                     ))}
                   </div>
+
+                  {conversation.messages.length > 4 ? (
+                    <p className="mt-3 text-xs leading-5 text-slate-500">
+                      Showing the latest 4 messages from this customer-visible
+                      project history.
+                    </p>
+                  ) : null}
 
                   {conversation.replyAllowed ? (
                     <form
@@ -972,7 +1047,12 @@ export default async function PortalProjectDetailPage({
                         </button>
                       </div>
                     </form>
-                  ) : null}
+                  ) : (
+                    <p className="mt-4 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-xs leading-5 text-slate-500">
+                      This conversation is visible for history only. Replies are
+                      not available on archived project conversations.
+                    </p>
+                  )}
                 </section>
               ))
             ) : (

@@ -50,8 +50,13 @@ void test("portal project communication summary keeps customer-visible conversat
 
   assert.equal(summary.conversationCount, 1);
   assert.equal(summary.messageCount, 1);
+  assert.equal(summary.replyableConversationCount, 1);
+  assert.equal(summary.customerActionCount, 1);
   assert.equal(summary.latestMessageAt, "2026-05-27T12:00:00.000Z");
   assert.equal(summary.conversations[0]?.replyAllowed, true);
+  assert.equal(summary.conversations[0]?.customerActionRequired, true);
+  assert.equal(summary.conversations[0]?.statusLabel, "Waiting on you");
+  assert.match(summary.primaryStatusLabel, /waiting on you/);
 });
 
 void test("portal project communication summary drops threads with no visible messages", () => {
@@ -62,6 +67,9 @@ void test("portal project communication summary drops threads with no visible me
 
   assert.equal(summary.conversationCount, 0);
   assert.equal(summary.messageCount, 0);
+  assert.equal(summary.replyableConversationCount, 0);
+  assert.equal(summary.customerActionCount, 0);
+  assert.equal(summary.primaryStatusLabel, "No shared communication yet");
 });
 
 void test("portal project communication summary keeps newest conversations first", () => {
@@ -94,4 +102,33 @@ void test("portal project communication summary does not allow replies to archiv
   });
 
   assert.equal(summary.conversations[0]?.replyAllowed, false);
+  assert.equal(summary.conversations[0]?.statusLabel, "History only");
+  assert.equal(summary.conversations[0]?.customerActionRequired, false);
+});
+
+void test("portal project communication summary marks customer replies as contractor review pending", () => {
+  const summary = derivePortalProjectCommunicationSummary({
+    threads: [thread({ threadStatus: "waiting_on_contractor" })],
+    messages: [
+      message({
+        id: "contractor-message",
+        occurredAt: "2026-05-27T12:00:00.000Z",
+        createdAt: "2026-05-27T12:00:00.000Z"
+      }),
+      message({
+        id: "customer-reply",
+        senderType: "portal_user",
+        direction: "inbound",
+        occurredAt: "2026-05-27T13:00:00.000Z",
+        createdAt: "2026-05-27T13:00:00.000Z",
+        body: "Can you confirm the start time?"
+      })
+    ]
+  });
+
+  assert.equal(summary.customerActionCount, 0);
+  assert.equal(summary.contractorReviewCount, 1);
+  assert.equal(summary.conversations[0]?.contractorReviewPending, true);
+  assert.equal(summary.conversations[0]?.statusLabel, "Contractor reviewing");
+  assert.equal(summary.primaryStatusLabel, "Your latest reply is recorded");
 });
