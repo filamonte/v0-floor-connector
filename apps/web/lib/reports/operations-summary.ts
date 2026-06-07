@@ -126,6 +126,10 @@ export type ReportsContinuitySection = {
 };
 
 export type OperationsReportingSummary = {
+  laborFieldSnapshot: {
+    metrics: ReportsMetric[];
+    attentionItems: ReportsListItem[];
+  };
   counts: {
     openProjects: number;
     projectsNeedingAttention: number;
@@ -678,8 +682,131 @@ export function deriveOperationsReportingSummary(input: {
     ...openInvoices.map((invoice) => invoice.projectId),
     ...proofGapProjectIds
   ]);
+  const activeWorkJobs = uniqueById([
+    ...todayJobs.map((job) => ({
+      id: `active-job:${job.id}`,
+      title: getProjectLabel(job.project),
+      subtitle: getCustomerLabel(job.customer),
+      meta: "Scheduled today",
+      href: `/jobs/${job.id}`,
+      tone: "neutral" as ReportsTone,
+      sourceLabel: "Job Workspace"
+    })),
+    ...inProgressJobs.map((job) => ({
+      id: `active-job:${job.id}`,
+      title: getProjectLabel(job.project),
+      subtitle: getCustomerLabel(job.customer),
+      meta: "In progress",
+      href: `/jobs/${job.id}`,
+      tone: "attention" as ReportsTone,
+      sourceLabel: "Job Workspace"
+    }))
+  ]);
+  const activeCrewCount = new Set(
+    input.jobAssignments
+      .filter((assignment) =>
+        input.jobs.some(
+          (job) =>
+            job.id === assignment.jobId && job.dispatchStatus !== "completed"
+        )
+      )
+      .map((assignment) => assignment.personId ?? assignment.vendorId)
+      .filter((assigneeId): assigneeId is string => Boolean(assigneeId))
+  ).size;
+  const laborFieldAttentionItems = uniqueById([
+    ...missingCrewJobs.map((job) => ({
+      id: `missing-crew:${job.id}`,
+      title: getProjectLabel(job.project),
+      subtitle: getCustomerLabel(job.customer),
+      meta: "Missing crew",
+      href: `/schedule?crew=unassigned&jobId=${job.id}`,
+      tone: "attention" as ReportsTone,
+      sourceLabel: "CrewBoard"
+    })),
+    ...openFieldBlockers.map((note) => ({
+      id: `field-blocker:${note.id}`,
+      title: note.title,
+      subtitle: getProjectLabel(note.project),
+      meta: note.noteType.replaceAll("_", " "),
+      href: `/daily-logs/${note.dailyLogId}`,
+      tone: "blocked" as ReportsTone,
+      sourceLabel: "Daily Logs"
+    })),
+    ...projectsMissingRecentDailyLogs.map((projectId) => {
+      const project = input.projects.find(
+        (candidate) => candidate.id === projectId
+      );
+
+      return {
+        id: `missing-daily-log:${projectId}`,
+        title: project?.name ?? "Project field work",
+        subtitle: getCustomerLabel(project?.customer),
+        meta: "Missing Daily Log",
+        href: `/daily-logs?projectId=${projectId}`,
+        tone: "attention" as ReportsTone,
+        sourceLabel: "Daily Logs"
+      };
+    }),
+    ...proofGapProjectIds.map((projectId) => {
+      const project = input.projects.find(
+        (candidate) => candidate.id === projectId
+      );
+
+      return {
+        id: `proof-gap:${projectId}`,
+        title: project?.name ?? "Project field proof",
+        subtitle: getCustomerLabel(project?.customer),
+        meta: "Evidence gap",
+        href: `/projects/${projectId}`,
+        tone: "attention" as ReportsTone,
+        sourceLabel: "Project Workspace"
+      };
+    })
+  ]).slice(0, 8);
 
   return {
+    laborFieldSnapshot: {
+      metrics: [
+        metric({
+          id: "active-field-work",
+          label: "Active Field Work",
+          value: activeWorkJobs.length,
+          detail: "Jobs scheduled today or currently in progress",
+          href: "/field",
+          tone: activeWorkJobs.length > 0 ? "neutral" : "good"
+        }),
+        metric({
+          id: "active-crew-coverage",
+          label: "Active Crew Coverage",
+          value: activeCrewCount,
+          detail: "Assigned people or vendors on non-completed jobs",
+          href: "/people",
+          tone: activeCrewCount > 0 ? "neutral" : "attention"
+        }),
+        metric({
+          id: "blocked-field-work",
+          label: "Blocked / Incomplete",
+          value: openFieldBlockers.length,
+          detail: "Open blocker or issue Job Notes",
+          href: "/daily-logs",
+          tone: openFieldBlockers.length > 0 ? "blocked" : "good"
+        }),
+        metric({
+          id: "field-evidence-attention",
+          label: "Field Evidence Attention",
+          value:
+            projectsMissingRecentDailyLogs.length + proofGapProjectIds.length,
+          detail: "Missing Daily Logs or field evidence gaps",
+          href: "/daily-logs",
+          tone:
+            projectsMissingRecentDailyLogs.length + proofGapProjectIds.length >
+            0
+              ? "attention"
+              : "good"
+        })
+      ],
+      attentionItems: laborFieldAttentionItems
+    },
     counts: {
       openProjects: openProjects.length,
       projectsNeedingAttention: readyCheckProjects.length,

@@ -241,6 +241,78 @@ void test("flags field blockers and missing recent Daily Job Logs", () => {
   assert.equal(result.lists.fieldBlockers[0]?.title, "Moisture issue");
 });
 
+void test("summarizes labor and field pressure without replacing Field or People", () => {
+  const result = summary({
+    projects: [project()],
+    jobs: [
+      job({
+        id: "today",
+        dispatchStatus: "scheduled",
+        scheduledDate: "2026-05-20"
+      }),
+      job({
+        id: "in-progress",
+        dispatchStatus: "in_progress",
+        scheduledDate: "2026-05-20"
+      })
+    ],
+    jobAssignments: [
+      {
+        id: "assignment-1",
+        jobId: "today",
+        personId: "person-1",
+        vendorId: null
+      }
+    ],
+    dailyLogs: [
+      {
+        id: "daily-log-1",
+        projectId: "project-1",
+        jobId: "today",
+        logDate: "2026-05-19"
+      }
+    ],
+    fieldNotes: [fieldNote({ id: "blocker" })],
+    attachments: []
+  });
+
+  assert.deepEqual(
+    result.laborFieldSnapshot.metrics.map((metric) => [
+      metric.id,
+      metric.value,
+      metric.href,
+      metric.tone
+    ]),
+    [
+      ["active-field-work", 2, "/field", "neutral"],
+      ["active-crew-coverage", 1, "/people", "neutral"],
+      ["blocked-field-work", 1, "/daily-logs", "blocked"],
+      ["field-evidence-attention", 2, "/daily-logs", "attention"]
+    ]
+  );
+  assert.deepEqual(
+    result.laborFieldSnapshot.attentionItems.map((item) => [
+      item.id,
+      item.href,
+      item.sourceLabel
+    ]),
+    [
+      [
+        "missing-crew:in-progress",
+        "/schedule?crew=unassigned&jobId=in-progress",
+        "CrewBoard"
+      ],
+      ["field-blocker:blocker", "/daily-logs/daily-log-1", "Daily Logs"],
+      [
+        "missing-daily-log:project-1",
+        "/daily-logs?projectId=project-1",
+        "Daily Logs"
+      ],
+      ["proof-gap:project-1", "/projects/project-1", "Project Workspace"]
+    ]
+  );
+});
+
 void test("handles empty state without fake counts", () => {
   const result = summary();
 
