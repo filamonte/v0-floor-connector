@@ -367,10 +367,11 @@ Remaining gates:
 
 ## Merged Streams
 
-These streams have merged to `main`. Completed `field-execution-depth-v1` and
-`sales-to-production-readiness-v1` worktrees are retained pending explicit
-retirement approval. Completed `operational-command-center-v1` worktrees and
-eligible branches were retired after explicit cleanup approval:
+These streams have merged to `main`. Completed `field-execution-depth-v1`
+worktrees are retirement candidates retained pending explicit cleanup approval.
+Completed `sales-to-production-readiness-v1` worktrees are retained pending
+explicit retirement approval. Completed `operational-command-center-v1`
+worktrees and eligible branches were retired after explicit cleanup approval:
 
 ### field-handoff-packet-v1
 
@@ -380,7 +381,8 @@ eligible branches were retired after explicit cleanup approval:
 - Must avoid: duplicate schedule/job models, portal work, dispatch automation,
   schema changes, migrations, and provider/customer-facing behavior.
 - Merged: `715af07d feat: deepen field handoff packet`.
-- Cleanup: worktree and branch retained pending explicit retirement approval.
+- Cleanup: retirement candidate; worktree and branch retained pending explicit
+  cleanup approval.
 
 ### daily-execution-command-v1
 
@@ -391,7 +393,8 @@ eligible branches were retired after explicit cleanup approval:
 - Must avoid: separate field reporting system, duplicate issue tracker,
   duplicate punch-list model, schema changes, migrations, and portal behavior.
 - Merged: `627358c4 feat: strengthen daily execution workflow`.
-- Cleanup: worktree and branch retained pending explicit retirement approval.
+- Cleanup: retirement candidate; worktree and branch retained pending explicit
+  cleanup approval.
 
 ### crew-execution-visibility-v1
 
@@ -402,7 +405,8 @@ eligible branches were retired after explicit cleanup approval:
 - Must avoid: route optimization, dispatch replacement, crew scheduling
   replacement, dashboard sprawl, schema changes, and migrations.
 - Merged: `980cfe5b feat: improve crew execution visibility`.
-- Cleanup: worktree and branch retained pending explicit retirement approval.
+- Cleanup: retirement candidate; worktree and branch retained pending explicit
+  cleanup approval.
 
 ### verification-field-execution-v1
 
@@ -412,7 +416,8 @@ eligible branches were retired after explicit cleanup approval:
 - Must avoid: feature work, schema changes, UI redesign, runtime behavior, and
   loosening checks.
 - Merged: `36e80505 test: protect field execution workflow`.
-- Cleanup: worktree and branch retained pending explicit retirement approval.
+- Cleanup: retirement candidate; worktree and branch retained pending explicit
+  cleanup approval.
 
 ### sales-readiness-command-v1
 

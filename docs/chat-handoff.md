@@ -81,10 +81,12 @@ under Jeff's controlled merge approval. Sales Readiness Command V1 merged as
 Readiness Handoff V1 merged as `09942b0b`, and Verification Sales To Production
 V1 merged as `f4e31baf`. Post-merge targeted tests, typecheck, lint,
 `pnpm.cmd fc:preflight:fast`, and `git diff --check` passed. The four completed
-wave worktrees are retained pending explicit retirement approval. The dirty
-out-of-scope `C:\FC-worktrees\project-next-actions` worktree was preserved
-untouched. The next wave is not approved from this handoff; agents may not
-auto-continue without Jeff approval.
+wave worktrees are retirement candidates retained pending explicit cleanup
+approval; the cleanup plan is
+[docs/review-packets/field-execution-depth-v1-cleanup-plan.md](C:/FloorConnector/docs/review-packets/field-execution-depth-v1-cleanup-plan.md).
+The dirty out-of-scope `C:\FC-worktrees\project-next-actions` worktree was
+preserved untouched. The next wave is not approved from this handoff; agents
+may not auto-continue without Jeff approval.
 
 Current wave gate note: `field-execution-depth-v1` has merged to `main` under
 Jeff's controlled merge approval. Field Handoff Packet V1 merged as

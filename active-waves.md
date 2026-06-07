@@ -145,8 +145,9 @@ Merge result:
 Post-merge validation passed: targeted field execution tests, typecheck, lint,
 `pnpm.cmd fc:preflight:fast`, and `git diff --check`.
 
-Wave status: Merged to `main`; completed wave worktrees are retained pending
-explicit retirement approval. No next wave is approved by this merge.
+Wave status: Merged to `main`; completed wave worktrees are retirement
+candidates retained pending explicit cleanup approval. No next wave is approved
+by this merge.
 
 Approved stream branches:
 
