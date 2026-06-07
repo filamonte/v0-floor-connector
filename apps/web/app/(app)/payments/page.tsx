@@ -51,6 +51,18 @@ function formatPaymentEventActor(value: string | null) {
   return value ? formatStatusLabel(value) : "Payment evidence";
 }
 
+function continuityToneClass(tone: "neutral" | "attention" | "warning") {
+  if (tone === "warning") {
+    return "border-red-200 bg-red-50 text-red-700";
+  }
+
+  if (tone === "attention") {
+    return "border-[#e4d7ca] bg-[#fffcf7] text-[#8f5b32]";
+  }
+
+  return "border-[#d6d6d6] bg-[#f8f8f8] text-slate-500";
+}
+
 function buildPaymentsHref(input: {
   q?: string;
   status?: PaymentsManagerView;
@@ -103,6 +115,7 @@ export default async function PaymentsPage({
   ] as const;
 
   const recentPayments = readModel.payments;
+  const paymentContinuity = readModel.paymentContinuityCommand;
 
   return (
     <ContractorWorkspacePage
@@ -232,6 +245,122 @@ export default async function PaymentsPage({
           </div>
         ) : null}
 
+        <section className="border border-[#d6d6d6] bg-white">
+          <div className="flex flex-col gap-4 border-b border-[#e5e5e5] px-5 py-4 sm:px-6 lg:flex-row lg:items-start lg:justify-between">
+            <div>
+              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#8f5b32]">
+                Payment continuity
+              </p>
+              <h2 className="mt-1 text-xl font-semibold tracking-tight text-[#171717]">
+                Invoice to payment outcome
+              </h2>
+              <p className="mt-1 max-w-[78ch] text-sm leading-6 text-slate-500">
+                Failed, pending, partial, and settled payment outcomes are
+                summarized from canonical payments, invoices, and immutable
+                payment events.
+              </p>
+            </div>
+            <Link
+              href={paymentContinuity.nextMove.href}
+              className="inline-flex shrink-0 items-center justify-center rounded-[4px] border border-[#171717] bg-[#171717] px-4 py-2.5 text-sm font-medium text-white transition hover:bg-[#2a2a2a]"
+            >
+              {paymentContinuity.nextMove.label}
+            </Link>
+          </div>
+          <div className="grid gap-px bg-[#e5e5e5] md:grid-cols-2 xl:grid-cols-4">
+            {paymentContinuity.summaryCards.map((card) => (
+              <div key={card.id} className="min-w-0 bg-white px-4 py-4">
+                <div className="flex items-start justify-between gap-3">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#666666]">
+                    {card.label}
+                  </p>
+                  <span
+                    className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] ${continuityToneClass(card.tone)}`}
+                  >
+                    {card.tone}
+                  </span>
+                </div>
+                <p className="mt-3 text-xl font-semibold tracking-tight text-[#171717]">
+                  {card.value}
+                </p>
+                <p className="mt-2 text-sm leading-5 text-slate-500">
+                  {card.detail}
+                </p>
+              </div>
+            ))}
+          </div>
+          <div className="grid gap-px bg-[#e5e5e5] lg:grid-cols-4">
+            {[
+              {
+                id: "failed",
+                title: "Failures and voids",
+                items: paymentContinuity.failedOrVoided,
+                empty: "No failed or voided payment evidence is active."
+              },
+              {
+                id: "pending",
+                title: "Pending outcomes",
+                items: paymentContinuity.pendingOutcomes,
+                empty: "No payment requests or checkout starts are pending."
+              },
+              {
+                id: "partial",
+                title: "Partial balances",
+                items: paymentContinuity.partialBalances,
+                empty: "No recorded payment left a visible balance open."
+              },
+              {
+                id: "settled",
+                title: "Settled outcomes",
+                items: paymentContinuity.settledOutcomes,
+                empty: "No settled payment outcomes are visible."
+              }
+            ].map((lane) => (
+              <div key={lane.id} className="min-w-0 bg-white">
+                <div className="border-b border-[#e5e5e5] px-4 py-3">
+                  <h3 className="text-sm font-semibold text-[#171717]">
+                    {lane.title}
+                  </h3>
+                </div>
+                <div className="divide-y divide-[#e5e5e5]">
+                  {lane.items.length > 0 ? (
+                    lane.items.map((item) => (
+                      <Link
+                        key={item.id}
+                        href={item.href}
+                        className="block px-4 py-3 transition hover:bg-[#f8f8f8]"
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0">
+                            <p className="truncate text-sm font-semibold text-[#171717]">
+                              {item.title}
+                            </p>
+                            <p className="mt-1 truncate text-xs text-slate-500">
+                              {item.customerName} - {item.projectName}
+                            </p>
+                          </div>
+                          <span
+                            className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] ${continuityToneClass(item.tone)}`}
+                          >
+                            {formatMoney(item.value)}
+                          </span>
+                        </div>
+                        <p className="mt-2 text-xs leading-5 text-slate-500">
+                          {item.detail}
+                        </p>
+                      </Link>
+                    ))
+                  ) : (
+                    <div className="px-4 py-5 text-sm leading-5 text-slate-500">
+                      {lane.empty}
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
         <section className="grid gap-4 xl:grid-cols-2 2xl:grid-cols-4">
           <ManagerDashboardCard
             eyebrow="Collections queue"
@@ -313,8 +442,8 @@ export default async function PaymentsPage({
             </h3>
             <p className="text-sm leading-6 text-slate-500">
               Immutable payment events tied back to canonical invoices. Provider
-              references are shown only as compact identifiers; raw payloads stay
-              out of this review surface.
+              references are shown only as compact identifiers; raw payloads
+              stay out of this review surface.
             </p>
           </div>
 
@@ -358,7 +487,9 @@ export default async function PaymentsPage({
                     <span className="inline-flex rounded-[4px] border border-[#d6d6d6] bg-[#f8f8f8] px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-slate-700">
                       {event.classification.needsReview
                         ? "Needs review"
-                        : formatPaymentEventActor(event.payment?.status ?? null)}
+                        : formatPaymentEventActor(
+                            event.payment?.status ?? null
+                          )}
                     </span>
                   </div>
                 </Link>
