@@ -101,6 +101,15 @@ type TimeCardCountRow = CountRow & {
   status: string;
 };
 
+type ExecutionAttachmentContextRow = {
+  id: string;
+  subject_type: "daily_log" | "field_note";
+  subject_id: string;
+  file_name: string;
+  caption: string | null;
+  created_at: string;
+};
+
 const fieldAssignedJobSelect = `
   id,
   company_id,
@@ -233,6 +242,25 @@ function isTimeCardCountRow(value: unknown): value is TimeCardCountRow {
   return isCountRow(value) && typeof row.status === "string";
 }
 
+function isExecutionAttachmentContextRow(
+  value: unknown
+): value is ExecutionAttachmentContextRow {
+  if (!value || typeof value !== "object") {
+    return false;
+  }
+
+  const row = value as Partial<ExecutionAttachmentContextRow>;
+
+  return (
+    typeof row.id === "string" &&
+    (row.subject_type === "daily_log" || row.subject_type === "field_note") &&
+    typeof row.subject_id === "string" &&
+    typeof row.file_name === "string" &&
+    (row.caption === null || typeof row.caption === "string") &&
+    typeof row.created_at === "string"
+  );
+}
+
 function countByJobId(rows: CountRow[]) {
   const counts = new Map<string, number>();
 
@@ -245,6 +273,58 @@ function countByJobId(rows: CountRow[]) {
   }
 
   return counts;
+}
+
+function mapExecutionAttachmentsByJobId(input: {
+  rows: ExecutionAttachmentContextRow[];
+  dailyLogRows: DailyLogContextRow[];
+  fieldNoteRows: FieldNoteContextRow[];
+}) {
+  const jobIdBySubject = new Map<string, string>();
+  const countsByJobId = new Map<string, number>();
+  const latestByJobId = new Map<
+    string,
+    FieldAssignedWorkJob["latestExecutionAttachment"]
+  >();
+
+  for (const row of input.dailyLogRows) {
+    if (row.job_id) {
+      jobIdBySubject.set(`daily_log:${row.id}`, row.job_id);
+    }
+  }
+
+  for (const row of input.fieldNoteRows) {
+    if (row.job_id) {
+      jobIdBySubject.set(`field_note:${row.id}`, row.job_id);
+    }
+  }
+
+  for (const row of [...input.rows].sort((left, right) =>
+    right.created_at.localeCompare(left.created_at)
+  )) {
+    const jobId = jobIdBySubject.get(`${row.subject_type}:${row.subject_id}`);
+
+    if (!jobId) {
+      continue;
+    }
+
+    countsByJobId.set(jobId, (countsByJobId.get(jobId) ?? 0) + 1);
+
+    if (!latestByJobId.has(jobId)) {
+      latestByJobId.set(jobId, {
+        id: row.id,
+        subjectType: row.subject_type,
+        subjectId: row.subject_id,
+        fileName: row.file_name,
+        caption: row.caption
+      });
+    }
+  }
+
+  return {
+    countsByJobId,
+    latestByJobId
+  };
 }
 
 function mapLatestDailyLogByJobId(rows: DailyLogContextRow[]) {
@@ -350,6 +430,8 @@ function mapFieldAssignedWorkJob(input: {
   fieldNoteCount: number;
   openFieldBlockerCount: number;
   latestOpenFieldBlocker: FieldAssignedWorkJob["latestOpenFieldBlocker"];
+  executionAttachmentCount: number;
+  latestExecutionAttachment: FieldAssignedWorkJob["latestExecutionAttachment"];
   timeCardCount: number;
   openTimeCardCount: number;
   readiness: FieldAssignedWorkJob["readiness"];
@@ -384,10 +466,65 @@ function mapFieldAssignedWorkJob(input: {
     fieldNoteCount: input.fieldNoteCount,
     openFieldBlockerCount: input.openFieldBlockerCount,
     latestOpenFieldBlocker: input.latestOpenFieldBlocker,
+    executionAttachmentCount: input.executionAttachmentCount,
+    latestExecutionAttachment: input.latestExecutionAttachment,
     timeCardCount: input.timeCardCount,
     openTimeCardCount: input.openTimeCardCount,
     readiness: input.readiness
   };
+}
+
+async function listExecutionAttachmentContextRows(input: {
+  organizationId: string;
+  dailyLogRows: DailyLogContextRow[];
+  fieldNoteRows: FieldNoteContextRow[];
+}) {
+  const supabase = await getSupabaseServerClient();
+  const dailyLogIds = input.dailyLogRows.map((row) => row.id);
+  const fieldNoteIds = input.fieldNoteRows.map((row) => row.id);
+  const dailyLogQuery =
+    dailyLogIds.length > 0
+      ? supabase
+          .from("execution_attachments")
+          .select(
+            "id, subject_type, subject_id, file_name, caption, created_at"
+          )
+          .eq("company_id", input.organizationId)
+          .eq("subject_type", "daily_log")
+          .is("archived_at", null)
+          .in("subject_id", dailyLogIds)
+      : null;
+  const fieldNoteQuery =
+    fieldNoteIds.length > 0
+      ? supabase
+          .from("execution_attachments")
+          .select(
+            "id, subject_type, subject_id, file_name, caption, created_at"
+          )
+          .eq("company_id", input.organizationId)
+          .eq("subject_type", "field_note")
+          .is("archived_at", null)
+          .in("subject_id", fieldNoteIds)
+      : null;
+  const responses = await Promise.all([
+    dailyLogQuery
+      ? dailyLogQuery.order("created_at", { ascending: false })
+      : Promise.resolve({ data: [], error: null }),
+    fieldNoteQuery
+      ? fieldNoteQuery.order("created_at", { ascending: false })
+      : Promise.resolve({ data: [], error: null })
+  ]);
+  const error = responses.find((response) => response.error)?.error;
+
+  if (error) {
+    throw new Error(
+      `Unable to load assigned field evidence counts: ${error.message}`
+    );
+  }
+
+  return responses
+    .flatMap((response) => response.data ?? [])
+    .filter(isExecutionAttachmentContextRow);
 }
 
 async function listCurrentPersonAssignedJobIds(input: {
@@ -547,6 +684,16 @@ export const listAssignedFieldWorkForCurrentUser = cache(
     const openFieldBlockerCounts = countByJobId(openFieldBlockerRows);
     const latestOpenFieldBlockerByJobId =
       mapLatestOpenFieldBlockerByJobId(openFieldBlockerRows);
+    const executionAttachmentRows = await listExecutionAttachmentContextRows({
+      organizationId: scope.organizationId,
+      dailyLogRows,
+      fieldNoteRows
+    });
+    const executionAttachmentsByJobId = mapExecutionAttachmentsByJobId({
+      rows: executionAttachmentRows,
+      dailyLogRows,
+      fieldNoteRows
+    });
     const timeCardRows = rawTimeCardRows.filter(isTimeCardCountRow);
     const timeCardCounts = countByJobId(timeCardRows);
     const openTimeCardCounts = countByJobId(
@@ -570,6 +717,10 @@ export const listAssignedFieldWorkForCurrentUser = cache(
           openFieldBlockerCount: openFieldBlockerCounts.get(row.id) ?? 0,
           latestOpenFieldBlocker:
             latestOpenFieldBlockerByJobId.get(row.id) ?? null,
+          executionAttachmentCount:
+            executionAttachmentsByJobId.countsByJobId.get(row.id) ?? 0,
+          latestExecutionAttachment:
+            executionAttachmentsByJobId.latestByJobId.get(row.id) ?? null,
           timeCardCount: timeCardCounts.get(row.id) ?? 0,
           openTimeCardCount: openTimeCardCounts.get(row.id) ?? 0,
           readiness: readinessByProjectId.get(row.project_id) ?? null

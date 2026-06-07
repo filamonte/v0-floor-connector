@@ -5,6 +5,7 @@ import { listAssignedFieldWorkForCurrentUser } from "@/lib/field/assigned-work-d
 import {
   buildFieldDailyExecutionCommand,
   buildFieldExecutionReadinessBrief,
+  buildFieldQuickCapturePlan,
   buildFieldAssignedWorkQueue,
   summarizeFieldAssignedWorkJob,
   type FieldAssignedWorkGroupKey
@@ -106,6 +107,21 @@ function getReadinessBriefClassName(
       return "border-amber-300 bg-amber-50 text-amber-950";
     case "needs_context":
       return "border-slate-300 bg-white text-slate-700";
+  }
+}
+
+function getQuickCaptureItemClassName(
+  status: ReturnType<
+    typeof buildFieldQuickCapturePlan
+  >["items"][number]["status"]
+) {
+  switch (status) {
+    case "ready":
+      return "border-emerald-200 bg-emerald-50";
+    case "blocked":
+      return "border-amber-300 bg-amber-50";
+    case "needs_capture":
+      return "border-slate-200 bg-white";
   }
 }
 
@@ -232,6 +248,8 @@ export default async function FieldWorkItemsPage() {
                             buildFieldExecutionReadinessBrief(job);
                           const dailyExecutionCommand =
                             buildFieldDailyExecutionCommand(job);
+                          const quickCapturePlan =
+                            buildFieldQuickCapturePlan(job);
 
                           return (
                             <li key={job.id}>
@@ -277,6 +295,12 @@ export default async function FieldWorkItemsPage() {
                                     {job.fieldNoteCount === 1 ? "" : "s"}
                                   </span>
                                   <span>
+                                    {job.executionAttachmentCount} Evidence File
+                                    {job.executionAttachmentCount === 1
+                                      ? ""
+                                      : "s"}
+                                  </span>
+                                  <span>
                                     {job.timeCardCount} Time Card
                                     {job.timeCardCount === 1 ? "" : "s"}
                                   </span>
@@ -308,6 +332,43 @@ export default async function FieldWorkItemsPage() {
                                     >
                                       {dailyExecutionCommand.nextActionLabel}
                                     </Link>
+                                  </div>
+                                </div>
+                                <div className="mt-3 rounded-[6px] border border-slate-200 bg-white px-3 py-2">
+                                  <div>
+                                    <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
+                                      {quickCapturePlan.title}
+                                    </p>
+                                    <p className="mt-1 text-xs leading-5 text-slate-500">
+                                      {quickCapturePlan.detail}
+                                    </p>
+                                  </div>
+                                  <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                                    {quickCapturePlan.items.map((item) => (
+                                      <div
+                                        key={`${job.id}-${item.key}`}
+                                        className={`rounded-[6px] border px-3 py-2 ${getQuickCaptureItemClassName(
+                                          item.status
+                                        )}`}
+                                      >
+                                        <div className="flex min-w-0 items-start justify-between gap-2">
+                                          <div className="min-w-0">
+                                            <p className="text-sm font-semibold text-slate-950">
+                                              {item.label}
+                                            </p>
+                                            <p className="mt-1 text-xs leading-5 text-slate-500">
+                                              {item.detail}
+                                            </p>
+                                          </div>
+                                          <Link
+                                            href={item.href}
+                                            className="inline-flex shrink-0 items-center rounded-[6px] border border-slate-300 bg-white px-2 py-1 text-[11px] font-semibold text-slate-700 transition hover:border-[#d8731f] hover:text-slate-950"
+                                          >
+                                            {item.actionLabel}
+                                          </Link>
+                                        </div>
+                                      </div>
+                                    ))}
                                   </div>
                                 </div>
                                 <div

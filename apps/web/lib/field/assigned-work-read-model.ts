@@ -40,6 +40,14 @@ export type FieldAssignedWorkJob = {
     title: string;
     noteType: string;
   } | null;
+  executionAttachmentCount: number;
+  latestExecutionAttachment: {
+    id: string;
+    subjectType: "daily_log" | "field_note";
+    subjectId: string;
+    fileName: string;
+    caption: string | null;
+  } | null;
   timeCardCount: number;
   openTimeCardCount: number;
   readiness: ProjectFinancialReadinessSnapshot | null;
@@ -75,6 +83,23 @@ export type FieldDailyExecutionCommand = {
   nextActionHref: string;
   observationLabel: string;
   evidenceLabel: string;
+};
+
+export type FieldQuickCaptureItemStatus = "ready" | "needs_capture" | "blocked";
+
+export type FieldQuickCaptureItem = {
+  key: "daily_log" | "job_note" | "blocker" | "evidence";
+  status: FieldQuickCaptureItemStatus;
+  label: string;
+  detail: string;
+  actionLabel: string;
+  href: string;
+};
+
+export type FieldQuickCapturePlan = {
+  title: string;
+  detail: string;
+  items: FieldQuickCaptureItem[];
 };
 
 export type FieldAssignedWorkGroupKey =
@@ -346,6 +371,9 @@ export function buildFieldDailyExecutionCommand(
   }`;
   const evidenceLabel = [
     observationLabel,
+    `${job.executionAttachmentCount} evidence file${
+      job.executionAttachmentCount === 1 ? "" : "s"
+    }`,
     `${job.timeCardCount} time card${job.timeCardCount === 1 ? "" : "s"}`,
     job.openTimeCardCount > 0
       ? `${job.openTimeCardCount} open time card${
@@ -426,5 +454,88 @@ export function buildFieldDailyExecutionCommand(
     nextActionHref: job.latestDailyLog ? latestDailyLogHref : `/jobs/${job.id}`,
     observationLabel,
     evidenceLabel
+  };
+}
+
+export function buildFieldQuickCapturePlan(
+  job: FieldAssignedWorkJob
+): FieldQuickCapturePlan {
+  const dailyLogHref = job.latestDailyLog
+    ? `/daily-logs/${job.latestDailyLog.id}`
+    : `/daily-logs?compose=1&projectId=${job.project?.id ?? ""}&jobId=${
+        job.id
+      }#daily-log-create`;
+  const jobNoteHref = job.latestDailyLog
+    ? `/daily-logs/${job.latestDailyLog.id}?jobId=${job.id}#job-notes`
+    : dailyLogHref;
+  const blockerHref = job.latestOpenFieldBlocker
+    ? `/daily-logs/${job.latestOpenFieldBlocker.dailyLogId}#job-notes`
+    : job.latestDailyLog
+      ? `/daily-logs/${job.latestDailyLog.id}?noteType=blocker&jobId=${job.id}#job-notes`
+      : dailyLogHref;
+  const evidenceHref = job.latestDailyLog
+    ? `/daily-logs/${job.latestDailyLog.id}#execution-evidence`
+    : dailyLogHref;
+  const needsDailyLog =
+    (job.dispatchStatus === "scheduled" ||
+      job.dispatchStatus === "in_progress") &&
+    !job.latestDailyLog;
+  const hasNotes = job.fieldNoteCount > 0;
+  const hasEvidence = job.executionAttachmentCount > 0;
+
+  return {
+    title: "What happened today?",
+    detail:
+      "Capture the day on existing Daily Logs, Job Notes, blockers, and field evidence before the context moves into messages or memory.",
+    items: [
+      {
+        key: "daily_log",
+        status: needsDailyLog ? "needs_capture" : "ready",
+        label: job.latestDailyLog ? "Daily Log started" : "Daily Log needed",
+        detail: job.latestDailyLog
+          ? `Latest log ${job.latestDailyLog.logDate} is ready for today's narrative.`
+          : "Start the canonical Daily Job Log before adding observations or proof.",
+        actionLabel: job.latestDailyLog ? "Open Daily Log" : "Start Daily Log",
+        href: dailyLogHref
+      },
+      {
+        key: "job_note",
+        status: hasNotes ? "ready" : "needs_capture",
+        label: hasNotes ? "Job Notes captured" : "Add field note",
+        detail: hasNotes
+          ? `${job.fieldNoteCount} Job Note${
+              job.fieldNoteCount === 1 ? "" : "s"
+            } already linked to this job.`
+          : "Add the observation, condition, material note, labor note, or next-work detail to the Daily Job Log.",
+        actionLabel: hasNotes ? "Review notes" : "Add note",
+        href: jobNoteHref
+      },
+      {
+        key: "blocker",
+        status: job.openFieldBlockerCount > 0 ? "blocked" : "ready",
+        label:
+          job.openFieldBlockerCount > 0
+            ? "Blocker open"
+            : "Blocker check clear",
+        detail:
+          job.latestOpenFieldBlocker?.title ??
+          "If something stopped progress, capture it as a blocker or issue Job Note.",
+        actionLabel:
+          job.openFieldBlockerCount > 0 ? "Open blocker" : "Capture blocker",
+        href: blockerHref
+      },
+      {
+        key: "evidence",
+        status: hasEvidence ? "ready" : "needs_capture",
+        label: hasEvidence ? "Evidence attached" : "Add photo or file",
+        detail: hasEvidence
+          ? `${job.executionAttachmentCount} evidence file${
+              job.executionAttachmentCount === 1 ? "" : "s"
+            } linked to the Daily Log or Job Notes.`
+          : "Attach photos or PDFs to the Daily Job Log or Job Note; do not create a separate file trail.",
+        actionLabel: hasEvidence ? "Review evidence" : "Add evidence",
+        href: evidenceHref
+      }
+    ]
   };
 }
