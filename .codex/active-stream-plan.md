@@ -94,6 +94,139 @@ This clears a long-lived automation and governance risk before financial-wave
 approval review, but it does not approve a new wave or authorize stream
 creation, schema work, migrations, provider work, or feature implementation.
 
+## Owner Operations Reporting V1 Gate
+
+Gate date: 2026-06-07.
+
+Wave name: `owner-operations-reporting-v1`.
+
+Architecture Coordination approval: Approved.
+
+Jeff approval gate: Approved. Jeff explicitly approved stream/worktree creation
+for `owner-operations-reporting-v1`.
+
+Review packets:
+
+- [docs/review-packets/next-portfolio-recommendation-v3.md](C:/FloorConnector/docs/review-packets/next-portfolio-recommendation-v3.md)
+- [docs/review-packets/next-portfolio-recommendation-v4.md](C:/FloorConnector/docs/review-packets/next-portfolio-recommendation-v4.md)
+- [docs/review-packets/owner-operations-reporting-v1-plan.md](C:/FloorConnector/docs/review-packets/owner-operations-reporting-v1-plan.md)
+
+Wave status: Approved / Not Started. Stream branches and worktrees have been
+created, but feature implementation has not started and requires a later
+explicit start command. This gate does not approve schema/migration work,
+provider changes, BI/accounting replacement behavior, PRs, merges, cleanup,
+next-wave continuation, autonomous actions, or customer-facing sends.
+
+Approved stream set:
+
+- `stream/owner-operations-summary-v1`
+- `stream/execution-to-cash-reporting-v1`
+- `stream/labor-field-management-snapshot-v1`
+- `stream/portfolio-risk-exceptions-v1`
+- `stream/verification-owner-operations-reporting-v1`
+
+Approved worktrees:
+
+- `C:\FC-worktrees\owner-operations-summary-v1`
+- `C:\FC-worktrees\execution-to-cash-reporting-v1`
+- `C:\FC-worktrees\labor-field-management-snapshot-v1`
+- `C:\FC-worktrees\portfolio-risk-exceptions-v1`
+- `C:\FC-worktrees\verification-owner-operations-reporting-v1`
+
+Required future startup checks:
+
+```powershell
+pnpm.cmd worktree:doctor
+pnpm.cmd tooling:baseline -CommandsOnly
+```
+
+Implementation streams should also run focused tests for changed helpers,
+read-models, route surfaces, ownership links, or owner reporting summaries,
+then:
+
+```powershell
+pnpm.cmd --filter @floorconnector/web typecheck
+pnpm.cmd --filter @floorconnector/web lint
+pnpm.cmd fc:preflight:fast
+git diff --check
+git diff --cached --check
+```
+
+Merge order:
+
+1. `owner-operations-summary-v1`
+2. `execution-to-cash-reporting-v1`
+3. `labor-field-management-snapshot-v1`
+4. `portfolio-risk-exceptions-v1`
+5. `verification-owner-operations-reporting-v1`
+
+Verification must run last after implementation stream commits exist.
+
+### owner-operations-summary-v1
+
+- Branch: `stream/owner-operations-summary-v1`
+- Worktree: `C:\FC-worktrees\owner-operations-summary-v1`
+- Owns: Reports / owner operating review.
+- Mission: summarize owner-level operating health and route action to owning
+  workspaces.
+- Future allowed work, not now: operating snapshot, ready/blocked/slipping
+  summary, cross-workspace priority indicators, and owning-workspace links.
+- Forbidden: dashboard replacement, new reporting persistence, action ownership
+  migration into Reports, schemas, and migrations.
+- Suggested commit: `feat: add owner operations summary`
+
+### execution-to-cash-reporting-v1
+
+- Branch: `stream/execution-to-cash-reporting-v1`
+- Worktree: `C:\FC-worktrees\execution-to-cash-reporting-v1`
+- Owns: Reports with Field and Financials continuity.
+- Mission: show continuity from completed work through billing, invoice,
+  payment events, collections priority, and cash visibility.
+- Future allowed work, not now: completed-not-billed visibility, billable /
+  invoiced / collectible / paid summaries, cash pressure, and links to Field,
+  Project, and Financials.
+- Forbidden: accounting replacement, invoice/payment mutation, duplicate AR
+  model, provider/gateway behavior changes, schemas, and migrations.
+- Suggested commit: `feat: add execution to cash reporting`
+
+### labor-field-management-snapshot-v1
+
+- Branch: `stream/labor-field-management-snapshot-v1`
+- Worktree: `C:\FC-worktrees\labor-field-management-snapshot-v1`
+- Owns: Reports with Field / People visibility.
+- Mission: summarize active work, crew load, blocked execution, and incomplete
+  field evidence for owner review.
+- Future allowed work, not now: active crew/work snapshot, blocked/incomplete
+  field-work visibility, labor attention summary, and Field/People links.
+- Forbidden: payroll, route optimization, duplicate crew/time-card/schedule/
+  field models, schemas, and migrations.
+- Suggested commit: `feat: add labor field management snapshot`
+
+### portfolio-risk-exceptions-v1
+
+- Branch: `stream/portfolio-risk-exceptions-v1`
+- Worktree: `C:\FC-worktrees\portfolio-risk-exceptions-v1`
+- Owns: Reports / owner exception review.
+- Mission: surface cross-portfolio risks and exceptions while preserving owning
+  workspaces for action.
+- Future allowed work, not now: overdue, missing, stalled, blocked, customer
+  attention, and office attention exception review with links to owners.
+- Forbidden: autonomous decisions, AI action layer, duplicate task/workflow/
+  risk/exception models, schemas, and migrations.
+- Suggested commit: `feat: add portfolio risk exceptions`
+
+### verification-owner-operations-reporting-v1
+
+- Branch: `stream/verification-owner-operations-reporting-v1`
+- Worktree: `C:\FC-worktrees\verification-owner-operations-reporting-v1`
+- Owns: verification.
+- Mission: protect Reports as summarize-and-route owner review over canonical
+  records, not a duplicate operating system.
+- Verification must wait until implementation stream commits exist.
+- Forbidden: feature work, UI redesign, schemas, migrations, and loosening
+  existing checks.
+- Suggested commit: `test: protect owner operations reporting`
+
 ## Financial Closeout Collections V1 Gate
 
 Gate date: 2026-06-07.

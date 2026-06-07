@@ -117,6 +117,85 @@ This cleanup clears automation risk before the next financial wave. It does not
 approve a new wave, create streams, create worktrees, modify schemas or
 migrations, or authorize financial feature implementation.
 
+## Owner Operations Reporting V1 Approval Gate
+
+Gate date: 2026-06-07.
+
+Wave name: `owner-operations-reporting-v1`.
+
+Review packets:
+
+- [docs/review-packets/next-portfolio-recommendation-v3.md](C:/FloorConnector/docs/review-packets/next-portfolio-recommendation-v3.md)
+- [docs/review-packets/next-portfolio-recommendation-v4.md](C:/FloorConnector/docs/review-packets/next-portfolio-recommendation-v4.md)
+- [docs/review-packets/owner-operations-reporting-v1-plan.md](C:/FloorConnector/docs/review-packets/owner-operations-reporting-v1-plan.md)
+
+Wave goal: give contractor owners and managers an owner-level operating review
+layer that summarizes business movement, execution-to-cash continuity, field
+and labor attention, and cross-portfolio exceptions while routing action back
+to the owning workspaces.
+
+Gate status:
+
+| Gate item                              | Status      | Evidence / note                                                                                      |
+| -------------------------------------- | ----------- | ---------------------------------------------------------------------------------------------------- |
+| Architecture Coordination approval     | Approved    | Stream ownership, dependencies, non-goals, validation, verification, and merge order are recorded.   |
+| Jeff approval gate                     | Approved    | Jeff explicitly approved stream/worktree creation for `owner-operations-reporting-v1`.               |
+| Stream creation                        | Complete    | Five branches and worktrees were created from the verified current `main` baseline.                  |
+| Implementation start                   | Not started | A later explicit start command is required before feature work begins.                               |
+| Human review gate                      | Pending     | No implementation, review packet, controlled merge, PR, or cleanup approval has been granted.        |
+| Cleanup                                | Not started | No worktree or branch retirement is approved.                                                        |
+| Autonomous merge / indefinite continue | Not allowed | No next wave, PR, merge, schema/migration work, provider work, or autonomous action work is allowed. |
+
+Approved stream set:
+
+| Stream                                       | Ownership area                    | Mission                                                                  | Status                 |
+| -------------------------------------------- | --------------------------------- | ------------------------------------------------------------------------ | ---------------------- |
+| `owner-operations-summary-v1`                | Reports / owner operating review  | Summarize owner-level operating health and route action to owning areas. | Approved / Not Started |
+| `execution-to-cash-reporting-v1`             | Reports with Field and Financials | Show continuity from completed work through invoice, payment, and cash.  | Approved / Not Started |
+| `labor-field-management-snapshot-v1`         | Reports with Field / People       | Summarize crew, active work, blocked execution, and field evidence.      | Approved / Not Started |
+| `portfolio-risk-exceptions-v1`               | Reports / owner exception review  | Surface cross-portfolio risks and exceptions without owning action.      | Approved / Not Started |
+| `verification-owner-operations-reporting-v1` | Verification                      | Protect canonical records, ownership boundaries, and no schema drift.    | Approved / Not Started |
+
+Approved stream branches:
+
+- `stream/owner-operations-summary-v1`
+- `stream/execution-to-cash-reporting-v1`
+- `stream/labor-field-management-snapshot-v1`
+- `stream/portfolio-risk-exceptions-v1`
+- `stream/verification-owner-operations-reporting-v1`
+
+Approved worktrees:
+
+- `C:\FC-worktrees\owner-operations-summary-v1`
+- `C:\FC-worktrees\execution-to-cash-reporting-v1`
+- `C:\FC-worktrees\labor-field-management-snapshot-v1`
+- `C:\FC-worktrees\portfolio-risk-exceptions-v1`
+- `C:\FC-worktrees\verification-owner-operations-reporting-v1`
+
+Dependency and merge order:
+
+1. `owner-operations-summary-v1`
+2. `execution-to-cash-reporting-v1`
+3. `labor-field-management-snapshot-v1`
+4. `portfolio-risk-exceptions-v1`
+5. `verification-owner-operations-reporting-v1`
+
+Verification must run last after implementation stream commits exist.
+
+Shared guardrails:
+
+- Reports summarizes, explains, and routes; it does not own operating action.
+- Dashboard remains prioritization only.
+- Project remains diagnostic.
+- Field remains execution owner.
+- Financials remains billing, collections, and payment action owner.
+- Communications remains communication action owner.
+- Settings remains configuration owner.
+- Portal remains customer-safe.
+- Do not create duplicate reporting, financial, field, labor, workflow, risk,
+  or exception models.
+- Do not modify schemas or migrations.
+
 ## Financial Closeout Collections V1 Approval Gate
 
 Gate date: 2026-06-07.

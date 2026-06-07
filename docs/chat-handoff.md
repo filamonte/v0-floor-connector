@@ -92,6 +92,19 @@ The next wave is not approved from this cleanup; agents may not auto-continue,
 perform schema/migration work, change provider behavior, or perform additional
 destructive cleanup without Jeff approval.
 
+Current wave gate note: `owner-operations-reporting-v1` has Jeff approval and
+Architecture Coordination approval for stream/worktree creation. The approved
+streams are `owner-operations-summary-v1`,
+`execution-to-cash-reporting-v1`, `labor-field-management-snapshot-v1`,
+`portfolio-risk-exceptions-v1`, and
+`verification-owner-operations-reporting-v1`. Their worktrees were created at
+`C:\FC-worktrees\<stream>` from the verified `main` baseline and must remain
+Approved / Not Started until a later explicit start command. Verification runs
+last after implementation commits exist. This approval does not authorize
+feature work yet, schema/migration work, provider changes, BI/accounting
+replacement behavior, PRs, merges, cleanup, next-wave continuation, autonomous
+actions, or customer-facing sends.
+
 Current wave gate note: `mobile-field-capture-closeout-v1` has merged to
 `main` under Jeff's controlled merge approval. Field Quick Capture V1 merged as
 `d2e9e727`, Closeout Readiness Command V1 merged as `cea565d7`, Field
