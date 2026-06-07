@@ -126,6 +126,10 @@ export type ReportsContinuitySection = {
 };
 
 export type OperationsReportingSummary = {
+  ownerSummary: {
+    operatingSnapshot: ReportsMetric[];
+    reviewItems: ReportsListItem[];
+  };
   counts: {
     openProjects: number;
     projectsNeedingAttention: number;
@@ -678,8 +682,67 @@ export function deriveOperationsReportingSummary(input: {
     ...openInvoices.map((invoice) => invoice.projectId),
     ...proofGapProjectIds
   ]);
+  const blockedOperatingCount =
+    readyCheckProjects.length +
+    openFieldBlockers.length +
+    waitingContracts.length +
+    overdueInvoices.length;
+  const slippingOperatingCount =
+    projectsMissingRecentDailyLogs.length +
+    scheduleWarningCount +
+    completedJobsAwaitingCloseout.length;
+  const ownerReviewItems = uniqueById([
+    ...attentionItems,
+    ...arExposureItems,
+    ...fieldExecutionItems
+  ]).slice(0, 6);
 
   return {
+    ownerSummary: {
+      operatingSnapshot: [
+        metric({
+          id: "owner-ready-to-move",
+          label: "Ready",
+          value: readyToMoveCount,
+          detail: "Projects and jobs ready to move at source",
+          href: "/projects",
+          tone: readyToMoveCount > 0 ? "good" : "neutral"
+        }),
+        metric({
+          id: "owner-blocked",
+          label: "Blocked",
+          value: blockedOperatingCount,
+          detail: "Readiness, signature, field, and overdue blockers",
+          href: "/reports",
+          tone: blockedOperatingCount > 0 ? "blocked" : "good"
+        }),
+        metric({
+          id: "owner-slipping",
+          label: "Slipping",
+          value: slippingOperatingCount,
+          detail: "Daily Log gaps, schedule warnings, and closeout lag",
+          href: "/schedule",
+          tone: slippingOperatingCount > 0 ? "attention" : "good"
+        }),
+        metric({
+          id: "owner-cash-pressure",
+          label: "Cash Pressure",
+          value: money(input.collections.overdueReceivableAmount),
+          detail: `${input.collections.overdueInvoiceCount || overdueInvoices.length} overdue invoice${
+            (input.collections.overdueInvoiceCount ||
+              overdueInvoices.length) === 1
+              ? ""
+              : "s"
+          } routed to Financials`,
+          href: "/financials/accounts-receivable",
+          tone:
+            Number(input.collections.overdueReceivableAmount) > 0
+              ? "blocked"
+              : "good"
+        })
+      ],
+      reviewItems: ownerReviewItems
+    },
     counts: {
       openProjects: openProjects.length,
       projectsNeedingAttention: readyCheckProjects.length,

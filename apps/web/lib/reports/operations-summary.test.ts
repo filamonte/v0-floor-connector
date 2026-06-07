@@ -167,6 +167,79 @@ void test("computes scheduling and crew metrics", () => {
   assert.equal(result.lists.jobsNeedingSchedulingOrCrew.length, 2);
 });
 
+void test("builds owner operating snapshot from canonical source signals", () => {
+  const result = summary({
+    projects: [
+      project({
+        id: "blocked-project",
+        commercialReadinessStatus: "contract_required"
+      }),
+      project({
+        id: "ready-project",
+        commercialReadinessStatus: "ready_to_schedule"
+      })
+    ],
+    jobs: [
+      job({
+        id: "ready-unscheduled",
+        projectId: "ready-project",
+        dispatchStatus: "unscheduled"
+      }),
+      job({
+        id: "in-progress",
+        projectId: "ready-project",
+        dispatchStatus: "in_progress",
+        scheduledDate: "2026-05-20"
+      })
+    ],
+    contracts: [contract({ id: "waiting", status: "sent" })],
+    invoices: [invoice({ id: "overdue", dueDate: "2026-05-01" })],
+    fieldNotes: [fieldNote({ id: "blocker" })],
+    collections: {
+      openReceivableAmount: "100.00",
+      overdueReceivableAmount: "100.00",
+      openInvoiceCount: 1,
+      overdueInvoiceCount: 1,
+      pendingPaymentAmount: "0.00",
+      pendingEventCount: 0,
+      failedOrVoidedEventCount: 0
+    }
+  });
+
+  assert.deepEqual(
+    result.ownerSummary.operatingSnapshot.map((metric) => [
+      metric.id,
+      metric.value,
+      metric.href,
+      metric.tone
+    ]),
+    [
+      ["owner-ready-to-move", 2, "/projects", "good"],
+      ["owner-blocked", 4, "/reports", "blocked"],
+      ["owner-slipping", 1, "/schedule", "attention"],
+      [
+        "owner-cash-pressure",
+        "100.00",
+        "/financials/accounts-receivable",
+        "blocked"
+      ]
+    ]
+  );
+  assert.equal(result.ownerSummary.reviewItems.length, 6);
+  assert.equal(
+    result.ownerSummary.reviewItems.every((item) =>
+      [
+        "/projects/",
+        "/contracts/",
+        "/daily-logs",
+        "/invoices/",
+        "/schedule"
+      ].some((prefix) => item.href.startsWith(prefix))
+    ),
+    true
+  );
+});
+
 void test("computes receivable and payment attention metrics", () => {
   const result = summary({
     projects: [project()],
