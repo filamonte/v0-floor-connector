@@ -4,6 +4,7 @@ import test from "node:test";
 import {
   buildFieldDailyExecutionCommand,
   buildFieldExecutionReadinessBrief,
+  buildFieldQuickCapturePlan,
   buildFieldAssignedWorkQueue,
   summarizeFieldAssignedWorkJob,
   type FieldAssignedWorkJob
@@ -59,6 +60,8 @@ const baseJob = {
   fieldNoteCount: 0,
   openFieldBlockerCount: 0,
   latestOpenFieldBlocker: null,
+  executionAttachmentCount: 0,
+  latestExecutionAttachment: null,
   timeCardCount: 0,
   openTimeCardCount: 0,
   readiness: readyReadiness
@@ -276,7 +279,10 @@ void test("field daily execution command prioritizes blockers over capture promp
     command.nextActionHref,
     "/daily-logs/88888888-8888-4888-8888-888888888888#job-notes"
   );
-  assert.equal(command.evidenceLabel, "2 field notes · 1 time card");
+  assert.equal(
+    command.evidenceLabel,
+    "2 field notes · 0 evidence files · 1 time card"
+  );
 });
 
 void test("field daily execution command starts Daily Log for scheduled work without one", () => {
@@ -315,4 +321,67 @@ void test("field daily execution command distinguishes active and completed exec
   assert.equal(activeCommand.nextActionHref, "/daily-logs/daily-active");
   assert.equal(completedCommand.status, "closeout_review");
   assert.equal(completedCommand.nextActionHref, "/daily-logs/daily-complete");
+});
+
+void test("field quick capture plan guides daily log notes blockers and evidence on existing records", () => {
+  const plan = buildFieldQuickCapturePlan({
+    ...baseJob,
+    dispatchStatus: "in_progress",
+    latestDailyLog: {
+      id: "daily-active",
+      logDate: "2026-05-28",
+      status: "draft"
+    },
+    fieldNoteCount: 2,
+    openFieldBlockerCount: 1,
+    latestOpenFieldBlocker: {
+      id: "field-note-blocker",
+      dailyLogId: "daily-active",
+      title: "Moisture readings need office review",
+      noteType: "blocker"
+    },
+    executionAttachmentCount: 3,
+    latestExecutionAttachment: {
+      id: "attachment-latest",
+      subjectType: "field_note",
+      subjectId: "field-note-blocker",
+      fileName: "moisture-reading.pdf",
+      caption: "Meter proof"
+    }
+  });
+
+  assert.equal(plan.title, "What happened today?");
+  assert.deepEqual(
+    plan.items.map((item) => [item.key, item.status, item.actionLabel]),
+    [
+      ["daily_log", "ready", "Open Daily Log"],
+      ["job_note", "ready", "Review notes"],
+      ["blocker", "blocked", "Open blocker"],
+      ["evidence", "ready", "Review evidence"]
+    ]
+  );
+  assert.equal(
+    plan.items.find((item) => item.key === "blocker")?.href,
+    "/daily-logs/daily-active#job-notes"
+  );
+});
+
+void test("field quick capture plan starts with canonical Daily Log when capture has not begun", () => {
+  const plan = buildFieldQuickCapturePlan({
+    ...baseJob,
+    scheduledDate: "2026-05-28"
+  });
+
+  assert.deepEqual(
+    plan.items.map((item) => [item.key, item.status]),
+    [
+      ["daily_log", "needs_capture"],
+      ["job_note", "needs_capture"],
+      ["blocker", "ready"],
+      ["evidence", "needs_capture"]
+    ]
+  );
+  assert.ok(
+    plan.items.every((item) => item.href.startsWith("/daily-logs?compose=1"))
+  );
 });
