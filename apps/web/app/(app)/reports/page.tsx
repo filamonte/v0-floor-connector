@@ -407,6 +407,23 @@ function OperationsReportingWorkspace({
         </div>
       </ReportSection>
 
+      <ReportSection
+        eyebrow="Portfolio Risk"
+        title="Owner exception review"
+        description="Cross-portfolio risks from source records only. Reports identify exceptions and route to the workspace that owns the next action."
+      >
+        <div className="space-y-4 p-4">
+          <ReportMetricGrid metrics={summary.portfolioRiskSummary.metrics} />
+          <AttentionList
+            title="Risk and exception list"
+            description="Office-blocked, customer/cash-blocked, overdue, missing, stalled, and closeout exceptions linked to the canonical owner."
+            items={summary.portfolioRiskSummary.exceptionItems}
+            emptyTitle="No portfolio exceptions are visible."
+            emptyDescription="This list stays empty until canonical source records create owner-level exception signals."
+          />
+        </div>
+      </ReportSection>
+
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         {summary.continuitySections.map((section) => (
           <AttentionList

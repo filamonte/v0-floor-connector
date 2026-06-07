@@ -754,3 +754,111 @@ void test("distinguishes operations continuity lanes and source links", () => {
     "/daily-logs/daily-log-1"
   );
 });
+
+void test("surfaces portfolio exceptions without creating workflow state", () => {
+  const result = summary({
+    projects: [
+      project({
+        id: "blocked-project",
+        name: "Blocked Project",
+        commercialReadinessStatus: "contract_required"
+      }),
+      project({
+        id: "ready-project",
+        name: "Ready Project",
+        commercialReadinessStatus: "ready_to_schedule"
+      })
+    ],
+    jobs: [
+      job({
+        id: "missing-crew",
+        dispatchStatus: "scheduled",
+        scheduledDate: "2026-05-20",
+        project: { name: "Ready Project" }
+      }),
+      job({
+        id: "completed-open",
+        dispatchStatus: "completed",
+        projectId: "ready-project",
+        project: { name: "Ready Project" }
+      })
+    ],
+    contracts: [contract({ id: "signature", status: "sent" })],
+    invoices: [
+      invoice({
+        id: "overdue",
+        dueDate: "2026-05-01",
+        balanceDueAmount: "800.00"
+      })
+    ],
+    dailyLogs: [
+      {
+        id: "daily-log-1",
+        projectId: "ready-project",
+        jobId: "missing-crew",
+        logDate: "2026-05-19"
+      }
+    ],
+    fieldNotes: [fieldNote({ id: "blocker" })],
+    collections: {
+      openReceivableAmount: "800.00",
+      overdueReceivableAmount: "800.00",
+      openInvoiceCount: 1,
+      overdueInvoiceCount: 1,
+      pendingPaymentAmount: "0.00",
+      pendingEventCount: 0,
+      failedOrVoidedEventCount: 1
+    }
+  });
+
+  assert.deepEqual(
+    result.portfolioRiskSummary.metrics.map((metric) => [
+      metric.id,
+      metric.value,
+      metric.href,
+      metric.tone
+    ]),
+    [
+      ["office-blocked", 3, "/reports", "attention"],
+      [
+        "customer-cash-blocked",
+        2,
+        "/financials/accounts-receivable",
+        "blocked"
+      ],
+      ["missing-or-stalled", 3, "/daily-logs", "attention"],
+      ["portfolio-exceptions", 6, "/reports", "attention"]
+    ]
+  );
+  assert.deepEqual(
+    result.portfolioRiskSummary.exceptionItems.map((item) => [
+      item.id,
+      item.href,
+      item.sourceLabel
+    ]),
+    [
+      [
+        "project-risk:blocked-project",
+        "/projects/blocked-project",
+        "Project Workspace"
+      ],
+      [
+        "crew-risk:missing-crew",
+        "/schedule?crew=unassigned&jobId=missing-crew",
+        "CrewBoard"
+      ],
+      [
+        "signature-risk:signature",
+        "/contracts/signature",
+        "Contract Workspace"
+      ],
+      ["field-risk:blocker", "/daily-logs/daily-log-1", "Daily Logs"],
+      ["cash-risk:overdue", "/invoices/overdue", "Invoice Workspace"],
+      [
+        "closeout-risk:completed-open",
+        "/projects/ready-project",
+        "Project Workspace"
+      ]
+    ]
+  );
+});
