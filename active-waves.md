@@ -126,16 +126,17 @@ Gate status:
 | Stream creation                        | Complete    | Four branches and worktrees were created from the verified current `main` baseline.              |
 | Implementation start                   | Completed   | The approved implementation and verification slices landed on `main`.                            |
 | Human review gate                      | Satisfied   | Jeff approved the controlled merge prompt; no PRs were opened.                                   |
-| Autonomous merge / indefinite continue | Not allowed | No PR, next wave, schema/migration work, or destructive cleanup is approved.                     |
+| Cleanup                                | Completed   | Jeff explicitly approved cleanup; completed worktrees and eligible local branches were retired.  |
+| Autonomous merge / indefinite continue | Not allowed | No PR, next wave, schema/migration work, or additional destructive cleanup is approved.          |
 
 Approved stream set:
 
-| Stream                            | Ownership area                     | Mission                                                                                                       | Status |
-| --------------------------------- | ---------------------------------- | ------------------------------------------------------------------------------------------------------------- | ------ |
-| `portal-project-clarity-v1`       | Customer project understanding     | Make project status, next steps, waiting states, and completed work easier for customers to understand.       | Merged |
-| `portal-financial-visibility-v1`  | Customer financial understanding   | Make invoices, payments, balances, and billing status easier for customers to understand.                     | Merged |
-| `portal-communication-trust-v1`   | Customer communication confidence  | Help customers understand communication history and action requirements without exposing internal operations. | Merged |
-| `verification-customer-portal-v1` | Customer portal trust verification | Protect customer-safe boundaries, canonical records, ownership boundaries, and no schema/migration drift.     | Merged |
+| Stream                            | Ownership area                     | Mission                                                                                                       | Status  |
+| --------------------------------- | ---------------------------------- | ------------------------------------------------------------------------------------------------------------- | ------- |
+| `portal-project-clarity-v1`       | Customer project understanding     | Make project status, next steps, waiting states, and completed work easier for customers to understand.       | Retired |
+| `portal-financial-visibility-v1`  | Customer financial understanding   | Make invoices, payments, balances, and billing status easier for customers to understand.                     | Retired |
+| `portal-communication-trust-v1`   | Customer communication confidence  | Help customers understand communication history and action requirements without exposing internal operations. | Retired |
+| `verification-customer-portal-v1` | Customer portal trust verification | Protect customer-safe boundaries, canonical records, ownership boundaries, and no schema/migration drift.     | Retired |
 
 Approved stream branches:
 
@@ -172,9 +173,9 @@ ownership, golden workflow, project status window, financial visibility, and
 portal communication summary tests; typecheck; lint;
 `pnpm.cmd fc:preflight:fast`; and `git diff --check`.
 
-Wave status: Merged to `main`; completed wave worktrees and branches are
-retained pending explicit retirement approval. No next wave is approved by this
-merge.
+Wave status: Merged to `main`; completed wave worktrees and eligible local
+branches were retired after explicit cleanup approval. No next wave is approved
+by this cleanup.
 
 Shared non-goals:
 

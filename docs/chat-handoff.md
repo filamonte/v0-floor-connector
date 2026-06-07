@@ -132,11 +132,14 @@ Communication Trust V1 merged as `7b63ceef`, and Verification Customer Portal
 V1 merged as `bb2db7dd`. Post-merge targeted customer portal trust,
 operational ownership, golden workflow, project status window, financial
 visibility, and portal communication summary tests passed, along with
-typecheck, lint, `pnpm.cmd fc:preflight:fast`, and `git diff --check`. The four
-completed wave worktrees and branches are retained pending explicit retirement
-approval. The dirty out-of-scope `C:\FC-worktrees\project-next-actions`
-worktree was preserved untouched. The next wave is not approved from this
-merge; agents may not auto-continue without Jeff approval.
+typecheck, lint, `pnpm.cmd fc:preflight:fast`, and `git diff --check`. After
+explicit cleanup approval, the four completed wave worktrees were removed from
+the Git worktree registry, residual directories were removed after exact-path
+confirmation, and eligible local branches were deleted. No matching remote
+branches were present. The dirty out-of-scope
+`C:\FC-worktrees\project-next-actions` worktree was preserved untouched. The
+next wave is not approved from this cleanup; agents may not auto-continue
+without Jeff approval.
 
 ## Required First Reads
 

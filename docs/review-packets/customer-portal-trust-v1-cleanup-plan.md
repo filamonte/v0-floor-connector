@@ -4,9 +4,9 @@ Status date: 2026-06-07
 
 Role: FloorConnector Release Operations Lead
 
-Scope: cleanup planning only for `customer-portal-trust-v1`.
+Scope: cleanup planning and execution record for `customer-portal-trust-v1`.
 
-No worktrees or branches were deleted while creating this plan. No new wave was
+This plan was executed after Jeff explicitly approved cleanup. No new wave was
 started. `C:\FC-worktrees\project-next-actions` was not used or modified.
 
 ## Wave Completion Status
@@ -29,12 +29,12 @@ Pre-cleanup planning preflight confirmed `main` was clean and even with
 
 ## Retirement Candidate Table
 
-| Worktree path                                     | Branch                                   | Worktree status | Stream head                                                | Contained in `main` | Retirement candidate |
-| ------------------------------------------------- | ---------------------------------------- | --------------- | ---------------------------------------------------------- | ------------------- | -------------------- |
-| `C:\FC-worktrees\portal-project-clarity-v1`       | `stream/portal-project-clarity-v1`       | Clean           | `59ed0e51 feat: improve portal project clarity`            | Yes                 | Yes                  |
-| `C:\FC-worktrees\portal-financial-visibility-v1`  | `stream/portal-financial-visibility-v1`  | Clean           | `dd69983c feat: improve portal financial visibility`       | Yes                 | Yes                  |
-| `C:\FC-worktrees\portal-communication-trust-v1`   | `stream/portal-communication-trust-v1`   | Clean           | `fb1692ae feat: improve portal communication trust`        | Yes                 | Yes                  |
-| `C:\FC-worktrees\verification-customer-portal-v1` | `stream/verification-customer-portal-v1` | Clean           | `ca5554bd test: update customer portal trust verification` | Yes                 | Yes                  |
+| Worktree path                                     | Branch                                   | Pre-cleanup status | Stream head                                                | Contained in `main` | Cleanup result |
+| ------------------------------------------------- | ---------------------------------------- | ------------------ | ---------------------------------------------------------- | ------------------- | -------------- |
+| `C:\FC-worktrees\portal-project-clarity-v1`       | `stream/portal-project-clarity-v1`       | Clean              | `59ed0e51 feat: improve portal project clarity`            | Yes                 | Retired        |
+| `C:\FC-worktrees\portal-financial-visibility-v1`  | `stream/portal-financial-visibility-v1`  | Clean              | `dd69983c feat: improve portal financial visibility`       | Yes                 | Retired        |
+| `C:\FC-worktrees\portal-communication-trust-v1`   | `stream/portal-communication-trust-v1`   | Clean              | `fb1692ae feat: improve portal communication trust`        | Yes                 | Retired        |
+| `C:\FC-worktrees\verification-customer-portal-v1` | `stream/verification-customer-portal-v1` | Clean              | `ca5554bd test: update customer portal trust verification` | Yes                 | Retired        |
 
 Containment evidence used:
 
@@ -63,7 +63,20 @@ No matching remote branches were found by:
 git ls-remote --heads origin stream/portal-project-clarity-v1 stream/portal-financial-visibility-v1 stream/portal-communication-trust-v1 stream/verification-customer-portal-v1
 ```
 
-Remote deletion is therefore not currently part of the candidate cleanup set.
+Remote deletion was therefore not part of the cleanup execution.
+
+## Cleanup Execution Result
+
+After explicit approval:
+
+- `git worktree remove` removed all four approved worktrees from the Git
+  worktree registry.
+- The four residual directories were removed after confirming their resolved
+  absolute paths exactly matched the approved portal wave paths.
+- The four approved local stream branches were deleted.
+- No remote branches were deleted because no matching remote branches were
+  present.
+- `C:\FC-worktrees\project-next-actions` was preserved untouched.
 
 ## Dirty And Out-Of-Scope Worktrees Preserved
 
@@ -123,36 +136,31 @@ is exactly one of the four approved portal wave paths above.
 
 ## Required Human Approval Before Deletion
 
-This plan does not authorize deletion.
+Jeff explicitly approved deletion before cleanup execution.
 
-Before any destructive cleanup, Jeff must explicitly approve retiring:
+The approval covered:
 
 - the four listed portal wave worktrees
 - the four listed local stream branches
 
-The approval must continue to exclude
-`C:\FC-worktrees\project-next-actions` and must not authorize a new wave by
-implication.
+The approval continued to exclude `C:\FC-worktrees\project-next-actions` and
+did not authorize a new wave by implication.
 
 ## Governance Docs
 
-No governance registry changes are required for this planning pass. The active
-registries already record the customer portal trust streams as merged and
-retained pending explicit retirement approval.
-
-After cleanup execution, update:
+Cleanup execution updated:
 
 - `active-worktrees.md`
 - `active-waves.md`
 - `.codex/active-stream-plan.md`
 - `docs/chat-handoff.md`
 
-Those updates should mark the approved portal wave worktrees and branches as
-retired/archived only after deletion succeeds.
+Those updates mark the approved portal wave worktrees and branches as retired
+or archived after deletion succeeded.
 
 ## Cleanup Readiness
 
-It is safe to request explicit cleanup approval for the four listed portal wave
-worktrees and local branches.
+Cleanup was completed after explicit approval.
 
-It is not safe to perform cleanup until that approval is recorded.
+No additional cleanup, branch deletion, worktree deletion, feature work, schema
+work, migration work, or next wave is approved by this execution record.
