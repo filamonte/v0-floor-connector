@@ -231,6 +231,12 @@ payment continuity, financial closeout verification, golden workflow, and
 operational ownership tests; typecheck; lint; `pnpm.cmd fc:preflight:fast`;
 and `git diff --check`.
 
+Cleanup plan:
+[docs/review-packets/financial-closeout-collections-v1-cleanup-plan.md](C:/FloorConnector/docs/review-packets/financial-closeout-collections-v1-cleanup-plan.md).
+Cleanup planning is complete; no financial closeout collections worktree or
+branch deletion is approved until explicit human retirement approval is
+recorded.
+
 ## Customer Portal Trust V1 Gate
 
 Gate date: 2026-06-07.

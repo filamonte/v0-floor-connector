@@ -193,6 +193,11 @@ Wave status: Merged to `main`; completed wave worktrees and branches are
 retained pending explicit retirement approval. No next wave is approved by this
 merge.
 
+Cleanup plan:
+[docs/review-packets/financial-closeout-collections-v1-cleanup-plan.md](C:/FloorConnector/docs/review-packets/financial-closeout-collections-v1-cleanup-plan.md).
+Cleanup planning is complete; no deletion is approved until explicit human
+retirement approval is recorded.
+
 Shared non-goals:
 
 - no implementation from this approval task;

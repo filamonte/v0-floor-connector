@@ -84,7 +84,10 @@ priority, payment continuity, financial closeout verification, golden workflow,
 and operational ownership tests passed, along with typecheck, lint,
 `pnpm.cmd fc:preflight:fast`, and `git diff --check`. The four completed wave
 worktrees and branches are retained pending explicit retirement approval. The
-next wave is not approved from this merge; agents may not auto-continue,
+cleanup plan is recorded at
+[docs/review-packets/financial-closeout-collections-v1-cleanup-plan.md](C:/FloorConnector/docs/review-packets/financial-closeout-collections-v1-cleanup-plan.md);
+no deletion is approved until explicit human retirement approval is recorded.
+The next wave is not approved from this merge; agents may not auto-continue,
 perform schema/migration work, change provider behavior, or perform destructive
 cleanup without Jeff approval.
 
