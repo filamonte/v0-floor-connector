@@ -81,23 +81,23 @@ under Jeff's controlled merge approval. Sales Readiness Command V1 merged as
 Readiness Handoff V1 merged as `09942b0b`, and Verification Sales To Production
 V1 merged as `f4e31baf`. Post-merge targeted tests, typecheck, lint,
 `pnpm.cmd fc:preflight:fast`, and `git diff --check` passed. The four completed
-wave worktrees are retirement candidates retained pending explicit cleanup
-approval; the cleanup plan is
-[docs/review-packets/field-execution-depth-v1-cleanup-plan.md](C:/FloorConnector/docs/review-packets/field-execution-depth-v1-cleanup-plan.md).
-The dirty out-of-scope `C:\FC-worktrees\project-next-actions` worktree was
-preserved untouched. The next wave is not approved from this handoff; agents
-may not auto-continue without Jeff approval.
+wave worktrees are retained pending explicit retirement approval. The dirty
+out-of-scope `C:\FC-worktrees\project-next-actions` worktree was preserved
+untouched. The next wave is not approved from this handoff; agents may not
+auto-continue without Jeff approval.
 
 Current wave gate note: `field-execution-depth-v1` has merged to `main` under
 Jeff's controlled merge approval. Field Handoff Packet V1 merged as
 `715af07d`, Daily Execution Command V1 merged as `627358c4`, Crew Execution
 Visibility V1 merged as `980cfe5b`, and Verification Field Execution V1 merged
 as `36e80505`. Post-merge targeted field execution tests, typecheck, lint,
-`pnpm.cmd fc:preflight:fast`, and `git diff --check` passed. The four completed
-wave worktrees are retained pending explicit retirement approval. The dirty
-out-of-scope `C:\FC-worktrees\project-next-actions` worktree was preserved
-untouched. The next wave is not approved from this handoff; agents may not
-auto-continue without Jeff approval.
+`pnpm.cmd fc:preflight:fast`, and `git diff --check` passed. After explicit
+cleanup approval, the four completed wave worktrees were removed from the Git
+worktree registry and their eligible local branches were deleted. No matching
+remote branches were present. The dirty out-of-scope
+`C:\FC-worktrees\project-next-actions` worktree was preserved untouched. The
+next wave is not approved from this handoff; agents may not auto-continue
+without Jeff approval.
 
 ## Required First Reads
 

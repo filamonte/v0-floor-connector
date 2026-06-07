@@ -124,7 +124,8 @@ Gate status:
 | Stream creation                        | Complete    | Four branches and worktrees were created from current `main` at `9bad7a65`.                      |
 | Implementation start                   | Completed   | The approved implementation and verification slices landed on `main`.                            |
 | Human review gate                      | Satisfied   | Jeff approved the controlled merge prompt; no PRs were opened.                                   |
-| Autonomous merge / indefinite continue | Not allowed | Next-wave continuation and destructive cleanup still require explicit approval.                  |
+| Cleanup                                | Completed   | Jeff explicitly approved cleanup; completed worktrees and eligible local branches were retired.  |
+| Autonomous merge / indefinite continue | Not allowed | Next-wave continuation and any future destructive cleanup still require explicit approval.       |
 
 Approved stream set:
 
@@ -145,9 +146,9 @@ Merge result:
 Post-merge validation passed: targeted field execution tests, typecheck, lint,
 `pnpm.cmd fc:preflight:fast`, and `git diff --check`.
 
-Wave status: Merged to `main`; completed wave worktrees are retirement
-candidates retained pending explicit cleanup approval. No next wave is approved
-by this merge.
+Wave status: Merged to `main`; completed wave worktrees and eligible local
+branches were retired after explicit cleanup approval. No next wave is approved
+by this cleanup.
 
 Approved stream branches:
 

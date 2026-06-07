@@ -88,10 +88,11 @@ for `field-execution-depth-v1`.
 Review packet:
 [docs/review-packets/field-execution-depth-v1-plan.md](C:/FloorConnector/docs/review-packets/field-execution-depth-v1-plan.md).
 
-Wave status: Merged to `main`. Jeff approved the controlled merge of the
-reviewed ready stream set. This does not approve schema/migrations,
-provider/customer-facing actions, PRs, next-wave continuation, destructive
-cleanup, or work in dirty/out-of-scope worktrees.
+Wave status: Merged to `main`; completed worktrees and eligible local branches
+were retired after explicit cleanup approval. This does not approve
+schema/migrations, provider/customer-facing actions, PRs, next-wave
+continuation, future destructive cleanup, or work in dirty/out-of-scope
+worktrees.
 
 Approved stream set:
 
@@ -118,11 +119,11 @@ git diff --check
 git diff --cached --check
 ```
 
-Human review gate is satisfied for the approved merge set only. Agents may not
-continue to another wave, perform schema/migration work, delete branches or
-worktrees, or use dirty/out-of-scope worktrees from this approval. Agents must
-not touch `C:\FC-worktrees\project-next-actions` unless Jeff explicitly scopes
-it.
+Human review gate is satisfied for the approved merge and cleanup set only.
+Agents may not continue to another wave, perform schema/migration work, delete
+additional branches or worktrees, or use dirty/out-of-scope worktrees from this
+approval. Agents must not touch `C:\FC-worktrees\project-next-actions` unless
+Jeff explicitly scopes it.
 
 ### field-handoff-packet-v1
 
@@ -368,10 +369,11 @@ Remaining gates:
 ## Merged Streams
 
 These streams have merged to `main`. Completed `field-execution-depth-v1`
-worktrees are retirement candidates retained pending explicit cleanup approval.
-Completed `sales-to-production-readiness-v1` worktrees are retained pending
-explicit retirement approval. Completed `operational-command-center-v1`
-worktrees and eligible branches were retired after explicit cleanup approval:
+worktrees and eligible local branches were retired after explicit cleanup
+approval. Completed `sales-to-production-readiness-v1` worktrees are retained
+pending explicit retirement approval. Completed
+`operational-command-center-v1` worktrees and eligible branches were retired
+after explicit cleanup approval:
 
 ### field-handoff-packet-v1
 
@@ -381,8 +383,8 @@ worktrees and eligible branches were retired after explicit cleanup approval:
 - Must avoid: duplicate schedule/job models, portal work, dispatch automation,
   schema changes, migrations, and provider/customer-facing behavior.
 - Merged: `715af07d feat: deepen field handoff packet`.
-- Cleanup: retirement candidate; worktree and branch retained pending explicit
-  cleanup approval.
+- Cleanup: worktree removed from Git worktree registry and local branch deleted
+  after explicit approval.
 
 ### daily-execution-command-v1
 
@@ -393,8 +395,8 @@ worktrees and eligible branches were retired after explicit cleanup approval:
 - Must avoid: separate field reporting system, duplicate issue tracker,
   duplicate punch-list model, schema changes, migrations, and portal behavior.
 - Merged: `627358c4 feat: strengthen daily execution workflow`.
-- Cleanup: retirement candidate; worktree and branch retained pending explicit
-  cleanup approval.
+- Cleanup: worktree removed from Git worktree registry and local branch deleted
+  after explicit approval.
 
 ### crew-execution-visibility-v1
 
@@ -405,8 +407,8 @@ worktrees and eligible branches were retired after explicit cleanup approval:
 - Must avoid: route optimization, dispatch replacement, crew scheduling
   replacement, dashboard sprawl, schema changes, and migrations.
 - Merged: `980cfe5b feat: improve crew execution visibility`.
-- Cleanup: retirement candidate; worktree and branch retained pending explicit
-  cleanup approval.
+- Cleanup: worktree removed from Git worktree registry and local branch deleted
+  after explicit approval.
 
 ### verification-field-execution-v1
 
@@ -416,8 +418,8 @@ worktrees and eligible branches were retired after explicit cleanup approval:
 - Must avoid: feature work, schema changes, UI redesign, runtime behavior, and
   loosening checks.
 - Merged: `36e80505 test: protect field execution workflow`.
-- Cleanup: retirement candidate; worktree and branch retained pending explicit
-  cleanup approval.
+- Cleanup: worktree removed from Git worktree registry and local branch deleted
+  after explicit approval.
 
 ### sales-readiness-command-v1
 

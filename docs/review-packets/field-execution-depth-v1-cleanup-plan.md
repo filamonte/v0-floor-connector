@@ -1,12 +1,14 @@
 # Field Execution Depth V1 Cleanup Plan
 
-Status: Cleanup Approval Required
+Status: Cleanup Executed
 Doc Type: Cleanup Plan
 Plan date: 2026-06-07
+Execution date: 2026-06-07
 
 This plan covers post-wave cleanup for `field-execution-depth-v1` after the
-approved stream set merged to `main`. It does not delete worktrees, delete
-branches, start another wave, modify schema, modify migrations, or authorize
+approved stream set merged to `main`. Jeff explicitly approved retiring the
+completed worktrees and eligible local branches. Cleanup did not start another
+wave, modify schema, modify migrations, delete remote branches, or authorize
 work in `C:\FC-worktrees\project-next-actions`.
 
 ## Wave Completion Status
@@ -48,6 +50,48 @@ streams.
 The `1 ahead / 6 behind` result is expected after squash merge and governance
 closeout. It is not evidence of unmerged work because patch-equivalence checks
 found no unique branch changes.
+
+## Cleanup Execution Result
+
+Execution preflight confirmed `main` was clean and even with `origin/main`.
+`pnpm.cmd worktree:doctor` passed, and
+`pnpm.cmd tooling:baseline -CommandsOnly` returned the standard validation
+commands.
+
+Each approved candidate was reconfirmed before deletion:
+
+- worktree existed and was on the expected branch;
+- worktree status was clean;
+- no schema or migration diff remained relative to `origin/main`;
+- patch-equivalence checks against `main` and `origin/main` returned no unique
+  unmerged patch output;
+- matching remote branches were not present;
+- no unique unmerged work would be lost.
+
+Retired worktrees:
+
+| Worktree                                          | Result                             |
+| ------------------------------------------------- | ---------------------------------- |
+| `C:\FC-worktrees\field-handoff-packet-v1`         | Removed from Git worktree registry |
+| `C:\FC-worktrees\daily-execution-command-v1`      | Removed from Git worktree registry |
+| `C:\FC-worktrees\crew-execution-visibility-v1`    | Removed from Git worktree registry |
+| `C:\FC-worktrees\verification-field-execution-v1` | Removed from Git worktree registry |
+
+Deleted local branches:
+
+| Branch                                   | Result  |
+| ---------------------------------------- | ------- |
+| `stream/field-handoff-packet-v1`         | Deleted |
+| `stream/daily-execution-command-v1`      | Deleted |
+| `stream/crew-execution-visibility-v1`    | Deleted |
+| `stream/verification-field-execution-v1` | Deleted |
+
+Remote branch result: no matching remote branches were present, so no remote
+branches were deleted.
+
+The approved paths may still contain residual local development cache/link
+directories after `git worktree remove`, but they are no longer registered Git
+worktrees and the approved stream branches have been deleted.
 
 ## Branch Deletion Candidates
 
@@ -175,8 +219,7 @@ git branch recovery/field-execution-depth-v1 <main-commit>
 
 ## Recommendation
 
-Recommend retiring all four completed `field-execution-depth-v1` worktrees and
-deleting their local branches after explicit cleanup approval. There is no
-current technical reason to preserve any of the four beyond optional short-term
-inspection, and remote branch deletion is not needed unless matching remote
-branches appear later.
+Cleanup is complete for the four approved `field-execution-depth-v1` worktrees
+and eligible local branches. No next wave is approved by this cleanup. Continue
+to preserve `C:\FC-worktrees\project-next-actions` unless Jeff explicitly
+scopes it in a later task.
