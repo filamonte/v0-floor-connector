@@ -71,9 +71,10 @@ Communications Handoff V1 merged as `c18a8708`, and Verification Mobile Field
 Closeout V1 merged as `916eb8be`. Post-merge targeted mobile field closeout,
 field handoff, assigned work, dispatch board, daily-log, field-note, field
 execution, operational ownership, and golden workflow tests passed, along with
-typecheck, lint, `pnpm.cmd fc:preflight:fast`, and `git diff --check`. The
-four completed wave worktrees and branches are retained pending explicit
-retirement approval. The dirty out-of-scope
+typecheck, lint, `pnpm.cmd fc:preflight:fast`, and `git diff --check`. After
+explicit cleanup approval, the four completed wave worktrees were removed from
+the Git worktree registry and their local branches were deleted. No matching
+remote branches were present. The dirty out-of-scope
 `C:\FC-worktrees\project-next-actions` worktree was preserved untouched. The
 next wave is not approved from this handoff; agents may not auto-continue
 without Jeff approval.
