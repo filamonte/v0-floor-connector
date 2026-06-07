@@ -91,11 +91,11 @@ Review packet:
 Portfolio recommendation:
 [docs/review-packets/next-portfolio-recommendation.md](C:/FloorConnector/docs/review-packets/next-portfolio-recommendation.md).
 
-Wave status: Approved / Not Started. Four worktrees and branches may exist for
-later explicit start commands. This gate does not approve implementation,
+Wave status: Merged to `main`; completed worktrees and branches are retained
+pending explicit retirement approval. This merge does not approve
 schema/migrations, provider/customer-facing actions, autonomous messaging,
-financial mutation, PRs, merge, next-wave continuation, destructive cleanup, or
-work in dirty/out-of-scope worktrees.
+financial mutation, PRs, next-wave continuation, destructive cleanup, or work
+in dirty/out-of-scope worktrees.
 
 Approved stream set:
 
@@ -122,11 +122,11 @@ git diff --check
 git diff --cached --check
 ```
 
-Human review gate is not satisfied for implementation or merge. Agents may not
-continue into feature work, perform schema/migration work, open PRs, delete
-branches or worktrees, or use dirty/out-of-scope worktrees from this approval.
-Agents must not touch `C:\FC-worktrees\project-next-actions` unless Jeff
-explicitly scopes it.
+Human review gate was satisfied for the approved controlled merge only. Agents
+may not continue into new feature work, perform schema/migration work, open PRs,
+delete branches or worktrees, or use dirty/out-of-scope worktrees from this
+approval. Agents must not touch `C:\FC-worktrees\project-next-actions` unless
+Jeff explicitly scopes it.
 
 ### portal-project-clarity-v1
 
@@ -140,7 +140,7 @@ explicitly scopes it.
 - Must avoid: duplicate project models, contractor-only operational state,
   portal workflow engines, schema changes, migrations, and feature work before
   a later start command.
-- Status: Approved / Not Started.
+- Status: Merged to `main` as `f0d8c81c`.
 
 ### portal-financial-visibility-v1
 
@@ -155,7 +155,7 @@ explicitly scopes it.
 - Must avoid: accounting replacement, duplicate invoice models, duplicate
   payment models, financial math changes, payment mutation, schema changes,
   migrations, and feature work before a later start command.
-- Status: Approved / Not Started.
+- Status: Merged to `main` as `2fa1c633`.
 
 ### portal-communication-trust-v1
 
@@ -170,7 +170,7 @@ explicitly scopes it.
 - Must avoid: duplicate communication models, autonomous messaging, AI customer
   communications, provider/customer-facing sends, schema changes, migrations,
   and feature work before a later start command.
-- Status: Approved / Not Started.
+- Status: Merged to `main` as `7b63ceef`.
 
 ### verification-customer-portal-v1
 
@@ -185,7 +185,19 @@ explicitly scopes it.
 - Must avoid: feature work, UI redesign, schema changes, migrations, loosening
   existing tests, and verification implementation before feature-stream
   evidence exists.
-- Status: Approved / Not Started.
+- Status: Merged to `main` as `bb2db7dd`.
+
+Merge result:
+
+- Portal Project Clarity V1 merged to `main` as `f0d8c81c`.
+- Portal Financial Visibility V1 merged to `main` as `2fa1c633`.
+- Portal Communication Trust V1 merged to `main` as `7b63ceef`.
+- Verification Customer Portal V1 merged to `main` as `bb2db7dd`.
+
+Post-merge validation passed: targeted customer portal trust, operational
+ownership, golden workflow, project status window, financial visibility, and
+portal communication summary tests; typecheck; lint;
+`pnpm.cmd fc:preflight:fast`; and `git diff --check`.
 
 ## Mobile Field Capture Closeout V1 Gate
 

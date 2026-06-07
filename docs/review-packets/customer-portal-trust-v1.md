@@ -1,10 +1,10 @@
 # Customer Portal Trust V1 Review Packet
 
-Status: Review packet; rebased and revalidated; Jeff controlled-merge decision pending.
+Status: Merged to `main`; post-merge validation passed.
 
 Date: 2026-06-07
 
-Scope: merge-readiness review for `customer-portal-trust-v1`.
+Scope: completed merge review for `customer-portal-trust-v1`.
 
 ## Executive Summary
 
@@ -17,19 +17,17 @@ No reviewed stream changes schemas or migrations. No reviewed stream introduces
 duplicate project, invoice, payment, communication, customer-action, or
 portal-owned workflow models.
 
-The wave is safe for Jeff to approve for controlled merge. Each stream has now
-been rebased onto current `origin/main` and revalidated. Do not merge without
-reviewing the shared portal project page and `docs/current-state.md` conflict
-areas.
+The wave has landed on `main` under Jeff's controlled merge approval. Each
+stream was merged in the approved order and post-merge validation passed.
 
 ## Streams Completed
 
-| Stream                            | Branch                                   | Worktree                                          | Status         | Readiness  |
-| --------------------------------- | ---------------------------------------- | ------------------------------------------------- | -------------- | ---------- |
-| `portal-project-clarity-v1`       | `stream/portal-project-clarity-v1`       | `C:\FC-worktrees\portal-project-clarity-v1`       | Clean, `1 / 0` | Ready      |
-| `portal-financial-visibility-v1`  | `stream/portal-financial-visibility-v1`  | `C:\FC-worktrees\portal-financial-visibility-v1`  | Clean, `1 / 0` | Ready      |
-| `portal-communication-trust-v1`   | `stream/portal-communication-trust-v1`   | `C:\FC-worktrees\portal-communication-trust-v1`   | Clean, `1 / 0` | Ready      |
-| `verification-customer-portal-v1` | `stream/verification-customer-portal-v1` | `C:\FC-worktrees\verification-customer-portal-v1` | Clean, `2 / 0` | Ready last |
+| Stream                            | Branch                                   | Worktree                                          | Status | Readiness |
+| --------------------------------- | ---------------------------------------- | ------------------------------------------------- | ------ | --------- |
+| `portal-project-clarity-v1`       | `stream/portal-project-clarity-v1`       | `C:\FC-worktrees\portal-project-clarity-v1`       | Merged | Complete  |
+| `portal-financial-visibility-v1`  | `stream/portal-financial-visibility-v1`  | `C:\FC-worktrees\portal-financial-visibility-v1`  | Merged | Complete  |
+| `portal-communication-trust-v1`   | `stream/portal-communication-trust-v1`   | `C:\FC-worktrees\portal-communication-trust-v1`   | Merged | Complete  |
+| `verification-customer-portal-v1` | `stream/verification-customer-portal-v1` | `C:\FC-worktrees\verification-customer-portal-v1` | Merged | Complete  |
 
 The implementation streams and verification stream were rebased onto current
 `origin/main` after the review packet landed on `main`.
@@ -42,6 +40,15 @@ The implementation streams and verification stream were rebased onto current
 | `portal-financial-visibility-v1`  | `dd69983cb7599b3dcadddc48554c0ce19bc41814` | `feat: improve portal financial visibility`       |
 | `portal-communication-trust-v1`   | `fb1692ae4fa0dbe1d6312b4c63ed88f51737fed1` | `feat: improve portal communication trust`        |
 | `verification-customer-portal-v1` | `ca5554bd4880150e1f3b56228fb6a52fb3e4e26e` | `test: update customer portal trust verification` |
+
+## Merge Commits On Main
+
+| Stream                            | Main merge commit | Message                                       |
+| --------------------------------- | ----------------- | --------------------------------------------- |
+| `portal-project-clarity-v1`       | `f0d8c81c`        | `feat: merge portal project clarity v1`       |
+| `portal-financial-visibility-v1`  | `2fa1c633`        | `feat: merge portal financial visibility v1`  |
+| `portal-communication-trust-v1`   | `7b63ceef`        | `feat: merge portal communication trust v1`   |
+| `verification-customer-portal-v1` | `bb2db7dd`        | `test: merge verification customer portal v1` |
 
 ## Files Changed By Stream
 
@@ -282,12 +289,10 @@ Pairwise implementation merge simulation found changed-in-both conflicts:
   `apps/web/app/(portal)/portal/projects/[projectId]/page.tsx`
   and `docs/current-state.md`
 
-Manual conflict resolution is still likely during the combined merge. This is
-an expected integration risk, not a correction blocker. The portal page overlap
-is additive and should preserve project clarity, billing visibility, and
-communication trust sections. The `docs/current-state.md` overlap should
-preserve both implemented-truth bullets while leaving the dirty
-`C:\FC-worktrees\project-next-actions` worktree untouched.
+The controlled local merge completed without manual conflict markers. The
+portal page preserved the project clarity, billing visibility, and communication
+trust sections. `docs/current-state.md` preserved both implemented-truth bullets.
+The dirty `C:\FC-worktrees\project-next-actions` worktree was not touched.
 
 ### Dirty Out-Of-Scope Worktree
 
@@ -322,25 +327,23 @@ exposure, or portal-only state.
 
 ## Merge Order Recommendation
 
-Recommended controlled merge order:
+Completed controlled merge order:
 
 1. `portal-project-clarity-v1`
 2. `portal-financial-visibility-v1`
 3. `portal-communication-trust-v1`
 4. `verification-customer-portal-v1`
 
-Readiness by stream:
+Merge result by stream:
 
-| Stream                            | Recommendation | Reason                                                                                                  |
-| --------------------------------- | -------------- | ------------------------------------------------------------------------------------------------------- |
-| `portal-project-clarity-v1`       | Ready          | Clean, rebased, and revalidated.                                                                        |
-| `portal-financial-visibility-v1`  | Ready          | Clean, rebased, and revalidated; likely project-page conflict after first merge.                        |
-| `portal-communication-trust-v1`   | Ready          | Clean, rebased, and revalidated; likely project-page and `current-state` conflict after earlier merges. |
-| `verification-customer-portal-v1` | Ready last     | Clean, rebased, and revalidated with updated implementation evidence.                                   |
+| Stream                            | Recommendation | Reason                                             |
+| --------------------------------- | -------------- | -------------------------------------------------- |
+| `portal-project-clarity-v1`       | Merged         | Landed on `main` as `f0d8c81c`; validation passed. |
+| `portal-financial-visibility-v1`  | Merged         | Landed on `main` as `2fa1c633`; validation passed. |
+| `portal-communication-trust-v1`   | Merged         | Landed on `main` as `7b63ceef`; validation passed. |
+| `verification-customer-portal-v1` | Merged last    | Landed on `main` as `bb2db7dd`; validation passed. |
 
-No stream should be deferred or corrected before merge based on this review.
-Manual conflict resolution should preserve all three customer-facing portal
-sections and both implemented-truth doc updates.
+No stream was deferred or corrected during the controlled merge.
 
 ## Risks / Follow-Ups
 
@@ -359,9 +362,6 @@ sections and both implemented-truth doc updates.
 No next wave is approved by this review packet. Options for Jeff review after
 this wave:
 
-- approve controlled merge of `customer-portal-trust-v1`
-- request a correction pass on one stream if merge resolution exposes drift
-- defer a stream if conflict resolution becomes too risky
 - continue planning the next wave after merge and post-merge validation
 
 Potential future wave directions, subject to separate approval:
@@ -375,9 +375,6 @@ Potential future wave directions, subject to separate approval:
 
 ## Jeff Decision Options
 
-- Approve merge.
-- Request correction.
-- Defer stream.
 - Continue to next wave.
 
-This packet does not mark Jeff approval as granted.
+This packet does not approve the next wave.

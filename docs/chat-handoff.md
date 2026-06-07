@@ -114,17 +114,29 @@ remote branches were present. The dirty out-of-scope
 next wave is not approved from this handoff; agents may not auto-continue
 without Jeff approval.
 
-Current wave gate note: `customer-portal-trust-v1` has Jeff approval and
-Architecture Coordination approval for stream/worktree creation only. The
-approved streams are `portal-project-clarity-v1`,
+Prior wave gate note: `customer-portal-trust-v1` had Jeff approval and
+Architecture Coordination approval for stream/worktree creation. The
+approved streams were `portal-project-clarity-v1`,
 `portal-financial-visibility-v1`, `portal-communication-trust-v1`, and
-`verification-customer-portal-v1`. Their worktrees are approved at
+`verification-customer-portal-v1`. Their worktrees were approved at
 `C:\FC-worktrees\<stream>`, with verification landing last after the three
-implementation streams. No feature implementation, schema/migration work, PR,
-merge, next wave, provider/customer-facing send, autonomous messaging,
-financial mutation, or destructive cleanup is approved by this gate. The dirty
-out-of-scope `C:\FC-worktrees\project-next-actions` worktree must remain
-untouched.
+implementation streams. This approval did not authorize schema/migration work,
+PRs, next-wave continuation, provider/customer-facing sends, autonomous
+messaging, financial mutation, or destructive cleanup. The dirty out-of-scope
+`C:\FC-worktrees\project-next-actions` worktree remains a hard exclusion.
+
+Current wave gate note: `customer-portal-trust-v1` has merged to `main` under
+Jeff's controlled merge approval. Portal Project Clarity V1 merged as
+`f0d8c81c`, Portal Financial Visibility V1 merged as `2fa1c633`, Portal
+Communication Trust V1 merged as `7b63ceef`, and Verification Customer Portal
+V1 merged as `bb2db7dd`. Post-merge targeted customer portal trust,
+operational ownership, golden workflow, project status window, financial
+visibility, and portal communication summary tests passed, along with
+typecheck, lint, `pnpm.cmd fc:preflight:fast`, and `git diff --check`. The four
+completed wave worktrees and branches are retained pending explicit retirement
+approval. The dirty out-of-scope `C:\FC-worktrees\project-next-actions`
+worktree was preserved untouched. The next wave is not approved from this
+merge; agents may not auto-continue without Jeff approval.
 
 ## Required First Reads
 

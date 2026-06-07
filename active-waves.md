@@ -124,18 +124,18 @@ Gate status:
 | Architecture Coordination approval     | Approved    | Stream ownership, dependency map, non-goals, validation, verification, and merge order recorded. |
 | Jeff approval gate                     | Approved    | Jeff explicitly approved `customer-portal-trust-v1` for stream/worktree creation.                |
 | Stream creation                        | Complete    | Four branches and worktrees were created from the verified current `main` baseline.              |
-| Implementation start                   | Not started | A later explicit start command is required before feature or verification implementation.        |
-| Human review gate                      | Required    | No merge, PR, or implementation continuation is approved by this gate.                           |
+| Implementation start                   | Completed   | The approved implementation and verification slices landed on `main`.                            |
+| Human review gate                      | Satisfied   | Jeff approved the controlled merge prompt; no PRs were opened.                                   |
 | Autonomous merge / indefinite continue | Not allowed | No PR, next wave, schema/migration work, or destructive cleanup is approved.                     |
 
 Approved stream set:
 
-| Stream                            | Ownership area                     | Mission                                                                                                       | Status                 |
-| --------------------------------- | ---------------------------------- | ------------------------------------------------------------------------------------------------------------- | ---------------------- |
-| `portal-project-clarity-v1`       | Customer project understanding     | Make project status, next steps, waiting states, and completed work easier for customers to understand.       | Approved / Not Started |
-| `portal-financial-visibility-v1`  | Customer financial understanding   | Make invoices, payments, balances, and billing status easier for customers to understand.                     | Approved / Not Started |
-| `portal-communication-trust-v1`   | Customer communication confidence  | Help customers understand communication history and action requirements without exposing internal operations. | Approved / Not Started |
-| `verification-customer-portal-v1` | Customer portal trust verification | Protect customer-safe boundaries, canonical records, ownership boundaries, and no schema/migration drift.     | Approved / Not Started |
+| Stream                            | Ownership area                     | Mission                                                                                                       | Status |
+| --------------------------------- | ---------------------------------- | ------------------------------------------------------------------------------------------------------------- | ------ |
+| `portal-project-clarity-v1`       | Customer project understanding     | Make project status, next steps, waiting states, and completed work easier for customers to understand.       | Merged |
+| `portal-financial-visibility-v1`  | Customer financial understanding   | Make invoices, payments, balances, and billing status easier for customers to understand.                     | Merged |
+| `portal-communication-trust-v1`   | Customer communication confidence  | Help customers understand communication history and action requirements without exposing internal operations. | Merged |
+| `verification-customer-portal-v1` | Customer portal trust verification | Protect customer-safe boundaries, canonical records, ownership boundaries, and no schema/migration drift.     | Merged |
 
 Approved stream branches:
 
@@ -159,6 +159,22 @@ Dependency and merge order:
 4. `verification-customer-portal-v1`
 
 Verification must run last after implementation stream commits exist.
+
+Merge result:
+
+- Portal Project Clarity V1 merged to `main` as `f0d8c81c`.
+- Portal Financial Visibility V1 merged to `main` as `2fa1c633`.
+- Portal Communication Trust V1 merged to `main` as `7b63ceef`.
+- Verification Customer Portal V1 merged to `main` as `bb2db7dd`.
+
+Post-merge validation passed: targeted customer portal trust, operational
+ownership, golden workflow, project status window, financial visibility, and
+portal communication summary tests; typecheck; lint;
+`pnpm.cmd fc:preflight:fast`; and `git diff --check`.
+
+Wave status: Merged to `main`; completed wave worktrees and branches are
+retained pending explicit retirement approval. No next wave is approved by this
+merge.
 
 Shared non-goals:
 
