@@ -257,6 +257,15 @@ matters now` line from existing list fields only. This does not add portal
   customer messaging, provider integrations, notifications, payment/signature
   mutation beyond existing explicit portal actions, or contractor-only
   intelligence exposure.
+- Portal financial visibility now adds a deterministic
+  [apps/web/lib/portal/financial-visibility.ts](C:/FloorConnector/apps/web/lib/portal/financial-visibility.ts)
+  explanation layer to the portal Project Workspace and portal invoice review.
+  It summarizes shared invoice count, outstanding balance, payment history,
+  latest customer-safe payment activity, and billing readiness from canonical
+  invoices, recorded payments, immutable payment events, and the existing
+  payment workflow gate. It does not add schema, migrations, duplicate invoice
+  or payment models, new financial math, payment mutation, provider sends, or
+  portal-owned billing truth.
 - Customer-Safe Closeout Package + Portal Handoff v1 adds a shared portal
   closeout handoff read model in
   [apps/web/lib/portal/closeout-handoff.ts](C:/FloorConnector/apps/web/lib/portal/closeout-handoff.ts).
