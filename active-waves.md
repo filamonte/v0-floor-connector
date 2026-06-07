@@ -141,18 +141,18 @@ Gate status:
 | Architecture Coordination approval     | Approved    | Stream ownership, dependency map, non-goals, validation, verification, and merge order recorded. |
 | Jeff approval gate                     | Approved    | Jeff explicitly approved `financial-closeout-collections-v1` for stream/worktree creation.       |
 | Stream creation                        | Complete    | Four branches and worktrees were created from the verified current `main` baseline.              |
-| Implementation start                   | Not started | This approval creates structure only; a later explicit start command is required.                |
-| Human review gate                      | Pending     | No implementation, review packet, or merge approval exists yet.                                  |
-| Autonomous merge / indefinite continue | Not allowed | No PR, merge, schema/migration work, provider changes, or next wave is approved.                 |
+| Implementation start                   | Completed   | The approved implementation and verification slices landed on `main`.                            |
+| Human review gate                      | Satisfied   | Jeff approved the controlled merge prompt; no PRs were opened.                                   |
+| Autonomous merge / indefinite continue | Not allowed | No PR, next wave, schema/migration work, provider changes, or destructive cleanup is approved.   |
 
 Approved stream set:
 
-| Stream                               | Ownership area                    | Mission                                                                | Status                 |
-| ------------------------------------ | --------------------------------- | ---------------------------------------------------------------------- | ---------------------- |
-| `billing-readiness-command-v1`       | Billing readiness                 | Make it clearer when work is ready to invoice.                         | Approved / Not Started |
-| `collections-priority-v1`            | Collections action prioritization | Help contractors understand where collection effort should be focused. | Approved / Not Started |
-| `payment-continuity-v1`              | Payment continuity                | Improve visibility from invoice through payment events and outcomes.   | Approved / Not Started |
-| `verification-financial-closeout-v1` | Financial verification            | Protect canonical financial boundaries and no schema/migration drift.  | Approved / Not Started |
+| Stream                               | Ownership area                    | Mission                                                                | Status |
+| ------------------------------------ | --------------------------------- | ---------------------------------------------------------------------- | ------ |
+| `billing-readiness-command-v1`       | Billing readiness                 | Make it clearer when work is ready to invoice.                         | Merged |
+| `collections-priority-v1`            | Collections action prioritization | Help contractors understand where collection effort should be focused. | Merged |
+| `payment-continuity-v1`              | Payment continuity                | Improve visibility from invoice through payment events and outcomes.   | Merged |
+| `verification-financial-closeout-v1` | Financial verification            | Protect canonical financial boundaries and no schema/migration drift.  | Merged |
 
 Approved stream branches:
 
@@ -176,6 +176,22 @@ Dependency and merge order:
 4. `verification-financial-closeout-v1`
 
 Verification must run last after implementation stream commits exist.
+
+Merge result:
+
+- Billing Readiness Command V1 merged to `main` as `5ae3c0c2`.
+- Collections Priority V1 merged to `main` as `3e888512`.
+- Payment Continuity V1 merged to `main` as `ae05bb26`.
+- Verification Financial Closeout V1 merged to `main` as `be83f4ca`.
+
+Post-merge validation passed: targeted billing readiness, collections priority,
+payment continuity, financial closeout verification, golden workflow, and
+operational ownership tests; typecheck; lint; `pnpm.cmd fc:preflight:fast`;
+and `git diff --check`.
+
+Wave status: Merged to `main`; completed wave worktrees and branches are
+retained pending explicit retirement approval. No next wave is approved by this
+merge.
 
 Shared non-goals:
 

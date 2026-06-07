@@ -111,11 +111,11 @@ Review packet:
 Portfolio recommendation:
 [docs/review-packets/next-portfolio-recommendation-v2.md](C:/FloorConnector/docs/review-packets/next-portfolio-recommendation-v2.md).
 
-Wave status: Approved / Not Started. Four branches and worktrees were created
-from the verified current `main` approval baseline. This approval does not start
-implementation, approve schema/migrations, provider changes, accounting
-replacement behavior, PRs, merges, next-wave continuation, or autonomous
-collections actions.
+Wave status: Merged to `main`. The approved implementation and verification
+slices landed under Jeff's controlled merge approval. This merge does not
+approve schema/migrations, provider changes, accounting replacement behavior,
+PRs, next-wave continuation, destructive cleanup, or autonomous collections
+actions.
 
 Approved stream set:
 
@@ -171,7 +171,8 @@ commits and evidence.
 - Must avoid: duplicate invoice models, accounting replacement, new billing
   schema, migrations, payment mutation, provider work, and feature work before a
   later start command.
-- Status: Approved / Not Started.
+- Status: Merged to `main` as `5ae3c0c2`; worktree and branch retained pending
+  explicit retirement approval.
 
 ### collections-priority-v1
 
@@ -186,7 +187,8 @@ commits and evidence.
 - Must avoid: collections automation, accounting replacement, duplicate payment
   state, payment retry automation, detached collection-task models, schema
   changes, migrations, and feature work before a later start command.
-- Status: Approved / Not Started.
+- Status: Merged to `main` as `3e888512`; worktree and branch retained pending
+  explicit retirement approval.
 
 ### payment-continuity-v1
 
@@ -201,7 +203,8 @@ commits and evidence.
 - Must avoid: gateway replacement, duplicate payment models, provider changes,
   payment math changes, schema changes, migrations, and feature work before a
   later start command.
-- Status: Approved / Not Started.
+- Status: Merged to `main` as `ae05bb26`; worktree and branch retained pending
+  explicit retirement approval.
 
 ### verification-financial-closeout-v1
 
@@ -213,7 +216,20 @@ commits and evidence.
   replacement, and no schema/migration drift.
 - Must avoid: feature work, UI redesign, schema changes, migrations, loosening
   existing checks, and running before implementation streams complete.
-- Status: Approved / Not Started; runs last.
+- Status: Merged to `main` as `be83f4ca`; worktree and branch retained pending
+  explicit retirement approval. Verification merged last.
+
+Merge result:
+
+- Billing Readiness Command V1 merged to `main` as `5ae3c0c2`.
+- Collections Priority V1 merged to `main` as `3e888512`.
+- Payment Continuity V1 merged to `main` as `ae05bb26`.
+- Verification Financial Closeout V1 merged to `main` as `be83f4ca`.
+
+Post-merge validation passed: targeted billing readiness, collections priority,
+payment continuity, financial closeout verification, golden workflow, and
+operational ownership tests; typecheck; lint; `pnpm.cmd fc:preflight:fast`;
+and `git diff --check`.
 
 ## Customer Portal Trust V1 Gate
 
@@ -780,6 +796,47 @@ retired after explicit cleanup approval. Completed
 retirement approval. Completed
 `operational-command-center-v1` worktrees and eligible branches were retired
 after explicit cleanup approval:
+
+### billing-readiness-command-v1
+
+- Branch: `stream/billing-readiness-command-v1`
+- Worktree: `C:\FC-worktrees\billing-readiness-command-v1`
+- Owns: billing readiness visibility and closeout-to-invoice continuity.
+- Must avoid: duplicate invoice models, accounting replacement, billing schema,
+  migrations, payment mutation, and provider work.
+- Merged: `5ae3c0c2 feat: merge billing readiness command v1`.
+- Cleanup: worktree and branch retained pending explicit retirement approval.
+
+### collections-priority-v1
+
+- Branch: `stream/collections-priority-v1`
+- Worktree: `C:\FC-worktrees\collections-priority-v1`
+- Owns: collections action prioritization and AR action visibility.
+- Must avoid: collections automation, accounting replacement, duplicate payment
+  state, payment retry automation, detached collection-task models, schema
+  changes, and migrations.
+- Merged: `3e888512 feat: merge collections priority v1`.
+- Cleanup: worktree and branch retained pending explicit retirement approval.
+
+### payment-continuity-v1
+
+- Branch: `stream/payment-continuity-v1`
+- Worktree: `C:\FC-worktrees\payment-continuity-v1`
+- Owns: invoice-to-payment continuity and payment outcome visibility.
+- Must avoid: gateway replacement, duplicate payment models, provider changes,
+  payment math changes, schema changes, and migrations.
+- Merged: `ae05bb26 feat: merge payment continuity v1`.
+- Cleanup: worktree and branch retained pending explicit retirement approval.
+
+### verification-financial-closeout-v1
+
+- Branch: `stream/verification-financial-closeout-v1`
+- Worktree: `C:\FC-worktrees\verification-financial-closeout-v1`
+- Owns: verification for financial closeout collections boundaries.
+- Must avoid: feature work, UI redesign, schema changes, migrations, loosening
+  checks, and runtime behavior outside verification.
+- Merged: `be83f4ca test: merge verification financial closeout v1`.
+- Cleanup: worktree and branch retained pending explicit retirement approval.
 
 ### field-quick-capture-v1
 

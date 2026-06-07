@@ -75,17 +75,18 @@ risk were not recovered. The remote branch was not touched. This cleanup clears
 automation risk before the next financial wave, but does not approve that wave
 or authorize stream/worktree creation.
 
-Current wave gate note: `financial-closeout-collections-v1` has Jeff approval
-and Architecture Coordination approval for stream/worktree creation only. The
-approved streams are `billing-readiness-command-v1`,
-`collections-priority-v1`, `payment-continuity-v1`, and
-`verification-financial-closeout-v1`. Their worktrees were created at
-`C:\FC-worktrees\<stream>` from the verified current `main` approval baseline;
-all are clean and not started. Merge order is billing readiness, collections
-priority, payment continuity, then verification. This approval does not
-authorize implementation, schema/migration work, accounting replacement,
-provider changes, autonomous collections action, PRs, merges, or another wave.
-A later explicit start command is required before any stream edits product code.
+Current wave gate note: `financial-closeout-collections-v1` has merged to
+`main` under Jeff's controlled merge approval. Billing Readiness Command V1
+merged as `5ae3c0c2`, Collections Priority V1 merged as `3e888512`, Payment
+Continuity V1 merged as `ae05bb26`, and Verification Financial Closeout V1
+merged as `be83f4ca`. Post-merge targeted billing readiness, collections
+priority, payment continuity, financial closeout verification, golden workflow,
+and operational ownership tests passed, along with typecheck, lint,
+`pnpm.cmd fc:preflight:fast`, and `git diff --check`. The four completed wave
+worktrees and branches are retained pending explicit retirement approval. The
+next wave is not approved from this merge; agents may not auto-continue,
+perform schema/migration work, change provider behavior, or perform destructive
+cleanup without Jeff approval.
 
 Current wave gate note: `mobile-field-capture-closeout-v1` has merged to
 `main` under Jeff's controlled merge approval. Field Quick Capture V1 merged as

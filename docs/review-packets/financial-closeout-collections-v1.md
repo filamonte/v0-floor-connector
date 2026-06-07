@@ -1,6 +1,6 @@
 # Financial Closeout Collections V1 Review Packet
 
-Status: Review Packet
+Status: Merged
 Doc Type: Merge Readiness
 Wave: financial-closeout-collections-v1
 Prepared From: main
@@ -20,20 +20,20 @@ and projects.
 
 No stream introduces an accounting replacement, payment gateway/provider
 behavior, duplicate financial persistence model, schema change, or migration.
-Jeff approval is not granted by this packet; the decision options are listed at
-the end.
+Jeff later approved the controlled merge, and the approved stream set has now
+merged to `main`.
 
 ## Streams Completed
 
 | Stream                             | Worktree                                             | Branch                                      | Commit                                                  | Current Readiness |
 | ---------------------------------- | ---------------------------------------------------- | ------------------------------------------- | ------------------------------------------------------- | ----------------- |
-| Billing Readiness Command V1       | `C:\FC-worktrees\billing-readiness-command-v1`       | `stream/billing-readiness-command-v1`       | `75435d99 feat: improve billing readiness command`      | Ready             |
-| Collections Priority V1            | `C:\FC-worktrees\collections-priority-v1`            | `stream/collections-priority-v1`            | `471bc481 feat: improve collections priority`           | Ready             |
-| Payment Continuity V1              | `C:\FC-worktrees\payment-continuity-v1`              | `stream/payment-continuity-v1`              | `3240c503 feat: improve payment continuity`             | Ready             |
-| Verification Financial Closeout V1 | `C:\FC-worktrees\verification-financial-closeout-v1` | `stream/verification-financial-closeout-v1` | `03557da5 test: protect financial closeout collections` | Ready             |
+| Billing Readiness Command V1       | `C:\FC-worktrees\billing-readiness-command-v1`       | `stream/billing-readiness-command-v1`       | `75435d99 feat: improve billing readiness command`      | Merged            |
+| Collections Priority V1            | `C:\FC-worktrees\collections-priority-v1`            | `stream/collections-priority-v1`            | `471bc481 feat: improve collections priority`           | Merged            |
+| Payment Continuity V1              | `C:\FC-worktrees\payment-continuity-v1`              | `stream/payment-continuity-v1`              | `3240c503 feat: improve payment continuity`             | Merged            |
+| Verification Financial Closeout V1 | `C:\FC-worktrees\verification-financial-closeout-v1` | `stream/verification-financial-closeout-v1` | `03557da5 test: protect financial closeout collections` | Merged            |
 
-All four worktrees exist, are clean, are one commit ahead and zero commits
-behind `origin/main`, and still contain the named committed slice.
+All four worktrees existed, were clean, and contained the named committed slice
+at merge gate. They remain retained pending explicit retirement approval.
 
 ## Commits By Stream
 
@@ -137,19 +137,51 @@ Stream validation reported by the completed wave:
 
 Review packet validation:
 
-- Pending until this packet is formatted and committed:
-  `pnpm.cmd exec prettier --check docs/review-packets/financial-closeout-collections-v1.md`
-- Pending until this packet is formatted and committed: `git diff --check`
-- Pending until this packet is staged: `git diff --cached --check`
+- `pnpm.cmd exec prettier --check docs/review-packets/financial-closeout-collections-v1.md`:
+  passed before review-packet commit.
+- `git diff --check`: passed before review-packet commit.
+- `git diff --cached --check`: passed before review-packet commit.
+
+Controlled merge results:
+
+| Stream                             | Merge commit |
+| ---------------------------------- | ------------ |
+| Billing Readiness Command V1       | `5ae3c0c2`   |
+| Collections Priority V1            | `3e888512`   |
+| Payment Continuity V1              | `ae05bb26`   |
+| Verification Financial Closeout V1 | `be83f4ca`   |
+
+Post-merge validation after each stream passed:
+
+- `pnpm.cmd --filter @floorconnector/web typecheck`
+- `pnpm.cmd --filter @floorconnector/web lint`
+- `pnpm.cmd fc:preflight:fast`
+- `git diff --check`
+
+Final targeted tests passed:
+
+- `lib/financials/billing-readiness-command.test.ts`
+- `lib/financials/collections-command-center.test.ts`
+- `lib/payments/payment-continuity-command.test.ts`
+- `lib/verification/financial-closeout-collections.test.ts`
+- `lib/verification/golden-workflow-checks.test.ts`
+- `lib/verification/operational-ownership.test.ts`
+
+Final validation passed:
+
+- `pnpm.cmd --filter @floorconnector/web typecheck`
+- `pnpm.cmd --filter @floorconnector/web lint`
+- `pnpm.cmd fc:preflight:fast`
+- `git diff --check`
 
 ## Governance Review
 
-- No merge was performed.
+- The approved stream set merged under Jeff's controlled merge approval.
 - No PR was opened.
 - No next wave was started.
-- No implementation feature work was added on `main`.
+- No implementation feature work outside the approved stream set was added on
+  `main`.
 - No schemas or migrations were modified.
-- No production code from `main` was modified by this review-packet task.
 - Verification stream was reviewed last and remains a boundary-protection slice,
   not a feature expansion.
 
@@ -239,22 +271,19 @@ Recommended merge order:
 3. Payment Continuity V1
 4. Verification Financial Closeout V1
 
-Current readiness is `Ready` for all streams from the current `origin/main`
-base. During the actual ordered merge process, refresh each later stream against
-the newly advanced `main` before merging it. No correction is expected from this
-review, but post-refresh validation should still be treated as required.
+Actual merge order matched the recommendation. The stream worktrees and
+branches are retained pending explicit retirement approval.
 
 ## Risks And Follow-Ups
 
-- Rerun the normal validation stack after each ordered merge or rebase because
-  later streams were reviewed as independent one-commit branches from the same
-  current base.
+- Retire the completed financial closeout collections worktrees and local
+  branches only after explicit cleanup approval.
 - Keep collection actions manual/review-first until a separate approved wave
   scopes messaging, reminders, or provider-backed collection behavior.
 - Keep accounting export/sync and reconciliation execution as future approved
   work; this wave intentionally stops at visibility and guidance.
-- Consider a later post-merge docs update to current-state only after merged
-  implementation truth exists on `main`.
+- Consider a current-state implemented-truth update only if Jeff wants the
+  merged financial visibility behavior reflected in current-state docs.
 
 ## Next Recommended Wave Options
 
@@ -269,7 +298,7 @@ review, but post-refresh validation should still be treated as required.
 
 ## Jeff Decision Options
 
-- Approve merge.
-- Request correction.
-- Defer stream.
-- Continue to next wave.
+- Merge approved and completed for this stream set.
+- Retire completed worktrees later.
+- Request follow-up docs/current-state update.
+- Continue to next wave only after separate approval.
