@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  buildFieldDailyExecutionCommand,
   buildFieldExecutionReadinessBrief,
   buildFieldAssignedWorkQueue,
   summarizeFieldAssignedWorkJob,
@@ -247,4 +248,71 @@ void test("field execution readiness brief flags missing daily log and readiness
 
   assert.equal(missingReadinessBrief.status, "needs_context");
   assert.equal(missingReadinessBrief.label, "Readiness context missing");
+});
+
+void test("field daily execution command prioritizes blockers over capture prompts", () => {
+  const command = buildFieldDailyExecutionCommand({
+    ...baseJob,
+    scheduledDate: "2026-05-28",
+    latestDailyLog: {
+      id: "88888888-8888-4888-8888-888888888888",
+      logDate: "2026-05-28",
+      status: "draft"
+    },
+    openFieldBlockerCount: 1,
+    latestOpenFieldBlocker: {
+      id: "99999999-9999-4999-8999-999999999999",
+      dailyLogId: "88888888-8888-4888-8888-888888888888",
+      title: "Moisture reading failed",
+      noteType: "blocker"
+    },
+    fieldNoteCount: 2,
+    timeCardCount: 1
+  });
+
+  assert.equal(command.status, "blocked");
+  assert.equal(command.label, "Resolve field blocker");
+  assert.equal(
+    command.nextActionHref,
+    "/daily-logs/88888888-8888-4888-8888-888888888888#job-notes"
+  );
+  assert.equal(command.evidenceLabel, "2 field notes · 1 time card");
+});
+
+void test("field daily execution command starts Daily Log for scheduled work without one", () => {
+  const command = buildFieldDailyExecutionCommand({
+    ...baseJob,
+    scheduledDate: "2026-05-28"
+  });
+
+  assert.equal(command.status, "start_daily_log");
+  assert.equal(command.label, "Start Daily Log");
+  assert.match(command.nextActionHref, /^\/daily-logs\?compose=1/);
+  assert.match(command.nextActionHref, new RegExp(`jobId=${baseJob.id}`));
+});
+
+void test("field daily execution command distinguishes active and completed execution", () => {
+  const activeCommand = buildFieldDailyExecutionCommand({
+    ...baseJob,
+    dispatchStatus: "in_progress",
+    latestDailyLog: {
+      id: "daily-active",
+      logDate: "2026-05-28",
+      status: "draft"
+    }
+  });
+  const completedCommand = buildFieldDailyExecutionCommand({
+    ...baseJob,
+    dispatchStatus: "completed",
+    latestDailyLog: {
+      id: "daily-complete",
+      logDate: "2026-05-27",
+      status: "submitted"
+    }
+  });
+
+  assert.equal(activeCommand.status, "continue_execution");
+  assert.equal(activeCommand.nextActionHref, "/daily-logs/daily-active");
+  assert.equal(completedCommand.status, "closeout_review");
+  assert.equal(completedCommand.nextActionHref, "/daily-logs/daily-complete");
 });

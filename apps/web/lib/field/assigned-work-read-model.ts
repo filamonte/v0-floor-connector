@@ -60,6 +60,23 @@ export type FieldExecutionReadinessBrief = {
   }>;
 };
 
+export type FieldDailyExecutionCommandStatus =
+  | "blocked"
+  | "start_daily_log"
+  | "record_observation"
+  | "continue_execution"
+  | "closeout_review";
+
+export type FieldDailyExecutionCommand = {
+  status: FieldDailyExecutionCommandStatus;
+  label: string;
+  detail: string;
+  nextActionLabel: string;
+  nextActionHref: string;
+  observationLabel: string;
+  evidenceLabel: string;
+};
+
 export type FieldAssignedWorkGroupKey =
   | "today"
   | "upcoming"
@@ -313,5 +330,101 @@ export function buildFieldExecutionReadinessBrief(
     detail:
       "Project readiness is clear, crew context exists, and no open field blockers are linked to this job.",
     sources
+  };
+}
+
+export function buildFieldDailyExecutionCommand(
+  job: FieldAssignedWorkJob
+): FieldDailyExecutionCommand {
+  const latestDailyLogHref = job.latestDailyLog
+    ? `/daily-logs/${job.latestDailyLog.id}`
+    : `/daily-logs?compose=1&projectId=${job.project?.id ?? ""}&jobId=${
+        job.id
+      }#daily-log-create`;
+  const observationLabel = `${job.fieldNoteCount} field note${
+    job.fieldNoteCount === 1 ? "" : "s"
+  }`;
+  const evidenceLabel = [
+    observationLabel,
+    `${job.timeCardCount} time card${job.timeCardCount === 1 ? "" : "s"}`,
+    job.openTimeCardCount > 0
+      ? `${job.openTimeCardCount} open time card${
+          job.openTimeCardCount === 1 ? "" : "s"
+        }`
+      : null
+  ]
+    .filter(Boolean)
+    .join(" · ");
+
+  if (job.openFieldBlockerCount > 0) {
+    return {
+      status: "blocked",
+      label: "Resolve field blocker",
+      detail:
+        job.latestOpenFieldBlocker?.title ??
+        `${job.openFieldBlockerCount} open blocker or issue note needs office review.`,
+      nextActionLabel: "Open blocker",
+      nextActionHref: job.latestOpenFieldBlocker
+        ? `/daily-logs/${job.latestOpenFieldBlocker.dailyLogId}#job-notes`
+        : latestDailyLogHref,
+      observationLabel,
+      evidenceLabel
+    };
+  }
+
+  if (
+    (job.dispatchStatus === "scheduled" ||
+      job.dispatchStatus === "in_progress") &&
+    !job.latestDailyLog
+  ) {
+    return {
+      status: "start_daily_log",
+      label: "Start Daily Log",
+      detail:
+        "Capture today's execution notes on the canonical Daily Log before field context splits across messages or memory.",
+      nextActionLabel: "Start Daily Log",
+      nextActionHref: latestDailyLogHref,
+      observationLabel,
+      evidenceLabel
+    };
+  }
+
+  if (job.dispatchStatus === "in_progress") {
+    return {
+      status: "continue_execution",
+      label: "Continue execution",
+      detail:
+        "Daily Log continuity is active. Keep observations, blockers, time, and evidence tied back to this job.",
+      nextActionLabel: "Open Daily Log",
+      nextActionHref: latestDailyLogHref,
+      observationLabel,
+      evidenceLabel
+    };
+  }
+
+  if (job.dispatchStatus === "completed") {
+    return {
+      status: "closeout_review",
+      label: "Review closeout context",
+      detail:
+        "Execution is complete. Review Daily Logs, field notes, time, and evidence before closeout handoff.",
+      nextActionLabel: job.latestDailyLog ? "Open Daily Log" : "Open job",
+      nextActionHref: job.latestDailyLog
+        ? latestDailyLogHref
+        : `/jobs/${job.id}`,
+      observationLabel,
+      evidenceLabel
+    };
+  }
+
+  return {
+    status: "record_observation",
+    label: "Capture execution observations",
+    detail:
+      "Use the job, Daily Log, and Field Work Items surfaces for notes, blockers, photos, and next actions.",
+    nextActionLabel: job.latestDailyLog ? "Open Daily Log" : "Open job",
+    nextActionHref: job.latestDailyLog ? latestDailyLogHref : `/jobs/${job.id}`,
+    observationLabel,
+    evidenceLabel
   };
 }
