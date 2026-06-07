@@ -48,6 +48,19 @@ function formatScheduleVisibilityLabel(project: PortalProjectDetailSummary) {
   return `${formatStatusLabel(project.latestJobDispatchStatus)} shared by contractor`;
 }
 
+function formatStageStateLabel(state: string) {
+  switch (state) {
+    case "complete":
+      return "Complete";
+    case "current":
+      return "Current";
+    case "waiting":
+      return "Waiting";
+    default:
+      return "Not shared";
+  }
+}
+
 export function PortalProjectSummaryPanel({
   project,
   statusWindow,
@@ -102,6 +115,31 @@ export function PortalProjectSummaryPanel({
                 shows only customer-safe updates already shared for the project.
               </p>
             </div>
+            <div className={portalInsetPanelClassName}>
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+                Current stage
+              </p>
+              <div className="mt-2 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-slate-950">
+                    {statusWindow.currentStage.label}
+                  </p>
+                  <p className="mt-1 text-sm leading-6 text-slate-600">
+                    {statusWindow.currentStage.helperText}
+                  </p>
+                </div>
+                <PortalStatusBadge
+                  status={statusWindow.currentStage.tone}
+                  className="shrink-0"
+                >
+                  {statusWindow.currentStage.statusLabel}
+                </PortalStatusBadge>
+              </div>
+              <p className="mt-3 text-xs leading-5 text-slate-500">
+                This stage is derived from shared estimate, contract, change
+                order, invoice, and schedule records only.
+              </p>
+            </div>
           </div>
         </section>
 
@@ -146,6 +184,53 @@ export function PortalProjectSummaryPanel({
           ]}
         />
       </div>
+
+      <section className={portalStatePanelClassName}>
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+          <div className="min-w-0">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.26em] text-slate-500">
+              Project stage map
+            </p>
+            <h2 className="mt-2 text-lg font-semibold tracking-tight text-slate-950">
+              Where this shared project stands
+            </h2>
+          </div>
+          <PortalStatusBadge status={statusWindow.statusTone}>
+            {statusWindow.statusLabel}
+          </PortalStatusBadge>
+        </div>
+        <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+          {statusWindow.stageSummary.map((stage) => (
+            <div key={stage.key} className={portalReviewCardClassName}>
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <div className="min-w-0">
+                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+                    {formatStageStateLabel(stage.state)}
+                  </p>
+                  <h3 className="mt-2 text-base font-semibold text-slate-950">
+                    {stage.label}
+                  </h3>
+                  <p className="mt-2 text-sm leading-6 text-slate-600">
+                    {stage.helperText}
+                  </p>
+                </div>
+                <PortalStatusBadge status={stage.tone} className="shrink-0">
+                  {stage.statusLabel}
+                </PortalStatusBadge>
+              </div>
+              {stage.href ? (
+                <div className="mt-4">
+                  <PortalSecondaryLink href={stage.href}>
+                    {stage.customerActionRequired
+                      ? "Review this stage"
+                      : "Open record"}
+                  </PortalSecondaryLink>
+                </div>
+              ) : null}
+            </div>
+          ))}
+        </div>
+      </section>
     </div>
   );
 }
