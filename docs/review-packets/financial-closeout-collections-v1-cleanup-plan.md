@@ -1,6 +1,6 @@
 # Financial Closeout Collections V1 Cleanup Plan
 
-Status: Cleanup Planned / Awaiting Explicit Retirement Approval
+Status: Cleanup Completed
 Doc Type: Worktree Retirement Plan
 Wave: `financial-closeout-collections-v1`
 Prepared From: `main`
@@ -9,8 +9,8 @@ Prepared Date: 2026-06-07
 ## Wave Completion Status
 
 `financial-closeout-collections-v1` has merged to `main` under Jeff's
-controlled merge approval. No worktrees or branches were deleted during this
-cleanup-planning pass.
+controlled merge approval. Jeff explicitly approved cleanup execution, and the
+four completed worktrees and eligible local branches were retired.
 
 Merged stream commits on `main`:
 
@@ -23,39 +23,39 @@ Merged stream commits on `main`:
 
 Post-merge validation and targeted financial closeout verification passed in
 the controlled merge task. `main` was pushed and verified even with
-`origin/main` before this cleanup plan was prepared.
+`origin/main` before cleanup execution.
 
 ## Retirement Candidates
 
-All four completed financial closeout collections worktrees are retirement
-candidates after explicit human cleanup approval.
+All four completed financial closeout collections worktrees were removed from
+the Git worktree registry. Residual directories were removed after exact-path
+confirmation.
 
-| Worktree                                             | Branch                                      | Current head | Worktree status | Ahead / behind vs `origin/main` | Contained in `main` | Unique patch commits vs `main` | Retirement candidate |
-| ---------------------------------------------------- | ------------------------------------------- | ------------ | --------------- | ------------------------------- | ------------------- | ------------------------------ | -------------------- |
-| `C:\FC-worktrees\billing-readiness-command-v1`       | `stream/billing-readiness-command-v1`       | `75435d99`   | Clean           | `0 / 9`                         | Yes                 | None                           | Yes                  |
-| `C:\FC-worktrees\collections-priority-v1`            | `stream/collections-priority-v1`            | `471bc481`   | Clean           | `0 / 9`                         | Yes                 | None                           | Yes                  |
-| `C:\FC-worktrees\payment-continuity-v1`              | `stream/payment-continuity-v1`              | `3240c503`   | Clean           | `0 / 9`                         | Yes                 | None                           | Yes                  |
-| `C:\FC-worktrees\verification-financial-closeout-v1` | `stream/verification-financial-closeout-v1` | `03557da5`   | Clean           | `0 / 9`                         | Yes                 | None                           | Yes                  |
+| Worktree                                             | Branch                                      | Current head | Worktree status      | Ahead / behind vs `origin/main` | Contained in `main` | Unique patch commits vs `main` | Retirement candidate |
+| ---------------------------------------------------- | ------------------------------------------- | ------------ | -------------------- | ------------------------------- | ------------------- | ------------------------------ | -------------------- |
+| `C:\FC-worktrees\billing-readiness-command-v1`       | `stream/billing-readiness-command-v1`       | `75435d99`   | Clean before removal | `0 / 10`                        | Yes                 | None                           | Retired              |
+| `C:\FC-worktrees\collections-priority-v1`            | `stream/collections-priority-v1`            | `471bc481`   | Clean before removal | `0 / 10`                        | Yes                 | None                           | Retired              |
+| `C:\FC-worktrees\payment-continuity-v1`              | `stream/payment-continuity-v1`              | `3240c503`   | Clean before removal | `0 / 10`                        | Yes                 | None                           | Retired              |
+| `C:\FC-worktrees\verification-financial-closeout-v1` | `stream/verification-financial-closeout-v1` | `03557da5`   | Clean before removal | `0 / 10`                        | Yes                 | None                           | Retired              |
 
 ## Branch Deletion Candidates
 
-The local stream branches are deletion candidates after explicit human cleanup
-approval because the approved stream heads are contained in `main` and no unique
-patch commits remain outside `main`.
+The local stream branches were deleted after explicit human cleanup approval
+because the approved stream heads were contained in `main` and no unique patch
+commits remained outside `main`.
 
-Branch deletion candidates:
+Deleted local branches:
 
 - `stream/billing-readiness-command-v1`
 - `stream/collections-priority-v1`
 - `stream/payment-continuity-v1`
 - `stream/verification-financial-closeout-v1`
 
-Remote branch deletion is not approved by this plan. If remote deletion is
-desired later, it must be explicitly approved by name.
+No matching remote branches existed, so no remote branches were deleted.
 
 ## Containment Evidence
 
-Cleanup audit commands confirmed:
+Cleanup audit commands confirmed before deletion:
 
 - each worktree path exists;
 - each worktree is on its expected `stream/*` branch;
@@ -67,7 +67,28 @@ Cleanup audit commands confirmed:
   returned no unique patch commits for all four branches.
 
 No schema, migration, provider, gateway, accounting replacement, or duplicate
-financial model work is part of cleanup.
+financial model work was part of cleanup.
+
+## Cleanup Execution Result
+
+Executed cleanup:
+
+- removed `C:\FC-worktrees\billing-readiness-command-v1`;
+- removed `C:\FC-worktrees\collections-priority-v1`;
+- removed `C:\FC-worktrees\payment-continuity-v1`;
+- removed `C:\FC-worktrees\verification-financial-closeout-v1`;
+- deleted local branch `stream/billing-readiness-command-v1`;
+- deleted local branch `stream/collections-priority-v1`;
+- deleted local branch `stream/payment-continuity-v1`;
+- deleted local branch `stream/verification-financial-closeout-v1`.
+
+Remote branch result:
+
+- `stream/billing-readiness-command-v1`: absent on `origin`, no deletion;
+- `stream/collections-priority-v1`: absent on `origin`, no deletion;
+- `stream/payment-continuity-v1`: absent on `origin`, no deletion;
+- `stream/verification-financial-closeout-v1`: absent on `origin`, no
+  deletion.
 
 ## Exact Cleanup Commands For Later
 
@@ -114,10 +135,8 @@ path and the Git worktree registry no longer owns it.
 
 ## Required Approval
 
-Human approval is required before any deletion. This plan does not approve:
+Human approval was recorded before deletion. This cleanup does not approve:
 
-- deleting worktrees;
-- deleting local branches;
 - deleting remote branches;
 - starting another wave;
 - modifying schemas or migrations;
@@ -126,7 +145,7 @@ Human approval is required before any deletion. This plan does not approve:
 
 ## Governance Follow-Up After Approved Cleanup
 
-After cleanup is explicitly approved and executed, update:
+Cleanup execution updated:
 
 - `active-worktrees.md` to mark the four financial closeout collections streams
   as archived/retired;

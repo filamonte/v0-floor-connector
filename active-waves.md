@@ -143,16 +143,17 @@ Gate status:
 | Stream creation                        | Complete    | Four branches and worktrees were created from the verified current `main` baseline.              |
 | Implementation start                   | Completed   | The approved implementation and verification slices landed on `main`.                            |
 | Human review gate                      | Satisfied   | Jeff approved the controlled merge prompt; no PRs were opened.                                   |
-| Autonomous merge / indefinite continue | Not allowed | No PR, next wave, schema/migration work, provider changes, or destructive cleanup is approved.   |
+| Cleanup                                | Completed   | Jeff explicitly approved cleanup; completed worktrees and eligible local branches were retired.  |
+| Autonomous merge / indefinite continue | Not allowed | No PR, next wave, schema/migration work, provider changes, or additional cleanup is approved.    |
 
 Approved stream set:
 
-| Stream                               | Ownership area                    | Mission                                                                | Status |
-| ------------------------------------ | --------------------------------- | ---------------------------------------------------------------------- | ------ |
-| `billing-readiness-command-v1`       | Billing readiness                 | Make it clearer when work is ready to invoice.                         | Merged |
-| `collections-priority-v1`            | Collections action prioritization | Help contractors understand where collection effort should be focused. | Merged |
-| `payment-continuity-v1`              | Payment continuity                | Improve visibility from invoice through payment events and outcomes.   | Merged |
-| `verification-financial-closeout-v1` | Financial verification            | Protect canonical financial boundaries and no schema/migration drift.  | Merged |
+| Stream                               | Ownership area                    | Mission                                                                | Status  |
+| ------------------------------------ | --------------------------------- | ---------------------------------------------------------------------- | ------- |
+| `billing-readiness-command-v1`       | Billing readiness                 | Make it clearer when work is ready to invoice.                         | Retired |
+| `collections-priority-v1`            | Collections action prioritization | Help contractors understand where collection effort should be focused. | Retired |
+| `payment-continuity-v1`              | Payment continuity                | Improve visibility from invoice through payment events and outcomes.   | Retired |
+| `verification-financial-closeout-v1` | Financial verification            | Protect canonical financial boundaries and no schema/migration drift.  | Retired |
 
 Approved stream branches:
 
@@ -189,14 +190,14 @@ payment continuity, financial closeout verification, golden workflow, and
 operational ownership tests; typecheck; lint; `pnpm.cmd fc:preflight:fast`;
 and `git diff --check`.
 
-Wave status: Merged to `main`; completed wave worktrees and branches are
-retained pending explicit retirement approval. No next wave is approved by this
-merge.
+Wave status: Merged to `main`; completed wave worktrees and eligible local
+branches were retired after explicit cleanup approval. No next wave is approved
+by this cleanup.
 
 Cleanup plan:
 [docs/review-packets/financial-closeout-collections-v1-cleanup-plan.md](C:/FloorConnector/docs/review-packets/financial-closeout-collections-v1-cleanup-plan.md).
-Cleanup planning is complete; no deletion is approved until explicit human
-retirement approval is recorded.
+Cleanup completed for the four approved financial closeout collections
+worktrees and eligible local branches. No matching remote branches existed.
 
 Shared non-goals:
 

@@ -82,14 +82,15 @@ Continuity V1 merged as `ae05bb26`, and Verification Financial Closeout V1
 merged as `be83f4ca`. Post-merge targeted billing readiness, collections
 priority, payment continuity, financial closeout verification, golden workflow,
 and operational ownership tests passed, along with typecheck, lint,
-`pnpm.cmd fc:preflight:fast`, and `git diff --check`. The four completed wave
-worktrees and branches are retained pending explicit retirement approval. The
-cleanup plan is recorded at
-[docs/review-packets/financial-closeout-collections-v1-cleanup-plan.md](C:/FloorConnector/docs/review-packets/financial-closeout-collections-v1-cleanup-plan.md);
-no deletion is approved until explicit human retirement approval is recorded.
-The next wave is not approved from this merge; agents may not auto-continue,
-perform schema/migration work, change provider behavior, or perform destructive
-cleanup without Jeff approval.
+`pnpm.cmd fc:preflight:fast`, and `git diff --check`. After explicit cleanup
+approval, the four completed wave worktrees were removed from the Git worktree
+registry, their residual directories were removed after exact-path
+confirmation, and eligible local branches were deleted. No matching remote
+branches existed. The cleanup result is recorded at
+[docs/review-packets/financial-closeout-collections-v1-cleanup-plan.md](C:/FloorConnector/docs/review-packets/financial-closeout-collections-v1-cleanup-plan.md).
+The next wave is not approved from this cleanup; agents may not auto-continue,
+perform schema/migration work, change provider behavior, or perform additional
+destructive cleanup without Jeff approval.
 
 Current wave gate note: `mobile-field-capture-closeout-v1` has merged to
 `main` under Jeff's controlled merge approval. Field Quick Capture V1 merged as
