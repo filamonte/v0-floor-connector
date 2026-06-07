@@ -126,6 +126,10 @@ export type ReportsContinuitySection = {
 };
 
 export type OperationsReportingSummary = {
+  executionToCashSummary: {
+    metrics: ReportsMetric[];
+    flowItems: ReportsListItem[];
+  };
   counts: {
     openProjects: number;
     projectsNeedingAttention: number;
@@ -678,8 +682,107 @@ export function deriveOperationsReportingSummary(input: {
     ...openInvoices.map((invoice) => invoice.projectId),
     ...proofGapProjectIds
   ]);
+  const invoicedProjectIds = new Set(
+    input.invoices.map((invoice) => invoice.projectId)
+  );
+  const completedNotBilledJobs = completedJobs.filter(
+    (job) => !invoicedProjectIds.has(job.projectId)
+  );
+  const openCashPressureAmount = Number(
+    input.collections.overdueReceivableAmount
+  );
+  const executionToCashFlowItems = uniqueById([
+    ...completedNotBilledJobs.map((job) => ({
+      id: `completed-not-billed:${job.id}`,
+      title: getProjectLabel(job.project),
+      subtitle: getCustomerLabel(job.customer),
+      meta: "Completed / not billed",
+      href: `/projects/${job.projectId}`,
+      tone: "attention" as ReportsTone,
+      sourceLabel: "Project Workspace"
+    })),
+    ...completedJobs
+      .map((job) => {
+        const invoice = openInvoices.find(
+          (candidate) => candidate.projectId === job.projectId
+        );
+
+        if (!invoice) {
+          return null;
+        }
+
+        return {
+          id: `billable-collectible:${job.id}:${invoice.id}`,
+          title: getProjectLabel(invoice.project ?? job.project),
+          subtitle: getCustomerLabel(invoice.customer ?? job.customer),
+          meta: `Collectible ${money(invoice.balanceDueAmount)}`,
+          href: `/invoices/${invoice.id}`,
+          tone:
+            invoice.dueDate !== null && invoice.dueDate < input.todayIso
+              ? ("blocked" as ReportsTone)
+              : ("attention" as ReportsTone),
+          sourceLabel: "Invoice Workspace"
+        };
+      })
+      .filter(isReportsListItem),
+    ...recordedPayments.slice(0, 4).map((payment) => ({
+      id: `cash-received:${payment.id}`,
+      title: payment.invoice?.referenceNumber ?? "Recorded payment",
+      subtitle: `${getCustomerLabel(payment.customer)} / ${getProjectLabel(
+        payment.project
+      )}`,
+      meta: `Received ${money(payment.amount)}`,
+      href: payment.invoice?.id
+        ? `/invoices/${payment.invoice.id}`
+        : "/payments",
+      tone: "good" as ReportsTone,
+      sourceLabel: payment.invoice?.id ? "Invoice Workspace" : "Payments"
+    }))
+  ]).slice(0, 8);
 
   return {
+    executionToCashSummary: {
+      metrics: [
+        metric({
+          id: "completed-not-billed",
+          label: "Completed / Not Billed",
+          value: completedNotBilledJobs.length,
+          detail: "Completed jobs without a canonical invoice on the project",
+          href: "/projects",
+          tone: completedNotBilledJobs.length > 0 ? "attention" : "good"
+        }),
+        metric({
+          id: "billable-collectible-flow",
+          label: "Billable / Collectible",
+          value: input.collections.openInvoiceCount,
+          detail: "Open invoices routed to Financials for action",
+          href: "/financials/accounts-receivable",
+          tone: input.collections.openInvoiceCount > 0 ? "attention" : "good"
+        }),
+        metric({
+          id: "open-cash-pressure",
+          label: "Open Cash Pressure",
+          value: money(input.collections.overdueReceivableAmount),
+          detail: `${input.collections.overdueInvoiceCount || overdueInvoices.length} overdue invoice${
+            (input.collections.overdueInvoiceCount ||
+              overdueInvoices.length) === 1
+              ? ""
+              : "s"
+          }`,
+          href: "/financials/accounts-receivable",
+          tone: openCashPressureAmount > 0 ? "blocked" : "good"
+        }),
+        metric({
+          id: "payment-event-attention",
+          label: "Payment Event Attention",
+          value: paymentAttention,
+          detail: "Pending, failed, or voided payment events",
+          href: "/payments",
+          tone: paymentAttention > 0 ? "attention" : "good"
+        })
+      ],
+      flowItems: executionToCashFlowItems
+    },
     counts: {
       openProjects: openProjects.length,
       projectsNeedingAttention: readyCheckProjects.length,

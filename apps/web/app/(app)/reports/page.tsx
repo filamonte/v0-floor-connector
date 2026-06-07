@@ -343,6 +343,23 @@ function OperationsReportingWorkspace({
         </div>
       </ReportSection>
 
+      <ReportSection
+        eyebrow="Execution to Cash"
+        title="Completed work to cash visibility"
+        description="Owner-level summary of completed work, billing readiness, collectible invoices, payment event attention, and cash pressure. Field and Financials remain the action owners."
+      >
+        <div className="space-y-4 p-4">
+          <ReportMetricGrid metrics={summary.executionToCashSummary.metrics} />
+          <AttentionList
+            title="Execution-to-cash handoffs"
+            description="Completed work, collectible invoices, and recorded cash linked back to Project, Field, Invoice, or Payment workspaces."
+            items={summary.executionToCashSummary.flowItems}
+            emptyTitle="No execution-to-cash handoffs are visible."
+            emptyDescription="This list appears when canonical jobs, invoices, payments, or payment events create owner-level cash-flow signals."
+          />
+        </div>
+      </ReportSection>
+
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         {summary.continuitySections.map((section) => (
           <AttentionList
