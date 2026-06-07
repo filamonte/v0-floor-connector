@@ -10,6 +10,7 @@ import {
   summarizeFieldAssignedWorkJob,
   type FieldAssignedWorkGroupKey
 } from "@/lib/field/assigned-work-read-model";
+import { buildFieldCloseoutReadinessSummary } from "@/lib/field/closeout-readiness";
 import { listAssignedWorkItemsForCurrentUser } from "@/lib/work-items/data";
 import {
   getWorkItemFieldState,
@@ -122,6 +123,21 @@ function getQuickCaptureItemClassName(
       return "border-amber-300 bg-amber-50";
     case "needs_capture":
       return "border-slate-200 bg-white";
+  }
+}
+
+function getCloseoutReadinessClassName(
+  status: ReturnType<typeof buildFieldCloseoutReadinessSummary>["status"]
+) {
+  switch (status) {
+    case "blocked":
+      return "border-amber-300 bg-amber-50";
+    case "needs_evidence":
+      return "border-slate-300 bg-slate-50";
+    case "in_progress":
+      return "border-sky-200 bg-sky-50";
+    case "ready_for_review":
+      return "border-emerald-200 bg-emerald-50";
   }
 }
 
@@ -250,6 +266,8 @@ export default async function FieldWorkItemsPage() {
                             buildFieldDailyExecutionCommand(job);
                           const quickCapturePlan =
                             buildFieldQuickCapturePlan(job);
+                          const closeoutReadiness =
+                            buildFieldCloseoutReadinessSummary(job);
 
                           return (
                             <li key={job.id}>
@@ -368,6 +386,60 @@ export default async function FieldWorkItemsPage() {
                                           </Link>
                                         </div>
                                       </div>
+                                    ))}
+                                  </div>
+                                </div>
+                                <div
+                                  className={`mt-3 rounded-[6px] border px-3 py-2 ${getCloseoutReadinessClassName(
+                                    closeoutReadiness.status
+                                  )}`}
+                                >
+                                  <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                                    <div className="min-w-0">
+                                      <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
+                                        Closeout readiness
+                                      </p>
+                                      <p className="mt-1 text-sm font-semibold text-slate-950">
+                                        {closeoutReadiness.label}
+                                      </p>
+                                      <p className="mt-1 text-xs leading-5 text-slate-600">
+                                        {closeoutReadiness.detail}
+                                      </p>
+                                      <div className="mt-2 flex flex-wrap gap-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">
+                                        <span>
+                                          {closeoutReadiness.officeHandoffLabel}
+                                        </span>
+                                        <span>
+                                          {
+                                            closeoutReadiness.billingReadinessLabel
+                                          }
+                                        </span>
+                                      </div>
+                                    </div>
+                                    <Link
+                                      href={closeoutReadiness.primaryActionHref}
+                                      className="inline-flex shrink-0 items-center rounded-[6px] border border-slate-300 bg-white px-2 py-1 text-xs font-semibold text-slate-700 transition hover:border-[#d8731f] hover:text-slate-950"
+                                    >
+                                      {closeoutReadiness.primaryActionLabel}
+                                    </Link>
+                                  </div>
+                                  <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                                    {closeoutReadiness.signals.map((signal) => (
+                                      <Link
+                                        key={`${job.id}-${signal.key}`}
+                                        href={signal.href}
+                                        className="block rounded-[6px] border border-white/70 bg-white/70 px-3 py-2 transition hover:border-[#d8731f] hover:bg-white"
+                                      >
+                                        <p className="text-sm font-semibold text-slate-950">
+                                          {signal.label}
+                                        </p>
+                                        <p className="mt-1 text-xs leading-5 text-slate-500">
+                                          {signal.detail}
+                                        </p>
+                                        <p className="mt-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">
+                                          {signal.actionLabel}
+                                        </p>
+                                      </Link>
                                     ))}
                                   </div>
                                 </div>
