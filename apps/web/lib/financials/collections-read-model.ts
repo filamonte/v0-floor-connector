@@ -22,6 +22,10 @@ import {
   buildCollectionsCommandCenter,
   type CollectionsCommandCenter
 } from "./collections-command-center";
+import {
+  buildBillingReadinessCommand,
+  type BillingReadinessCommand
+} from "./billing-readiness-command";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 
 export type FinancialCollectionsInvoice = {
@@ -121,11 +125,33 @@ export type FinancialCollectionsEvent = {
   } | null;
 };
 
+export type FinancialBillingReadinessJob = {
+  id: string;
+  projectId: string | null;
+  estimateId: string | null;
+  scheduledDate: string | null;
+  updatedAt: string;
+  customer: {
+    id: string;
+    name: string;
+    companyName: string | null;
+  } | null;
+  project: {
+    id: string;
+    name: string;
+  } | null;
+  estimate: {
+    id: string;
+    referenceNumber: string;
+  } | null;
+};
+
 export type FinancialCollectionsReadModel = {
   summary: FinancialCollectionsSummary;
   financialControl: FinancialControlSummary;
   collectionsIntelligence: CollectionsFollowUpIntelligence;
   collectionsCommandCenter: CollectionsCommandCenter;
+  billingReadinessCommand: BillingReadinessCommand;
   overdueInvoices: FinancialCollectionsInvoice[];
   collectionOpportunities: FinancialCollectionsInvoice[];
   partiallyPaidInvoices: FinancialCollectionsInvoice[];
@@ -231,6 +257,27 @@ type EventRow = {
   } | null;
 };
 
+type BillingReadinessJobRow = {
+  id: string;
+  project_id: string | null;
+  estimate_id: string | null;
+  scheduled_date: string | null;
+  updated_at: string;
+  projects?: {
+    id: string;
+    name: string;
+    customers?: {
+      id: string;
+      name: string;
+      company_name: string | null;
+    } | null;
+  } | null;
+  estimates?: {
+    id: string;
+    reference_number: string;
+  } | null;
+};
+
 const invoiceSelect = `
   id,
   customer_id,
@@ -324,6 +371,27 @@ const eventSelect = `
       id,
       name
     )
+  )
+`;
+
+const billingReadinessJobSelect = `
+  id,
+  project_id,
+  estimate_id,
+  scheduled_date,
+  updated_at,
+  projects (
+    id,
+    name,
+    customers (
+      id,
+      name,
+      company_name
+    )
+  ),
+  estimates (
+    id,
+    reference_number
   )
 `;
 
@@ -472,6 +540,37 @@ function mapEvent(row: EventRow): FinancialCollectionsEvent {
   };
 }
 
+function mapBillingReadinessJob(
+  row: BillingReadinessJobRow
+): FinancialBillingReadinessJob {
+  return {
+    id: row.id,
+    projectId: row.project_id,
+    estimateId: row.estimate_id,
+    scheduledDate: row.scheduled_date,
+    updatedAt: row.updated_at,
+    customer: row.projects?.customers
+      ? {
+          id: row.projects.customers.id,
+          name: row.projects.customers.name,
+          companyName: row.projects.customers.company_name
+        }
+      : null,
+    project: row.projects
+      ? {
+          id: row.projects.id,
+          name: row.projects.name
+        }
+      : null,
+    estimate: row.estimates
+      ? {
+          id: row.estimates.id,
+          referenceNumber: row.estimates.reference_number
+        }
+      : null
+  };
+}
+
 function sortOpenInvoices(invoices: FinancialCollectionsInvoice[]) {
   return invoices.sort((left, right) => {
     const leftDue = left.dueDate ?? "9999-12-31";
@@ -561,16 +660,41 @@ async function listEventInputs(organizationId: string) {
     : [];
 }
 
+async function listBillingReadinessJobs(organizationId: string) {
+  const supabase = await getSupabaseServerClient();
+  const response = await supabase
+    .from("jobs")
+    .select(billingReadinessJobSelect)
+    .eq("company_id", organizationId)
+    .eq("dispatch_status", "completed")
+    .order("updated_at", { ascending: false })
+    .limit(40);
+
+  if (response.error) {
+    throw new Error(
+      `Unable to load billing readiness job inputs: ${response.error.message}`
+    );
+  }
+
+  return Array.isArray(response.data)
+    ? (response.data as unknown as BillingReadinessJobRow[]).map(
+        mapBillingReadinessJob
+      )
+    : [];
+}
+
 export const getFinancialCollectionsReadModel = cache(
   async (input: {
     organizationId: string;
     todayIso: string;
   }): Promise<FinancialCollectionsReadModel> => {
-    const [invoices, payments, events] = await Promise.all([
-      listInvoiceInputs(input),
-      listPaymentInputs(input.organizationId),
-      listEventInputs(input.organizationId)
-    ]);
+    const [invoices, payments, events, billingReadinessJobs] =
+      await Promise.all([
+        listInvoiceInputs(input),
+        listPaymentInputs(input.organizationId),
+        listEventInputs(input.organizationId),
+        listBillingReadinessJobs(input.organizationId)
+      ]);
     const openInvoices = invoices.filter(isOpenReceivableInvoice);
     const overdueInvoices = openInvoices.filter(
       (invoice) => invoice.dueDate !== null && invoice.dueDate < input.todayIso
@@ -608,6 +732,10 @@ export const getFinancialCollectionsReadModel = cache(
         payments,
         paymentEvents: events,
         todayIso: input.todayIso
+      }),
+      billingReadinessCommand: buildBillingReadinessCommand({
+        completedJobs: billingReadinessJobs,
+        invoices
       }),
       overdueInvoices: sortOpenInvoices(overdueInvoices).slice(0, 8),
       collectionOpportunities: sortOpenInvoices(openInvoices).slice(0, 12),

@@ -44,6 +44,7 @@ export default async function FinancialsHomePage() {
   });
   const financialControl = readModel.financialControl;
   const collectionsDesk = readModel.collectionsCommandCenter;
+  const billingReadiness = readModel.billingReadinessCommand;
   const urgentPriorityCount = collectionsDesk.priorityItems.filter(
     (item) => item.priorityBand === "urgent"
   ).length;
@@ -311,6 +312,139 @@ export default async function FinancialsHomePage() {
               Open next move
             </Link>
           </div>
+        </section>
+
+        <section className="border border-[#d6d6d6] bg-white">
+          <div className="flex flex-col gap-4 border-b border-[#e5e5e5] px-4 py-3 sm:px-5 lg:flex-row lg:items-start lg:justify-between">
+            <div>
+              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#8f5b32]">
+                Billing readiness
+              </p>
+              <h2 className="mt-1 text-xl font-semibold tracking-tight text-[#171717]">
+                Completed work moving toward invoice
+              </h2>
+              <p className="mt-1 max-w-[78ch] text-sm leading-6 text-slate-500">
+                Completed jobs, billing prerequisites, and draft invoices are
+                surfaced from canonical jobs and invoices before collection
+                pressure begins.
+              </p>
+            </div>
+            <Link
+              href={billingReadiness.nextMove.href}
+              className="inline-flex shrink-0 items-center justify-center rounded-[4px] border border-[#171717] bg-[#171717] px-4 py-2.5 text-sm font-medium text-white transition hover:bg-[#2a2a2a]"
+            >
+              {billingReadiness.nextMove.label}
+            </Link>
+          </div>
+          <div className="grid gap-px bg-[#e5e5e5] md:grid-cols-2 xl:grid-cols-4">
+            {billingReadiness.summaryCards.map((card) => (
+              <div key={card.id} className="min-w-0 bg-white px-4 py-4">
+                <div className="flex items-start justify-between gap-3">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#666666]">
+                    {card.label}
+                  </p>
+                  <span
+                    className={
+                      card.tone === "warning"
+                        ? "rounded-full border border-red-200 bg-red-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-red-700"
+                        : card.tone === "attention"
+                          ? "rounded-full border border-[#e4d7ca] bg-[#fffcf7] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#8f5b32]"
+                          : "rounded-full border border-[#d6d6d6] bg-[#f8f8f8] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-500"
+                    }
+                  >
+                    {card.tone}
+                  </span>
+                </div>
+                <p className="mt-3 text-xl font-semibold tracking-tight text-[#171717]">
+                  {card.value}
+                </p>
+                <p className="mt-2 text-sm leading-5 text-slate-500">
+                  {card.detail}
+                </p>
+              </div>
+            ))}
+          </div>
+          <div className="grid gap-px bg-[#e5e5e5] lg:grid-cols-3">
+            {[
+              {
+                id: "ready",
+                title: "Ready for invoice review",
+                items: billingReadiness.readyToInvoice,
+                empty: "No completed work is waiting for invoice creation."
+              },
+              {
+                id: "missing",
+                title: "Missing prerequisites",
+                items: billingReadiness.missingPrerequisites,
+                empty: "No billing prerequisites are blocking completed work."
+              },
+              {
+                id: "drafts",
+                title: "Draft invoice review",
+                items: billingReadiness.draftReview,
+                empty: "No draft invoices need review right now."
+              }
+            ].map((lane) => (
+              <div key={lane.id} className="min-w-0 bg-white">
+                <div className="border-b border-[#e5e5e5] px-4 py-3">
+                  <h3 className="text-sm font-semibold text-[#171717]">
+                    {lane.title}
+                  </h3>
+                </div>
+                <div className="divide-y divide-[#e5e5e5]">
+                  {lane.items.length > 0 ? (
+                    lane.items.slice(0, 4).map((item) => (
+                      <Link
+                        key={item.id}
+                        href={item.actionHref}
+                        className="block px-4 py-3 transition hover:bg-[#f8f8f8]"
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0">
+                            <p className="truncate text-sm font-semibold text-[#171717]">
+                              {item.title}
+                            </p>
+                            <p className="mt-1 truncate text-xs text-slate-500">
+                              {item.customerName} - {item.projectName}
+                            </p>
+                          </div>
+                          <span
+                            className={
+                              item.tone === "warning"
+                                ? "rounded-full border border-red-200 bg-red-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-red-700"
+                                : item.tone === "attention"
+                                  ? "rounded-full border border-[#e4d7ca] bg-[#fffcf7] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#8f5b32]"
+                                  : "rounded-full border border-[#d6d6d6] bg-[#f8f8f8] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-500"
+                            }
+                          >
+                            {item.invoiceReference ?? item.sourceLabel}
+                          </span>
+                        </div>
+                        <p className="mt-2 text-xs leading-5 text-slate-500">
+                          {item.detail}
+                        </p>
+                        <p className="mt-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-[#666666]">
+                          {item.actionLabel}
+                        </p>
+                      </Link>
+                    ))
+                  ) : (
+                    <div className="px-4 py-5 text-sm leading-5 text-slate-500">
+                      {lane.empty}
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+          {billingReadiness.alreadyInBilling.length > 0 ? (
+            <div className="border-t border-[#e5e5e5] bg-[#f8f8f8] px-4 py-4 text-sm leading-6 text-slate-500 sm:px-5">
+              {billingReadiness.alreadyInBilling.length} completed job
+              {billingReadiness.alreadyInBilling.length === 1 ? "" : "s"}{" "}
+              already have linked canonical invoice records, so this command
+              does not propose duplicate billing.
+            </div>
+          ) : null}
         </section>
 
         <section className="border border-[#d6d6d6] bg-white">
