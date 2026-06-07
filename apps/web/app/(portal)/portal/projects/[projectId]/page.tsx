@@ -326,7 +326,20 @@ export default async function PortalProjectDetailPage({
     estimates,
     contracts,
     changeOrders,
-    invoices
+    invoices,
+    jobs:
+      project.latestJobId && project.latestJobDispatchStatus
+        ? [
+            {
+              id: project.latestJobId,
+              dispatchStatus: project.latestJobDispatchStatus,
+              scheduledDate: project.latestJobScheduledDate,
+              scheduledStartAt: project.latestJobScheduledStartAt,
+              scheduledEndAt: project.latestJobScheduledEndAt,
+              updatedAt: project.updatedAt
+            }
+          ]
+        : []
   });
   const statusExplanation = derivePortalSafeStatusExplanation({
     projectId: project.id,
