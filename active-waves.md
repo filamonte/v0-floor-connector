@@ -117,6 +117,93 @@ This cleanup clears automation risk before the next financial wave. It does not
 approve a new wave, create streams, create worktrees, modify schemas or
 migrations, or authorize financial feature implementation.
 
+## Financial Closeout Collections V1 Approval Gate
+
+Gate date: 2026-06-07.
+
+Wave name: `financial-closeout-collections-v1`.
+
+Review packet:
+[docs/review-packets/financial-closeout-collections-v1-plan.md](C:/FloorConnector/docs/review-packets/financial-closeout-collections-v1-plan.md).
+
+Portfolio recommendation:
+[docs/review-packets/next-portfolio-recommendation-v2.md](C:/FloorConnector/docs/review-packets/next-portfolio-recommendation-v2.md).
+
+Wave goal: improve the contractor cash-flow path from field completion through
+billing readiness, invoice/payment continuity, collections priority, and cash
+visibility without adding accounting replacement behavior or duplicate
+financial models.
+
+Gate status:
+
+| Gate item                              | Status      | Evidence / note                                                                                  |
+| -------------------------------------- | ----------- | ------------------------------------------------------------------------------------------------ |
+| Architecture Coordination approval     | Approved    | Stream ownership, dependency map, non-goals, validation, verification, and merge order recorded. |
+| Jeff approval gate                     | Approved    | Jeff explicitly approved `financial-closeout-collections-v1` for stream/worktree creation.       |
+| Stream creation                        | Complete    | Four branches and worktrees were created from the verified current `main` baseline.              |
+| Implementation start                   | Not started | This approval creates structure only; a later explicit start command is required.                |
+| Human review gate                      | Pending     | No implementation, review packet, or merge approval exists yet.                                  |
+| Autonomous merge / indefinite continue | Not allowed | No PR, merge, schema/migration work, provider changes, or next wave is approved.                 |
+
+Approved stream set:
+
+| Stream                               | Ownership area                    | Mission                                                                | Status                 |
+| ------------------------------------ | --------------------------------- | ---------------------------------------------------------------------- | ---------------------- |
+| `billing-readiness-command-v1`       | Billing readiness                 | Make it clearer when work is ready to invoice.                         | Approved / Not Started |
+| `collections-priority-v1`            | Collections action prioritization | Help contractors understand where collection effort should be focused. | Approved / Not Started |
+| `payment-continuity-v1`              | Payment continuity                | Improve visibility from invoice through payment events and outcomes.   | Approved / Not Started |
+| `verification-financial-closeout-v1` | Financial verification            | Protect canonical financial boundaries and no schema/migration drift.  | Approved / Not Started |
+
+Approved stream branches:
+
+- `stream/billing-readiness-command-v1`
+- `stream/collections-priority-v1`
+- `stream/payment-continuity-v1`
+- `stream/verification-financial-closeout-v1`
+
+Approved worktrees:
+
+- `C:\FC-worktrees\billing-readiness-command-v1`
+- `C:\FC-worktrees\collections-priority-v1`
+- `C:\FC-worktrees\payment-continuity-v1`
+- `C:\FC-worktrees\verification-financial-closeout-v1`
+
+Dependency and merge order:
+
+1. `billing-readiness-command-v1`
+2. `collections-priority-v1`
+3. `payment-continuity-v1`
+4. `verification-financial-closeout-v1`
+
+Verification must run last after implementation stream commits exist.
+
+Shared non-goals:
+
+- no implementation from this approval task;
+- no schema or migration work unless a later prompt explicitly approves it;
+- no duplicate invoice, payment, ledger, collection-task, or AR model;
+- no accounting replacement, provider changes, payment retry/refund/dispute
+  automation, customer-facing sends, PR, merge, next wave, or autonomous
+  continuation;
+- no work outside the four approved worktrees.
+
+Required future stream startup checks:
+
+```powershell
+pnpm.cmd worktree:doctor
+pnpm.cmd tooling:baseline -CommandsOnly
+```
+
+Required implementation validation unless a later prompt narrows scope:
+
+```powershell
+pnpm.cmd --filter @floorconnector/web typecheck
+pnpm.cmd --filter @floorconnector/web lint
+pnpm.cmd fc:preflight:fast
+git diff --check
+git diff --cached --check
+```
+
 ## Customer Portal Trust V1 Approval Gate
 
 Gate date: 2026-06-07.

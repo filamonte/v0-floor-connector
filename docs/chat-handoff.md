@@ -75,6 +75,18 @@ risk were not recovered. The remote branch was not touched. This cleanup clears
 automation risk before the next financial wave, but does not approve that wave
 or authorize stream/worktree creation.
 
+Current wave gate note: `financial-closeout-collections-v1` has Jeff approval
+and Architecture Coordination approval for stream/worktree creation only. The
+approved streams are `billing-readiness-command-v1`,
+`collections-priority-v1`, `payment-continuity-v1`, and
+`verification-financial-closeout-v1`. Their worktrees were created at
+`C:\FC-worktrees\<stream>` from the verified current `main` approval baseline;
+all are clean and not started. Merge order is billing readiness, collections
+priority, payment continuity, then verification. This approval does not
+authorize implementation, schema/migration work, accounting replacement,
+provider changes, autonomous collections action, PRs, merges, or another wave.
+A later explicit start command is required before any stream edits product code.
+
 Current wave gate note: `mobile-field-capture-closeout-v1` has merged to
 `main` under Jeff's controlled merge approval. Field Quick Capture V1 merged as
 `d2e9e727`, Closeout Readiness Command V1 merged as `cea565d7`, Field

@@ -94,6 +94,127 @@ This clears a long-lived automation and governance risk before financial-wave
 approval review, but it does not approve a new wave or authorize stream
 creation, schema work, migrations, provider work, or feature implementation.
 
+## Financial Closeout Collections V1 Gate
+
+Gate date: 2026-06-07.
+
+Wave name: `financial-closeout-collections-v1`.
+
+Architecture Coordination approval: Approved.
+
+Jeff approval gate: Approved. Jeff explicitly approved stream/worktree creation
+for `financial-closeout-collections-v1`.
+
+Review packet:
+[docs/review-packets/financial-closeout-collections-v1-plan.md](C:/FloorConnector/docs/review-packets/financial-closeout-collections-v1-plan.md).
+
+Portfolio recommendation:
+[docs/review-packets/next-portfolio-recommendation-v2.md](C:/FloorConnector/docs/review-packets/next-portfolio-recommendation-v2.md).
+
+Wave status: Approved / Not Started. Four branches and worktrees were created
+from the verified current `main` approval baseline. This approval does not start
+implementation, approve schema/migrations, provider changes, accounting
+replacement behavior, PRs, merges, next-wave continuation, or autonomous
+collections actions.
+
+Approved stream set:
+
+- `stream/billing-readiness-command-v1`
+- `stream/collections-priority-v1`
+- `stream/payment-continuity-v1`
+- `stream/verification-financial-closeout-v1`
+
+Approved worktrees:
+
+- `C:\FC-worktrees\billing-readiness-command-v1`
+- `C:\FC-worktrees\collections-priority-v1`
+- `C:\FC-worktrees\payment-continuity-v1`
+- `C:\FC-worktrees\verification-financial-closeout-v1`
+
+Required future startup checks:
+
+```powershell
+pnpm.cmd worktree:doctor
+pnpm.cmd tooling:baseline -CommandsOnly
+```
+
+Implementation streams should also run focused tests for changed helpers,
+read-models, financial lineage, payment-state visibility, or routes, then:
+
+```powershell
+pnpm.cmd --filter @floorconnector/web typecheck
+pnpm.cmd --filter @floorconnector/web lint
+pnpm.cmd fc:preflight:fast
+git diff --check
+git diff --cached --check
+```
+
+Merge order:
+
+1. `billing-readiness-command-v1`
+2. `collections-priority-v1`
+3. `payment-continuity-v1`
+4. `verification-financial-closeout-v1`
+
+Verification must run last after the three implementation streams report
+commits and evidence.
+
+### billing-readiness-command-v1
+
+- Branch: `stream/billing-readiness-command-v1`
+- Worktree: `C:\FC-worktrees\billing-readiness-command-v1`
+- Owns: billing readiness.
+- Mission: make it clearer when work is ready to invoice.
+- Future allowed work, not now: billing readiness visibility, missing billing
+  prerequisites, closeout-to-invoice continuity, invoice readiness guidance, and
+  project-to-financial handoff clarity.
+- Must avoid: duplicate invoice models, accounting replacement, new billing
+  schema, migrations, payment mutation, provider work, and feature work before a
+  later start command.
+- Status: Approved / Not Started.
+
+### collections-priority-v1
+
+- Branch: `stream/collections-priority-v1`
+- Worktree: `C:\FC-worktrees\collections-priority-v1`
+- Owns: collections action prioritization.
+- Mission: help contractors understand where collection effort should be
+  focused.
+- Future allowed work, not now: overdue visibility, collection priority
+  signals, aging awareness, collection readiness guidance, and AR action
+  visibility.
+- Must avoid: collections automation, accounting replacement, duplicate payment
+  state, payment retry automation, detached collection-task models, schema
+  changes, migrations, and feature work before a later start command.
+- Status: Approved / Not Started.
+
+### payment-continuity-v1
+
+- Branch: `stream/payment-continuity-v1`
+- Worktree: `C:\FC-worktrees\payment-continuity-v1`
+- Owns: payment continuity.
+- Mission: improve visibility from invoice through payment events and payment
+  outcomes.
+- Future allowed work, not now: payment event visibility, payment status
+  clarity, payment failure continuity, partial payment understanding, and
+  invoice-payment continuity.
+- Must avoid: gateway replacement, duplicate payment models, provider changes,
+  payment math changes, schema changes, migrations, and feature work before a
+  later start command.
+- Status: Approved / Not Started.
+
+### verification-financial-closeout-v1
+
+- Branch: `stream/verification-financial-closeout-v1`
+- Worktree: `C:\FC-worktrees\verification-financial-closeout-v1`
+- Owns: verification for the financial closeout collections wave.
+- Mission: protect canonical invoices, canonical payments, payment events,
+  financial ownership boundaries, no duplicate financial models, no accounting
+  replacement, and no schema/migration drift.
+- Must avoid: feature work, UI redesign, schema changes, migrations, loosening
+  existing checks, and running before implementation streams complete.
+- Status: Approved / Not Started; runs last.
+
 ## Customer Portal Trust V1 Gate
 
 Gate date: 2026-06-07.
