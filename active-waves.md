@@ -101,6 +101,22 @@ packets from this registry. Agents may not begin a new wave, create active
 streams, continue to the next wave, or merge without Architecture Coordination
 approval and Jeff review.
 
+## Project Next Actions Retirement
+
+Retirement date: 2026-06-07.
+
+Jeff explicitly approved archiving the stale dirty worktree
+`C:\FC-worktrees\project-next-actions`. The branch head was contained in
+`origin/main`, no unique commits would be lost, the dirty staged index was
+archived outside the canonical repo at
+`C:\FC-worktrees\_archive\project-next-actions-2026-06-07.patch`, and no dirty
+work was merged. Useful communication-continuity behavior already exists on
+`main`; the stale `docs/current-state.md` state was not applied.
+
+This cleanup clears automation risk before the next financial wave. It does not
+approve a new wave, create streams, create worktrees, modify schemas or
+migrations, or authorize financial feature implementation.
+
 ## Customer Portal Trust V1 Approval Gate
 
 Gate date: 2026-06-07.

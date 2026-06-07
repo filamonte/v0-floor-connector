@@ -64,6 +64,17 @@ Work -> Verification -> Integration Review Packet -> Jeff Approval -> Continue.
 Agents may prepare scoped work and review packets, but may not auto-merge,
 auto-continue, or bypass Jeff approval.
 
+Current cleanup note: Jeff explicitly approved retiring
+`C:\FC-worktrees\project-next-actions` / `stream/project-next-actions` as stale
+governance debt. The branch head was contained in `origin/main`, no unique
+commits would be lost, dirty staged work was archived outside the repo at
+`C:\FC-worktrees\_archive\project-next-actions-2026-06-07.patch`, and no dirty
+work was merged or applied. Useful communication-continuity behavior already
+exists on `main`; stale `docs/current-state.md` and Project Workspace rollback
+risk were not recovered. The remote branch was not touched. This cleanup clears
+automation risk before the next financial wave, but does not approve that wave
+or authorize stream/worktree creation.
+
 Current wave gate note: `mobile-field-capture-closeout-v1` has merged to
 `main` under Jeff's controlled merge approval. Field Quick Capture V1 merged as
 `d2e9e727`, Closeout Readiness Command V1 merged as `cea565d7`, Field

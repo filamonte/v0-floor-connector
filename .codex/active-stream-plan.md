@@ -74,6 +74,26 @@ scripts, implement scripts, open a PR, or begin runtime/tooling changes until
 Architecture Coordination and Jeff approve stream creation and implementation
 start.
 
+## Project Next Actions Retirement
+
+Retirement date: 2026-06-07.
+
+Jeff explicitly approved retirement of
+`C:\FC-worktrees\project-next-actions` / `stream/project-next-actions`. Safety
+review confirmed the branch head was contained in `origin/main`, no unique
+commits would be lost, and the remaining dirty state was staged-only stale
+work. An archival patch was saved outside the repo at
+`C:\FC-worktrees\_archive\project-next-actions-2026-06-07.patch`.
+
+No dirty work was merged or applied to `main`. Useful record-linked
+communication-continuity behavior already exists on `main`, while the stale
+`docs/current-state.md` blob and Project Workspace rollback risk were rejected
+as recovery sources. The remote branch was not touched.
+
+This clears a long-lived automation and governance risk before financial-wave
+approval review, but it does not approve a new wave or authorize stream
+creation, schema work, migrations, provider work, or feature implementation.
+
 ## Customer Portal Trust V1 Gate
 
 Gate date: 2026-06-07.
