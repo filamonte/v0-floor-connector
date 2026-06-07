@@ -390,6 +390,23 @@ function OperationsReportingWorkspace({
         </div>
       </ReportSection>
 
+      <ReportSection
+        eyebrow="Labor and Field"
+        title="Field management snapshot"
+        description="Read-only owner visibility into active work, crew coverage, blockers, Daily Log gaps, and field evidence pressure. Field and People remain action owners."
+      >
+        <div className="space-y-4 p-4">
+          <ReportMetricGrid metrics={summary.laborFieldSnapshot.metrics} />
+          <AttentionList
+            title="Labor and field attention"
+            description="Crew, Daily Log, blocker, and evidence signals linked to Field, People, Schedule, Jobs, and Project workspaces."
+            items={summary.laborFieldSnapshot.attentionItems}
+            emptyTitle="No labor or field pressure is visible."
+            emptyDescription="This list appears when canonical jobs, assignments, Daily Logs, field notes, or evidence records need owner review."
+          />
+        </div>
+      </ReportSection>
+
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         {summary.continuitySections.map((section) => (
           <AttentionList
