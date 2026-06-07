@@ -115,6 +115,31 @@ This helper is intentionally pure verification. It does not import
 implementation-stream-only helpers, query data, add routes, add schema,
 exercise provider behavior, or perform feature work.
 
+## Mobile Field Closeout V1 Verification
+
+The `mobile-field-capture-closeout-v1` wave adds a verification-only helper at
+`apps/web/lib/verification/mobile-field-closeout-workflow.ts`. It protects the
+approved field-capture and closeout boundaries after the implementation streams
+complete:
+
+- quick capture stays on canonical Daily Logs and field notes / Job Notes;
+- blocker and issue capture stays on field-note types;
+- field evidence stays on existing execution attachments;
+- closeout readiness derives from jobs, Daily Logs, field notes, and execution
+  attachments;
+- Communications receives review-first internal handoff context only and owns
+  conversation action;
+- Financials remains the owner of billing/collection action;
+- Portal behavior remains unchanged and no portal-only field copies are added;
+- schema and migrations remain unchanged.
+
+| Verification area        | Automated evidence                                                                                                      | Manual / code-review check                                                                    |
+| ------------------------ | ----------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| Field capture            | `mobile-field-closeout-workflow.test.ts` requires Daily Logs, field notes, blockers, and evidence to use canonical rows | Confirm Field UI links back to existing Daily Log / Job Note / evidence anchors               |
+| Closeout readiness       | Helper coverage blocks duplicate closeout, issue, and punch-list models                                                 | Confirm readiness is advisory and does not mutate invoice, payment, or billing state          |
+| Communications handoff   | Helper coverage requires review-first drafts and no autonomous customer sends                                           | Confirm `/communications` links are internal review handoffs, not provider/customer sends     |
+| Ownership / portal / SQL | Helper coverage protects Field, Project, Financials, Portal, and schema boundaries                                      | Confirm no portal behavior, schema, migration, customer-facing send, or duplicate model drift |
+
 ## Existing Test Surface
 
 - `playwright.config.js` defines setup, protected, portal, payment, and
@@ -149,6 +174,10 @@ exercise provider behavior, or perform feature work.
   continuity, readiness gates, operational ownership, no duplicate models,
   deposit readiness, schedule handoff, Settings ownership, and portal
   customer-safe boundaries.
+- `apps/web/lib/verification/mobile-field-closeout-workflow.test.ts` verifies
+  the approved mobile field closeout wave boundaries across canonical Daily
+  Logs, field notes, execution attachments, closeout readiness, Communications
+  review handoff, ownership, portal safety, and schema/migration drift.
 
 ## Fixture And Auth Notes
 
