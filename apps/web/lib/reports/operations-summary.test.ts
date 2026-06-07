@@ -442,6 +442,85 @@ void test("execution-to-cash lane routes completed work with open invoices to In
   ]);
 });
 
+void test("summarizes execution-to-cash without mutating invoice or payment state", () => {
+  const result = summary({
+    projects: [project()],
+    jobs: [
+      job({ id: "complete-unbilled", dispatchStatus: "completed" }),
+      job({
+        id: "complete-collectible",
+        projectId: "project-2",
+        dispatchStatus: "completed",
+        project: { name: "Collectible Project" }
+      })
+    ],
+    invoices: [
+      invoice({
+        id: "collectible-invoice",
+        projectId: "project-2",
+        dueDate: "2026-05-01",
+        balanceDueAmount: "600.00",
+        project: { name: "Collectible Project" }
+      })
+    ],
+    payments: [payment({ id: "cash", amount: "200.00" })],
+    collections: {
+      openReceivableAmount: "600.00",
+      overdueReceivableAmount: "600.00",
+      openInvoiceCount: 1,
+      overdueInvoiceCount: 1,
+      pendingPaymentAmount: "75.00",
+      pendingEventCount: 1,
+      failedOrVoidedEventCount: 1
+    }
+  });
+
+  assert.deepEqual(
+    result.executionToCashSummary.metrics.map((metric) => [
+      metric.id,
+      metric.value,
+      metric.href,
+      metric.tone
+    ]),
+    [
+      ["completed-not-billed", 1, "/projects", "attention"],
+      [
+        "billable-collectible-flow",
+        1,
+        "/financials/accounts-receivable",
+        "attention"
+      ],
+      [
+        "open-cash-pressure",
+        "600.00",
+        "/financials/accounts-receivable",
+        "blocked"
+      ],
+      ["payment-event-attention", 2, "/payments", "attention"]
+    ]
+  );
+  assert.deepEqual(
+    result.executionToCashSummary.flowItems.map((item) => [
+      item.id,
+      item.href,
+      item.sourceLabel
+    ]),
+    [
+      [
+        "completed-not-billed:complete-unbilled",
+        "/projects/project-1",
+        "Project Workspace"
+      ],
+      [
+        "billable-collectible:complete-collectible:collectible-invoice",
+        "/invoices/collectible-invoice",
+        "Invoice Workspace"
+      ],
+      ["cash-received:cash", "/invoices/invoice-1", "Invoice Workspace"]
+    ]
+  );
+});
+
 void test("execution-to-cash lane includes paid and recent payment movement without report-owned records", () => {
   const result = summary({
     projects: [project()],
