@@ -10,6 +10,7 @@ import {
   summarizeFieldAssignedWorkJob,
   type FieldAssignedWorkGroupKey
 } from "@/lib/field/assigned-work-read-model";
+import { buildFieldCommunicationsHandoff } from "@/lib/field/communications-handoff";
 import { buildFieldCloseoutReadinessSummary } from "@/lib/field/closeout-readiness";
 import { listAssignedWorkItemsForCurrentUser } from "@/lib/work-items/data";
 import {
@@ -141,6 +142,19 @@ function getCloseoutReadinessClassName(
   }
 }
 
+function getCommunicationsHandoffClassName(
+  status: ReturnType<typeof buildFieldCommunicationsHandoff>["status"]
+) {
+  switch (status) {
+    case "needs_office_review":
+      return "border-amber-300 bg-amber-50";
+    case "ready_to_update":
+      return "border-emerald-200 bg-emerald-50";
+    case "monitor":
+      return "border-slate-200 bg-white";
+  }
+}
+
 export default async function FieldWorkItemsPage() {
   const [{ currentPerson, workItems }, assignedFieldWork] = await Promise.all([
     listAssignedWorkItemsForCurrentUser("/field/work-items"),
@@ -268,6 +282,11 @@ export default async function FieldWorkItemsPage() {
                             buildFieldQuickCapturePlan(job);
                           const closeoutReadiness =
                             buildFieldCloseoutReadinessSummary(job);
+                          const communicationsHandoff =
+                            buildFieldCommunicationsHandoff({
+                              job,
+                              closeoutReadiness
+                            });
 
                           return (
                             <li key={job.id}>
@@ -387,6 +406,46 @@ export default async function FieldWorkItemsPage() {
                                         </div>
                                       </div>
                                     ))}
+                                  </div>
+                                </div>
+                                <div
+                                  className={`mt-3 rounded-[6px] border px-3 py-2 ${getCommunicationsHandoffClassName(
+                                    communicationsHandoff.status
+                                  )}`}
+                                >
+                                  <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                                    <div className="min-w-0">
+                                      <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
+                                        Communications handoff
+                                      </p>
+                                      <p className="mt-1 text-sm font-semibold text-slate-950">
+                                        {communicationsHandoff.label}
+                                      </p>
+                                      <p className="mt-1 text-xs leading-5 text-slate-600">
+                                        {communicationsHandoff.detail}
+                                      </p>
+                                      <p className="mt-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">
+                                        {communicationsHandoff.audienceLabel}
+                                      </p>
+                                    </div>
+                                    <Link
+                                      href={communicationsHandoff.handoffHref}
+                                      className="inline-flex shrink-0 items-center rounded-[6px] border border-slate-300 bg-white px-2 py-1 text-xs font-semibold text-slate-700 transition hover:border-[#d8731f] hover:text-slate-950"
+                                    >
+                                      {communicationsHandoff.handoffActionLabel}
+                                    </Link>
+                                  </div>
+                                  <div className="mt-3 flex flex-wrap gap-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">
+                                    {communicationsHandoff.sourceSignals.map(
+                                      (signal) => (
+                                        <span
+                                          key={`${job.id}-${signal}`}
+                                          className="rounded-[6px] border border-white/70 bg-white/70 px-2 py-1"
+                                        >
+                                          {signal}
+                                        </span>
+                                      )
+                                    )}
                                   </div>
                                 </div>
                                 <div
