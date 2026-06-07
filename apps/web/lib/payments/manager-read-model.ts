@@ -10,6 +10,10 @@ import type {
 } from "@floorconnector/types";
 
 import { classifyPaymentEventEvidence } from "@/lib/financials/payment-reconciliation-core";
+import {
+  buildPaymentContinuityCommand,
+  type PaymentContinuityCommand
+} from "@/lib/payments/payment-continuity-command";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 
 export type PaymentsManagerView = "all" | PaymentStatus;
@@ -92,6 +96,7 @@ export type PaymentsManagerReconciliationEvent = {
 };
 
 export type PaymentsManagerReadModel = {
+  paymentContinuityCommand: PaymentContinuityCommand;
   payments: PaymentsManagerPayment[];
   recentRecordedPayments: PaymentsManagerPayment[];
   openInvoices: PaymentsManagerInvoicePreview[];
@@ -746,13 +751,17 @@ export const getPaymentsManagerReadModel = cache(
     });
 
     return {
+      paymentContinuityCommand: buildPaymentContinuityCommand({
+        payments: [...payments, ...recentRecordedPayments],
+        events: reconciliationEvents
+      }),
       payments,
       recentRecordedPayments,
       openInvoices: openInvoices.slice(0, 4),
       overdueInvoices: overdueInvoices.slice(0, 4),
-      failedPaymentEvents: reconciliationEvents.filter(
-        (event) => event.eventType === "payment_failed"
-      ).slice(0, 4),
+      failedPaymentEvents: reconciliationEvents
+        .filter((event) => event.eventType === "payment_failed")
+        .slice(0, 4),
       reconciliationEvents,
       reconciliationAttentionEvents: reconciliationEvents
         .filter((event) => event.classification.needsReview)
