@@ -22,6 +22,7 @@ import { buildDocumentPrintHref } from "@/lib/document-engine/print";
 import { requestPortalInvoicePaymentAction } from "@/lib/invoices/actions";
 import { getOrganizationProductionActionLockState } from "@/lib/organizations/activation-guard";
 import { getPortalInvoiceReviewData } from "@/lib/portal/data";
+import { derivePortalInvoiceFinancialClarity } from "@/lib/portal/financial-visibility";
 
 type PortalInvoiceReviewPageProps = {
   params: Promise<{
@@ -298,6 +299,16 @@ export default async function PortalInvoiceReviewPage({
     canRequestPayment: invoice.paymentWorkflow.canRequestPayment,
     latestPaymentEventType: invoice.paymentEvents[0]?.eventType ?? null
   });
+  const financialClarity = derivePortalInvoiceFinancialClarity({
+    invoice: {
+      ...invoice,
+      latestPaymentEventType: invoice.paymentEvents[0]?.eventType ?? null,
+      latestPaymentEventAt: invoice.paymentEvents[0]?.occurredAt ?? null
+    },
+    payments: invoice.payments,
+    paymentEvents: invoice.paymentEvents,
+    paymentWorkflow: invoice.paymentWorkflow
+  });
 
   return (
     <div className="grid min-w-0 gap-8 xl:grid-cols-[minmax(0,1.08fr)_320px]">
@@ -460,6 +471,70 @@ export default async function PortalInvoiceReviewPage({
             </div>
           </div>
         </div>
+
+        <DetailPanel
+          title="Billing Clarity"
+          description="Plain-language invoice status, payment history, balance, and billing-readiness context."
+        >
+          <div className="grid gap-5">
+            <section className={portalStatePanelClassName}>
+              <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                <div className="min-w-0">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.26em] text-slate-500">
+                    Customer billing status
+                  </p>
+                  <h2 className="mt-2 text-lg font-semibold tracking-tight text-slate-950">
+                    {financialClarity.statusLabel}
+                  </h2>
+                  <p className="mt-2 text-sm leading-6 text-slate-600">
+                    {financialClarity.balanceSummary}
+                  </p>
+                </div>
+                <PortalStatusBadge
+                  status={financialClarity.statusTone}
+                  className="shrink-0"
+                >
+                  {financialClarity.statusLabel}
+                </PortalStatusBadge>
+              </div>
+            </section>
+
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className={portalInsetPanelClassName}>
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+                  Payment history
+                </p>
+                <p className="mt-2 text-sm leading-6 text-slate-600">
+                  {financialClarity.paymentHistorySummary}
+                </p>
+              </div>
+              <div className={portalInsetPanelClassName}>
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+                  Latest activity
+                </p>
+                <p className="mt-2 text-sm leading-6 text-slate-600">
+                  {financialClarity.latestActivitySummary}
+                </p>
+              </div>
+              <div className={portalInsetPanelClassName}>
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+                  Billing readiness
+                </p>
+                <p className="mt-2 text-sm leading-6 text-slate-600">
+                  {financialClarity.billingReadinessSummary}
+                </p>
+              </div>
+              <div className={portalInsetPanelClassName}>
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+                  Next step
+                </p>
+                <p className="mt-2 text-sm leading-6 text-slate-600">
+                  {financialClarity.nextStepSummary}
+                </p>
+              </div>
+            </div>
+          </div>
+        </DetailPanel>
 
         <DetailPanel
           title="Invoice Body"

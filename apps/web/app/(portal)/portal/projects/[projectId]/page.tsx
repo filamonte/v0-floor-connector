@@ -22,6 +22,7 @@ import { replyToPortalProjectCommunicationThreadAction } from "@/lib/communicati
 import { listPortalProjectCommunicationSummary } from "@/lib/communications/portal-project-data";
 import { buildPortalProjectEvidenceReceiptPrintHref } from "@/lib/document-engine/print";
 import { derivePortalCloseoutHandoff } from "@/lib/portal/closeout-handoff";
+import { derivePortalFinancialVisibility } from "@/lib/portal/financial-visibility";
 import { derivePortalProjectStatusWindow } from "@/lib/portal/project-status-window";
 import { derivePortalProjectTimeline } from "@/lib/portal/project-timeline";
 import { derivePortalSharedDocuments } from "@/lib/portal/shared-documents";
@@ -418,6 +419,10 @@ export default async function PortalProjectDetailPage({
         latestPaymentEventAt: project.latestInvoicePaymentEventAt
       })
     : null;
+  const financialVisibility = derivePortalFinancialVisibility({
+    projectId: project.id,
+    invoices
+  });
 
   return (
     <div className="grid gap-8 xl:grid-cols-[minmax(0,1.08fr)_320px]">
@@ -490,6 +495,123 @@ export default async function PortalProjectDetailPage({
           statusExplanation={statusExplanation}
           customerHubCards={customerHubCards}
         />
+
+        <DetailPanel
+          title="Billing Visibility"
+          description="Customer-safe invoice, payment, balance, and billing-readiness context for this project."
+        >
+          <div className="grid gap-5">
+            <section className={portalStatePanelClassName}>
+              <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                <div className="min-w-0">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.26em] text-slate-500">
+                    Project billing status
+                  </p>
+                  <h2 className="mt-2 text-lg font-semibold tracking-tight text-slate-950">
+                    {financialVisibility.statusLabel}
+                  </h2>
+                  <p className="mt-2 text-sm leading-6 text-slate-600">
+                    {financialVisibility.primaryMessage}
+                  </p>
+                </div>
+                <PortalStatusBadge
+                  status={financialVisibility.statusTone}
+                  className="shrink-0"
+                >
+                  {financialVisibility.statusLabel}
+                </PortalStatusBadge>
+              </div>
+
+              <div className="mt-5 grid gap-3 sm:grid-cols-3">
+                <div className={portalInsetPanelClassName}>
+                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+                    Outstanding balance
+                  </p>
+                  <p className="mt-2 text-lg font-semibold text-slate-950">
+                    {financialVisibility.outstandingBalanceLabel}
+                  </p>
+                </div>
+                <div className={portalInsetPanelClassName}>
+                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+                    Shared invoices
+                  </p>
+                  <p className="mt-2 text-sm font-semibold text-slate-950">
+                    {financialVisibility.invoiceCountLabel}
+                  </p>
+                  <p className="mt-1 text-sm leading-6 text-slate-600">
+                    {financialVisibility.paymentHistoryLabel}
+                  </p>
+                </div>
+                <div className={portalInsetPanelClassName}>
+                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+                    Billing readiness
+                  </p>
+                  <p className="mt-2 text-sm leading-6 text-slate-600">
+                    {financialVisibility.billingReadinessLabel}
+                  </p>
+                </div>
+              </div>
+
+              {financialVisibility.nextActionHref ? (
+                <div className="mt-5">
+                  <PortalSecondaryLink
+                    href={financialVisibility.nextActionHref}
+                  >
+                    {financialVisibility.nextActionLabel}
+                  </PortalSecondaryLink>
+                </div>
+              ) : null}
+            </section>
+
+            {financialVisibility.rows.length > 0 ? (
+              <div className="grid gap-4">
+                {financialVisibility.rows.map((invoice) => (
+                  <article
+                    key={invoice.id}
+                    className={portalReviewCardClassName}
+                  >
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                      <div className="min-w-0">
+                        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+                          {invoice.invoiceTypeLabel}
+                        </p>
+                        <h3 className="mt-2 text-base font-semibold text-slate-950">
+                          {invoice.referenceNumber}
+                        </h3>
+                        <p className="mt-2 text-sm leading-6 text-slate-600">
+                          {invoice.customerExplanation}
+                        </p>
+                      </div>
+                      <PortalStatusBadge status={invoice.tone}>
+                        {invoice.paymentStateLabel}
+                      </PortalStatusBadge>
+                    </div>
+                    <div className="mt-4 grid gap-2 text-sm leading-6 text-slate-600 sm:grid-cols-3">
+                      <p>Total: {invoice.totalLabel}</p>
+                      <p>Due: {invoice.balanceLabel}</p>
+                      <p>Due date: {invoice.dueDateLabel}</p>
+                    </div>
+                    <p className="mt-2 text-sm leading-6 text-slate-600">
+                      {invoice.latestActivityLabel ??
+                        invoice.billingReadinessLabel}
+                    </p>
+                    <div className="mt-4">
+                      <PortalSecondaryLink href={invoice.href}>
+                        Review invoice
+                      </PortalSecondaryLink>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            ) : (
+              <AppEmptyState
+                eyebrow="Billing"
+                title="No invoices are shared yet"
+                description={financialVisibility.emptyStateMessage}
+              />
+            )}
+          </div>
+        </DetailPanel>
 
         <DetailPanel
           title="Project Status"
