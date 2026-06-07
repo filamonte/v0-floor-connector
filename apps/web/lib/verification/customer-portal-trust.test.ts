@@ -10,7 +10,7 @@ const implementationStreams: CustomerPortalTrustStreamEvidence[] = [
   {
     id: "portal-project-clarity-v1",
     branch: "stream/portal-project-clarity-v1",
-    commitHash: "6e2df75c23e8867452b09a80e4cb8279ab648fdd",
+    commitHash: "59ed0e51e3e4c35923490a1e6cde5e244056eff7",
     commitMessage: "feat: improve portal project clarity",
     clean: true,
     implementationComplete: true,
@@ -35,7 +35,7 @@ const implementationStreams: CustomerPortalTrustStreamEvidence[] = [
   {
     id: "portal-financial-visibility-v1",
     branch: "stream/portal-financial-visibility-v1",
-    commitHash: "e64af7ba2359aad0365bcb3e4fa3fc4e1f85ab54",
+    commitHash: "dd69983cb7599b3dcadddc48554c0ce19bc41814",
     commitMessage: "feat: improve portal financial visibility",
     clean: true,
     implementationComplete: true,
@@ -61,7 +61,7 @@ const implementationStreams: CustomerPortalTrustStreamEvidence[] = [
   {
     id: "portal-communication-trust-v1",
     branch: "stream/portal-communication-trust-v1",
-    commitHash: "56bf9ff62c7aa93bba267c4ba945f1e24fb79c6d",
+    commitHash: "fb1692ae4fa0dbe1d6312b4c63ed88f51737fed1",
     commitMessage: "feat: improve portal communication trust",
     clean: true,
     implementationComplete: true,
