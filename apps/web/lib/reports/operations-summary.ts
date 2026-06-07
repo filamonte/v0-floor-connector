@@ -126,6 +126,10 @@ export type ReportsContinuitySection = {
 };
 
 export type OperationsReportingSummary = {
+  portfolioRiskSummary: {
+    metrics: ReportsMetric[];
+    exceptionItems: ReportsListItem[];
+  };
   counts: {
     openProjects: number;
     projectsNeedingAttention: number;
@@ -678,8 +682,115 @@ export function deriveOperationsReportingSummary(input: {
     ...openInvoices.map((invoice) => invoice.projectId),
     ...proofGapProjectIds
   ]);
+  const officeBlockedCount =
+    readyCheckProjects.length +
+    waitingContracts.length +
+    missingCrewJobs.length;
+  const customerOrCashBlockedCount =
+    overdueInvoices.length + input.collections.failedOrVoidedEventCount;
+  const missingOrStalledCount =
+    projectsMissingRecentDailyLogs.length +
+    completedJobsAwaitingCloseout.length +
+    proofGapProjectIds.length;
+  const portfolioExceptionItems = uniqueById([
+    ...readyCheckProjects.map((project) => ({
+      id: `project-risk:${project.id}`,
+      title: project.name,
+      subtitle: getCustomerLabel(project.customer),
+      meta: project.commercialReadinessStatus.replaceAll("_", " "),
+      href: `/projects/${project.id}`,
+      tone: "blocked" as ReportsTone,
+      sourceLabel: "Project Workspace"
+    })),
+    ...missingCrewJobs.map((job) => ({
+      id: `crew-risk:${job.id}`,
+      title: getProjectLabel(job.project),
+      subtitle: getCustomerLabel(job.customer),
+      meta: "Missing crew",
+      href: `/schedule?crew=unassigned&jobId=${job.id}`,
+      tone: "attention" as ReportsTone,
+      sourceLabel: "CrewBoard"
+    })),
+    ...waitingContracts.map((contract) => ({
+      id: `signature-risk:${contract.id}`,
+      title: contract.referenceNumber,
+      subtitle: `${getCustomerLabel(contract.customer)} / ${getProjectLabel(
+        contract.project
+      )}`,
+      meta: contract.status.replaceAll("_", " "),
+      href: `/contracts/${contract.id}`,
+      tone: "attention" as ReportsTone,
+      sourceLabel: "Contract Workspace"
+    })),
+    ...openFieldBlockers.map((note) => ({
+      id: `field-risk:${note.id}`,
+      title: note.title,
+      subtitle: getProjectLabel(note.project),
+      meta: note.noteType.replaceAll("_", " "),
+      href: `/daily-logs/${note.dailyLogId}`,
+      tone: "blocked" as ReportsTone,
+      sourceLabel: "Daily Logs"
+    })),
+    ...overdueInvoices.map((invoice) => ({
+      id: `cash-risk:${invoice.id}`,
+      title: invoice.referenceNumber,
+      subtitle: `${getCustomerLabel(invoice.customer)} / ${getProjectLabel(
+        invoice.project
+      )}`,
+      meta: `Overdue ${money(invoice.balanceDueAmount)}`,
+      href: `/invoices/${invoice.id}`,
+      tone: "blocked" as ReportsTone,
+      sourceLabel: "Invoice Workspace"
+    })),
+    ...completedJobsAwaitingCloseout.map((job) => ({
+      id: `closeout-risk:${job.id}`,
+      title: getProjectLabel(job.project),
+      subtitle: getCustomerLabel(job.customer),
+      meta: "Closeout not complete",
+      href: `/projects/${job.projectId}`,
+      tone: "attention" as ReportsTone,
+      sourceLabel: "Project Workspace"
+    }))
+  ]).slice(0, 10);
 
   return {
+    portfolioRiskSummary: {
+      metrics: [
+        metric({
+          id: "office-blocked",
+          label: "Office Blocked",
+          value: officeBlockedCount,
+          detail: "Readiness, signature, or crew exceptions",
+          href: "/reports",
+          tone: officeBlockedCount > 0 ? "attention" : "good"
+        }),
+        metric({
+          id: "customer-cash-blocked",
+          label: "Customer / Cash Blocked",
+          value: customerOrCashBlockedCount,
+          detail: "Overdue invoices and failed or voided payment events",
+          href: "/financials/accounts-receivable",
+          tone: customerOrCashBlockedCount > 0 ? "blocked" : "good"
+        }),
+        metric({
+          id: "missing-or-stalled",
+          label: "Missing / Stalled",
+          value: missingOrStalledCount,
+          detail: "Missing Daily Logs, proof gaps, or closeout lag",
+          href: "/daily-logs",
+          tone: missingOrStalledCount > 0 ? "attention" : "good"
+        }),
+        metric({
+          id: "portfolio-exceptions",
+          label: "Portfolio Exceptions",
+          value: portfolioExceptionItems.length,
+          detail: "Source-linked exceptions requiring owner review",
+          href: "/reports",
+          tone: portfolioExceptionItems.length > 0 ? "attention" : "good"
+        })
+      ],
+      exceptionItems: portfolioExceptionItems
+    },
     counts: {
       openProjects: openProjects.length,
       projectsNeedingAttention: readyCheckProjects.length,
