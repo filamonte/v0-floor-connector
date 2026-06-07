@@ -14,7 +14,7 @@ Scope: status collection only for `customer-portal-trust-v1`.
 | Branch               | `main`                                     |
 | Status               | Clean                                      |
 | `HEAD...origin/main` | `0 ahead / 0 behind`                       |
-| Latest main commit   | `49ef8a6301f9c943b1ea7383dd0403b2ad508189` |
+| Latest main commit   | `8f17b99927f24f9225276900cf7b84722406a8ce` |
 
 No feature work, schema work, migrations, PRs, merges, or next-wave work were
 performed for this status packet.
@@ -22,35 +22,36 @@ performed for this status packet.
 ## Wave Status
 
 `customer-portal-trust-v1` has completed all three implementation stream
-commits locally. Verification has not started. Verification is now ready to
-start as the next stream, with merge-overlap awareness required.
+commits locally. The implementation streams and verification stream were
+rebased onto current `origin/main` and revalidated. Verification is complete
+and the wave is ready for Jeff's controlled merge decision, with merge-overlap
+awareness required.
 
 ## Stream Status Table
 
-| Stream                            | Worktree exists | Branch                                   | Clean/dirty | Ahead/behind vs `origin/main` | Latest commit                              | Implementation complete | Verification start      |
-| --------------------------------- | --------------- | ---------------------------------------- | ----------- | ----------------------------- | ------------------------------------------ | ----------------------- | ----------------------- |
-| `portal-project-clarity-v1`       | Yes             | `stream/portal-project-clarity-v1`       | Clean       | `1 / 0`                       | `6e2df75c23e8867452b09a80e4cb8279ab648fdd` | Yes                     | Implementation complete |
-| `portal-financial-visibility-v1`  | Yes             | `stream/portal-financial-visibility-v1`  | Clean       | `1 / 0`                       | `e64af7ba2359aad0365bcb3e4fa3fc4e1f85ab54` | Yes                     | Implementation complete |
-| `portal-communication-trust-v1`   | Yes             | `stream/portal-communication-trust-v1`   | Clean       | `1 / 0`                       | `56bf9ff62c7aa93bba267c4ba945f1e24fb79c6d` | Yes                     | Implementation complete |
-| `verification-customer-portal-v1` | Yes             | `stream/verification-customer-portal-v1` | Clean       | `0 / 0`                       | `49ef8a6301f9c943b1ea7383dd0403b2ad508189` | Not applicable          | Ready to start now      |
+| Stream                            | Worktree exists | Branch                                   | Clean/dirty | Ahead/behind vs `origin/main` | Latest commit                              | Implementation complete | Verification start |
+| --------------------------------- | --------------- | ---------------------------------------- | ----------- | ----------------------------- | ------------------------------------------ | ----------------------- | ------------------ |
+| `portal-project-clarity-v1`       | Yes             | `stream/portal-project-clarity-v1`       | Clean       | `1 / 0`                       | `59ed0e51e3e4c35923490a1e6cde5e244056eff7` | Yes                     | Complete           |
+| `portal-financial-visibility-v1`  | Yes             | `stream/portal-financial-visibility-v1`  | Clean       | `1 / 0`                       | `dd69983cb7599b3dcadddc48554c0ce19bc41814` | Yes                     | Complete           |
+| `portal-communication-trust-v1`   | Yes             | `stream/portal-communication-trust-v1`   | Clean       | `1 / 0`                       | `fb1692ae4fa0dbe1d6312b4c63ed88f51737fed1` | Yes                     | Complete           |
+| `verification-customer-portal-v1` | Yes             | `stream/verification-customer-portal-v1` | Clean       | `2 / 0`                       | `ca5554bd4880150e1f3b56228fb6a52fb3e4e26e` | Not applicable          | Complete           |
 
 ## Implementation Completion Status
 
-All three implementation streams reported completed local commits with clean
+All three implementation streams have completed local commits with clean
 worktrees, required validation, and no schema or migration changes.
 
-Verification should start next. It should inspect the three implementation
-branches and explicitly handle overlapping files before any merge
-recommendation.
+Verification is complete and records the rebased implementation commit heads.
+The wave still needs controlled merge handling for overlapping files.
 
 ## Commits By Stream
 
-| Stream                            | Commit                                     | Message                                     |
-| --------------------------------- | ------------------------------------------ | ------------------------------------------- |
-| `portal-project-clarity-v1`       | `6e2df75c23e8867452b09a80e4cb8279ab648fdd` | `feat: improve portal project clarity`      |
-| `portal-financial-visibility-v1`  | `e64af7ba2359aad0365bcb3e4fa3fc4e1f85ab54` | `feat: improve portal financial visibility` |
-| `portal-communication-trust-v1`   | `56bf9ff62c7aa93bba267c4ba945f1e24fb79c6d` | `feat: improve portal communication trust`  |
-| `verification-customer-portal-v1` | `49ef8a6301f9c943b1ea7383dd0403b2ad508189` | `docs: approve customer portal trust wave`  |
+| Stream                            | Commit                                     | Message                                           |
+| --------------------------------- | ------------------------------------------ | ------------------------------------------------- |
+| `portal-project-clarity-v1`       | `59ed0e51e3e4c35923490a1e6cde5e244056eff7` | `feat: improve portal project clarity`            |
+| `portal-financial-visibility-v1`  | `dd69983cb7599b3dcadddc48554c0ce19bc41814` | `feat: improve portal financial visibility`       |
+| `portal-communication-trust-v1`   | `fb1692ae4fa0dbe1d6312b4c63ed88f51737fed1` | `feat: improve portal communication trust`        |
+| `verification-customer-portal-v1` | `ca5554bd4880150e1f3b56228fb6a52fb3e4e26e` | `test: update customer portal trust verification` |
 
 ## Files Changed By Stream
 
@@ -84,7 +85,7 @@ recommendation.
 
 ### `portal-project-clarity-v1`
 
-Reported passing:
+Revalidated passing after rebase:
 
 - `pnpm.cmd worktree:doctor` with expected no-upstream warning
 - `pnpm.cmd tooling:baseline -CommandsOnly`
@@ -98,7 +99,7 @@ Reported passing:
 
 ### `portal-financial-visibility-v1`
 
-Reported passing:
+Revalidated passing after rebase:
 
 - `pnpm.cmd --filter @floorconnector/web exec tsx --test ./lib/portal/financial-visibility.test.ts`
 - repo-local Prettier formatting after known Windows App Router path parsing issue
@@ -110,7 +111,7 @@ Reported passing:
 
 ### `portal-communication-trust-v1`
 
-Reported passing:
+Revalidated passing after rebase:
 
 - `pnpm.cmd worktree:doctor` with expected no-upstream warning
 - `pnpm.cmd --filter @floorconnector/web exec tsx --test lib/communications/portal-project-summary.test.ts`
@@ -123,12 +124,20 @@ Reported passing:
 
 ### `verification-customer-portal-v1`
 
-No verification validation has run yet. This is expected because verification
-was queued until implementation commits existed.
+Revalidated passing after rebase and evidence update:
+
+- `pnpm.cmd --filter @floorconnector/web exec tsx --test lib/verification/customer-portal-trust.test.ts`
+- `pnpm.cmd --filter @floorconnector/web exec tsx --test lib/verification/operational-ownership.test.ts`
+- `pnpm.cmd --filter @floorconnector/web exec tsx --test lib/verification/golden-workflow-checks.test.ts`
+- `pnpm.cmd --filter @floorconnector/web typecheck`
+- `pnpm.cmd --filter @floorconnector/web lint`
+- `pnpm.cmd fc:preflight:fast`
+- `git diff --check`
 
 ## Blockers
 
-No implementation-completion blocker is currently visible.
+No implementation-completion or verification-completion blocker is currently
+visible.
 
 Merge and verification coordination need human attention because several streams
 touch the same files:
@@ -165,10 +174,10 @@ Overlap with this wave:
 
 ## Verification Readiness
 
-Verification is ready to start because all three implementation streams now
-have local commits and clean worktrees.
+Verification is complete because all three implementation streams have rebased
+local commits and clean worktrees.
 
-Verification should not merge anything. It should validate:
+The completed verification did not merge anything. It validated:
 
 - customer-safe portal boundaries
 - canonical project, invoice, payment, and communication records
@@ -178,11 +187,27 @@ Verification should not merge anything. It should validate:
   and `docs/current-state.md`
 - no conflict with the dirty out-of-scope `project-next-actions` worktree
 
+## Overlap Reconciliation
+
+All streams rebased cleanly onto current `origin/main`. Pairwise merge
+simulation still reports changed-in-both overlap in
+`apps/web/app/(portal)/portal/projects/[projectId]/page.tsx`. The overlap is
+additive and should be resolved during the controlled merge by preserving the
+project clarity, billing visibility, and communication trust sections.
+
+Financial visibility and communication trust also both touch
+`docs/current-state.md`. Preserve both implemented-truth bullets in the
+controlled merge checkout. Do not use or modify
+`C:\FC-worktrees\project-next-actions`.
+
 ## Next Recommended Action
 
-Start `stream/verification-customer-portal-v1` in
-`C:\FC-worktrees\verification-customer-portal-v1`.
+Jeff can approve controlled merges in the recorded order:
 
-The verification prompt should explicitly inspect all three implementation
-commits, preserve the dirty `project-next-actions` boundary, and report merge
-order or conflict risk before any integration recommendation.
+1. `portal-project-clarity-v1`
+2. `portal-financial-visibility-v1`
+3. `portal-communication-trust-v1`
+4. `verification-customer-portal-v1`
+
+Manual conflict resolution should be expected for the portal project page and
+`docs/current-state.md`.

@@ -1,6 +1,6 @@
 # Customer Portal Trust V1 Review Packet
 
-Status: Review packet; Jeff decision pending.
+Status: Review packet; rebased and revalidated; Jeff controlled-merge decision pending.
 
 Date: 2026-06-07
 
@@ -17,32 +17,31 @@ No reviewed stream changes schemas or migrations. No reviewed stream introduces
 duplicate project, invoice, payment, communication, customer-action, or
 portal-owned workflow models.
 
-The wave is safe for Jeff to approve for controlled merge after each
-implementation stream is rebased onto current `origin/main` and the known
-overlaps are resolved deliberately. Do not merge without reviewing the shared
-portal project page and `docs/current-state.md` conflict areas.
+The wave is safe for Jeff to approve for controlled merge. Each stream has now
+been rebased onto current `origin/main` and revalidated. Do not merge without
+reviewing the shared portal project page and `docs/current-state.md` conflict
+areas.
 
 ## Streams Completed
 
-| Stream                            | Branch                                   | Worktree                                          | Status         | Readiness          |
-| --------------------------------- | ---------------------------------------- | ------------------------------------------------- | -------------- | ------------------ |
-| `portal-project-clarity-v1`       | `stream/portal-project-clarity-v1`       | `C:\FC-worktrees\portal-project-clarity-v1`       | Clean, `1 / 1` | Ready after rebase |
-| `portal-financial-visibility-v1`  | `stream/portal-financial-visibility-v1`  | `C:\FC-worktrees\portal-financial-visibility-v1`  | Clean, `1 / 1` | Ready after rebase |
-| `portal-communication-trust-v1`   | `stream/portal-communication-trust-v1`   | `C:\FC-worktrees\portal-communication-trust-v1`   | Clean, `1 / 1` | Ready after rebase |
-| `verification-customer-portal-v1` | `stream/verification-customer-portal-v1` | `C:\FC-worktrees\verification-customer-portal-v1` | Clean, `1 / 0` | Ready last         |
+| Stream                            | Branch                                   | Worktree                                          | Status         | Readiness  |
+| --------------------------------- | ---------------------------------------- | ------------------------------------------------- | -------------- | ---------- |
+| `portal-project-clarity-v1`       | `stream/portal-project-clarity-v1`       | `C:\FC-worktrees\portal-project-clarity-v1`       | Clean, `1 / 0` | Ready      |
+| `portal-financial-visibility-v1`  | `stream/portal-financial-visibility-v1`  | `C:\FC-worktrees\portal-financial-visibility-v1`  | Clean, `1 / 0` | Ready      |
+| `portal-communication-trust-v1`   | `stream/portal-communication-trust-v1`   | `C:\FC-worktrees\portal-communication-trust-v1`   | Clean, `1 / 0` | Ready      |
+| `verification-customer-portal-v1` | `stream/verification-customer-portal-v1` | `C:\FC-worktrees\verification-customer-portal-v1` | Clean, `2 / 0` | Ready last |
 
-The three implementation streams are behind `origin/main` by one commit because
-the live status packet landed on `main` after the implementation branches were
-created. This review did not rebase them.
+The implementation streams and verification stream were rebased onto current
+`origin/main` after the review packet landed on `main`.
 
 ## Commits By Stream
 
-| Stream                            | Commit                                     | Message                                     |
-| --------------------------------- | ------------------------------------------ | ------------------------------------------- |
-| `portal-project-clarity-v1`       | `6e2df75c23e8867452b09a80e4cb8279ab648fdd` | `feat: improve portal project clarity`      |
-| `portal-financial-visibility-v1`  | `e64af7ba2359aad0365bcb3e4fa3fc4e1f85ab54` | `feat: improve portal financial visibility` |
-| `portal-communication-trust-v1`   | `56bf9ff62c7aa93bba267c4ba945f1e24fb79c6d` | `feat: improve portal communication trust`  |
-| `verification-customer-portal-v1` | `28628902c7dab2d2e37e5c0917f191729bd75f78` | `test: protect customer portal trust`       |
+| Stream                            | Commit                                     | Message                                           |
+| --------------------------------- | ------------------------------------------ | ------------------------------------------------- |
+| `portal-project-clarity-v1`       | `59ed0e51e3e4c35923490a1e6cde5e244056eff7` | `feat: improve portal project clarity`            |
+| `portal-financial-visibility-v1`  | `dd69983cb7599b3dcadddc48554c0ce19bc41814` | `feat: improve portal financial visibility`       |
+| `portal-communication-trust-v1`   | `fb1692ae4fa0dbe1d6312b4c63ed88f51737fed1` | `feat: improve portal communication trust`        |
+| `verification-customer-portal-v1` | `ca5554bd4880150e1f3b56228fb6a52fb3e4e26e` | `test: update customer portal trust verification` |
 
 ## Files Changed By Stream
 
@@ -155,7 +154,7 @@ This review packet adds:
 
 ### `portal-project-clarity-v1`
 
-Reported passing:
+Revalidated passing after rebase:
 
 - `pnpm.cmd worktree:doctor` with expected no-upstream warning
 - `pnpm.cmd tooling:baseline -CommandsOnly`
@@ -169,7 +168,7 @@ Reported passing:
 
 ### `portal-financial-visibility-v1`
 
-Reported passing:
+Revalidated passing after rebase:
 
 - `pnpm.cmd --filter @floorconnector/web exec tsx --test ./lib/portal/financial-visibility.test.ts`
 - repo-local Prettier formatting
@@ -181,7 +180,7 @@ Reported passing:
 
 ### `portal-communication-trust-v1`
 
-Reported passing:
+Revalidated passing after rebase:
 
 - `pnpm.cmd worktree:doctor` with expected no-upstream warning
 - `pnpm.cmd --filter @floorconnector/web exec tsx --test lib/communications/portal-project-summary.test.ts`
@@ -194,7 +193,7 @@ Reported passing:
 
 ### `verification-customer-portal-v1`
 
-Reported passing:
+Revalidated passing after rebase and verification evidence update:
 
 - `pnpm.cmd --filter @floorconnector/web exec tsx --test lib/verification/customer-portal-trust.test.ts`
 - `pnpm.cmd --filter @floorconnector/web exec tsx --test lib/verification/operational-ownership.test.ts`
@@ -270,8 +269,8 @@ portal-owned workflow state.
 
 ### Merge Simulation Findings
 
-Direct merge simulation from current `origin/main` into each individual stream
-showed no conflict for the individual streams.
+Rebase from current `origin/main` into each individual stream completed without
+conflict.
 
 Pairwise implementation merge simulation found changed-in-both conflicts:
 
@@ -283,8 +282,12 @@ Pairwise implementation merge simulation found changed-in-both conflicts:
   `apps/web/app/(portal)/portal/projects/[projectId]/page.tsx`
   and `docs/current-state.md`
 
-Manual conflict resolution is likely during the combined merge. This is an
-expected integration risk, not a correction blocker.
+Manual conflict resolution is still likely during the combined merge. This is
+an expected integration risk, not a correction blocker. The portal page overlap
+is additive and should preserve project clarity, billing visibility, and
+communication trust sections. The `docs/current-state.md` overlap should
+preserve both implemented-truth bullets while leaving the dirty
+`C:\FC-worktrees\project-next-actions` worktree untouched.
 
 ### Dirty Out-Of-Scope Worktree
 
@@ -328,12 +331,12 @@ Recommended controlled merge order:
 
 Readiness by stream:
 
-| Stream                            | Recommendation     | Reason                                                                                                                                        |
-| --------------------------------- | ------------------ | --------------------------------------------------------------------------------------------------------------------------------------------- |
-| `portal-project-clarity-v1`       | Ready after rebase | Clean and expected commit present; behind `origin/main` by one commit.                                                                        |
-| `portal-financial-visibility-v1`  | Ready after rebase | Clean and expected commit present; behind `origin/main` by one commit; likely project-page conflict after first merge.                        |
-| `portal-communication-trust-v1`   | Ready after rebase | Clean and expected commit present; behind `origin/main` by one commit; likely project-page and `current-state` conflict after earlier merges. |
-| `verification-customer-portal-v1` | Ready last         | Clean and expected verification commit present; lands after implementation streams.                                                           |
+| Stream                            | Recommendation | Reason                                                                                                  |
+| --------------------------------- | -------------- | ------------------------------------------------------------------------------------------------------- |
+| `portal-project-clarity-v1`       | Ready          | Clean, rebased, and revalidated.                                                                        |
+| `portal-financial-visibility-v1`  | Ready          | Clean, rebased, and revalidated; likely project-page conflict after first merge.                        |
+| `portal-communication-trust-v1`   | Ready          | Clean, rebased, and revalidated; likely project-page and `current-state` conflict after earlier merges. |
+| `verification-customer-portal-v1` | Ready last     | Clean, rebased, and revalidated with updated implementation evidence.                                   |
 
 No stream should be deferred or corrected before merge based on this review.
 Manual conflict resolution should preserve all three customer-facing portal
