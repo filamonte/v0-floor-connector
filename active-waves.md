@@ -117,23 +117,36 @@ dashboard sprawl.
 
 Gate status:
 
-| Gate item                              | Status               | Evidence / note                                                                                  |
-| -------------------------------------- | -------------------- | ------------------------------------------------------------------------------------------------ |
-| Architecture Coordination approval     | Approved             | Stream ownership, dependency map, non-goals, validation, verification, and merge order recorded. |
-| Jeff approval gate                     | Approved             | Jeff explicitly approved `field-execution-depth-v1` for stream/worktree creation.                |
-| Stream creation                        | Complete             | Four branches and worktrees were created from current `main` at `9bad7a65`.                      |
-| Implementation start                   | Not started          | This approval task does not authorize feature work. A later explicit start command is required.  |
-| Human review gate                      | Required before work | Feature implementation, merge, cleanup, PRs, and next-wave continuation still require approval.  |
-| Autonomous merge / indefinite continue | Not allowed          | No merge, PR, schema, migration, provider action, or next wave is authorized by this gate.       |
+| Gate item                              | Status      | Evidence / note                                                                                  |
+| -------------------------------------- | ----------- | ------------------------------------------------------------------------------------------------ |
+| Architecture Coordination approval     | Approved    | Stream ownership, dependency map, non-goals, validation, verification, and merge order recorded. |
+| Jeff approval gate                     | Approved    | Jeff explicitly approved `field-execution-depth-v1` for stream/worktree creation.                |
+| Stream creation                        | Complete    | Four branches and worktrees were created from current `main` at `9bad7a65`.                      |
+| Implementation start                   | Completed   | The approved implementation and verification slices landed on `main`.                            |
+| Human review gate                      | Satisfied   | Jeff approved the controlled merge prompt; no PRs were opened.                                   |
+| Autonomous merge / indefinite continue | Not allowed | Next-wave continuation and destructive cleanup still require explicit approval.                  |
 
 Approved stream set:
 
-| Stream                            | Ownership area                 | Mission                                                                                                      | Status                 |
-| --------------------------------- | ------------------------------ | ------------------------------------------------------------------------------------------------------------ | ---------------------- |
-| `field-handoff-packet-v1`         | Field handoff context          | Ensure every scheduled job arrives with complete execution context from canonical project, job, and records. | Approved / Not Started |
-| `daily-execution-command-v1`      | Daily execution workflow       | Strengthen daily logs, field notes, blockers, execution observations, photo visibility, and next actions.    | Approved / Not Started |
-| `crew-execution-visibility-v1`    | Cross-project field visibility | Improve visibility into active, blocked, incomplete, office-attention, and execution-warning work.           | Approved / Not Started |
-| `verification-field-execution-v1` | Field execution verification   | Protect canonical project chain, jobs, schedule, daily logs, field notes, and ownership boundaries.          | Approved / Not Started |
+| Stream                            | Ownership area                 | Mission                                                                                                      | Status |
+| --------------------------------- | ------------------------------ | ------------------------------------------------------------------------------------------------------------ | ------ |
+| `field-handoff-packet-v1`         | Field handoff context          | Ensure every scheduled job arrives with complete execution context from canonical project, job, and records. | Merged |
+| `daily-execution-command-v1`      | Daily execution workflow       | Strengthen daily logs, field notes, blockers, execution observations, photo visibility, and next actions.    | Merged |
+| `crew-execution-visibility-v1`    | Cross-project field visibility | Improve visibility into active, blocked, incomplete, office-attention, and execution-warning work.           | Merged |
+| `verification-field-execution-v1` | Field execution verification   | Protect canonical project chain, jobs, schedule, daily logs, field notes, and ownership boundaries.          | Merged |
+
+Merge result:
+
+- Field Handoff Packet V1 merged to `main` as `715af07d`.
+- Daily Execution Command V1 merged to `main` as `627358c4`.
+- Crew Execution Visibility V1 merged to `main` as `980cfe5b`.
+- Verification Field Execution V1 merged to `main` as `36e80505`.
+
+Post-merge validation passed: targeted field execution tests, typecheck, lint,
+`pnpm.cmd fc:preflight:fast`, and `git diff --check`.
+
+Wave status: Merged to `main`; completed wave worktrees are retained pending
+explicit retirement approval. No next wave is approved by this merge.
 
 Approved stream branches:
 

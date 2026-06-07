@@ -88,9 +88,10 @@ for `field-execution-depth-v1`.
 Review packet:
 [docs/review-packets/field-execution-depth-v1-plan.md](C:/FloorConnector/docs/review-packets/field-execution-depth-v1-plan.md).
 
-Wave status: Approved / Not Started. Branches and worktrees have been created
-from current `main` at `9bad7a65`. Implementation has not started and requires
-a later explicit start command.
+Wave status: Merged to `main`. Jeff approved the controlled merge of the
+reviewed ready stream set. This does not approve schema/migrations,
+provider/customer-facing actions, PRs, next-wave continuation, destructive
+cleanup, or work in dirty/out-of-scope worktrees.
 
 Approved stream set:
 
@@ -117,10 +118,11 @@ git diff --check
 git diff --cached --check
 ```
 
-Human review gate remains required for implementation start, PRs, merges,
-worktree/branch cleanup, schema/migration work, provider/customer-facing
-actions, and next-wave continuation. Agents must not touch
-`C:\FC-worktrees\project-next-actions` unless Jeff explicitly scopes it.
+Human review gate is satisfied for the approved merge set only. Agents may not
+continue to another wave, perform schema/migration work, delete branches or
+worktrees, or use dirty/out-of-scope worktrees from this approval. Agents must
+not touch `C:\FC-worktrees\project-next-actions` unless Jeff explicitly scopes
+it.
 
 ### field-handoff-packet-v1
 
@@ -137,7 +139,7 @@ actions, and next-wave continuation. Agents must not touch
 - Must avoid: new schedule model, new job model, portal work, dispatch
   automation, route optimization, schema changes, migrations, and feature work
   before a later start command.
-- Status: Approved / Not Started.
+- Status: Merged to `main` as `715af07d`.
 
 ### daily-execution-command-v1
 
@@ -152,7 +154,7 @@ actions, and next-wave continuation. Agents must not touch
 - Must avoid: separate field reporting system, duplicate issue tracker,
   duplicate punch-list model, schema changes, migrations, portal behavior, and
   feature work before a later start command.
-- Status: Approved / Not Started.
+- Status: Merged to `main` as `627358c4`.
 
 ### crew-execution-visibility-v1
 
@@ -167,7 +169,7 @@ actions, and next-wave continuation. Agents must not touch
 - Must avoid: route optimization, dispatch replacement, crew scheduling
   replacement, dashboard sprawl, duplicate schedule/job/field models, schema
   changes, migrations, and feature work before a later start command.
-- Status: Approved / Not Started.
+- Status: Merged to `main` as `980cfe5b`.
 
 ### verification-field-execution-v1
 
@@ -181,7 +183,7 @@ actions, and next-wave continuation. Agents must not touch
   after the implementation streams complete.
 - Must avoid: feature work, schema changes, UI redesign, loosening checks,
   runtime behavior, and implementation before feature-stream evidence exists.
-- Status: Approved / Not Started.
+- Status: Merged to `main` as `36e80505`.
 
 ## Sales To Production Readiness V1 Gate
 
@@ -365,10 +367,52 @@ Remaining gates:
 
 ## Merged Streams
 
-These streams have merged to `main`. Completed
+These streams have merged to `main`. Completed `field-execution-depth-v1` and
 `sales-to-production-readiness-v1` worktrees are retained pending explicit
 retirement approval. Completed `operational-command-center-v1` worktrees and
 eligible branches were retired after explicit cleanup approval:
+
+### field-handoff-packet-v1
+
+- Branch: `stream/field-handoff-packet-v1`
+- Worktree: `C:\FC-worktrees\field-handoff-packet-v1`
+- Owns: field handoff context for scheduled jobs.
+- Must avoid: duplicate schedule/job models, portal work, dispatch automation,
+  schema changes, migrations, and provider/customer-facing behavior.
+- Merged: `715af07d feat: deepen field handoff packet`.
+- Cleanup: worktree and branch retained pending explicit retirement approval.
+
+### daily-execution-command-v1
+
+- Branch: `stream/daily-execution-command-v1`
+- Worktree: `C:\FC-worktrees\daily-execution-command-v1`
+- Owns: daily execution workflow over canonical jobs, Daily Logs, field notes,
+  blockers, observations, photos, and execution next actions.
+- Must avoid: separate field reporting system, duplicate issue tracker,
+  duplicate punch-list model, schema changes, migrations, and portal behavior.
+- Merged: `627358c4 feat: strengthen daily execution workflow`.
+- Cleanup: worktree and branch retained pending explicit retirement approval.
+
+### crew-execution-visibility-v1
+
+- Branch: `stream/crew-execution-visibility-v1`
+- Worktree: `C:\FC-worktrees\crew-execution-visibility-v1`
+- Owns: cross-project field visibility over active, blocked, incomplete,
+  office-attention, and execution-warning work.
+- Must avoid: route optimization, dispatch replacement, crew scheduling
+  replacement, dashboard sprawl, schema changes, and migrations.
+- Merged: `980cfe5b feat: improve crew execution visibility`.
+- Cleanup: worktree and branch retained pending explicit retirement approval.
+
+### verification-field-execution-v1
+
+- Branch: `stream/verification-field-execution-v1`
+- Worktree: `C:\FC-worktrees\verification-field-execution-v1`
+- Owns: verification for field execution depth.
+- Must avoid: feature work, schema changes, UI redesign, runtime behavior, and
+  loosening checks.
+- Merged: `36e80505 test: protect field execution workflow`.
+- Cleanup: worktree and branch retained pending explicit retirement approval.
 
 ### sales-readiness-command-v1
 

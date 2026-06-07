@@ -1,16 +1,16 @@
 # Field Execution Depth V1 Review Packet
 
-Status: Jeff Review Required
+Status: Merged to `main`
 Doc Type: Review Packet
 Review date: 2026-06-06
 Review source: live Git/worktree inspection from `C:\FloorConnector` on `main`
 after `git fetch origin`, required main preflight checks, stream worktree
 inspection, and diff review.
 
-This packet records integration review and merge readiness for
-`field-execution-depth-v1`. It does not merge branches, open PRs, start another
-wave, modify schema, retire worktrees/branches, or mark Jeff approval as
-granted.
+This packet records integration review, merge readiness, and the controlled
+merge result for `field-execution-depth-v1`. It does not open PRs, start
+another wave, modify schema, retire worktrees/branches, or mark next-wave
+approval as granted.
 
 ## Executive Summary
 
@@ -27,6 +27,12 @@ cleanly onto current `origin/main`, remains clean, contains the reported
 verification slice, and is `1 ahead / 0 behind` `origin/main`. All streams were
 revalidated after the final rebase pass. The merge order remains implementation
 streams first and verification last.
+
+Jeff approved the controlled merge. The approved stream set merged to `main` in
+order with post-merge validation after each stream and final validation after
+the complete sequence. No PRs were opened, no schema or migration files were
+changed, no next wave was started, and completed worktrees/branches remain
+retained pending explicit retirement approval.
 
 ## Main Branch Preflight
 
@@ -76,6 +82,15 @@ worktree:
 | Daily Execution Command V1      | `c20fdf92` | `feat: strengthen daily execution workflow` |
 | Crew Execution Visibility V1    | `16631580` | `feat: improve crew execution visibility`   |
 | Verification Field Execution V1 | `575a16d7` | `test: protect field execution workflow`    |
+
+## Merge Result
+
+| Stream                          | Main commit | Message                                     |
+| ------------------------------- | ----------- | ------------------------------------------- |
+| Field Handoff Packet V1         | `715af07d`  | `feat: deepen field handoff packet`         |
+| Daily Execution Command V1      | `627358c4`  | `feat: strengthen daily execution workflow` |
+| Crew Execution Visibility V1    | `980cfe5b`  | `feat: improve crew execution visibility`   |
+| Verification Field Execution V1 | `36e80505`  | `test: protect field execution workflow`    |
 
 ## Files Changed By Stream
 
@@ -323,13 +338,9 @@ after this wave merges, next options to consider are:
 
 ## Jeff Review Decision Options
 
-Jeff may choose one of:
+Jeff approved the controlled merge for this packet. Future actions still need
+separate approval:
 
-- Approve merge: authorize the controlled rebase, validation, and merge order
-  above.
-- Request correction: name the stream and issue to correct before merge.
-- Defer stream: hold one stream while allowing the rest to remain queued.
-- Continue to next wave: only after this wave is merged and a separate next-wave
-  approval is recorded.
-
-Jeff approval to merge is not granted by this packet.
+- Push `main`, if the completed merge and governance closeout should be shared.
+- Retire completed worktrees/branches through the approved cleanup flow.
+- Continue to a next wave only after a separate next-wave approval is recorded.
