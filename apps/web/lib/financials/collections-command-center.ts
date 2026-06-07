@@ -8,6 +8,14 @@ export type CollectionsCommandCenterTone = "neutral" | "attention" | "warning";
 
 export type CollectionsPriorityBand = "urgent" | "attention" | "monitoring";
 
+export type CollectionsAgingBand =
+  | "no_due_date"
+  | "not_due"
+  | "due_today"
+  | "past_due_1_30"
+  | "past_due_31_60"
+  | "past_due_60_plus";
+
 export type CollectionsPrioritySignal =
   | "failed_payment"
   | "voided_payment"
@@ -71,6 +79,8 @@ export type CollectionsPriorityItem = {
   reason: string;
   nextAction: string;
   dueSignal: string;
+  agingBand: CollectionsAgingBand;
+  readinessGuidance: string;
   lastActivityAt: string;
   latestPaymentEventType: string | null;
   latestPaymentSignal: CollectionsLatestPaymentSignal | null;
@@ -222,6 +232,35 @@ function getDueSignal(invoice: FinancialControlInvoiceInput, todayIso: string) {
   }
 
   return `Due in ${Math.abs(daysPastDue)} day${daysPastDue === -1 ? "" : "s"}`;
+}
+
+function getAgingBand(
+  invoice: FinancialControlInvoiceInput,
+  todayIso: string
+): CollectionsAgingBand {
+  const daysPastDue = getDaysPastDue(invoice, todayIso);
+
+  if (daysPastDue === null) {
+    return "no_due_date";
+  }
+
+  if (daysPastDue < 0) {
+    return "not_due";
+  }
+
+  if (daysPastDue === 0) {
+    return "due_today";
+  }
+
+  if (daysPastDue <= 30) {
+    return "past_due_1_30";
+  }
+
+  if (daysPastDue <= 60) {
+    return "past_due_31_60";
+  }
+
+  return "past_due_60_plus";
 }
 
 function latestForInvoice<T extends { invoiceId?: string | null }>(
@@ -483,6 +522,51 @@ function getNextAction(signals: CollectionsPrioritySignal[]) {
   return "Review invoice";
 }
 
+function getReadinessGuidance(input: {
+  signals: CollectionsPrioritySignal[];
+  agingBand: CollectionsAgingBand;
+}) {
+  if (
+    input.signals.includes("failed_payment") ||
+    input.signals.includes("voided_payment")
+  ) {
+    return "Payment Trail evidence should be reviewed before routine customer follow-up.";
+  }
+
+  if (
+    input.signals.includes("pending_checkout") ||
+    input.signals.includes("pending_payment")
+  ) {
+    return "Confirm whether the payment is still in progress or needs a new customer touch.";
+  }
+
+  if (input.signals.includes("unpaid_deposit")) {
+    return "Deposit balance should be resolved before treating the project as financially ready.";
+  }
+
+  if (input.agingBand === "past_due_60_plus") {
+    return "Escalate the oldest overdue balance with customer and project context visible.";
+  }
+
+  if (input.agingBand === "past_due_31_60") {
+    return "Prioritize follow-up before the balance reaches long-aged AR.";
+  }
+
+  if (input.agingBand === "past_due_1_30") {
+    return "Use normal overdue follow-up with the invoice and payment context attached.";
+  }
+
+  if (input.signals.includes("partially_paid")) {
+    return "Confirm the remaining balance after partial payment before the next collection touch.";
+  }
+
+  if (input.signals.includes("stale_activity")) {
+    return "Review stale activity before deciding whether a customer touch is needed.";
+  }
+
+  return "Monitor until due date, payment activity, or customer exposure changes priority.";
+}
+
 function getPriorityBand(input: {
   priorityScore: number;
   signals: CollectionsPrioritySignal[];
@@ -529,6 +613,7 @@ function buildPriorityItems(input: {
         (payment) => payment.createdAt ?? payment.paymentDate
       );
       const daysPastDue = getDaysPastDue(invoice, input.todayIso);
+      const agingBand = getAgingBand(invoice, input.todayIso);
       const lastActivityAt = getLatestActivity({
         invoice,
         payments: input.payments,
@@ -636,6 +721,8 @@ function buildPriorityItems(input: {
         reason: getPriorityReason(signals),
         nextAction: getNextAction(signals),
         dueSignal: getDueSignal(invoice, input.todayIso),
+        agingBand,
+        readinessGuidance: getReadinessGuidance({ signals, agingBand }),
         lastActivityAt: lastActivityAt || invoice.updatedAt,
         latestPaymentEventType: latestPaymentSignal?.eventType ?? null,
         latestPaymentSignal,

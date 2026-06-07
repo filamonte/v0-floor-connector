@@ -29,6 +29,10 @@ function formatStatusLabel(value: string) {
   return value.replaceAll("_", " ");
 }
 
+function formatCompactLabel(value: string) {
+  return value.replaceAll("_", " ");
+}
+
 function formatDateTime(value: string) {
   return new Intl.DateTimeFormat("en-US", {
     month: "short",
@@ -414,6 +418,12 @@ export default async function AccountsReceivablePage() {
                                       this open invoice yet.
                                     </p>
                                   )}
+                                  <p className="mt-2 text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
+                                    {formatCompactLabel(item.agingBand)}
+                                  </p>
+                                  <p className="mt-1 text-xs leading-5 text-slate-500">
+                                    {item.readinessGuidance}
+                                  </p>
                                 </div>
                                 <Link
                                   href={item.invoiceHref}
