@@ -91,12 +91,10 @@ Review packet:
 Portfolio recommendation:
 [docs/review-packets/next-portfolio-recommendation.md](C:/FloorConnector/docs/review-packets/next-portfolio-recommendation.md).
 
-Wave status: Approved / Not Started. Branches and worktrees have been created
-from the verified current `main` baseline; implementation has not started and
-requires a later explicit start command. This gate does not approve
-schema/migrations, provider/customer-facing actions, portal behavior changes,
-PRs, merges, cleanup, next-wave continuation, or work in dirty/out-of-scope
-worktrees.
+Wave status: Merged to `main`; worktrees and branches are retained pending
+explicit retirement approval. This merge does not approve schema/migrations,
+provider/customer-facing actions, portal behavior changes, PRs, cleanup,
+next-wave continuation, or work in dirty/out-of-scope worktrees.
 
 Approved stream set:
 
@@ -123,10 +121,10 @@ git diff --check
 git diff --cached --check
 ```
 
-Human review gate is satisfied for stream/worktree creation only. Agents may
-not start implementation, continue to another wave, perform schema/migration
-work, open PRs, merge, delete branches or worktrees, or use
-dirty/out-of-scope worktrees from this approval. Agents must not touch
+Human review gate is satisfied for the approved merge set only. Agents may not
+continue to another wave, perform schema/migration work, open PRs, delete
+branches or worktrees, or use dirty/out-of-scope worktrees from this approval.
+Agents must not touch
 `C:\FC-worktrees\project-next-actions` unless Jeff explicitly scopes it.
 
 ### field-quick-capture-v1
@@ -144,7 +142,7 @@ dirty/out-of-scope worktrees from this approval. Agents must not touch
 - Must avoid: new Daily Log model, new field-note model, new attachment model,
   offline sync, native mobile app, schema changes, migrations, portal behavior
   changes, and feature work before a later start command.
-- Status: Approved / Not Started.
+- Status: Merged to `main` as `d2e9e727`.
 
 ### closeout-readiness-command-v1
 
@@ -161,7 +159,7 @@ dirty/out-of-scope worktrees from this approval. Agents must not touch
 - Must avoid: duplicate invoice model, duplicate closeout model, new checklist
   schema, accounting replacement, dashboard sprawl, schema changes, migrations,
   autonomous billing, and feature work before a later start command.
-- Status: Approved / Not Started.
+- Status: Merged to `main` as `cea565d7`.
 
 ### field-communications-handoff-v1
 
@@ -179,7 +177,7 @@ dirty/out-of-scope worktrees from this approval. Agents must not touch
 - Must avoid: duplicate communications model, autonomous sends, AI-generated
   customer sends, portal-only communication copies, schema changes, migrations,
   dashboard sprawl, and feature work before a later start command.
-- Status: Approved / Not Started.
+- Status: Merged to `main` as `c18a8708`.
 
 ### verification-mobile-field-closeout-v1
 
@@ -198,7 +196,7 @@ dirty/out-of-scope worktrees from this approval. Agents must not touch
 - Must avoid: feature work, UI redesign, schema changes, migrations, loosening
   existing tests, and verification implementation before feature-stream
   evidence exists.
-- Status: Approved / Not Started.
+- Status: Merged to `main` as `916eb8be`.
 
 ## Field Execution Depth V1 Gate
 
@@ -496,10 +494,54 @@ Remaining gates:
 
 These streams have merged to `main`. Completed `field-execution-depth-v1`
 worktrees and eligible local branches were retired after explicit cleanup
-approval. Completed `sales-to-production-readiness-v1` worktrees are retained
-pending explicit retirement approval. Completed
+approval. Completed `mobile-field-capture-closeout-v1` and
+`sales-to-production-readiness-v1` worktrees are retained pending explicit
+retirement approval. Completed
 `operational-command-center-v1` worktrees and eligible branches were retired
 after explicit cleanup approval:
+
+### field-quick-capture-v1
+
+- Branch: `stream/field-quick-capture-v1`
+- Worktree: `C:\FC-worktrees\field-quick-capture-v1`
+- Owns: fast field capture inside existing field execution workflows.
+- Must avoid: new Daily Log model, new field-note model, new attachment model,
+  offline sync, native mobile app, schema changes, migrations, and portal
+  behavior changes.
+- Merged: `d2e9e727 feat: merge field quick capture v1`.
+- Cleanup: worktree and branch retained pending explicit retirement approval.
+
+### closeout-readiness-command-v1
+
+- Branch: `stream/closeout-readiness-command-v1`
+- Worktree: `C:\FC-worktrees\closeout-readiness-command-v1`
+- Owns: closeout readiness and billing handoff signals.
+- Must avoid: duplicate invoice model, duplicate closeout model, new checklist
+  schema, accounting replacement, dashboard sprawl, schema changes, migrations,
+  and autonomous billing.
+- Merged: `cea565d7 feat: merge closeout readiness command v1`.
+- Cleanup: worktree and branch retained pending explicit retirement approval.
+
+### field-communications-handoff-v1
+
+- Branch: `stream/field-communications-handoff-v1`
+- Worktree: `C:\FC-worktrees\field-communications-handoff-v1`
+- Owns: field-to-office communication handoff.
+- Must avoid: duplicate communications model, autonomous sends, AI-generated
+  customer sends, portal-only communication copies, schema changes, migrations,
+  and dashboard sprawl.
+- Merged: `c18a8708 feat: merge field communications handoff v1`.
+- Cleanup: worktree and branch retained pending explicit retirement approval.
+
+### verification-mobile-field-closeout-v1
+
+- Branch: `stream/verification-mobile-field-closeout-v1`
+- Worktree: `C:\FC-worktrees\verification-mobile-field-closeout-v1`
+- Owns: verification for mobile field capture and closeout boundaries.
+- Must avoid: feature work, UI redesign, schema changes, migrations, loosening
+  existing tests, and runtime behavior changes outside verification.
+- Merged: `916eb8be test: merge verification mobile field closeout v1`.
+- Cleanup: worktree and branch retained pending explicit retirement approval.
 
 ### field-handoff-packet-v1
 

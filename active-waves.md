@@ -119,23 +119,39 @@ closeout models, or dashboard sprawl.
 
 Gate status:
 
-| Gate item                              | Status       | Evidence / note                                                                                         |
-| -------------------------------------- | ------------ | ------------------------------------------------------------------------------------------------------- |
-| Architecture Coordination approval     | Approved     | Stream ownership, dependency map, non-goals, validation, verification, and merge order recorded.        |
-| Jeff approval gate                     | Approved     | Jeff explicitly approved `mobile-field-capture-closeout-v1` for stream/worktree creation.               |
-| Stream creation                        | Complete     | Four branches and worktrees were created from the verified current `main` baseline.                     |
-| Implementation start                   | Not approved | This task may create the approved streams and worktrees only; implementation requires a later command.  |
-| Human review gate                      | Required     | Future implementation, PRs, merge, cleanup, and next-wave continuation require separate human approval. |
-| Autonomous merge / indefinite continue | Not allowed  | No merge, PR, next wave, schema/migration work, or destructive cleanup is approved by this gate.        |
+| Gate item                              | Status      | Evidence / note                                                                                  |
+| -------------------------------------- | ----------- | ------------------------------------------------------------------------------------------------ |
+| Architecture Coordination approval     | Approved    | Stream ownership, dependency map, non-goals, validation, verification, and merge order recorded. |
+| Jeff approval gate                     | Approved    | Jeff explicitly approved `mobile-field-capture-closeout-v1` for stream/worktree creation.        |
+| Stream creation                        | Complete    | Four branches and worktrees were created from the verified current `main` baseline.              |
+| Implementation start                   | Completed   | The approved implementation and verification slices landed on `main`.                            |
+| Human review gate                      | Satisfied   | Jeff approved the controlled merge prompt; no PRs were opened.                                   |
+| Autonomous merge / indefinite continue | Not allowed | No merge, PR, next wave, schema/migration work, or destructive cleanup is approved by this gate. |
 
 Approved stream set:
 
-| Stream                                  | Ownership area                                | Mission                                                                                                | Status                 |
-| --------------------------------------- | --------------------------------------------- | ------------------------------------------------------------------------------------------------------ | ---------------------- |
-| `field-quick-capture-v1`                | Fast field capture                            | Make it faster for crews or supervisors to record useful field evidence and work status.               | Approved / Not Started |
-| `closeout-readiness-command-v1`         | Closeout readiness and billing handoff        | Make it clear when field work is complete enough to move toward closeout and billing readiness.        | Approved / Not Started |
-| `field-communications-handoff-v1`       | Field-to-office communication handoff         | Make field observations, blockers, and closeout signals easier for the office to understand and route. | Approved / Not Started |
-| `verification-mobile-field-closeout-v1` | Verification for mobile field/closeout bounds | Protect canonical daily logs, field notes, execution attachments, jobs/schedule, and ownership rules.  | Approved / Not Started |
+| Stream                                  | Ownership area                                | Mission                                                                                                | Status |
+| --------------------------------------- | --------------------------------------------- | ------------------------------------------------------------------------------------------------------ | ------ |
+| `field-quick-capture-v1`                | Fast field capture                            | Make it faster for crews or supervisors to record useful field evidence and work status.               | Merged |
+| `closeout-readiness-command-v1`         | Closeout readiness and billing handoff        | Make it clear when field work is complete enough to move toward closeout and billing readiness.        | Merged |
+| `field-communications-handoff-v1`       | Field-to-office communication handoff         | Make field observations, blockers, and closeout signals easier for the office to understand and route. | Merged |
+| `verification-mobile-field-closeout-v1` | Verification for mobile field/closeout bounds | Protect canonical daily logs, field notes, execution attachments, jobs/schedule, and ownership rules.  | Merged |
+
+Merge result:
+
+- Field Quick Capture V1 merged to `main` as `d2e9e727`.
+- Closeout Readiness Command V1 merged to `main` as `cea565d7`.
+- Field Communications Handoff V1 merged to `main` as `c18a8708`.
+- Verification Mobile Field Closeout V1 merged to `main` as `916eb8be`.
+
+Post-merge validation passed: targeted mobile field closeout, field handoff,
+assigned work, dispatch board, daily-log, field-note, field execution,
+operational ownership, and golden workflow tests; typecheck; lint;
+`pnpm.cmd fc:preflight:fast`; and `git diff --check`.
+
+Wave status: Merged to `main`; completed wave worktrees and branches are
+retained pending explicit retirement approval. No next wave is approved by this
+merge.
 
 Approved stream branches:
 

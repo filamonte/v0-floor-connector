@@ -1,6 +1,6 @@
 # Mobile Field Capture Closeout V1 Review Packet
 
-Status: Review packet complete; Jeff approval not granted.
+Status: Jeff approved; controlled merge complete.
 
 Date: 2026-06-07
 Base branch reviewed: `main`
@@ -8,13 +8,13 @@ Reviewed against: `origin/main`
 
 ## Executive Summary
 
-`mobile-field-capture-closeout-v1` is merge-ready as a sequenced wave, pending Jeff's decision. The four stream worktrees exist, are clean, are ahead of `origin/main`, are not behind `origin/main`, and each requested committed slice is present.
+`mobile-field-capture-closeout-v1` was approved by Jeff and merged to `main` in the verified dependency order. The four stream worktrees existed, were clean, matched the approved heads, and had no schema or migration drift before merge.
 
 The reviewed work keeps the mobile field closeout workflow on canonical records:
 
 Field Work -> Evidence -> Closeout Readiness -> Billing Readiness
 
-No merge, rebase, pull request, schema change, migration change, production-code edit from `main`, or next-wave launch was performed during this review. `C:\FC-worktrees\project-next-actions` was not touched.
+No rebase, pull request, schema change, migration change, next-wave launch, worktree deletion, or branch deletion was performed during integration. `C:\FC-worktrees\project-next-actions` was not touched.
 
 ## Streams Completed
 
@@ -33,6 +33,15 @@ No merge, rebase, pull request, schema change, migration change, production-code
 | Closeout Readiness Command V1         | `9e86d9b1 feat: clarify closeout readiness command`     |
 | Field Communications Handoff V1       | `00ba7185 feat: connect field communications handoff`   |
 | Verification Mobile Field Closeout V1 | `4f44e37c test: protect mobile field closeout workflow` |
+
+## Merge Results
+
+| Stream                                | Merge commit                                                 |
+| ------------------------------------- | ------------------------------------------------------------ |
+| Field Quick Capture V1                | `d2e9e727 feat: merge field quick capture v1`                |
+| Closeout Readiness Command V1         | `cea565d7 feat: merge closeout readiness command v1`         |
+| Field Communications Handoff V1       | `c18a8708 feat: merge field communications handoff v1`       |
+| Verification Mobile Field Closeout V1 | `916eb8be test: merge verification mobile field closeout v1` |
 
 ## Files Changed By Stream
 
@@ -123,17 +132,22 @@ Stream validation previously recorded in the completed stream work:
 - Field Communications Handoff V1: focused communications/closeout/read-model tests, typecheck, lint, `fc:preflight:fast`, and diff checks passed.
 - Verification Mobile Field Closeout V1: focused mobile-field-closeout verification plus field tests, typecheck, lint, `fc:preflight:fast`, and diff checks passed.
 
-Review-packet validation is recorded in the final report for this task.
+Controlled merge validation:
+
+- After each stream merge: `pnpm.cmd --filter @floorconnector/web typecheck`, `pnpm.cmd --filter @floorconnector/web lint`, `pnpm.cmd fc:preflight:fast`, and `git diff --check` passed.
+- Final targeted tests passed: field handoff, assigned work, dispatch board, daily-log, field-note, field execution verification, mobile field closeout verification, operational ownership, and golden workflow checks.
+- Final validation passed: `pnpm.cmd --filter @floorconnector/web typecheck`, `pnpm.cmd --filter @floorconnector/web lint`, `pnpm.cmd fc:preflight:fast`, and `git diff --check`.
 
 ## Governance Review
 
-- Scope stayed review-packet and merge-readiness only.
-- No merge was performed.
+- Scope stayed controlled integration and governance closeout only.
+- Controlled merge was performed after Jeff approval.
 - No pull request was opened.
 - No new wave was started.
 - No rebase was performed.
+- No worktree or branch cleanup was performed.
 - No schema or migration files changed in the reviewed streams.
-- No production code was modified from `main` during this review task.
+- Production code changed only through the approved stream merges.
 - `C:\FC-worktrees\project-next-actions` was not touched.
 
 ## Ownership Review
@@ -190,10 +204,9 @@ The streams are cumulative, so merging them out of order would create avoidable 
 
 ## Risks And Follow-Ups
 
-- The stream branches appear local in the checked worktrees; publish or merge them through the approved local process only after Jeff approval.
-- Browser route smoke was not rerun as part of this review-packet task; run it if Jeff wants UI proof immediately before merge.
-- Main registry docs still reflect the approved wave state from launch; update operational registries after Jeff's merge decision.
-- Keep the merge sequence strict because later streams include earlier stream changes.
+- Completed stream worktrees and branches are retained pending explicit retirement approval.
+- Browser route smoke was not rerun as part of the controlled merge task; use a separately scoped smoke pass if Jeff wants UI proof after merge.
+- No next wave is approved by this merge.
 
 ## Next Recommended Wave Options
 
@@ -207,7 +220,7 @@ These are options for Jeff's next decision, not approvals:
 
 ## Jeff Decision Options
 
-- Approve merge.
-- Request correction.
-- Defer stream.
-- Continue to next wave.
+- Approve merge: completed.
+- Request correction: not selected.
+- Defer stream: not selected.
+- Continue to next wave: not selected; requires separate approval.

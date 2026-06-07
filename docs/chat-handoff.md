@@ -64,17 +64,19 @@ Work -> Verification -> Integration Review Packet -> Jeff Approval -> Continue.
 Agents may prepare scoped work and review packets, but may not auto-merge,
 auto-continue, or bypass Jeff approval.
 
-Current wave gate note: `mobile-field-capture-closeout-v1` is approved for
-stream/worktree creation only. Jeff explicitly approved the wave on 2026-06-07,
-and the four branches/worktrees were created from the verified current `main`
-baseline: `field-quick-capture-v1`, `closeout-readiness-command-v1`,
-`field-communications-handoff-v1`, and
-`verification-mobile-field-closeout-v1`. Implementation has not started. A
-later explicit start command is required before feature work. Verification must
-run last after implementation stream commits exist. This approval does not
-authorize schema/migrations, provider/customer-facing actions, portal behavior
-changes, PRs, merges, cleanup, next-wave continuation, or work in
-`C:\FC-worktrees\project-next-actions`.
+Current wave gate note: `mobile-field-capture-closeout-v1` has merged to
+`main` under Jeff's controlled merge approval. Field Quick Capture V1 merged as
+`d2e9e727`, Closeout Readiness Command V1 merged as `cea565d7`, Field
+Communications Handoff V1 merged as `c18a8708`, and Verification Mobile Field
+Closeout V1 merged as `916eb8be`. Post-merge targeted mobile field closeout,
+field handoff, assigned work, dispatch board, daily-log, field-note, field
+execution, operational ownership, and golden workflow tests passed, along with
+typecheck, lint, `pnpm.cmd fc:preflight:fast`, and `git diff --check`. The
+four completed wave worktrees and branches are retained pending explicit
+retirement approval. The dirty out-of-scope
+`C:\FC-worktrees\project-next-actions` worktree was preserved untouched. The
+next wave is not approved from this handoff; agents may not auto-continue
+without Jeff approval.
 
 Current wave gate note: `operational-command-center-v1` has merged to `main`
 under Jeff's controlled merge approval. Project Workspace V2 merged as
