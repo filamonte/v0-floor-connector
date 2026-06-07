@@ -74,6 +74,132 @@ scripts, implement scripts, open a PR, or begin runtime/tooling changes until
 Architecture Coordination and Jeff approve stream creation and implementation
 start.
 
+## Mobile Field Capture Closeout V1 Gate
+
+Gate date: 2026-06-07.
+
+Wave name: `mobile-field-capture-closeout-v1`.
+
+Architecture Coordination approval: Approved.
+
+Jeff approval gate: Approved. Jeff explicitly approved stream/worktree creation
+for `mobile-field-capture-closeout-v1`.
+
+Review packet:
+[docs/review-packets/mobile-field-capture-closeout-v1-plan.md](C:/FloorConnector/docs/review-packets/mobile-field-capture-closeout-v1-plan.md).
+
+Portfolio recommendation:
+[docs/review-packets/next-portfolio-recommendation.md](C:/FloorConnector/docs/review-packets/next-portfolio-recommendation.md).
+
+Wave status: Approved / Not Started. Branches and worktrees have been created
+from the verified current `main` baseline; implementation has not started and
+requires a later explicit start command. This gate does not approve
+schema/migrations, provider/customer-facing actions, portal behavior changes,
+PRs, merges, cleanup, next-wave continuation, or work in dirty/out-of-scope
+worktrees.
+
+Approved stream set:
+
+- `stream/field-quick-capture-v1`
+- `stream/closeout-readiness-command-v1`
+- `stream/field-communications-handoff-v1`
+- `stream/verification-mobile-field-closeout-v1`
+
+Required future startup checks:
+
+```powershell
+pnpm.cmd worktree:doctor
+pnpm.cmd tooling:baseline -CommandsOnly
+```
+
+Implementation streams should also run focused tests for changed helpers,
+read-models, actions, or routes, then:
+
+```powershell
+pnpm.cmd --filter @floorconnector/web typecheck
+pnpm.cmd --filter @floorconnector/web lint
+pnpm.cmd fc:preflight:fast
+git diff --check
+git diff --cached --check
+```
+
+Human review gate is satisfied for stream/worktree creation only. Agents may
+not start implementation, continue to another wave, perform schema/migration
+work, open PRs, merge, delete branches or worktrees, or use
+dirty/out-of-scope worktrees from this approval. Agents must not touch
+`C:\FC-worktrees\project-next-actions` unless Jeff explicitly scopes it.
+
+### field-quick-capture-v1
+
+- Branch: `stream/field-quick-capture-v1`
+- Worktree: `C:\FC-worktrees\field-quick-capture-v1`
+- Owns: fast field capture inside existing field execution workflows.
+- Mission: make it faster for crews or supervisors to record useful field
+  evidence and work status.
+- Future allowed work, not now: improve quick Daily Log visibility, quick
+  field-note capture, blocker/issue capture using existing field notes,
+  photo/file evidence visibility using existing execution attachments,
+  mobile-friendly layout improvements where safe, and "what happened today?"
+  capture flow.
+- Must avoid: new Daily Log model, new field-note model, new attachment model,
+  offline sync, native mobile app, schema changes, migrations, portal behavior
+  changes, and feature work before a later start command.
+- Status: Approved / Not Started.
+
+### closeout-readiness-command-v1
+
+- Branch: `stream/closeout-readiness-command-v1`
+- Worktree: `C:\FC-worktrees\closeout-readiness-command-v1`
+- Owns: closeout readiness and billing handoff signals.
+- Mission: make it clear when field work is complete enough to move toward
+  closeout and billing readiness.
+- Future allowed work, not now: improve closeout readiness visibility, missing
+  Daily Log / field-note / photo evidence signals, incomplete or unresolved
+  blocker signals, project/job completion handoff clarity, links from
+  Field/Project into invoice/billing readiness where appropriate, and office
+  "ready to bill?" awareness without duplicating Financials.
+- Must avoid: duplicate invoice model, duplicate closeout model, new checklist
+  schema, accounting replacement, dashboard sprawl, schema changes, migrations,
+  autonomous billing, and feature work before a later start command.
+- Status: Approved / Not Started.
+
+### field-communications-handoff-v1
+
+- Branch: `stream/field-communications-handoff-v1`
+- Worktree: `C:\FC-worktrees\field-communications-handoff-v1`
+- Owns: field-to-office communication handoff.
+- Mission: make field observations, blockers, and closeout signals easier for
+  the office to understand and route without turning Field into
+  Communications.
+- Future allowed work, not now: improve links from field notes/blockers to
+  Communications context, office attention signals from field execution,
+  compact handoff evidence on field/project surfaces, communication-safe
+  escalation paths, and clearer boundaries between Field evidence and
+  Communications action.
+- Must avoid: duplicate communications model, autonomous sends, AI-generated
+  customer sends, portal-only communication copies, schema changes, migrations,
+  dashboard sprawl, and feature work before a later start command.
+- Status: Approved / Not Started.
+
+### verification-mobile-field-closeout-v1
+
+- Branch: `stream/verification-mobile-field-closeout-v1`
+- Worktree: `C:\FC-worktrees\verification-mobile-field-closeout-v1`
+- Owns: verification for mobile field capture and closeout boundaries.
+- Mission: protect mobile field capture and closeout boundaries.
+- Future allowed work, not now: add focused verification helpers/tests/docs
+  after implementation streams complete.
+- Must protect: canonical Daily Logs, canonical field notes, canonical
+  execution attachments, canonical jobs/schedule, no duplicate closeout model,
+  no duplicate issue or punch-list model, no dashboard sprawl, Field owns
+  execution capture, Project diagnoses, Communications owns conversation
+  action, Financials owns billing/collection action, Portal remains
+  customer-safe, and no schema/migration drift.
+- Must avoid: feature work, UI redesign, schema changes, migrations, loosening
+  existing tests, and verification implementation before feature-stream
+  evidence exists.
+- Status: Approved / Not Started.
+
 ## Field Execution Depth V1 Gate
 
 Gate date: 2026-06-06.

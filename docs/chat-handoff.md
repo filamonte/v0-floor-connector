@@ -64,6 +64,18 @@ Work -> Verification -> Integration Review Packet -> Jeff Approval -> Continue.
 Agents may prepare scoped work and review packets, but may not auto-merge,
 auto-continue, or bypass Jeff approval.
 
+Current wave gate note: `mobile-field-capture-closeout-v1` is approved for
+stream/worktree creation only. Jeff explicitly approved the wave on 2026-06-07,
+and the four branches/worktrees were created from the verified current `main`
+baseline: `field-quick-capture-v1`, `closeout-readiness-command-v1`,
+`field-communications-handoff-v1`, and
+`verification-mobile-field-closeout-v1`. Implementation has not started. A
+later explicit start command is required before feature work. Verification must
+run last after implementation stream commits exist. This approval does not
+authorize schema/migrations, provider/customer-facing actions, portal behavior
+changes, PRs, merges, cleanup, next-wave continuation, or work in
+`C:\FC-worktrees\project-next-actions`.
+
 Current wave gate note: `operational-command-center-v1` has merged to `main`
 under Jeff's controlled merge approval. Project Workspace V2 merged as
 `c809186c`, Field Command Center V1 was already on `main` as `6df16ed1`,

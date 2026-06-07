@@ -101,6 +101,94 @@ packets from this registry. Agents may not begin a new wave, create active
 streams, continue to the next wave, or merge without Architecture Coordination
 approval and Jeff review.
 
+## Mobile Field Capture Closeout V1 Approval Gate
+
+Gate date: 2026-06-07.
+
+Wave name: `mobile-field-capture-closeout-v1`.
+
+Review packet:
+[docs/review-packets/mobile-field-capture-closeout-v1-plan.md](C:/FloorConnector/docs/review-packets/mobile-field-capture-closeout-v1-plan.md).
+
+Portfolio recommendation:
+[docs/review-packets/next-portfolio-recommendation.md](C:/FloorConnector/docs/review-packets/next-portfolio-recommendation.md).
+
+Wave goal: make field capture and closeout easier without creating duplicate
+field systems, duplicate issue models, duplicate punch-list models, duplicate
+closeout models, or dashboard sprawl.
+
+Gate status:
+
+| Gate item                              | Status       | Evidence / note                                                                                         |
+| -------------------------------------- | ------------ | ------------------------------------------------------------------------------------------------------- |
+| Architecture Coordination approval     | Approved     | Stream ownership, dependency map, non-goals, validation, verification, and merge order recorded.        |
+| Jeff approval gate                     | Approved     | Jeff explicitly approved `mobile-field-capture-closeout-v1` for stream/worktree creation.               |
+| Stream creation                        | Complete     | Four branches and worktrees were created from the verified current `main` baseline.                     |
+| Implementation start                   | Not approved | This task may create the approved streams and worktrees only; implementation requires a later command.  |
+| Human review gate                      | Required     | Future implementation, PRs, merge, cleanup, and next-wave continuation require separate human approval. |
+| Autonomous merge / indefinite continue | Not allowed  | No merge, PR, next wave, schema/migration work, or destructive cleanup is approved by this gate.        |
+
+Approved stream set:
+
+| Stream                                  | Ownership area                                | Mission                                                                                                | Status                 |
+| --------------------------------------- | --------------------------------------------- | ------------------------------------------------------------------------------------------------------ | ---------------------- |
+| `field-quick-capture-v1`                | Fast field capture                            | Make it faster for crews or supervisors to record useful field evidence and work status.               | Approved / Not Started |
+| `closeout-readiness-command-v1`         | Closeout readiness and billing handoff        | Make it clear when field work is complete enough to move toward closeout and billing readiness.        | Approved / Not Started |
+| `field-communications-handoff-v1`       | Field-to-office communication handoff         | Make field observations, blockers, and closeout signals easier for the office to understand and route. | Approved / Not Started |
+| `verification-mobile-field-closeout-v1` | Verification for mobile field/closeout bounds | Protect canonical daily logs, field notes, execution attachments, jobs/schedule, and ownership rules.  | Approved / Not Started |
+
+Approved stream branches:
+
+- `stream/field-quick-capture-v1`
+- `stream/closeout-readiness-command-v1`
+- `stream/field-communications-handoff-v1`
+- `stream/verification-mobile-field-closeout-v1`
+
+Approved worktrees:
+
+- `C:\FC-worktrees\field-quick-capture-v1`
+- `C:\FC-worktrees\closeout-readiness-command-v1`
+- `C:\FC-worktrees\field-communications-handoff-v1`
+- `C:\FC-worktrees\verification-mobile-field-closeout-v1`
+
+Dependency and merge order:
+
+1. `field-quick-capture-v1`
+2. `closeout-readiness-command-v1`
+3. `field-communications-handoff-v1`
+4. `verification-mobile-field-closeout-v1`
+
+Verification must run last after implementation stream commits exist.
+
+Shared non-goals:
+
+- no implementation from this approval task;
+- no schema or migration work unless a later prompt explicitly approves it;
+- no duplicate Daily Log, field note, attachment, closeout, issue, punch-list,
+  invoice, communication, or dashboard model;
+- no offline sync, native mobile app, autonomous billing, autonomous sends,
+  provider/customer-facing action, portal behavior change, PR, merge, or next
+  wave;
+- no work in dirty/out-of-scope worktrees, including
+  `C:\FC-worktrees\project-next-actions`.
+
+Required future stream startup checks:
+
+```powershell
+pnpm.cmd worktree:doctor
+pnpm.cmd tooling:baseline -CommandsOnly
+```
+
+Required implementation validation unless a later prompt narrows scope:
+
+```powershell
+pnpm.cmd --filter @floorconnector/web typecheck
+pnpm.cmd --filter @floorconnector/web lint
+pnpm.cmd fc:preflight:fast
+git diff --check
+git diff --cached --check
+```
+
 ## Field Execution Depth V1 Approval Gate
 
 Gate date: 2026-06-06.
