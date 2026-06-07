@@ -290,6 +290,28 @@ function OperationsReportingWorkspace({
         description="Read-only visibility across projects, CrewBoard, FieldTrail, MessageCenter, billing, and closeout proof."
       >
         <div className="space-y-4 p-4">
+          <div>
+            <div className="mb-2 flex items-end justify-between gap-3">
+              <div>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#666666]">
+                  Owner review
+                </p>
+                <p className="mt-1 text-xs text-slate-500">
+                  Ready, blocked, slipping, and cash pressure signals route back
+                  to the owning workspace for action.
+                </p>
+              </div>
+              <Link
+                href="/dashboard"
+                className="shrink-0 text-xs font-semibold text-[#334155] underline-offset-4 hover:underline"
+              >
+                Dashboard priorities
+              </Link>
+            </div>
+            <ReportMetricGrid
+              metrics={summary.ownerSummary.operatingSnapshot}
+            />
+          </div>
           <ReportMetricGrid metrics={summary.metrics} />
           <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
             {[
@@ -342,6 +364,14 @@ function OperationsReportingWorkspace({
           </div>
         </div>
       </ReportSection>
+
+      <AttentionList
+        title="Owner review queue"
+        description="The highest-priority source-record items for owner review. Reports summarize; the linked workspace owns the action."
+        items={summary.ownerSummary.reviewItems}
+        emptyTitle="No owner review items are visible."
+        emptyDescription="This queue stays empty until source records create readiness, field, signature, receivable, or scheduling pressure."
+      />
 
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         {summary.continuitySections.map((section) => (
