@@ -201,6 +201,11 @@ Wave status: Merged to `main`; completed wave worktrees and eligible local
 branches are retained pending explicit cleanup approval. No next wave is
 approved by this merge.
 
+Cleanup plan:
+[docs/review-packets/owner-operations-reporting-v1-cleanup-plan.md](C:/FloorConnector/docs/review-packets/owner-operations-reporting-v1-cleanup-plan.md).
+Cleanup is planned only; no worktree or branch retirement is approved until a
+later explicit cleanup execution approval.
+
 Shared guardrails:
 
 - Reports summarizes, explains, and routes; it does not own operating action.

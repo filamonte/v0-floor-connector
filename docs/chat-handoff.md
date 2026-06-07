@@ -102,10 +102,12 @@ reporting, labor field management snapshot, portfolio risk exceptions, owner
 operations verification, golden workflow, and operational ownership tests
 passed, along with typecheck, lint, `pnpm.cmd fc:preflight:fast`, and
 `git diff --check`. The five completed wave worktrees and eligible local
-branches are retained pending explicit retirement approval. The next wave is
-not approved from this merge; agents may not auto-continue, perform
-schema/migration work, change provider behavior, or perform cleanup without
-Jeff approval.
+branches are retained pending explicit retirement approval. Cleanup planning is
+recorded at
+[docs/review-packets/owner-operations-reporting-v1-cleanup-plan.md](C:/FloorConnector/docs/review-packets/owner-operations-reporting-v1-cleanup-plan.md);
+no cleanup execution is approved yet. The next wave is not approved from this
+merge or cleanup plan; agents may not auto-continue, perform schema/migration
+work, change provider behavior, or perform cleanup without Jeff approval.
 
 Current wave gate note: `mobile-field-capture-closeout-v1` has merged to
 `main` under Jeff's controlled merge approval. Field Quick Capture V1 merged as

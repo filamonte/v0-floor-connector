@@ -118,6 +118,11 @@ schema/migration work, provider changes, BI/accounting replacement behavior,
 PRs, cleanup, next-wave continuation, autonomous actions, or customer-facing
 sends.
 
+Cleanup plan:
+[docs/review-packets/owner-operations-reporting-v1-cleanup-plan.md](C:/FloorConnector/docs/review-packets/owner-operations-reporting-v1-cleanup-plan.md).
+Cleanup is planned only; no worktree or branch retirement is approved until a
+later explicit cleanup execution approval.
+
 Approved stream set:
 
 - `stream/owner-operations-summary-v1`
