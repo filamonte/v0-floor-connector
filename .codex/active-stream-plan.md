@@ -113,15 +113,15 @@ Review packets:
 - [docs/review-packets/owner-operations-reporting-v1.md](C:/FloorConnector/docs/review-packets/owner-operations-reporting-v1.md)
 
 Wave status: Merged to `main`; completed worktrees and eligible local branches
-are retained pending explicit cleanup approval. This merge does not approve
+were retired after explicit cleanup approval. This cleanup does not approve
 schema/migration work, provider changes, BI/accounting replacement behavior,
-PRs, cleanup, next-wave continuation, autonomous actions, or customer-facing
-sends.
+PRs, next-wave continuation, additional destructive cleanup, autonomous
+actions, or customer-facing sends.
 
 Cleanup plan:
 [docs/review-packets/owner-operations-reporting-v1-cleanup-plan.md](C:/FloorConnector/docs/review-packets/owner-operations-reporting-v1-cleanup-plan.md).
-Cleanup is planned only; no worktree or branch retirement is approved until a
-later explicit cleanup execution approval.
+Cleanup completed for the five approved owner operations reporting worktrees
+and eligible local branches. No matching remote branches existed.
 
 Approved stream set:
 
@@ -194,7 +194,8 @@ ownership tests; typecheck; lint; `pnpm.cmd fc:preflight:fast`; and
 - Forbidden: dashboard replacement, new reporting persistence, action ownership
   migration into Reports, schemas, and migrations.
 - Suggested commit: `feat: add owner operations summary`
-- Status: Merged to `main` as `1181cdf5`; cleanup pending explicit approval.
+- Status: Merged to `main` as `1181cdf5`; worktree removed and local branch
+  deleted after explicit cleanup approval.
 
 ### execution-to-cash-reporting-v1
 
@@ -209,7 +210,8 @@ ownership tests; typecheck; lint; `pnpm.cmd fc:preflight:fast`; and
 - Forbidden: accounting replacement, invoice/payment mutation, duplicate AR
   model, provider/gateway behavior changes, schemas, and migrations.
 - Suggested commit: `feat: add execution to cash reporting`
-- Status: Merged to `main` as `f4c3b5cc`; cleanup pending explicit approval.
+- Status: Merged to `main` as `f4c3b5cc`; worktree removed and local branch
+  deleted after explicit cleanup approval.
 
 ### labor-field-management-snapshot-v1
 
@@ -223,7 +225,8 @@ ownership tests; typecheck; lint; `pnpm.cmd fc:preflight:fast`; and
 - Forbidden: payroll, route optimization, duplicate crew/time-card/schedule/
   field models, schemas, and migrations.
 - Suggested commit: `feat: add labor field management snapshot`
-- Status: Merged to `main` as `f4b16512`; cleanup pending explicit approval.
+- Status: Merged to `main` as `f4b16512`; worktree removed and local branch
+  deleted after explicit cleanup approval.
 
 ### portfolio-risk-exceptions-v1
 
@@ -237,7 +240,8 @@ ownership tests; typecheck; lint; `pnpm.cmd fc:preflight:fast`; and
 - Forbidden: autonomous decisions, AI action layer, duplicate task/workflow/
   risk/exception models, schemas, and migrations.
 - Suggested commit: `feat: add portfolio risk exceptions`
-- Status: Merged to `main` as `791156ee`; cleanup pending explicit approval.
+- Status: Merged to `main` as `791156ee`; worktree removed and local branch
+  deleted after explicit cleanup approval.
 
 ### verification-owner-operations-reporting-v1
 
@@ -250,7 +254,8 @@ ownership tests; typecheck; lint; `pnpm.cmd fc:preflight:fast`; and
 - Forbidden: feature work, UI redesign, schemas, migrations, and loosening
   existing checks.
 - Suggested commit: `test: protect owner operations reporting`
-- Status: Merged to `main` as `e0c3119d`; cleanup pending explicit approval.
+- Status: Merged to `main` as `e0c3119d`; worktree removed and local branch
+  deleted after explicit cleanup approval.
 
 ## Financial Closeout Collections V1 Gate
 

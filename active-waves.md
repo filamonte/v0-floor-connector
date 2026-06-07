@@ -144,18 +144,18 @@ Gate status:
 | Stream creation                        | Complete    | Five branches and worktrees were created from the verified current `main` baseline.                    |
 | Implementation start                   | Completed   | The approved implementation and verification slices landed on `main`.                                  |
 | Human review gate                      | Satisfied   | Jeff approved the controlled merge prompt; no PRs were opened.                                         |
-| Cleanup                                | Not started | No worktree or branch retirement is approved.                                                          |
+| Cleanup                                | Completed   | Jeff explicitly approved cleanup; completed worktrees and eligible local branches were retired.        |
 | Autonomous merge / indefinite continue | Not allowed | No next wave, PR, schema/migration work, provider work, cleanup, or autonomous action work is allowed. |
 
 Approved stream set:
 
-| Stream                                       | Ownership area                    | Mission                                                                  | Status |
-| -------------------------------------------- | --------------------------------- | ------------------------------------------------------------------------ | ------ |
-| `owner-operations-summary-v1`                | Reports / owner operating review  | Summarize owner-level operating health and route action to owning areas. | Merged |
-| `execution-to-cash-reporting-v1`             | Reports with Field and Financials | Show continuity from completed work through invoice, payment, and cash.  | Merged |
-| `labor-field-management-snapshot-v1`         | Reports with Field / People       | Summarize crew, active work, blocked execution, and field evidence.      | Merged |
-| `portfolio-risk-exceptions-v1`               | Reports / owner exception review  | Surface cross-portfolio risks and exceptions without owning action.      | Merged |
-| `verification-owner-operations-reporting-v1` | Verification                      | Protect canonical records, ownership boundaries, and no schema drift.    | Merged |
+| Stream                                       | Ownership area                    | Mission                                                                  | Status  |
+| -------------------------------------------- | --------------------------------- | ------------------------------------------------------------------------ | ------- |
+| `owner-operations-summary-v1`                | Reports / owner operating review  | Summarize owner-level operating health and route action to owning areas. | Retired |
+| `execution-to-cash-reporting-v1`             | Reports with Field and Financials | Show continuity from completed work through invoice, payment, and cash.  | Retired |
+| `labor-field-management-snapshot-v1`         | Reports with Field / People       | Summarize crew, active work, blocked execution, and field evidence.      | Retired |
+| `portfolio-risk-exceptions-v1`               | Reports / owner exception review  | Surface cross-portfolio risks and exceptions without owning action.      | Retired |
+| `verification-owner-operations-reporting-v1` | Verification                      | Protect canonical records, ownership boundaries, and no schema drift.    | Retired |
 
 Approved stream branches:
 
@@ -198,13 +198,13 @@ ownership tests; typecheck; lint; `pnpm.cmd fc:preflight:fast`; and
 `git diff --check`.
 
 Wave status: Merged to `main`; completed wave worktrees and eligible local
-branches are retained pending explicit cleanup approval. No next wave is
-approved by this merge.
+branches were retired after explicit cleanup approval. No next wave is approved
+by this cleanup.
 
 Cleanup plan:
 [docs/review-packets/owner-operations-reporting-v1-cleanup-plan.md](C:/FloorConnector/docs/review-packets/owner-operations-reporting-v1-cleanup-plan.md).
-Cleanup is planned only; no worktree or branch retirement is approved until a
-later explicit cleanup execution approval.
+Cleanup completed for the five approved owner operations reporting worktrees
+and eligible local branches. No matching remote branches existed.
 
 Shared guardrails:
 
