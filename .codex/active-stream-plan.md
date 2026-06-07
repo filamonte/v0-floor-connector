@@ -74,6 +74,119 @@ scripts, implement scripts, open a PR, or begin runtime/tooling changes until
 Architecture Coordination and Jeff approve stream creation and implementation
 start.
 
+## Customer Portal Trust V1 Gate
+
+Gate date: 2026-06-07.
+
+Wave name: `customer-portal-trust-v1`.
+
+Architecture Coordination approval: Approved.
+
+Jeff approval gate: Approved. Jeff explicitly approved stream/worktree creation
+for `customer-portal-trust-v1`.
+
+Review packet:
+[docs/review-packets/customer-portal-trust-v1-plan.md](C:/FloorConnector/docs/review-packets/customer-portal-trust-v1-plan.md).
+
+Portfolio recommendation:
+[docs/review-packets/next-portfolio-recommendation.md](C:/FloorConnector/docs/review-packets/next-portfolio-recommendation.md).
+
+Wave status: Approved / Not Started. Four worktrees and branches may exist for
+later explicit start commands. This gate does not approve implementation,
+schema/migrations, provider/customer-facing actions, autonomous messaging,
+financial mutation, PRs, merge, next-wave continuation, destructive cleanup, or
+work in dirty/out-of-scope worktrees.
+
+Approved stream set:
+
+- `stream/portal-project-clarity-v1`
+- `stream/portal-financial-visibility-v1`
+- `stream/portal-communication-trust-v1`
+- `stream/verification-customer-portal-v1`
+
+Required future startup checks:
+
+```powershell
+pnpm.cmd worktree:doctor
+pnpm.cmd tooling:baseline -CommandsOnly
+```
+
+Implementation streams should also run focused tests for changed helpers,
+read-models, actions, or routes, then:
+
+```powershell
+pnpm.cmd --filter @floorconnector/web typecheck
+pnpm.cmd --filter @floorconnector/web lint
+pnpm.cmd fc:preflight:fast
+git diff --check
+git diff --cached --check
+```
+
+Human review gate is not satisfied for implementation or merge. Agents may not
+continue into feature work, perform schema/migration work, open PRs, delete
+branches or worktrees, or use dirty/out-of-scope worktrees from this approval.
+Agents must not touch `C:\FC-worktrees\project-next-actions` unless Jeff
+explicitly scopes it.
+
+### portal-project-clarity-v1
+
+- Branch: `stream/portal-project-clarity-v1`
+- Worktree: `C:\FC-worktrees\portal-project-clarity-v1`
+- Owns: customer project understanding.
+- Mission: make project status easier for customers to understand.
+- Future allowed work, not now: customer-safe project progress, next-step
+  visibility, waiting/completed state, readiness explanations, timeline
+  clarity, and project stage understanding over canonical project records.
+- Must avoid: duplicate project models, contractor-only operational state,
+  portal workflow engines, schema changes, migrations, and feature work before
+  a later start command.
+- Status: Approved / Not Started.
+
+### portal-financial-visibility-v1
+
+- Branch: `stream/portal-financial-visibility-v1`
+- Worktree: `C:\FC-worktrees\portal-financial-visibility-v1`
+- Owns: customer financial understanding.
+- Mission: make invoices, payments, balances, and billing status easier for
+  customers to understand.
+- Future allowed work, not now: invoice clarity, payment clarity, outstanding
+  balance visibility, payment history visibility, and billing readiness
+  explanations over canonical invoices, payments, and payment events.
+- Must avoid: accounting replacement, duplicate invoice models, duplicate
+  payment models, financial math changes, payment mutation, schema changes,
+  migrations, and feature work before a later start command.
+- Status: Approved / Not Started.
+
+### portal-communication-trust-v1
+
+- Branch: `stream/portal-communication-trust-v1`
+- Worktree: `C:\FC-worktrees\portal-communication-trust-v1`
+- Owns: customer communication confidence.
+- Mission: help customers understand communication history and action
+  requirements.
+- Future allowed work, not now: communication continuity visibility, customer
+  action awareness, portal-safe conversation context, and communication trust
+  indicators over canonical communication records.
+- Must avoid: duplicate communication models, autonomous messaging, AI customer
+  communications, provider/customer-facing sends, schema changes, migrations,
+  and feature work before a later start command.
+- Status: Approved / Not Started.
+
+### verification-customer-portal-v1
+
+- Branch: `stream/verification-customer-portal-v1`
+- Worktree: `C:\FC-worktrees\verification-customer-portal-v1`
+- Owns: verification for customer portal trust boundaries.
+- Mission: protect customer-safe boundaries, canonical records, project
+  ownership, financial ownership, communications ownership, portal visibility
+  rules, no duplicate models, and no schema/migration drift.
+- Future allowed work, not now: add focused verification helpers/tests/docs
+  after implementation streams complete.
+- Must avoid: feature work, UI redesign, schema changes, migrations, loosening
+  existing tests, and verification implementation before feature-stream
+  evidence exists.
+- Status: Approved / Not Started.
+
 ## Mobile Field Capture Closeout V1 Gate
 
 Gate date: 2026-06-07.

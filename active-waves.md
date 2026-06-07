@@ -101,6 +101,95 @@ packets from this registry. Agents may not begin a new wave, create active
 streams, continue to the next wave, or merge without Architecture Coordination
 approval and Jeff review.
 
+## Customer Portal Trust V1 Approval Gate
+
+Gate date: 2026-06-07.
+
+Wave name: `customer-portal-trust-v1`.
+
+Review packet:
+[docs/review-packets/customer-portal-trust-v1-plan.md](C:/FloorConnector/docs/review-packets/customer-portal-trust-v1-plan.md).
+
+Portfolio recommendation:
+[docs/review-packets/next-portfolio-recommendation.md](C:/FloorConnector/docs/review-packets/next-portfolio-recommendation.md).
+
+Wave goal: strengthen customer understanding, trust, and self-service through
+customer-safe portal visibility over existing canonical project, financial, and
+communication records.
+
+Gate status:
+
+| Gate item                              | Status      | Evidence / note                                                                                  |
+| -------------------------------------- | ----------- | ------------------------------------------------------------------------------------------------ |
+| Architecture Coordination approval     | Approved    | Stream ownership, dependency map, non-goals, validation, verification, and merge order recorded. |
+| Jeff approval gate                     | Approved    | Jeff explicitly approved `customer-portal-trust-v1` for stream/worktree creation.                |
+| Stream creation                        | Complete    | Four branches and worktrees were created from the verified current `main` baseline.              |
+| Implementation start                   | Not started | A later explicit start command is required before feature or verification implementation.        |
+| Human review gate                      | Required    | No merge, PR, or implementation continuation is approved by this gate.                           |
+| Autonomous merge / indefinite continue | Not allowed | No PR, next wave, schema/migration work, or destructive cleanup is approved.                     |
+
+Approved stream set:
+
+| Stream                            | Ownership area                     | Mission                                                                                                       | Status                 |
+| --------------------------------- | ---------------------------------- | ------------------------------------------------------------------------------------------------------------- | ---------------------- |
+| `portal-project-clarity-v1`       | Customer project understanding     | Make project status, next steps, waiting states, and completed work easier for customers to understand.       | Approved / Not Started |
+| `portal-financial-visibility-v1`  | Customer financial understanding   | Make invoices, payments, balances, and billing status easier for customers to understand.                     | Approved / Not Started |
+| `portal-communication-trust-v1`   | Customer communication confidence  | Help customers understand communication history and action requirements without exposing internal operations. | Approved / Not Started |
+| `verification-customer-portal-v1` | Customer portal trust verification | Protect customer-safe boundaries, canonical records, ownership boundaries, and no schema/migration drift.     | Approved / Not Started |
+
+Approved stream branches:
+
+- `stream/portal-project-clarity-v1`
+- `stream/portal-financial-visibility-v1`
+- `stream/portal-communication-trust-v1`
+- `stream/verification-customer-portal-v1`
+
+Approved worktrees:
+
+- `C:\FC-worktrees\portal-project-clarity-v1`
+- `C:\FC-worktrees\portal-financial-visibility-v1`
+- `C:\FC-worktrees\portal-communication-trust-v1`
+- `C:\FC-worktrees\verification-customer-portal-v1`
+
+Dependency and merge order:
+
+1. `portal-project-clarity-v1`
+2. `portal-financial-visibility-v1`
+3. `portal-communication-trust-v1`
+4. `verification-customer-portal-v1`
+
+Verification must run last after implementation stream commits exist.
+
+Shared non-goals:
+
+- no implementation from this approval task;
+- no schema or migration work unless a later prompt explicitly approves it;
+- no duplicate project, invoice, payment, communication, customer, portal,
+  dashboard, or workflow model;
+- no contractor-only operational state exposed to customers;
+- no autonomous messaging, provider/customer-facing sends, AI customer
+  communications, financial mutation, payment mutation, PR, merge, next wave,
+  or destructive cleanup;
+- no work in dirty/out-of-scope worktrees, including
+  `C:\FC-worktrees\project-next-actions`.
+
+Required future stream startup checks:
+
+```powershell
+pnpm.cmd worktree:doctor
+pnpm.cmd tooling:baseline -CommandsOnly
+```
+
+Required implementation validation unless a later prompt narrows scope:
+
+```powershell
+pnpm.cmd --filter @floorconnector/web typecheck
+pnpm.cmd --filter @floorconnector/web lint
+pnpm.cmd fc:preflight:fast
+git diff --check
+git diff --cached --check
+```
+
 ## Mobile Field Capture Closeout V1 Approval Gate
 
 Gate date: 2026-06-07.

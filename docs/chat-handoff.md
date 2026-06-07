@@ -114,6 +114,18 @@ remote branches were present. The dirty out-of-scope
 next wave is not approved from this handoff; agents may not auto-continue
 without Jeff approval.
 
+Current wave gate note: `customer-portal-trust-v1` has Jeff approval and
+Architecture Coordination approval for stream/worktree creation only. The
+approved streams are `portal-project-clarity-v1`,
+`portal-financial-visibility-v1`, `portal-communication-trust-v1`, and
+`verification-customer-portal-v1`. Their worktrees are approved at
+`C:\FC-worktrees\<stream>`, with verification landing last after the three
+implementation streams. No feature implementation, schema/migration work, PR,
+merge, next wave, provider/customer-facing send, autonomous messaging,
+financial mutation, or destructive cleanup is approved by this gate. The dirty
+out-of-scope `C:\FC-worktrees\project-next-actions` worktree must remain
+untouched.
+
 ## Required First Reads
 
 Read these before implementation or documentation work:
