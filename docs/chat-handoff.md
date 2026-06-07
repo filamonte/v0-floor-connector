@@ -92,18 +92,20 @@ The next wave is not approved from this cleanup; agents may not auto-continue,
 perform schema/migration work, change provider behavior, or perform additional
 destructive cleanup without Jeff approval.
 
-Current wave gate note: `owner-operations-reporting-v1` has Jeff approval and
-Architecture Coordination approval for stream/worktree creation. The approved
-streams are `owner-operations-summary-v1`,
-`execution-to-cash-reporting-v1`, `labor-field-management-snapshot-v1`,
-`portfolio-risk-exceptions-v1`, and
-`verification-owner-operations-reporting-v1`. Their worktrees were created at
-`C:\FC-worktrees\<stream>` from the verified `main` baseline and must remain
-Approved / Not Started until a later explicit start command. Verification runs
-last after implementation commits exist. This approval does not authorize
-feature work yet, schema/migration work, provider changes, BI/accounting
-replacement behavior, PRs, merges, cleanup, next-wave continuation, autonomous
-actions, or customer-facing sends.
+Current wave gate note: `owner-operations-reporting-v1` has merged to `main`
+under Jeff's controlled merge approval. Owner Operations Summary V1 merged as
+`1181cdf5`, Execution-to-Cash Reporting V1 merged as `f4c3b5cc`, Labor Field
+Management Snapshot V1 merged as `f4b16512`, Portfolio Risk Exceptions V1
+merged as `791156ee`, and Verification Owner Operations Reporting V1 merged as
+`e0c3119d`. Post-merge targeted owner operations summary, execution-to-cash
+reporting, labor field management snapshot, portfolio risk exceptions, owner
+operations verification, golden workflow, and operational ownership tests
+passed, along with typecheck, lint, `pnpm.cmd fc:preflight:fast`, and
+`git diff --check`. The five completed wave worktrees and eligible local
+branches are retained pending explicit retirement approval. The next wave is
+not approved from this merge; agents may not auto-continue, perform
+schema/migration work, change provider behavior, or perform cleanup without
+Jeff approval.
 
 Current wave gate note: `mobile-field-capture-closeout-v1` has merged to
 `main` under Jeff's controlled merge approval. Field Quick Capture V1 merged as

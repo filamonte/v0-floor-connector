@@ -128,6 +128,7 @@ Review packets:
 - [docs/review-packets/next-portfolio-recommendation-v3.md](C:/FloorConnector/docs/review-packets/next-portfolio-recommendation-v3.md)
 - [docs/review-packets/next-portfolio-recommendation-v4.md](C:/FloorConnector/docs/review-packets/next-portfolio-recommendation-v4.md)
 - [docs/review-packets/owner-operations-reporting-v1-plan.md](C:/FloorConnector/docs/review-packets/owner-operations-reporting-v1-plan.md)
+- [docs/review-packets/owner-operations-reporting-v1.md](C:/FloorConnector/docs/review-packets/owner-operations-reporting-v1.md)
 
 Wave goal: give contractor owners and managers an owner-level operating review
 layer that summarizes business movement, execution-to-cash continuity, field
@@ -136,25 +137,25 @@ to the owning workspaces.
 
 Gate status:
 
-| Gate item                              | Status      | Evidence / note                                                                                      |
-| -------------------------------------- | ----------- | ---------------------------------------------------------------------------------------------------- |
-| Architecture Coordination approval     | Approved    | Stream ownership, dependencies, non-goals, validation, verification, and merge order are recorded.   |
-| Jeff approval gate                     | Approved    | Jeff explicitly approved stream/worktree creation for `owner-operations-reporting-v1`.               |
-| Stream creation                        | Complete    | Five branches and worktrees were created from the verified current `main` baseline.                  |
-| Implementation start                   | Not started | A later explicit start command is required before feature work begins.                               |
-| Human review gate                      | Pending     | No implementation, review packet, controlled merge, PR, or cleanup approval has been granted.        |
-| Cleanup                                | Not started | No worktree or branch retirement is approved.                                                        |
-| Autonomous merge / indefinite continue | Not allowed | No next wave, PR, merge, schema/migration work, provider work, or autonomous action work is allowed. |
+| Gate item                              | Status      | Evidence / note                                                                                        |
+| -------------------------------------- | ----------- | ------------------------------------------------------------------------------------------------------ |
+| Architecture Coordination approval     | Approved    | Stream ownership, dependencies, non-goals, validation, verification, and merge order are recorded.     |
+| Jeff approval gate                     | Approved    | Jeff explicitly approved stream/worktree creation for `owner-operations-reporting-v1`.                 |
+| Stream creation                        | Complete    | Five branches and worktrees were created from the verified current `main` baseline.                    |
+| Implementation start                   | Completed   | The approved implementation and verification slices landed on `main`.                                  |
+| Human review gate                      | Satisfied   | Jeff approved the controlled merge prompt; no PRs were opened.                                         |
+| Cleanup                                | Not started | No worktree or branch retirement is approved.                                                          |
+| Autonomous merge / indefinite continue | Not allowed | No next wave, PR, schema/migration work, provider work, cleanup, or autonomous action work is allowed. |
 
 Approved stream set:
 
-| Stream                                       | Ownership area                    | Mission                                                                  | Status                 |
-| -------------------------------------------- | --------------------------------- | ------------------------------------------------------------------------ | ---------------------- |
-| `owner-operations-summary-v1`                | Reports / owner operating review  | Summarize owner-level operating health and route action to owning areas. | Approved / Not Started |
-| `execution-to-cash-reporting-v1`             | Reports with Field and Financials | Show continuity from completed work through invoice, payment, and cash.  | Approved / Not Started |
-| `labor-field-management-snapshot-v1`         | Reports with Field / People       | Summarize crew, active work, blocked execution, and field evidence.      | Approved / Not Started |
-| `portfolio-risk-exceptions-v1`               | Reports / owner exception review  | Surface cross-portfolio risks and exceptions without owning action.      | Approved / Not Started |
-| `verification-owner-operations-reporting-v1` | Verification                      | Protect canonical records, ownership boundaries, and no schema drift.    | Approved / Not Started |
+| Stream                                       | Ownership area                    | Mission                                                                  | Status |
+| -------------------------------------------- | --------------------------------- | ------------------------------------------------------------------------ | ------ |
+| `owner-operations-summary-v1`                | Reports / owner operating review  | Summarize owner-level operating health and route action to owning areas. | Merged |
+| `execution-to-cash-reporting-v1`             | Reports with Field and Financials | Show continuity from completed work through invoice, payment, and cash.  | Merged |
+| `labor-field-management-snapshot-v1`         | Reports with Field / People       | Summarize crew, active work, blocked execution, and field evidence.      | Merged |
+| `portfolio-risk-exceptions-v1`               | Reports / owner exception review  | Surface cross-portfolio risks and exceptions without owning action.      | Merged |
+| `verification-owner-operations-reporting-v1` | Verification                      | Protect canonical records, ownership boundaries, and no schema drift.    | Merged |
 
 Approved stream branches:
 
@@ -181,6 +182,24 @@ Dependency and merge order:
 5. `verification-owner-operations-reporting-v1`
 
 Verification must run last after implementation stream commits exist.
+
+Merge result:
+
+- Owner Operations Summary V1 merged to `main` as `1181cdf5`.
+- Execution-to-Cash Reporting V1 merged to `main` as `f4c3b5cc`.
+- Labor Field Management Snapshot V1 merged to `main` as `f4b16512`.
+- Portfolio Risk Exceptions V1 merged to `main` as `791156ee`.
+- Verification Owner Operations Reporting V1 merged to `main` as `e0c3119d`.
+
+Post-merge validation passed: targeted owner operations summary,
+execution-to-cash reporting, labor field management snapshot, portfolio risk
+exceptions, owner operations verification, golden workflow, and operational
+ownership tests; typecheck; lint; `pnpm.cmd fc:preflight:fast`; and
+`git diff --check`.
+
+Wave status: Merged to `main`; completed wave worktrees and eligible local
+branches are retained pending explicit cleanup approval. No next wave is
+approved by this merge.
 
 Shared guardrails:
 

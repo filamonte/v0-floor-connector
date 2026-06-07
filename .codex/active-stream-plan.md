@@ -110,12 +110,13 @@ Review packets:
 - [docs/review-packets/next-portfolio-recommendation-v3.md](C:/FloorConnector/docs/review-packets/next-portfolio-recommendation-v3.md)
 - [docs/review-packets/next-portfolio-recommendation-v4.md](C:/FloorConnector/docs/review-packets/next-portfolio-recommendation-v4.md)
 - [docs/review-packets/owner-operations-reporting-v1-plan.md](C:/FloorConnector/docs/review-packets/owner-operations-reporting-v1-plan.md)
+- [docs/review-packets/owner-operations-reporting-v1.md](C:/FloorConnector/docs/review-packets/owner-operations-reporting-v1.md)
 
-Wave status: Approved / Not Started. Stream branches and worktrees have been
-created, but feature implementation has not started and requires a later
-explicit start command. This gate does not approve schema/migration work,
-provider changes, BI/accounting replacement behavior, PRs, merges, cleanup,
-next-wave continuation, autonomous actions, or customer-facing sends.
+Wave status: Merged to `main`; completed worktrees and eligible local branches
+are retained pending explicit cleanup approval. This merge does not approve
+schema/migration work, provider changes, BI/accounting replacement behavior,
+PRs, cleanup, next-wave continuation, autonomous actions, or customer-facing
+sends.
 
 Approved stream set:
 
@@ -162,6 +163,20 @@ Merge order:
 
 Verification must run last after implementation stream commits exist.
 
+Merge result:
+
+- Owner Operations Summary V1 merged to `main` as `1181cdf5`.
+- Execution-to-Cash Reporting V1 merged to `main` as `f4c3b5cc`.
+- Labor Field Management Snapshot V1 merged to `main` as `f4b16512`.
+- Portfolio Risk Exceptions V1 merged to `main` as `791156ee`.
+- Verification Owner Operations Reporting V1 merged to `main` as `e0c3119d`.
+
+Post-merge validation passed: targeted owner operations summary,
+execution-to-cash reporting, labor field management snapshot, portfolio risk
+exceptions, owner operations verification, golden workflow, and operational
+ownership tests; typecheck; lint; `pnpm.cmd fc:preflight:fast`; and
+`git diff --check`.
+
 ### owner-operations-summary-v1
 
 - Branch: `stream/owner-operations-summary-v1`
@@ -174,6 +189,7 @@ Verification must run last after implementation stream commits exist.
 - Forbidden: dashboard replacement, new reporting persistence, action ownership
   migration into Reports, schemas, and migrations.
 - Suggested commit: `feat: add owner operations summary`
+- Status: Merged to `main` as `1181cdf5`; cleanup pending explicit approval.
 
 ### execution-to-cash-reporting-v1
 
@@ -188,6 +204,7 @@ Verification must run last after implementation stream commits exist.
 - Forbidden: accounting replacement, invoice/payment mutation, duplicate AR
   model, provider/gateway behavior changes, schemas, and migrations.
 - Suggested commit: `feat: add execution to cash reporting`
+- Status: Merged to `main` as `f4c3b5cc`; cleanup pending explicit approval.
 
 ### labor-field-management-snapshot-v1
 
@@ -201,6 +218,7 @@ Verification must run last after implementation stream commits exist.
 - Forbidden: payroll, route optimization, duplicate crew/time-card/schedule/
   field models, schemas, and migrations.
 - Suggested commit: `feat: add labor field management snapshot`
+- Status: Merged to `main` as `f4b16512`; cleanup pending explicit approval.
 
 ### portfolio-risk-exceptions-v1
 
@@ -214,6 +232,7 @@ Verification must run last after implementation stream commits exist.
 - Forbidden: autonomous decisions, AI action layer, duplicate task/workflow/
   risk/exception models, schemas, and migrations.
 - Suggested commit: `feat: add portfolio risk exceptions`
+- Status: Merged to `main` as `791156ee`; cleanup pending explicit approval.
 
 ### verification-owner-operations-reporting-v1
 
@@ -226,6 +245,7 @@ Verification must run last after implementation stream commits exist.
 - Forbidden: feature work, UI redesign, schemas, migrations, and loosening
   existing checks.
 - Suggested commit: `test: protect owner operations reporting`
+- Status: Merged to `main` as `e0c3119d`; cleanup pending explicit approval.
 
 ## Financial Closeout Collections V1 Gate
 

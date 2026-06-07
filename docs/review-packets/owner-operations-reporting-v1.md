@@ -1,23 +1,25 @@
 # Owner Operations Reporting V1 Review Packet
 
-Status: Review packet / merge-readiness only.
+Status: Merged to `main` under controlled merge approval.
 
 Wave: `owner-operations-reporting-v1`
 
 Review date: 2026-06-07
 
-Jeff approval status: not granted in this packet.
+Jeff approval status: Jeff explicitly approved controlled merge after this
+packet; cleanup and next-wave approval are not granted.
 
-This packet reviews the completed owner operations reporting streams after
-implementation and verification in their approved worktrees. It does not merge
-anything, open PRs, start another wave, modify schemas or migrations, or approve
-cleanup.
+This packet reviewed the completed owner operations reporting streams after
+implementation and verification in their approved worktrees, then was updated
+after controlled merge. It does not open PRs, start another wave, modify schemas
+or migrations, or approve cleanup.
 
 ## Executive Summary
 
-`owner-operations-reporting-v1` is ready for Jeff merge approval. The wave adds
-owner-level visibility to `/reports` while preserving the product architecture:
-Reports summarizes, explains, and routes; owning workspaces act.
+`owner-operations-reporting-v1` has merged to `main` under Jeff's controlled
+merge approval. The wave adds owner-level visibility to `/reports` while
+preserving the product architecture: Reports summarizes, explains, and routes;
+owning workspaces act.
 
 The implementation streams extend the existing canonical reports read model and
 Reports page with:
@@ -37,14 +39,22 @@ accounting behavior changes were detected.
 
 | Stream                                     | Worktree                                                     | Branch                                              | Head       | Status |
 | ------------------------------------------ | ------------------------------------------------------------ | --------------------------------------------------- | ---------- | ------ |
-| Owner Operations Summary V1                | `C:\FC-worktrees\owner-operations-summary-v1`                | `stream/owner-operations-summary-v1`                | `edf21324` | Ready  |
-| Execution-to-Cash Reporting V1             | `C:\FC-worktrees\execution-to-cash-reporting-v1`             | `stream/execution-to-cash-reporting-v1`             | `20a8fffe` | Ready  |
-| Labor Field Management Snapshot V1         | `C:\FC-worktrees\labor-field-management-snapshot-v1`         | `stream/labor-field-management-snapshot-v1`         | `f2332b41` | Ready  |
-| Portfolio Risk Exceptions V1               | `C:\FC-worktrees\portfolio-risk-exceptions-v1`               | `stream/portfolio-risk-exceptions-v1`               | `8df1a6d3` | Ready  |
-| Verification Owner Operations Reporting V1 | `C:\FC-worktrees\verification-owner-operations-reporting-v1` | `stream/verification-owner-operations-reporting-v1` | `f8d0378c` | Ready  |
+| Owner Operations Summary V1                | `C:\FC-worktrees\owner-operations-summary-v1`                | `stream/owner-operations-summary-v1`                | `edf21324` | Merged |
+| Execution-to-Cash Reporting V1             | `C:\FC-worktrees\execution-to-cash-reporting-v1`             | `stream/execution-to-cash-reporting-v1`             | `20a8fffe` | Merged |
+| Labor Field Management Snapshot V1         | `C:\FC-worktrees\labor-field-management-snapshot-v1`         | `stream/labor-field-management-snapshot-v1`         | `f2332b41` | Merged |
+| Portfolio Risk Exceptions V1               | `C:\FC-worktrees\portfolio-risk-exceptions-v1`               | `stream/portfolio-risk-exceptions-v1`               | `8df1a6d3` | Merged |
+| Verification Owner Operations Reporting V1 | `C:\FC-worktrees\verification-owner-operations-reporting-v1` | `stream/verification-owner-operations-reporting-v1` | `f8d0378c` | Merged |
 
 Each stream worktree exists, is on the expected branch, is clean, is one commit
 ahead and zero behind `origin/main`, and contains the expected reviewed commit.
+
+Controlled merge commits on `main`:
+
+- `1181cdf5 feat: merge owner operations summary v1`
+- `f4c3b5cc feat: merge execution to cash reporting v1`
+- `f4b16512 feat: merge labor field management snapshot v1`
+- `791156ee feat: merge portfolio risk exceptions v1`
+- `e0c3119d test: merge verification owner operations reporting v1`
 
 ## Commits By Stream
 
@@ -169,6 +179,32 @@ Review packet validation:
 - passed: `git diff --check`
 - passed: `git diff --cached --check`
 
+Controlled merge validation:
+
+- after Owner Operations Summary merge: typecheck passed, lint passed,
+  `pnpm.cmd fc:preflight:fast` passed, `git diff --check` passed
+- after Execution-to-Cash Reporting merge: typecheck passed, lint passed,
+  `pnpm.cmd fc:preflight:fast` passed, `git diff --check` passed
+- after Labor Field Management Snapshot merge: typecheck passed, lint passed,
+  `pnpm.cmd fc:preflight:fast` passed, `git diff --check` passed
+- after Portfolio Risk Exceptions merge: typecheck passed, lint passed,
+  `pnpm.cmd fc:preflight:fast` passed, `git diff --check` passed
+- after Verification Owner Operations Reporting merge: typecheck passed, lint
+  passed, `pnpm.cmd fc:preflight:fast` passed, `git diff --check` passed
+
+Targeted post-merge tests passed with 27 tests:
+
+```powershell
+pnpm.cmd exec tsx --test apps/web/lib/reports/operations-summary.test.ts apps/web/lib/reports/owner-operations-reporting-boundaries.test.ts apps/web/lib/verification/golden-workflow-checks.test.ts apps/web/lib/verification/operational-ownership.test.ts
+```
+
+Final validation passed:
+
+- `pnpm.cmd --filter @floorconnector/web typecheck`
+- `pnpm.cmd --filter @floorconnector/web lint`
+- `pnpm.cmd fc:preflight:fast`
+- `git diff --check`
+
 ## Governance Review
 
 The stream set follows the approved wave:
@@ -273,11 +309,11 @@ the workspace that owns the next action.
 
 | Stream                                       | Readiness | Notes                                                                        |
 | -------------------------------------------- | --------- | ---------------------------------------------------------------------------- |
-| `owner-operations-summary-v1`                | Ready     | Clean, expected commit present, no schema/provider/model drift.              |
-| `execution-to-cash-reporting-v1`             | Ready     | Clean, expected commit present, no invoice/payment mutation.                 |
-| `labor-field-management-snapshot-v1`         | Ready     | Clean, expected commit present, no payroll/crew/time-card duplication.       |
-| `portfolio-risk-exceptions-v1`               | Ready     | Clean, expected commit present, no autonomous decisions or risk persistence. |
-| `verification-owner-operations-reporting-v1` | Ready     | Clean, expected commit present, verification-only scope.                     |
+| `owner-operations-summary-v1`                | Merged    | Landed on `main` as `1181cdf5`; no schema/provider/model drift.              |
+| `execution-to-cash-reporting-v1`             | Merged    | Landed on `main` as `f4c3b5cc`; no invoice/payment mutation.                 |
+| `labor-field-management-snapshot-v1`         | Merged    | Landed on `main` as `f4b16512`; no payroll/crew/time-card duplication.       |
+| `portfolio-risk-exceptions-v1`               | Merged    | Landed on `main` as `791156ee`; no autonomous decisions or risk persistence. |
+| `verification-owner-operations-reporting-v1` | Merged    | Landed on `main` as `e0c3119d`; verification-only scope.                     |
 
 ## Merge Order Recommendation
 
@@ -295,12 +331,12 @@ visibility, then risk/exception aggregation, then verification last.
 
 ## Risks And Follow-Ups
 
-- Same-file overlap is expected in `apps/web/app/(app)/reports/page.tsx`,
+- Same-file overlap in `apps/web/app/(app)/reports/page.tsx`,
   `apps/web/lib/reports/operations-summary.ts`, and
-  `apps/web/lib/reports/operations-summary.test.ts`; controlled merge should
-  validate after each stream.
-- After merge, run focused owner-reporting tests and full fast preflight on
-  `main`.
+  `apps/web/lib/reports/operations-summary.test.ts` was resolved during
+  controlled merge and validated after each stream.
+- Completed worktrees and eligible local branches should be retired only after
+  explicit cleanup approval.
 - Future reporting work should continue using canonical read models and avoid a
   BI warehouse, reporting persistence layer, task/workflow model, or accounting
   replacement.
