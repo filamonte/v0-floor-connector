@@ -110,9 +110,14 @@ void test("orders failed payment invoices ahead of regular overdue balances", ()
   assert.equal(commandCenter.priorityItems[0]?.invoiceId, "failed");
   assert.equal(commandCenter.priorityItems[0]?.tone, "warning");
   assert.equal(commandCenter.priorityItems[0]?.priorityBand, "urgent");
+  assert.equal(commandCenter.priorityItems[0]?.agingBand, "not_due");
   assert.equal(
     commandCenter.priorityItems[0]?.nextAction,
     "Review Payment Trail"
+  );
+  assert.equal(
+    commandCenter.priorityItems[0]?.readinessGuidance,
+    "Payment Trail evidence should be reviewed before routine customer follow-up."
   );
   assert.ok(commandCenter.priorityItems[0]?.signals.includes("failed_payment"));
 });
@@ -339,7 +344,33 @@ void test("derives collection priority bands and compact latest payment signal",
   assert.equal(failed?.latestPaymentSignal?.label, "Payment failed");
   assert.equal(failed?.latestPaymentSignal?.historyCount, 2);
   assert.equal(monitoring?.priorityBand, "monitoring");
+  assert.equal(monitoring?.agingBand, "not_due");
+  assert.equal(
+    monitoring?.readinessGuidance,
+    "Monitor until due date, payment activity, or customer exposure changes priority."
+  );
   assert.equal(monitoring?.latestPaymentSignal, null);
+});
+
+void test("adds collection readiness guidance for long-aged receivables", () => {
+  const commandCenter = build({
+    invoices: [
+      invoice({
+        id: "long-aged",
+        referenceNumber: "INV-LONG-AGED",
+        dueDate: "2026-02-01",
+        balanceDueAmount: "750.00"
+      })
+    ]
+  });
+  const item = commandCenter.priorityItems[0];
+
+  assert.equal(item?.agingBand, "past_due_60_plus");
+  assert.equal(item?.priorityBand, "attention");
+  assert.equal(
+    item?.readinessGuidance,
+    "Escalate the oldest overdue balance with customer and project context visible."
+  );
 });
 
 void test("keeps paid and void invoices out of priority collections rows", () => {
