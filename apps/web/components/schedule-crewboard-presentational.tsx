@@ -427,6 +427,12 @@ export function ScheduleFieldCommandCenter(input: {
                     <p className="mt-2 text-sm leading-6 text-[var(--text-secondary)]">
                       {item.detail}
                     </p>
+                    <p className="mt-2 rounded-[4px] border border-[var(--border-warm)] bg-white px-2 py-1 text-xs font-semibold uppercase tracking-[0.12em] text-[var(--text-secondary)]">
+                      {item.executionVisibility.label}
+                    </p>
+                    <p className="mt-1 text-xs leading-5 text-[var(--text-secondary)]">
+                      {item.executionVisibility.detail}
+                    </p>
                     <p className="mt-1 text-xs font-medium text-[var(--text-secondary)]">
                       {item.crewLabel}
                       {item.warnings.length > 0

@@ -41,6 +41,20 @@ export type FieldCommandCenterSectionKey =
   | "field_handoff"
   | "execution_warnings";
 
+export type FieldExecutionVisibilityStatus =
+  | "active"
+  | "blocked"
+  | "incomplete"
+  | "office_attention"
+  | "warning"
+  | "clear";
+
+export type FieldExecutionVisibility = {
+  status: FieldExecutionVisibilityStatus;
+  label: string;
+  detail: string;
+};
+
 export type FieldCommandCenterItem<TJob extends ScheduleBoardJobSource> = {
   id: string;
   job: TJob;
@@ -57,6 +71,7 @@ export type FieldCommandCenterItem<TJob extends ScheduleBoardJobSource> = {
     | "review_project";
   statusLabel: string;
   detail: string;
+  executionVisibility: FieldExecutionVisibility;
 };
 
 export type FieldCommandCenterSection<TJob extends ScheduleBoardJobSource> = {
@@ -164,6 +179,12 @@ function buildFieldCommandItem<TJob extends ScheduleBoardJobSource>(
           : warnings.length > 0
             ? "review_project"
             : "open_job";
+  const executionVisibility = buildFieldExecutionVisibility({
+    job,
+    handoff,
+    readinessBlocked: isKnownReadinessBlocked,
+    warnings
+  });
 
   return {
     id: job.id,
@@ -180,7 +201,71 @@ function buildFieldCommandItem<TJob extends ScheduleBoardJobSource>(
       : (handoff?.detail ??
         (warnings.length > 0
           ? warnings[0].detail
-          : "No execution warnings are currently derived for this job."))
+          : "No execution warnings are currently derived for this job.")),
+    executionVisibility
+  };
+}
+
+function buildFieldExecutionVisibility<
+  TJob extends ScheduleBoardJobSource
+>(input: {
+  job: TJob;
+  handoff: ScheduleFieldHandoffSummary | null;
+  readinessBlocked: boolean;
+  warnings: ScheduleWarningSummary[];
+}): FieldExecutionVisibility {
+  if (input.readinessBlocked) {
+    return {
+      status: "office_attention",
+      label: "Office attention required",
+      detail:
+        "Project readiness is blocking field execution; route back to Project Workspace before dispatching."
+    };
+  }
+
+  if (input.handoff && input.handoff.openBlockerCount > 0) {
+    return {
+      status: "blocked",
+      label: "Blocked work",
+      detail: `${input.handoff.openBlockerCount} open blocker or issue note is tied to this job.`
+    };
+  }
+
+  if (input.job.dispatchStatus === "in_progress") {
+    return {
+      status: "active",
+      label: "Active work",
+      detail: input.handoff?.latestFieldActivityAt
+        ? "Field execution is active with recent Daily Log, field-note, or time-card activity."
+        : "Field execution is active; monitor Daily Log and field-note continuity."
+    };
+  }
+
+  if (
+    input.job.dispatchStatus !== "completed" &&
+    (!input.handoff || !input.handoff.dailyLog)
+  ) {
+    return {
+      status: "incomplete",
+      label: "Incomplete handoff",
+      detail:
+        "Daily Log context is missing for scheduled or active work; start from the canonical Daily Log flow."
+    };
+  }
+
+  if (input.warnings.length > 0) {
+    return {
+      status: "warning",
+      label: "Execution warning",
+      detail: input.warnings[0].detail
+    };
+  }
+
+  return {
+    status: "clear",
+    label: "Clear execution context",
+    detail:
+      "No blockers, missing Daily Log context, or schedule warnings are currently derived for this job."
   };
 }
 

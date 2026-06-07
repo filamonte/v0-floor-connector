@@ -256,6 +256,20 @@ void test("field command center sections group execution lanes from canonical sc
       ?.items.find((item) => item.job.id === todayJob.id)?.recommendedAction,
     "open_daily_log"
   );
+  assert.equal(
+    sections
+      .find((section) => section.key === "field_handoff")
+      ?.items.find((item) => item.job.id === todayJob.id)?.executionVisibility
+      .status,
+    "incomplete"
+  );
+  assert.equal(
+    sections
+      .find((section) => section.key === "in_progress")
+      ?.items.find((item) => item.job.id === inProgressJob.id)
+      ?.executionVisibility.status,
+    "active"
+  );
 });
 
 void test("field command center sends readiness-blocked jobs back to Project diagnosis", () => {
@@ -302,9 +316,69 @@ void test("field command center sends readiness-blocked jobs back to Project dia
     ?.items.find((candidate) => candidate.job.id === blockedReadyJob.id);
 
   assert.equal(item?.recommendedAction, "review_project");
+  assert.equal(item?.executionVisibility.status, "office_attention");
+  assert.equal(item?.executionVisibility.label, "Office attention required");
   assert.equal(item?.readinessHandoff.label, "Unpaid deposit");
   assert.equal(
     item?.readinessHandoff.primaryHref,
     "/invoices/77777777-7777-4777-8777-777777777777"
   );
+});
+
+void test("field command center marks open field blockers as blocked work", () => {
+  const blockedJob = {
+    ...baseJob,
+    id: "77777777-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+    assignmentCount: 1,
+    crewSummary: ["Install crew"]
+  };
+  const board = buildScheduleBoardReadModel({
+    jobs: [blockedJob],
+    today: new Date(2026, 4, 8)
+  });
+  const sections = buildFieldCommandCenterSections({
+    board,
+    handoffsByJobId: new Map([
+      [
+        blockedJob.id,
+        {
+          jobId: blockedJob.id,
+          title: "Blocked job",
+          contextLabel: "Acme Floors - Warehouse floor",
+          targetDate: "2026-05-08",
+          hasCrewAssigned: true,
+          dailyLog: {
+            id: "daily-log-blocked",
+            logDate: "2026-05-08",
+            status: "draft"
+          },
+          latestDailyLog: {
+            id: "daily-log-blocked",
+            logDate: "2026-05-08",
+            status: "draft"
+          },
+          openBlockerCount: 2,
+          fieldNoteCount: 3,
+          targetDateTimeCardCount: 1,
+          openTimeCardCount: 0,
+          latestFieldActivityAt: "2026-05-08T15:00:00.000Z",
+          jobHref: `/jobs/${blockedJob.id}`,
+          projectHref: `/projects/${blockedJob.projectId}`,
+          dailyLogHref: "/daily-logs/daily-log-blocked",
+          fieldWorkHref: "/field/work-items",
+          blockerHref:
+            "/daily-logs/daily-log-blocked?noteType=blocker#job-notes",
+          tone: "blocked",
+          label: "Blockers open",
+          detail: "2 open field blockers need review."
+        }
+      ]
+    ])
+  });
+  const item = sections
+    .find((section) => section.key === "field_handoff")
+    ?.items.find((candidate) => candidate.job.id === blockedJob.id);
+
+  assert.equal(item?.executionVisibility.status, "blocked");
+  assert.equal(item?.executionVisibility.label, "Blocked work");
 });
