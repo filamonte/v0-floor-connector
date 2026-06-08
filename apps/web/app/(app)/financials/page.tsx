@@ -509,402 +509,426 @@ export default async function FinancialsHomePage() {
           ) : null}
         </section>
 
-        <section className="border border-[#d6d6d6] bg-white">
-          <div className="border-b border-[#e5e5e5] px-4 py-3 sm:px-5">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#666666]">
-              Continuity map
-            </p>
-            <h2 className="mt-1 text-xl font-semibold tracking-tight text-[#171717]">
-              Financial command center links
-            </h2>
-            <p className="mt-1 max-w-[78ch] text-sm leading-6 text-slate-500">
-              Start here, then continue into the canonical workspace that owns
-              the invoice, payment, project, customer, or SOV context. These are
-              routing signals only.
-            </p>
-          </div>
-          <div className="grid gap-px bg-[#e5e5e5] md:grid-cols-2 xl:grid-cols-3">
-            {financialContinuityLinks.map((item) => (
-              <Link
-                key={item.id}
-                href={item.href}
-                className="min-w-0 bg-white px-4 py-4 transition hover:bg-[#f8f8f8]"
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#666666]">
-                      {item.eyebrow}
-                    </p>
-                    <h3 className="mt-1 text-[17px] font-semibold tracking-tight text-[#171717]">
-                      {item.title}
-                    </h3>
-                  </div>
-                  <span
-                    className={
-                      item.tone === "warning"
-                        ? "rounded-full border border-red-200 bg-red-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-red-700"
-                        : item.tone === "attention"
-                          ? "rounded-full border border-[#e4d7ca] bg-[#fffcf7] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#8f5b32]"
-                          : "rounded-full border border-[#d6d6d6] bg-[#f8f8f8] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-500"
-                    }
-                  >
-                    {item.tone}
-                  </span>
-                </div>
-                <p className="mt-3 text-xl font-semibold tracking-tight text-[#171717]">
-                  {item.value}
-                </p>
-                <p className="mt-2 text-sm leading-5 text-slate-500">
-                  {item.detail}
-                </p>
-              </Link>
-            ))}
-          </div>
-        </section>
+        <details className="group space-y-4">
+          <summary className="flex cursor-pointer list-none items-start justify-between gap-4 border border-[#d6d6d6] bg-white px-4 py-3 sm:px-5 [&::-webkit-details-marker]:hidden">
+            <div>
+              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#666666]">
+                Supporting finance detail
+              </p>
+              <h2 className="mt-1 text-xl font-semibold tracking-tight text-[#171717]">
+                Links, signals, and receivables previews
+              </h2>
+              <p className="mt-1 max-w-[78ch] text-sm leading-6 text-slate-500">
+                Secondary command links, configuration routing, review cards,
+                and AR previews stay available below the finance action lanes.
+              </p>
+            </div>
+            <span className="mt-0.5 inline-flex shrink-0 items-center rounded-full border border-[#d6d6d6] bg-[#f8f8f8] px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#666666]">
+              <span className="group-open:hidden">Show</span>
+              <span className="hidden group-open:inline">Hide</span>
+            </span>
+          </summary>
 
-        <section className="border border-[#d6d6d6] bg-white">
-          <div className="border-b border-[#e5e5e5] px-4 py-3 sm:px-5">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#666666]">
-              Command Center
-            </p>
-            <h2 className="mt-1 text-xl font-semibold tracking-tight text-[#171717]">
-              Financial control signals
-            </h2>
-            <p className="mt-1 max-w-[78ch] text-sm leading-6 text-slate-500">
-              Read-only finance signals across AR, deposits, Payment Trail,
-              retainage, and SOV-linked invoices. Each item routes back to the
-              canonical workspace that owns the source record.
-            </p>
-          </div>
-          <div className="grid gap-px bg-[#e5e5e5] md:grid-cols-2 xl:grid-cols-5">
-            {financialControl.commandSignals.map((signal) => (
-              <Link
-                key={signal.id}
-                href={signal.href}
-                className="min-w-0 bg-white px-4 py-4 transition hover:bg-[#f8f8f8]"
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#666666]">
-                    {signal.label}
-                  </p>
-                  <span
-                    className={
-                      signal.tone === "warning"
-                        ? "rounded-full border border-red-200 bg-red-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-red-700"
-                        : signal.tone === "attention"
-                          ? "rounded-full border border-[#e4d7ca] bg-[#fffcf7] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#8f5b32]"
-                          : "rounded-full border border-[#d6d6d6] bg-[#f8f8f8] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-500"
-                    }
-                  >
-                    {signal.tone}
-                  </span>
-                </div>
-                <p className="mt-2 text-lg font-semibold tracking-tight text-[#171717]">
-                  {signal.id === "payment-trail"
-                    ? signal.value
-                    : formatMoney(signal.value)}
-                </p>
-                <p className="mt-2 text-xs leading-5 text-slate-500">
-                  {signal.detail}
-                </p>
-              </Link>
-            ))}
-          </div>
-        </section>
-
-        <section className="border border-[#d6d6d6] bg-white">
-          <div className="border-b border-[#e5e5e5] px-4 py-3 sm:px-5">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#666666]">
-              Settings boundary
-            </p>
-            <h2 className="mt-1 text-xl font-semibold tracking-tight text-[#171717]">
-              Configuration lives in Settings
-            </h2>
-            <p className="mt-1 max-w-[78ch] text-sm leading-6 text-slate-500">
-              This workspace acts on existing financial records. Tax, retainage,
-              template, numbering, deposit, and workflow defaults remain
-              administrative configuration.
-            </p>
-          </div>
-          <div className="grid gap-px bg-[#e5e5e5] md:grid-cols-3">
-            {financialSettingsLinks.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className="min-w-0 bg-white px-4 py-4 transition hover:bg-[#f8f8f8]"
-              >
-                <h3 className="text-sm font-semibold text-[#171717]">
-                  {item.title}
-                </h3>
-                <p className="mt-2 text-sm leading-5 text-slate-500">
-                  {item.detail}
-                </p>
-              </Link>
-            ))}
-          </div>
-        </section>
-
-        <section className="grid gap-4 xl:auto-rows-fr xl:grid-cols-3">
-          <ManagerDashboardCard
-            eyebrow="Collections"
-            title="Overdue invoices"
-            description="Past-due invoices with balance still owed."
-            actionHref="/financials/accounts-receivable"
-            actionLabel="Review AR"
-            items={readModel.overdueInvoices.slice(0, 5).map((invoice) => ({
-              href: `/invoices/${invoice.id}`,
-              title: invoice.referenceNumber,
-              subtitle: `${invoice.customer?.name ?? "Unknown customer"} - ${invoice.project?.name ?? "No project"}`,
-              meta: invoice.dueDate
-                ? `Due ${formatDate(invoice.dueDate)}`
-                : "No due date",
-              badge: formatStatusLabel(invoice.status),
-              trailing: formatMoney(invoice.balanceDueAmount)
-            }))}
-            emptyTitle="No overdue invoices need follow-up right now."
-            emptyDescription="Past-due balances will surface here for collections review."
-          />
-
-          <ManagerDashboardCard
-            eyebrow="Payment activity"
-            title="Pending checkout"
-            description="Pending payments and checkout activity that still need a customer or payment outcome."
-            actionHref="/payments?status=pending"
-            actionLabel="Open pending"
-            items={readModel.pendingPayments.slice(0, 5).map((payment) => ({
-              href: `/invoices/${payment.invoiceId}`,
-              title: payment.invoice?.referenceNumber ?? "Pending payment",
-              subtitle: `${payment.customer?.name ?? "Unknown customer"} - ${payment.project?.name ?? "No project"}`,
-              meta: payment.gatewayProvider ?? payment.paymentMethod,
-              badge: payment.gatewayStatus ?? "pending",
-              trailing: formatMoney(payment.amount)
-            }))}
-            emptyTitle="No pending checkout activity."
-            emptyDescription="Pending payments will appear here when follow-through is needed."
-          />
-
-          <ManagerDashboardCard
-            eyebrow="Payment attention"
-            title="Payment events needing review"
-            description="Failed, voided, or in-progress payment activity tied back to invoices."
-            actionHref="/payments"
-            actionLabel="Open payments"
-            items={financialControl.paymentEventsNeedingReview
-              .slice(0, 5)
-              .map((event) => ({
-                href: event.href,
-                title: event.invoiceReference,
-                subtitle: `${event.customerName} - ${event.projectName}`,
-                meta: event.nextMoveLabel,
-                badge: event.label,
-                trailing: event.reason
-              }))}
-            emptyTitle="No payment events need review."
-            emptyDescription="Payment Trail attention will appear here when follow-through is needed."
-          />
-        </section>
-
-        <section className="grid gap-4 xl:grid-cols-2">
-          <ManagerDashboardCard
-            eyebrow="Project collections"
-            title="Project collection attention"
-            description="Projects carrying open invoice or payment follow-through."
-            actionHref="/financials/accounts-receivable"
-            actionLabel="Review AR"
-            items={financialControl.projectCollectionAttention
-              .slice(0, 5)
-              .map((project) => ({
-                href: project.href,
-                title: project.projectName,
-                subtitle: project.customerName,
-                meta: project.reason,
-                badge: project.nextMoveLabel,
-                trailing: formatMoney(project.openBalanceAmount)
-              }))}
-            emptyTitle="No project collection attention."
-            emptyDescription="Projects with open invoice pressure will appear here."
-          />
-          <ManagerDashboardCard
-            eyebrow="Receivables"
-            title="Invoices needing attention"
-            description="Open invoices ordered by payment urgency, due date, and balance."
-            actionHref="/financials/accounts-receivable"
-            actionLabel="Open AR"
-            items={financialControl.invoicesNeedingAttention
-              .slice(0, 5)
-              .map((invoice) => ({
-                href: invoice.href,
-                title: invoice.referenceNumber,
-                subtitle: `${invoice.customerName} - ${invoice.projectName}`,
-                meta: invoice.reason,
-                badge: invoice.nextMoveLabel,
-                trailing: formatMoney(invoice.balanceDueAmount)
-              }))}
-            emptyTitle="No invoices need attention."
-            emptyDescription="Open balances and follow-up items will appear here."
-          />
-          <ManagerDashboardCard
-            eyebrow="Accounting Readiness"
-            title="Export and reconciliation prep"
-            description="Invoice, payment, tax, retainage, customer, and project context for accounting review."
-            actionHref="/financials/accounting-readiness"
-            actionLabel="Review prep"
-            items={[
-              {
-                href: "/financials/accounting-readiness",
-                title: "Accounting review workspace",
-                subtitle:
-                  "Read-only invoice and payment rows with export-ready columns.",
-                meta: "Review for accounting",
-                badge: "Export prep",
-                trailing: "Open"
-              },
-              {
-                href: "/financials/accounting-readiness",
-                title: "Tax and retainage snapshots",
-                subtitle:
-                  "Existing invoice snapshots surfaced without recalculating financial truth.",
-                meta: "Source records",
-                badge: "Read-only",
-                trailing: "Open"
-              }
-            ]}
-            emptyTitle="Accounting readiness is available."
-            emptyDescription="Open the workspace to review invoice and payment export prep."
-          />
-        </section>
-
-        <section className="grid gap-4 xl:grid-cols-[minmax(0,1.7fr)_minmax(320px,1fr)]">
           <section className="border border-[#d6d6d6] bg-white">
-            <div className="flex items-start justify-between gap-4 border-b border-[#e5e5e5] px-4 py-3">
-              <div>
-                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#666666]">
-                  Receivables
-                </p>
-                <h3 className="mt-1 text-[17px] font-semibold tracking-tight text-[#171717]">
-                  Collection opportunities
-                </h3>
-                <p className="mt-1 text-xs leading-5 text-slate-500">
-                  Highest-priority open balances with customer, project,
-                  estimate, and job context where those links exist.
-                </p>
-              </div>
-              <Link
-                href="/financials/accounts-receivable"
-                className="inline-flex shrink-0 items-center border border-[#d6d6d6] bg-[#f7f8fa] px-2.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-[#4f4f4f] transition hover:bg-white"
-              >
-                Open AR
-              </Link>
+            <div className="border-b border-[#e5e5e5] px-4 py-3 sm:px-5">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#666666]">
+                Continuity map
+              </p>
+              <h2 className="mt-1 text-xl font-semibold tracking-tight text-[#171717]">
+                Financial command center links
+              </h2>
+              <p className="mt-1 max-w-[78ch] text-sm leading-6 text-slate-500">
+                Start here, then continue into the canonical workspace that owns
+                the invoice, payment, project, customer, or SOV context. These
+                are routing signals only.
+              </p>
             </div>
-
-            <div className="hidden grid-cols-[minmax(0,1.1fr)_1fr_100px_130px] gap-4 border-b border-[#e5e5e5] px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#666666] md:grid">
-              <span>Invoice</span>
-              <span>Customer / project</span>
-              <span className="text-right">Due</span>
-              <span className="text-right">Balance</span>
-            </div>
-
-            <div className="divide-y divide-[#e5e5e5]">
-              {readModel.collectionOpportunities.length > 0 ? (
-                readModel.collectionOpportunities.slice(0, 8).map((invoice) => (
-                  <Link
-                    key={invoice.id}
-                    href={`/invoices/${invoice.id}`}
-                    className="grid gap-2 px-4 py-3 transition hover:bg-[#f8f8f8] md:grid-cols-[minmax(0,1.1fr)_1fr_100px_130px] md:items-center md:gap-4"
-                  >
+            <div className="grid gap-px bg-[#e5e5e5] md:grid-cols-2 xl:grid-cols-3">
+              {financialContinuityLinks.map((item) => (
+                <Link
+                  key={item.id}
+                  href={item.href}
+                  className="min-w-0 bg-white px-4 py-4 transition hover:bg-[#f8f8f8]"
+                >
+                  <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
-                      <p className="truncate text-sm font-semibold text-[#171717]">
-                        {invoice.referenceNumber}
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#666666]">
+                        {item.eyebrow}
                       </p>
-                      <p className="mt-1 text-xs uppercase tracking-[0.12em] text-[#666666]">
-                        {formatStatusLabel(invoice.workflowRole)} invoice
-                      </p>
+                      <h3 className="mt-1 text-[17px] font-semibold tracking-tight text-[#171717]">
+                        {item.title}
+                      </h3>
                     </div>
-                    <div className="min-w-0">
-                      <p className="truncate text-sm text-slate-700">
-                        {invoice.customer?.name ?? "Unknown customer"}
-                      </p>
-                      <p className="truncate text-sm text-slate-500">
-                        {invoice.project?.name ?? "No project"}
-                      </p>
-                    </div>
-                    <p className="text-sm text-slate-600 md:text-right">
-                      {invoice.dueDate
-                        ? formatDate(invoice.dueDate)
-                        : "No due date"}
-                    </p>
-                    <p className="text-sm font-semibold text-slate-900 md:text-right">
-                      {formatMoney(invoice.balanceDueAmount)}
-                    </p>
-                  </Link>
-                ))
-              ) : (
-                <div className="px-4 py-5">
-                  <p className="text-sm font-semibold text-[#171717]">
-                    No open receivables are waiting right now.
+                    <span
+                      className={
+                        item.tone === "warning"
+                          ? "rounded-full border border-red-200 bg-red-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-red-700"
+                          : item.tone === "attention"
+                            ? "rounded-full border border-[#e4d7ca] bg-[#fffcf7] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#8f5b32]"
+                            : "rounded-full border border-[#d6d6d6] bg-[#f8f8f8] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-500"
+                      }
+                    >
+                      {item.tone}
+                    </span>
+                  </div>
+                  <p className="mt-3 text-xl font-semibold tracking-tight text-[#171717]">
+                    {item.value}
                   </p>
                   <p className="mt-2 text-sm leading-5 text-slate-500">
-                    Outstanding invoice balances will appear here as billing
-                    moves through send and payment collection.
+                    {item.detail}
                   </p>
-                </div>
-              )}
+                </Link>
+              ))}
             </div>
           </section>
 
           <section className="border border-[#d6d6d6] bg-white">
-            <div className="border-b border-[#e5e5e5] px-4 py-3">
+            <div className="border-b border-[#e5e5e5] px-4 py-3 sm:px-5">
               <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#666666]">
-                Receivable mix
+                Command Center
               </p>
-              <h3 className="mt-1 text-[17px] font-semibold tracking-tight text-[#171717]">
-                Aging and invoice roles
-              </h3>
-              <p className="mt-1 text-xs leading-5 text-slate-500">
-                Derived from existing invoices and payments. This view does not
-                create accounting entries, payment records, or external sync.
+              <h2 className="mt-1 text-xl font-semibold tracking-tight text-[#171717]">
+                Financial control signals
+              </h2>
+              <p className="mt-1 max-w-[78ch] text-sm leading-6 text-slate-500">
+                Read-only finance signals across AR, deposits, Payment Trail,
+                retainage, and SOV-linked invoices. Each item routes back to the
+                canonical workspace that owns the source record.
               </p>
             </div>
-
-            <div className="divide-y divide-[#e5e5e5]">
-              {readModel.summary.agingBuckets.map((bucket) => (
-                <div
-                  key={bucket.key}
-                  className="grid grid-cols-[1fr_auto] gap-3 px-4 py-3"
+            <div className="grid gap-px bg-[#e5e5e5] md:grid-cols-2 xl:grid-cols-5">
+              {financialControl.commandSignals.map((signal) => (
+                <Link
+                  key={signal.id}
+                  href={signal.href}
+                  className="min-w-0 bg-white px-4 py-4 transition hover:bg-[#f8f8f8]"
                 >
-                  <div>
-                    <p className="text-sm font-semibold text-[#171717]">
-                      {bucket.label}
+                  <div className="flex items-start justify-between gap-3">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#666666]">
+                      {signal.label}
                     </p>
-                    <p className="mt-1 text-xs text-slate-500">
-                      {bucket.invoiceCount} invoice
-                      {bucket.invoiceCount === 1 ? "" : "s"}
-                    </p>
+                    <span
+                      className={
+                        signal.tone === "warning"
+                          ? "rounded-full border border-red-200 bg-red-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-red-700"
+                          : signal.tone === "attention"
+                            ? "rounded-full border border-[#e4d7ca] bg-[#fffcf7] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#8f5b32]"
+                            : "rounded-full border border-[#d6d6d6] bg-[#f8f8f8] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-500"
+                      }
+                    >
+                      {signal.tone}
+                    </span>
                   </div>
-                  <p className="text-sm font-semibold text-slate-900">
-                    {formatMoney(bucket.balanceAmount)}
+                  <p className="mt-2 text-lg font-semibold tracking-tight text-[#171717]">
+                    {signal.id === "payment-trail"
+                      ? signal.value
+                      : formatMoney(signal.value)}
                   </p>
-                </div>
+                  <p className="mt-2 text-xs leading-5 text-slate-500">
+                    {signal.detail}
+                  </p>
+                </Link>
               ))}
-              <div className="grid grid-cols-[1fr_auto] gap-3 px-4 py-3">
-                <p className="text-sm font-semibold text-[#171717]">
-                  Deposit invoices
-                </p>
-                <p className="text-sm font-semibold text-slate-900">
-                  {formatMoney(readModel.summary.depositReceivableAmount)}
-                </p>
-              </div>
-              <div className="grid grid-cols-[1fr_auto] gap-3 px-4 py-3">
-                <p className="text-sm font-semibold text-[#171717]">
-                  Standard invoices
-                </p>
-                <p className="text-sm font-semibold text-slate-900">
-                  {formatMoney(readModel.summary.standardReceivableAmount)}
-                </p>
-              </div>
             </div>
           </section>
-        </section>
+
+          <section className="border border-[#d6d6d6] bg-white">
+            <div className="border-b border-[#e5e5e5] px-4 py-3 sm:px-5">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#666666]">
+                Settings boundary
+              </p>
+              <h2 className="mt-1 text-xl font-semibold tracking-tight text-[#171717]">
+                Configuration lives in Settings
+              </h2>
+              <p className="mt-1 max-w-[78ch] text-sm leading-6 text-slate-500">
+                This workspace acts on existing financial records. Tax,
+                retainage, template, numbering, deposit, and workflow defaults
+                remain administrative configuration.
+              </p>
+            </div>
+            <div className="grid gap-px bg-[#e5e5e5] md:grid-cols-3">
+              {financialSettingsLinks.map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className="min-w-0 bg-white px-4 py-4 transition hover:bg-[#f8f8f8]"
+                >
+                  <h3 className="text-sm font-semibold text-[#171717]">
+                    {item.title}
+                  </h3>
+                  <p className="mt-2 text-sm leading-5 text-slate-500">
+                    {item.detail}
+                  </p>
+                </Link>
+              ))}
+            </div>
+          </section>
+
+          <section className="grid gap-4 xl:auto-rows-fr xl:grid-cols-3">
+            <ManagerDashboardCard
+              eyebrow="Collections"
+              title="Overdue invoices"
+              description="Past-due invoices with balance still owed."
+              actionHref="/financials/accounts-receivable"
+              actionLabel="Review AR"
+              items={readModel.overdueInvoices.slice(0, 5).map((invoice) => ({
+                href: `/invoices/${invoice.id}`,
+                title: invoice.referenceNumber,
+                subtitle: `${invoice.customer?.name ?? "Unknown customer"} - ${invoice.project?.name ?? "No project"}`,
+                meta: invoice.dueDate
+                  ? `Due ${formatDate(invoice.dueDate)}`
+                  : "No due date",
+                badge: formatStatusLabel(invoice.status),
+                trailing: formatMoney(invoice.balanceDueAmount)
+              }))}
+              emptyTitle="No overdue invoices need follow-up right now."
+              emptyDescription="Past-due balances will surface here for collections review."
+            />
+
+            <ManagerDashboardCard
+              eyebrow="Payment activity"
+              title="Pending checkout"
+              description="Pending payments and checkout activity that still need a customer or payment outcome."
+              actionHref="/payments?status=pending"
+              actionLabel="Open pending"
+              items={readModel.pendingPayments.slice(0, 5).map((payment) => ({
+                href: `/invoices/${payment.invoiceId}`,
+                title: payment.invoice?.referenceNumber ?? "Pending payment",
+                subtitle: `${payment.customer?.name ?? "Unknown customer"} - ${payment.project?.name ?? "No project"}`,
+                meta: payment.gatewayProvider ?? payment.paymentMethod,
+                badge: payment.gatewayStatus ?? "pending",
+                trailing: formatMoney(payment.amount)
+              }))}
+              emptyTitle="No pending checkout activity."
+              emptyDescription="Pending payments will appear here when follow-through is needed."
+            />
+
+            <ManagerDashboardCard
+              eyebrow="Payment attention"
+              title="Payment events needing review"
+              description="Failed, voided, or in-progress payment activity tied back to invoices."
+              actionHref="/payments"
+              actionLabel="Open payments"
+              items={financialControl.paymentEventsNeedingReview
+                .slice(0, 5)
+                .map((event) => ({
+                  href: event.href,
+                  title: event.invoiceReference,
+                  subtitle: `${event.customerName} - ${event.projectName}`,
+                  meta: event.nextMoveLabel,
+                  badge: event.label,
+                  trailing: event.reason
+                }))}
+              emptyTitle="No payment events need review."
+              emptyDescription="Payment Trail attention will appear here when follow-through is needed."
+            />
+          </section>
+
+          <section className="grid gap-4 xl:grid-cols-2">
+            <ManagerDashboardCard
+              eyebrow="Project collections"
+              title="Project collection attention"
+              description="Projects carrying open invoice or payment follow-through."
+              actionHref="/financials/accounts-receivable"
+              actionLabel="Review AR"
+              items={financialControl.projectCollectionAttention
+                .slice(0, 5)
+                .map((project) => ({
+                  href: project.href,
+                  title: project.projectName,
+                  subtitle: project.customerName,
+                  meta: project.reason,
+                  badge: project.nextMoveLabel,
+                  trailing: formatMoney(project.openBalanceAmount)
+                }))}
+              emptyTitle="No project collection attention."
+              emptyDescription="Projects with open invoice pressure will appear here."
+            />
+            <ManagerDashboardCard
+              eyebrow="Receivables"
+              title="Invoices needing attention"
+              description="Open invoices ordered by payment urgency, due date, and balance."
+              actionHref="/financials/accounts-receivable"
+              actionLabel="Open AR"
+              items={financialControl.invoicesNeedingAttention
+                .slice(0, 5)
+                .map((invoice) => ({
+                  href: invoice.href,
+                  title: invoice.referenceNumber,
+                  subtitle: `${invoice.customerName} - ${invoice.projectName}`,
+                  meta: invoice.reason,
+                  badge: invoice.nextMoveLabel,
+                  trailing: formatMoney(invoice.balanceDueAmount)
+                }))}
+              emptyTitle="No invoices need attention."
+              emptyDescription="Open balances and follow-up items will appear here."
+            />
+            <ManagerDashboardCard
+              eyebrow="Accounting Readiness"
+              title="Export and reconciliation prep"
+              description="Invoice, payment, tax, retainage, customer, and project context for accounting review."
+              actionHref="/financials/accounting-readiness"
+              actionLabel="Review prep"
+              items={[
+                {
+                  href: "/financials/accounting-readiness",
+                  title: "Accounting review workspace",
+                  subtitle:
+                    "Read-only invoice and payment rows with export-ready columns.",
+                  meta: "Review for accounting",
+                  badge: "Export prep",
+                  trailing: "Open"
+                },
+                {
+                  href: "/financials/accounting-readiness",
+                  title: "Tax and retainage snapshots",
+                  subtitle:
+                    "Existing invoice snapshots surfaced without recalculating financial truth.",
+                  meta: "Source records",
+                  badge: "Read-only",
+                  trailing: "Open"
+                }
+              ]}
+              emptyTitle="Accounting readiness is available."
+              emptyDescription="Open the workspace to review invoice and payment export prep."
+            />
+          </section>
+
+          <section className="grid gap-4 xl:grid-cols-[minmax(0,1.7fr)_minmax(320px,1fr)]">
+            <section className="border border-[#d6d6d6] bg-white">
+              <div className="flex items-start justify-between gap-4 border-b border-[#e5e5e5] px-4 py-3">
+                <div>
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#666666]">
+                    Receivables
+                  </p>
+                  <h3 className="mt-1 text-[17px] font-semibold tracking-tight text-[#171717]">
+                    Collection opportunities
+                  </h3>
+                  <p className="mt-1 text-xs leading-5 text-slate-500">
+                    Highest-priority open balances with customer, project,
+                    estimate, and job context where those links exist.
+                  </p>
+                </div>
+                <Link
+                  href="/financials/accounts-receivable"
+                  className="inline-flex shrink-0 items-center border border-[#d6d6d6] bg-[#f7f8fa] px-2.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-[#4f4f4f] transition hover:bg-white"
+                >
+                  Open AR
+                </Link>
+              </div>
+
+              <div className="hidden grid-cols-[minmax(0,1.1fr)_1fr_100px_130px] gap-4 border-b border-[#e5e5e5] px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#666666] md:grid">
+                <span>Invoice</span>
+                <span>Customer / project</span>
+                <span className="text-right">Due</span>
+                <span className="text-right">Balance</span>
+              </div>
+
+              <div className="divide-y divide-[#e5e5e5]">
+                {readModel.collectionOpportunities.length > 0 ? (
+                  readModel.collectionOpportunities
+                    .slice(0, 8)
+                    .map((invoice) => (
+                      <Link
+                        key={invoice.id}
+                        href={`/invoices/${invoice.id}`}
+                        className="grid gap-2 px-4 py-3 transition hover:bg-[#f8f8f8] md:grid-cols-[minmax(0,1.1fr)_1fr_100px_130px] md:items-center md:gap-4"
+                      >
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-semibold text-[#171717]">
+                            {invoice.referenceNumber}
+                          </p>
+                          <p className="mt-1 text-xs uppercase tracking-[0.12em] text-[#666666]">
+                            {formatStatusLabel(invoice.workflowRole)} invoice
+                          </p>
+                        </div>
+                        <div className="min-w-0">
+                          <p className="truncate text-sm text-slate-700">
+                            {invoice.customer?.name ?? "Unknown customer"}
+                          </p>
+                          <p className="truncate text-sm text-slate-500">
+                            {invoice.project?.name ?? "No project"}
+                          </p>
+                        </div>
+                        <p className="text-sm text-slate-600 md:text-right">
+                          {invoice.dueDate
+                            ? formatDate(invoice.dueDate)
+                            : "No due date"}
+                        </p>
+                        <p className="text-sm font-semibold text-slate-900 md:text-right">
+                          {formatMoney(invoice.balanceDueAmount)}
+                        </p>
+                      </Link>
+                    ))
+                ) : (
+                  <div className="px-4 py-5">
+                    <p className="text-sm font-semibold text-[#171717]">
+                      No open receivables are waiting right now.
+                    </p>
+                    <p className="mt-2 text-sm leading-5 text-slate-500">
+                      Outstanding invoice balances will appear here as billing
+                      moves through send and payment collection.
+                    </p>
+                  </div>
+                )}
+              </div>
+            </section>
+
+            <section className="border border-[#d6d6d6] bg-white">
+              <div className="border-b border-[#e5e5e5] px-4 py-3">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#666666]">
+                  Receivable mix
+                </p>
+                <h3 className="mt-1 text-[17px] font-semibold tracking-tight text-[#171717]">
+                  Aging and invoice roles
+                </h3>
+                <p className="mt-1 text-xs leading-5 text-slate-500">
+                  Derived from existing invoices and payments. This view does
+                  not create accounting entries, payment records, or external
+                  sync.
+                </p>
+              </div>
+
+              <div className="divide-y divide-[#e5e5e5]">
+                {readModel.summary.agingBuckets.map((bucket) => (
+                  <div
+                    key={bucket.key}
+                    className="grid grid-cols-[1fr_auto] gap-3 px-4 py-3"
+                  >
+                    <div>
+                      <p className="text-sm font-semibold text-[#171717]">
+                        {bucket.label}
+                      </p>
+                      <p className="mt-1 text-xs text-slate-500">
+                        {bucket.invoiceCount} invoice
+                        {bucket.invoiceCount === 1 ? "" : "s"}
+                      </p>
+                    </div>
+                    <p className="text-sm font-semibold text-slate-900">
+                      {formatMoney(bucket.balanceAmount)}
+                    </p>
+                  </div>
+                ))}
+                <div className="grid grid-cols-[1fr_auto] gap-3 px-4 py-3">
+                  <p className="text-sm font-semibold text-[#171717]">
+                    Deposit invoices
+                  </p>
+                  <p className="text-sm font-semibold text-slate-900">
+                    {formatMoney(readModel.summary.depositReceivableAmount)}
+                  </p>
+                </div>
+                <div className="grid grid-cols-[1fr_auto] gap-3 px-4 py-3">
+                  <p className="text-sm font-semibold text-[#171717]">
+                    Standard invoices
+                  </p>
+                  <p className="text-sm font-semibold text-slate-900">
+                    {formatMoney(readModel.summary.standardReceivableAmount)}
+                  </p>
+                </div>
+              </div>
+            </section>
+          </section>
+        </details>
       </div>
     </ContractorWorkspacePage>
   );

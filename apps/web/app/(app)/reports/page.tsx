@@ -636,7 +636,7 @@ export default async function ReportsPage({ searchParams }: ReportsPageProps) {
               label: "Tax collected",
               value: formatMoney(taxReport.summary.taxCollected),
               detail: "Invoice issue-date basis",
-              href: "#sales-tax-summary"
+              href: "#date-window-report-tables"
             }
           ].map((card) => (
             <Link
@@ -655,171 +655,195 @@ export default async function ReportsPage({ searchParams }: ReportsPageProps) {
           ))}
         </section>
 
-        <ReportSection
-          eyebrow="Tax reporting"
-          title="Sales Tax Summary"
-          description="Filing-prep visibility from canonical invoice tax snapshots using invoice issue date. This does not file returns, remit tax, call a provider, or recalculate historical invoices."
-        >
-          <div id="sales-tax-summary" className="space-y-4 p-4">
-            <div className="grid gap-px border border-[#d6d6d6] bg-[#d6d6d6] sm:grid-cols-2 xl:grid-cols-4">
-              {[
-                {
-                  label: "Taxable sales",
-                  value: formatMoney(taxReport.summary.taxableSales),
-                  detail: "Stored invoice snapshot"
-                },
-                {
-                  label: "Exempt sales",
-                  value: formatMoney(taxReport.summary.exemptSales),
-                  detail: `${taxReport.summary.exemptInvoiceCount} exempt invoices`
-                },
-                {
-                  label: "Tax collected",
-                  value: formatMoney(taxReport.summary.taxCollected),
-                  detail: "Stored tax collected snapshot"
-                },
-                {
-                  label: "Filing-prep invoices",
-                  value: taxReport.summary.invoiceCount,
-                  detail: `${taxReport.summary.paidInvoiceCount} paid / ${taxReport.summary.openInvoiceCount} open`
-                }
-              ].map((item) => (
-                <div key={item.label} className="bg-white px-3 py-2.5">
-                  <p className="text-[11px] uppercase tracking-[0.14em] text-[#666666]">
-                    {item.label}
-                  </p>
-                  <p className="mt-1 text-lg font-semibold tracking-tight text-[#171717]">
-                    {item.value}
-                  </p>
-                  <p className="mt-1 text-xs text-slate-500">{item.detail}</p>
-                </div>
-              ))}
+        <details className="group space-y-5">
+          <summary
+            id="date-window-report-tables"
+            className="flex cursor-pointer list-none items-start justify-between gap-4 border border-[#d6d6d6] bg-white px-4 py-3 sm:px-5 [&::-webkit-details-marker]:hidden"
+          >
+            <div>
+              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#666666]">
+                Supporting tables
+              </p>
+              <h2 className="mt-1 text-xl font-semibold tracking-tight text-[#171717]">
+                Date-window report tables
+              </h2>
+              <p className="mt-1 max-w-[78ch] text-sm leading-6 text-slate-500">
+                Tax, pipeline, commercial, receivable, cash, and readiness
+                detail stays grouped below the owner reporting workspace.
+              </p>
             </div>
+            <span className="mt-0.5 inline-flex shrink-0 items-center rounded-full border border-[#d6d6d6] bg-[#f8f8f8] px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#666666]">
+              <span className="group-open:hidden">Show</span>
+              <span className="hidden group-open:inline">Hide</span>
+            </span>
+          </summary>
 
-            <div className="grid gap-3 xl:grid-cols-3">
-              <TaxExceptionList
-                title="Exemption visibility"
-                description="Invoices carrying exempt sales or an exempt customer snapshot."
-                rows={taxReport.exceptionRows.exemptInvoices}
-              />
-              <TaxExceptionList
-                title="Open in period"
-                description="Issued invoices in this date range that are not fully paid yet."
-                rows={taxReport.exceptionRows.openInvoices}
-              />
-              <TaxExceptionList
-                title="Zero-tax taxable sales"
-                description="Taxable sales snapshots where collected tax is currently zero."
-                rows={taxReport.exceptionRows.zeroTaxWithTaxableSales}
-              />
-            </div>
-          </div>
-          <SimpleSalesTaxTable rows={taxReport.rows} />
-        </ReportSection>
-
-        <ReportSection
-          eyebrow="Pipeline"
-          title="Lead pipeline summary"
-          description="Opportunity counts by status from canonical lead records, filtered by updated date."
-        >
-          <div className="p-4">
-            <StatusSummaryGrid
-              statuses={leadStatuses}
-              counts={report.leadPipeline.counts}
-            />
-          </div>
-          <SimpleLeadTable leads={report.leadPipeline.drilldown} />
-        </ReportSection>
-
-        <ReportSection
-          eyebrow="Commercial"
-          title="Estimate summary"
-          description="Draft, sent, approved, and rejected estimates by current status. Values are proposal totals, not billing revenue."
-        >
-          <div className="p-4">
-            <StatusSummaryGrid
-              statuses={estimateStatuses}
-              counts={report.estimates.counts}
-              amountLabel="Value"
-            />
-          </div>
-          <SimpleEstimateTable estimates={report.estimates.drilldown} />
-        </ReportSection>
-
-        <section className="grid gap-5 xl:grid-cols-2">
           <ReportSection
-            eyebrow="Receivables"
-            title="Invoice summary"
-            description="Current invoice status and balance visibility from canonical invoices only."
+            eyebrow="Tax reporting"
+            title="Sales Tax Summary"
+            description="Filing-prep visibility from canonical invoice tax snapshots using invoice issue date. This does not file returns, remit tax, call a provider, or recalculate historical invoices."
+          >
+            <div id="sales-tax-summary" className="space-y-4 p-4">
+              <div className="grid gap-px border border-[#d6d6d6] bg-[#d6d6d6] sm:grid-cols-2 xl:grid-cols-4">
+                {[
+                  {
+                    label: "Taxable sales",
+                    value: formatMoney(taxReport.summary.taxableSales),
+                    detail: "Stored invoice snapshot"
+                  },
+                  {
+                    label: "Exempt sales",
+                    value: formatMoney(taxReport.summary.exemptSales),
+                    detail: `${taxReport.summary.exemptInvoiceCount} exempt invoices`
+                  },
+                  {
+                    label: "Tax collected",
+                    value: formatMoney(taxReport.summary.taxCollected),
+                    detail: "Stored tax collected snapshot"
+                  },
+                  {
+                    label: "Filing-prep invoices",
+                    value: taxReport.summary.invoiceCount,
+                    detail: `${taxReport.summary.paidInvoiceCount} paid / ${taxReport.summary.openInvoiceCount} open`
+                  }
+                ].map((item) => (
+                  <div key={item.label} className="bg-white px-3 py-2.5">
+                    <p className="text-[11px] uppercase tracking-[0.14em] text-[#666666]">
+                      {item.label}
+                    </p>
+                    <p className="mt-1 text-lg font-semibold tracking-tight text-[#171717]">
+                      {item.value}
+                    </p>
+                    <p className="mt-1 text-xs text-slate-500">{item.detail}</p>
+                  </div>
+                ))}
+              </div>
+
+              <div className="grid gap-3 xl:grid-cols-3">
+                <TaxExceptionList
+                  title="Exemption visibility"
+                  description="Invoices carrying exempt sales or an exempt customer snapshot."
+                  rows={taxReport.exceptionRows.exemptInvoices}
+                />
+                <TaxExceptionList
+                  title="Open in period"
+                  description="Issued invoices in this date range that are not fully paid yet."
+                  rows={taxReport.exceptionRows.openInvoices}
+                />
+                <TaxExceptionList
+                  title="Zero-tax taxable sales"
+                  description="Taxable sales snapshots where collected tax is currently zero."
+                  rows={taxReport.exceptionRows.zeroTaxWithTaxableSales}
+                />
+              </div>
+            </div>
+            <SimpleSalesTaxTable rows={taxReport.rows} />
+          </ReportSection>
+
+          <ReportSection
+            eyebrow="Pipeline"
+            title="Lead pipeline summary"
+            description="Opportunity counts by status from canonical lead records, filtered by updated date."
           >
             <div className="p-4">
               <StatusSummaryGrid
-                statuses={invoiceSummaryStatuses}
-                counts={report.invoices.counts}
-                amountLabel="Amount"
+                statuses={leadStatuses}
+                counts={report.leadPipeline.counts}
               />
             </div>
-            <SimpleInvoiceTable invoices={report.invoices.openDrilldown} />
+            <SimpleLeadTable leads={report.leadPipeline.drilldown} />
           </ReportSection>
 
           <ReportSection
-            eyebrow="Receivables"
-            title="Invoice aging"
-            description="Open invoice balances grouped by due date, falling back to issue date where due date is missing."
+            eyebrow="Commercial"
+            title="Estimate summary"
+            description="Draft, sent, approved, and rejected estimates by current status. Values are proposal totals, not billing revenue."
           >
-            <div className="divide-y divide-[#e5e5e5]">
-              {report.invoices.aging.map((bucket) => (
-                <div
-                  key={bucket.status}
-                  className="grid grid-cols-[1fr_80px_140px] gap-3 px-4 py-3 text-sm"
-                >
-                  <span className="font-semibold capitalize text-[#171717]">
-                    {labelize(bucket.status)}
-                  </span>
-                  <span className="text-right text-slate-600">
-                    {bucket.count}
-                  </span>
-                  <span className="text-right font-semibold text-slate-950">
-                    {formatMoney(bucket.amount)}
-                  </span>
-                </div>
-              ))}
+            <div className="p-4">
+              <StatusSummaryGrid
+                statuses={estimateStatuses}
+                counts={report.estimates.counts}
+                amountLabel="Value"
+              />
             </div>
+            <SimpleEstimateTable estimates={report.estimates.drilldown} />
           </ReportSection>
-        </section>
 
-        <ReportSection
-          eyebrow="Cash activity"
-          title="Payment activity summary"
-          description="Recent canonical payment records by payment date. Only recorded payments are treated as collected cash."
-        >
-          <div className="p-4">
-            <StatusSummaryGrid
-              statuses={paymentStatuses}
-              counts={report.payments.counts}
-              amountLabel="Amount"
-            />
-          </div>
-          <SimplePaymentTable payments={report.payments.recent} />
-        </ReportSection>
+          <section className="grid gap-5 xl:grid-cols-2">
+            <ReportSection
+              eyebrow="Receivables"
+              title="Invoice summary"
+              description="Current invoice status and balance visibility from canonical invoices only."
+            >
+              <div className="p-4">
+                <StatusSummaryGrid
+                  statuses={invoiceSummaryStatuses}
+                  counts={report.invoices.counts}
+                  amountLabel="Amount"
+                />
+              </div>
+              <SimpleInvoiceTable invoices={report.invoices.openDrilldown} />
+            </ReportSection>
 
-        <ReportSection
-          eyebrow="Readiness"
-          title="Project readiness blockers"
-          description="Current blocked projects by canonical project readiness status. This view does not read contracts, jobs, or create a separate blocker model."
-        >
-          <div className="p-4">
-            <StatusSummaryGrid
-              statuses={report.projectReadiness.counts.map(
-                (count) => count.status
-              )}
-              counts={report.projectReadiness.counts}
+            <ReportSection
+              eyebrow="Receivables"
+              title="Invoice aging"
+              description="Open invoice balances grouped by due date, falling back to issue date where due date is missing."
+            >
+              <div className="divide-y divide-[#e5e5e5]">
+                {report.invoices.aging.map((bucket) => (
+                  <div
+                    key={bucket.status}
+                    className="grid grid-cols-[1fr_80px_140px] gap-3 px-4 py-3 text-sm"
+                  >
+                    <span className="font-semibold capitalize text-[#171717]">
+                      {labelize(bucket.status)}
+                    </span>
+                    <span className="text-right text-slate-600">
+                      {bucket.count}
+                    </span>
+                    <span className="text-right font-semibold text-slate-950">
+                      {formatMoney(bucket.amount)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </ReportSection>
+          </section>
+
+          <ReportSection
+            eyebrow="Cash activity"
+            title="Payment activity summary"
+            description="Recent canonical payment records by payment date. Only recorded payments are treated as collected cash."
+          >
+            <div className="p-4">
+              <StatusSummaryGrid
+                statuses={paymentStatuses}
+                counts={report.payments.counts}
+                amountLabel="Amount"
+              />
+            </div>
+            <SimplePaymentTable payments={report.payments.recent} />
+          </ReportSection>
+
+          <ReportSection
+            eyebrow="Readiness"
+            title="Project readiness blockers"
+            description="Current blocked projects by canonical project readiness status. This view does not read contracts, jobs, or create a separate blocker model."
+          >
+            <div className="p-4">
+              <StatusSummaryGrid
+                statuses={report.projectReadiness.counts.map(
+                  (count) => count.status
+                )}
+                counts={report.projectReadiness.counts}
+              />
+            </div>
+            <SimpleProjectTable
+              projects={report.projectReadiness.blockedProjects}
             />
-          </div>
-          <SimpleProjectTable
-            projects={report.projectReadiness.blockedProjects}
-          />
-        </ReportSection>
+          </ReportSection>
+        </details>
       </div>
     </ContractorWorkspacePage>
   );

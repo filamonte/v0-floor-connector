@@ -3493,21 +3493,76 @@ export default async function SchedulePage({
             </div>
           </section>
 
-          <section className="grid gap-4 xl:auto-rows-fr xl:grid-cols-2">
-            <ManagerDashboardCard
-              eyebrow="Needs commitment"
-              title={unscheduledDispatchSection?.title ?? "Needs Scheduling"}
-              description={
-                unscheduledDispatchSection?.description ??
-                "These jobs already cleared the Ready Check. If expected work is absent, open the Project Workspace and review GateKeeper first."
-              }
-              actionHref={buildCurrentScheduleHref({ view: "unscheduled" })}
-              actionLabel="Review queue"
-              items={(unscheduledDispatchSection?.items ?? [])
-                .slice(0, 4)
-                .map((item) => {
-                  const job = item.job;
-                  const crewState = getCrewState(job);
+          <details className="group space-y-4">
+            <summary
+              className={`${schedulePanelClassName} flex cursor-pointer list-none items-start justify-between gap-4 px-5 py-4 sm:px-6 [&::-webkit-details-marker]:hidden`}
+            >
+              <div>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
+                  Supporting queues
+                </p>
+                <h2 className="mt-1 text-lg font-semibold tracking-tight text-[var(--text-primary)]">
+                  Schedule action previews
+                </h2>
+                <p className="mt-1 max-w-[78ch] text-sm leading-6 text-[var(--text-secondary)]">
+                  Queue cards for aging, readiness, crew, live work, and
+                  closeout stay grouped below CrewBoard attention and resource
+                  load.
+                </p>
+              </div>
+              <span className="mt-0.5 inline-flex shrink-0 items-center rounded-full border border-[var(--border-warm)] bg-[var(--highlight)] px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--text-secondary)]">
+                <span className="group-open:hidden">Show</span>
+                <span className="hidden group-open:inline">Hide</span>
+              </span>
+            </summary>
+
+            <section className="grid gap-4 xl:auto-rows-fr xl:grid-cols-2">
+              <ManagerDashboardCard
+                eyebrow="Needs commitment"
+                title={unscheduledDispatchSection?.title ?? "Needs Scheduling"}
+                description={
+                  unscheduledDispatchSection?.description ??
+                  "These jobs already cleared the Ready Check. If expected work is absent, open the Project Workspace and review GateKeeper first."
+                }
+                actionHref={buildCurrentScheduleHref({ view: "unscheduled" })}
+                actionLabel="Review queue"
+                items={(unscheduledDispatchSection?.items ?? [])
+                  .slice(0, 4)
+                  .map((item) => {
+                    const job = item.job;
+                    const crewState = getCrewState(job);
+                    const primaryAction = getPrimaryScheduleAction(job);
+
+                    return {
+                      href: buildCurrentScheduleHref({
+                        action: primaryAction.action,
+                        jobId: job.id
+                      }),
+                      title: getScheduleJobTitle(job),
+                      subtitle: getScheduleJobSubtitle(job),
+                      meta: item.warnings.length
+                        ? `${formatWarningCount(item.warnings.length)} before dispatch commitment`
+                        : crewState.label === "Assigned"
+                          ? `${item.crewLabel} ready once timing is set`
+                          : "Needs scheduling before crew commitment becomes actionable",
+                      badge:
+                        job.dispatchStatus === "unscheduled"
+                          ? "Needs Dispatch"
+                          : item.statusLabel,
+                      trailing: primaryAction.label
+                    };
+                  })}
+                emptyTitle="No jobs need scheduling right now."
+                emptyDescription="Jobs surface here after the Project Workspace clears the Ready Check and a job exists without timing."
+              />
+
+              <ManagerDashboardCard
+                eyebrow="Queue age"
+                title="Aging ready jobs"
+                description="Ready-to-schedule jobs that have waited since before today stay visible so dispatch can commit timing or reopen project context."
+                actionHref={buildCurrentScheduleHref({ view: "unscheduled" })}
+                actionLabel="Review aging"
+                items={agingUnscheduledReadyJobs.slice(0, 4).map((job) => {
                   const primaryAction = getPrimaryScheduleAction(job);
 
                   return {
@@ -3517,209 +3572,251 @@ export default async function SchedulePage({
                     }),
                     title: getScheduleJobTitle(job),
                     subtitle: getScheduleJobSubtitle(job),
-                    meta: item.warnings.length
-                      ? `${formatWarningCount(item.warnings.length)} before dispatch commitment`
-                      : crewState.label === "Assigned"
-                        ? `${item.crewLabel} ready once timing is set`
-                        : "Needs scheduling before crew commitment becomes actionable",
-                    badge:
-                      job.dispatchStatus === "unscheduled"
-                        ? "Needs Dispatch"
-                        : item.statusLabel,
+                    meta: `Waiting since ${formatDate(job.updatedAt.slice(0, 10))}`,
+                    badge: "Aging ready",
                     trailing: primaryAction.label
                   };
                 })}
-              emptyTitle="No jobs need scheduling right now."
-              emptyDescription="Jobs surface here after the Project Workspace clears the Ready Check and a job exists without timing."
-            />
+                emptyTitle="No aging ready jobs."
+                emptyDescription="Ready unscheduled jobs updated today stay out of this queue until they need dispatch follow-up."
+              />
 
-            <ManagerDashboardCard
-              eyebrow="Queue age"
-              title="Aging ready jobs"
-              description="Ready-to-schedule jobs that have waited since before today stay visible so dispatch can commit timing or reopen project context."
-              actionHref={buildCurrentScheduleHref({ view: "unscheduled" })}
-              actionLabel="Review aging"
-              items={agingUnscheduledReadyJobs.slice(0, 4).map((job) => {
-                const primaryAction = getPrimaryScheduleAction(job);
-
-                return {
-                  href: buildCurrentScheduleHref({
-                    action: primaryAction.action,
-                    jobId: job.id
-                  }),
-                  title: getScheduleJobTitle(job),
-                  subtitle: getScheduleJobSubtitle(job),
-                  meta: `Waiting since ${formatDate(job.updatedAt.slice(0, 10))}`,
-                  badge: "Aging ready",
-                  trailing: primaryAction.label
-                };
-              })}
-              emptyTitle="No aging ready jobs."
-              emptyDescription="Ready unscheduled jobs updated today stay out of this queue until they need dispatch follow-up."
-            />
-
-            <ManagerDashboardCard
-              eyebrow="Readiness"
-              title="Needs readiness review"
-              description="This queue collects scheduled or active jobs that need human review before the day runs cleanly: missing crew, missing end time, or schedule warnings."
-              actionHref={buildCurrentScheduleHref({ view: "all" })}
-              actionLabel="Review schedule"
-              items={needsReadinessReviewJobs.slice(0, 4).map((job) => {
-                const primaryAction = getPrimaryScheduleAction(job);
-                const jobWarnings = scheduleWarningsByJobId.get(job.id) ?? [];
-                const readinessBadge = getScheduleReadinessBadge({
-                  dispatchStatus: job.dispatchStatus,
-                  assignmentCount: job.assignmentCount,
-                  warningCount: jobWarnings.length
-                });
-
-                return {
-                  href: buildCurrentScheduleHref({
-                    action: primaryAction.action,
-                    jobId: job.id
-                  }),
-                  title: getScheduleJobTitle(job),
-                  subtitle: getScheduleJobSubtitle(job),
-                  meta: getScheduleReadinessReviewMeta({
+              <ManagerDashboardCard
+                eyebrow="Readiness"
+                title="Needs readiness review"
+                description="This queue collects scheduled or active jobs that need human review before the day runs cleanly: missing crew, missing end time, or schedule warnings."
+                actionHref={buildCurrentScheduleHref({ view: "all" })}
+                actionLabel="Review schedule"
+                items={needsReadinessReviewJobs.slice(0, 4).map((job) => {
+                  const primaryAction = getPrimaryScheduleAction(job);
+                  const jobWarnings = scheduleWarningsByJobId.get(job.id) ?? [];
+                  const readinessBadge = getScheduleReadinessBadge({
                     dispatchStatus: job.dispatchStatus,
                     assignmentCount: job.assignmentCount,
                     warningCount: jobWarnings.length
-                  }),
-                  badge: readinessBadge.label,
-                  trailing: primaryAction.label
-                };
-              })}
-              emptyTitle="No schedule readiness review items."
-              emptyDescription="Jobs with timing, crew, and warning context in place will stay out of this review queue."
-            />
+                  });
 
-            <ManagerDashboardCard
-              eyebrow="Readiness"
-              title="Blocked / not ready"
-              description="These jobs stay visible, but CrewBoard should not commit dates until the linked project readiness blocker is resolved."
-              actionHref={buildCurrentScheduleHref({
-                view: "unscheduled",
-                layout: "board"
-              })}
-              actionLabel="Open blocked lane"
-              items={blockedUnscheduledJobs.slice(0, 4).map((job) => {
-                const readiness = projectReadinessByProjectId.get(
-                  job.projectId
-                );
-                const blocker = readiness?.blockers[0] ?? null;
+                  return {
+                    href: buildCurrentScheduleHref({
+                      action: primaryAction.action,
+                      jobId: job.id
+                    }),
+                    title: getScheduleJobTitle(job),
+                    subtitle: getScheduleJobSubtitle(job),
+                    meta: getScheduleReadinessReviewMeta({
+                      dispatchStatus: job.dispatchStatus,
+                      assignmentCount: job.assignmentCount,
+                      warningCount: jobWarnings.length
+                    }),
+                    badge: readinessBadge.label,
+                    trailing: primaryAction.label
+                  };
+                })}
+                emptyTitle="No schedule readiness review items."
+                emptyDescription="Jobs with timing, crew, and warning context in place will stay out of this review queue."
+              />
 
-                return {
-                  href: blocker
-                    ? (getReadinessBlockerHref(
-                        blocker,
-                        readiness,
-                        job.projectId
-                      ) ?? `/projects/${job.projectId}`)
-                    : `/projects/${job.projectId}`,
-                  title: getScheduleJobTitle(job),
-                  subtitle: getScheduleJobSubtitle(job),
-                  meta: blocker
-                    ? getReadinessBlockerDetail(blocker, readiness)
-                    : "Open the Project Workspace to review readiness.",
-                  badge: blocker
-                    ? formatReadinessBlockerLabel(blocker)
-                    : "Blocked",
-                  trailing: "Resolve blocker"
-                };
-              })}
-              emptyTitle="No unscheduled jobs are readiness-blocked."
-              emptyDescription="If project commercial readiness changes after a job exists, blocked jobs remain visible here instead of disappearing from scheduling."
-            />
+              <ManagerDashboardCard
+                eyebrow="Readiness"
+                title="Blocked / not ready"
+                description="These jobs stay visible, but CrewBoard should not commit dates until the linked project readiness blocker is resolved."
+                actionHref={buildCurrentScheduleHref({
+                  view: "unscheduled",
+                  layout: "board"
+                })}
+                actionLabel="Open blocked lane"
+                items={blockedUnscheduledJobs.slice(0, 4).map((job) => {
+                  const readiness = projectReadinessByProjectId.get(
+                    job.projectId
+                  );
+                  const blocker = readiness?.blockers[0] ?? null;
 
-            <ManagerDashboardCard
-              eyebrow="Today"
-              title={todayDispatchSection?.title ?? "Scheduled work for today"}
-              description={
-                todayDispatchSection?.description ??
-                "Keep the immediate field picture visible without turning the page into a full calendar app."
-              }
-              actionHref={buildCurrentScheduleHref({ view: "today" })}
-              actionLabel="View today"
-              items={(todayDispatchSection?.items ?? [])
-                .slice(0, 4)
-                .map((item) => {
-                  const job = item.job;
-                  const crewState = getCrewState(job);
+                  return {
+                    href: blocker
+                      ? (getReadinessBlockerHref(
+                          blocker,
+                          readiness,
+                          job.projectId
+                        ) ?? `/projects/${job.projectId}`)
+                      : `/projects/${job.projectId}`,
+                    title: getScheduleJobTitle(job),
+                    subtitle: getScheduleJobSubtitle(job),
+                    meta: blocker
+                      ? getReadinessBlockerDetail(blocker, readiness)
+                      : "Open the Project Workspace to review readiness.",
+                    badge: blocker
+                      ? formatReadinessBlockerLabel(blocker)
+                      : "Blocked",
+                    trailing: "Resolve blocker"
+                  };
+                })}
+                emptyTitle="No unscheduled jobs are readiness-blocked."
+                emptyDescription="If project commercial readiness changes after a job exists, blocked jobs remain visible here instead of disappearing from scheduling."
+              />
+
+              <ManagerDashboardCard
+                eyebrow="Today"
+                title={
+                  todayDispatchSection?.title ?? "Scheduled work for today"
+                }
+                description={
+                  todayDispatchSection?.description ??
+                  "Keep the immediate field picture visible without turning the page into a full calendar app."
+                }
+                actionHref={buildCurrentScheduleHref({ view: "today" })}
+                actionLabel="View today"
+                items={(todayDispatchSection?.items ?? [])
+                  .slice(0, 4)
+                  .map((item) => {
+                    const job = item.job;
+                    const crewState = getCrewState(job);
+                    const primaryAction = getPrimaryScheduleAction(job);
+
+                    return {
+                      href:
+                        primaryAction.action === "assign"
+                          ? buildCurrentScheduleHref({
+                              action: primaryAction.action,
+                              jobId: job.id
+                            })
+                          : `/jobs/${job.id}`,
+                      title: getScheduleJobTitle(job),
+                      subtitle: `${getScheduleJobSubtitle(job)} · ${formatDateTime(job.scheduledStartAt)}`,
+                      meta: item.warnings.length
+                        ? `${formatWarningCount(item.warnings.length)} · ${crewState.detail}`
+                        : crewState.label === "Assigned"
+                          ? `Crew ${item.crewLabel}`
+                          : crewState.detail,
+                      badge:
+                        crewState.label === "Needs crew"
+                          ? "Needs crew"
+                          : "Today",
+                      trailing:
+                        primaryAction.action === "assign"
+                          ? primaryAction.label
+                          : "Open job"
+                    };
+                  })}
+                emptyTitle="No work is scheduled for today."
+                emptyDescription="Once jobs get real date commitments for today, they will surface here as the immediate operating queue."
+              />
+
+              <ManagerDashboardCard
+                eyebrow="Live execution"
+                title={inProgressDispatchSection?.title ?? "In Progress"}
+                description={
+                  inProgressDispatchSection?.description ??
+                  "Active field execution stays visible separately from schedule planning."
+                }
+                actionHref={buildCurrentScheduleHref({ view: "in_progress" })}
+                actionLabel="Open live work"
+                items={(inProgressDispatchSection?.items ?? [])
+                  .slice(0, 4)
+                  .map((item) => {
+                    const job = item.job;
+
+                    return {
+                      href: `/jobs/${job.id}`,
+                      title: getScheduleJobTitle(job),
+                      subtitle: getScheduleJobSubtitle(job),
+                      meta: item.warnings.length
+                        ? `${formatWarningCount(item.warnings.length)} · ${item.crewLabel}`
+                        : `Crew ${item.crewLabel}`,
+                      badge: "In Progress",
+                      trailing:
+                        item.recommendedAction === "assign_crew"
+                          ? "Assign crew"
+                          : "Open job"
+                    };
+                  })}
+                emptyTitle="No jobs are in progress."
+                emptyDescription="Live job records will appear here once field execution has started."
+              />
+
+              <ManagerDashboardCard
+                eyebrow="Upcoming"
+                title={upcomingDispatchSection?.title ?? "Next scheduled work"}
+                description={
+                  upcomingDispatchSection?.description ??
+                  "This keeps the next few commitments in view so project continuity and crew planning stay connected."
+                }
+                actionHref={buildCurrentScheduleHref({ view: "upcoming" })}
+                actionLabel="View upcoming"
+                items={(upcomingDispatchSection?.items ?? [])
+                  .slice(0, 4)
+                  .map((item) => {
+                    const job = item.job;
+                    const crewState = getCrewState(job);
+                    const primaryAction = getPrimaryScheduleAction(job);
+
+                    return {
+                      href: buildCurrentScheduleHref({
+                        action: primaryAction.action,
+                        jobId: job.id
+                      }),
+                      title: getScheduleJobTitle(job),
+                      subtitle: `${getScheduleJobSubtitle(job)} · ${formatDate(job.scheduledDate)}`,
+                      meta: item.warnings.length
+                        ? `${formatWarningCount(item.warnings.length)} · ${crewState.detail}`
+                        : crewState.label === "Assigned"
+                          ? `${item.crewLabel} in place`
+                          : crewState.detail,
+                      badge:
+                        crewState.label === "Needs crew"
+                          ? "Needs crew"
+                          : "Upcoming",
+                      trailing: primaryAction.label
+                    };
+                  })}
+                emptyTitle="No upcoming jobs are on the board yet."
+                emptyDescription="Later scheduled work will show up here once the next commitments are captured on the job records."
+              />
+
+              <ManagerDashboardCard
+                eyebrow="Crew"
+                title="Assigned crew visibility"
+                description="Use this queue to confirm which jobs already have named people or vendors attached before the day starts."
+                actionHref={buildCurrentScheduleHref({ crew: "assigned" })}
+                actionLabel="View assigned"
+                items={assignedJobs.slice(0, 4).map((job) => {
                   const primaryAction = getPrimaryScheduleAction(job);
 
                   return {
-                    href:
-                      primaryAction.action === "assign"
-                        ? buildCurrentScheduleHref({
-                            action: primaryAction.action,
-                            jobId: job.id
-                          })
-                        : `/jobs/${job.id}`,
+                    href: buildCurrentScheduleHref({
+                      action: "assign",
+                      jobId: job.id
+                    }),
                     title: getScheduleJobTitle(job),
-                    subtitle: `${getScheduleJobSubtitle(job)} · ${formatDateTime(job.scheduledStartAt)}`,
-                    meta: item.warnings.length
-                      ? `${formatWarningCount(item.warnings.length)} · ${crewState.detail}`
-                      : crewState.label === "Assigned"
-                        ? `Crew ${item.crewLabel}`
-                        : crewState.detail,
+                    subtitle: `${formatAssignmentLabel(job.assignmentCount)} · ${job.crewSummary.join(", ")}`,
+                    meta: job.crewVendor?.name
+                      ? `Crew vendor ${job.crewVendor.name}`
+                      : job.crewLeads.length > 0
+                        ? `Lead ${job.crewLeads.join(", ")}`
+                        : "Crew attached on assignment rows",
                     badge:
-                      crewState.label === "Needs crew" ? "Needs crew" : "Today",
+                      job.dispatchStatus === "in_progress"
+                        ? "Live"
+                        : "Assigned",
                     trailing:
-                      primaryAction.action === "assign"
-                        ? primaryAction.label
-                        : "Open job"
+                      primaryAction.label === "Refine schedule"
+                        ? "Manage crew"
+                        : primaryAction.label
                   };
                 })}
-              emptyTitle="No work is scheduled for today."
-              emptyDescription="Once jobs get real date commitments for today, they will surface here as the immediate operating queue."
-            />
+                emptyTitle="No jobs have crew assignments yet."
+                emptyDescription="As people or subcontractor vendors get attached to jobs, they will show up here for quick review."
+              />
 
-            <ManagerDashboardCard
-              eyebrow="Live execution"
-              title={inProgressDispatchSection?.title ?? "In Progress"}
-              description={
-                inProgressDispatchSection?.description ??
-                "Active field execution stays visible separately from schedule planning."
-              }
-              actionHref={buildCurrentScheduleHref({ view: "in_progress" })}
-              actionLabel="Open live work"
-              items={(inProgressDispatchSection?.items ?? [])
-                .slice(0, 4)
-                .map((item) => {
-                  const job = item.job;
-
-                  return {
-                    href: `/jobs/${job.id}`,
-                    title: getScheduleJobTitle(job),
-                    subtitle: getScheduleJobSubtitle(job),
-                    meta: item.warnings.length
-                      ? `${formatWarningCount(item.warnings.length)} · ${item.crewLabel}`
-                      : `Crew ${item.crewLabel}`,
-                    badge: "In Progress",
-                    trailing:
-                      item.recommendedAction === "assign_crew"
-                        ? "Assign crew"
-                        : "Open job"
-                  };
+              <ManagerDashboardCard
+                eyebrow="Crew"
+                title="Missing Crew"
+                description="Scheduled and active jobs with no crew assignment stay visible so staffing gaps do not hide inside the calendar."
+                actionHref={buildCurrentScheduleHref({
+                  view: "scheduled",
+                  crew: "unassigned"
                 })}
-              emptyTitle="No jobs are in progress."
-              emptyDescription="Live job records will appear here once field execution has started."
-            />
-
-            <ManagerDashboardCard
-              eyebrow="Upcoming"
-              title={upcomingDispatchSection?.title ?? "Next scheduled work"}
-              description={
-                upcomingDispatchSection?.description ??
-                "This keeps the next few commitments in view so project continuity and crew planning stay connected."
-              }
-              actionHref={buildCurrentScheduleHref({ view: "upcoming" })}
-              actionLabel="View upcoming"
-              items={(upcomingDispatchSection?.items ?? [])
-                .slice(0, 4)
-                .map((item) => {
-                  const job = item.job;
-                  const crewState = getCrewState(job);
+                actionLabel="Assign crew"
+                items={missingCrewJobs.slice(0, 4).map((job) => {
                   const primaryAction = getPrimaryScheduleAction(job);
 
                   return {
@@ -3728,102 +3825,35 @@ export default async function SchedulePage({
                       jobId: job.id
                     }),
                     title: getScheduleJobTitle(job),
-                    subtitle: `${getScheduleJobSubtitle(job)} · ${formatDate(job.scheduledDate)}`,
-                    meta: item.warnings.length
-                      ? `${formatWarningCount(item.warnings.length)} · ${crewState.detail}`
-                      : crewState.label === "Assigned"
-                        ? `${item.crewLabel} in place`
-                        : crewState.detail,
-                    badge:
-                      crewState.label === "Needs crew"
-                        ? "Needs crew"
-                        : "Upcoming",
-                    trailing: primaryAction.label
+                    subtitle: `${getScheduleJobSubtitle(job)} - ${formatDate(job.scheduledDate)}`,
+                    meta: "Date exists, crew assignment is still open",
+                    badge: "Missing Crew",
+                    trailing: "Assign crew"
                   };
                 })}
-              emptyTitle="No upcoming jobs are on the board yet."
-              emptyDescription="Later scheduled work will show up here once the next commitments are captured on the job records."
-            />
+                emptyTitle="No scheduled jobs are missing crew."
+                emptyDescription="CrewBoard will flag jobs here when the date is set but people or labor-provider vendors still need to be attached."
+              />
 
-            <ManagerDashboardCard
-              eyebrow="Crew"
-              title="Assigned crew visibility"
-              description="Use this queue to confirm which jobs already have named people or vendors attached before the day starts."
-              actionHref={buildCurrentScheduleHref({ crew: "assigned" })}
-              actionLabel="View assigned"
-              items={assignedJobs.slice(0, 4).map((job) => {
-                const primaryAction = getPrimaryScheduleAction(job);
-
-                return {
-                  href: buildCurrentScheduleHref({
-                    action: "assign",
-                    jobId: job.id
-                  }),
+              <ManagerDashboardCard
+                eyebrow="Closeout"
+                title="Completed / Recently Done"
+                description="Use completed jobs as schedule closeout handoffs back to Job and Project Workspaces."
+                actionHref={buildCurrentScheduleHref({ view: "completed" })}
+                actionLabel="View done"
+                items={recentlyCompletedJobs.slice(0, 4).map((job) => ({
+                  href: `/jobs/${job.id}`,
                   title: getScheduleJobTitle(job),
-                  subtitle: `${formatAssignmentLabel(job.assignmentCount)} · ${job.crewSummary.join(", ")}`,
-                  meta: job.crewVendor?.name
-                    ? `Crew vendor ${job.crewVendor.name}`
-                    : job.crewLeads.length > 0
-                      ? `Lead ${job.crewLeads.join(", ")}`
-                      : "Crew attached on assignment rows",
-                  badge:
-                    job.dispatchStatus === "in_progress" ? "Live" : "Assigned",
-                  trailing:
-                    primaryAction.label === "Refine schedule"
-                      ? "Manage crew"
-                      : primaryAction.label
-                };
-              })}
-              emptyTitle="No jobs have crew assignments yet."
-              emptyDescription="As people or subcontractor vendors get attached to jobs, they will show up here for quick review."
-            />
-
-            <ManagerDashboardCard
-              eyebrow="Crew"
-              title="Missing Crew"
-              description="Scheduled and active jobs with no crew assignment stay visible so staffing gaps do not hide inside the calendar."
-              actionHref={buildCurrentScheduleHref({
-                view: "scheduled",
-                crew: "unassigned"
-              })}
-              actionLabel="Assign crew"
-              items={missingCrewJobs.slice(0, 4).map((job) => {
-                const primaryAction = getPrimaryScheduleAction(job);
-
-                return {
-                  href: buildCurrentScheduleHref({
-                    action: primaryAction.action,
-                    jobId: job.id
-                  }),
-                  title: getScheduleJobTitle(job),
-                  subtitle: `${getScheduleJobSubtitle(job)} - ${formatDate(job.scheduledDate)}`,
-                  meta: "Date exists, crew assignment is still open",
-                  badge: "Missing Crew",
-                  trailing: "Assign crew"
-                };
-              })}
-              emptyTitle="No scheduled jobs are missing crew."
-              emptyDescription="CrewBoard will flag jobs here when the date is set but people or labor-provider vendors still need to be attached."
-            />
-
-            <ManagerDashboardCard
-              eyebrow="Closeout"
-              title="Completed / Recently Done"
-              description="Use completed jobs as schedule closeout handoffs back to Job and Project Workspaces."
-              actionHref={buildCurrentScheduleHref({ view: "completed" })}
-              actionLabel="View done"
-              items={recentlyCompletedJobs.slice(0, 4).map((job) => ({
-                href: `/jobs/${job.id}`,
-                title: getScheduleJobTitle(job),
-                subtitle: `${getScheduleJobSubtitle(job)} - updated ${formatDate(job.updatedAt.slice(0, 10))}`,
-                meta: "Open the job or project for closeout, billing, or evidence follow-through",
-                badge: "Completed",
-                trailing: "Open job"
-              }))}
-              emptyTitle="No completed jobs are showing here yet."
-              emptyDescription="Completed jobs will appear here from the same job records; no separate closeout board is created."
-            />
-          </section>
+                  subtitle: `${getScheduleJobSubtitle(job)} - updated ${formatDate(job.updatedAt.slice(0, 10))}`,
+                  meta: "Open the job or project for closeout, billing, or evidence follow-through",
+                  badge: "Completed",
+                  trailing: "Open job"
+                }))}
+                emptyTitle="No completed jobs are showing here yet."
+                emptyDescription="Completed jobs will appear here from the same job records; no separate closeout board is created."
+              />
+            </section>
+          </details>
 
           <ScheduleDispatchBoardShell
             eyebrow="CrewBoard planner"
