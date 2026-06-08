@@ -6082,6 +6082,7 @@ export default async function ProjectDetailPage({
         <DetailPanel
           title="Coordination"
           description="Customer-facing appointments stay visible below the core estimate, contract, job, and invoice path."
+          collapsed
         >
           <div className="space-y-6">
             <SectionOverview
@@ -6327,6 +6328,7 @@ export default async function ProjectDetailPage({
         <DetailPanel
           title="Readiness / Financial"
           description="Financing lives with commercial readiness, deposit state, and scheduling blockers. Basic project identity stays separate below."
+          collapsed
         >
           <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(280px,0.72fr)]">
             <div className="grid gap-3 sm:grid-cols-2">
@@ -6458,6 +6460,7 @@ export default async function ProjectDetailPage({
         <DetailPanel
           title="Field Signal"
           description="Supporting labor and time context stays visible here after the commercial and operations picture is understood."
+          collapsed
         >
           <div className="grid gap-6 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
             <div className="space-y-3">
