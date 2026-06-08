@@ -1,6 +1,6 @@
 # Visual UX Review Contractor Usability V1 Live Status
 
-Status: Complete locally; ready for integration review packet
+Status: Rebased and validated; ready for controlled merge review
 Doc type: Live status packet
 Generated: 2026-06-08
 Wave: `visual-ux-review-contractor-usability-v1`
@@ -25,43 +25,38 @@ customer-facing sends.
 
 ## Wave Status
 
-The UX wave is locally complete. All four implementation streams have one
-committed slice, the verification stream has one committed verification slice,
-and all five stream worktrees are clean and one commit ahead of `origin/main`.
+The UX wave is locally complete, rebased onto current `origin/main`, and
+validated. All four implementation streams have one committed slice, the
+verification stream has its original verification slice plus a hash-update
+verification commit, and all five stream worktrees are clean.
 
-No worktree-state blockers were found. Verification has completed locally.
-Implementation-stream validation output was not recorded in local commit
-metadata or docs found during this status pass, except for the golden-workflow
-stream's validation plan.
+No worktree-state blockers were found. Verification completed locally after the
+implementation streams were rebased and validated.
 
 ## Stream Status Table
 
-| Stream                                | Worktree exists | Branch                                       | Status | Ahead/behind vs `origin/main` | Latest commit                                      | Completion | Validation evidence                                                                | Blockers   | Verification state                           |
-| ------------------------------------- | --------------- | -------------------------------------------- | ------ | ----------------------------- | -------------------------------------------------- | ---------- | ---------------------------------------------------------------------------------- | ---------- | -------------------------------------------- |
-| `golden-workflow-usability-review-v1` | Yes             | `stream/golden-workflow-usability-review-v1` | Clean  | `1 / 0`                       | `57964f52 feat: clarify golden workflow usability` | Complete   | Not recorded as executed in local metadata; review packet includes validation plan | None found | Verification should use this committed slice |
-| `workspace-density-polish-v1`         | Yes             | `stream/workspace-density-polish-v1`         | Clean  | `1 / 0`                       | `1f5ca9d9 feat: polish workspace density`          | Complete   | Not recorded in local commit metadata/docs found during this pass                  | None found | Verification should use this committed slice |
-| `manager-page-ownership-polish-v1`    | Yes             | `stream/manager-page-ownership-polish-v1`    | Clean  | `1 / 0`                       | `fa27c637 feat: polish manager page ownership`     | Complete   | Not recorded in local commit metadata/docs found during this pass                  | None found | Verification should use this committed slice |
-| `portal-customer-clarity-polish-v1`   | Yes             | `stream/portal-customer-clarity-polish-v1`   | Clean  | `1 / 0`                       | `6c2a2b23 feat: polish portal customer clarity`    | Complete   | Not recorded in local commit metadata/docs found during this pass                  | None found | Verification should use this committed slice |
-| `verification-ux-ia-ownership-v1`     | Yes             | `stream/verification-ux-ia-ownership-v1`     | Clean  | `1 / 0`                       | `3b65b997 test: protect ux ia ownership`           | Complete   | Focused verification test, typecheck, lint, fast preflight, and diff checks passed | None found | Complete                                     |
+| Stream                                | Worktree exists | Branch                                       | Status | Ahead/behind vs `origin/main` | Latest commit                                        | Completion | Validation evidence                                                                                                             | Blockers   | Verification state                               |
+| ------------------------------------- | --------------- | -------------------------------------------- | ------ | ----------------------------- | ---------------------------------------------------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------- | ---------- | ------------------------------------------------ |
+| `golden-workflow-usability-review-v1` | Yes             | `stream/golden-workflow-usability-review-v1` | Clean  | `1 / 0`                       | `a952ebf6 feat: clarify golden workflow usability`   | Complete   | Focused route-map test, typecheck, lint, fast preflight, and diff checks passed                                                 | None found | Ready; verification updated to this rebased head |
+| `workspace-density-polish-v1`         | Yes             | `stream/workspace-density-polish-v1`         | Clean  | `1 / 0`                       | `797483ff feat: polish workspace density`            | Complete   | No focused test exists; typecheck, lint, fast preflight, and diff checks passed                                                 | None found | Ready; verification updated to this rebased head |
+| `manager-page-ownership-polish-v1`    | Yes             | `stream/manager-page-ownership-polish-v1`    | Clean  | `1 / 0`                       | `2b3549df feat: polish manager page ownership`       | Complete   | No focused test exists; typecheck, lint, fast preflight, and diff checks passed                                                 | None found | Ready; verification updated to this rebased head |
+| `portal-customer-clarity-polish-v1`   | Yes             | `stream/portal-customer-clarity-polish-v1`   | Clean  | `1 / 0`                       | `cad90b36 feat: polish portal customer clarity`      | Complete   | Portal helper tests passed; changed portal E2E specs passed; typecheck, lint, fast preflight, and diff checks passed            | None found | Ready; verification updated to this rebased head |
+| `verification-ux-ia-ownership-v1`     | Yes             | `stream/verification-ux-ia-ownership-v1`     | Clean  | `2 / 0`                       | `f1bc5c4b test: update ux ia ownership verification` | Complete   | Focused UX/IA, operational ownership, and golden workflow tests passed; typecheck, lint, fast preflight, and diff checks passed | None found | Complete                                         |
 
 ## Implementation Completion Status
 
-All four implementation streams appear complete based on the requested commit
-hashes, clean worktrees, and one-commit-ahead status versus `origin/main`.
-Verification has completed after those implementation commits.
-
-The status coordinator did not rerun the implementation-stream validation
-stacks. If integration review requires fresh validation evidence for every
-implementation stream, rerun or request those validation summaries before merge
-review.
+All four implementation streams are complete based on the rebased commit heads,
+clean worktrees, and passed validation reruns. Verification completed after the
+implementation streams were rebased and the verification helper was updated to
+the current implementation heads.
 
 ## Commits By Stream
 
-- `golden-workflow-usability-review-v1`: `57964f52 feat: clarify golden workflow usability`
-- `workspace-density-polish-v1`: `1f5ca9d9 feat: polish workspace density`
-- `manager-page-ownership-polish-v1`: `fa27c637 feat: polish manager page ownership`
-- `portal-customer-clarity-polish-v1`: `6c2a2b23 feat: polish portal customer clarity`
-- `verification-ux-ia-ownership-v1`: `3b65b997 test: protect ux ia ownership`
+- `golden-workflow-usability-review-v1`: `a952ebf6 feat: clarify golden workflow usability`
+- `workspace-density-polish-v1`: `797483ff feat: polish workspace density`
+- `manager-page-ownership-polish-v1`: `2b3549df feat: polish manager page ownership`
+- `portal-customer-clarity-polish-v1`: `cad90b36 feat: polish portal customer clarity`
+- `verification-ux-ia-ownership-v1`: `f1bc5c4b test: update ux ia ownership verification`
 
 ## Files Changed By Stream
 
@@ -121,19 +116,23 @@ review.
 
 ## Validations By Stream
 
-- `golden-workflow-usability-review-v1`: execution results not recorded in
-  local commit metadata or docs found during this pass. The stream review packet
-  lists a validation plan for the route-map helper test, web typecheck, web
-  lint, fast preflight, and diff checks.
-- `workspace-density-polish-v1`: execution results not recorded in local commit
-  metadata or docs found during this pass.
-- `manager-page-ownership-polish-v1`: execution results not recorded in local
-  commit metadata or docs found during this pass.
-- `portal-customer-clarity-polish-v1`: execution results not recorded in local
-  commit metadata or docs found during this pass.
-- `verification-ux-ia-ownership-v1`: passed focused UX/IA ownership test, web
-  typecheck, web lint, fast preflight, `git diff --check`, and
-  `git diff --cached --check`.
+- `golden-workflow-usability-review-v1`: passed
+  `pnpm.cmd --filter @floorconnector/web exec tsx --test lib/workflow-usability/golden-workflow-route-map.test.ts`
+  with 2 tests; passed web typecheck, web lint, `pnpm.cmd fc:preflight:fast`,
+  and `git diff --check`.
+- `workspace-density-polish-v1`: no focused test exists for this UI/copy/layout
+  polish stream; passed web typecheck, web lint, `pnpm.cmd fc:preflight:fast`,
+  and `git diff --check`.
+- `manager-page-ownership-polish-v1`: no focused test exists for this UI/copy
+  ownership-label stream; passed web typecheck, web lint,
+  `pnpm.cmd fc:preflight:fast`, and `git diff --check`.
+- `portal-customer-clarity-polish-v1`: passed portal helper tests with 31 tests;
+  passed changed portal E2E specs with 11 passed and 1 negative-fixture case
+  skipped; passed web typecheck, web lint, `pnpm.cmd fc:preflight:fast`, and
+  `git diff --check`.
+- `verification-ux-ia-ownership-v1`: passed focused UX/IA ownership,
+  operational ownership, and golden workflow checks with 14 tests; passed web
+  typecheck, web lint, `pnpm.cmd fc:preflight:fast`, and `git diff --check`.
 
 ## Blockers
 
@@ -143,15 +142,18 @@ Known caveats:
 
 - Active registry docs still describe the wave as approved or not started. They
   are stale relative to the inspected stream commits.
-- Implementation stream validation evidence was not found as executed output in
-  local commit metadata or docs during this status pass.
-- All five stream commits are local one-ahead worktree commits and are not
-  merged into `main`.
+- The four implementation stream commits are local one-ahead worktree commits
+  and are not merged into `main`.
+- The verification stream is two commits ahead of `origin/main` because it
+  includes the original verification slice plus the current-head hash update.
+- Contractor-side browser smoke for the workspace density and ownership-banner
+  surfaces was not rerun in this pass.
 
 ## Verification Status
 
 Verification is complete locally at
-`3b65b997 test: protect ux ia ownership`. The verification slice protects:
+`f1bc5c4b test: update ux ia ownership verification`. The verification slice
+protects:
 
 - Dashboard prioritizes.
 - Project diagnoses.
@@ -166,18 +168,19 @@ Verification is complete locally at
 
 ## Next Recommended Action
 
-Run the integration review packet next, unless Jeff wants fresh validation
-evidence rerun in the four implementation worktrees first. Do not merge, open a
-PR, run cleanup, start another wave, change schemas or migrations, or modify
-production code from this packet.
+Jeff can approve controlled merges in the recommended order:
+`golden-workflow-usability-review-v1`, `workspace-density-polish-v1`,
+`manager-page-ownership-polish-v1`, `portal-customer-clarity-polish-v1`, then
+`verification-ux-ia-ownership-v1`. Do not merge, open a PR, run cleanup, start
+another wave, change schemas or migrations, or modify production code from this
+packet.
 
 ## What Jeff Should Paste Into ChatGPT
 
 Use
 `docs/review-packets/visual-ux-review-contractor-usability-v1-live-status.md`
-as the single live-status source for the UX wave. Prepare the integration
-review packet for `visual-ux-review-contractor-usability-v1`. Do not merge,
-open PRs, run cleanup, start the next wave, change schemas or migrations, or
-modify production code. Treat implementation streams as locally complete,
-verification complete at `3b65b997`, and call out that implementation stream
-validation evidence is not recorded locally unless rerun.
+as the single live-status source for the UX wave. The implementation streams are
+rebased and validated at `a952ebf6`, `797483ff`, `2b3549df`, and `cad90b36`.
+Verification is complete at `f1bc5c4b`. Proceed to controlled merge approval in
+the recommended order only; do not open PRs, run cleanup, start the next wave,
+change schemas or migrations, or modify production code.

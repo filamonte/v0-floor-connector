@@ -12,35 +12,35 @@ grant Jeff approval.
 
 ## Executive Summary
 
-The wave is locally complete and structurally aligned with the approved UX/IA
-ownership model. All five worktrees exist, are clean, and still contain the
-requested committed slice. The implementation work improves contractor
-understandability, workspace density, manager page ownership clarity, and
-customer-safe portal language without adding schema, migration, provider,
-payment, customer-send, or duplicate-model paths.
+The wave is locally complete, rebased onto current `origin/main`, and
+structurally aligned with the approved UX/IA ownership model. All five
+worktrees exist, are clean, and still contain the requested committed slice. The
+implementation work improves contractor understandability, workspace density,
+manager page ownership clarity, and customer-safe portal language without adding
+schema, migration, provider, payment, customer-send, or duplicate-model paths.
 
-Merge approval should wait. Each stream is now `1 / 1` against `origin/main`
-because the live-status packet has already landed on `main`, and implementation
-validation evidence was not recorded locally for every stream. The recommended
-state is ready after rebase plus targeted validation rerun.
+The current evidence supports controlled merge approval in the recommended
+order. Implementation streams were rebased and validated, verification was
+rebased after the implementation streams, the verification helper was updated to
+the rebased implementation heads, and the verification stream was revalidated.
 
 ## Streams Completed
 
-| Stream                                | Worktree | Branch                                       | Status | Ahead/behind vs `origin/main` | Merge readiness                               |
-| ------------------------------------- | -------- | -------------------------------------------- | ------ | ----------------------------- | --------------------------------------------- |
-| `golden-workflow-usability-review-v1` | Exists   | `stream/golden-workflow-usability-review-v1` | Clean  | `1 / 1`                       | Ready after rebase and validation rerun       |
-| `workspace-density-polish-v1`         | Exists   | `stream/workspace-density-polish-v1`         | Clean  | `1 / 1`                       | Ready after rebase and validation rerun       |
-| `manager-page-ownership-polish-v1`    | Exists   | `stream/manager-page-ownership-polish-v1`    | Clean  | `1 / 1`                       | Ready after rebase and validation rerun       |
-| `portal-customer-clarity-polish-v1`   | Exists   | `stream/portal-customer-clarity-polish-v1`   | Clean  | `1 / 1`                       | Ready after rebase and validation rerun       |
-| `verification-ux-ia-ownership-v1`     | Exists   | `stream/verification-ux-ia-ownership-v1`     | Clean  | `1 / 1`                       | Ready after rebase and final validation rerun |
+| Stream                                | Worktree | Branch                                       | Status | Ahead/behind vs `origin/main` | Merge readiness                              |
+| ------------------------------------- | -------- | -------------------------------------------- | ------ | ----------------------------- | -------------------------------------------- |
+| `golden-workflow-usability-review-v1` | Exists   | `stream/golden-workflow-usability-review-v1` | Clean  | `1 / 0`                       | Merge-ready after validation rerun           |
+| `workspace-density-polish-v1`         | Exists   | `stream/workspace-density-polish-v1`         | Clean  | `1 / 0`                       | Merge-ready after validation rerun           |
+| `manager-page-ownership-polish-v1`    | Exists   | `stream/manager-page-ownership-polish-v1`    | Clean  | `1 / 0`                       | Merge-ready after validation rerun           |
+| `portal-customer-clarity-polish-v1`   | Exists   | `stream/portal-customer-clarity-polish-v1`   | Clean  | `1 / 0`                       | Merge-ready after validation rerun           |
+| `verification-ux-ia-ownership-v1`     | Exists   | `stream/verification-ux-ia-ownership-v1`     | Clean  | `2 / 0`                       | Merge-ready last after implementation merges |
 
 ## Commits By Stream
 
-- `golden-workflow-usability-review-v1`: `57964f52 feat: clarify golden workflow usability`
-- `workspace-density-polish-v1`: `1f5ca9d9 feat: polish workspace density`
-- `manager-page-ownership-polish-v1`: `fa27c637 feat: polish manager page ownership`
-- `portal-customer-clarity-polish-v1`: `6c2a2b23 feat: polish portal customer clarity`
-- `verification-ux-ia-ownership-v1`: `3b65b997 test: protect ux ia ownership`
+- `golden-workflow-usability-review-v1`: `a952ebf6 feat: clarify golden workflow usability`
+- `workspace-density-polish-v1`: `797483ff feat: polish workspace density`
+- `manager-page-ownership-polish-v1`: `2b3549df feat: polish manager page ownership`
+- `portal-customer-clarity-polish-v1`: `cad90b36 feat: polish portal customer clarity`
+- `verification-ux-ia-ownership-v1`: `f1bc5c4b test: update ux ia ownership verification`
 
 ## Files Changed By Stream
 
@@ -151,28 +151,26 @@ distinct action or review roles.
 
 ## Validation Evidence
 
-| Stream                                | Focused evidence found                                                                                                             | Validation evidence status                                                                           | Rerun before merge                                                        |
-| ------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
-| `golden-workflow-usability-review-v1` | `golden-workflow-route-map.test.ts` covers approved stage order and Reports summarize-and-route boundary                           | Test file and validation plan exist; executed results not recorded locally                           | Yes                                                                       |
-| `workspace-density-polish-v1`         | No focused test file added                                                                                                         | Presentation/layout polish only, but executed typecheck/lint/preflight evidence not recorded locally | Yes                                                                       |
-| `manager-page-ownership-polish-v1`    | No focused test file added                                                                                                         | Ownership copy is visible in changed pages/components; executed validation not recorded locally      | Yes                                                                       |
-| `portal-customer-clarity-polish-v1`   | Portal helper tests plus portal E2E specs changed                                                                                  | Focused tests exist for customer-safe invoice/status wording; executed results not recorded locally  | Yes                                                                       |
-| `verification-ux-ia-ownership-v1`     | `ux-ia-ownership.test.ts` covers implementation commits, ownership areas, schema drift, forbidden boundaries, and partial coverage | Prior verification reported focused test, typecheck, lint, fast preflight, and diff checks passed    | Yes, after rebasing and after implementation streams are staged for merge |
+| Stream                                | Focused evidence found                                                                                   | Validation evidence status                                                                                                                                                                                    | Rerun before merge |
+| ------------------------------------- | -------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------ |
+| `golden-workflow-usability-review-v1` | `golden-workflow-route-map.test.ts` covers approved stage order and Reports summarize-and-route boundary | Focused route-map test passed, 2 tests; web typecheck passed; web lint passed; fast preflight passed; `git diff --check` passed                                                                               | Complete           |
+| `workspace-density-polish-v1`         | No focused test file exists for this UI/copy/layout polish stream                                        | Web typecheck passed; web lint passed; fast preflight passed; `git diff --check` passed                                                                                                                       | Complete           |
+| `manager-page-ownership-polish-v1`    | No focused test file exists for this UI/copy ownership-label stream                                      | Web typecheck passed; web lint passed; fast preflight passed; `git diff --check` passed                                                                                                                       | Complete           |
+| `portal-customer-clarity-polish-v1`   | Portal helper tests and changed portal E2E specs                                                         | Portal helper tests passed, 31 tests; changed portal E2E specs passed, 11 passed and 1 negative-fixture case skipped; web typecheck passed; web lint passed; fast preflight passed; `git diff --check` passed | Complete           |
+| `verification-ux-ia-ownership-v1`     | `ux-ia-ownership.test.ts`, `operational-ownership.test.ts`, and `golden-workflow-checks.test.ts`         | Focused verification tests passed, 14 tests; web typecheck passed; web lint passed; fast preflight passed; `git diff --check` passed                                                                          | Complete           |
 
 ## Validation Gaps
 
-- Implementation stream validation output was not found as executed result in
-  local commit metadata or docs during this review.
 - Workspace density and manager page ownership did not add focused tests. That
-  is acceptable for small UI/copy polish, but typecheck, lint, fast preflight,
-  and route/browser smoke should be rerun before merge approval.
-- All streams are behind current `origin/main` by the live-status docs commit.
-  Rebase or equivalent current-main integration should happen before merge
-  validation.
+  remains acceptable for small UI/copy polish because typecheck, lint, fast
+  preflight, and diff checks passed after rebase.
+- Contractor-side browser smoke for the density and ownership-banner pages was
+  not rerun in this pass. The portal-focused Playwright specs were rerun and
+  passed.
 
 ## Governance Review
 
-Pass with caveats.
+Pass.
 
 - No schema or migration paths were changed.
 - No provider behavior, payment behavior, financial math, signature behavior,
@@ -214,7 +212,7 @@ Pass.
 
 ## UX / IA Review
 
-Pass with validation caveats.
+Pass.
 
 - Golden workflow understandability improves through an explicit lead-to-cash
   route map.
@@ -228,15 +226,12 @@ Pass with validation caveats.
 - Cross-linking to owning workspaces improves through Reports route-map
   handoffs and manager-page ownership copy.
 
-Remaining clarity risks:
+Remaining caveats:
 
-- Collapsed Project Workspace sections should be browser-smoked after rebase to
-  confirm no important readiness or field context becomes too hidden for mobile
-  users.
-- Manager-page ownership banners add copy density; route smoke should confirm
-  they help scanning rather than crowding the first viewport.
-- Portal E2E specs changed, but protected portal route execution evidence should
-  be rerun with healthy auth before merge.
+- Collapsed Project Workspace sections and manager-page ownership banners were
+  not browser-smoked in this pass. Typecheck, lint, fast preflight, and diff
+  checks passed for those streams.
+- Portal E2E coverage was rerun with the changed portal specs and passed.
 
 ## Merge Order Recommendation
 
@@ -248,18 +243,16 @@ The approved merge order remains correct:
 4. `portal-customer-clarity-polish-v1`
 5. `verification-ux-ia-ownership-v1`
 
-Verification should merge last after the four implementation streams are
-rebased/current and after focused validation is rerun.
+Verification should merge last after the four implementation streams land so the
+verification helper's rebased implementation heads remain accurate.
 
 ## Risks And Follow-Ups
 
-- Rebase risk: all stream branches are currently behind `origin/main` by at
-  least the live-status docs commit; this packet will add another docs commit on
-  `main`, so every stream will need current-main integration before merge.
-- Validation risk: implementation validation evidence is incomplete in local
-  docs/commit metadata.
-- UX risk: collapsed density and ownership banners should receive route/browser
-  smoke before merge because the changes affect first-pass comprehension.
+- Rebase risk: this packet commit on `main` will make the streams behind `main`
+  by one docs-only commit unless Jeff pushes or merges the docs first and then
+  refreshes stream ancestry.
+- UX risk: collapsed density and ownership banners did not receive
+  contractor-side browser smoke in this pass.
 - Registry risk: active registry lifecycle status is stale and should be
   reconciled during the approved merge/lifecycle step, not by this review packet.
 
@@ -283,7 +276,7 @@ remain:
 
 Jeff may choose one of:
 
-1. Approve merge after each stream is rebased and validation is rerun.
+1. Approve controlled merges in the recommended order.
 2. Request correction on any stream before validation rerun.
 3. Rerun validation first and review the fresh evidence before deciding.
 4. Defer one stream while preserving the approved merge order for the rest.
