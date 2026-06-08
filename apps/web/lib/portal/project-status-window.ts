@@ -243,7 +243,7 @@ function mapContracts(
     const helperText = isComplete
       ? "Contract signing is complete."
       : contract.customerSignedAt && !contract.contractorCountersignedAt
-        ? "Your signature is recorded. Contractor countersign may still be pending."
+        ? "Your signature is recorded. Your contractor may still need to finish their signature."
         : contract.customerViewedAt
           ? "This contract has been viewed and is still in motion."
           : contract.sentAt
@@ -334,7 +334,7 @@ function toAttentionItem(
   return {
     label:
       record.type === "invoice"
-        ? "Review or pay invoice"
+        ? "Review invoice"
         : record.type === "contract"
           ? "Review contract"
           : record.type === "change_order"
@@ -366,7 +366,7 @@ function deriveProjectStage(input: PortalProjectStatusWindowInput) {
     state: "complete",
     statusLabel: formatStatusLabel(input.projectStatus),
     helperText:
-      "This customer portal workspace is connected to the shared project record.",
+      "This portal page is connected to the project your contractor shared with you.",
     tone: "complete",
     href: `/portal/projects/${input.projectId}`
   } satisfies PortalProjectStage;
@@ -456,7 +456,7 @@ function deriveContractStage(
       state: "current",
       statusLabel: formatStatusLabel(activeContract.status),
       helperText: activeContract.customerSignedAt
-        ? "Your signature is recorded. Contractor countersign may still be pending."
+        ? "Your signature is recorded. Your contractor may still need to finish their signature."
         : "The contract is shared for review or signature.",
       tone: "attention",
       href: `/portal/contracts/${activeContract.id}`,
@@ -807,7 +807,7 @@ export function derivePortalProjectStatusWindow(
       statusLabel: "Needs your attention",
       statusTone: "attention",
       primaryMessage:
-        "One or more shared project records needs review, signature, approval, or payment follow-through.",
+        "One or more shared project items needs your review, signature, approval, or payment follow-through.",
       customerNextStep,
       currentStage,
       stageSummary,
@@ -840,7 +840,7 @@ export function derivePortalProjectStatusWindow(
     statusLabel: projectStatusLabel,
     statusTone: "neutral",
     primaryMessage:
-      "Shared project records are available for review, but no customer action is currently open.",
+      "Shared project items are available for review, but no customer action is currently open.",
     customerNextStep,
     currentStage,
     stageSummary,

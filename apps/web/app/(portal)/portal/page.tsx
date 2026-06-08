@@ -205,7 +205,7 @@ export default async function PortalHomePage() {
       <section className="space-y-10">
         <div className={portalHeroPanelClassName}>
           <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-slate-500">
-            Customer Workspace
+            Your Portal
           </p>
           <h1 className="mt-4 text-3xl font-semibold tracking-tight text-slate-950 sm:text-4xl">
             Review the work your contractor has shared
@@ -291,9 +291,9 @@ export default async function PortalHomePage() {
                       />
                     ) : (
                       <p className="text-sm leading-6 text-slate-600">
-                        No commercial records are shared yet. When they are
-                        published, the right project to review will appear here
-                        first.
+                        No estimate, contract, or invoice is shared yet. When
+                        one is ready, the right project to review will appear
+                        here first.
                       </p>
                     )
                   },
@@ -473,25 +473,25 @@ export default async function PortalHomePage() {
 
       <aside className="space-y-6">
         <DetailPanel
-          title="Access Scope"
-          description="Shared access and record visibility for this workspace."
+          title="What you can see"
+          description="Projects and documents your contractor has shared with you."
         >
           <ContextFactsList
             items={[
               {
-                label: "Access model",
+                label: "Project access",
                 value:
-                  "You can only see projects explicitly shared with your customer access."
+                  "You can only see projects your contractor has shared with your portal account."
               },
               {
-                label: "Commercial records",
+                label: "Shared items",
                 value:
-                  "Estimates, contracts, and invoices stay connected to this same project."
+                  "Estimates, contracts, and invoices stay connected to the project they belong to."
               },
               {
-                label: "What is not here",
+                label: "Private details",
                 value:
-                  "Messaging and broad project self-service are still outside this customer workspace."
+                  "Some contractor notes and internal work details stay private unless your contractor shares them."
               }
             ]}
           />

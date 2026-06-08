@@ -83,12 +83,16 @@ void test("project status window sends open invoices to review or payment", () =
     ]
   });
 
-  assert.equal(window.customerNextStep.label, "Review/pay invoice");
+  assert.equal(window.customerNextStep.label, "Review invoice");
   assert.equal(window.sharedRecords[0]?.type, "invoice");
   assert.equal(window.sharedRecords[0]?.href, "/portal/invoices/invoice-1");
-  assert.equal(window.attentionItems[0]?.label, "Review or pay invoice");
+  assert.equal(window.attentionItems[0]?.label, "Review invoice");
   assert.equal(window.currentStage.key, "invoice");
   assert.equal(window.currentStage.statusLabel, "Open balance");
+  assert.doesNotMatch(
+    `${window.primaryMessage} ${window.customerNextStep.description}`,
+    /provider|stripe|contractor-owned|internal|blocker/i
+  );
 });
 
 void test("project status window sends pending change orders to review", () => {
@@ -163,7 +167,7 @@ void test("project status window keeps mixed record ordering deterministic", () 
       "Review estimate",
       "Review contract",
       "Review change order",
-      "Review or pay invoice"
+      "Review invoice"
     ]
   );
 });

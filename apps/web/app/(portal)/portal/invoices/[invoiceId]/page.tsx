@@ -58,7 +58,7 @@ function formatPaymentEventLabel(eventType: string) {
     case "payment_requested":
       return "Payment requested";
     case "checkout_started":
-      return "Checkout started";
+      return "Payment started";
     case "payment_succeeded":
       return "Payment succeeded";
     case "payment_failed":
@@ -75,11 +75,11 @@ function formatPaymentEventLabel(eventType: string) {
 function formatPaymentActorLabel(actorType: string) {
   switch (actorType) {
     case "portal_user":
-      return "Customer portal";
+      return "You";
     case "organization_user":
       return "Contractor team";
     case "provider":
-      return "Payment service";
+      return "Payment update";
     case "system":
       return "Project update";
     default:
@@ -361,8 +361,8 @@ export default async function PortalInvoiceReviewPage({
 
           <PortalTrustStrip
             eyebrow="Shared billing record"
-            title="Review payment state on the live project invoice"
-            description="Checkout and payment activity stays connected to this invoice, the project workspace, and the contractor-owned billing record."
+            title="Review the invoice and payment status"
+            description="Checkout and payment activity stays connected to this invoice and the project workspace."
             items={[
               {
                 label: "Project",
@@ -473,8 +473,8 @@ export default async function PortalInvoiceReviewPage({
         </div>
 
         <DetailPanel
-          title="Billing Clarity"
-          description="Plain-language invoice status, payment history, balance, and billing-readiness context."
+          title="Invoice status"
+          description="Plain-language balance, payment history, and next-step details."
         >
           <div className="grid gap-5">
             <section className={portalStatePanelClassName}>
@@ -728,7 +728,7 @@ export default async function PortalInvoiceReviewPage({
 
       <aside className="min-w-0 space-y-6">
         <DetailPanel
-          title="Payment Actions"
+          title="Pay this invoice"
           description="Continue to secure checkout when payment is available."
         >
           <div className="space-y-4 text-sm leading-6 text-slate-600">
@@ -849,8 +849,8 @@ export default async function PortalInvoiceReviewPage({
         </DetailPanel>
 
         <DetailPanel
-          title="Payment Activity"
-          description="Recent payment activity on this invoice."
+          title="Payment history"
+          description="Recent payment updates on this invoice."
         >
           <div className="space-y-3">
             {invoice.paymentEvents.length > 0 ? (
