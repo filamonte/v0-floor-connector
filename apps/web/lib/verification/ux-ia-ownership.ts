@@ -72,10 +72,10 @@ const uxIaOwnershipAreas: UxIaOwnershipArea[] = [
 
 const requiredImplementationCommits: Record<UxIaImplementationStream, string> =
   {
-    "golden-workflow-usability-review-v1": "a952ebf6",
-    "workspace-density-polish-v1": "797483ff",
-    "manager-page-ownership-polish-v1": "2b3549df",
-    "portal-customer-clarity-polish-v1": "cad90b36"
+    "golden-workflow-usability-review-v1": "d5eb1eae",
+    "workspace-density-polish-v1": "0c477b23",
+    "manager-page-ownership-polish-v1": "9472d465",
+    "portal-customer-clarity-polish-v1": "a03d0f0f"
   };
 
 const requiredProtectedBoundaries: Record<UxIaOwnershipArea, string[]> = {
