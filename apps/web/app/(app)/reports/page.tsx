@@ -16,6 +16,7 @@ import type {
   ReportsMetric,
   ReportsTone
 } from "@/lib/reports/operations-summary";
+import { getGoldenWorkflowRouteMap } from "@/lib/workflow-usability/golden-workflow-route-map";
 
 type ReportsPageProps = {
   searchParams?: Promise<{
@@ -282,6 +283,8 @@ function OperationsReportingWorkspace({
 }: {
   summary: OperationsReportingSummary;
 }) {
+  const routeMap = getGoldenWorkflowRouteMap();
+
   return (
     <div className="space-y-5">
       <ReportSection
@@ -372,6 +375,42 @@ function OperationsReportingWorkspace({
         emptyTitle="No owner review items are visible."
         emptyDescription="This queue stays empty until source records create readiness, field, signature, receivable, or scheduling pressure."
       />
+
+      <ReportSection
+        eyebrow="Contractor Journey"
+        title="Lead-to-cash route map"
+        description="A read-only ownership map for the full contractor workflow. Each stage links to the workspace that owns the next action."
+      >
+        <div className="grid gap-px border-t border-[#e5e5e5] bg-[#d6d6d6] md:grid-cols-2 xl:grid-cols-3">
+          {routeMap.map((item, index) => (
+            <Link
+              key={item.id}
+              href={item.href}
+              className="min-w-0 bg-white px-4 py-3 transition hover:bg-[#f8f8f8]"
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#666666]">
+                    {String(index + 1).padStart(2, "0")} / {item.owner}
+                  </p>
+                  <h4 className="mt-1 text-sm font-semibold tracking-tight text-[#171717]">
+                    {item.stage}
+                  </h4>
+                </div>
+                <span className="shrink-0 rounded-[4px] border border-[#e5e5e5] bg-[#f8f8f8] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#4f4f4f]">
+                  Open
+                </span>
+              </div>
+              <p className="mt-3 text-sm font-medium leading-5 text-[#2a2a2a]">
+                {item.question}
+              </p>
+              <p className="mt-2 text-xs leading-5 text-slate-500">
+                {item.handoff}
+              </p>
+            </Link>
+          ))}
+        </div>
+      </ReportSection>
 
       <ReportSection
         eyebrow="Execution to Cash"

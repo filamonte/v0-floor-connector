@@ -2888,8 +2888,11 @@ Implemented UI behavior now:
   attention, ready-to-move handoffs, execution-to-cash continuity, AR exposure,
   field execution, and recent source-record movement while linking rows back to
   Project Workspace, CrewBoard, Invoice Workspace, Contract Workspace, Job
-  Workspace, Payment surfaces, or Daily Logs. It does not add an analytics
-  warehouse, report builder, fake metrics,
+  Workspace, Payment surfaces, or Daily Logs. Reports now also includes a compact
+  lead-to-cash route map that names each golden workflow stage, the owning
+  workspace, and the handoff question so owner review can understand where the
+  next action lives without moving action ownership into Reports. It does not
+  add an analytics warehouse, report builder, fake metrics,
   export system, automation, AI, schema, migrations, reporting persistence, or
   payment/signature behavior.
 - Estimate, Contract, Invoice, Job, and Project Workspaces share the same baseline grammar: compact header band, semantic status pill, next-action card, workflow summary, state facts, primary record surface, context rail, connected records, and internal follow-through sections.
