@@ -224,6 +224,16 @@ export default async function FinancialsHomePage() {
       eyebrow="Financials"
       title={`Financial Control for ${organizationContext.organization.displayName}`}
       description="Scan open money, overdue invoices, pending payment activity, and collection next moves across active work."
+      ownership={{
+        owns: "Financials owns billing readiness, AR, collections pressure, payment evidence, and invoice-to-payment continuity over canonical financial records.",
+        acts: "Work open money through AR, Invoices, Payments, and Progress Billing; Dashboard and Reports only route attention here.",
+        configuration: {
+          href: "/settings/financial",
+          label: "Financial settings",
+          detail:
+            "Tax, retainage, and financial defaults stay in Settings before records snapshot applied values."
+        }
+      }}
       summary={
         <div className="grid gap-px border border-[#d6d6d6] bg-[#d6d6d6] sm:grid-cols-2 xl:grid-cols-4">
           <div className="bg-white px-3 py-2.5">

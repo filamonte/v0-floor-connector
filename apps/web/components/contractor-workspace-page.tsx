@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import Link from "next/link";
 
 import { WorkspaceCommandBar } from "@/components/workspace-command-bar";
 
@@ -8,6 +9,15 @@ type ContractorWorkspacePageProps = {
   description: string;
   headerTone?: "default" | "dark";
   summary?: ReactNode;
+  ownership?: {
+    owns: string;
+    acts: string;
+    configuration?: {
+      href: string;
+      label: string;
+      detail: string;
+    };
+  };
   commandBar?: {
     searchSlot?: ReactNode;
     filterSlot?: ReactNode;
@@ -23,6 +33,7 @@ export function ContractorWorkspacePage({
   description,
   headerTone = "default",
   summary,
+  ownership,
   commandBar,
   children
 }: ContractorWorkspacePageProps) {
@@ -79,6 +90,85 @@ export function ContractorWorkspacePage({
             </div>
           ) : null}
         </div>
+
+        {ownership ? (
+          <div
+            className={[
+              "mt-3 grid gap-px overflow-hidden rounded-[6px] border text-xs leading-5 sm:grid-cols-2",
+              ownership.configuration ? "xl:grid-cols-3" : "",
+              darkHeader
+                ? "border-white/15 bg-white/15"
+                : "border-[var(--border-warm)] bg-[var(--border-warm)]"
+            ].join(" ")}
+          >
+            {[
+              { label: "Owns", detail: ownership.owns },
+              { label: "Act here", detail: ownership.acts }
+            ].map((item) => (
+              <div
+                key={item.label}
+                className={[
+                  "min-w-0 px-3 py-2.5",
+                  darkHeader ? "bg-white/[0.08]" : "bg-white"
+                ].join(" ")}
+              >
+                <p
+                  className={[
+                    "text-[10px] font-semibold uppercase tracking-[0.16em]",
+                    darkHeader
+                      ? "text-[var(--copper-light)]"
+                      : "text-[var(--copper)]"
+                  ].join(" ")}
+                >
+                  {item.label}
+                </p>
+                <p
+                  className={[
+                    "mt-1 break-words [overflow-wrap:anywhere]",
+                    darkHeader
+                      ? "text-gray-100"
+                      : "text-[var(--text-secondary)]"
+                  ].join(" ")}
+                >
+                  {item.detail}
+                </p>
+              </div>
+            ))}
+            {ownership.configuration ? (
+              <Link
+                href={ownership.configuration.href}
+                className={[
+                  "min-w-0 px-3 py-2.5 transition",
+                  darkHeader
+                    ? "bg-white/[0.08] text-gray-100 hover:bg-white/[0.13]"
+                    : "bg-white text-[var(--text-secondary)] hover:bg-[var(--highlight)]"
+                ].join(" ")}
+              >
+                <p
+                  className={[
+                    "text-[10px] font-semibold uppercase tracking-[0.16em]",
+                    darkHeader
+                      ? "text-[var(--copper-light)]"
+                      : "text-[var(--copper)]"
+                  ].join(" ")}
+                >
+                  Configure in Settings
+                </p>
+                <p
+                  className={[
+                    "mt-1 font-semibold",
+                    darkHeader ? "text-white" : "text-[var(--text-primary)]"
+                  ].join(" ")}
+                >
+                  {ownership.configuration.label}
+                </p>
+                <p className="mt-1 break-words [overflow-wrap:anywhere]">
+                  {ownership.configuration.detail}
+                </p>
+              </Link>
+            ) : null}
+          </div>
+        ) : null}
 
         {commandBar ? (
           <div

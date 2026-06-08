@@ -391,6 +391,16 @@ export default async function CommunicationsPage({
       eyebrow="Communications"
       title={`Record-linked communications for ${organizationContext.organization.displayName}`}
       description="Review operational memory across opportunity, customer, project, estimate, contract, change order, invoice, and payment records without creating a second inbox, provider integration, or portal-only copy."
+      ownership={{
+        owns: "Communications owns conversation review, reply triage, customer-visible history boundaries, and record-linked message continuity.",
+        acts: "Select an existing canonical thread to review or reply; record workspaces summarize related context and route communication action back here.",
+        configuration: {
+          href: "/settings/workflows",
+          label: "Workflow settings",
+          detail:
+            "Communication-facing automation and guidance preferences stay in Settings; this queue does not edit configuration."
+        }
+      }}
       summary={
         <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
           <div className="border border-[#e5e5e5] bg-white px-4 py-3">
