@@ -179,6 +179,16 @@ export default async function ProjectsPage({
       title={`Project command centers for ${organizationContext.organization.displayName}`}
       description="Projects are the operational root connecting customer context to estimating, contracts, execution, billing, and closeout."
       headerTone="dark"
+      ownership={{
+        owns: "Project diagnoses lifecycle state and source-record continuity across customer, estimate, contract, job, invoice, payment, and closeout context.",
+        acts: "Open the Project Workspace to diagnose blockers, then follow the linked Estimate, Contract, CrewBoard, Financials, or Communications surface that owns the next action.",
+        configuration: {
+          href: "/settings/workflows",
+          label: "Workflow defaults",
+          detail:
+            "Tenant defaults and guidance settings stay in Settings; project queues do not edit configuration."
+        }
+      }}
       summary={
         <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
           <ProjectsSummaryStat label="Opportunity" value={counts.lead} />

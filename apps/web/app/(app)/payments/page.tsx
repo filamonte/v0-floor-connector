@@ -122,6 +122,16 @@ export default async function PaymentsPage({
       eyebrow="Payments"
       title={`Payment manager for ${organizationContext.organization.displayName}`}
       description="Review collections pressure, recent payments, reconciliation evidence, and invoice continuity here without turning payments into a separate finance subsystem."
+      ownership={{
+        owns: "Payments owns recorded, pending, failed, and voided payment evidence on the canonical invoice/payment chain.",
+        acts: "Review payment status and provider evidence here; collection follow-through stays linked to the Invoice Workspace and AR.",
+        configuration: {
+          href: "/settings/financial",
+          label: "Financial settings",
+          detail:
+            "Payment and financial defaults remain Settings-owned; this manager does not edit tenant configuration."
+        }
+      }}
       summary={
         <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
           <div className="border border-[#e5e5e5] bg-white px-4 py-3">

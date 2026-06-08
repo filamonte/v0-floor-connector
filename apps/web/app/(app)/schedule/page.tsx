@@ -2658,6 +2658,16 @@ export default async function SchedulePage({
       eyebrow="CrewBoard"
       title="CrewBoard"
       description={`Run daily scheduling for ${organizationContext.organization.displayName}: see what needs a date, what is happening today, where crew is missing, and which job or project to open next.`}
+      ownership={{
+        owns: "Field and Schedule own execution planning over canonical jobs, assignments, Daily Logs, field notes, evidence, people, vendors, and time context.",
+        acts: "Schedule, assign, and prepare moves here; open Job or Project Workspaces when readiness, scope, billing, or broader execution continuity needs review.",
+        configuration: {
+          href: "/settings/workflows",
+          label: "Workflow defaults",
+          detail:
+            "Readiness and workflow preferences stay in Settings; CrewBoard does not create separate dispatch configuration."
+        }
+      }}
       summary={
         <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
           {summaryItems.map((item) => (

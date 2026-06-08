@@ -162,6 +162,16 @@ export default async function AccountsReceivablePage() {
       eyebrow="Financials"
       title="Accounts Receivable"
       description="Review open balances, overdue invoices, pending checkout activity, and the next collection move."
+      ownership={{
+        owns: "Accounts Receivable owns collection review over canonical invoices, payments, and payment events.",
+        acts: "Open invoices for follow-up and payment requests; route payment evidence exceptions to Payments without creating collection-only records.",
+        configuration: {
+          href: "/settings/financial",
+          label: "Financial settings",
+          detail:
+            "Collection queues show current records; tax, retainage, and workflow defaults stay in Settings."
+        }
+      }}
       summary={
         <div className="grid gap-px border border-[#d6d6d6] bg-[#d6d6d6] sm:grid-cols-2 xl:grid-cols-5">
           {collectionsDesk.summaryCards.map((card) => (

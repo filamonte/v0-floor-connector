@@ -195,6 +195,63 @@ function filterItems(items: DashboardQueueItem[], query: string) {
   return items.filter((item) => item.searchText.toLowerCase().includes(query));
 }
 
+function DashboardOwnershipBanner() {
+  const ownershipItems = [
+    {
+      label: "Owns",
+      title: "Prioritization",
+      detail:
+        "Dashboard surfaces what needs attention now from source records; it does not create separate workflow or action state."
+    },
+    {
+      label: "Act in",
+      title: "Owning workspaces",
+      detail:
+        "Projects diagnose, CrewBoard and Field execute, Financials collects, and Communications handles conversation action."
+    },
+    {
+      label: "Configure in Settings",
+      title: "Workflow defaults",
+      detail:
+        "Tenant preferences, guidance controls, and operational defaults stay out of the dashboard."
+    }
+  ];
+
+  return (
+    <section className="grid gap-px overflow-hidden border border-[var(--border-warm)] bg-[var(--border-warm)] text-xs leading-5 shadow-[0_18px_42px_-36px_rgba(34,26,20,0.35)] sm:grid-cols-3">
+      {ownershipItems.map((item) => {
+        const content = (
+          <>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--copper)]">
+              {item.label}
+            </p>
+            <p className="mt-1 font-semibold text-[var(--text-primary)]">
+              {item.title}
+            </p>
+            <p className="mt-1 break-words text-[var(--text-secondary)] [overflow-wrap:anywhere]">
+              {item.detail}
+            </p>
+          </>
+        );
+
+        return item.label === "Configure in Settings" ? (
+          <Link
+            key={item.label}
+            href="/settings/workflows"
+            className="min-w-0 bg-white px-4 py-3 transition hover:bg-[var(--highlight)]"
+          >
+            {content}
+          </Link>
+        ) : (
+          <div key={item.label} className="min-w-0 bg-white px-4 py-3">
+            {content}
+          </div>
+        );
+      })}
+    </section>
+  );
+}
+
 function BoardPanel({
   eyebrow,
   title,
@@ -1404,6 +1461,8 @@ export function ContractorDashboardSurface({
     <div className="overflow-x-hidden bg-[var(--cream)]">
       <div className="space-y-4 px-4 py-4 sm:px-6">
         <h1 className="sr-only">Dashboard</h1>
+
+        <DashboardOwnershipBanner />
 
         <DashboardOperatingSummary
           header={header}

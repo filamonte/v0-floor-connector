@@ -210,6 +210,26 @@ export default async function FieldWorkItemsPage() {
             Dashboard
           </Link>
         </div>
+        <div className="mt-4 grid gap-px overflow-hidden rounded-[6px] border border-slate-200 bg-slate-200 text-xs leading-5 sm:grid-cols-2">
+          <div className="min-w-0 bg-slate-50 px-3 py-2.5">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#8f5b32]">
+              Owns
+            </p>
+            <p className="mt-1 break-words text-slate-600 [overflow-wrap:anywhere]">
+              Field owns assigned execution work over canonical jobs, Work
+              Items, Daily Logs, Field Notes, evidence, crew, and time context.
+            </p>
+          </div>
+          <div className="min-w-0 bg-slate-50 px-3 py-2.5">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#8f5b32]">
+              Act here
+            </p>
+            <p className="mt-1 break-words text-slate-600 [overflow-wrap:anywhere]">
+              Use the linked Job, Project, Daily Log, Field Note, and Work Item
+              actions from this queue; Dashboard only routes attention here.
+            </p>
+          </div>
+        </div>
       </section>
 
       {!currentPerson ? (

@@ -562,6 +562,10 @@ export default async function ReportsPage({ searchParams }: ReportsPageProps) {
       eyebrow="Reports"
       title={`Reports for ${organizationContext.organization.displayName}`}
       description="Read-only company visibility over source records. Reports route back to the workspaces where teams schedule, collect, sign, and close out work."
+      ownership={{
+        owns: "Reports owns read-only company visibility, owner review, and cross-workspace summaries over source records.",
+        acts: "Use report links to route work to Project, CrewBoard, Financials, Communications, or record workspaces; Reports does not execute operating actions."
+      }}
       summary={
         <div className="grid gap-px border border-[#d6d6d6] bg-[#d6d6d6] sm:grid-cols-2">
           <div className="bg-white px-3 py-2.5">
