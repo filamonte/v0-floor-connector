@@ -26,13 +26,13 @@ the rebased implementation heads, and the verification stream was revalidated.
 
 ## Streams Completed
 
-| Stream                                | Worktree | Branch                                       | Status | Ahead/behind vs `origin/main` | Merge readiness                              |
-| ------------------------------------- | -------- | -------------------------------------------- | ------ | ----------------------------- | -------------------------------------------- |
-| `golden-workflow-usability-review-v1` | Exists   | `stream/golden-workflow-usability-review-v1` | Clean  | `1 / 0`                       | Merge-ready after validation rerun           |
-| `workspace-density-polish-v1`         | Exists   | `stream/workspace-density-polish-v1`         | Clean  | `1 / 0`                       | Merge-ready after validation rerun           |
-| `manager-page-ownership-polish-v1`    | Exists   | `stream/manager-page-ownership-polish-v1`    | Clean  | `1 / 0`                       | Merge-ready after validation rerun           |
-| `portal-customer-clarity-polish-v1`   | Exists   | `stream/portal-customer-clarity-polish-v1`   | Clean  | `1 / 0`                       | Merge-ready after validation rerun           |
-| `verification-ux-ia-ownership-v1`     | Exists   | `stream/verification-ux-ia-ownership-v1`     | Clean  | `2 / 0`                       | Merge-ready last after implementation merges |
+| Stream                                | Worktree | Branch                                       | Status | Ahead/behind at validation time | Merge readiness                              |
+| ------------------------------------- | -------- | -------------------------------------------- | ------ | ------------------------------- | -------------------------------------------- |
+| `golden-workflow-usability-review-v1` | Exists   | `stream/golden-workflow-usability-review-v1` | Clean  | `1 / 0`                         | Merge-ready after validation rerun           |
+| `workspace-density-polish-v1`         | Exists   | `stream/workspace-density-polish-v1`         | Clean  | `1 / 0`                         | Merge-ready after validation rerun           |
+| `manager-page-ownership-polish-v1`    | Exists   | `stream/manager-page-ownership-polish-v1`    | Clean  | `1 / 0`                         | Merge-ready after validation rerun           |
+| `portal-customer-clarity-polish-v1`   | Exists   | `stream/portal-customer-clarity-polish-v1`   | Clean  | `1 / 0`                         | Merge-ready after validation rerun           |
+| `verification-ux-ia-ownership-v1`     | Exists   | `stream/verification-ux-ia-ownership-v1`     | Clean  | `2 / 0`                         | Merge-ready last after implementation merges |
 
 ## Commits By Stream
 
@@ -248,9 +248,9 @@ verification helper's rebased implementation heads remain accurate.
 
 ## Risks And Follow-Ups
 
-- Rebase risk: this packet commit on `main` will make the streams behind `main`
-  by one docs-only commit unless Jeff pushes or merges the docs first and then
-  refreshes stream ancestry.
+- Rebase risk: packet commits on `main` can make the streams behind `main` by
+  one or more docs-only commits unless Jeff refreshes stream ancestry
+  immediately before controlled merge.
 - UX risk: collapsed density and ownership banners did not receive
   contractor-side browser smoke in this pass.
 - Registry risk: active registry lifecycle status is stale and should be
