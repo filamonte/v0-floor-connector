@@ -257,6 +257,144 @@ ownership tests; typecheck; lint; `pnpm.cmd fc:preflight:fast`; and
 - Status: Merged to `main` as `e0c3119d`; worktree removed and local branch
   deleted after explicit cleanup approval.
 
+## Visual UX Review Contractor Usability V1 Gate
+
+Gate date: 2026-06-07.
+
+Wave name: `visual-ux-review-contractor-usability-v1`.
+
+Architecture Coordination approval: Approved.
+
+Jeff approval gate: Approved. Jeff explicitly approved stream/worktree creation
+for `visual-ux-review-contractor-usability-v1`.
+
+Review packets:
+
+- [docs/review-packets/next-portfolio-recommendation-v4.md](C:/FloorConnector/docs/review-packets/next-portfolio-recommendation-v4.md)
+- [docs/review-packets/visual-ux-review-contractor-usability-v1-plan.md](C:/FloorConnector/docs/review-packets/visual-ux-review-contractor-usability-v1-plan.md)
+
+Wave status: Approved / Not Started. The approved branches and worktrees exist,
+but implementation requires a later explicit Start command. This approval does
+not authorize schema/migration work, provider changes, financial/payment
+changes, portal-owned state, PRs, merges, cleanup, next-wave continuation, or
+autonomous actions.
+
+Approved stream set:
+
+- `stream/golden-workflow-usability-review-v1`
+- `stream/workspace-density-polish-v1`
+- `stream/manager-page-ownership-polish-v1`
+- `stream/portal-customer-clarity-polish-v1`
+- `stream/verification-ux-ia-ownership-v1`
+
+Approved worktrees:
+
+- `C:\FC-worktrees\golden-workflow-usability-review-v1`
+- `C:\FC-worktrees\workspace-density-polish-v1`
+- `C:\FC-worktrees\manager-page-ownership-polish-v1`
+- `C:\FC-worktrees\portal-customer-clarity-polish-v1`
+- `C:\FC-worktrees\verification-ux-ia-ownership-v1`
+
+Required future startup checks:
+
+```powershell
+pnpm.cmd worktree:doctor
+pnpm.cmd tooling:baseline -CommandsOnly
+```
+
+Implementation streams should also run focused tests, route smoke, screenshots,
+or browser checks when route behavior, helpers, read models, component
+hierarchy, portal copy, or ownership labels change, then:
+
+```powershell
+pnpm.cmd --filter @floorconnector/web typecheck
+pnpm.cmd --filter @floorconnector/web lint
+pnpm.cmd fc:preflight:fast
+git diff --check
+git diff --cached --check
+```
+
+Merge order:
+
+1. `golden-workflow-usability-review-v1`
+2. `workspace-density-polish-v1`
+3. `manager-page-ownership-polish-v1`
+4. `portal-customer-clarity-polish-v1`
+5. `verification-ux-ia-ownership-v1`
+
+Verification must run last after implementation stream commits exist.
+
+### golden-workflow-usability-review-v1
+
+- Branch: `stream/golden-workflow-usability-review-v1`
+- Worktree: `C:\FC-worktrees\golden-workflow-usability-review-v1`
+- Owns: end-to-end contractor journey review.
+- Mission: clarify the full contractor path from Lead through Reports.
+- Future allowed work, not now: confusing transition identification, next-step
+  language, owning-workspace cross-links, and decision-fog reduction.
+- Forbidden: schema changes, new feature models, dashboard rebuild, broad
+  visual redesign, migrations, provider behavior, and duplicate workflow state.
+- Suggested commit: `feat: clarify golden workflow usability`
+- Status: Approved / Not Started.
+
+### workspace-density-polish-v1
+
+- Branch: `stream/workspace-density-polish-v1`
+- Worktree: `C:\FC-worktrees\workspace-density-polish-v1`
+- Owns: major workspace density and readability.
+- Mission: reduce clutter and improve hierarchy on high-traffic contractor
+  workspaces.
+- Future allowed work, not now: section hierarchy, duplicate-summary reduction,
+  empty states, and card/action grouping.
+- Forbidden: ownership changes, new workflow models, schema changes,
+  migrations, major redesign, provider behavior, and source-record mutation.
+- Suggested commit: `feat: polish workspace density`
+- Status: Approved / Not Started.
+
+### manager-page-ownership-polish-v1
+
+- Branch: `stream/manager-page-ownership-polish-v1`
+- Worktree: `C:\FC-worktrees\manager-page-ownership-polish-v1`
+- Owns: manager page clarity and ownership boundaries.
+- Mission: make manager pages clearly answer what they own and where users
+  should act.
+- Future allowed work, not now: ownership language cleanup, clearer action
+  ownership, Dashboard prioritization-only clarity, and Settings
+  configuration-only links.
+- Forbidden: new manager pages unless already routed, schema changes,
+  migrations, dashboard sprawl, duplicate action ownership, and new persistence.
+- Suggested commit: `feat: polish manager page ownership`
+- Status: Approved / Not Started.
+
+### portal-customer-clarity-polish-v1
+
+- Branch: `stream/portal-customer-clarity-polish-v1`
+- Worktree: `C:\FC-worktrees\portal-customer-clarity-polish-v1`
+- Owns: customer-facing clarity.
+- Mission: improve customer-safe portal clarity after the portal trust wave.
+- Future allowed work, not now: simplified customer-safe language, customer
+  next-action clarity, portal section hierarchy, and reduced internal
+  operational terminology.
+- Forbidden: portal-owned state, autonomous customer actions, schema changes,
+  migrations, payment/provider changes, field-proof exposure, and internal-only
+  terminology leakage.
+- Suggested commit: `feat: polish portal customer clarity`
+- Status: Approved / Not Started.
+
+### verification-ux-ia-ownership-v1
+
+- Branch: `stream/verification-ux-ia-ownership-v1`
+- Worktree: `C:\FC-worktrees\verification-ux-ia-ownership-v1`
+- Owns: verification for UX and IA ownership boundaries.
+- Mission: protect Dashboard, Project, Field, Financials, Communications,
+  Portal, Reports, and Settings ownership boundaries while preventing duplicate
+  models and schema/migration drift.
+- Verification must wait until implementation stream commits exist.
+- Forbidden: feature work, UI redesign, schema changes, migrations, loosening
+  checks, and running before implementation streams complete.
+- Suggested commit: `test: protect ux ia ownership`
+- Status: Approved / Not Started.
+
 ## Financial Closeout Collections V1 Gate
 
 Gate date: 2026-06-07.

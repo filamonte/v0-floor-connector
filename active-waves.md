@@ -220,6 +220,82 @@ Shared guardrails:
   or exception models.
 - Do not modify schemas or migrations.
 
+## Visual UX Review Contractor Usability V1 Approval Gate
+
+Gate date: 2026-06-07.
+
+Wave name: `visual-ux-review-contractor-usability-v1`.
+
+Review packets:
+
+- [docs/review-packets/next-portfolio-recommendation-v4.md](C:/FloorConnector/docs/review-packets/next-portfolio-recommendation-v4.md)
+- [docs/review-packets/visual-ux-review-contractor-usability-v1-plan.md](C:/FloorConnector/docs/review-packets/visual-ux-review-contractor-usability-v1-plan.md)
+
+Wave goal: review and polish contractor-facing UX and information architecture
+after the completed capability waves so FloorConnector feels clearer, less
+duplicative, and more like one operational command center without changing the
+canonical business model.
+
+Gate status:
+
+| Gate item                              | Status         | Evidence / note                                                                                   |
+| -------------------------------------- | -------------- | ------------------------------------------------------------------------------------------------- |
+| Architecture Coordination approval     | Approved       | Stream ownership, dependencies, non-goals, validation, verification, and merge order recorded.    |
+| Jeff approval gate                     | Approved       | Jeff explicitly approved stream/worktree creation for `visual-ux-review-contractor-usability-v1`. |
+| Stream creation                        | Complete       | Five branches and worktrees were created from the verified current `main` baseline.               |
+| Implementation start                   | Not started    | A later explicit Start command is required before implementation work begins.                     |
+| Human review gate                      | Required later | No merge, PR, or cleanup approval is granted by this packet.                                      |
+| Autonomous merge / indefinite continue | Not allowed    | No next wave, schema/migration work, provider work, cleanup, or autonomous action work allowed.   |
+
+Approved stream set:
+
+| Stream                                | Ownership area                          | Mission                                                                 | Status                 |
+| ------------------------------------- | --------------------------------------- | ----------------------------------------------------------------------- | ---------------------- |
+| `golden-workflow-usability-review-v1` | End-to-end contractor journey review    | Clarify the Lead-to-Reports golden workflow for contractor users.       | Approved / Not Started |
+| `workspace-density-polish-v1`         | Major workspace density and readability | Reduce clutter and improve hierarchy on high-traffic workspaces.        | Approved / Not Started |
+| `manager-page-ownership-polish-v1`    | Manager page ownership boundaries       | Clarify what manager pages own and where users should act.              | Approved / Not Started |
+| `portal-customer-clarity-polish-v1`   | Customer-facing portal clarity          | Simplify customer-safe portal language and section hierarchy.           | Approved / Not Started |
+| `verification-ux-ia-ownership-v1`     | Verification                            | Protect UX/IA ownership boundaries, duplicate-model risk, and no drift. | Approved / Not Started |
+
+Approved stream branches:
+
+- `stream/golden-workflow-usability-review-v1`
+- `stream/workspace-density-polish-v1`
+- `stream/manager-page-ownership-polish-v1`
+- `stream/portal-customer-clarity-polish-v1`
+- `stream/verification-ux-ia-ownership-v1`
+
+Approved worktrees:
+
+- `C:\FC-worktrees\golden-workflow-usability-review-v1`
+- `C:\FC-worktrees\workspace-density-polish-v1`
+- `C:\FC-worktrees\manager-page-ownership-polish-v1`
+- `C:\FC-worktrees\portal-customer-clarity-polish-v1`
+- `C:\FC-worktrees\verification-ux-ia-ownership-v1`
+
+Dependency and merge order:
+
+1. `golden-workflow-usability-review-v1`
+2. `workspace-density-polish-v1`
+3. `manager-page-ownership-polish-v1`
+4. `portal-customer-clarity-polish-v1`
+5. `verification-ux-ia-ownership-v1`
+
+Verification must run last after implementation stream commits exist.
+
+Shared guardrails:
+
+- Dashboard prioritizes.
+- Project diagnoses.
+- Field executes.
+- Financials owns billing and collection action.
+- Communications owns conversation action.
+- Portal remains customer-safe.
+- Reports summarize and route, not act.
+- Settings owns configuration.
+- Do not create duplicate ownership, workflow, or business models.
+- Do not modify schemas or migrations.
+
 ## Financial Closeout Collections V1 Approval Gate
 
 Gate date: 2026-06-07.

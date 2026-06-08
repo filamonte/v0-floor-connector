@@ -64,6 +64,17 @@ Work -> Verification -> Integration Review Packet -> Jeff Approval -> Continue.
 Agents may prepare scoped work and review packets, but may not auto-merge,
 auto-continue, or bypass Jeff approval.
 
+Current wave gate note: `visual-ux-review-contractor-usability-v1` is approved
+for stream/worktree creation only. Jeff and Architecture Coordination approved
+the wave, and the five approved branches/worktrees now exist:
+`golden-workflow-usability-review-v1`, `workspace-density-polish-v1`,
+`manager-page-ownership-polish-v1`, `portal-customer-clarity-polish-v1`, and
+`verification-ux-ia-ownership-v1`. Implementation has not started and requires
+a later explicit Start command. Verification must run last after implementation
+stream commits exist. This approval does not authorize schemas, migrations,
+provider changes, financial/payment behavior changes, portal-owned state, PRs,
+merges, cleanup, next-wave continuation, or autonomous actions.
+
 Current cleanup note: Jeff explicitly approved retiring
 `C:\FC-worktrees\project-next-actions` / `stream/project-next-actions` as stale
 governance debt. The branch head was contained in `origin/main`, no unique
