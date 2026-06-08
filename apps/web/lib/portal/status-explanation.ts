@@ -259,12 +259,12 @@ export function derivePortalSafeStatusExplanation(
       shortExplanation: isPartiallyPaid
         ? "A payment has been recorded, and this invoice still shows a remaining balance."
         : "A shared invoice has an open balance or payment request for this project.",
-      customerActionLabel: "Review or pay invoice",
+      customerActionLabel: "Review invoice",
       customerActionHref: `/portal/invoices/${openInvoice.id}`,
       statusTone: "attention",
       sourceCategory: "invoice",
       safeNextStep:
-        "Open the invoice to review the balance, payment status, and available payment action."
+        "Open the invoice to review the balance, payment status, and any available payment step."
     };
   }
 
@@ -336,7 +336,7 @@ export function derivePortalSafeStatusExplanation(
     return {
       headline: "Your project is ready for scheduling",
       shortExplanation:
-        "The shared commercial records are current, and the next visible step is scheduling work with your contractor.",
+        "The shared estimate, contract, and billing records are current. The next visible step is scheduling work with your contractor.",
       customerActionLabel: null,
       customerActionHref: null,
       statusTone: "neutral",

@@ -442,9 +442,9 @@ export default async function PortalProjectDetailPage({
       <section className="space-y-10">
         <div className={portalHeroPanelClassName}>
           <DetailPageHeader
-            eyebrow="Shared Project Workspace"
+            eyebrow="Shared Project"
             title={project.name}
-            description="Use this page to see what matters most on this project, then move into the shared record that needs your attention."
+            description="Use this page to see what matters most, then open the shared item that needs your attention."
             backHref="/portal"
             backLabel="Back to portal home"
             actions={
@@ -458,9 +458,9 @@ export default async function PortalProjectDetailPage({
           />
 
           <PortalTrustStrip
-            eyebrow="Live shared project"
-            title="One customer view into this project chain"
-            description="You are viewing the project records shared with you. Signing, approving, or paying updates the contractor's project record."
+            eyebrow="Project access"
+            title="One view of the project your contractor shared"
+            description="Signing, approving, or paying from this portal updates the same project records your contractor uses."
             items={[
               {
                 label: "Estimate",
@@ -510,8 +510,8 @@ export default async function PortalProjectDetailPage({
         />
 
         <DetailPanel
-          title="Billing Visibility"
-          description="Customer-safe invoice, payment, balance, and billing-readiness context for this project."
+          title="Billing"
+          description="Current invoice, payment, and balance details shared for this project."
         >
           <div className="grid gap-5">
             <section className={portalStatePanelClassName}>
@@ -656,7 +656,7 @@ export default async function PortalProjectDetailPage({
                   <div className="mt-4">
                     <PortalSecondaryLink href={record.href}>
                       {record.type === "invoice"
-                        ? "Review or pay invoice"
+                        ? "Review invoice"
                         : record.type === "contract"
                           ? "Review contract"
                           : record.type === "change_order"
@@ -1216,8 +1216,8 @@ export default async function PortalProjectDetailPage({
         </DetailPanel>
 
         <DetailPanel
-          title="Project trust thread"
-          description="Customer-safe status, approvals, invoices, shared documents, and explicitly shared evidence from records available in this portal."
+          title="Project timeline"
+          description="Shared status, approvals, invoices, documents, and updates available in this portal."
         >
           {timeline.timelineItems.length > 0 ? (
             <div className="space-y-3">
@@ -1370,8 +1370,8 @@ export default async function PortalProjectDetailPage({
         </DetailPanel>
 
         <DetailPanel
-          title="Commercial Records"
-          description="Records your contractor has shared for this project."
+          title="Shared project items"
+          description="Estimates, contracts, invoices, warranties, and changes shared for this project."
         >
           <div className="space-y-8">
             <section className="space-y-4">
@@ -1604,8 +1604,8 @@ export default async function PortalProjectDetailPage({
         </DetailPanel>
 
         <DetailPanel
-          title="Workspace Guidance"
-          description="Use this project as the bridge into the record carrying the current step."
+          title="How this page works"
+          description="This project page points you to the item carrying the current step."
         >
           <div className="space-y-3 text-sm leading-6 text-slate-600">
             <p>

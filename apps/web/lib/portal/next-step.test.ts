@@ -36,9 +36,14 @@ void test("portal next step sends open invoices to review and payment", () => {
     ]
   });
 
-  assert.equal(nextStep.label, "Review/pay invoice");
+  assert.equal(nextStep.label, "Review invoice");
   assert.equal(nextStep.href, "/portal/invoices/invoice-1");
   assert.equal(nextStep.source, "invoice");
+  assert.match(nextStep.description, /payment step/);
+  assert.doesNotMatch(
+    `${nextStep.label} ${nextStep.description} ${nextStep.reason}`,
+    /provider|stripe|contractor-owned|internal|blocker/i
+  );
 });
 
 void test("portal next step sends pending change orders to review", () => {

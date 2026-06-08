@@ -589,9 +589,9 @@ function deriveNextAction(input: {
 
   if (openInvoice) {
     return {
-      label: "Review/pay invoice",
+      label: "Review invoice",
       description:
-        "An invoice or deposit still has an open balance or payment request.",
+        "An invoice or deposit still has an open balance or payment step to review.",
       href: `/portal/invoices/${openInvoice.id}`,
       tone: "attention",
       source: "invoice"

@@ -41,7 +41,7 @@ void test("portal-safe status explains signed contract with deposit payment need
   });
 
   assert.equal(explanation.headline, "Payment requested");
-  assert.equal(explanation.customerActionLabel, "Review or pay invoice");
+  assert.equal(explanation.customerActionLabel, "Review invoice");
   assert.equal(explanation.customerActionHref, "/portal/invoices/invoice-1");
   assert.equal(explanation.sourceCategory, "invoice");
 });

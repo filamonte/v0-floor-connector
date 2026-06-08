@@ -278,7 +278,9 @@ async function preparePendingInviteFixture() {
   }
 
   const token = randomBytes(32).toString("base64url");
-  const expiresAt = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString();
+  const expiresAt = new Date(
+    Date.now() + 14 * 24 * 60 * 60 * 1000
+  ).toISOString();
   const existingGrant = await findSingleBy(
     supabase,
     "portal_access_grants",
@@ -385,7 +387,9 @@ test.describe("portal invite account onboarding", () => {
       "Portal invite UX smoke requires SUPABASE_SERVICE_ROLE_KEY, FLOORCONNECTOR_E2E_EMAIL, and FLOORCONNECTOR_ALLOW_E2E_FIXTURE_WRITE=1 for a pending invite fixture."
     );
 
-    await page.goto(`/portal/invite?token=${encodeURIComponent(preparedInvite.token)}`);
+    await page.goto(
+      `/portal/invite?token=${encodeURIComponent(preparedInvite.token)}`
+    );
 
     await expect(
       page.getByRole("heading", { name: /Continue to your shared project/i })
@@ -415,7 +419,7 @@ test.describe("portal invite account onboarding", () => {
     }
 
     await expect(page.locator("body")).not.toContainText(
-      /Payment Actions|Signature Actions|Balance due|Invoice Review|Contract Review|Estimate Review/i
+      /Pay this invoice|Signature Actions|Balance due|Invoice Review|Contract Review|Estimate Review/i
     );
   });
 

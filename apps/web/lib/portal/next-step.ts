@@ -155,12 +155,12 @@ export function derivePortalCustomerNextStep(
     const reference = openInvoice.referenceNumber ?? "the invoice";
 
     return {
-      label: "Review/pay invoice",
+      label: "Review invoice",
       description:
-        "This invoice has an open balance or active payment request on the shared project record.",
+        "This invoice has an open balance or payment step to review. If payment is available, you can continue from the invoice page.",
       href: `/portal/invoices/${openInvoice.id}`,
       tone: "attention",
-      reason: `${reference} needs billing review.`,
+      reason: `${reference} needs invoice review.`,
       source: "invoice"
     };
   }

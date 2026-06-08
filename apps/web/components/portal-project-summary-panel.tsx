@@ -72,7 +72,7 @@ export function PortalProjectSummaryPanel({
       <div className="grid gap-5 xl:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)]">
         <section className={portalStatePanelClassName}>
           <p className="text-[11px] font-semibold uppercase tracking-[0.26em] text-slate-500">
-            Current project state
+            Project status
           </p>
           <div className="mt-4 space-y-3">
             <div className="flex flex-wrap items-center gap-3">
@@ -97,7 +97,7 @@ export function PortalProjectSummaryPanel({
             </p>
             <div className={portalInsetPanelClassName}>
               <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
-                Shared project records
+                Shared with you
               </p>
               <div className="mt-2 space-y-1 text-sm leading-6 text-slate-600">
                 <p>
@@ -111,8 +111,8 @@ export function PortalProjectSummaryPanel({
                 {paymentSummary ? <p>Payment: {paymentSummary}</p> : null}
               </div>
               <p className="mt-3 text-xs leading-5 text-slate-500">
-                Schedule and progress stay contractor-managed here. This portal
-                shows only customer-safe updates already shared for the project.
+                Schedule and progress updates come from your contractor. This
+                portal shows only project updates already shared with you.
               </p>
             </div>
             <div className={portalInsetPanelClassName}>
@@ -136,8 +136,8 @@ export function PortalProjectSummaryPanel({
                 </PortalStatusBadge>
               </div>
               <p className="mt-3 text-xs leading-5 text-slate-500">
-                This stage is derived from shared estimate, contract, change
-                order, invoice, and schedule records only.
+                This stage is based on the estimate, contract, changes, billing,
+                and schedule details shared with you.
               </p>
             </div>
           </div>
@@ -150,7 +150,7 @@ export function PortalProjectSummaryPanel({
           items={[
             {
               key: "next-action",
-              label: "What to review next",
+              label: "Your next step",
               content: (
                 <NextActionCard
                   eyebrow="Project guidance"
@@ -172,11 +172,11 @@ export function PortalProjectSummaryPanel({
             },
             {
               key: "record-visibility",
-              label: "Shared records",
+              label: "What has been shared",
               content: (
                 <div className="space-y-1 text-sm text-slate-600">
-                  <p>{statusWindow.sharedRecords.length} total record(s)</p>
-                  <p>{statusWindow.attentionItems.length} needing attention</p>
+                  <p>{statusWindow.sharedRecords.length} items shared</p>
+                  <p>{statusWindow.attentionItems.length} need your review</p>
                   <p>{statusWindow.completedItems.length} complete</p>
                 </div>
               )
@@ -189,10 +189,10 @@ export function PortalProjectSummaryPanel({
         <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
           <div className="min-w-0">
             <p className="text-[11px] font-semibold uppercase tracking-[0.26em] text-slate-500">
-              Project stage map
+              Project steps
             </p>
             <h2 className="mt-2 text-lg font-semibold tracking-tight text-slate-950">
-              Where this shared project stands
+              Where this project stands
             </h2>
           </div>
           <PortalStatusBadge status={statusWindow.statusTone}>
@@ -221,9 +221,7 @@ export function PortalProjectSummaryPanel({
               {stage.href ? (
                 <div className="mt-4">
                   <PortalSecondaryLink href={stage.href}>
-                    {stage.customerActionRequired
-                      ? "Review this stage"
-                      : "Open record"}
+                    {stage.customerActionRequired ? "Review" : "Open"}
                   </PortalSecondaryLink>
                 </div>
               ) : null}
@@ -245,8 +243,8 @@ export function PortalProjectCustomerActionHub({
 >) {
   return (
     <DetailPanel
-      title="Customer Action Hub"
-      description="The clearest customer-safe path through the project records currently shared with you."
+      title="Next Steps"
+      description="Start with the item that needs your attention, then review the other project items shared with you."
     >
       <div className="grid gap-4 lg:grid-cols-2">
         <section className={`${portalStatePanelClassName} lg:col-span-2`}>

@@ -279,7 +279,7 @@ function mapInvoices(invoices: PortalSharedInvoice[]): PortalSharedDocument[] {
         subjectId: invoice.id,
         audience: "portal"
       }),
-      actionLabel: needsAttention ? "Review or pay invoice" : "Open",
+      actionLabel: needsAttention ? "Review invoice" : "Open",
       helperText,
       customerActionRequired: needsAttention || undefined,
       completed: completed || undefined,

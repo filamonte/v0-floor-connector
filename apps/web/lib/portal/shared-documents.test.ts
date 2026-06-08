@@ -71,7 +71,7 @@ void test("shared documents sends unpaid invoices to review or payment", () => {
 
   assert.equal(center.documents[0]?.type, "invoice");
   assert.equal(center.documents[0]?.tone, "attention");
-  assert.equal(center.documents[0]?.actionLabel, "Review or pay invoice");
+  assert.equal(center.documents[0]?.actionLabel, "Review invoice");
   assert.equal(center.documents[0]?.customerActionRequired, true);
   assert.equal(center.documents[0]?.primaryHref, "/portal/invoices/invoice-1");
   assert.equal(
