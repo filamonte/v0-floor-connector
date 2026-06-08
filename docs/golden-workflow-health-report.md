@@ -28,6 +28,7 @@ that every workflow transition is submitted through production UI forms.
 | Schedule readiness visibility | Verified for fixture chain | Golden browser spec opens `/schedule` with exact post-signature project/job context; schedule handoff spec covers ready handoffs                                                                                                                                                                              | Deposit/financing readiness variants remain separate                                                                         |
 | Project continuity summaries  | Partial                    | Project detail, ProjectPulse, operational workspace, timeline, MessageCenter/Proof/Closeout read models                                                                                                                                                                                                       | Needs health summary generated from live golden fixture records                                                              |
 | Operational ownership model   | Verified at helper level   | `apps/web/lib/verification/operational-ownership.test.ts` verifies dashboard prioritization, Project Workspace diagnosis, owning workspace action, Settings tenant configuration, Super Admin platform policy, Portal customer-safe review/action, forbidden ownership absence, and canonical lifecycle order | Route-specific ownership assertions remain distributed across existing protected, portal, settings, and platform-admin specs |
+| UX / IA ownership boundaries  | Verified at helper level   | `apps/web/lib/verification/ux-ia-ownership.test.ts` verifies the four UX review implementation commits, Dashboard, Project, Field, Financials, Communications, Portal, Reports, Settings, no duplicate models, and no schema/migration drift                                                                  | Route-specific visual hierarchy evidence remains distributed across the implementation stream closeouts                      |
 
 ## Verified Workflow Stages
 
@@ -47,6 +48,12 @@ that every workflow transition is submitted through production UI forms.
 - New ownership helper spine: the operational ownership model now has pure
   verification coverage for Dashboard, Project Workspace, owning workspaces,
   Settings, Super Admin, and Portal without adding feature behavior.
+- New UX / IA ownership helper spine: the visual UX review wave now has pure
+  verification coverage for Dashboard prioritization, Project diagnosis, Field
+  execution, Financials billing/collections action, Communications conversation
+  action, customer-safe Portal behavior, Reports summarize-and-route behavior,
+  Settings configuration ownership, implementation commit review, no duplicate
+  models, and no schema/migration drift.
 - New browser proof chain: `e2e/golden-workflow-verification.spec.js` creates a
   disposable canonical chain, checks blocked pre-signature state, signs the
   contract through canonical signer/event state, creates the post-readiness job
@@ -79,21 +86,22 @@ that every workflow transition is submitted through production UI forms.
 
 ## Confidence By Stage
 
-| Stage                      | Confidence | Reason                                                                                                            |
-| -------------------------- | ---------- | ----------------------------------------------------------------------------------------------------------------- |
-| Opportunity                | Medium     | Golden browser fixture proves converted opportunity linkage; UI-submitted conversion remains                      |
-| Customer                   | Medium     | Customer/People/portal access coverage exists; conversion primary-contact proof needs tightening                  |
-| Project                    | High       | Golden browser fixture proves blocked-to-ready readiness sync on one canonical project                            |
-| Estimate                   | Medium     | Estimate authoring/approval coverage exists; end-to-end handoff to contract needs browser proof                   |
-| Contract                   | Medium     | Contract workspace and portal tests exist; protected generation path needs tighter coverage                       |
-| Signature                  | Medium     | Portal signature is covered; onsite signature remains outside golden suite                                        |
-| Job                        | Medium     | Ready handoffs covered; blocked creation refusal needs browser coverage                                           |
-| Schedule                   | High       | Schedule read model and ready handoff coverage are focused and current                                            |
-| Invoice                    | Medium     | Invoice workspace/payment boundaries exist; blocked standard creation needs browser coverage                      |
-| Payment                    | High       | Golden browser fixture proves paid invoice state after canonical payment; webhook spec covers provider completion |
-| Portal continuity          | Medium     | Real auth/grant coverage exists; side-by-side contractor/portal state comparison remains                          |
-| Project continuity summary | Medium     | Multiple read models are covered; live fixture health report generation remains                                   |
-| Operational ownership      | Medium     | Pure helper coverage now protects surface responsibilities; route-specific assertions remain distributed          |
+| Stage                      | Confidence | Reason                                                                                                                                    |
+| -------------------------- | ---------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| Opportunity                | Medium     | Golden browser fixture proves converted opportunity linkage; UI-submitted conversion remains                                              |
+| Customer                   | Medium     | Customer/People/portal access coverage exists; conversion primary-contact proof needs tightening                                          |
+| Project                    | High       | Golden browser fixture proves blocked-to-ready readiness sync on one canonical project                                                    |
+| Estimate                   | Medium     | Estimate authoring/approval coverage exists; end-to-end handoff to contract needs browser proof                                           |
+| Contract                   | Medium     | Contract workspace and portal tests exist; protected generation path needs tighter coverage                                               |
+| Signature                  | Medium     | Portal signature is covered; onsite signature remains outside golden suite                                                                |
+| Job                        | Medium     | Ready handoffs covered; blocked creation refusal needs browser coverage                                                                   |
+| Schedule                   | High       | Schedule read model and ready handoff coverage are focused and current                                                                    |
+| Invoice                    | Medium     | Invoice workspace/payment boundaries exist; blocked standard creation needs browser coverage                                              |
+| Payment                    | High       | Golden browser fixture proves paid invoice state after canonical payment; webhook spec covers provider completion                         |
+| Portal continuity          | Medium     | Real auth/grant coverage exists; side-by-side contractor/portal state comparison remains                                                  |
+| Project continuity summary | Medium     | Multiple read models are covered; live fixture health report generation remains                                                           |
+| Operational ownership      | Medium     | Pure helper coverage now protects surface responsibilities; route-specific assertions remain distributed                                  |
+| UX / IA ownership          | Medium     | Pure helper coverage now protects the visual UX review ownership map; route-specific screenshots and closeout evidence remain distributed |
 
 ## V1 Implementation Notes
 
@@ -103,6 +111,8 @@ that every workflow transition is submitted through production UI forms.
 - Added `apps/web/lib/verification/golden-workflow-checks.test.ts`.
 - Added `apps/web/lib/verification/operational-ownership.ts`.
 - Added `apps/web/lib/verification/operational-ownership.test.ts`.
+- Added `apps/web/lib/verification/ux-ia-ownership.ts`.
+- Added `apps/web/lib/verification/ux-ia-ownership.test.ts`.
 - Added `e2e/golden-workflow-verification.spec.js`.
 - Updated `playwright.config.js` so the new spec runs under
   `chromium-protected`.

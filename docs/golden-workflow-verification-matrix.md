@@ -115,6 +115,39 @@ This helper is intentionally pure verification. It does not import
 implementation-stream-only helpers, query data, add routes, add schema,
 exercise provider behavior, or perform feature work.
 
+## UX IA Ownership V1 Verification
+
+The `visual-ux-review-contractor-usability-v1` wave adds a verification-only
+helper at `apps/web/lib/verification/ux-ia-ownership.ts`. It protects the
+approved post-implementation UX / IA ownership boundaries after the four
+implementation streams complete:
+
+- Dashboard prioritizes attention and routes users to owning workspaces.
+- Project diagnoses project state and routes action back to source records.
+- Field owns execution through canonical jobs, schedule, Daily Logs, field
+  notes, evidence, and related execution records.
+- Financials owns billing, collections, invoice, payment, and payment-event
+  action.
+- Communications owns record-linked conversation review and communication
+  action.
+- Portal remains customer-safe review/action over scoped canonical records.
+- Reports summarizes and routes without owning operating action.
+- Settings owns tenant configuration and operational preferences.
+- The wave has no schema, migration, generated database type, duplicate-model,
+  or local-only persistence drift.
+
+| Verification area                   | Automated evidence                                                                                                                 | Manual / code-review check                                                                                                                       |
+| ----------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Implementation evidence             | `ux-ia-ownership.test.ts` requires the four expected implementation commits and reviews their changed-path lists                   | Confirm reviewed commits match the stream closeout evidence before integration review                                                            |
+| Dashboard / Project / Reports       | Helper coverage blocks dashboard-owned action state, Project action ownership drift, and Reports-owned action state                | Confirm route copy and hierarchy still send action to the owning workspace                                                                       |
+| Field / Financials / Communications | Helper coverage protects canonical execution, invoice/payment/event, and communication thread/message ownership                    | Confirm no duplicate dispatch, field, invoice, payment, inbox, message, provider, or automation models were introduced                           |
+| Portal / Settings                   | Helper coverage protects customer-safe portal review/action and Settings configuration ownership                                   | Confirm no contractor-only readiness language leaks to portal and no operational route mutates configuration                                     |
+| Schema / model drift                | Helper coverage fails on migration, database-package, generated database type, duplicate-model, or local-only persistence evidence | Confirm the implementation commits did not touch `supabase/migrations`, provider behavior, financial math, payment state, or portal access rules |
+
+This helper is intentionally pure verification. It does not query data, add
+routes, add schema, add migrations, change UI behavior, loosen route tests, call
+providers, or perform feature work.
+
 ## Mobile Field Closeout V1 Verification
 
 The `mobile-field-capture-closeout-v1` wave adds a verification-only helper at
@@ -178,6 +211,13 @@ complete:
   the approved mobile field closeout wave boundaries across canonical Daily
   Logs, field notes, execution attachments, closeout readiness, Communications
   review handoff, ownership, portal safety, and schema/migration drift.
+- `apps/web/lib/verification/ux-ia-ownership.test.ts` verifies the approved
+  visual UX review wave boundaries across Dashboard prioritization, Project
+  diagnosis, Field execution, Financials billing/collections action,
+  Communications conversation action, Portal customer safety, Reports
+  summarize-and-route behavior, Settings configuration ownership, required
+  implementation commit evidence, no duplicate models, and no schema/migration
+  drift.
 
 ## Fixture And Auth Notes
 
