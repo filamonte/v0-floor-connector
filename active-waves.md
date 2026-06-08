@@ -238,24 +238,24 @@ canonical business model.
 
 Gate status:
 
-| Gate item                              | Status         | Evidence / note                                                                                   |
-| -------------------------------------- | -------------- | ------------------------------------------------------------------------------------------------- |
-| Architecture Coordination approval     | Approved       | Stream ownership, dependencies, non-goals, validation, verification, and merge order recorded.    |
-| Jeff approval gate                     | Approved       | Jeff explicitly approved stream/worktree creation for `visual-ux-review-contractor-usability-v1`. |
-| Stream creation                        | Complete       | Five branches and worktrees were created from the verified current `main` baseline.               |
-| Implementation start                   | Not started    | A later explicit Start command is required before implementation work begins.                     |
-| Human review gate                      | Required later | No merge, PR, or cleanup approval is granted by this packet.                                      |
-| Autonomous merge / indefinite continue | Not allowed    | No next wave, schema/migration work, provider work, cleanup, or autonomous action work allowed.   |
+| Gate item                              | Status      | Evidence / note                                                                                   |
+| -------------------------------------- | ----------- | ------------------------------------------------------------------------------------------------- |
+| Architecture Coordination approval     | Approved    | Stream ownership, dependencies, non-goals, validation, verification, and merge order recorded.    |
+| Jeff approval gate                     | Approved    | Jeff explicitly approved stream/worktree creation for `visual-ux-review-contractor-usability-v1`. |
+| Stream creation                        | Complete    | Five branches and worktrees were created from the verified current `main` baseline.               |
+| Implementation start                   | Completed   | The approved implementation and verification slices landed on `main`.                             |
+| Human review gate                      | Satisfied   | Jeff approved the controlled final-refresh-and-merge prompt; no PRs were opened.                  |
+| Autonomous merge / indefinite continue | Not allowed | No next wave, schema/migration work, provider work, cleanup, or autonomous action work allowed.   |
 
 Approved stream set:
 
-| Stream                                | Ownership area                          | Mission                                                                 | Status                 |
-| ------------------------------------- | --------------------------------------- | ----------------------------------------------------------------------- | ---------------------- |
-| `golden-workflow-usability-review-v1` | End-to-end contractor journey review    | Clarify the Lead-to-Reports golden workflow for contractor users.       | Approved / Not Started |
-| `workspace-density-polish-v1`         | Major workspace density and readability | Reduce clutter and improve hierarchy on high-traffic workspaces.        | Approved / Not Started |
-| `manager-page-ownership-polish-v1`    | Manager page ownership boundaries       | Clarify what manager pages own and where users should act.              | Approved / Not Started |
-| `portal-customer-clarity-polish-v1`   | Customer-facing portal clarity          | Simplify customer-safe portal language and section hierarchy.           | Approved / Not Started |
-| `verification-ux-ia-ownership-v1`     | Verification                            | Protect UX/IA ownership boundaries, duplicate-model risk, and no drift. | Approved / Not Started |
+| Stream                                | Ownership area                          | Mission                                                                 | Status |
+| ------------------------------------- | --------------------------------------- | ----------------------------------------------------------------------- | ------ |
+| `golden-workflow-usability-review-v1` | End-to-end contractor journey review    | Clarify the Lead-to-Reports golden workflow for contractor users.       | Merged |
+| `workspace-density-polish-v1`         | Major workspace density and readability | Reduce clutter and improve hierarchy on high-traffic workspaces.        | Merged |
+| `manager-page-ownership-polish-v1`    | Manager page ownership boundaries       | Clarify what manager pages own and where users should act.              | Merged |
+| `portal-customer-clarity-polish-v1`   | Customer-facing portal clarity          | Simplify customer-safe portal language and section hierarchy.           | Merged |
+| `verification-ux-ia-ownership-v1`     | Verification                            | Protect UX/IA ownership boundaries, duplicate-model risk, and no drift. | Merged |
 
 Approved stream branches:
 
@@ -282,6 +282,23 @@ Dependency and merge order:
 5. `verification-ux-ia-ownership-v1`
 
 Verification must run last after implementation stream commits exist.
+
+Merge result:
+
+- Golden Workflow Usability Review V1 merged to `main` as `32f2151d`.
+- Workspace Density Polish V1 merged to `main` as `a726a18c`.
+- Manager Page Ownership Polish V1 merged to `main` as `f0a03562`.
+- Portal Customer Clarity Polish V1 merged to `main` as `0cc57cd1`.
+- Verification UX IA Ownership V1 merged to `main` as `c4017a28`.
+
+Post-merge validation passed: targeted golden workflow usability, portal
+clarity, UX/IA ownership verification, operational ownership, and golden
+workflow checks; changed portal Playwright specs; typecheck; lint;
+`pnpm.cmd fc:preflight:fast`; and `git diff --check`.
+
+Wave status: Merged to `main`; completed wave worktrees and branches are
+retained pending explicit retirement approval. No next wave is approved by this
+merge.
 
 Shared guardrails:
 

@@ -64,16 +64,20 @@ Work -> Verification -> Integration Review Packet -> Jeff Approval -> Continue.
 Agents may prepare scoped work and review packets, but may not auto-merge,
 auto-continue, or bypass Jeff approval.
 
-Current wave gate note: `visual-ux-review-contractor-usability-v1` is approved
-for stream/worktree creation only. Jeff and Architecture Coordination approved
-the wave, and the five approved branches/worktrees now exist:
-`golden-workflow-usability-review-v1`, `workspace-density-polish-v1`,
-`manager-page-ownership-polish-v1`, `portal-customer-clarity-polish-v1`, and
-`verification-ux-ia-ownership-v1`. Implementation has not started and requires
-a later explicit Start command. Verification must run last after implementation
-stream commits exist. This approval does not authorize schemas, migrations,
-provider changes, financial/payment behavior changes, portal-owned state, PRs,
-merges, cleanup, next-wave continuation, or autonomous actions.
+Current wave gate note: `visual-ux-review-contractor-usability-v1` has merged
+to `main` under Jeff's controlled merge approval. Golden Workflow Usability
+Review V1 merged as `32f2151d`, Workspace Density Polish V1 merged as
+`a726a18c`, Manager Page Ownership Polish V1 merged as `f0a03562`, Portal
+Customer Clarity Polish V1 merged as `0cc57cd1`, and Verification UX IA
+Ownership V1 merged as `c4017a28`. Post-merge targeted golden workflow
+usability, portal clarity, UX/IA ownership verification, operational ownership,
+and golden workflow checks passed; changed portal Playwright specs passed with
+11 passed and 1 negative-fixture case skipped; typecheck, lint,
+`pnpm.cmd fc:preflight:fast`, and `git diff --check` passed. The five completed
+wave worktrees and branches are retained pending explicit retirement approval.
+The next wave is not approved from this merge; agents may not auto-continue,
+perform schema/migration work, change provider/payment behavior, create
+portal-owned state, open PRs, or perform cleanup without Jeff approval.
 
 Current cleanup note: Jeff explicitly approved retiring
 `C:\FC-worktrees\project-next-actions` / `stream/project-next-actions` as stale

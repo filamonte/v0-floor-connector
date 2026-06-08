@@ -273,11 +273,10 @@ Review packets:
 - [docs/review-packets/next-portfolio-recommendation-v4.md](C:/FloorConnector/docs/review-packets/next-portfolio-recommendation-v4.md)
 - [docs/review-packets/visual-ux-review-contractor-usability-v1-plan.md](C:/FloorConnector/docs/review-packets/visual-ux-review-contractor-usability-v1-plan.md)
 
-Wave status: Approved / Not Started. The approved branches and worktrees exist,
-but implementation requires a later explicit Start command. This approval does
-not authorize schema/migration work, provider changes, financial/payment
-changes, portal-owned state, PRs, merges, cleanup, next-wave continuation, or
-autonomous actions.
+Wave status: Merged to `main`; completed worktrees and branches are retained
+pending explicit retirement approval. This merge does not authorize
+schema/migration work, provider changes, financial/payment changes,
+portal-owned state, PRs, cleanup, next-wave continuation, or autonomous actions.
 
 Approved stream set:
 
@@ -324,6 +323,19 @@ Merge order:
 
 Verification must run last after implementation stream commits exist.
 
+Merge result:
+
+- Golden Workflow Usability Review V1 merged to `main` as `32f2151d`.
+- Workspace Density Polish V1 merged to `main` as `a726a18c`.
+- Manager Page Ownership Polish V1 merged to `main` as `f0a03562`.
+- Portal Customer Clarity Polish V1 merged to `main` as `0cc57cd1`.
+- Verification UX IA Ownership V1 merged to `main` as `c4017a28`.
+
+Post-merge validation passed: targeted golden workflow usability, portal
+clarity, UX/IA ownership verification, operational ownership, and golden
+workflow checks; changed portal Playwright specs; typecheck; lint;
+`pnpm.cmd fc:preflight:fast`; and `git diff --check`.
+
 ### golden-workflow-usability-review-v1
 
 - Branch: `stream/golden-workflow-usability-review-v1`
@@ -335,7 +347,8 @@ Verification must run last after implementation stream commits exist.
 - Forbidden: schema changes, new feature models, dashboard rebuild, broad
   visual redesign, migrations, provider behavior, and duplicate workflow state.
 - Suggested commit: `feat: clarify golden workflow usability`
-- Status: Approved / Not Started.
+- Status: Merged to `main` as `32f2151d`; worktree and branch retained pending
+  explicit retirement approval.
 
 ### workspace-density-polish-v1
 
@@ -349,7 +362,8 @@ Verification must run last after implementation stream commits exist.
 - Forbidden: ownership changes, new workflow models, schema changes,
   migrations, major redesign, provider behavior, and source-record mutation.
 - Suggested commit: `feat: polish workspace density`
-- Status: Approved / Not Started.
+- Status: Merged to `main` as `a726a18c`; worktree and branch retained pending
+  explicit retirement approval.
 
 ### manager-page-ownership-polish-v1
 
@@ -364,7 +378,8 @@ Verification must run last after implementation stream commits exist.
 - Forbidden: new manager pages unless already routed, schema changes,
   migrations, dashboard sprawl, duplicate action ownership, and new persistence.
 - Suggested commit: `feat: polish manager page ownership`
-- Status: Approved / Not Started.
+- Status: Merged to `main` as `f0a03562`; worktree and branch retained pending
+  explicit retirement approval.
 
 ### portal-customer-clarity-polish-v1
 
@@ -379,7 +394,8 @@ Verification must run last after implementation stream commits exist.
   migrations, payment/provider changes, field-proof exposure, and internal-only
   terminology leakage.
 - Suggested commit: `feat: polish portal customer clarity`
-- Status: Approved / Not Started.
+- Status: Merged to `main` as `0cc57cd1`; worktree and branch retained pending
+  explicit retirement approval.
 
 ### verification-ux-ia-ownership-v1
 
@@ -393,7 +409,8 @@ Verification must run last after implementation stream commits exist.
 - Forbidden: feature work, UI redesign, schema changes, migrations, loosening
   checks, and running before implementation streams complete.
 - Suggested commit: `test: protect ux ia ownership`
-- Status: Approved / Not Started.
+- Status: Merged to `main` as `c4017a28`; worktree and branch retained pending
+  explicit retirement approval.
 
 ## Financial Closeout Collections V1 Gate
 

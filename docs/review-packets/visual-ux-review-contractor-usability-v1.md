@@ -1,46 +1,42 @@
 # Visual UX Review Contractor Usability V1
 
-Status: Review packet / merge-readiness recommendation
+Status: Merged to `main`; closeout recorded
 Doc type: Integration review packet
 Review date: 2026-06-08
 Wave: `visual-ux-review-contractor-usability-v1`
 
-This packet reviews the completed local stream slices for the Visual UX Review
-Contractor Usability V1 wave. It does not approve merges, open PRs, start
-another wave, change schemas or migrations, modify production code on `main`, or
-grant Jeff approval.
+This packet records the controlled merge closeout for the Visual UX Review
+Contractor Usability V1 wave. It does not open PRs, start another wave, change
+schemas or migrations, authorize cleanup, or grant approval for later work.
 
 ## Executive Summary
 
-The wave is locally complete, rebased onto current `origin/main`, and
-structurally aligned with the approved UX/IA ownership model. All five
-worktrees exist, are clean, and still contain the requested committed slice. The
-implementation work improves contractor understandability, workspace density,
-manager page ownership clarity, and customer-safe portal language without adding
-schema, migration, provider, payment, customer-send, or duplicate-model paths.
+The wave has merged to `main` in the approved order and remains structurally
+aligned with the approved UX/IA ownership model. The implementation work
+improves contractor understandability, workspace density, manager page
+ownership clarity, and customer-safe portal language without adding schema,
+migration, provider, payment, customer-send, or duplicate-model paths.
 
-The current evidence supports controlled merge approval in the recommended
-order. Implementation streams were rebased and validated, verification was
-rebased after the implementation streams, the verification helper was updated to
-the rebased implementation heads, and the verification stream was revalidated.
+Final refresh, per-merge validation, targeted tests, portal Playwright checks,
+and final validation all passed before this closeout update.
 
 ## Streams Completed
 
-| Stream                                | Worktree | Branch                                       | Status | Ahead/behind at validation time | Merge readiness                              |
-| ------------------------------------- | -------- | -------------------------------------------- | ------ | ------------------------------- | -------------------------------------------- |
-| `golden-workflow-usability-review-v1` | Exists   | `stream/golden-workflow-usability-review-v1` | Clean  | `1 / 0`                         | Merge-ready after validation rerun           |
-| `workspace-density-polish-v1`         | Exists   | `stream/workspace-density-polish-v1`         | Clean  | `1 / 0`                         | Merge-ready after validation rerun           |
-| `manager-page-ownership-polish-v1`    | Exists   | `stream/manager-page-ownership-polish-v1`    | Clean  | `1 / 0`                         | Merge-ready after validation rerun           |
-| `portal-customer-clarity-polish-v1`   | Exists   | `stream/portal-customer-clarity-polish-v1`   | Clean  | `1 / 0`                         | Merge-ready after validation rerun           |
-| `verification-ux-ia-ownership-v1`     | Exists   | `stream/verification-ux-ia-ownership-v1`     | Clean  | `2 / 0`                         | Merge-ready last after implementation merges |
+| Stream                                | Worktree | Branch                                       | Status | Ahead/behind at validation time | Merge readiness                |
+| ------------------------------------- | -------- | -------------------------------------------- | ------ | ------------------------------- | ------------------------------ |
+| `golden-workflow-usability-review-v1` | Exists   | `stream/golden-workflow-usability-review-v1` | Clean  | `1 / 0`                         | Merged to `main` as `32f2151d` |
+| `workspace-density-polish-v1`         | Exists   | `stream/workspace-density-polish-v1`         | Clean  | `1 / 0`                         | Merged to `main` as `a726a18c` |
+| `manager-page-ownership-polish-v1`    | Exists   | `stream/manager-page-ownership-polish-v1`    | Clean  | `1 / 0`                         | Merged to `main` as `f0a03562` |
+| `portal-customer-clarity-polish-v1`   | Exists   | `stream/portal-customer-clarity-polish-v1`   | Clean  | `1 / 0`                         | Merged to `main` as `0cc57cd1` |
+| `verification-ux-ia-ownership-v1`     | Exists   | `stream/verification-ux-ia-ownership-v1`     | Clean  | `3 / 0`                         | Merged to `main` as `c4017a28` |
 
 ## Commits By Stream
 
-- `golden-workflow-usability-review-v1`: `a952ebf6 feat: clarify golden workflow usability`
-- `workspace-density-polish-v1`: `797483ff feat: polish workspace density`
-- `manager-page-ownership-polish-v1`: `2b3549df feat: polish manager page ownership`
-- `portal-customer-clarity-polish-v1`: `cad90b36 feat: polish portal customer clarity`
-- `verification-ux-ia-ownership-v1`: `f1bc5c4b test: update ux ia ownership verification`
+- `golden-workflow-usability-review-v1`: refreshed head `d5eb1eae feat: clarify golden workflow usability`; merged as `32f2151d`.
+- `workspace-density-polish-v1`: refreshed head `0c477b23 feat: polish workspace density`; merged as `a726a18c`.
+- `manager-page-ownership-polish-v1`: refreshed head `9472d465 feat: polish manager page ownership`; merged as `f0a03562`.
+- `portal-customer-clarity-polish-v1`: refreshed head `a03d0f0f feat: polish portal customer clarity`; merged as `0cc57cd1`.
+- `verification-ux-ia-ownership-v1`: refreshed head `41390322 test: update ux ia ownership verification`; merged as `c4017a28`.
 
 ## Files Changed By Stream
 
@@ -233,9 +229,9 @@ Remaining caveats:
   checks passed for those streams.
 - Portal E2E coverage was rerun with the changed portal specs and passed.
 
-## Merge Order Recommendation
+## Merge Result
 
-The approved merge order remains correct:
+The approved merge order was followed:
 
 1. `golden-workflow-usability-review-v1`
 2. `workspace-density-polish-v1`
@@ -243,18 +239,16 @@ The approved merge order remains correct:
 4. `portal-customer-clarity-polish-v1`
 5. `verification-ux-ia-ownership-v1`
 
-Verification should merge last after the four implementation streams land so the
-verification helper's rebased implementation heads remain accurate.
+Verification merged last after the four implementation streams landed, and the
+verification helper was refreshed to the final implementation heads before
+merge.
 
 ## Risks And Follow-Ups
 
-- Rebase risk: packet commits on `main` can make the streams behind `main` by
-  one or more docs-only commits unless Jeff refreshes stream ancestry
-  immediately before controlled merge.
 - UX risk: collapsed density and ownership banners did not receive
   contractor-side browser smoke in this pass.
 - Registry risk: active registry lifecycle status is stale and should be
-  reconciled during the approved merge/lifecycle step, not by this review packet.
+  reconciled by this closeout commit.
 
 ## Next Recommended Wave Options
 
@@ -272,15 +266,8 @@ remain:
 - `guided-project-capture-v1`, if the team is ready for a larger pre-estimate
   capture flow after UX baseline stabilization.
 
-## Jeff Decision Options
+## Closeout State
 
-Jeff may choose one of:
-
-1. Approve controlled merges in the recommended order.
-2. Request correction on any stream before validation rerun.
-3. Rerun validation first and review the fresh evidence before deciding.
-4. Defer one stream while preserving the approved merge order for the rest.
-5. Continue planning the next wave only after this wave is merged or explicitly
-   deferred.
-
-No Jeff approval is granted by this packet.
+Jeff approved the controlled merge. The wave is merged to `main`; worktrees and
+branches are retained pending explicit retirement approval. No next wave is
+approved by this closeout packet.
