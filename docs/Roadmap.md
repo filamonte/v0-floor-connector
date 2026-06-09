@@ -72,6 +72,12 @@ Program, Wave, Stream, PR, and commit counts are activity measures, not success
 metrics. Each Program may produce multiple waves, and each wave must still
 preserve the canonical lifecycle and operational command center model.
 
+Program A's proposed Wave A1, `assessment-foundation-a1`, is documented in
+[docs/review-packets/program-a-assessment-foundation-a1-plan.md](C:/FloorConnector/docs/review-packets/program-a-assessment-foundation-a1-plan.md).
+It targets Assessment Intelligence maturity movement from 5 / 100 to 20 / 100
+only after verified delivery. It is planning-only and does not authorize
+streams, branches, worktrees, code, schemas, migrations, PRs, or merge.
+
 Use [docs/platform-build-registry.md](C:/FloorConnector/docs/platform-build-registry.md) as the living strategic coordination map for major planned systems, priorities, dependencies, maturity, status, and rationale. Use [docs/platform-maturity-model.md](C:/FloorConnector/docs/platform-maturity-model.md) to prevent foundation-level systems from being treated as ready for intelligence, predictive, or autonomous behavior too early.
 
 Use [docs/floorconnector-build-list-and-completion-timeline.md](C:/FloorConnector/docs/floorconnector-build-list-and-completion-timeline.md)

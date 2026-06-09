@@ -92,6 +92,16 @@ Capability -> Program -> Wave -> Stream navigation. Program B Operational Work
 Management, Program C Communications OS, and Program D Field OS are Planned. No
 next wave is approved by the Program portfolio.
 
+Program A planning note: proposed Wave A1 `assessment-foundation-a1` is recorded
+in
+[docs/review-packets/program-a-assessment-foundation-a1-plan.md](C:/FloorConnector/docs/review-packets/program-a-assessment-foundation-a1-plan.md).
+It targets Assessment Intelligence movement from 5 / 100 to 20 / 100 after
+verified delivery and recommends conflict-safe stream ids
+`assessment-package-depth-v1`, `guided-project-capture-workflow-v1`,
+`area-space-model-v1`, `estimate-handoff-v1`, and
+`verification-assessment-foundation-v1`. This is planning only; no stream,
+branch, worktree, implementation, schema, migration, PR, or merge is approved.
+
 Current wave gate note: `guided-project-capture-v1` has merged to `main` under
 Jeff's controlled merge approval. Assessment Package Model V1 merged as
 `7ca9d14a`, Guided Capture Workspace V1 merged as `ab7acd0b`, Customer

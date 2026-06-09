@@ -31,10 +31,13 @@ stream registry. Programs do not create branches or worktrees.
 New streams must follow the lifecycle Proposed -> Architecture Review ->
 Approved -> Active -> Verification -> Merged -> Retired, and Architecture
 Coordination must approve stream creation before any new worktree is created.
-The wave proposal gate also requires Capability and Program mapping, Product
-Council prioritization, dependency documentation, ownership conflict review, UX
-/ IA impact review, verification scope, proposed merge order, active registry
-update, and recorded Jeff approval before a wave begins.
+The wave proposal gate also requires Capability and Program mapping, Current
+Capability Maturity, Target Capability Maturity, Business Outcome, Success
+Criteria, Product Council prioritization, dependency documentation, ownership
+conflict review, UX / IA impact review, verification scope, proposed merge
+order, active registry update, and recorded Jeff approval before a wave begins.
+Capability maturity advancement is the primary progress metric; Program, Wave,
+Stream, commit, PR, and branch counts are activity metrics only.
 Wave-launch prompts must also require `pnpm.cmd worktree:doctor` and use
 [docs/automation-tooling-baseline.md](C:/FloorConnector/docs/automation-tooling-baseline.md)
 for local tooling, Playwright, optional CLI, worktree-link, and validation
@@ -227,9 +230,20 @@ Recommended next implementation areas:
 - Estimate Handoff
 
 Candidate future stream or wave names may include
-`assessment-package-depth-v1`, `guided-project-capture-depth-v1`,
-`area-space-model-v1`, `photo-capture-foundation-v1`,
+`assessment-foundation-a1`, `assessment-package-depth-v1`,
+`guided-project-capture-workflow-v1`, `area-space-model-v1`,
+`photo-capture-foundation-v1`,
 `site-conditions-risk-detection-v1`, and `estimate-handoff-depth-v1`.
+
+Proposed Wave A1: Assessment Foundation is documented in
+[docs/review-packets/program-a-assessment-foundation-a1-plan.md](C:/FloorConnector/docs/review-packets/program-a-assessment-foundation-a1-plan.md).
+It targets Assessment Intelligence maturity movement from 5 / 100 to 20 / 100
+after verified delivery. Recommended stream ids are
+`assessment-package-depth-v1`, `guided-project-capture-workflow-v1`,
+`area-space-model-v1`, `estimate-handoff-v1`, and
+`verification-assessment-foundation-v1`. These are planning-only names; no
+stream, branch, worktree, implementation, schema/migration work, PR, or merge is
+approved by this registry entry.
 
 These names are preparation notes only. They do not authorize branches,
 worktrees, PRs, implementation, schema/migration work, provider actions, portal

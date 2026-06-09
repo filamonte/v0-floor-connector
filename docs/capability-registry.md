@@ -56,8 +56,23 @@ Definitions:
   documentation, or governance slice.
 
 For now, the initial capabilities map one-to-one with the initial Programs.
-Later capabilities may span more than one Program, but no Wave may begin without
-an explicit Capability and Program mapping.
+Later capabilities may span more than one Program.
+
+## Capability Advancement Rule
+
+No Program, Wave, or Stream may be created without direct linkage to a
+registered capability.
+
+Every proposal must state:
+
+- Capability
+- Current Capability Maturity
+- Target Capability Maturity
+- Business Outcome
+- Success Criteria
+
+The primary progress metric is capability maturity advancement. Program, Wave,
+Stream, commit, PR, and branch counts are activity metrics only.
 
 ## Status Vocabulary
 
@@ -82,14 +97,33 @@ Maturity scores should change only after verified implementation, completed
 review packets, meaningful evidence, or quarterly capability review. A proposed
 Wave by itself does not increase maturity.
 
+## Capability Heatmap
+
+| Capability                  | Current Maturity | Band | Color |
+| --------------------------- | ---------------- | ---- | ----- |
+| Assessment Intelligence     | 5%               | 0-20 | Red   |
+| Operational Work Management | 0%               | 0-20 | Red   |
+| Communications OS           | 0%               | 0-20 | Red   |
+| Field OS                    | 0%               | 0-20 | Red   |
+
+Heatmap colors:
+
+| Range  | Color       |
+| ------ | ----------- |
+| 0-20   | Red         |
+| 20-40  | Orange      |
+| 40-60  | Yellow      |
+| 60-80  | Light Green |
+| 80-100 | Green       |
+
 ## Registry
 
-| Capability                  | Purpose                                                                                   | Business Outcome                                                                                      | Status  | Maturity Score | Owning Program                         | Active Waves                                                                           | Dependencies                                                                                                   | Success Metrics                                                                                                    |
-| --------------------------- | ----------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- | ------- | -------------- | -------------------------------------- | -------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
-| Assessment Intelligence     | Project-owned pre-estimate assessment, capture, review, and handoff context.              | Fewer missed details, faster estimator review, better downstream reuse of site and scope context.     | Active  | 5              | Program A: Assessment Intelligence     | Recent: `guided-project-capture-v1` merged; future assessment depth requires approval. | Canonical Project context; Estimate approved-context consumption; customer-safe Portal input; review-only AI.  | Assessment completeness, missing-info reduction, estimate rework reduction, handoff speed, source-record reuse.    |
-| Operational Work Management | Accountability, work ownership, labor visibility, and cross-role operating queues.        | Office, PM, field, and accounting teams know who owns work, what is late, and what needs action.      | Planned | 0              | Program B: Operational Work Management | None.                                                                                  | Canonical Work Items, People, Projects, Jobs, time/labor data, Financials, Field, Communications ownership.    | Unowned-work reduction, assignment clarity, overdue-work reduction, labor visibility, handoff latency.             |
-| Communications OS           | Unified record-linked communication continuity across customer and contractor workflows.  | Contractors stop losing follow-ups across email, phone, portal, internal notes, and project handoffs. | Planned | 0              | Program C: Communications OS           | None.                                                                                  | `communication_threads`, `communication_messages`, portal safety, provider adapters, review-only AI.           | Response latency, unlinked-message reduction, follow-up completion, customer-safe continuity, send-proof coverage. |
-| Field OS                    | Mobile and field execution workflows tied to project, job, schedule, proof, and closeout. | Field teams receive clearer work packets, capture execution proof, and move projects toward closeout. | Planned | 0              | Program D: Field OS                    | None.                                                                                  | Jobs, schedule, daily logs, field notes, execution attachments, Work Items, People, equipment, closeout proof. | Daily-log completion, blocker closure, field-proof completeness, closeout readiness, schedule-to-field continuity. |
+| Capability                  | Purpose                                                                                   | Business Outcome                                                                                      | Status  | Maturity Score | Owning Program                         | Active Waves                                                                                      | Dependencies                                                                                                   | Success Metrics                                                                                                    |
+| --------------------------- | ----------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- | ------- | -------------- | -------------------------------------- | ------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| Assessment Intelligence     | Project-owned pre-estimate assessment, capture, review, and handoff context.              | Fewer missed details, faster estimator review, better downstream reuse of site and scope context.     | Active  | 5              | Program A: Assessment Intelligence     | Recent: `guided-project-capture-v1` merged; proposed planning packet: `assessment-foundation-a1`. | Canonical Project context; Estimate approved-context consumption; customer-safe Portal input; review-only AI.  | Assessment completeness, missing-info reduction, estimate rework reduction, handoff speed, source-record reuse.    |
+| Operational Work Management | Accountability, work ownership, labor visibility, and cross-role operating queues.        | Office, PM, field, and accounting teams know who owns work, what is late, and what needs action.      | Planned | 0              | Program B: Operational Work Management | None.                                                                                             | Canonical Work Items, People, Projects, Jobs, time/labor data, Financials, Field, Communications ownership.    | Unowned-work reduction, assignment clarity, overdue-work reduction, labor visibility, handoff latency.             |
+| Communications OS           | Unified record-linked communication continuity across customer and contractor workflows.  | Contractors stop losing follow-ups across email, phone, portal, internal notes, and project handoffs. | Planned | 0              | Program C: Communications OS           | None.                                                                                             | `communication_threads`, `communication_messages`, portal safety, provider adapters, review-only AI.           | Response latency, unlinked-message reduction, follow-up completion, customer-safe continuity, send-proof coverage. |
+| Field OS                    | Mobile and field execution workflows tied to project, job, schedule, proof, and closeout. | Field teams receive clearer work packets, capture execution proof, and move projects toward closeout. | Planned | 0              | Program D: Field OS                    | None.                                                                                             | Jobs, schedule, daily logs, field notes, execution attachments, Work Items, People, equipment, closeout proof. | Daily-log completion, blocker closure, field-proof completeness, closeout readiness, schedule-to-field continuity. |
 
 ## Capability Details
 
@@ -100,6 +134,14 @@ Current posture: Foundation, active at 5 percent maturity.
 Program A owns the direction for project-owned Assessment Packages, guided
 capture review, customer-safe capture input, risk signal visibility, missing
 information guidance, and estimate handoff continuity.
+
+Planning packet
+[docs/review-packets/program-a-assessment-foundation-a1-plan.md](C:/FloorConnector/docs/review-packets/program-a-assessment-foundation-a1-plan.md)
+prepares Wave A1: Assessment Foundation. It targets capability maturity movement
+from 5 percent to 20 percent only after implementation, verification, review,
+and merge evidence exists. The packet does not approve stream creation,
+branches, worktrees, schemas, migrations, PRs, provider behavior, or
+implementation.
 
 Allowed direction:
 

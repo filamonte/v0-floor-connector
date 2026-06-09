@@ -58,7 +58,7 @@ center and less like disconnected modules.
 
 | Program | Name                        | Health  | Current wave posture                                                                                  |
 | ------- | --------------------------- | ------- | ----------------------------------------------------------------------------------------------------- |
-| A       | Assessment Intelligence     | Active  | `guided-project-capture-v1` is merged to `main`; cleanup remains a separate explicit approval step.   |
+| A       | Assessment Intelligence     | Active  | `guided-project-capture-v1` is merged; `assessment-foundation-a1` is proposed planning only.          |
 | B       | Operational Work Management | Planned | Future waves may cover workforce, labor visibility, work ownership, and accountability depth.         |
 | C       | Communications OS           | Planned | Future waves may cover unified communication, record-linked follow-up, provider delivery, and memory. |
 | D       | Field OS                    | Planned | Future waves may cover mobile execution, closeout proof, field packets, inspections, and field depth. |
@@ -86,10 +86,36 @@ Recommended next implementation areas:
 - Risk Detection
 - Estimate Handoff
 
-Candidate future wave or stream names may include:
+Proposed Wave A1:
+
+- Wave id: `assessment-foundation-a1`
+- Program: Program A: Assessment Intelligence
+- Capability: Assessment Intelligence
+- Current capability maturity: 5 / 100
+- Target capability maturity after verified Wave A1 delivery: 20 / 100
+- Business outcome: structured site assessments and complete project context
+  flow into estimating without losing or recreating work.
+- Planning packet:
+  [docs/review-packets/program-a-assessment-foundation-a1-plan.md](C:/FloorConnector/docs/review-packets/program-a-assessment-foundation-a1-plan.md)
+- Status: Proposed / Planning Only. No streams, branches, worktrees,
+  implementation, schema changes, migrations, PRs, or merges are approved.
+
+Recommended Wave A1 stream names:
 
 - `assessment-package-depth-v1`
-- `guided-project-capture-depth-v1`
+- `guided-project-capture-workflow-v1`
+- `area-space-model-v1`
+- `estimate-handoff-v1`
+- `verification-assessment-foundation-v1`
+
+Earlier requested labels `assessment-package-model-v1` and
+`guided-project-capture-v1` are not reused because they already identify a
+merged Program A stream and merged Program A wave. The Wave A1 plan preserves
+their objectives under conflict-safe successor names.
+
+Other candidate future wave or stream names may include:
+
+- `assessment-package-depth-v1`
 - `area-space-model-v1`
 - `photo-capture-foundation-v1`
 - `site-conditions-risk-detection-v1`

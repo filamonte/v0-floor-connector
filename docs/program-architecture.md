@@ -46,6 +46,12 @@ creating new top-level navigation docs. New Program or capability docs must
 follow the documentation registration and anti-sprawl rules in
 [docs/documentation-governance.md](C:/FloorConnector/docs/documentation-governance.md).
 
+No Program, Wave, or Stream may be created without direct linkage to a
+registered capability. Every proposal must state Capability, Current Capability
+Maturity, Target Capability Maturity, Business Outcome, and Success Criteria.
+Capability maturity advancement is the primary progress metric; Program, Wave,
+Stream, commit, PR, and branch counts are activity metrics only.
+
 ## Program Definition
 
 Every Program must record:
@@ -109,6 +115,14 @@ Primary capability areas:
 Boundary: Project owns assessment context. Estimate consumes approved context.
 Portal may contribute customer-safe input but must not own operational truth.
 AI remains review/assist only.
+
+Next planning packet:
+[docs/review-packets/program-a-assessment-foundation-a1-plan.md](C:/FloorConnector/docs/review-packets/program-a-assessment-foundation-a1-plan.md)
+prepares Wave A1: Assessment Foundation for possible execution. It targets
+Assessment Intelligence maturity movement from 5 / 100 to 20 / 100 only after
+verified implementation and review evidence exists. It does not approve stream
+creation, worktrees, branches, implementation, schemas, migrations, PRs, or
+merge.
 
 ## Program B: Operational Work Management
 

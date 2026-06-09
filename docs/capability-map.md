@@ -44,14 +44,19 @@ Capability maturity is tracked in
 Program, Wave, Stream, PR, and commit counts are activity measures, not success
 metrics.
 
+No Program, Wave, or Stream may be created without direct linkage to a
+registered capability. Every proposal must state Capability, Current Capability
+Maturity, Target Capability Maturity, Business Outcome, and Success Criteria.
+Capability maturity advancement is the primary progress metric.
+
 ## Capability Index
 
-| Capability                  | Status  | Maturity            | Owning Program                         | Linked Waves                       | Linked Active Streams                                                                                                                             |
-| --------------------------- | ------- | ------------------- | -------------------------------------- | ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Assessment Intelligence     | Active  | Foundation, 5 / 100 | Program A: Assessment Intelligence     | `guided-project-capture-v1` merged | `assessment-package-model-v1`, `guided-capture-workspace-v1`, `customer-assessment-capture-v1`, `assessment-to-estimate-handoff-v1`, verification |
-| Operational Work Management | Planned | Foundation, 0 / 100 | Program B: Operational Work Management | None approved                      | None approved                                                                                                                                     |
-| Communications OS           | Planned | Foundation, 0 / 100 | Program C: Communications OS           | None approved                      | None approved                                                                                                                                     |
-| Field OS                    | Planned | Foundation, 0 / 100 | Program D: Field OS                    | None approved                      | None approved                                                                                                                                     |
+| Capability                  | Status  | Maturity            | Owning Program                         | Linked Waves                                                            | Linked Active Streams                                                                                                                             |
+| --------------------------- | ------- | ------------------- | -------------------------------------- | ----------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Assessment Intelligence     | Active  | Foundation, 5 / 100 | Program A: Assessment Intelligence     | `guided-project-capture-v1` merged; `assessment-foundation-a1` proposed | `assessment-package-model-v1`, `guided-capture-workspace-v1`, `customer-assessment-capture-v1`, `assessment-to-estimate-handoff-v1`, verification |
+| Operational Work Management | Planned | Foundation, 0 / 100 | Program B: Operational Work Management | None approved                                                           | None approved                                                                                                                                     |
+| Communications OS           | Planned | Foundation, 0 / 100 | Program C: Communications OS           | None approved                                                           | None approved                                                                                                                                     |
+| Field OS                    | Planned | Foundation, 0 / 100 | Program D: Field OS                    | None approved                                                           | None approved                                                                                                                                     |
 
 ## Assessment Intelligence
 
@@ -75,6 +80,7 @@ Linked documentation:
 - [docs/guided-project-capture-vision.md](C:/FloorConnector/docs/guided-project-capture-vision.md)
 - [docs/review-packets/guided-project-capture-v1-plan.md](C:/FloorConnector/docs/review-packets/guided-project-capture-v1-plan.md)
 - [docs/review-packets/guided-project-capture-v1.md](C:/FloorConnector/docs/review-packets/guided-project-capture-v1.md)
+- [docs/review-packets/program-a-assessment-foundation-a1-plan.md](C:/FloorConnector/docs/review-packets/program-a-assessment-foundation-a1-plan.md)
 - [active-waves.md](C:/FloorConnector/active-waves.md)
 - [.codex/active-stream-plan.md](C:/FloorConnector/.codex/active-stream-plan.md)
 
@@ -82,6 +88,8 @@ Linked active or recently merged Waves:
 
 - `guided-project-capture-v1`: merged to `main`; completed worktrees and
   branches are retained pending explicit retirement approval.
+- `assessment-foundation-a1`: proposed planning packet only; not approved for
+  stream creation, implementation, schema work, migrations, PRs, or merge.
 
 Linked active or recently merged Streams:
 
@@ -279,12 +287,18 @@ architecture freeze because:
 
 Recommended first execution wave candidates after this documentation pass:
 
+- `assessment-foundation-a1`
 - `assessment-package-depth-v1`
-- `guided-project-capture-depth-v1`
+- `guided-project-capture-workflow-v1`
 - `area-space-model-v1`
 - `photo-capture-foundation-v1`
 - `site-conditions-risk-detection-v1`
 - `estimate-handoff-depth-v1`
+
+The proposed `assessment-foundation-a1` packet targets Program A maturity
+movement from 5 / 100 to 20 / 100 after verified delivery. It uses
+conflict-safe successor stream names where earlier Program A names are already
+merged or reserved.
 
 No candidate is approved by this map. Each candidate still requires Product
 Council prioritization, Architecture Coordination approval, dependency review,
