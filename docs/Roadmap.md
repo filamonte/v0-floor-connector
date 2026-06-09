@@ -7,6 +7,11 @@ This roadmap frames FloorConnector around platform maturity, not early startup b
 
 For implemented truth, use [docs/current-state.md](C:/FloorConnector/docs/current-state.md). For the founder/product-owner build list, immediate build order, and horizon-based completion timeline, use [docs/floorconnector-build-list-and-completion-timeline.md](C:/FloorConnector/docs/floorconnector-build-list-and-completion-timeline.md). For concise maturity status, use [docs/platform-maturity.md](C:/FloorConnector/docs/platform-maturity.md), [docs/module-status.md](C:/FloorConnector/docs/module-status.md), and [docs/known-gaps.md](C:/FloorConnector/docs/known-gaps.md). For strategic sequencing, use [docs/platform-build-registry.md](C:/FloorConnector/docs/platform-build-registry.md) and [docs/platform-maturity-model.md](C:/FloorConnector/docs/platform-maturity-model.md). For strategic layer doctrine, use [docs/communications-layer.md](C:/FloorConnector/docs/communications-layer.md), [docs/reporting-and-metrics.md](C:/FloorConnector/docs/reporting-and-metrics.md), [docs/automation-layer.md](C:/FloorConnector/docs/automation-layer.md), [docs/intelligence-layer.md](C:/FloorConnector/docs/intelligence-layer.md), [docs/agentic-operations-layer.md](C:/FloorConnector/docs/agentic-operations-layer.md), and [docs/contractor-success-platform.md](C:/FloorConnector/docs/contractor-success-platform.md).
 
+For program-level execution planning, use
+[docs/program-architecture.md](C:/FloorConnector/docs/program-architecture.md).
+Roadmap items should now be framed as Program -> Wave -> Stream -> PR ->
+Verification -> Merge when they become governed delivery candidates.
+
 ## Roadmap Principles
 
 - No roadmap section claims implementation by itself.
@@ -39,6 +44,23 @@ Current recommended build-order discipline:
 | Tier 4 | Intelligence Layer                            |
 | Tier 5 | Predictive AI And Agentic Assistance          |
 | Tier 6 | Governed Autonomy, Ecosystem, And Marketplace |
+
+## Strategic Programs
+
+The current Program portfolio organizes major multi-wave initiatives without
+claiming implementation or authorizing streams:
+
+| Program | Focus                       | Roadmap relationship                                                                       |
+| ------- | --------------------------- | ------------------------------------------------------------------------------------------ |
+| A       | Assessment Intelligence     | Deepens pre-estimate assessment, project capture, and estimator handoff capability.        |
+| B       | Operational Work Management | Deepens accountability, work ownership, labor visibility, and cross-role execution.        |
+| C       | Communications OS           | Deepens record-linked communication continuity, follow-up, and future provider/AI support. |
+| D       | Field OS                    | Deepens mobile field execution, field packets, closeout proof, and crew workflows.         |
+
+Program planning does not override roadmap principles, current-state truth, or
+the wave/stream approval gate. Each Program may produce multiple waves, and
+each wave must still preserve the canonical lifecycle and operational command
+center model.
 
 Use [docs/platform-build-registry.md](C:/FloorConnector/docs/platform-build-registry.md) as the living strategic coordination map for major planned systems, priorities, dependencies, maturity, status, and rationale. Use [docs/platform-maturity-model.md](C:/FloorConnector/docs/platform-maturity-model.md) to prevent foundation-level systems from being treated as ready for intelligence, predictive, or autonomous behavior too early.
 

@@ -47,6 +47,7 @@ Use this together with:
 - [docs/current-state.md](C:/FloorConnector/docs/current-state.md)
 - [docs/workflows.md](C:/FloorConnector/docs/workflows.md)
 - [docs/chat-handoff.md](C:/FloorConnector/docs/chat-handoff.md)
+- [docs/program-architecture.md](C:/FloorConnector/docs/program-architecture.md)
 - [docs/Roadmap.md](C:/FloorConnector/docs/Roadmap.md)
 - [docs/target-ia.md](C:/FloorConnector/docs/target-ia.md)
 - [docs/sales-to-production.md](C:/FloorConnector/docs/sales-to-production.md)
@@ -117,6 +118,8 @@ Parallelization with isolation:
 
 Orchestrated capability waves instead of random tasks:
 
+- Long-running strategic work is organized through Programs before it becomes
+  waves or streams.
 - Work is organized as capability waves such as Scheduling Capability Wave v1,
   not isolated widgets or page tweaks.
 - Each wave has scope, forbidden scope, stream ownership, acceptance criteria,
@@ -173,6 +176,9 @@ One canonical lifecycle:
 
 Responsibilities:
 
+- maintain the Program -> Wave -> Stream -> PR -> Verification -> Merge
+  execution model
+- coordinate Product Council and Strategic Research inputs before wave selection
 - choose capability waves
 - define streams, owners, branch names, and worktree names
 - assign protected hotspot ownership

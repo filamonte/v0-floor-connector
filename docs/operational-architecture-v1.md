@@ -61,6 +61,31 @@ Future work should improve at least one of these outcomes:
 | Integrations      | Provider adapters for delivery, payment, signature, accounting, calendar, and future services.      | Providers are telemetry or execution adapters, not business source of truth.             |
 | Governance        | Stream lifecycle, ownership, verification, docs truth, and merge sequencing.                        | Governance does not implement features.                                                  |
 
+## Program Operating Model
+
+Long-running platform initiatives are coordinated through Programs before they
+become waves or streams:
+
+```text
+Program -> Wave -> Stream -> PR -> Verification -> Merge
+```
+
+Programs group multiple waves around measurable contractor business outcomes.
+They do not create branches, create worktrees, approve implementation, or change
+implemented truth by themselves. The permanent Program model is defined in
+[docs/program-architecture.md](C:/FloorConnector/docs/program-architecture.md).
+
+Initial Programs:
+
+- Program A: Assessment Intelligence, focused on site assessment and
+  project-capture excellence.
+- Program B: Operational Work Management, focused on accountability across
+  sales, estimating, project management, field, and accounting.
+- Program C: Communications OS, focused on unified contractor communication and
+  continuity.
+- Program D: Field OS, focused on making FloorConnector the primary execution
+  platform for field teams.
+
 ## Permanent Planning Functions
 
 ### Jeff
@@ -94,6 +119,20 @@ ownership, dependency mapping, conflict review, UX / IA impact, verification
 scope, merge order, registry updates, and Jeff approval. Local worktree
 existence alone is not approval to begin a stream.
 
+### Strategic Research
+
+Strategic Research is a permanent planning function for competitor analysis,
+industry trend analysis, contractor workflow analysis, AI and automation
+opportunity analysis, and quarterly capability recommendations. It informs
+Program and wave selection but does not approve implementation.
+
+### Product Council
+
+Product Council prioritizes Programs, evaluates contractor value, prevents
+feature sprawl, and ensures operational depth remains the primary objective. It
+decides whether a candidate wave advances an existing Program or requires a new
+Program proposal. Jeff approval and Architecture Coordination gates still apply.
+
 ### Feature Streams
 
 Feature streams implement approved slices only. They must have defined
@@ -111,7 +150,8 @@ The target AI-native operating loop is:
 
 ```text
 Jeff
-  -> Product Director
+  -> Product Council / Product Director
+  -> Program Planning
   -> Architecture Coordination
   -> Wave Planning
   -> Feature Streams

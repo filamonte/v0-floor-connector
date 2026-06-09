@@ -20,6 +20,13 @@ Use [docs/ai-native-development-architecture.md](C:/FloorConnector/docs/ai-nativ
 when a task involves parallel agents, worktrees, stream ownership, capability
 waves, hotspot governance, merge sequencing, or QA/verification coordination.
 
+Use [docs/program-architecture.md](C:/FloorConnector/docs/program-architecture.md)
+when a task involves Program-level portfolio planning, multi-wave initiatives,
+Strategic Research, Product Council, Program health, or the permanent Program
+-> Wave -> Stream -> PR -> Verification -> Merge execution model. Programs
+guide wave selection but do not authorize branches, worktrees, PRs, merges, or
+implemented-status claims.
+
 Use [docs/guided-project-capture-vision.md](C:/FloorConnector/docs/guided-project-capture-vision.md)
 when a task mentions Guided Project Capture, Assessment Packages, project area
 capture, customer self-service estimate inputs, capture confidence, or future
@@ -57,12 +64,20 @@ for safe autonomous work versus human-approval boundaries. Use
 agent appears to be in the wrong repository, branch, worktree, stale origin, or
 blocked validation state.
 
-Current automation readiness is Ready With Human Review Gate. Future waves must
-follow the loop Jeff Review -> Product Director Recommendation -> Architecture
-Coordination Approval -> Wave Proposal -> Stream Creation -> Parallel Feature
-Work -> Verification -> Integration Review Packet -> Jeff Approval -> Continue.
-Agents may prepare scoped work and review packets, but may not auto-merge,
-auto-continue, or bypass Jeff approval.
+Current automation readiness is Ready With Human Review Gate. Future planning
+must follow the loop Strategic Research / Product Council -> Program -> Wave ->
+Stream -> PR -> Verification -> Merge. Future waves still require Jeff Review
+-> Product Director Recommendation -> Architecture Coordination Approval ->
+Wave Proposal -> Stream Creation -> Parallel Feature Work -> Verification ->
+Integration Review Packet -> Jeff Approval -> Continue. Agents may prepare
+scoped work and review packets, but may not auto-merge, auto-continue, or
+bypass Jeff approval.
+
+Current Program portfolio: Program A Assessment Intelligence is Active because
+`guided-project-capture-v1` is merged and future assessment depth remains
+available for separate approval. Program B Operational Work Management, Program
+C Communications OS, and Program D Field OS are Planned. No next wave is
+approved by the Program portfolio.
 
 Current wave gate note: `guided-project-capture-v1` has merged to `main` under
 Jeff's controlled merge approval. Assessment Package Model V1 merged as
@@ -229,6 +244,7 @@ Read these before implementation or documentation work:
 - [docs/developer-source-of-truth.md](C:/FloorConnector/docs/developer-source-of-truth.md)
 - [docs/current-state.md](C:/FloorConnector/docs/current-state.md)
 - [docs/parallel-development-governance.md](C:/FloorConnector/docs/parallel-development-governance.md)
+- [docs/program-architecture.md](C:/FloorConnector/docs/program-architecture.md)
 - [docs/operational-architecture-v1.md](C:/FloorConnector/docs/operational-architecture-v1.md)
 - [docs/automation-tooling-baseline.md](C:/FloorConnector/docs/automation-tooling-baseline.md)
 - [docs/ai-native-development-architecture.md](C:/FloorConnector/docs/ai-native-development-architecture.md)

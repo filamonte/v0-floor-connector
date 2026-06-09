@@ -13,6 +13,7 @@ Use this with:
 - [docs/developer-source-of-truth.md](C:/FloorConnector/docs/developer-source-of-truth.md)
 - [docs/current-state.md](C:/FloorConnector/docs/current-state.md)
 - [docs/workflows.md](C:/FloorConnector/docs/workflows.md)
+- [docs/program-architecture.md](C:/FloorConnector/docs/program-architecture.md)
 - [docs/ai-native-development-architecture.md](C:/FloorConnector/docs/ai-native-development-architecture.md)
 - [docs/operational-architecture-v1.md](C:/FloorConnector/docs/operational-architecture-v1.md)
 - [docs/automation-tooling-baseline.md](C:/FloorConnector/docs/automation-tooling-baseline.md)
@@ -30,6 +31,24 @@ All future development must answer this question before approval:
 If the answer is unclear, the stream stays in architecture review until
 ownership, workflow impact, information architecture impact, canonical model
 impact, and verification strategy are explicit.
+
+## Program Layer
+
+FloorConnector planning now uses the permanent execution chain:
+
+```text
+Program -> Wave -> Stream -> PR -> Verification -> Merge
+```
+
+Programs are long-running strategic initiatives that group multiple waves around
+major contractor business outcomes. They are defined in
+[docs/program-architecture.md](C:/FloorConnector/docs/program-architecture.md).
+
+Program planning does not approve implementation. A Program may recommend or
+sequence waves, but branches and worktrees remain stream-scoped, and every wave
+still must pass Product Council prioritization, Architecture Coordination
+approval, dependency review, stream creation governance, verification planning,
+registry updates, merge-order planning, and Jeff approval before work begins.
 
 ## Stream Lifecycle
 
@@ -106,16 +125,19 @@ If any condition is not met, the stream remains Proposed or Architecture Review.
 
 No wave may begin until all gate items are recorded:
 
-1. Architecture Coordination approves stream ownership.
-2. Upstream and downstream dependencies are documented.
-3. Ownership conflicts are checked.
-4. UX / IA impact is reviewed.
-5. Verification scope is defined.
-6. Merge order is proposed.
-7. Active wave registry is updated.
-8. Jeff approval gate is recorded.
-9. Tooling baseline is checked with `pnpm.cmd worktree:doctor` and any required
-   worktree dev-tool links are repaired before stream work begins.
+1. Program mapping is recorded, including the Program outcome the wave advances
+   or the reason the wave is governance-only.
+2. Product Council confirms contractor value and priority.
+3. Architecture Coordination approves stream ownership.
+4. Upstream and downstream dependencies are documented.
+5. Ownership conflicts are checked.
+6. UX / IA impact is reviewed.
+7. Verification scope is defined.
+8. Merge order is proposed.
+9. Active wave registry is updated.
+10. Jeff approval gate is recorded.
+11. Tooling baseline is checked with `pnpm.cmd worktree:doctor` and any required
+    worktree dev-tool links are repaired before stream work begins.
 
 If any item is missing, the wave remains a proposal. Agents may draft the wave,
 stream brief, and review packet requirements, but they may not create or activate

@@ -29,10 +29,34 @@ Before starting stream work, future wave prompts must require
 [docs/automation-tooling-baseline.md](C:/FloorConnector/docs/automation-tooling-baseline.md)
 for local dependency, Playwright, optional CLI, and validation-command guidance.
 
+Program-level planning is defined in
+[docs/program-architecture.md](C:/FloorConnector/docs/program-architecture.md).
+The permanent governed execution chain is:
+
+```text
+Program -> Wave -> Stream -> PR -> Verification -> Merge
+```
+
+Programs group multi-wave strategic initiatives. They do not authorize
+implementation, branches, worktrees, PRs, verification bypass, or merges.
+
 The governing product architecture principle is defined in
 [docs/operational-architecture-v1.md](C:/FloorConnector/docs/operational-architecture-v1.md):
 future waves must make FloorConnector feel more like one operational command
 center and less like disconnected modules.
+
+## Program Portfolio
+
+| Program | Name                        | Health  | Current wave posture                                                                                  |
+| ------- | --------------------------- | ------- | ----------------------------------------------------------------------------------------------------- |
+| A       | Assessment Intelligence     | Active  | `guided-project-capture-v1` is merged to `main`; cleanup remains a separate explicit approval step.   |
+| B       | Operational Work Management | Planned | Future waves may cover workforce, labor visibility, work ownership, and accountability depth.         |
+| C       | Communications OS           | Planned | Future waves may cover unified communication, record-linked follow-up, provider delivery, and memory. |
+| D       | Field OS                    | Planned | Future waves may cover mobile execution, closeout proof, field packets, inspections, and field depth. |
+
+Program health statuses are `Planned`, `Active`, `Blocked`, `Verification`,
+and `Complete`. Program status does not replace wave status or stream status.
+No next wave is approved by listing a Program here.
 
 ## Operational Capability Waves v1
 

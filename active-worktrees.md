@@ -42,6 +42,9 @@ Statuses:
 
 Expectations:
 
+- Programs do not create branches or worktrees. The governed execution chain is
+  Program -> Wave -> Stream -> PR -> Verification -> Merge, but this registry
+  remains stream-scoped.
 - Create streams with `pnpm worktree:create <name>`.
 - Run `pnpm worktree:reconcile` and `pnpm worktree:audit` at the start of the
   day.
@@ -68,6 +71,8 @@ Expectations:
   Proposed -> Architecture Review -> Approved -> Active -> Verification ->
   Merged -> Retired and must satisfy the stream creation rule before worktree
   creation.
+- Program governance is defined in `docs/program-architecture.md`. Program
+  approval may guide wave selection, but it is not worktree approval.
 - Architecture Coordination is a permanent governance function. It never owns
   feature implementation; it owns stream ownership governance, dependency
   mapping, duplicate capability/workflow/data-model detection, navigation drift
