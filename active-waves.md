@@ -67,6 +67,49 @@ Program health statuses are `Planned`, `Active`, `Blocked`, `Verification`,
 and `Complete`. Program status does not replace wave status or stream status.
 No next wave is approved by listing a Program here.
 
+## Beta Readiness Operating Core V1
+
+Proposal date: 2026-06-09.
+
+Wave name: `beta-readiness-operating-core-v1`.
+
+Review packet:
+[docs/review-packets/beta-readiness-operating-core-v1.md](C:/FloorConnector/docs/review-packets/beta-readiness-operating-core-v1.md).
+
+Status: Proposed / Architecture Review. This is a planning and governance
+setup packet only. It does not authorize implementation, branch creation,
+worktree creation, schema changes, migrations, provider behavior, customer
+self-service, scheduling board work, AI automation, PRs, merges, or cleanup.
+
+Purpose: move FloorConnector from aligned product architecture toward a usable,
+marketable beta platform by planning the highest-leverage operating-core gaps
+in coordinated streams.
+
+Proposed stream set:
+
+| Stream                              | Review packet                                                                        | Ownership area                                                    | Proposed dependency posture                                                             |
+| ----------------------------------- | ------------------------------------------------------------------------------------ | ----------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| `payment-schedule-readiness-v1`     | [packet](C:/FloorConnector/docs/review-packets/payment-schedule-readiness-v1.md)     | Contract payment schedules and Financial Readiness rules          | Recommended first stream; upstream for Project handoff and scheduling readiness         |
+| `opportunity-assessment-package-v1` | [packet](C:/FloorConnector/docs/review-packets/opportunity-assessment-package-v1.md) | Opportunity-owned Assessment Package planning and transition path | May run in parallel only after conflict review with active Program A assessment streams |
+| `project-handoff-alignment-v1`      | [packet](C:/FloorConnector/docs/review-packets/project-handoff-alignment-v1.md)      | Project creation timing and sales-to-operations handoff           | Waits on payment readiness and assessment ownership clarity                             |
+| `ux-governance-beta-cleanup-v1`     | [packet](C:/FloorConnector/docs/review-packets/ux-governance-beta-cleanup-v1.md)     | Beta-blocking UX consistency under design governance              | Can run in parallel if presentation-only and existing-data-only                         |
+
+Shared non-goals:
+
+- no scheduling board implementation
+- no full AIA implementation
+- no AI automation
+- no customer self-service implementation
+- no marketplace or ecosystem work
+- no major redesign outside governance cleanup
+- no duplicate financial, project, assessment, portal, AI, signature, checkout,
+  or AIA source of truth
+
+Recommended next review decision: approve or narrow
+`payment-schedule-readiness-v1` as the first implementation stream, then record
+branch/worktree creation approval before any app code, schema, migration, or
+test implementation begins.
+
 ## Product UX Governance Alignment V1
 
 Gate date: 2026-06-09.

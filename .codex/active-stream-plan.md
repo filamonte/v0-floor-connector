@@ -43,6 +43,67 @@ Wave-launch prompts must also require `pnpm.cmd worktree:doctor` and use
 for local tooling, Playwright, optional CLI, worktree-link, and validation
 guidance.
 
+## Beta Readiness Operating Core V1 Proposal
+
+Proposal date: 2026-06-09.
+
+Wave name: `beta-readiness-operating-core-v1`.
+
+Review packet:
+
+- [docs/review-packets/beta-readiness-operating-core-v1.md](C:/FloorConnector/docs/review-packets/beta-readiness-operating-core-v1.md)
+
+Wave status: Proposed / Architecture Review. This is a planning and governance
+setup packet only. It does not authorize implementation, branch creation,
+worktree creation, schemas, migrations, provider behavior, customer
+self-service, scheduling board work, AI automation, PRs, merges, or cleanup.
+
+Purpose: plan coordinated beta-readiness streams that close operating-core
+gaps while preserving the canonical lifecycle, current-state truth, and
+Design System Governance.
+
+Proposed stream set:
+
+- `stream/payment-schedule-readiness-v1`
+- `stream/opportunity-assessment-package-v1`
+- `stream/project-handoff-alignment-v1`
+- `stream/ux-governance-beta-cleanup-v1`
+
+Proposed worktrees:
+
+- `C:\FC-worktrees\payment-schedule-readiness-v1`
+- `C:\FC-worktrees\opportunity-assessment-package-v1`
+- `C:\FC-worktrees\project-handoff-alignment-v1`
+- `C:\FC-worktrees\ux-governance-beta-cleanup-v1`
+
+Dependency order:
+
+1. `payment-schedule-readiness-v1` should start first because Financial
+   Readiness affects Project creation, schedule readiness, and production
+   readiness.
+2. `opportunity-assessment-package-v1` may run in parallel only after
+   Architecture Coordination resolves overlap with active Program A assessment
+   streams.
+3. `project-handoff-alignment-v1` waits for payment readiness and assessment
+   ownership clarity.
+4. `ux-governance-beta-cleanup-v1` can run in parallel if it remains
+   presentation-only, existing-data-only, and avoids business logic.
+
+Shared forbidden scope:
+
+- scheduling board implementation
+- full AIA implementation
+- AI automation
+- customer self-service implementation
+- marketplace or ecosystem work
+- broad redesign outside governance cleanup
+- duplicate financial, assessment, project, portal, signature, checkout,
+  payment, provider, AIA, or AI source of truth
+
+Required next gate: review the wave packet, choose whether to approve or narrow
+the first implementation stream, then update registries with approved
+branch/worktree status before creating worktrees or changing app code.
+
 ## Product UX Governance Alignment V1 Gate
 
 Gate date: 2026-06-09.
