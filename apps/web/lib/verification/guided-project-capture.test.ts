@@ -9,7 +9,7 @@ import {
 const implementationEvidence: GuidedProjectCaptureImplementationEvidence[] = [
   {
     stream: "assessment-package-model-v1",
-    commit: "38093cdf",
+    commit: "e40b7c3a",
     files: [
       "apps/web/lib/projects/assessment-package.ts",
       "apps/web/lib/projects/assessment-package.test.ts"
@@ -24,7 +24,7 @@ const implementationEvidence: GuidedProjectCaptureImplementationEvidence[] = [
   },
   {
     stream: "guided-capture-workspace-v1",
-    commit: "ebfc42fc",
+    commit: "f42f4918",
     files: [
       "apps/web/lib/projects/guided-capture-workspace.ts",
       "apps/web/lib/projects/guided-capture-workspace.test.ts"
@@ -39,7 +39,7 @@ const implementationEvidence: GuidedProjectCaptureImplementationEvidence[] = [
   },
   {
     stream: "customer-assessment-capture-v1",
-    commit: "799b40ca",
+    commit: "e7f31352",
     files: [
       "apps/web/lib/portal/assessment-capture.ts",
       "apps/web/lib/portal/assessment-capture.test.ts"
@@ -54,7 +54,7 @@ const implementationEvidence: GuidedProjectCaptureImplementationEvidence[] = [
   },
   {
     stream: "assessment-to-estimate-handoff-v1",
-    commit: "ebb45fa9",
+    commit: "e94d726b",
     files: [
       "apps/web/lib/estimates/assessment-handoff.ts",
       "apps/web/lib/estimates/assessment-handoff.test.ts"
@@ -76,10 +76,10 @@ void test("verifyGuidedProjectCaptureBoundaries passes for the reviewed implemen
   assert.equal(summary.status, "pass");
   assert.deepEqual(summary.failures, []);
   assert.deepEqual(summary.reviewedCommits, [
-    "38093cdf",
-    "799b40ca",
-    "ebb45fa9",
-    "ebfc42fc"
+    "e40b7c3a",
+    "e7f31352",
+    "e94d726b",
+    "f42f4918"
   ]);
   assert.equal(summary.streamStatus["assessment-package-model-v1"], "verified");
   assert.equal(

@@ -41,10 +41,10 @@ export type GuidedProjectCaptureVerificationSummary = {
 };
 
 const requiredCommitByStream: Record<GuidedProjectCaptureStream, string> = {
-  "assessment-package-model-v1": "38093cdf",
-  "guided-capture-workspace-v1": "ebfc42fc",
-  "customer-assessment-capture-v1": "799b40ca",
-  "assessment-to-estimate-handoff-v1": "ebb45fa9"
+  "assessment-package-model-v1": "e40b7c3a",
+  "guided-capture-workspace-v1": "f42f4918",
+  "customer-assessment-capture-v1": "e7f31352",
+  "assessment-to-estimate-handoff-v1": "e94d726b"
 };
 
 const requiredAssertionsByStream: Record<
