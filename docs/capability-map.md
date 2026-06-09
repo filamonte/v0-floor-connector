@@ -51,12 +51,12 @@ Capability maturity advancement is the primary progress metric.
 
 ## Capability Index
 
-| Capability                  | Status  | Maturity            | Owning Program                         | Linked Waves                                                                             | Linked Active Streams                                                              |
-| --------------------------- | ------- | ------------------- | -------------------------------------- | ---------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
-| Assessment Intelligence     | Active  | Foundation, 9 / 100 | Program A: Assessment Intelligence     | `guided-project-capture-v1` merged; `assessment-foundation-a1` Batch 1 in implementation | `assessment-package-depth-v1`, `area-space-model-v1`, prior guided capture streams |
-| Operational Work Management | Planned | Foundation, 0 / 100 | Program B: Operational Work Management | None approved                                                                            | None approved                                                                      |
-| Communications OS           | Planned | Foundation, 0 / 100 | Program C: Communications OS           | None approved                                                                            | None approved                                                                      |
-| Field OS                    | Planned | Foundation, 0 / 100 | Program D: Field OS                    | None approved                                                                            | None approved                                                                      |
+| Capability                  | Status  | Maturity             | Owning Program                         | Linked Waves                                                                             | Linked Active Streams                                                              |
+| --------------------------- | ------- | -------------------- | -------------------------------------- | ---------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| Assessment Intelligence     | Active  | Foundation, 12 / 100 | Program A: Assessment Intelligence     | `guided-project-capture-v1` merged; `assessment-foundation-a1` Batch 1 in implementation | `assessment-package-depth-v1`, `area-space-model-v1`, prior guided capture streams |
+| Operational Work Management | Planned | Foundation, 0 / 100  | Program B: Operational Work Management | None approved                                                                            | None approved                                                                      |
+| Communications OS           | Planned | Foundation, 0 / 100  | Program C: Communications OS           | None approved                                                                            | None approved                                                                      |
+| Field OS                    | Planned | Foundation, 0 / 100  | Program D: Field OS                    | None approved                                                                            | None approved                                                                      |
 
 ## Assessment Intelligence
 
@@ -66,11 +66,12 @@ and reuse site/scope context downstream.
 
 Status: Active.
 
-Maturity: Foundation, 9 / 100. The first guided project capture Wave has merged
-to `main`; `assessment-package-depth-v1` adds the first schema-backed
-project-owned Assessment Package foundation. Area/space modeling, guided
-capture depth, photo capture, AI risk detection, and estimate handoff depth
-still require later approved work.
+Maturity: Foundation, 12 / 100. The first guided project capture Wave has
+merged to `main`; `assessment-package-depth-v1` adds the first schema-backed
+project-owned Assessment Package foundation, and `area-space-model-v1` adds the
+package-owned Area / Space foundation. Guided capture depth, photo capture, AI
+risk detection, material takeoff, portal contribution, and estimate handoff
+depth still require later approved work.
 
 Owning Program:
 
@@ -93,8 +94,10 @@ Linked active or recently merged Waves:
   branches are retained pending explicit retirement approval.
 - `assessment-foundation-a1`: Batch 1 is in implementation.
   `assessment-package-depth-v1` adds canonical Assessment Package persistence
-  and minimal Project Workspace access. `area-space-model-v1` remains separate
-  and must not be modified by this stream.
+  and minimal Project Workspace access. `area-space-model-v1` adds canonical
+  package-owned areas/spaces for room, zone, dimensional, substrate, condition,
+  prep, moisture, and access context without creating detached room, material,
+  estimate, or project truth.
 
 Linked active, approved, or recently merged Streams:
 

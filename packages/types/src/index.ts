@@ -88,6 +88,7 @@ export type OpportunityMeasurementId = string;
 export type OpportunityAttachmentId = string;
 export type OpportunityObservationId = string;
 export type AssessmentPackageId = string;
+export type AssessmentSpaceId = string;
 
 export type MembershipRole = "owner" | "admin" | "manager" | "member";
 export type ContactKind =
@@ -158,6 +159,15 @@ export type AssessmentPackageStatus =
   | "in_progress"
   | "ready_for_estimate"
   | "archived";
+export type AssessmentSpaceType =
+  | "room"
+  | "area"
+  | "zone"
+  | "stair"
+  | "hallway"
+  | "garage"
+  | "exterior"
+  | "other";
 export type CommercialReadinessStatus =
   | "not_ready"
   | "waiting_on_estimate_approval"
@@ -990,6 +1000,31 @@ export interface AssessmentPackage {
   recommendedSystemSummary: string | null;
   riskSummary: string | null;
   estimateHandoffSummary: string | null;
+  createdByUserId: ProfileId | null;
+  updatedByUserId: ProfileId | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AssessmentSpace {
+  id: AssessmentSpaceId;
+  organizationId: OrganizationId;
+  assessmentPackageId: AssessmentPackageId;
+  projectId: ProjectId;
+  name: string;
+  spaceType: AssessmentSpaceType;
+  floorLevel: string | null;
+  lengthFeet: string | null;
+  widthFeet: string | null;
+  squareFeet: string | null;
+  perimeterFeet: string | null;
+  substrate: string | null;
+  currentFlooring: string | null;
+  conditionSummary: string | null;
+  prepNotes: string | null;
+  moistureNotes: string | null;
+  accessNotes: string | null;
+  sortOrder: number;
   createdByUserId: ProfileId | null;
   updatedByUserId: ProfileId | null;
   createdAt: string;
