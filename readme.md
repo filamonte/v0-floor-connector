@@ -124,6 +124,8 @@ Use these docs together:
   troubleshooting guide for common AI run failures
 - [docs/developer-source-of-truth.md](C:/FloorConnector/docs/developer-source-of-truth.md): primary developer entry point and implementation guardrail summary
 - [docs/current-state.md](C:/FloorConnector/docs/current-state.md): implemented truth on the current branch
+- [docs/product-operating-model.md](C:/FloorConnector/docs/product-operating-model.md): target product operating model for pre-sale, sold-work, readiness, and closeout
+- [docs/design-system-governance.md](C:/FloorConnector/docs/design-system-governance.md): UX governance for page types, dashboard boundaries, color semantics, and Graphite/Copper usage
 - [docs/platform-maturity.md](C:/FloorConnector/docs/platform-maturity.md): concise platform maturity framing
 - [docs/platform-maturity-model.md](C:/FloorConnector/docs/platform-maturity-model.md): build-stage discipline from foundation through autonomous maturity
 - [docs/platform-build-registry.md](C:/FloorConnector/docs/platform-build-registry.md): strategic build-priority registry for major planned platform systems

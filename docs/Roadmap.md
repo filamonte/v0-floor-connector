@@ -19,6 +19,10 @@ For strategic Capability -> Program -> Wave -> Stream navigation, use
 For documentation authority and navigation, use
 [docs/document-map.md](C:/FloorConnector/docs/document-map.md). Roadmap
 sequencing does not replace capability maturity scores or implemented truth.
+Use [docs/product-operating-model.md](C:/FloorConnector/docs/product-operating-model.md)
+for target operating-model decisions and
+[docs/design-system-governance.md](C:/FloorConnector/docs/design-system-governance.md)
+for UX governance.
 
 ## Roadmap Principles
 
@@ -28,6 +32,10 @@ sequencing does not replace capability maturity scores or implemented truth.
 
 `opportunity -> customer -> project -> estimate -> contract -> change order -> job -> invoice -> payment`
 
+- Target operating-model work may refine stage timing around Lead,
+  Opportunity, Assessment Package, Financial Readiness, Project Creation, and
+  Production Readiness, but Roadmap items must keep target direction separate
+  from current-state truth.
 - Public acquisition, communications, integrations, AI, marketplace, reporting, and materials work must attach to the same canonical system.
 - Communications must attach to operational context rather than become a disconnected inbox or chat product.
 - Reporting and metrics must derive from canonical records rather than duplicate reporting truth.
@@ -77,6 +85,26 @@ Program A's proposed Wave A1, `assessment-foundation-a1`, is documented in
 It targets Assessment Intelligence maturity movement from 5 / 100 to 20 / 100
 only after verified delivery. It is planning-only and does not authorize
 streams, branches, worktrees, code, schemas, migrations, PRs, or merge.
+
+## Product + UX Governance Alignment Sequence
+
+The current product/UX governance sequence is:
+
+1. documentation and product operating-model alignment
+2. design system governance
+3. Assessment Package maturity
+4. Project creation / handoff alignment
+5. payment schedule / readiness model
+6. AIA / progress billing maturity for commercial-contractor readiness
+7. UX cleanup before beta
+8. role-aware dashboards and workspace personalization after shared dashboard
+   and design-system governance are stable
+
+This sequence is planning guidance only. It does not mean these items are
+implemented, and it does not authorize implementation streams by itself. AIA /
+progress billing should follow the payment schedule / readiness model
+foundation unless a later approved architecture review records a better
+dependency order.
 
 Use [docs/platform-build-registry.md](C:/FloorConnector/docs/platform-build-registry.md) as the living strategic coordination map for major planned systems, priorities, dependencies, maturity, status, and rationale. Use [docs/platform-maturity-model.md](C:/FloorConnector/docs/platform-maturity-model.md) to prevent foundation-level systems from being treated as ready for intelligence, predictive, or autonomous behavior too early.
 
@@ -143,8 +171,10 @@ Roadmap sequencing should account for these future areas without turning them in
   [docs/design/universal-capture-ui-blueprint.md](C:/FloorConnector/docs/design/universal-capture-ui-blueprint.md)
 - QuickBooks/accounting integration later, as sync/export from FloorConnector financial truth
 - AI-assisted takeoff and workflow intelligence later, with human approval and no AI-only records
-- Guided Project Capture and project-owned Assessment Packages before estimate
-  creation, with customer mobile web capture before native applications
+- Guided Project Capture and Opportunity-first Assessment Packages before
+  Project creation, with customer mobile web capture before native applications
+- role-aware dashboards and workspace personalization later as UX/adoption
+  maturity over the same canonical records, not as a role-specific data model
 
 The field-operations connection map now lives in [docs/field-operations-architecture-map.md](C:/FloorConnector/docs/field-operations-architecture-map.md). The equipment depth layer is planned in [docs/equipment-management-plan.md](C:/FloorConnector/docs/equipment-management-plan.md), with maintenance/utilization/costing detail in [docs/equipment-maintenance-utilization-plan.md](C:/FloorConnector/docs/equipment-maintenance-utilization-plan.md). The registry and assignment/readiness foundations now exist; the intended next equipment sequence is maintenance, utilization, rental-return, and job-costing inputs. Equipment must remain attached to vendors, people, projects, jobs, schedule, time, warranty/service, documents, and future job costing.
 
@@ -254,10 +284,11 @@ Future depth:
 - richer document-template and output controls
 - shared file/evidence layer with multi-record links
 - Takeoff & Scope Intelligence as project-scoped, human-reviewed estimate input
-- Guided Project Capture as a project-scoped pre-estimate workflow for
+- Guided Project Capture as an Opportunity-first pre-estimate workflow for
   Assessment Packages, Area / Space Modeling, customer mobile web capture,
   qualification signals, financing interest, confidence scoring, and
-  human-reviewed AI observations
+  human-reviewed AI observations, with Project workspaces later surfacing
+  linked assessment context after the work becomes operational
 
 Catalog, materials, systems, takeoff, and documents must feed canonical estimates, contracts, jobs, invoices, and closeout evidence rather than become separate estimating or file silos. The founder-demo rehearsal path now lives in [docs/founder-demo-readiness.md](C:/FloorConnector/docs/founder-demo-readiness.md), the first prospect-facing script lives in [docs/founder-prospect-demo-script.md](C:/FloorConnector/docs/founder-prospect-demo-script.md), and the structured worksheet lives in [docs/founder-prospect-feedback.md](C:/FloorConnector/docs/founder-prospect-feedback.md). Use those docs to decide whether the next product slice should be estimate/catalog/materials depth, scheduling/dispatch depth, manager/mobile polish, import/export readiness, reporting/dashboard depth, live billing readiness controls, or onboarding/marketing polish after explicit release decisions.
 
@@ -286,6 +317,10 @@ Future depth:
   data is mature
 - export-first data portability is now started through `/settings/export`, with small metadata-only export history, validation-only customer/contact CSV import dry run, tenant-scoped saved import review batches, and a read-only batch review shell; future import/write depth should build on editable row decisions, create/link-only first phase, dedicated audit, rollback, duplicate resolution, backups, and explicit approval rather than raw database imports
 - AIA/progress billing UX, exports, and draw-management depth
+- full commercial AIA / progress billing maturity as required future adoption
+  depth, including pay applications, continuation sheets, billing periods,
+  approval workflow, retainage release, and accounting/reconciliation support
+  over canonical invoices/payments rather than a detached billing subsystem
 - deeper payment reconciliation execution beyond read-only event visibility, retries, refunds, disputes, and provider sync
 - subscription/billing governance only after explicit security and release gates
 - paid early-access infrastructure should follow [docs/paid-early-access-plan.md](C:/FloorConnector/docs/paid-early-access-plan.md); the current Phase 2.5 foundation covers founder setup/activation visibility, platform-admin-entered billing evidence, a durable `/super-admin/billing` Billing Operations console, test-mode-only Product/recurring Price setup, a test-mode-only FloorConnector SaaS subscription Checkout Session bridge, and signed SaaS-only webhook reconciliation, while live Stripe Billing launch, entitlement enforcement, public self-serve launch, Customer Portal, and live provider mutation remain separate approved phases

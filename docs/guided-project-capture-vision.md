@@ -20,22 +20,28 @@ Related documents:
 
 Guided Project Capture formalizes a future structured assessment workflow before
 estimating begins. It should help customers, sales representatives, estimators,
-and field personnel create a reusable project assessment package that improves
+and field personnel create a reusable Assessment Package that improves
 estimating readiness without turning capture into the estimate itself.
 
 The current broad workflow is:
 
 `Lead -> Site Visit -> Estimate`
 
-The future workflow direction is:
+The future target workflow direction is:
 
-`Lead -> Guided Project Capture -> Assessment Package -> Estimate`
+`Lead -> Opportunity -> Assessment Package -> Estimate`
 
 Guided Project Capture should reduce estimating labor, increase estimating
 throughput, improve lead qualification, improve project readiness, improve data
 continuity, support future AI-assisted estimating, support future customer
 self-service estimating workflows, and strengthen sales-to-production
 continuity.
+
+Current implementation may still attach assessment and capture surfaces to
+Project where [docs/current-state.md](C:/FloorConnector/docs/current-state.md)
+records that state. Target direction is Opportunity-first Assessment Package
+capture before Project creation, with Project inheriting or continuing that
+context after the work becomes real, sold, or contract-progressed.
 
 ## Core Principle
 
@@ -52,8 +58,10 @@ commercial scope and price.
 
 ## Assessment Package
 
-An Assessment Package is a future reusable project asset. It belongs to the
-Project, not to an Estimate.
+An Assessment Package is the future reusable pre-estimate knowledge-capture
+layer. In the target model, Opportunity and Assessment own pre-sale capture
+before a Project exists. Once a Project exists, the Project should surface and
+continue the linked Assessment Package context as the operational root.
 
 An Assessment Package may contain:
 
@@ -74,8 +82,8 @@ An Assessment Package may contain:
 - AI-generated observations
 - confidence scores
 
-Assessment Packages should be reusable across the project lifecycle. They may
-eventually support:
+Assessment Packages should be reusable across the full sales-to-production
+lifecycle. They may eventually support:
 
 - estimates
 - revised estimates
@@ -87,14 +95,15 @@ eventually support:
 - invoicing
 - customer communication
 
-The boundary is important: the Assessment Package is source context and project
-memory. It should not own pricing, become an estimate, bypass catalog or System
-Template mapping, or create a detached estimating workflow.
+The boundary is important: the Assessment Package is source context and
+operational memory. It should not own pricing, become an estimate, bypass
+catalog or System Template mapping, force every opportunity to begin as a
+Project, or create a detached estimating workflow.
 
 ## Area / Space Modeling
 
-Guided Project Capture should eventually support project area modeling. A
-project may contain areas or spaces such as:
+Guided Project Capture should eventually support area and space modeling. An
+Assessment Package or linked Project may contain areas or spaces such as:
 
 - Living Room
 - Kitchen
@@ -118,8 +127,9 @@ Areas may eventually contain:
 - AI observations
 
 Area / Space Modeling is future architecture direction only. It should extend
-project-scoped assessment and takeoff context without creating a duplicate
-project, estimate, room, or field model disconnected from the canonical chain.
+Opportunity/Assessment capture and later Project-scoped takeoff context without
+creating a duplicate opportunity, project, estimate, room, or field model
+disconnected from the canonical chain.
 
 ## Mobile Strategy
 
@@ -157,7 +167,7 @@ Phase 5:
 
 Native mobile applications may become appropriate later, but the first strategic
 priority is responsive, tenant-safe, portal-safe mobile web capture over the
-same canonical project chain.
+same canonical opportunity-to-project chain.
 
 ## AI Strategy
 
@@ -276,5 +286,8 @@ Guided Project Capture should strengthen the existing canonical lifecycle:
 
 `opportunity -> customer -> project -> estimate -> contract -> change order -> job -> invoice -> payment`
 
-It should add better project-scoped context before estimating, not create a
-parallel lead, estimate, field, portal, or AI system.
+It should add better Opportunity/Assessment context before estimating and
+continue that context into the Project after sale. It should support both
+onsite representative or inspector capture and future customer self-service
+capture without creating a parallel homeowner, portal, lead, estimate, field, or
+AI system.

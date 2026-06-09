@@ -104,7 +104,7 @@ Contractor outcomes:
 
 Primary capability areas:
 
-- project-owned Assessment Packages
+- Opportunity-first Assessment Packages with Project continuity after sale
 - customer-safe assessment capture
 - internal guided capture workspace
 - missing-information guidance

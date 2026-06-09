@@ -118,12 +118,12 @@ Heatmap colors:
 
 ## Registry
 
-| Capability                  | Purpose                                                                                   | Business Outcome                                                                                      | Status  | Maturity Score | Owning Program                         | Active Waves                                                                                              | Dependencies                                                                                                   | Success Metrics                                                                                                    |
-| --------------------------- | ----------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- | ------- | -------------- | -------------------------------------- | --------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
-| Assessment Intelligence     | Project-owned pre-estimate assessment, capture, review, and handoff context.              | Fewer missed details, faster estimator review, better downstream reuse of site and scope context.     | Active  | 12             | Program A: Assessment Intelligence     | `assessment-foundation-a1` Batch 1 in implementation; package and area/space foundations are implemented. | Canonical Project context; Estimate approved-context consumption; customer-safe Portal input; review-only AI.  | Assessment completeness, missing-info reduction, estimate rework reduction, handoff speed, source-record reuse.    |
-| Operational Work Management | Accountability, work ownership, labor visibility, and cross-role operating queues.        | Office, PM, field, and accounting teams know who owns work, what is late, and what needs action.      | Planned | 0              | Program B: Operational Work Management | None.                                                                                                     | Canonical Work Items, People, Projects, Jobs, time/labor data, Financials, Field, Communications ownership.    | Unowned-work reduction, assignment clarity, overdue-work reduction, labor visibility, handoff latency.             |
-| Communications OS           | Unified record-linked communication continuity across customer and contractor workflows.  | Contractors stop losing follow-ups across email, phone, portal, internal notes, and project handoffs. | Planned | 0              | Program C: Communications OS           | None.                                                                                                     | `communication_threads`, `communication_messages`, portal safety, provider adapters, review-only AI.           | Response latency, unlinked-message reduction, follow-up completion, customer-safe continuity, send-proof coverage. |
-| Field OS                    | Mobile and field execution workflows tied to project, job, schedule, proof, and closeout. | Field teams receive clearer work packets, capture execution proof, and move projects toward closeout. | Planned | 0              | Program D: Field OS                    | None.                                                                                                     | Jobs, schedule, daily logs, field notes, execution attachments, Work Items, People, equipment, closeout proof. | Daily-log completion, blocker closure, field-proof completeness, closeout readiness, schedule-to-field continuity. |
+| Capability                  | Purpose                                                                                                             | Business Outcome                                                                                      | Status  | Maturity Score | Owning Program                         | Active Waves                                                                                              | Dependencies                                                                                                                     | Success Metrics                                                                                                    |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- | ------- | -------------- | -------------------------------------- | --------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| Assessment Intelligence     | Opportunity-first pre-estimate assessment, capture, review, and handoff context with Project continuity after sale. | Fewer missed details, faster estimator review, better downstream reuse of site and scope context.     | Active  | 12             | Program A: Assessment Intelligence     | `assessment-foundation-a1` Batch 1 in implementation; package and area/space foundations are implemented. | Canonical Opportunity and Project continuity; Estimate approved-context consumption; customer-safe Portal input; review-only AI. | Assessment completeness, missing-info reduction, estimate rework reduction, handoff speed, source-record reuse.    |
+| Operational Work Management | Accountability, work ownership, labor visibility, and cross-role operating queues.                                  | Office, PM, field, and accounting teams know who owns work, what is late, and what needs action.      | Planned | 0              | Program B: Operational Work Management | None.                                                                                                     | Canonical Work Items, People, Projects, Jobs, time/labor data, Financials, Field, Communications ownership.                      | Unowned-work reduction, assignment clarity, overdue-work reduction, labor visibility, handoff latency.             |
+| Communications OS           | Unified record-linked communication continuity across customer and contractor workflows.                            | Contractors stop losing follow-ups across email, phone, portal, internal notes, and project handoffs. | Planned | 0              | Program C: Communications OS           | None.                                                                                                     | `communication_threads`, `communication_messages`, portal safety, provider adapters, review-only AI.                             | Response latency, unlinked-message reduction, follow-up completion, customer-safe continuity, send-proof coverage. |
+| Field OS                    | Mobile and field execution workflows tied to project, job, schedule, proof, and closeout.                           | Field teams receive clearer work packets, capture execution proof, and move projects toward closeout. | Planned | 0              | Program D: Field OS                    | None.                                                                                                     | Jobs, schedule, daily logs, field notes, execution attachments, Work Items, People, equipment, closeout proof.                   | Daily-log completion, blocker closure, field-proof completeness, closeout readiness, schedule-to-field continuity. |
 
 ## Capability Details
 
@@ -131,29 +131,35 @@ Heatmap colors:
 
 Current posture: Foundation, active at 12 percent maturity.
 
-Program A owns the direction for project-owned Assessment Packages, guided
+Program A owns the direction for Opportunity-first Assessment Packages, guided
 capture review, customer-safe capture input, risk signal visibility, missing
-information guidance, and estimate handoff continuity.
+information guidance, and estimate handoff continuity. Project workspaces should
+surface linked assessment context after the work becomes operational.
 
 Planning packet
 [docs/review-packets/program-a-assessment-foundation-a1-plan.md](C:/FloorConnector/docs/review-packets/program-a-assessment-foundation-a1-plan.md)
 prepares Wave A1: Assessment Foundation. The
-`assessment-package-depth-v1` implementation adds the first schema-backed
-project-owned Assessment Package foundation, and `area-space-model-v1` adds
-package-owned area/space modeling for rooms, zones, dimensions, substrates,
-conditions, prep notes, moisture notes, access notes, and future handoff
-support. Current capability evidence is 12 percent. Full Wave A1 movement
+`assessment-package-depth-v1` implementation deepens the existing schema-backed
+Assessment Package foundation, and `area-space-model-v1` adds package-owned
+area/space modeling for rooms, zones, dimensions, substrates, conditions, prep
+notes, moisture notes, access notes, and future handoff support. Current
+capability evidence is 12 percent. Full Wave A1 movement
 remains below 20 percent until later approved streams, verification, review,
 and merge evidence exists.
 
 Allowed direction:
 
-- keep Assessment Packages owned by Projects
+- deepen Opportunity-first Assessment Package capture before Project creation
+- treat Assessment Package as first-class pre-estimate knowledge capture
+- let Project context inherit, surface, and continue linked Assessment Package,
+  Area, and Space context after sale or contract progression
 - let Estimates consume approved assessment context
 - keep customer portal capture customer-safe
 - keep AI in review, assist, observation, and draft-preparation mode
-- reuse canonical customers, projects, estimates, documents, attachments, and
-  workflow records
+- reuse canonical opportunities, customers, projects, estimates, documents,
+  attachments, and workflow records
+- preserve current Project-attached Assessment Package / Area / Space
+  foundation notes separately where current-state records implemented truth
 
 Forbidden direction:
 

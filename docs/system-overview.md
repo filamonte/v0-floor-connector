@@ -34,6 +34,17 @@ That is the core product idea: one connected contractor workflow, not a collecti
 
 `public acquisition -> opportunity -> customer -> project -> estimate -> contract -> payment -> scheduling -> execution -> follow-up`
 
+Product operating-model alignment refines the target path for brand-new
+customer work:
+
+`Lead -> Opportunity -> Assessment Package -> Estimate -> Estimate Approval -> Contract -> Contract Signature -> Financial Readiness -> Project Creation -> Schedule -> Production Readiness -> Job Start -> Change Orders -> Completion -> Final Billing / Payment -> Warranty -> Review Request -> Closeout`
+
+That sequence is target direction, not an implemented-status claim. The current
+branch still uses the canonical lifecycle and current-state truth documented in
+[docs/current-state.md](C:/FloorConnector/docs/current-state.md). See
+[docs/product-operating-model.md](C:/FloorConnector/docs/product-operating-model.md)
+for the product governance model.
+
 ## Feature Coverage Direction
 
 FloorConnector's implemented backbone already covers the core canonical chain from opportunity through payment, with workforce, field, portal, settings, super-admin, deterministic cues, and import/export foundations around it. The next product direction is not to copy Contractor Foreman feature-for-feature, but to cover serious contractor operating needs and then go deeper for specialty flooring and surface contractors.
@@ -48,13 +59,20 @@ are future platform services only; they are not current implementation claims.
 
 Guided Project Capture is a planned future layer between lead intake and
 estimate creation. It should let customers, sales representatives, estimators,
-and field personnel create a project-owned Assessment Package before estimating
-begins. That package may include measurements, area layouts, photos, videos,
-site conditions, substrate and moisture observations, crack/joint observations,
-prep requirements, product preferences, visualizer selections, financing
-interest, customer goals, AI observations, and confidence scores. It is not an
-estimate and must not be described as implemented until current-state records an
-implemented slice.
+and field personnel create an Opportunity-first Assessment Package before
+estimating begins. That package may include measurements, area layouts, photos,
+videos, site conditions, substrate and moisture observations, crack/joint
+observations, prep requirements, product preferences, visualizer selections,
+financing interest, customer goals, AI observations, and confidence scores. It
+is not an estimate and must not be described as implemented until current-state
+records an implemented slice.
+
+Assessment Package should be treated as first-class knowledge capture, not a
+helper feature. The target model lets Opportunity and Assessment Package carry
+pre-sale context before Project exists, then uses Project as the operational
+root after the work is real enough to operate. Existing Project-attached
+Assessment Package scaffolding remains implemented truth where current-state
+records it.
 
 Another planned layer is Universal Capture + Assistant Action: an operating
 surface for capturing callbacks, reminders, follow-ups, site-visit intent,
@@ -376,6 +394,15 @@ FloorConnector is implemented as a modular monolith:
 
 This gives the product clean module boundaries without fragmenting the source of truth.
 
+Role-aware dashboards and workspace personalization are future presentation
+layers over this same canonical workflow. FloorConnector may eventually support
+Platform Defaults -> Organization Presets -> User Personalization so owners,
+sales personnel, estimators, office administrators, operations, and field teams
+see different default layouts and queue emphasis. That personalization must
+change presentation, filtering, ordering, and action priority only; it must not
+create role-specific systems, duplicate records, alternate workflow state, or
+new data ownership.
+
 ### Contractor App And Portal Are Two Surfaces On The Same System
 
 The contractor app and the portal are not two separate systems.
@@ -476,6 +503,10 @@ These are still later layers:
 - broader billing-center style self-service
 - deeper reconciliation and retry tooling
 - broader accounting integrations
+- full AIA / progress billing maturity: pay applications, continuation sheets,
+  billing periods, GC/architect/owner approval workflow, retainage release,
+  document generation/export, and accounting/reconciliation support over the
+  same canonical financial chain
 
 #### Deeper E-Sign Features
 
@@ -493,7 +524,7 @@ These are still later layers:
 #### Guided Project Capture
 
 - customer mobile web capture before native mobile applications
-- project-owned Assessment Packages before estimate creation
+- Opportunity-first Assessment Packages before Project creation
 - Area / Space Modeling for room or zone-level measurements, conditions,
   photos, product selections, and AI observations
 - Assessment Confidence signals for measurement, condition, and product
@@ -532,6 +563,11 @@ The next layers should follow the current roadmap direction in a disciplined ord
 - strengthen project as the operational hub
 - tighten readiness, blockers, and next-best-action guidance
 - keep reducing page-to-page friction
+- align the product operating model so Opportunity and Assessment Package own
+  more pre-sale work before Project creation where future implementation
+  supports it
+- replace deposit-only readiness assumptions with payment-schedule based
+  Financial Readiness and broader Production Readiness
 
 2. Scheduling and dispatch depth
 
@@ -542,9 +578,9 @@ The next layers should follow the current roadmap direction in a disciplined ord
 3. Materials, reusable catalogs, and richer shared document tooling
 
 - deepen reusable operational content on the same canonical system
-- add Guided Project Capture and project-owned Assessment Packages before
-  estimate creation, keeping capture separate from pricing and estimate
-  approval
+- add Guided Project Capture and Opportunity-first Assessment Packages before
+  Project creation, while Project workspaces later surface linked assessment,
+  area, and space context after the work becomes operational
 
 4. External integrations
 

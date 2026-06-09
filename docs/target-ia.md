@@ -10,6 +10,8 @@ This document defines the **target information architecture** for the contractor
 It is intended to guide future navigation, workspace structure, and route decisions without forcing an immediate refactor of the current application. It should be read alongside:
 
 - [docs/current-state.md](C:/FloorConnector/docs/current-state.md): source of truth for what is implemented today
+- [docs/product-operating-model.md](C:/FloorConnector/docs/product-operating-model.md): target operating model for pre-sale, sold-work, readiness, and closeout
+- [docs/design-system-governance.md](C:/FloorConnector/docs/design-system-governance.md): UX governance and page type responsibilities
 - [docs/Architecture.md](C:/FloorConnector/docs/Architecture.md): target platform architecture
 - [docs/Roadmap.md](C:/FloorConnector/docs/Roadmap.md): platform maturity roadmap
 - [docs/sales-to-production.md](C:/FloorConnector/docs/sales-to-production.md): target sales and commercial workflow direction
@@ -37,6 +39,11 @@ This document exists to answer:
 Projects should become the main workspace for work delivery. Operational records such as estimates, jobs, files, daily execution, and invoices should feel connected to the project rather than like isolated modules.
 
 That also means project detail should be the primary workflow and readiness hub in page-structure terms, while related record pages support that hub rather than competing with it as parallel workflow homes.
+
+Product operating-model alignment clarifies the target boundary: Opportunity
+and Assessment Package should own more pre-sale work before Project exists.
+Project remains the operational root after sale, contract progression, or other
+approved handoff point where work becomes real enough to operate.
 
 ### 2. Customers Are Relationship Roots, Not Execution Roots
 
@@ -128,6 +135,29 @@ It should eventually include:
 
 Dashboard is not the operational root. It is the summary and prioritization surface.
 
+### Role-Aware Defaults And Personalization
+
+The target IA remains shared. Role-aware dashboards and workspace defaults may
+change a user's landing layout, queue emphasis, card order, action priority, and
+summary density, but they must not create separate role-specific systems.
+
+The preferred model is:
+
+```text
+Platform Defaults -> Organization Presets -> User Personalization
+```
+
+Owners, sales personnel, estimators, office administrators, operations staff,
+and field personnel may need different default entry experiences. Those
+differences should help each person see the most relevant work first while all
+users continue to operate on the same canonical customers, opportunities,
+projects, estimates, contracts, jobs, invoices, payments, communications, and
+operational records.
+
+Role-specific dashboards should not create separate module worlds, duplicate
+queues, duplicate records, or alternate workflow ownership. They are a
+presentation and prioritization layer over the shared operating system.
+
 ## Growth
 
 Growth is a future target surface, not a current route claim.
@@ -194,9 +224,9 @@ This area should include:
   FieldTrail, MessageCenter, CloseoutTrail, and Proof Center layers should stay
   project-scoped rather than becoming disconnected top-level modules
 - future takeoff status, generated quantities, linked estimate context, and scope summary
-- future Guided Project Capture status, project-owned Assessment Package
-  completeness, area/space capture, confidence signals, and estimate-readiness
-  handoff
+- future linked Assessment Package context after the work becomes operational:
+  capture completeness, area/space context, confidence signals, and
+  estimate-readiness handoff
 
 Projects should answer:
 
@@ -215,12 +245,19 @@ This area should include:
 - global estimate list and approval queues
 - invoices
 - payments
-- retainage and AIA billing later
+- payment schedules, financial readiness, retainage, and AIA / progress billing
+  later
 - change-order financial effects later
 - reporting and collections views later
 - payment-request delivery history later
 
 Financials is where users work across many projects at once, especially for accounting, approvals, and collections.
+
+Financials must support residential terms, commercial net terms, milestone
+billing, and future AIA / progress billing without becoming a separate billing
+product world. Future AIA support should extend canonical estimate/contract
+scope, SOV, invoices, payments, and retainage rather than creating a detached
+pay-application system.
 
 ## People
 
@@ -503,27 +540,29 @@ Summary of project health, stage, customer, location, assigned people, and curre
 
 ### Guided Project Capture
 
-Future pre-estimate project workspace section for structured customer, sales,
-estimator, or field capture before estimate creation.
+Future pre-estimate capture should start in Opportunity/Assessment before a
+Project exists. Standalone or global pre-sale work areas may be needed for
+Opportunity and Assessment queues so the Project workspace does not become a
+junk drawer of unsold leads.
 
-This section should manage project-owned Assessment Package context such as
-measurements, area layouts, photos, videos, site conditions, substrate
-information, moisture observations, cracks/joints, prep requirements, product
-preferences, visualizer selections, financing interest, customer goals,
-customer requirements, AI observations, and confidence scores.
+Once a Project exists, this section should surface linked Assessment Package
+context for continuity: measurements, area layouts, photos, videos, site
+conditions, substrate information, moisture observations, cracks/joints, prep
+requirements, product preferences, visualizer selections, financing interest,
+customer goals, customer requirements, AI observations, and confidence scores.
 
 Guided Project Capture is not an estimating workspace. It should prepare
-estimate-ready project context, qualification signals, and Assessment
-Confidence so a human estimator can decide whether remote estimating,
-estimator review, or an onsite visit is appropriate. The Assessment Package
-belongs to the Project and may later be reused by estimates, revised estimates,
-change orders, scheduling, production planning, field handoff, job execution,
-invoicing, and customer communication.
+estimate-ready context, qualification signals, and Assessment Confidence so a
+human estimator can decide whether remote estimating, estimator review, or an
+onsite visit is appropriate. The Assessment Package should bridge into
+Estimate, Contract, Project, Schedule, Production Readiness, Change Orders,
+Closeout, revised estimates, field handoff, job execution, invoicing, and
+customer communication as the work progresses.
 
-Future Area / Space Modeling may let a project organize capture by rooms or
-zones such as Living Room, Kitchen, Basement, Bedroom 1, and Bedroom 2. Area
-records should remain project-scoped capture context, not duplicate projects,
-estimate records, or field subsystems.
+Future Area / Space Modeling may let an Assessment Package or linked Project
+organize capture by rooms or zones such as Living Room, Kitchen, Basement,
+Bedroom 1, and Bedroom 2. Area records should remain capture context, not
+duplicate opportunities, projects, estimate records, or field subsystems.
 
 ### Takeoff & Scope
 

@@ -11,6 +11,8 @@ Cross-references:
 
 - [docs/developer-source-of-truth.md](C:/FloorConnector/docs/developer-source-of-truth.md): primary development entry point and guardrails
 - [docs/current-state.md](C:/FloorConnector/docs/current-state.md): implemented truth
+- [docs/product-operating-model.md](C:/FloorConnector/docs/product-operating-model.md): target Product + UX operating model
+- [docs/design-system-governance.md](C:/FloorConnector/docs/design-system-governance.md): dashboard, workspace, action, and color governance
 - [docs/Architecture.md](C:/FloorConnector/docs/Architecture.md): system design
 - [docs/Roadmap.md](C:/FloorConnector/docs/Roadmap.md): platform maturity sequencing
 - [docs/inventory-cost-architecture.md](C:/FloorConnector/docs/inventory-cost-architecture.md): inventory, cost-item, and tax model
@@ -89,6 +91,18 @@ Future pre-lead visual/product/finish selection can extend the front of this lif
 Future public acquisition can also extend the front of this lifecycle. The intended broader direction is:
 
 `public acquisition -> opportunity -> customer -> project -> estimate -> contract -> payment -> scheduling -> execution -> follow-up`
+
+Product operating-model alignment adds a more precise target path for brand-new
+customer work:
+
+`Lead -> Opportunity -> Assessment Package -> Estimate -> Estimate Approval -> Contract -> Contract Signature -> Financial Readiness -> Project Creation -> Schedule -> Production Readiness -> Job Start -> Change Orders -> Completion -> Final Billing / Payment -> Warranty -> Review Request -> Closeout`
+
+This target path does not mean the current implementation has moved Project
+creation after contract progression. Today, current-state still owns the
+implemented Project-attached Assessment Package and project-centered operating
+hub truth. Future workflow work should move toward Opportunity and Assessment
+Package owning more pre-sale context before Project exists, without creating
+duplicate opportunity, project, estimate, or portal records.
 
 Contractor-owned websites, tenant-owned domains, landing pages, SEO/service/location pages, public forms, website AI intake, campaign/source attribution, reviews/testimonials, before/after galleries, portals, communications, and operational workflows should all reinforce that same graph. They are not separate systems and should not introduce duplicate lead, customer, contact, project, website, portal, marketing, or AI knowledge models.
 
@@ -1271,11 +1285,17 @@ Boundary:
 
 ### Progress Billing Workflow
 
-- Setup: SOV with % complete.
+- Current scaffolding: Schedule of Values, percent-complete updates, retainage,
+  and progress invoices extend the canonical approved-estimate / contract scope
+  -> SOV -> invoice -> payment chain.
 
-- Update: Mark complete, billed.
+- Required future maturity: full AIA / progress billing with pay applications,
+  continuation sheets, billing periods, GC/architect/owner approval workflow,
+  retainage release, document generation/export, and accounting/reconciliation
+  support.
 
-- Generate: G702/G703.
+- Boundary: do not create a separate AIA-only module, detached pay-application
+  truth, spreadsheet shadow model, or invoice-replacement billing record.
 
 ## Intended Workflow Direction
 
@@ -1303,7 +1323,11 @@ With supporting readiness stages between those records:
 - signature readiness
 - future delivery proof and communication tracking
 - deposit or billing readiness
+- configurable payment-schedule readiness, including simple residential terms,
+  commercial net terms, milestone billing, and future AIA / progress billing
 - scheduling readiness
+- production readiness for materials, labor, tooling/equipment, schedule, site
+  conditions, and blockers
 - closeout
 
 ### Project As The Operational Hub
@@ -1325,6 +1349,9 @@ Areas where the current implementation is real but still needs workflow tighteni
 - clearer readiness and blocker messaging between estimate approval, contract progress, job readiness, and invoice readiness
 - more project-centered continuity in navigation and page structure
 - better handling of operational stages such as site assessment, deposit readiness, and scheduling readiness without duplicating core records
+- replacement of deposit-hardcoded readiness language with configurable
+  payment-schedule based Financial Readiness and broader Production Readiness
+  before job start
 
 ## Current Practical Interpretation
 

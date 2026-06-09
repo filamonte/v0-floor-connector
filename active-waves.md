@@ -67,6 +67,57 @@ Program health statuses are `Planned`, `Active`, `Blocked`, `Verification`,
 and `Complete`. Program status does not replace wave status or stream status.
 No next wave is approved by listing a Program here.
 
+## Product UX Governance Alignment V1
+
+Gate date: 2026-06-09.
+
+Wave name: `product-ux-governance-alignment-v1`.
+
+Capability: Product / UX Governance.
+
+Program: Governance-only; this stream prepares documentation and operating
+model alignment before larger capability waves.
+
+Architecture Coordination approval: Approved by the explicit docs-only
+alignment prompt and current stream creation rule.
+
+Jeff approval gate: Satisfied for this docs-only alignment pass by the
+explicit request to run it as the first alignment pass.
+
+Review packet:
+
+- [docs/review-packets/product-ux-governance-alignment-v1.md](C:/FloorConnector/docs/review-packets/product-ux-governance-alignment-v1.md)
+
+Wave status: Active docs-only alignment. This does not authorize app code,
+schema, migrations, Supabase work, provider work, UI component changes, tests,
+runtime config, PRs, external tool/resource creation, implementation waves, or
+merge/cleanup beyond the requested docs-only stream.
+
+Approved stream:
+
+- `stream/product-ux-governance-alignment-v1`
+
+Approved worktree:
+
+- `C:\FC-worktrees\product-ux-governance-alignment-v1`
+
+Ownership:
+
+- target product operating model
+- design-system and UX governance
+- documentation drift review around Assessment Package, Project creation timing,
+  payment schedules, Financial Readiness, Production Readiness, and AIA /
+  progress billing posture
+
+Validation expectation:
+
+```powershell
+pnpm.cmd exec prettier --write <changed markdown files>
+git diff --check
+git diff --cached --check
+pnpm.cmd worktree:doctor
+```
+
 ## Program A Execution Preparation
 
 Program A: Assessment Intelligence is the recommended next execution focus
@@ -106,7 +157,7 @@ Wave A1 stream plan:
 
 | Stream                                  | Status                 | Role                                      | Merge priority |
 | --------------------------------------- | ---------------------- | ----------------------------------------- | -------------- |
-| `assessment-package-depth-v1`           | Approved / Not Started | Project-owned Assessment Package depth    | 1              |
+| `assessment-package-depth-v1`           | Approved / Not Started | Assessment Package depth and continuity   | 1              |
 | `area-space-model-v1`                   | Approved / Not Started | Area, room, space, and measurement depth  | 2              |
 | `guided-project-capture-workflow-v1`    | Proposed               | Contractor capture workflow depth         | 3              |
 | `estimate-handoff-v1`                   | Proposed               | Assessment-to-estimate continuity         | 4              |

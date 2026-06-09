@@ -68,6 +68,10 @@ FloorConnector should unify the contractor revenue path so that:
 - public acquisition, contractor-owned website pages, intake, and qualification all feed one canonical workflow instead of separate marketing or CRM databases
 - future visual/product/finish selection can start before formal lead intake while still becoming part of the same canonical record chain later
 - future site data, plans, photos, and takeoff quantities can become reviewed estimate inputs instead of disconnected spreadsheet or drawing artifacts
+- Assessment Package becomes the first-class knowledge-capture bridge between
+  Opportunity and Estimate, supporting sales reps, inspectors, estimators,
+  owner review, future customer self-service, and future AI assistance without
+  becoming a parallel record silo
 - selected finish, system, product, and specification context follows the work from opportunity through closeout instead of staying trapped in a visualizer, catalog, estimate, or document silo
 - approved commercial scope flows into contracts and execution without being recreated
 - execution flows into billing without disconnecting from the original scope
@@ -92,12 +96,19 @@ and is future direction only.
 
 Guided Project Capture is a future expression of that company-brain direction.
 It should sit between lead intake and estimate creation, producing a
-project-owned Assessment Package before pricing begins. The package should
-collect information once, then make it reusable across estimating, revised
-estimates, change orders, scheduling, production planning, field handoff, job
-execution, invoicing, and customer communication. Guided Project Capture is not
-an estimating feature; it is a pre-estimate project-readiness stage. See
+pre-estimate Assessment Package before pricing begins. Opportunity/Assessment
+owns pre-sale capture before Project exists, then Project surfaces and
+continues that context after sold-work handoff. The package should collect
+information once, then make it reusable across estimating, revised estimates,
+change orders, scheduling, production planning, field handoff, job execution,
+invoicing, and customer communication. Guided Project Capture is not an
+estimating feature; it is a pre-estimate knowledge-capture stage. See
 [docs/guided-project-capture-vision.md](C:/FloorConnector/docs/guided-project-capture-vision.md).
+
+The target operating model now further clarifies that Opportunity and
+Assessment Package should carry pre-sale knowledge before Project exists, while
+Project remains the operational root after sold-work handoff. See
+[docs/product-operating-model.md](C:/FloorConnector/docs/product-operating-model.md).
 
 The current enterprise UX consolidation direction supports that thesis at the page level: People owns contact/access administration, Customer summarizes the account relationship, Project owns operational state, Estimate/Contract/Invoice own proposal/signature/billing review, and Portal keeps customer-facing review simple. See [docs/enterprise-ux-consolidation.md](C:/FloorConnector/docs/enterprise-ux-consolidation.md).
 
@@ -168,6 +179,10 @@ Beyond basic invoicing, FloorConnector is intended to support a fuller contracto
 - tax-aware billing
 - retainage handling
 - schedule-of-values and progress billing support
+- full AIA / progress billing maturity for commercial-contractor adoption,
+  including pay applications, continuation sheets, billing periods, approval
+  workflow, retainage release, document generation/export, and
+  accounting/reconciliation support
 - payment collection and reconciliation extensions
 - reporting that ties financial activity back to the same customer, project, and job chain
 
@@ -425,11 +440,14 @@ The expansion path is:
 - first, strengthen workflow continuity across the existing operational chain
 - then make `Project` the practical operational hub for active work
 - then deepen scheduling, materials, execution, notifications, and financial controls
+- then make dashboards and workspace defaults role-aware so owners, sales,
+  estimators, office administrators, operations, and field users see the most
+  relevant canonical work first
 - then strengthen communications continuity, canonical metrics, and deterministic workflow automation
 - then add project-scoped Takeoff & Scope Intelligence where plans, photos, and measurements feed catalog-mapped estimate line items
 - then add Guided Project Capture where customers, sales, estimators, and field
-  personnel can create project-owned Assessment Packages before estimate work
-  begins
+  personnel can create Opportunity-first Assessment Packages before Project
+  creation, with Project workspaces later continuing linked assessment context
 - then mature the Intelligence Layer from trusted reporting and workflow evidence
 - then extend outward into customer-facing experiences and external integrations
 - then extend the public acquisition layer through contractor-owned websites, tenant-owned domains, landing pages, SEO/service/location pages, public forms, campaign attribution, AI-assisted content generation, and review/reputation/project-proof loops that feed the same canonical opportunity and revenue chain
@@ -438,6 +456,12 @@ The expansion path is:
   intelligent operating guidance where those layers strengthen canonical
   project continuity
 - then consider broader connected platform layers such as materials ecosystems, contractor network collaboration, or marketplace behavior where they align with the same job lifecycle
+
+Role-aware personalization should make FloorConnector feel enterprise-grade
+without becoming complicated. It is future direction only: different users may
+see different dashboard layouts, priorities, queues, and workspace defaults, but
+they all continue to operate on the same canonical workflow, records, and
+source of truth.
 
 That means future platform growth should feel like a widening circle around the same shared contractor workflow, not a collection of disconnected products.
 
