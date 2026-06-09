@@ -1938,6 +1938,7 @@ Implemented:
 - reporting-ready taxable/exempt/tax-collected foundations
 - shared template reference foundation
 - canonical invoice workflow roles for standard billing and upstream deposit-readiness requests
+- canonical contract-owned payment requirements through `contract_payment_requirements` for Financial Readiness terms such as no upfront payment, net terms, due on completion, deposit before scheduling, 50/50, thirds, milestone placeholder, and future progress-billing placeholder. These requirements are tenant-scoped and linked to canonical contracts, projects, customers, optional estimates, and optional invoice evidence. Readiness derives satisfaction from canonical invoice/payment evidence and falls back to the existing deposit-invoice workflow when no contract payment requirements exist.
 - snapshot-based invoice source system with explicit lineage per invoice line
 - invoice creation from approved estimate snapshots, selected SOV rows, approved change-order snapshot rows, or invoice-only adjustments
 

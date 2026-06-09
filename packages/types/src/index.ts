@@ -19,6 +19,7 @@ export type InvoiceId = string;
 export type InvoiceEventId = string;
 export type PaymentId = string;
 export type PaymentEventId = string;
+export type ContractPaymentRequirementId = string;
 export type ScheduleOfValuesId = string;
 export type TemplateId = string;
 export type PlatformTemplateSeedId = string;
@@ -272,6 +273,28 @@ export type PaymentEventActorType =
   | "organization_user"
   | "provider"
   | "system";
+export type ContractPaymentScheduleType =
+  | "no_upfront_payment_required"
+  | "net_terms"
+  | "due_on_completion"
+  | "deposit_before_scheduling"
+  | "fifty_fifty"
+  | "thirds"
+  | "milestone_placeholder"
+  | "progress_billing_placeholder";
+export type ContractPaymentRequirementDueBasis =
+  | "contract_signing"
+  | "before_scheduling"
+  | "mobilization"
+  | "completion"
+  | "net_terms"
+  | "milestone"
+  | "progress_billing_placeholder";
+export type ContractPaymentRequirementAmountMode =
+  | "fixed_amount"
+  | "percentage"
+  | "remaining_balance"
+  | "none";
 export type InvoiceEventType =
   | "sent"
   | "viewed"
@@ -618,6 +641,7 @@ export type CommercialReadinessBlocker =
   | "contract_internal_approval_pending"
   | "contract_signature_pending"
   | "deposit_required"
+  | "payment_requirement_unsatisfied"
   | "financing_pending"
   | "financing_declined";
 

@@ -76,10 +76,11 @@ Wave name: `beta-readiness-operating-core-v1`.
 Review packet:
 [docs/review-packets/beta-readiness-operating-core-v1.md](C:/FloorConnector/docs/review-packets/beta-readiness-operating-core-v1.md).
 
-Status: Proposed / Architecture Review. This is a planning and governance
-setup packet only. It does not authorize implementation, branch creation,
-worktree creation, schema changes, migrations, provider behavior, customer
-self-service, scheduling board work, AI automation, PRs, merges, or cleanup.
+Status: Active for first stream only. Jeff authorized
+`payment-schedule-readiness-v1` implementation on 2026-06-09 after review.
+The remaining proposed streams stay gated. This does not authorize full AIA,
+Project creation alignment, scheduling board work, provider behavior, customer
+self-service, AI automation, PRs, merges, or cleanup.
 
 Purpose: move FloorConnector from aligned product architecture toward a usable,
 marketable beta platform by planning the highest-leverage operating-core gaps
@@ -89,7 +90,7 @@ Proposed stream set:
 
 | Stream                              | Review packet                                                                        | Ownership area                                                    | Proposed dependency posture                                                             |
 | ----------------------------------- | ------------------------------------------------------------------------------------ | ----------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
-| `payment-schedule-readiness-v1`     | [packet](C:/FloorConnector/docs/review-packets/payment-schedule-readiness-v1.md)     | Contract payment schedules and Financial Readiness rules          | Recommended first stream; upstream for Project handoff and scheduling readiness         |
+| `payment-schedule-readiness-v1`     | [packet](C:/FloorConnector/docs/review-packets/payment-schedule-readiness-v1.md)     | Contract payment schedules and Financial Readiness rules          | Active; upstream for Project handoff and scheduling readiness                           |
 | `opportunity-assessment-package-v1` | [packet](C:/FloorConnector/docs/review-packets/opportunity-assessment-package-v1.md) | Opportunity-owned Assessment Package planning and transition path | May run in parallel only after conflict review with active Program A assessment streams |
 | `project-handoff-alignment-v1`      | [packet](C:/FloorConnector/docs/review-packets/project-handoff-alignment-v1.md)      | Project creation timing and sales-to-operations handoff           | Waits on payment readiness and assessment ownership clarity                             |
 | `ux-governance-beta-cleanup-v1`     | [packet](C:/FloorConnector/docs/review-packets/ux-governance-beta-cleanup-v1.md)     | Beta-blocking UX consistency under design governance              | Can run in parallel if presentation-only and existing-data-only                         |
@@ -105,10 +106,11 @@ Shared non-goals:
 - no duplicate financial, project, assessment, portal, AI, signature, checkout,
   or AIA source of truth
 
-Recommended next review decision: approve or narrow
-`payment-schedule-readiness-v1` as the first implementation stream, then record
-branch/worktree creation approval before any app code, schema, migration, or
-test implementation begins.
+Current active stream: implement `payment-schedule-readiness-v1` from
+`stream/payment-schedule-readiness-v1` in
+`C:\FC-worktrees\payment-schedule-readiness-v1`. The first slice must stay
+limited to contract-owned payment requirements and readiness rules over the
+canonical financial chain.
 
 ## Product UX Governance Alignment V1
 

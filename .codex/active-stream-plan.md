@@ -53,10 +53,11 @@ Review packet:
 
 - [docs/review-packets/beta-readiness-operating-core-v1.md](C:/FloorConnector/docs/review-packets/beta-readiness-operating-core-v1.md)
 
-Wave status: Proposed / Architecture Review. This is a planning and governance
-setup packet only. It does not authorize implementation, branch creation,
-worktree creation, schemas, migrations, provider behavior, customer
-self-service, scheduling board work, AI automation, PRs, merges, or cleanup.
+Wave status: Active for first stream only. Jeff authorized
+`payment-schedule-readiness-v1` implementation on 2026-06-09 after review.
+The other proposed streams remain gated. This does not authorize full AIA,
+Project creation alignment, scheduling board work, provider behavior, customer
+self-service, AI automation, PRs, merges, or cleanup.
 
 Purpose: plan coordinated beta-readiness streams that close operating-core
 gaps while preserving the canonical lifecycle, current-state truth, and
@@ -100,9 +101,27 @@ Shared forbidden scope:
 - duplicate financial, assessment, project, portal, signature, checkout,
   payment, provider, AIA, or AI source of truth
 
-Required next gate: review the wave packet, choose whether to approve or narrow
-the first implementation stream, then update registries with approved
-branch/worktree status before creating worktrees or changing app code.
+Active first stream:
+
+- Branch: `stream/payment-schedule-readiness-v1`
+- Worktree: `C:\FC-worktrees\payment-schedule-readiness-v1`
+- Owns: contract-owned payment requirements and Financial Readiness rules over
+  canonical contracts, projects, invoices, payments, and payment events.
+- Mission: replace deposit-hardcoded readiness with payment-schedule based
+  readiness while preserving current deposit invoice compatibility.
+- Forbidden: full AIA, pay applications, continuation sheets, retainage release
+  workflow, Project creation alignment, scheduling board work, customer
+  self-service, AI automation, accounting integration, external payment
+  provider changes, dashboard redesign, role-aware personalization, duplicate
+  payment ledgers, detached checkout/payment models, portal-only billing
+  copies, and AIA-only billing silos.
+- Suggested commit:
+  `feat: add contract payment schedule readiness foundation`
+- Status: Active.
+
+Required next gate after this stream: review the committed implementation
+before launching Project handoff, Assessment Package, UX cleanup, full AIA, or
+scheduling work.
 
 ## Product UX Governance Alignment V1 Gate
 

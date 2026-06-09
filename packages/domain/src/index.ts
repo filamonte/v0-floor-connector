@@ -14,6 +14,9 @@ import type {
   GateKeeperArtifactType,
   CommercialReadinessBlocker,
   CommercialReadinessStatus,
+  ContractPaymentRequirementAmountMode,
+  ContractPaymentRequirementDueBasis,
+  ContractPaymentScheduleType,
   ContractSignatureActorType,
   ContractSignatureEventType,
   ContractSignerRole,
@@ -336,6 +339,34 @@ export const paymentEventActorTypes = [
   "provider",
   "system"
 ] as const satisfies readonly PaymentEventActorType[];
+
+export const contractPaymentScheduleTypes = [
+  "no_upfront_payment_required",
+  "net_terms",
+  "due_on_completion",
+  "deposit_before_scheduling",
+  "fifty_fifty",
+  "thirds",
+  "milestone_placeholder",
+  "progress_billing_placeholder"
+] as const satisfies readonly ContractPaymentScheduleType[];
+
+export const contractPaymentRequirementDueBasisValues = [
+  "contract_signing",
+  "before_scheduling",
+  "mobilization",
+  "completion",
+  "net_terms",
+  "milestone",
+  "progress_billing_placeholder"
+] as const satisfies readonly ContractPaymentRequirementDueBasis[];
+
+export const contractPaymentRequirementAmountModes = [
+  "fixed_amount",
+  "percentage",
+  "remaining_balance",
+  "none"
+] as const satisfies readonly ContractPaymentRequirementAmountMode[];
 
 export const paymentStatusTransitions: Record<
   PaymentStatus,
@@ -1006,6 +1037,23 @@ export type CommercialReadinessInput = {
   financingStatus: FinancingStatus;
   depositInvoiceStatus: InvoiceStatus | null;
   depositInvoiceRole: InvoiceWorkflowRole | null;
+  paymentRequirements?: readonly CommercialReadinessPaymentRequirementInput[];
+};
+
+export type CommercialReadinessPaymentRequirementInput = {
+  id: string;
+  scheduleType: ContractPaymentScheduleType;
+  dueBasis: ContractPaymentRequirementDueBasis;
+  amountMode: ContractPaymentRequirementAmountMode;
+  amount: string | null;
+  percentage: string | null;
+  scheduleBlocking: boolean;
+  linkedInvoiceId: string | null;
+  linkedInvoiceStatus: InvoiceStatus | null;
+  linkedInvoiceTotalAmount: string | null;
+  linkedInvoiceBalanceDueAmount: string | null;
+  linkedInvoiceRecordedPaymentAmount: string | null;
+  hasCanonicalPaymentEventEvidence?: boolean;
 };
 
 export type InvoicePaymentWorkflowGateInput = {
@@ -1057,10 +1105,51 @@ export type CommercialReadinessResult = {
   status: CommercialReadinessStatus;
 };
 
+function parseMoneyAmount(value: string | null) {
+  if (value === null) {
+    return null;
+  }
+
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function isPaymentRequirementSatisfied(
+  requirement: CommercialReadinessPaymentRequirementInput
+) {
+  if (!requirement.scheduleBlocking || requirement.amountMode === "none") {
+    return true;
+  }
+
+  if (requirement.linkedInvoiceStatus === "paid") {
+    return true;
+  }
+
+  const invoiceTotal = parseMoneyAmount(requirement.linkedInvoiceTotalAmount);
+  const invoiceBalance = parseMoneyAmount(
+    requirement.linkedInvoiceBalanceDueAmount
+  );
+  const recordedPaymentAmount = parseMoneyAmount(
+    requirement.linkedInvoiceRecordedPaymentAmount
+  );
+  const requiredAmount = parseMoneyAmount(requirement.amount);
+
+  if (requiredAmount !== null && requiredAmount > 0) {
+    return (recordedPaymentAmount ?? 0) >= requiredAmount;
+  }
+
+  if (invoiceTotal !== null && invoiceTotal > 0 && invoiceBalance !== null) {
+    return invoiceBalance <= 0;
+  }
+
+  return false;
+}
+
 export function computeCommercialReadiness(
   input: CommercialReadinessInput
 ): CommercialReadinessResult {
   const blockers: CommercialReadinessBlocker[] = [];
+  const paymentRequirements = input.paymentRequirements ?? [];
 
   if (
     input.siteAssessmentStatus &&
@@ -1094,7 +1183,19 @@ export function computeCommercialReadiness(
     blockers.push("contract_signature_pending");
   }
 
-  if (input.requireDepositBeforeJobScheduling) {
+  const activeBlockingPaymentRequirement =
+    paymentRequirements.find((requirement) => requirement.scheduleBlocking) ??
+    null;
+
+  if (
+    activeBlockingPaymentRequirement &&
+    !isPaymentRequirementSatisfied(activeBlockingPaymentRequirement)
+  ) {
+    blockers.push("payment_requirement_unsatisfied");
+  } else if (
+    paymentRequirements.length === 0 &&
+    input.requireDepositBeforeJobScheduling
+  ) {
     const depositPaid =
       input.depositInvoiceRole === "deposit" &&
       input.depositInvoiceStatus === "paid";
@@ -1125,10 +1226,12 @@ export function computeCommercialReadiness(
               ? "waiting_on_signature"
               : blockers.includes("deposit_required")
                 ? "waiting_on_deposit"
-                : blockers.includes("financing_pending") ||
-                    blockers.includes("financing_declined")
-                  ? "waiting_on_financing"
-                  : "not_ready";
+                : blockers.includes("payment_requirement_unsatisfied")
+                  ? "waiting_on_deposit"
+                  : blockers.includes("financing_pending") ||
+                      blockers.includes("financing_declined")
+                    ? "waiting_on_financing"
+                    : "not_ready";
 
   return {
     blockers,

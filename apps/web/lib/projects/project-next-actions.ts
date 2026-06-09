@@ -38,6 +38,7 @@ type ProjectNextActionReadiness = {
   depositInvoiceId?: string | null;
   depositRequired?: boolean;
   depositSatisfied?: boolean;
+  activePaymentRequirementInvoiceId?: string | null;
 };
 
 type ProjectNextActionEstimate = {
@@ -192,6 +193,13 @@ export function buildProjectNextActions(
   const latestContract = newestByUpdatedAt(input.contracts);
   const openInvoices = input.invoices.filter(isOpenInvoice);
   const depositInvoice =
+    (input.readinessSnapshot?.activePaymentRequirementInvoiceId
+      ? input.invoices.find(
+          (invoice) =>
+            invoice.id ===
+            input.readinessSnapshot?.activePaymentRequirementInvoiceId
+        )
+      : null) ??
     (input.readinessSnapshot?.depositInvoiceId
       ? input.invoices.find(
           (invoice) => invoice.id === input.readinessSnapshot?.depositInvoiceId
@@ -344,40 +352,54 @@ export function buildProjectNextActions(
     signedContract &&
     input.readinessSnapshot &&
     !input.readinessSnapshot.isReadyToSchedule &&
-    input.readinessSnapshot.blockers.some((blocker) =>
-      ["deposit_required", "financing_pending", "financing_declined"].includes(
-        blocker
-      )
+    input.readinessSnapshot.blockers.some(
+      (blocker) =>
+        [
+          "deposit_required",
+          "financing_pending",
+          "financing_declined"
+        ].includes(blocker) || blocker === "payment_requirement_unsatisfied"
     )
   ) {
     const financialBlocker = input.readinessSnapshot.blockers.find((blocker) =>
-      ["deposit_required", "financing_pending", "financing_declined"].includes(
-        blocker
-      )
+      [
+        "deposit_required",
+        "payment_requirement_unsatisfied",
+        "financing_pending",
+        "financing_declined"
+      ].includes(blocker)
     );
     push({
       id: `${input.project.id}:financial-readiness`,
       projectId: input.project.id,
       currentStage: "Financial readiness",
       owningWorkspace:
-        financialBlocker === "deposit_required" && depositInvoice
+        (financialBlocker === "deposit_required" ||
+          financialBlocker === "payment_requirement_unsatisfied") &&
+        depositInvoice
           ? "Invoice Workspace"
           : "Project Readiness",
       headline:
-        financialBlocker === "deposit_required"
-          ? "Resolve deposit readiness"
+        financialBlocker === "deposit_required" ||
+        financialBlocker === "payment_requirement_unsatisfied"
+          ? "Resolve payment readiness"
           : "Resolve financing readiness",
       reason:
-        financialBlocker === "deposit_required"
-          ? "The contract is signed, but the required deposit is not satisfied yet."
+        financialBlocker === "deposit_required" ||
+        financialBlocker === "payment_requirement_unsatisfied"
+          ? "The contract is signed, but the schedule-blocking payment requirement is not satisfied yet."
           : "The contract is signed, but financing status still blocks the operational handoff.",
       severity: "blocked",
       primaryActionLabel:
-        financialBlocker === "deposit_required" && depositInvoice
-          ? "Open deposit invoice"
+        (financialBlocker === "deposit_required" ||
+          financialBlocker === "payment_requirement_unsatisfied") &&
+        depositInvoice
+          ? "Open payment invoice"
           : "Review project readiness",
       primaryHref:
-        financialBlocker === "deposit_required" && depositInvoice
+        (financialBlocker === "deposit_required" ||
+          financialBlocker === "payment_requirement_unsatisfied") &&
+        depositInvoice
           ? `/invoices/${depositInvoice.id}`
           : `/projects/${input.project.id}#project-readiness-blockers`,
       secondaryActionLabel: "Open contract",
