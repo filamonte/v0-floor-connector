@@ -1114,6 +1114,34 @@ function parseMoneyAmount(value: string | null) {
   return Number.isFinite(parsed) ? parsed : null;
 }
 
+function parseScaledDecimal(value: string | null, scale: number) {
+  if (value === null) {
+    return null;
+  }
+
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? Math.round(parsed * scale) : null;
+}
+
+function calculatePercentageRequirementCents(input: {
+  invoiceTotal: string | null;
+  percentage: string | null;
+}) {
+  const invoiceTotalCents = parseScaledDecimal(input.invoiceTotal, 100);
+  const percentageBasisPoints = parseScaledDecimal(input.percentage, 100);
+
+  if (
+    invoiceTotalCents === null ||
+    invoiceTotalCents <= 0 ||
+    percentageBasisPoints === null ||
+    percentageBasisPoints <= 0
+  ) {
+    return null;
+  }
+
+  return Math.ceil((invoiceTotalCents * percentageBasisPoints) / 10000);
+}
+
 function isPaymentRequirementSatisfied(
   requirement: CommercialReadinessPaymentRequirementInput
 ) {
@@ -1134,7 +1162,28 @@ function isPaymentRequirementSatisfied(
   );
   const requiredAmount = parseMoneyAmount(requirement.amount);
 
-  if (requiredAmount !== null && requiredAmount > 0) {
+  if (requirement.amountMode === "percentage") {
+    const recordedPaymentCents = parseScaledDecimal(
+      requirement.linkedInvoiceRecordedPaymentAmount,
+      100
+    );
+    const requiredPaymentCents = calculatePercentageRequirementCents({
+      invoiceTotal: requirement.linkedInvoiceTotalAmount,
+      percentage: requirement.percentage
+    });
+
+    return (
+      recordedPaymentCents !== null &&
+      requiredPaymentCents !== null &&
+      recordedPaymentCents >= requiredPaymentCents
+    );
+  }
+
+  if (
+    requirement.amountMode === "fixed_amount" &&
+    requiredAmount !== null &&
+    requiredAmount > 0
+  ) {
     return (recordedPaymentAmount ?? 0) >= requiredAmount;
   }
 

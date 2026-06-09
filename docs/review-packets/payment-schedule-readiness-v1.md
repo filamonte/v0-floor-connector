@@ -120,10 +120,11 @@ Implemented focused tests:
 - `apps/web/lib/projects/payment-schedule-readiness-migration.test.ts`
 
 The tests cover no-upfront, net terms, due-on-completion, deposit-required,
-partial payment, 50/50 first-blocking-event, thirds first-blocking-event,
-milestone placeholder, progress/AIA placeholder, canonical evidence, legacy
-deposit compatibility, tenant-scoped migration structure, RLS posture, invoice
-evidence reuse, and no full AIA/pay-application fields.
+partial payment, 50/50 percentage threshold, 50/50 first-blocking-event, thirds
+percentage threshold, thirds first-blocking-event, missing invoice-total
+percentage guards, milestone placeholder, progress/AIA placeholder, canonical
+evidence, legacy deposit compatibility, tenant-scoped migration structure, RLS
+posture, invoice evidence reuse, and no full AIA/pay-application fields.
 
 Expected implementation validation:
 
@@ -165,3 +166,22 @@ final readiness assumptions until merged.
   evidence.
 - Preserved legacy deposit invoice behavior as the fallback path when no
   contract payment requirements exist.
+
+## Review Blocker Correction
+
+Review found that percentage payment requirements were modeled in the migration,
+types, and domain constants, but readiness satisfaction only evaluated fixed
+amounts or paid / zero-balance invoice evidence.
+
+Correction made:
+
+- Percentage requirements now calculate the required threshold from linked
+  invoice total and configured percentage.
+- Canonical recorded payment amount must meet or exceed the computed threshold
+  unless the linked invoice is already marked paid.
+- 50/50 and thirds remain limited to the first schedule-blocking requirement in
+  this slice.
+- Tests now cover below-threshold and at-threshold 50/50 and thirds behavior,
+  plus percentage requirements without linked invoice total.
+- No full AIA, milestone automation, provider behavior, checkout behavior,
+  invoice generation, or new financial silo was added.

@@ -158,6 +158,55 @@ void test("partial payment does not satisfy required amount", () => {
   assert.ok(readiness.blockers.includes("payment_requirement_unsatisfied"));
 });
 
+void test("50/50 percentage requirement blocks below threshold", () => {
+  const readiness = computeCommercialReadiness(
+    baseInput({
+      paymentRequirements: [
+        requirement({
+          id: "first-half",
+          scheduleType: "fifty_fifty",
+          dueBasis: "contract_signing",
+          amountMode: "percentage",
+          amount: null,
+          percentage: "50.00",
+          scheduleBlocking: true,
+          linkedInvoiceStatus: "partially_paid",
+          linkedInvoiceTotalAmount: "10000.00",
+          linkedInvoiceBalanceDueAmount: "5001.00",
+          linkedInvoiceRecordedPaymentAmount: "4999.00"
+        })
+      ]
+    })
+  );
+
+  assert.equal(readiness.isReadyToSchedule, false);
+  assert.ok(readiness.blockers.includes("payment_requirement_unsatisfied"));
+});
+
+void test("50/50 percentage requirement proceeds at threshold", () => {
+  const readiness = computeCommercialReadiness(
+    baseInput({
+      paymentRequirements: [
+        requirement({
+          id: "first-half",
+          scheduleType: "fifty_fifty",
+          dueBasis: "contract_signing",
+          amountMode: "percentage",
+          amount: null,
+          percentage: "50.00",
+          scheduleBlocking: true,
+          linkedInvoiceStatus: "partially_paid",
+          linkedInvoiceTotalAmount: "10000.00",
+          linkedInvoiceBalanceDueAmount: "5000.00",
+          linkedInvoiceRecordedPaymentAmount: "5000.00"
+        })
+      ]
+    })
+  );
+
+  assert.equal(readiness.status, "ready_to_schedule");
+});
+
 void test("50/50 only blocks on the first schedule-blocking event", () => {
   const readiness = computeCommercialReadiness(
     baseInput({
@@ -170,8 +219,9 @@ void test("50/50 only blocks on the first schedule-blocking event", () => {
           amount: null,
           percentage: "50.00",
           scheduleBlocking: true,
-          linkedInvoiceStatus: "paid",
-          linkedInvoiceBalanceDueAmount: "0.00",
+          linkedInvoiceStatus: "partially_paid",
+          linkedInvoiceTotalAmount: "1000.00",
+          linkedInvoiceBalanceDueAmount: "500.00",
           linkedInvoiceRecordedPaymentAmount: "500.00"
         }),
         requirement({
@@ -195,6 +245,55 @@ void test("50/50 only blocks on the first schedule-blocking event", () => {
   assert.equal(readiness.status, "ready_to_schedule");
 });
 
+void test("thirds percentage requirement blocks below threshold", () => {
+  const readiness = computeCommercialReadiness(
+    baseInput({
+      paymentRequirements: [
+        requirement({
+          id: "first-third",
+          scheduleType: "thirds",
+          dueBasis: "contract_signing",
+          amountMode: "percentage",
+          amount: null,
+          percentage: "33.33",
+          scheduleBlocking: true,
+          linkedInvoiceStatus: "partially_paid",
+          linkedInvoiceTotalAmount: "9000.00",
+          linkedInvoiceBalanceDueAmount: "6000.31",
+          linkedInvoiceRecordedPaymentAmount: "2999.69"
+        })
+      ]
+    })
+  );
+
+  assert.equal(readiness.isReadyToSchedule, false);
+  assert.ok(readiness.blockers.includes("payment_requirement_unsatisfied"));
+});
+
+void test("thirds percentage requirement proceeds at threshold", () => {
+  const readiness = computeCommercialReadiness(
+    baseInput({
+      paymentRequirements: [
+        requirement({
+          id: "first-third",
+          scheduleType: "thirds",
+          dueBasis: "contract_signing",
+          amountMode: "percentage",
+          amount: null,
+          percentage: "33.33",
+          scheduleBlocking: true,
+          linkedInvoiceStatus: "partially_paid",
+          linkedInvoiceTotalAmount: "9000.00",
+          linkedInvoiceBalanceDueAmount: "6000.30",
+          linkedInvoiceRecordedPaymentAmount: "2999.70"
+        })
+      ]
+    })
+  );
+
+  assert.equal(readiness.status, "ready_to_schedule");
+});
+
 void test("thirds only blocks on the first schedule-blocking event", () => {
   const readiness = computeCommercialReadiness(
     baseInput({
@@ -207,9 +306,10 @@ void test("thirds only blocks on the first schedule-blocking event", () => {
           amount: null,
           percentage: "33.33",
           scheduleBlocking: true,
-          linkedInvoiceStatus: "paid",
-          linkedInvoiceBalanceDueAmount: "0.00",
-          linkedInvoiceRecordedPaymentAmount: "333.33"
+          linkedInvoiceStatus: "partially_paid",
+          linkedInvoiceTotalAmount: "1000.00",
+          linkedInvoiceBalanceDueAmount: "666.70",
+          linkedInvoiceRecordedPaymentAmount: "333.30"
         }),
         requirement({
           id: "second-third",
@@ -244,6 +344,31 @@ void test("thirds only blocks on the first schedule-blocking event", () => {
   );
 
   assert.equal(readiness.status, "ready_to_schedule");
+});
+
+void test("percentage requirement without invoice total remains blocked", () => {
+  const readiness = computeCommercialReadiness(
+    baseInput({
+      paymentRequirements: [
+        requirement({
+          id: "percentage-no-total",
+          scheduleType: "fifty_fifty",
+          dueBasis: "contract_signing",
+          amountMode: "percentage",
+          amount: null,
+          percentage: "50.00",
+          scheduleBlocking: true,
+          linkedInvoiceStatus: "partially_paid",
+          linkedInvoiceTotalAmount: null,
+          linkedInvoiceBalanceDueAmount: "5000.00",
+          linkedInvoiceRecordedPaymentAmount: "5000.00"
+        })
+      ]
+    })
+  );
+
+  assert.equal(readiness.isReadyToSchedule, false);
+  assert.ok(readiness.blockers.includes("payment_requirement_unsatisfied"));
 });
 
 void test("milestone placeholder does not become fake billing completion", () => {
