@@ -17,6 +17,9 @@ Canonical repository notes:
 Use these first for most implementation or documentation tasks:
 
 - [AGENTS.md](C:/FloorConnector/AGENTS.md): repository-level AI agent rulebook
+- [docs/document-map.md](C:/FloorConnector/docs/document-map.md): primary
+  documentation navigation, authority tiers, lifecycle states, ownership model,
+  and archive-review map
 - [docs/agent-governance.md](C:/FloorConnector/docs/agent-governance.md):
   AI instruction hierarchy, startup, worktree, mobile, approval, and reporting
   governance
@@ -32,6 +35,9 @@ Use these first for most implementation or documentation tasks:
   primary development guardrails
 - [docs/current-state.md](C:/FloorConnector/docs/current-state.md):
   implemented truth on the current branch
+- [docs/capability-registry.md](C:/FloorConnector/docs/capability-registry.md):
+  capability maturity and Capability -> Program -> Wave -> Stream progress
+  model
 - [docs/workflows.md](C:/FloorConnector/docs/workflows.md): canonical and
   near-term workflow behavior
 - [docs/system-overview.md](C:/FloorConnector/docs/system-overview.md):

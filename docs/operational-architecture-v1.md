@@ -63,16 +63,19 @@ Future work should improve at least one of these outcomes:
 
 ## Program Operating Model
 
-Long-running platform initiatives are coordinated through Programs before they
-become waves or streams:
+Long-running platform initiatives are coordinated through Capabilities and
+Programs before they become waves or streams:
 
 ```text
-Program -> Wave -> Stream -> PR -> Verification -> Merge
+Capability -> Program -> Wave -> Stream -> PR -> Verification -> Merge
 ```
 
-Programs group multiple waves around measurable contractor business outcomes.
-They do not create branches, create worktrees, approve implementation, or change
-implemented truth by themselves. The permanent Program model is defined in
+Capabilities track contractor outcome maturity. Programs group multiple waves
+around measurable contractor business outcomes. They do not create branches,
+create worktrees, approve implementation, or change implemented truth by
+themselves. Capability maturity is tracked in
+[docs/capability-registry.md](C:/FloorConnector/docs/capability-registry.md),
+and the permanent Program model is defined in
 [docs/program-architecture.md](C:/FloorConnector/docs/program-architecture.md).
 
 Initial Programs:

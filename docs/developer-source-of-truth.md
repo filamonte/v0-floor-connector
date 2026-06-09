@@ -87,8 +87,10 @@ Consistency here is required for:
 Core:
 
 - AGENTS.md
+- docs/document-map.md
 - docs/developer-source-of-truth.md
 - docs/current-state.md
+- docs/capability-registry.md
 - docs/platform-maturity.md
 - docs/module-status.md
 - docs/known-gaps.md
@@ -114,6 +116,7 @@ Execution:
 - docs/ai/README.md
 - docs/parallel-development-governance.md
 - docs/operational-architecture-v1.md
+- docs/documentation-governance.md
 - docs/documentation-standards.md
 
 ---
@@ -121,10 +124,12 @@ Execution:
 ## HOW TO WORK
 
 1. Read AGENTS.md for repository startup, worktree, and agent governance rules
-2. Read this file
-3. Read current-state.md + workflows.md
-4. Follow rules strictly
-5. Ask if anything is unclear
+2. Read docs/document-map.md to confirm documentation authority and navigation
+3. Read this file
+4. Read current-state.md + workflows.md
+5. Use docs/capability-registry.md for capability maturity, not implemented truth
+6. Follow rules strictly
+7. Ask if anything is unclear
 
 ---
 
@@ -139,7 +144,7 @@ Execution:
 - Treat portal/customer Golden Workflow QA as a real-auth, real-grant smoke path. Portal checks must use a valid portal customer session backed by canonical `portal_access_grants` and `portal_project_access`; `/login`, accidental 404s, access-denied pages, or missing fixtures are not successful portal QA unless intentionally asserted as the expected unauthorized result
 - Treat customer portal access as contact-centered for new contractor-created invites: the customer account is the business relationship, the customer contact is the person, Supabase Auth proves identity, `portal_access_grants` authorize access, and `portal_project_access` scopes visible projects. Project visibility is explicit per customer contact; do not silently grant every contact the primary contact's projects. Null-contact grants are legacy compatibility only.
 - Treat [docs/parallel-development-governance.md](C:/FloorConnector/docs/parallel-development-governance.md) as the permanent stream lifecycle and stream creation rule before creating, approving, activating, verifying, merging, or retiring AI-native development streams.
-- Treat [docs/program-architecture.md](C:/FloorConnector/docs/program-architecture.md) as the permanent Program layer above waves and streams. Future governed planning follows Program -> Wave -> Stream -> PR -> Verification -> Merge, but Program approval does not create branches, worktrees, PRs, merges, schemas, migrations, or implemented truth.
+- Treat [docs/program-architecture.md](C:/FloorConnector/docs/program-architecture.md) as the permanent Program layer beneath capability maturity. Future governed planning follows Capability -> Program -> Wave -> Stream -> PR -> Verification -> Merge, but Capability or Program planning does not create branches, worktrees, PRs, merges, schemas, migrations, or implemented truth.
 - Treat [docs/automation-tooling-baseline.md](C:/FloorConnector/docs/automation-tooling-baseline.md) as the local automation/tooling baseline before launching or validating governed waves. Run `pnpm.cmd worktree:doctor` before stream work and prefer repo-local commands over global PATH tools.
 - Treat [docs/operational-architecture-v1.md](C:/FloorConnector/docs/operational-architecture-v1.md) as the governing Operational Command Center architecture principle: future work must make FloorConnector feel more like one connected operating command center and less like disconnected modules.
 - Treat FloorConnector automation readiness as Ready With Human Review Gate:

@@ -45,6 +45,8 @@ Use this together with:
 
 - [docs/developer-source-of-truth.md](C:/FloorConnector/docs/developer-source-of-truth.md)
 - [docs/current-state.md](C:/FloorConnector/docs/current-state.md)
+- [docs/document-map.md](C:/FloorConnector/docs/document-map.md)
+- [docs/capability-registry.md](C:/FloorConnector/docs/capability-registry.md)
 - [docs/workflows.md](C:/FloorConnector/docs/workflows.md)
 - [docs/chat-handoff.md](C:/FloorConnector/docs/chat-handoff.md)
 - [docs/program-architecture.md](C:/FloorConnector/docs/program-architecture.md)
@@ -176,7 +178,7 @@ One canonical lifecycle:
 
 Responsibilities:
 
-- maintain the Program -> Wave -> Stream -> PR -> Verification -> Merge
+- maintain the Capability -> Program -> Wave -> Stream -> PR -> Verification -> Merge
   execution model
 - coordinate Product Council and Strategic Research inputs before wave selection
 - choose capability waves

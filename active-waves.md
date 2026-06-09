@@ -9,6 +9,10 @@ wave implemented truth.
 
 For implemented status, use
 [docs/current-state.md](C:/FloorConnector/docs/current-state.md).
+For documentation authority, use
+[docs/document-map.md](C:/FloorConnector/docs/document-map.md). For capability
+maturity and Capability -> Program -> Wave -> Stream mapping, use
+[docs/capability-registry.md](C:/FloorConnector/docs/capability-registry.md).
 
 For active stream status, use
 [active-worktrees.md](C:/FloorConnector/active-worktrees.md) and
@@ -29,12 +33,15 @@ Before starting stream work, future wave prompts must require
 [docs/automation-tooling-baseline.md](C:/FloorConnector/docs/automation-tooling-baseline.md)
 for local dependency, Playwright, optional CLI, and validation-command guidance.
 
+Capability maturity is the preferred progress metric; Program, Wave, Stream,
+PR, and commit counts are activity measures only.
+
 Program-level planning is defined in
 [docs/program-architecture.md](C:/FloorConnector/docs/program-architecture.md).
 The permanent governed execution chain is:
 
 ```text
-Program -> Wave -> Stream -> PR -> Verification -> Merge
+Capability -> Program -> Wave -> Stream -> PR -> Verification -> Merge
 ```
 
 Programs group multi-wave strategic initiatives. They do not authorize

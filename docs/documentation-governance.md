@@ -7,7 +7,9 @@ This document defines how documentation should be maintained in the FloorConnect
 
 Use these docs together:
 
+- [docs/document-map.md](C:/FloorConnector/docs/document-map.md): primary documentation navigation, tier, authority, lifecycle, ownership, and archive-review map
 - [docs/current-state.md](C:/FloorConnector/docs/current-state.md): implemented truth and current branch reality
+- [docs/capability-registry.md](C:/FloorConnector/docs/capability-registry.md): capability maturity and Capability -> Program -> Wave -> Stream progress model
 - [docs/Architecture.md](C:/FloorConnector/docs/Architecture.md): target platform architecture
 - [docs/Roadmap.md](C:/FloorConnector/docs/Roadmap.md): platform maturity roadmap
 - [docs/sales-to-production.md](C:/FloorConnector/docs/sales-to-production.md): target sales and commercial workflow direction
@@ -15,6 +17,19 @@ Use these docs together:
 - [docs/documentation-governance.md](C:/FloorConnector/docs/documentation-governance.md): documentation maintenance and archival rules
 
 This file governs how docs are maintained. It is not a product-source-of-truth file for implementation status or roadmap sequencing.
+
+The documentation system uses six authority tiers:
+
+1. Authoritative Truth
+2. Planning
+3. Architecture
+4. Vision
+5. Governance
+6. Archive
+
+Use [docs/document-map.md](C:/FloorConnector/docs/document-map.md) for the
+current tier map, document owners, review frequency, lifecycle states, health
+audit, and archive candidates.
 
 ## Governing Rules
 
@@ -29,6 +44,23 @@ This file governs how docs are maintained. It is not a product-source-of-truth f
 - AI-facing docs must avoid ambiguous implementation claims.
 - Large active docs should be split, compacted, or archived when they become history logs rather than current guidance.
 - Feature coverage docs are target direction unless [docs/current-state.md](C:/FloorConnector/docs/current-state.md) says the capability is implemented.
+- Agents may recommend archive candidates, but they must not move, delete, or
+  archive documents without explicit owner approval.
+
+## Lifecycle States
+
+FloorConnector documentation uses these lifecycle states:
+
+- `Draft`
+- `Active`
+- `Authoritative`
+- `Deprecated`
+- `Archived`
+
+Transitions and responsibilities are defined in
+[docs/document-map.md](C:/FloorConnector/docs/document-map.md). `Archived`
+documents are historical context only unless an owner explicitly reactivates
+them.
 
 ## Purpose
 

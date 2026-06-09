@@ -14,19 +14,24 @@ worktree, verification, and merge rules, use
 [docs/parallel-development-governance.md](C:/FloorConnector/docs/parallel-development-governance.md),
 [active-worktrees.md](C:/FloorConnector/active-worktrees.md), and
 [.codex/active-stream-plan.md](C:/FloorConnector/.codex/active-stream-plan.md).
+For capability maturity and Capability -> Program -> Wave -> Stream mapping,
+use [docs/capability-registry.md](C:/FloorConnector/docs/capability-registry.md).
+For documentation authority, use
+[docs/document-map.md](C:/FloorConnector/docs/document-map.md).
 
 ## Execution Model
 
 The permanent governed execution chain is:
 
 ```text
-Program -> Wave -> Stream -> PR -> Verification -> Merge
+Capability -> Program -> Wave -> Stream -> PR -> Verification -> Merge
 ```
 
-A Program is a long-running strategic initiative that produces a major
-contractor business capability across multiple waves. A Wave is a bounded
-delivery portfolio inside one Program. A Stream is the smallest independently
-owned implementation, verification, documentation, or governance slice.
+A Capability is the contractor business outcome being matured. A Program is a
+long-running strategic initiative that produces or deepens that Capability
+across multiple Waves. A Wave is a bounded delivery portfolio inside one
+Program. A Stream is the smallest independently owned implementation,
+verification, documentation, or governance slice.
 
 Program approval does not authorize implementation. A wave still needs Product
 Council prioritization, Architecture Coordination approval, dependency review,

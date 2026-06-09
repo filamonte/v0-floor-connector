@@ -11,6 +11,12 @@ Use this document when you need current branch reality. For concise status maps,
 
 Use [docs/developer-source-of-truth.md](C:/FloorConnector/docs/developer-source-of-truth.md) as the primary developer entry point. Use this document for implemented truth after that first orientation.
 
+Use [docs/document-map.md](C:/FloorConnector/docs/document-map.md) for
+documentation authority and navigation. Use
+[docs/capability-registry.md](C:/FloorConnector/docs/capability-registry.md)
+for capability maturity and Capability -> Program -> Wave -> Stream progress;
+the capability registry does not replace this document for implemented truth.
+
 Use these docs together:
 
 - [docs/developer-source-of-truth.md](C:/FloorConnector/docs/developer-source-of-truth.md): primary development entry point and implementation guardrails

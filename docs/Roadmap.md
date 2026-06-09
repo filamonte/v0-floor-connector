@@ -9,8 +9,14 @@ For implemented truth, use [docs/current-state.md](C:/FloorConnector/docs/curren
 
 For program-level execution planning, use
 [docs/program-architecture.md](C:/FloorConnector/docs/program-architecture.md).
-Roadmap items should now be framed as Program -> Wave -> Stream -> PR ->
-Verification -> Merge when they become governed delivery candidates.
+Roadmap items should now be framed as Capability -> Program -> Wave -> Stream
+-> PR -> Verification -> Merge when they become governed delivery candidates.
+
+For capability maturity, use
+[docs/capability-registry.md](C:/FloorConnector/docs/capability-registry.md).
+For documentation authority and navigation, use
+[docs/document-map.md](C:/FloorConnector/docs/document-map.md). Roadmap
+sequencing does not replace capability maturity scores or implemented truth.
 
 ## Roadmap Principles
 
@@ -58,9 +64,11 @@ claiming implementation or authorizing streams:
 | D       | Field OS                    | Deepens mobile field execution, field packets, closeout proof, and crew workflows.         |
 
 Program planning does not override roadmap principles, current-state truth, or
-the wave/stream approval gate. Each Program may produce multiple waves, and
-each wave must still preserve the canonical lifecycle and operational command
-center model.
+the wave/stream approval gate. Capability maturity is tracked in
+[docs/capability-registry.md](C:/FloorConnector/docs/capability-registry.md);
+Program, Wave, Stream, PR, and commit counts are activity measures, not success
+metrics. Each Program may produce multiple waves, and each wave must still
+preserve the canonical lifecycle and operational command center model.
 
 Use [docs/platform-build-registry.md](C:/FloorConnector/docs/platform-build-registry.md) as the living strategic coordination map for major planned systems, priorities, dependencies, maturity, status, and rationale. Use [docs/platform-maturity-model.md](C:/FloorConnector/docs/platform-maturity-model.md) to prevent foundation-level systems from being treated as ready for intelligence, predictive, or autonomous behavior too early.
 

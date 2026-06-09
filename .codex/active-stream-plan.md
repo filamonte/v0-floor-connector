@@ -17,17 +17,22 @@ Permanent governance now lives in
 [docs/parallel-development-governance.md](C:/FloorConnector/docs/parallel-development-governance.md)
 and
 [docs/operational-architecture-v1.md](C:/FloorConnector/docs/operational-architecture-v1.md).
+[docs/document-map.md](C:/FloorConnector/docs/document-map.md) owns
+documentation authority and navigation.
+[docs/capability-registry.md](C:/FloorConnector/docs/capability-registry.md)
+owns Capability -> Program -> Wave -> Stream maturity tracking.
 [docs/program-architecture.md](C:/FloorConnector/docs/program-architecture.md)
-defines the permanent Program -> Wave -> Stream -> PR -> Verification -> Merge
-execution model. Programs group multi-wave strategic initiatives, but this file
-remains the stream registry. Programs do not create branches or worktrees.
+defines the permanent Program model. The governed execution model is
+Capability -> Program -> Wave -> Stream -> PR -> Verification -> Merge.
+Programs group multi-wave strategic initiatives, but this file remains the
+stream registry. Programs do not create branches or worktrees.
 New streams must follow the lifecycle Proposed -> Architecture Review ->
 Approved -> Active -> Verification -> Merged -> Retired, and Architecture
 Coordination must approve stream creation before any new worktree is created.
-The wave proposal gate also requires Program mapping, Product Council
-prioritization, dependency documentation, ownership conflict review, UX / IA
-impact review, verification scope, proposed merge order, active registry update,
-and recorded Jeff approval before a wave begins.
+The wave proposal gate also requires Capability and Program mapping, Product
+Council prioritization, dependency documentation, ownership conflict review, UX
+/ IA impact review, verification scope, proposed merge order, active registry
+update, and recorded Jeff approval before a wave begins.
 Wave-launch prompts must also require `pnpm.cmd worktree:doctor` and use
 [docs/automation-tooling-baseline.md](C:/FloorConnector/docs/automation-tooling-baseline.md)
 for local tooling, Playwright, optional CLI, worktree-link, and validation

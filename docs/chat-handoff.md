@@ -11,6 +11,12 @@ Use [docs/feature-build-status.md](C:/FloorConnector/docs/feature-build-status.m
 as an important planning reference when a task needs investor/demo/dev-friendly
 feature inventory, status categories, or built-versus-planned boundaries.
 
+Use [docs/document-map.md](C:/FloorConnector/docs/document-map.md) as the
+primary documentation navigation and authority map. Use
+[docs/capability-registry.md](C:/FloorConnector/docs/capability-registry.md)
+when a task involves Capability -> Program -> Wave -> Stream progress,
+maturity scoring, capability ownership, or quarterly capability review.
+
 Use [docs/floorconnector-build-list-and-completion-timeline.md](C:/FloorConnector/docs/floorconnector-build-list-and-completion-timeline.md)
 when a task needs the founder/product-owner build list, realistic completion
 horizons, next build order, or Core Complete definition. It is planning
@@ -65,13 +71,13 @@ agent appears to be in the wrong repository, branch, worktree, stale origin, or
 blocked validation state.
 
 Current automation readiness is Ready With Human Review Gate. Future planning
-must follow the loop Strategic Research / Product Council -> Program -> Wave ->
-Stream -> PR -> Verification -> Merge. Future waves still require Jeff Review
--> Product Director Recommendation -> Architecture Coordination Approval ->
-Wave Proposal -> Stream Creation -> Parallel Feature Work -> Verification ->
-Integration Review Packet -> Jeff Approval -> Continue. Agents may prepare
-scoped work and review packets, but may not auto-merge, auto-continue, or
-bypass Jeff approval.
+must follow the loop Strategic Research / Product Council -> Capability, then
+Program, Wave, Stream, PR, Verification, and Merge. Future waves still require
+Jeff Review -> Product Director Recommendation -> Architecture Coordination
+Approval -> Wave Proposal -> Stream Creation -> Parallel Feature Work ->
+Verification -> Integration Review Packet -> Jeff Approval -> Continue. Agents
+may prepare scoped work and review packets, but may not auto-merge,
+auto-continue, or bypass Jeff approval.
 
 Current Program portfolio: Program A Assessment Intelligence is Active because
 `guided-project-capture-v1` is merged and future assessment depth remains
@@ -241,8 +247,10 @@ Read these before implementation or documentation work:
 - [docs/agent-startup-checklist.md](C:/FloorConnector/docs/agent-startup-checklist.md)
 - [docs/autonomous-run-governance.md](C:/FloorConnector/docs/autonomous-run-governance.md)
 - [docs/ai-diagnostics.md](C:/FloorConnector/docs/ai-diagnostics.md)
+- [docs/document-map.md](C:/FloorConnector/docs/document-map.md)
 - [docs/developer-source-of-truth.md](C:/FloorConnector/docs/developer-source-of-truth.md)
 - [docs/current-state.md](C:/FloorConnector/docs/current-state.md)
+- [docs/capability-registry.md](C:/FloorConnector/docs/capability-registry.md)
 - [docs/parallel-development-governance.md](C:/FloorConnector/docs/parallel-development-governance.md)
 - [docs/program-architecture.md](C:/FloorConnector/docs/program-architecture.md)
 - [docs/operational-architecture-v1.md](C:/FloorConnector/docs/operational-architecture-v1.md)

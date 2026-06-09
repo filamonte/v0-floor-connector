@@ -12,6 +12,8 @@ Use this with:
 
 - [docs/developer-source-of-truth.md](C:/FloorConnector/docs/developer-source-of-truth.md)
 - [docs/current-state.md](C:/FloorConnector/docs/current-state.md)
+- [docs/document-map.md](C:/FloorConnector/docs/document-map.md)
+- [docs/capability-registry.md](C:/FloorConnector/docs/capability-registry.md)
 - [docs/workflows.md](C:/FloorConnector/docs/workflows.md)
 - [docs/program-architecture.md](C:/FloorConnector/docs/program-architecture.md)
 - [docs/ai-native-development-architecture.md](C:/FloorConnector/docs/ai-native-development-architecture.md)
@@ -37,11 +39,14 @@ impact, and verification strategy are explicit.
 FloorConnector planning now uses the permanent execution chain:
 
 ```text
-Program -> Wave -> Stream -> PR -> Verification -> Merge
+Capability -> Program -> Wave -> Stream -> PR -> Verification -> Merge
 ```
 
-Programs are long-running strategic initiatives that group multiple waves around
-major contractor business outcomes. They are defined in
+Capabilities are the contractor business outcomes being matured. Programs are
+long-running strategic initiatives that group multiple waves around those
+outcomes. Capability maturity is tracked in
+[docs/capability-registry.md](C:/FloorConnector/docs/capability-registry.md);
+Programs are defined in
 [docs/program-architecture.md](C:/FloorConnector/docs/program-architecture.md).
 
 Program planning does not approve implementation. A Program may recommend or
@@ -125,8 +130,9 @@ If any condition is not met, the stream remains Proposed or Architecture Review.
 
 No wave may begin until all gate items are recorded:
 
-1. Program mapping is recorded, including the Program outcome the wave advances
-   or the reason the wave is governance-only.
+1. Capability and Program mapping is recorded, including the Capability maturity
+   objective, the Program outcome the wave advances, or the reason the wave is
+   governance-only.
 2. Product Council confirms contractor value and priority.
 3. Architecture Coordination approves stream ownership.
 4. Upstream and downstream dependencies are documented.
