@@ -144,6 +144,8 @@ export type ScheduleReadinessHandoffSnapshot = {
   contractStatus?: string | null;
   depositInvoiceId?: string | null;
   depositInvoiceStatus?: string | null;
+  activePaymentRequirementInvoiceId?: string | null;
+  activePaymentRequirementInvoiceStatus?: string | null;
   opportunityId?: string | null;
 };
 
@@ -272,6 +274,8 @@ function formatReadinessBlockerLabel(blocker: string) {
       return "Unsigned contract";
     case "deposit_required":
       return "Unpaid deposit";
+    case "payment_requirement_unsatisfied":
+      return "Payment requirement open";
     case "financing_pending":
       return "Financing pending";
     case "financing_declined":
@@ -301,6 +305,10 @@ function getReadinessBlockerHref(input: {
       return input.readiness.depositInvoiceId
         ? `/invoices/${input.readiness.depositInvoiceId}`
         : `/invoices?projectId=${input.projectId}&workflowRole=deposit`;
+    case "payment_requirement_unsatisfied":
+      return input.readiness.activePaymentRequirementInvoiceId
+        ? `/invoices/${input.readiness.activePaymentRequirementInvoiceId}`
+        : `/projects/${input.projectId}#project-readiness-blockers`;
     case "site_assessment_incomplete":
       return input.readiness.opportunityId
         ? `/leads/${input.readiness.opportunityId}`
@@ -334,6 +342,10 @@ function getReadinessBlockerDetail(
       return readiness.depositInvoiceStatus
         ? `Deposit invoice is ${formatStatusLabel(readiness.depositInvoiceStatus)}.`
         : "Create or collect the required deposit invoice.";
+    case "payment_requirement_unsatisfied":
+      return readiness.activePaymentRequirementInvoiceStatus
+        ? `Payment requirement invoice is ${formatStatusLabel(readiness.activePaymentRequirementInvoiceStatus)}.`
+        : "Collect the schedule-blocking contract payment requirement.";
     case "site_assessment_incomplete":
       return "Complete the linked site assessment.";
     case "financing_pending":

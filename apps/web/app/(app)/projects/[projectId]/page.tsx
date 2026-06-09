@@ -490,6 +490,8 @@ function formatBlockerLabel(
       return "Contract signature is still required before operations handoff.";
     case "deposit_required":
       return "A deposit is required and has not been satisfied yet.";
+    case "payment_requirement_unsatisfied":
+      return "A schedule-blocking contract payment requirement is not satisfied yet.";
     case "financing_pending":
       return "Financing is still pending, so the project is not financially ready.";
     case "financing_declined":
@@ -2399,7 +2401,7 @@ function getProjectContractSummary(input: {
 
   if (contract.status === "signed") {
     if (readinessSnapshot?.status === "waiting_on_deposit") {
-      return `Signed ${formatDateTime(contract.signedAt)} | Deposit is the next commercial gate`;
+      return `Signed ${formatDateTime(contract.signedAt)} | Payment readiness is the next commercial gate`;
     }
 
     if (readinessSnapshot?.isReadyToSchedule) {
@@ -2452,6 +2454,7 @@ function buildReadinessStages(input: {
   const financialReady =
     readinessSnapshot != null &&
     !readinessSnapshot.blockers.includes("deposit_required") &&
+    !readinessSnapshot.blockers.includes("payment_requirement_unsatisfied") &&
     !readinessSnapshot.blockers.includes("financing_pending") &&
     !readinessSnapshot.blockers.includes("financing_declined");
 
@@ -2881,7 +2884,11 @@ function getNextAction(input: {
   }
 
   if (readinessSnapshot?.status === "waiting_on_deposit") {
-    return readinessSnapshot.depositInvoiceId
+    const paymentReadinessInvoiceId =
+      readinessSnapshot.activePaymentRequirementInvoiceId ??
+      readinessSnapshot.depositInvoiceId;
+
+    return paymentReadinessInvoiceId
       ? {
           title:
             depositLatestPaymentEventType === "payment_failed"
@@ -2897,43 +2904,43 @@ function getNextAction(input: {
                       ? "Blocked: restart deposit collection after the void"
                       : depositInvoice?.status === "partially_paid"
                         ? "Requires follow-up: close the remaining deposit balance"
-                        : "Blocked: collect the deposit",
+                        : "Blocked: collect the required payment",
           description:
             depositLatestPaymentEventType === "payment_failed"
-              ? `A customer payment attempt failed on the deposit invoice, so ${formatMoney(
+              ? `A customer payment attempt failed on the readiness invoice, so ${formatMoney(
                   depositInvoice?.balanceDueAmount ?? "0"
                 )} still needs follow-through before the commercial handoff is complete.`
               : depositLatestPaymentEventType === "checkout_started"
-                ? "A customer has already entered checkout for the deposit invoice. Keep attention on the payment outcome before taking the project forward."
+                ? "A customer has already entered checkout for the readiness invoice. Keep attention on the payment outcome before taking the project forward."
                 : depositLatestPaymentEventType === "payment_succeeded" &&
                     depositInvoice?.status === "partially_paid"
-                  ? `A provider-backed deposit payment has landed, but ${formatMoney(
+                  ? `A provider-backed payment has landed, but ${formatMoney(
                       depositInvoice.balanceDueAmount
                     )} still needs to clear before the commercial handoff is complete.`
                   : depositLatestPaymentEventType === "payment_requested"
-                    ? "Customer-facing payment has already been requested on the deposit invoice, so the active work is following that request through."
+                    ? "Customer-facing payment has already been requested on the readiness invoice, so the active work is following that request through."
                     : depositLatestPaymentEventType === "payment_voided"
-                      ? `The latest provider-backed payment on the deposit invoice was voided, so ${formatMoney(
+                      ? `The latest provider-backed payment on the readiness invoice was voided, so ${formatMoney(
                           depositInvoice?.balanceDueAmount ?? "0"
                         )} is open again before the commercial handoff can complete.`
                       : depositInvoice?.status === "partially_paid"
-                        ? `A deposit payment has already been recorded, but ${formatMoney(
+                        ? `A payment has already been recorded, but ${formatMoney(
                             depositInvoice.balanceDueAmount
                           )} still needs to clear before the commercial handoff is complete.`
-                        : "A deposit invoice exists, but the commercial handoff will stay blocked until that invoice is paid.",
-          primaryLabel: "Review deposit invoice",
-          primaryHref: `/invoices/${readinessSnapshot.depositInvoiceId}`,
+                        : "A readiness invoice exists, but the commercial handoff will stay blocked until that invoice is paid.",
+          primaryLabel: "Review payment invoice",
+          primaryHref: `/invoices/${paymentReadinessInvoiceId}`,
           blockerCopy:
-            "Scheduling stays blocked until the required deposit is satisfied."
+            "Scheduling stays blocked until the schedule-blocking payment requirement is satisfied."
         }
       : {
-          title: "Blocked: create the deposit request",
+          title: "Blocked: resolve payment readiness",
           description:
-            "The organization requires a deposit before operations can schedule this work on the same project chain.",
-          primaryLabel: "Create deposit invoice",
+            "The signed contract has a schedule-blocking payment requirement before operations can schedule this work on the same project chain.",
+          primaryLabel: "Review readiness",
           primaryHref: `/invoices?projectId=${projectId}&estimateId=${approvedEstimateId ?? ""}&workflowRole=deposit`,
           blockerCopy:
-            "Deposit collection cannot start until a deposit invoice is created from the existing project and approved-estimate context."
+            "Payment collection must stay on canonical invoice and payment records from the existing project and approved-estimate context."
         };
   }
 
@@ -3324,6 +3331,22 @@ function buildReadinessBlockerItems(input: {
           tone: "blocked"
         });
         break;
+      case "payment_requirement_unsatisfied":
+        pushUnique({
+          id: blocker,
+          title: input.depositInvoice
+            ? "Collect the required payment"
+            : "Review payment readiness",
+          detail: formatBlockerLabel(blocker),
+          href: input.depositInvoice
+            ? `/invoices/${input.depositInvoice.id}`
+            : `/projects/${input.projectId}#project-readiness-blockers`,
+          actionLabel: input.depositInvoice
+            ? "Open payment invoice"
+            : "Review readiness",
+          tone: "blocked"
+        });
+        break;
       case "financing_pending":
       case "financing_declined":
         pushUnique({
@@ -3706,6 +3729,12 @@ export default async function ProjectDetailPage({
         changeOrder.status === "sent" || changeOrder.status === "draft"
     ) ?? null;
   const depositInvoice =
+    (readinessSnapshot?.activePaymentRequirementInvoiceId
+      ? projectInvoices.find(
+          (invoice) =>
+            invoice.id === readinessSnapshot.activePaymentRequirementInvoiceId
+        )
+      : null) ??
     (readinessSnapshot?.depositInvoiceId
       ? projectInvoices.find(
           (invoice) => invoice.id === readinessSnapshot.depositInvoiceId
@@ -4614,6 +4643,8 @@ export default async function ProjectDetailPage({
           blockers: readinessSnapshot.blockers,
           depositRequired: readinessSnapshot.depositRequired,
           depositSatisfied: readinessSnapshot.depositSatisfied,
+          activePaymentRequirementInvoiceId:
+            readinessSnapshot.activePaymentRequirementInvoiceId,
           contractStatus: readinessSnapshot.contractStatus
         }
       : null,

@@ -67,6 +67,7 @@ export type ProjectOperationalWorkspaceInput = {
     blockers: string[];
     depositRequired: boolean;
     depositSatisfied: boolean;
+    activePaymentRequirementInvoiceId?: string | null;
     contractStatus?: string | null;
   } | null;
   approvedEstimateTotalAmount?: string | number | null;
