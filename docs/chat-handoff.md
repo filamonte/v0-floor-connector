@@ -64,6 +64,22 @@ Work -> Verification -> Integration Review Packet -> Jeff Approval -> Continue.
 Agents may prepare scoped work and review packets, but may not auto-merge,
 auto-continue, or bypass Jeff approval.
 
+Current wave gate note: `guided-project-capture-v1` has Architecture
+Coordination approval and Jeff approval for stream/worktree creation only. The
+approved streams are `assessment-package-model-v1`,
+`guided-capture-workspace-v1`, `customer-assessment-capture-v1`,
+`assessment-to-estimate-handoff-v1`, and
+`verification-guided-project-capture-v1`. Their branches and worktrees were
+created from the verified current `main` approval baseline at
+`C:\FC-worktrees\<stream>`. Status is Approved / Not Started: a later explicit
+start command is still required before feature work, verification work, PRs,
+merges, cleanup, schemas, migrations, provider behavior, or autonomous actions.
+Merge order is assessment package foundation, internal guided capture
+workspace, customer-safe assessment capture, assessment-to-estimate handoff,
+then verification. Assessment Package context belongs to Projects, Estimate
+consumes approved context, Portal remains customer-safe input/review only, and
+AI remains assist/review only.
+
 Current wave gate note: `visual-ux-review-contractor-usability-v1` has merged
 to `main` under Jeff's controlled merge approval. Golden Workflow Usability
 Review V1 merged as `32f2151d`, Workspace Density Polish V1 merged as

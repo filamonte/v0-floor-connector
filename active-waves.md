@@ -101,6 +101,83 @@ packets from this registry. Agents may not begin a new wave, create active
 streams, continue to the next wave, or merge without Architecture Coordination
 approval and Jeff review.
 
+## Guided Project Capture V1 Approval Gate
+
+Gate date: 2026-06-08.
+
+Wave name: `guided-project-capture-v1`.
+
+Review packets:
+
+- [docs/review-packets/next-portfolio-recommendation-v5.md](C:/FloorConnector/docs/review-packets/next-portfolio-recommendation-v5.md)
+- [docs/review-packets/guided-project-capture-v1-plan.md](C:/FloorConnector/docs/review-packets/guided-project-capture-v1-plan.md)
+
+Wave goal: add a project-owned guided assessment layer that helps internal
+users, customers, and estimators gather and review site/context information
+before estimate work, while preserving Project as the source of assessment
+context and Estimate as the consumer of approved context.
+
+Gate status:
+
+| Gate item                              | Status                 | Evidence / note                                                                                                 |
+| -------------------------------------- | ---------------------- | --------------------------------------------------------------------------------------------------------------- |
+| Architecture Coordination approval     | Approved               | Stream ownership, dependencies, non-goals, validation, verification, and merge order are recorded.              |
+| Jeff approval gate                     | Approved               | Jeff explicitly approved stream/worktree creation for `guided-project-capture-v1`.                              |
+| Stream creation                        | Complete               | Five branches and worktrees were created from the verified current `main` approval baseline.                    |
+| Implementation start                   | Not started            | A later explicit start command is still required before feature work begins.                                    |
+| Human review gate                      | Required before merge  | No stream may merge until implementation and verification evidence are reviewed.                                |
+| Autonomous merge / indefinite continue | Not allowed            | No PRs, schemas, migrations, provider work, next-wave continuation, or autonomous approval behavior is allowed. |
+| Verification                           | Approved / Not Started | Verification must run last after implementation stream commits exist.                                           |
+
+Approved stream set:
+
+| Stream                                   | Ownership area                      | Mission                                                                                | Status                 |
+| ---------------------------------------- | ----------------------------------- | -------------------------------------------------------------------------------------- | ---------------------- |
+| `assessment-package-model-v1`            | Project-owned assessment context    | Define and surface Assessment Package context using existing canonical records.        | Approved / Not Started |
+| `guided-capture-workspace-v1`            | Internal guided capture workspace   | Help internal users collect and review project assessment context before estimating.   | Approved / Not Started |
+| `customer-assessment-capture-v1`         | Customer-safe assessment input      | Let customers clarify requested information without making Portal the source of truth. | Approved / Not Started |
+| `assessment-to-estimate-handoff-v1`      | Estimator assessment handoff        | Make approved assessment context usable for estimate creation and review.              | Approved / Not Started |
+| `verification-guided-project-capture-v1` | Guided Project Capture verification | Protect Project ownership, Estimate consumption, Portal safety, AI review-only limits. | Approved / Not Started |
+
+Approved stream branches:
+
+- `stream/assessment-package-model-v1`
+- `stream/guided-capture-workspace-v1`
+- `stream/customer-assessment-capture-v1`
+- `stream/assessment-to-estimate-handoff-v1`
+- `stream/verification-guided-project-capture-v1`
+
+Approved worktrees:
+
+- `C:\FC-worktrees\assessment-package-model-v1`
+- `C:\FC-worktrees\guided-capture-workspace-v1`
+- `C:\FC-worktrees\customer-assessment-capture-v1`
+- `C:\FC-worktrees\assessment-to-estimate-handoff-v1`
+- `C:\FC-worktrees\verification-guided-project-capture-v1`
+
+Dependency and merge order:
+
+1. `assessment-package-model-v1`
+2. `guided-capture-workspace-v1`
+3. `customer-assessment-capture-v1`
+4. `assessment-to-estimate-handoff-v1`
+5. `verification-guided-project-capture-v1`
+
+Verification must run last after implementation stream commits exist.
+
+Shared guardrails:
+
+- Assessment Package context belongs to Projects, not Estimates.
+- Estimate consumes approved assessment context; it must not fork the assessment
+  or pricing model.
+- Portal remains a customer-safe input/review surface and must not own
+  operational state.
+- AI may assist review only; it may not autonomously approve, price, or mutate
+  workflow state.
+- Do not create schemas, migrations, duplicate project models, duplicate task
+  models, duplicate estimate models, or provider behavior in this wave unless a
+  later explicit approval changes scope.
+
 ## Project Next Actions Retirement
 
 Retirement date: 2026-06-07.

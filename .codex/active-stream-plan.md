@@ -28,6 +28,133 @@ Wave-launch prompts must also require `pnpm.cmd worktree:doctor` and use
 for local tooling, Playwright, optional CLI, worktree-link, and validation
 guidance.
 
+## Guided Project Capture V1 Gate
+
+Gate date: 2026-06-08.
+
+Wave name: `guided-project-capture-v1`.
+
+Architecture Coordination approval: Approved.
+
+Jeff approval gate: Approved. Jeff explicitly approved stream/worktree creation
+for `guided-project-capture-v1`.
+
+Review packets:
+
+- [docs/review-packets/next-portfolio-recommendation-v5.md](C:/FloorConnector/docs/review-packets/next-portfolio-recommendation-v5.md)
+- [docs/review-packets/guided-project-capture-v1-plan.md](C:/FloorConnector/docs/review-packets/guided-project-capture-v1-plan.md)
+
+Wave status: Approved / Not Started. Branches and worktrees were created from
+the verified current `main` approval baseline, but implementation has not
+started. A later explicit start command is still required before any feature,
+verification, schema, migration, provider, PR, merge, or cleanup work begins.
+
+Approved stream set:
+
+- `stream/assessment-package-model-v1`
+- `stream/guided-capture-workspace-v1`
+- `stream/customer-assessment-capture-v1`
+- `stream/assessment-to-estimate-handoff-v1`
+- `stream/verification-guided-project-capture-v1`
+
+Approved worktrees:
+
+- `C:\FC-worktrees\assessment-package-model-v1`
+- `C:\FC-worktrees\guided-capture-workspace-v1`
+- `C:\FC-worktrees\customer-assessment-capture-v1`
+- `C:\FC-worktrees\assessment-to-estimate-handoff-v1`
+- `C:\FC-worktrees\verification-guided-project-capture-v1`
+
+Required future startup checks:
+
+```powershell
+pnpm.cmd worktree:doctor
+pnpm.cmd tooling:baseline -CommandsOnly
+```
+
+Implementation streams should also run focused tests for changed helpers,
+read-models, route surfaces, ownership links, project assessment context,
+portal-safe customer input, or estimator handoff behavior, then:
+
+```powershell
+pnpm.cmd --filter @floorconnector/web typecheck
+pnpm.cmd --filter @floorconnector/web lint
+pnpm.cmd fc:preflight:fast
+git diff --check
+git diff --cached --check
+```
+
+Merge order:
+
+1. `assessment-package-model-v1`
+2. `guided-capture-workspace-v1`
+3. `customer-assessment-capture-v1`
+4. `assessment-to-estimate-handoff-v1`
+5. `verification-guided-project-capture-v1`
+
+Verification must run last after implementation stream commits exist.
+
+### assessment-package-model-v1
+
+- Branch: `stream/assessment-package-model-v1`
+- Worktree: `C:\FC-worktrees\assessment-package-model-v1`
+- Owns: Project-owned assessment package concept and read-model foundation.
+- Mission: define and surface Assessment Package as project-owned context using
+  existing records where possible.
+- Forbidden: new persisted package table unless separately approved, schema
+  changes, migrations, duplicate project model, and duplicate estimate model.
+- Suggested commit: `feat: add assessment package foundation`
+- Status: Approved / Not Started.
+
+### guided-capture-workspace-v1
+
+- Branch: `stream/guided-capture-workspace-v1`
+- Worktree: `C:\FC-worktrees\guided-capture-workspace-v1`
+- Owns: Internal guided capture workspace.
+- Mission: help internal users collect and review project assessment context
+  before estimating.
+- Forbidden: autonomous AI approval, new workflow engine, duplicate task model,
+  schema changes, and migrations.
+- Suggested commit: `feat: add guided capture workspace`
+- Status: Approved / Not Started.
+
+### customer-assessment-capture-v1
+
+- Branch: `stream/customer-assessment-capture-v1`
+- Worktree: `C:\FC-worktrees\customer-assessment-capture-v1`
+- Owns: Customer-safe assessment input.
+- Mission: clarify requested or reviewed information, photos, and input without
+  making Portal the source of operational truth.
+- Forbidden: portal-owned operational state, autonomous customer approval,
+  direct estimate mutation, schema changes, and migrations.
+- Suggested commit: `feat: add customer assessment capture`
+- Status: Approved / Not Started.
+
+### assessment-to-estimate-handoff-v1
+
+- Branch: `stream/assessment-to-estimate-handoff-v1`
+- Worktree: `C:\FC-worktrees\assessment-to-estimate-handoff-v1`
+- Owns: Estimator assessment handoff.
+- Mission: make approved assessment context usable for estimate creation and
+  review without duplicating Estimate.
+- Forbidden: auto-generation, pricing automation, duplicate estimate line
+  model, schema changes, and migrations.
+- Suggested commit: `feat: add assessment estimate handoff`
+- Status: Approved / Not Started.
+
+### verification-guided-project-capture-v1
+
+- Branch: `stream/verification-guided-project-capture-v1`
+- Worktree: `C:\FC-worktrees\verification-guided-project-capture-v1`
+- Owns: Guided Project Capture verification.
+- Mission: protect Project ownership of assessment context, Estimate
+  consumption of approved context, Portal customer safety, AI review-only
+  limits, duplicate-model prevention, and no schema/migration drift.
+- Forbidden: feature work, UI work, schema changes, migrations, and loosening
+  verification.
+- Suggested commit: `test: verify guided project capture boundaries`
+- Status: Approved / Not Started.
+
 ## Next Wave Recommendation
 
 Recommendation date: 2026-06-05.
