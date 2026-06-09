@@ -1,13 +1,14 @@
 # Guided Project Capture V1 Live Status
 
-Status: Live status packet
+Status: Merged / Pending Cleanup
 Doc Type: Review Packet
 Status date: 2026-06-08
 
 This packet records current local stream status for
-`guided-project-capture-v1`. It is status collection only. It does not merge
-anything, open PRs, start another wave, modify schemas or migrations, modify
-production code, or approve live review.
+`guided-project-capture-v1`. The approved streams have merged to `main`; the
+completed worktrees and branches are retained pending explicit retirement
+approval. It does not open PRs, start another wave, modify schemas or
+migrations, or approve cleanup.
 
 ## Main Checkout
 
@@ -15,35 +16,31 @@ production code, or approve live review.
 - Branch: `main`
 - `git fetch origin`: complete
 - Main status: clean
-- Ahead / behind vs `origin/main`: `0 / 0`
-- Current main commit before this packet update: `9d5ec485`
+- Ahead / behind vs `origin/main`: `5 / 0` before this closeout docs update
+- Current main commit before this closeout packet update: `6cba7bda`
 
 ## Wave Status
 
-`guided-project-capture-v1` implementation and verification are locally
-complete across the approved stream set. Each stream worktree exists, is clean,
-and has been rebased onto current `origin/main`. The four implementation streams
-are `1 ahead / 0 behind`; the verification stream is `2 ahead / 0 behind`
-because it includes the rebased verification commit plus the verification-only
-evidence refresh. No stream is merged. No PRs are open from this status packet.
+`guided-project-capture-v1` implementation and verification are merged to
+`main` across the approved stream set. Each stream worktree still exists and is
+retained pending explicit cleanup approval. No PRs were opened from this status
+packet, and no next wave is approved by this merge.
 
-Verification is complete in
-`C:\FC-worktrees\verification-guided-project-capture-v1` as commit `4077a90d`
-with the requested boundary coverage refreshed against the current
-implementation heads for Project ownership, Estimate consumption, Portal
-customer safety, AI review-only behavior, duplicate-model prevention,
-schema/migration drift prevention, and no direct pricing or estimate-line
-generation.
+Verification is complete and merged to `main` as merge commit `6cba7bda`.
+Verification covered the requested boundaries for Project ownership, Estimate
+consumption, Portal customer safety, AI review-only behavior, duplicate-model
+prevention, schema/migration drift prevention, and no direct pricing or
+estimate-line generation.
 
 ## Stream Status Table
 
-| Stream                                   | Worktree exists | Branch                                          | Clean / dirty | Ahead / behind vs `origin/main` | Latest commit | Latest message                                     | Implementation complete | Verification complete          | Blockers |
-| ---------------------------------------- | --------------- | ----------------------------------------------- | ------------- | ------------------------------- | ------------- | -------------------------------------------------- | ----------------------- | ------------------------------ | -------- |
-| `assessment-package-model-v1`            | Yes             | `stream/assessment-package-model-v1`            | Clean         | `1 / 0`                         | `e40b7c3a`    | `feat: add assessment package model`               | Yes                     | Covered by verification stream | None     |
-| `guided-capture-workspace-v1`            | Yes             | `stream/guided-capture-workspace-v1`            | Clean         | `1 / 0`                         | `f42f4918`    | `feat: add guided capture workspace`               | Yes                     | Covered by verification stream | None     |
-| `customer-assessment-capture-v1`         | Yes             | `stream/customer-assessment-capture-v1`         | Clean         | `1 / 0`                         | `e7f31352`    | `feat: add customer assessment capture`            | Yes                     | Covered by verification stream | None     |
-| `assessment-to-estimate-handoff-v1`      | Yes             | `stream/assessment-to-estimate-handoff-v1`      | Clean         | `1 / 0`                         | `e94d726b`    | `feat: add assessment estimate handoff`            | Yes                     | Covered by verification stream | None     |
-| `verification-guided-project-capture-v1` | Yes             | `stream/verification-guided-project-capture-v1` | Clean         | `2 / 0`                         | `4077a90d`    | `test: update guided project capture verification` | Yes, verification-only  | Yes                            | None     |
+| Stream                                   | Worktree exists | Branch                                          | Clean / dirty | Stream head | Merge commit | Implementation complete | Verification complete          | Blockers |
+| ---------------------------------------- | --------------- | ----------------------------------------------- | ------------- | ----------- | ------------ | ----------------------- | ------------------------------ | -------- |
+| `assessment-package-model-v1`            | Yes             | `stream/assessment-package-model-v1`            | Clean         | `e40b7c3a`  | `7ca9d14a`   | Yes, merged             | Covered by verification stream | None     |
+| `guided-capture-workspace-v1`            | Yes             | `stream/guided-capture-workspace-v1`            | Clean         | `f42f4918`  | `ab7acd0b`   | Yes, merged             | Covered by verification stream | None     |
+| `customer-assessment-capture-v1`         | Yes             | `stream/customer-assessment-capture-v1`         | Clean         | `e7f31352`  | `d14c1854`   | Yes, merged             | Covered by verification stream | None     |
+| `assessment-to-estimate-handoff-v1`      | Yes             | `stream/assessment-to-estimate-handoff-v1`      | Clean         | `e94d726b`  | `73dfc3f2`   | Yes, merged             | Covered by verification stream | None     |
+| `verification-guided-project-capture-v1` | Yes             | `stream/verification-guided-project-capture-v1` | Clean         | `4077a90d`  | `6cba7bda`   | Yes, verification-only  | Yes, merged                    | None     |
 
 ## Implementation Completion Status
 
@@ -70,6 +67,16 @@ All four implementation streams have one focused commit and clean worktrees:
 | `customer-assessment-capture-v1`         | `e7f31352 feat: add customer assessment capture`            |
 | `assessment-to-estimate-handoff-v1`      | `e94d726b feat: add assessment estimate handoff`            |
 | `verification-guided-project-capture-v1` | `4077a90d test: update guided project capture verification` |
+
+## Merge Commits On Main
+
+| Stream                                   | Merge commit | Message                                              |
+| ---------------------------------------- | ------------ | ---------------------------------------------------- |
+| `assessment-package-model-v1`            | `7ca9d14a`   | `feat: merge assessment package model v1`            |
+| `guided-capture-workspace-v1`            | `ab7acd0b`   | `feat: merge guided capture workspace v1`            |
+| `customer-assessment-capture-v1`         | `d14c1854`   | `feat: merge customer assessment capture v1`         |
+| `assessment-to-estimate-handoff-v1`      | `73dfc3f2`   | `feat: merge assessment estimate handoff v1`         |
+| `verification-guided-project-capture-v1` | `6cba7bda`   | `test: merge verification guided project capture v1` |
 
 ## Files Changed By Stream
 
@@ -164,20 +171,34 @@ All validation below was rerun after rebasing the streams onto current
 - Required verification validation passed: `pnpm.cmd fc:preflight:fast`
 - Required verification validation passed: `git diff --check`
 
+## Post-Merge Validation
+
+After each merge, `pnpm.cmd --filter @floorconnector/web typecheck`,
+`pnpm.cmd --filter @floorconnector/web lint`, `pnpm.cmd fc:preflight:fast`, and
+`git diff --check` passed.
+
+Final targeted tests passed:
+
+- `lib/projects/assessment-package.test.ts`: 2 passed.
+- `lib/projects/guided-capture-workspace.test.ts`: 2 passed.
+- `lib/portal/assessment-capture.test.ts`: 2 passed.
+- `lib/estimates/assessment-handoff.test.ts`: 2 passed.
+- `lib/verification/guided-project-capture.test.ts`: 5 passed.
+- `lib/verification/operational-ownership.test.ts`: 4 passed.
+- `lib/verification/golden-workflow-checks.test.ts`: 5 passed.
+
+Final validation passed: typecheck, lint, `pnpm.cmd fc:preflight:fast`,
+`git diff --check`, and `git diff --cached --check`.
+
 ## Blockers
 
-No current blockers were found for controlled merge approval.
-
-Known governance caveat: the active registry docs still describe the wave as
-Approved / Not Started because registry lifecycle updates are intentionally
-deferred until Jeff approves merge and cleanup. Direct worktree inspection shows
-all five guided capture streams are complete, clean, current with `origin/main`,
-validated, and unmerged.
+No current blockers were found. Cleanup remains intentionally pending explicit
+approval.
 
 ## Verification Complete
 
-Yes. Verification is complete as commit `4077a90d` on
-`stream/verification-guided-project-capture-v1`.
+Yes. Verification is complete as stream commit `4077a90d` and merged to `main`
+as `6cba7bda`.
 
 Verification covered:
 
@@ -195,17 +216,8 @@ Verification covered:
 
 ## Next Recommended Action
 
-Ask Jeff to approve the controlled merge sequence next. The implementation and
-verification streams are rebased onto current `origin/main`, validated, clean,
-and ready to merge in the recommended order.
+Ask Jeff to approve the standard cleanup sequence next. The five streams are
+merged, validated, and retained pending explicit retirement approval.
 
-Recommended merge order remains:
-
-1. `assessment-package-model-v1`
-2. `guided-capture-workspace-v1`
-3. `customer-assessment-capture-v1`
-4. `assessment-to-estimate-handoff-v1`
-5. `verification-guided-project-capture-v1`
-
-Do not merge, open PRs, retire worktrees, start the next wave, or update
-implemented-truth docs until Jeff explicitly approves the next step.
+Do not open PRs, retire worktrees, start the next wave, or perform additional
+cleanup until Jeff explicitly approves the next step.

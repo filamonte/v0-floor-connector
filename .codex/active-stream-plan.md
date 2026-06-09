@@ -44,10 +44,10 @@ Review packets:
 - [docs/review-packets/next-portfolio-recommendation-v5.md](C:/FloorConnector/docs/review-packets/next-portfolio-recommendation-v5.md)
 - [docs/review-packets/guided-project-capture-v1-plan.md](C:/FloorConnector/docs/review-packets/guided-project-capture-v1-plan.md)
 
-Wave status: Approved / Not Started. Branches and worktrees were created from
-the verified current `main` approval baseline, but implementation has not
-started. A later explicit start command is still required before any feature,
-verification, schema, migration, provider, PR, merge, or cleanup work begins.
+Wave status: Merged to `main`; completed worktrees and branches are retained
+pending explicit retirement approval. This merge does not authorize
+schema/migration work, provider changes, PRs, cleanup, next-wave continuation,
+or autonomous actions.
 
 Approved stream set:
 
@@ -94,6 +94,20 @@ Merge order:
 
 Verification must run last after implementation stream commits exist.
 
+Merge result:
+
+- Assessment Package Model V1 merged to `main` as `7ca9d14a`.
+- Guided Capture Workspace V1 merged to `main` as `ab7acd0b`.
+- Customer Assessment Capture V1 merged to `main` as `d14c1854`.
+- Assessment To Estimate Handoff V1 merged to `main` as `73dfc3f2`.
+- Verification Guided Project Capture V1 merged to `main` as `6cba7bda`.
+
+Post-merge validation passed: focused assessment package, guided capture
+workspace, customer assessment capture, assessment-to-estimate handoff, guided
+project capture verification, operational ownership, and golden workflow tests;
+typecheck; lint; `pnpm.cmd fc:preflight:fast`; `git diff --check`; and
+`git diff --cached --check`.
+
 ### assessment-package-model-v1
 
 - Branch: `stream/assessment-package-model-v1`
@@ -104,7 +118,8 @@ Verification must run last after implementation stream commits exist.
 - Forbidden: new persisted package table unless separately approved, schema
   changes, migrations, duplicate project model, and duplicate estimate model.
 - Suggested commit: `feat: add assessment package foundation`
-- Status: Approved / Not Started.
+- Status: Merged to `main` as `7ca9d14a`; worktree and branch retained pending
+  explicit retirement approval.
 
 ### guided-capture-workspace-v1
 
@@ -116,7 +131,8 @@ Verification must run last after implementation stream commits exist.
 - Forbidden: autonomous AI approval, new workflow engine, duplicate task model,
   schema changes, and migrations.
 - Suggested commit: `feat: add guided capture workspace`
-- Status: Approved / Not Started.
+- Status: Merged to `main` as `ab7acd0b`; worktree and branch retained pending
+  explicit retirement approval.
 
 ### customer-assessment-capture-v1
 
@@ -128,7 +144,8 @@ Verification must run last after implementation stream commits exist.
 - Forbidden: portal-owned operational state, autonomous customer approval,
   direct estimate mutation, schema changes, and migrations.
 - Suggested commit: `feat: add customer assessment capture`
-- Status: Approved / Not Started.
+- Status: Merged to `main` as `d14c1854`; worktree and branch retained pending
+  explicit retirement approval.
 
 ### assessment-to-estimate-handoff-v1
 
@@ -140,7 +157,8 @@ Verification must run last after implementation stream commits exist.
 - Forbidden: auto-generation, pricing automation, duplicate estimate line
   model, schema changes, and migrations.
 - Suggested commit: `feat: add assessment estimate handoff`
-- Status: Approved / Not Started.
+- Status: Merged to `main` as `73dfc3f2`; worktree and branch retained pending
+  explicit retirement approval.
 
 ### verification-guided-project-capture-v1
 
@@ -153,7 +171,8 @@ Verification must run last after implementation stream commits exist.
 - Forbidden: feature work, UI work, schema changes, migrations, and loosening
   verification.
 - Suggested commit: `test: verify guided project capture boundaries`
-- Status: Approved / Not Started.
+- Status: Merged to `main` as `6cba7bda`; worktree and branch retained pending
+  explicit retirement approval.
 
 ## Next Wave Recommendation
 

@@ -119,25 +119,25 @@ context and Estimate as the consumer of approved context.
 
 Gate status:
 
-| Gate item                              | Status                 | Evidence / note                                                                                                 |
-| -------------------------------------- | ---------------------- | --------------------------------------------------------------------------------------------------------------- |
-| Architecture Coordination approval     | Approved               | Stream ownership, dependencies, non-goals, validation, verification, and merge order are recorded.              |
-| Jeff approval gate                     | Approved               | Jeff explicitly approved stream/worktree creation for `guided-project-capture-v1`.                              |
-| Stream creation                        | Complete               | Five branches and worktrees were created from the verified current `main` approval baseline.                    |
-| Implementation start                   | Not started            | A later explicit start command is still required before feature work begins.                                    |
-| Human review gate                      | Required before merge  | No stream may merge until implementation and verification evidence are reviewed.                                |
-| Autonomous merge / indefinite continue | Not allowed            | No PRs, schemas, migrations, provider work, next-wave continuation, or autonomous approval behavior is allowed. |
-| Verification                           | Approved / Not Started | Verification must run last after implementation stream commits exist.                                           |
+| Gate item                              | Status      | Evidence / note                                                                                                 |
+| -------------------------------------- | ----------- | --------------------------------------------------------------------------------------------------------------- |
+| Architecture Coordination approval     | Approved    | Stream ownership, dependencies, non-goals, validation, verification, and merge order are recorded.              |
+| Jeff approval gate                     | Satisfied   | Jeff explicitly approved controlled merge of `guided-project-capture-v1`.                                       |
+| Stream creation                        | Complete    | Five branches and worktrees were created from the verified current `main` approval baseline.                    |
+| Implementation start                   | Completed   | The approved implementation and verification slices landed on `main`.                                           |
+| Human review gate                      | Satisfied   | Jeff approved the controlled merge prompt; no PRs were opened.                                                  |
+| Autonomous merge / indefinite continue | Not allowed | No PRs, schemas, migrations, provider work, next-wave continuation, or autonomous approval behavior is allowed. |
+| Verification                           | Completed   | Verification landed last after implementation stream commits existed.                                           |
 
 Approved stream set:
 
-| Stream                                   | Ownership area                      | Mission                                                                                | Status                 |
-| ---------------------------------------- | ----------------------------------- | -------------------------------------------------------------------------------------- | ---------------------- |
-| `assessment-package-model-v1`            | Project-owned assessment context    | Define and surface Assessment Package context using existing canonical records.        | Approved / Not Started |
-| `guided-capture-workspace-v1`            | Internal guided capture workspace   | Help internal users collect and review project assessment context before estimating.   | Approved / Not Started |
-| `customer-assessment-capture-v1`         | Customer-safe assessment input      | Let customers clarify requested information without making Portal the source of truth. | Approved / Not Started |
-| `assessment-to-estimate-handoff-v1`      | Estimator assessment handoff        | Make approved assessment context usable for estimate creation and review.              | Approved / Not Started |
-| `verification-guided-project-capture-v1` | Guided Project Capture verification | Protect Project ownership, Estimate consumption, Portal safety, AI review-only limits. | Approved / Not Started |
+| Stream                                   | Ownership area                      | Mission                                                                                | Status |
+| ---------------------------------------- | ----------------------------------- | -------------------------------------------------------------------------------------- | ------ |
+| `assessment-package-model-v1`            | Project-owned assessment context    | Define and surface Assessment Package context using existing canonical records.        | Merged |
+| `guided-capture-workspace-v1`            | Internal guided capture workspace   | Help internal users collect and review project assessment context before estimating.   | Merged |
+| `customer-assessment-capture-v1`         | Customer-safe assessment input      | Let customers clarify requested information without making Portal the source of truth. | Merged |
+| `assessment-to-estimate-handoff-v1`      | Estimator assessment handoff        | Make approved assessment context usable for estimate creation and review.              | Merged |
+| `verification-guided-project-capture-v1` | Guided Project Capture verification | Protect Project ownership, Estimate consumption, Portal safety, AI review-only limits. | Merged |
 
 Approved stream branches:
 
@@ -164,6 +164,24 @@ Dependency and merge order:
 5. `verification-guided-project-capture-v1`
 
 Verification must run last after implementation stream commits exist.
+
+Merge result:
+
+- Assessment Package Model V1 merged to `main` as `7ca9d14a`.
+- Guided Capture Workspace V1 merged to `main` as `ab7acd0b`.
+- Customer Assessment Capture V1 merged to `main` as `d14c1854`.
+- Assessment To Estimate Handoff V1 merged to `main` as `73dfc3f2`.
+- Verification Guided Project Capture V1 merged to `main` as `6cba7bda`.
+
+Post-merge validation passed: focused assessment package, guided capture
+workspace, customer assessment capture, assessment-to-estimate handoff, guided
+project capture verification, operational ownership, and golden workflow tests;
+typecheck; lint; `pnpm.cmd fc:preflight:fast`; `git diff --check`; and
+`git diff --cached --check`.
+
+Wave status: Merged to `main`; completed wave worktrees and branches are
+retained pending explicit retirement approval. No next wave is approved by this
+merge.
 
 Shared guardrails:
 

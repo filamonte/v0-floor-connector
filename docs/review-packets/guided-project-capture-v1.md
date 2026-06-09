@@ -1,6 +1,6 @@
 # Guided Project Capture v1 Review Packet
 
-Status: Merge Readiness Review
+Status: Merged / Pending Cleanup
 Wave: `guided-project-capture-v1`
 Date: 2026-06-08
 
@@ -16,22 +16,20 @@ not add schema, migrations, routes, server actions, provider calls, autonomous
 AI behavior, estimate line generation, direct pricing, or duplicate business
 models.
 
-Direct worktree inspection after the current-main refresh shows all five
-streams are clean and their expected committed slices are present. The four
-implementation streams are current with `origin/main` and `1 ahead / 0 behind`.
-The verification stream is current with `origin/main` and `2 ahead / 0 behind`
-because it contains the rebased verification commit plus a verification-only
-evidence refresh for the updated implementation heads.
+Jeff approved the controlled merge. The streams landed on `main` in the
+recommended order, all post-merge validation passed, and completed worktrees and
+branches are retained pending explicit retirement approval. No next wave is
+approved by this merge.
 
 ## Streams Completed
 
-| Stream                                   | Branch                                          | Worktree                                                 | Status                                                                               |
-| ---------------------------------------- | ----------------------------------------------- | -------------------------------------------------------- | ------------------------------------------------------------------------------------ |
-| `assessment-package-model-v1`            | `stream/assessment-package-model-v1`            | `C:\FC-worktrees\assessment-package-model-v1`            | Complete, clean, ready after rebase                                                  |
-| `guided-capture-workspace-v1`            | `stream/guided-capture-workspace-v1`            | `C:\FC-worktrees\guided-capture-workspace-v1`            | Complete, clean, ready after rebase                                                  |
-| `customer-assessment-capture-v1`         | `stream/customer-assessment-capture-v1`         | `C:\FC-worktrees\customer-assessment-capture-v1`         | Complete, clean, ready after rebase                                                  |
-| `assessment-to-estimate-handoff-v1`      | `stream/assessment-to-estimate-handoff-v1`      | `C:\FC-worktrees\assessment-to-estimate-handoff-v1`      | Complete, clean, ready after rebase                                                  |
-| `verification-guided-project-capture-v1` | `stream/verification-guided-project-capture-v1` | `C:\FC-worktrees\verification-guided-project-capture-v1` | Complete, clean, ready after implementation streams merge and verification refreshes |
+| Stream                                   | Branch                                          | Worktree                                                 | Status                                                   |
+| ---------------------------------------- | ----------------------------------------------- | -------------------------------------------------------- | -------------------------------------------------------- |
+| `assessment-package-model-v1`            | `stream/assessment-package-model-v1`            | `C:\FC-worktrees\assessment-package-model-v1`            | Merged to `main` as `7ca9d14a`; retained pending cleanup |
+| `guided-capture-workspace-v1`            | `stream/guided-capture-workspace-v1`            | `C:\FC-worktrees\guided-capture-workspace-v1`            | Merged to `main` as `ab7acd0b`; retained pending cleanup |
+| `customer-assessment-capture-v1`         | `stream/customer-assessment-capture-v1`         | `C:\FC-worktrees\customer-assessment-capture-v1`         | Merged to `main` as `d14c1854`; retained pending cleanup |
+| `assessment-to-estimate-handoff-v1`      | `stream/assessment-to-estimate-handoff-v1`      | `C:\FC-worktrees\assessment-to-estimate-handoff-v1`      | Merged to `main` as `73dfc3f2`; retained pending cleanup |
+| `verification-guided-project-capture-v1` | `stream/verification-guided-project-capture-v1` | `C:\FC-worktrees\verification-guided-project-capture-v1` | Merged to `main` as `6cba7bda`; retained pending cleanup |
 
 ## Commits By Stream
 
@@ -42,6 +40,16 @@ evidence refresh for the updated implementation heads.
 | `customer-assessment-capture-v1`         | `e7f31352` | `feat: add customer assessment capture`            |
 | `assessment-to-estimate-handoff-v1`      | `e94d726b` | `feat: add assessment estimate handoff`            |
 | `verification-guided-project-capture-v1` | `4077a90d` | `test: update guided project capture verification` |
+
+## Merge Commits On Main
+
+| Stream                                   | Merge commit | Message                                              |
+| ---------------------------------------- | ------------ | ---------------------------------------------------- |
+| `assessment-package-model-v1`            | `7ca9d14a`   | `feat: merge assessment package model v1`            |
+| `guided-capture-workspace-v1`            | `ab7acd0b`   | `feat: merge guided capture workspace v1`            |
+| `customer-assessment-capture-v1`         | `d14c1854`   | `feat: merge customer assessment capture v1`         |
+| `assessment-to-estimate-handoff-v1`      | `73dfc3f2`   | `feat: merge assessment estimate handoff v1`         |
+| `verification-guided-project-capture-v1` | `6cba7bda`   | `test: merge verification guided project capture v1` |
 
 ## Files Changed By Stream
 
@@ -161,13 +169,38 @@ repo-local command set.
 | `assessment-to-estimate-handoff-v1`      | `e94d726b`   | `1 / 0`        | `lib/estimates/assessment-handoff.test.ts` passed, 2 tests                                                                 | Passed    | Passed | Passed                          | Passed             |
 | `verification-guided-project-capture-v1` | `4077a90d`   | `2 / 0`        | Guided capture verification passed, 5 tests; operational ownership passed, 4 tests; golden workflow checks passed, 5 tests | Passed    | Passed | Passed after formatting refresh | Passed             |
 
+### Controlled Merge Validation
+
+After each merge, the required validation passed:
+
+| Merge commit | Stream                                   | Typecheck | Lint   | `fc:preflight:fast` | `git diff --check` |
+| ------------ | ---------------------------------------- | --------- | ------ | ------------------- | ------------------ |
+| `7ca9d14a`   | `assessment-package-model-v1`            | Passed    | Passed | Passed              | Passed             |
+| `ab7acd0b`   | `guided-capture-workspace-v1`            | Passed    | Passed | Passed              | Passed             |
+| `d14c1854`   | `customer-assessment-capture-v1`         | Passed    | Passed | Passed              | Passed             |
+| `73dfc3f2`   | `assessment-to-estimate-handoff-v1`      | Passed    | Passed | Passed              | Passed             |
+| `6cba7bda`   | `verification-guided-project-capture-v1` | Passed    | Passed | Passed              | Passed             |
+
+Final targeted tests passed:
+
+- `lib/projects/assessment-package.test.ts`: 2 passed.
+- `lib/projects/guided-capture-workspace.test.ts`: 2 passed.
+- `lib/portal/assessment-capture.test.ts`: 2 passed.
+- `lib/estimates/assessment-handoff.test.ts`: 2 passed.
+- `lib/verification/guided-project-capture.test.ts`: 5 passed.
+- `lib/verification/operational-ownership.test.ts`: 4 passed.
+- `lib/verification/golden-workflow-checks.test.ts`: 5 passed.
+
+Final validation passed: typecheck, lint, `pnpm.cmd fc:preflight:fast`,
+`git diff --check`, and `git diff --cached --check`.
+
 No stream has schema or migration file changes after rebase. The reviewed file
 sets remain inside the expected project, portal, estimate, and verification
 helper/test boundaries.
 
 ## Governance Review
 
-- No merge performed.
+- Controlled merge completed under Jeff's explicit approval.
 - No PR opened.
 - No new wave started.
 - No feature work added from `main`.
@@ -175,8 +208,8 @@ helper/test boundaries.
 - No schemas or migrations modified.
 - All reviewed implementation files are helper/test additions inside expected
   project, portal, estimate, and verification library boundaries.
-- Active registry docs still require final merge/cleanup updates after Jeff
-  approval and controlled merge.
+- Active registry docs now record the merge; cleanup still requires explicit
+  approval.
 
 ## Ownership Review
 
@@ -263,21 +296,21 @@ Rationale:
 - Verification should land last after implementation commits have been rebased
   and refreshed.
 
-Current direct status after rebase and validation refresh:
+Controlled merge result:
 
-- implementation streams are clean and `1 ahead / 0 behind` versus
-  `origin/main`;
-- verification is clean and `2 ahead / 0 behind` versus `origin/main`;
-- the recommended merge order remains unchanged.
+- all five streams merged to `main` in the recommended order;
+- all post-merge validation and final targeted tests passed;
+- completed worktrees and branches are retained pending explicit cleanup
+  approval;
+- no next wave is approved by this merge.
 
 ## Risks And Follow-Ups
 
 - No current-main rebase caveat remains after the validation refresh.
 - Route/UI integration should remain explicit future scope where not already
   handled.
-- After controlled merge, update implemented-truth docs only for behavior that
-  actually lands on `main`.
-- Cleanup should retire the five wave worktrees and reconcile active registries.
+- Cleanup should retire the five wave worktrees and reconcile active registries
+  only after explicit approval.
 - Later waves should decide whether to continue with Workforce & Labor
   Visibility, Document Proof Closeout Package, or Communication Automation
   Readiness.
@@ -293,15 +326,18 @@ Top follow-on options after merge and cleanup:
 | `communication-automation-readiness-v1` | Prepares communications for safer reminder, follow-up, and provider-backed automation later.   |
 | `ai-assistant-review-layer-v1`          | Builds on deterministic review/assist boundaries after more operational evidence is connected. |
 
-Do not start a next wave until Guided Project Capture is merged and cleaned up.
+Do not start a next wave until Guided Project Capture cleanup is explicitly
+approved and completed.
 
 ## Jeff Decision Options
 
-- Approve merge: authorize the standard rebase, validation refresh, controlled
-  merge, and cleanup sequence.
-- Request correction: hold one or more streams for targeted fixes before merge.
-- Defer stream: merge a subset only if Jeff intentionally defers a stream after
-  dependency review.
-- Continue to next wave: only after approved merges and cleanup are complete.
+- Approve cleanup: authorize retirement of the five completed worktrees and
+  eligible branches.
+- Request correction: hold cleanup if any merge or validation evidence needs
+  review.
+- Defer cleanup: leave merged worktrees in place temporarily.
+- Continue to next wave: only after cleanup is explicitly approved and
+  completed.
 
-Jeff approval is not granted by this packet.
+Jeff approval for merge was granted by prompt and executed. Jeff approval for
+cleanup or next-wave continuation is not granted by this packet.
