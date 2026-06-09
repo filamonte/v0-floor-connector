@@ -51,12 +51,12 @@ Capability maturity advancement is the primary progress metric.
 
 ## Capability Index
 
-| Capability                  | Status  | Maturity            | Owning Program                         | Linked Waves                                                            | Linked Active Streams                                                                                                                             |
-| --------------------------- | ------- | ------------------- | -------------------------------------- | ----------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Assessment Intelligence     | Active  | Foundation, 5 / 100 | Program A: Assessment Intelligence     | `guided-project-capture-v1` merged; `assessment-foundation-a1` proposed | `assessment-package-model-v1`, `guided-capture-workspace-v1`, `customer-assessment-capture-v1`, `assessment-to-estimate-handoff-v1`, verification |
-| Operational Work Management | Planned | Foundation, 0 / 100 | Program B: Operational Work Management | None approved                                                           | None approved                                                                                                                                     |
-| Communications OS           | Planned | Foundation, 0 / 100 | Program C: Communications OS           | None approved                                                           | None approved                                                                                                                                     |
-| Field OS                    | Planned | Foundation, 0 / 100 | Program D: Field OS                    | None approved                                                           | None approved                                                                                                                                     |
+| Capability                  | Status  | Maturity            | Owning Program                         | Linked Waves                                                                    | Linked Active Streams                                                              |
+| --------------------------- | ------- | ------------------- | -------------------------------------- | ------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| Assessment Intelligence     | Active  | Foundation, 5 / 100 | Program A: Assessment Intelligence     | `guided-project-capture-v1` merged; `assessment-foundation-a1` Batch 1 approved | `assessment-package-depth-v1`, `area-space-model-v1`, prior guided capture streams |
+| Operational Work Management | Planned | Foundation, 0 / 100 | Program B: Operational Work Management | None approved                                                                   | None approved                                                                      |
+| Communications OS           | Planned | Foundation, 0 / 100 | Program C: Communications OS           | None approved                                                                   | None approved                                                                      |
+| Field OS                    | Planned | Foundation, 0 / 100 | Program D: Field OS                    | None approved                                                                   | None approved                                                                      |
 
 ## Assessment Intelligence
 
@@ -88,11 +88,15 @@ Linked active or recently merged Waves:
 
 - `guided-project-capture-v1`: merged to `main`; completed worktrees and
   branches are retained pending explicit retirement approval.
-- `assessment-foundation-a1`: proposed planning packet only; not approved for
-  stream creation, implementation, schema work, migrations, PRs, or merge.
+- `assessment-foundation-a1`: Batch 1 approved for
+  `assessment-package-depth-v1` and `area-space-model-v1` branch/worktree
+  creation only; not approved for implementation, schema work, migrations, PRs,
+  or merge.
 
-Linked active or recently merged Streams:
+Linked active, approved, or recently merged Streams:
 
+- `assessment-package-depth-v1`
+- `area-space-model-v1`
 - `assessment-package-model-v1`
 - `guided-capture-workspace-v1`
 - `customer-assessment-capture-v1`

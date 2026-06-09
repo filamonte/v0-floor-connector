@@ -56,12 +56,12 @@ center and less like disconnected modules.
 
 ## Program Portfolio
 
-| Program | Name                        | Health  | Current wave posture                                                                                  |
-| ------- | --------------------------- | ------- | ----------------------------------------------------------------------------------------------------- |
-| A       | Assessment Intelligence     | Active  | `guided-project-capture-v1` is merged; `assessment-foundation-a1` is proposed planning only.          |
-| B       | Operational Work Management | Planned | Future waves may cover workforce, labor visibility, work ownership, and accountability depth.         |
-| C       | Communications OS           | Planned | Future waves may cover unified communication, record-linked follow-up, provider delivery, and memory. |
-| D       | Field OS                    | Planned | Future waves may cover mobile execution, closeout proof, field packets, inspections, and field depth. |
+| Program | Name                        | Health  | Current wave posture                                                                                                                     |
+| ------- | --------------------------- | ------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| A       | Assessment Intelligence     | Active  | `assessment-foundation-a1` Batch 1 is approved for stream/worktree creation only; implementation still requires a separate start prompt. |
+| B       | Operational Work Management | Planned | Future waves may cover workforce, labor visibility, work ownership, and accountability depth.                                            |
+| C       | Communications OS           | Planned | Future waves may cover unified communication, record-linked follow-up, provider delivery, and memory.                                    |
+| D       | Field OS                    | Planned | Future waves may cover mobile execution, closeout proof, field packets, inspections, and field depth.                                    |
 
 Program health statuses are `Planned`, `Active`, `Blocked`, `Verification`,
 and `Complete`. Program status does not replace wave status or stream status.
@@ -86,7 +86,7 @@ Recommended next implementation areas:
 - Risk Detection
 - Estimate Handoff
 
-Proposed Wave A1:
+Approved Wave A1 execution preparation:
 
 - Wave id: `assessment-foundation-a1`
 - Program: Program A: Assessment Intelligence
@@ -97,16 +97,20 @@ Proposed Wave A1:
   flow into estimating without losing or recreating work.
 - Planning packet:
   [docs/review-packets/program-a-assessment-foundation-a1-plan.md](C:/FloorConnector/docs/review-packets/program-a-assessment-foundation-a1-plan.md)
-- Status: Proposed / Planning Only. No streams, branches, worktrees,
-  implementation, schema changes, migrations, PRs, or merges are approved.
+- Status: Batch 1 Approved / Not Started. `assessment-package-depth-v1` and
+  `area-space-model-v1` are approved for branch/worktree creation only. No
+  implementation, schema changes, migrations, PRs, provider behavior,
+  autonomous AI, portal-owned state, or merges are approved.
 
-Recommended Wave A1 stream names:
+Wave A1 stream plan:
 
-- `assessment-package-depth-v1`
-- `guided-project-capture-workflow-v1`
-- `area-space-model-v1`
-- `estimate-handoff-v1`
-- `verification-assessment-foundation-v1`
+| Stream                                  | Status                 | Role                                      | Merge priority |
+| --------------------------------------- | ---------------------- | ----------------------------------------- | -------------- |
+| `assessment-package-depth-v1`           | Approved / Not Started | Project-owned Assessment Package depth    | 1              |
+| `area-space-model-v1`                   | Approved / Not Started | Area, room, space, and measurement depth  | 2              |
+| `guided-project-capture-workflow-v1`    | Proposed               | Contractor capture workflow depth         | 3              |
+| `estimate-handoff-v1`                   | Proposed               | Assessment-to-estimate continuity         | 4              |
+| `verification-assessment-foundation-v1` | Proposed               | Wave A1 verification after implementation | 5              |
 
 Earlier requested labels `assessment-package-model-v1` and
 `guided-project-capture-v1` are not reused because they already identify a
@@ -121,10 +125,10 @@ Other candidate future wave or stream names may include:
 - `site-conditions-risk-detection-v1`
 - `estimate-handoff-depth-v1`
 
-These are preparation notes only. No candidate is approved by this registry
-until Product Council prioritization, Architecture Coordination approval,
-dependency review, active registry update, verification strategy, merge-order
-planning, and Jeff approval are recorded.
+The Batch 1 approval is limited to stream readiness and branch/worktree
+creation. The next Codex prompt must start implementation in
+`C:\FC-worktrees\assessment-package-depth-v1` before any app code, schema,
+migration, UI, server utility, or test implementation begins.
 
 ## Operational Capability Waves v1
 

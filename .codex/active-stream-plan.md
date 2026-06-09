@@ -207,6 +207,118 @@ stream set. This does not approve schema/migrations, provider/customer-facing
 actions, PRs, next-wave continuation, destructive cleanup, or work in
 dirty/out-of-scope worktrees.
 
+## Assessment Foundation A1 Gate
+
+Gate date: 2026-06-09.
+
+Wave name: `assessment-foundation-a1`.
+
+Capability: Assessment Intelligence.
+
+Program: Program A: Assessment Intelligence.
+
+Current capability maturity: 5 / 100.
+
+Target capability maturity after verified Wave A1 delivery: 20 / 100.
+
+Business outcome: structured site assessments and complete project context flow
+into estimating without losing or recreating work.
+
+Architecture Coordination approval: Approved for Batch 1 stream/worktree
+creation only.
+
+Jeff approval gate: Satisfied for Batch 1 stream/worktree creation by the
+explicit Wave A1 execution-preparation prompt.
+
+Review packet:
+
+- [docs/review-packets/program-a-assessment-foundation-a1-plan.md](C:/FloorConnector/docs/review-packets/program-a-assessment-foundation-a1-plan.md)
+
+Wave status: Batch 1 Approved / Not Started. This gate approves creating only
+the `assessment-package-depth-v1` and `area-space-model-v1` branches/worktrees.
+It does not approve implementation, schema/migration work, provider changes,
+PRs, cleanup, next-wave continuation, portal-owned state, autonomous AI, or
+merges.
+
+Approved Batch 1 stream set:
+
+- `stream/assessment-package-depth-v1`
+- `stream/area-space-model-v1`
+
+Approved Batch 1 worktrees:
+
+- `C:\FC-worktrees\assessment-package-depth-v1`
+- `C:\FC-worktrees\area-space-model-v1`
+
+Required startup checks for future implementation prompts:
+
+```powershell
+git status --short --branch
+git fetch origin
+git rev-list --left-right --count HEAD...origin/main
+pnpm.cmd worktree:doctor
+pnpm.cmd tooling:baseline -CommandsOnly
+```
+
+Implementation validation expectations after a later explicit start prompt:
+
+```powershell
+pnpm.cmd --filter @floorconnector/web typecheck
+pnpm.cmd --filter @floorconnector/web lint
+pnpm.cmd fc:preflight:fast
+git diff --check
+git diff --cached --check
+```
+
+Batch 1 merge order:
+
+1. `assessment-package-depth-v1`
+2. `area-space-model-v1`
+
+`assessment-package-depth-v1` should merge before `area-space-model-v1` unless
+Architecture Coordination records a narrower parallel implementation split.
+`area-space-model-v1` must not create detached area, room, measurement, surface,
+material, field, or estimate truth outside project-owned Assessment Packages.
+
+### assessment-package-depth-v1
+
+- Branch: `stream/assessment-package-depth-v1`
+- Worktree: `C:\FC-worktrees\assessment-package-depth-v1`
+- Owns: Project-owned Assessment Package depth foundation.
+- Mission: create the canonical Assessment Package foundation connected to
+  Project, with ownership rules, tenant isolation expectations, readiness
+  relationship to existing project workflow, and future expansion points for
+  photos, conditions, risks, guided capture, and estimate handoff.
+- Dependencies: existing `guided-project-capture-v1` assessment package
+  helpers, canonical Project/Opportunity/Customer/Estimate context, attachment
+  and document foundations, Work Items, communications, tenant membership, and
+  current Project Workspace patterns.
+- Forbidden before a later implementation prompt: app code, schemas,
+  migrations, server utilities, tests, UI, provider behavior, PRs, autonomous
+  AI, portal-owned state, and merge.
+- Suggested implementation-start commit after a later prompt:
+  `feat: add assessment package depth foundation`
+- Status: Approved / Not Started.
+
+### area-space-model-v1
+
+- Branch: `stream/area-space-model-v1`
+- Worktree: `C:\FC-worktrees\area-space-model-v1`
+- Owns: Area / Space Modeling beneath Assessment Packages.
+- Mission: define areas, rooms, spaces, measurement fields, surface type,
+  substrate, starter floor-condition fields, Assessment Package linkage, future
+  estimate handoff relationship, and tenant isolation expectations.
+- Dependencies: `assessment-package-depth-v1` ownership decisions, canonical
+  Project context, Assessment Package source-record boundaries, estimate
+  handoff constraints, attachment/document patterns, and future material/system
+  template boundaries.
+- Forbidden before a later implementation prompt: detached room or measurement
+  model, material pricing, takeoff automation, app code, schemas, migrations,
+  server utilities, tests, UI, provider behavior, PRs, autonomous AI, and merge.
+- Suggested implementation-start commit after a later prompt:
+  `feat: add area space model foundation`
+- Status: Approved / Not Started.
+
 ## Program A Execution Preparation
 
 Preparation date: 2026-06-09.
@@ -235,15 +347,14 @@ Candidate future stream or wave names may include
 `photo-capture-foundation-v1`,
 `site-conditions-risk-detection-v1`, and `estimate-handoff-depth-v1`.
 
-Proposed Wave A1: Assessment Foundation is documented in
+Wave A1: Assessment Foundation is documented in
 [docs/review-packets/program-a-assessment-foundation-a1-plan.md](C:/FloorConnector/docs/review-packets/program-a-assessment-foundation-a1-plan.md).
 It targets Assessment Intelligence maturity movement from 5 / 100 to 20 / 100
-after verified delivery. Recommended stream ids are
-`assessment-package-depth-v1`, `guided-project-capture-workflow-v1`,
-`area-space-model-v1`, `estimate-handoff-v1`, and
-`verification-assessment-foundation-v1`. These are planning-only names; no
-stream, branch, worktree, implementation, schema/migration work, PR, or merge is
-approved by this registry entry.
+after verified delivery. Batch 1 approves only
+`assessment-package-depth-v1` and `area-space-model-v1` for branch/worktree
+creation. Remaining Wave A1 stream ids are proposed only:
+`guided-project-capture-workflow-v1`, `estimate-handoff-v1`, and
+`verification-assessment-foundation-v1`.
 
 These names are preparation notes only. They do not authorize branches,
 worktrees, PRs, implementation, schema/migration work, provider actions, portal

@@ -1,6 +1,6 @@
 # Program A Assessment Foundation A1 Plan
 
-Status: Proposed / Planning Only
+Status: Batch 1 Approved / Not Started
 
 Doc Type: Review Packet / Program and Wave Plan
 
@@ -20,9 +20,11 @@ Business Outcome: structured site assessments and complete project context flow
 into estimating without losing or recreating work.
 
 This packet prepares Program A for execution under the governed
-Capability -> Program -> Wave -> Stream model. It does not approve application
-code, schema, migrations, implementation, branches, worktrees, PRs, provider
-behavior, portal-owned state, autonomous AI, or merge.
+Capability -> Program -> Wave -> Stream model. Batch 1 approves only
+`assessment-package-depth-v1` and `area-space-model-v1` for branch/worktree
+creation. It does not approve application code, schema, migrations,
+implementation, PRs, provider behavior, portal-owned state, autonomous AI, or
+merge.
 
 ## Program Plan
 
@@ -76,6 +78,31 @@ The recommended stream ids preserve the requested objectives while avoiding
 branch, worktree, and registry ambiguity.
 
 ## Stream Definitions
+
+## Batch 1 Governance Readiness
+
+Batch 1 streams may be created as branches and worktrees after this packet and
+the active registries are committed on `main`.
+
+No implementation may begin until a later explicit stream implementation prompt
+starts the specific stream from its approved worktree.
+
+| Gate item                            | `assessment-package-depth-v1`                                                                          | `area-space-model-v1`                                                                                  |
+| ------------------------------------ | ------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------ |
+| Capability linkage                   | Assessment Intelligence                                                                                | Assessment Intelligence                                                                                |
+| Owning Program                       | Program A                                                                                              | Program A                                                                                              |
+| Owning Wave                          | `assessment-foundation-a1`                                                                             | `assessment-foundation-a1`                                                                             |
+| Current maturity                     | 5 / 100                                                                                                | 5 / 100                                                                                                |
+| Expected maturity impact             | Enables Wave A1 movement toward 20 / 100 after verified delivery                                       | Enables Wave A1 movement toward 20 / 100 after verified delivery                                       |
+| Dependency review                    | Pass; builds on merged guided project capture foundation and existing canonical Project context        | Pass with sequencing caveat; must consume Assessment Package depth decisions                           |
+| Overlap risk review                  | Pass; owns package depth, not area/space detail, estimate handoff, or capture workflow                 | Pass with constraint; must not create detached room, material, field, or estimate truth                |
+| Merge order                          | 1                                                                                                      | 2                                                                                                      |
+| Test strategy                        | Targeted schema/type/server/read-model tests only after implementation approval                        | Targeted schema/type/server/read-model tests only after implementation approval                        |
+| Docs to update during implementation | Current-state only after merge; capability docs/review packet as evidence changes                      | Current-state only after merge; capability docs/review packet as evidence changes                      |
+| Worktree path                        | `C:\FC-worktrees\assessment-package-depth-v1`                                                          | `C:\FC-worktrees\area-space-model-v1`                                                                  |
+| Branch name                          | `stream/assessment-package-depth-v1`                                                                   | `stream/area-space-model-v1`                                                                           |
+| Validation commands                  | `pnpm.cmd worktree:doctor`; targeted tests; typecheck; lint; `pnpm.cmd fc:preflight:fast`; diff checks | `pnpm.cmd worktree:doctor`; targeted tests; typecheck; lint; `pnpm.cmd fc:preflight:fast`; diff checks |
+| Readiness status                     | Approved / Not Started                                                                                 | Approved / Not Started                                                                                 |
 
 ### assessment-package-depth-v1
 
@@ -195,16 +222,23 @@ the number of streams, branches, commits, PRs, or files changed.
 
 ## Recommended Worktree Structure
 
-Do not create these worktrees until Jeff explicitly approves Wave A1 stream
-creation.
+Batch 1 worktrees may be created after this packet and the active registries are
+committed on `main`. The remaining Wave A1 worktrees stay proposed.
 
 | Stream id                               | Branch                                         | Worktree                                                |
 | --------------------------------------- | ---------------------------------------------- | ------------------------------------------------------- |
 | `assessment-package-depth-v1`           | `stream/assessment-package-depth-v1`           | `C:\FC-worktrees\assessment-package-depth-v1`           |
-| `guided-project-capture-workflow-v1`    | `stream/guided-project-capture-workflow-v1`    | `C:\FC-worktrees\guided-project-capture-workflow-v1`    |
 | `area-space-model-v1`                   | `stream/area-space-model-v1`                   | `C:\FC-worktrees\area-space-model-v1`                   |
+| `guided-project-capture-workflow-v1`    | `stream/guided-project-capture-workflow-v1`    | `C:\FC-worktrees\guided-project-capture-workflow-v1`    |
 | `estimate-handoff-v1`                   | `stream/estimate-handoff-v1`                   | `C:\FC-worktrees\estimate-handoff-v1`                   |
 | `verification-assessment-foundation-v1` | `stream/verification-assessment-foundation-v1` | `C:\FC-worktrees\verification-assessment-foundation-v1` |
+
+Creation commands for Batch 1:
+
+```powershell
+pnpm.cmd worktree:create assessment-package-depth-v1
+pnpm.cmd worktree:create area-space-model-v1
+```
 
 ## Recommended Merge Order
 
