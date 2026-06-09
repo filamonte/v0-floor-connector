@@ -68,6 +68,10 @@ FloorConnector should unify the contractor revenue path so that:
 - public acquisition, contractor-owned website pages, intake, and qualification all feed one canonical workflow instead of separate marketing or CRM databases
 - future visual/product/finish selection can start before formal lead intake while still becoming part of the same canonical record chain later
 - future site data, plans, photos, and takeoff quantities can become reviewed estimate inputs instead of disconnected spreadsheet or drawing artifacts
+- Assessment Package becomes the first-class knowledge-capture bridge between
+  Opportunity and Estimate, supporting sales reps, inspectors, estimators,
+  owner review, future customer self-service, and future AI assistance without
+  becoming a parallel record silo
 - selected finish, system, product, and specification context follows the work from opportunity through closeout instead of staying trapped in a visualizer, catalog, estimate, or document silo
 - approved commercial scope flows into contracts and execution without being recreated
 - execution flows into billing without disconnecting from the original scope
@@ -98,6 +102,11 @@ estimates, change orders, scheduling, production planning, field handoff, job
 execution, invoicing, and customer communication. Guided Project Capture is not
 an estimating feature; it is a pre-estimate project-readiness stage. See
 [docs/guided-project-capture-vision.md](C:/FloorConnector/docs/guided-project-capture-vision.md).
+
+The target operating model now further clarifies that Opportunity and
+Assessment Package should carry pre-sale knowledge before Project exists, while
+Project remains the operational root after sold-work handoff. See
+[docs/product-operating-model.md](C:/FloorConnector/docs/product-operating-model.md).
 
 The current enterprise UX consolidation direction supports that thesis at the page level: People owns contact/access administration, Customer summarizes the account relationship, Project owns operational state, Estimate/Contract/Invoice own proposal/signature/billing review, and Portal keeps customer-facing review simple. See [docs/enterprise-ux-consolidation.md](C:/FloorConnector/docs/enterprise-ux-consolidation.md).
 
@@ -168,6 +177,10 @@ Beyond basic invoicing, FloorConnector is intended to support a fuller contracto
 - tax-aware billing
 - retainage handling
 - schedule-of-values and progress billing support
+- full AIA / progress billing maturity for commercial-contractor adoption,
+  including pay applications, continuation sheets, billing periods, approval
+  workflow, retainage release, document generation/export, and
+  accounting/reconciliation support
 - payment collection and reconciliation extensions
 - reporting that ties financial activity back to the same customer, project, and job chain
 

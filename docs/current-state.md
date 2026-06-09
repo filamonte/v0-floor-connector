@@ -13,6 +13,12 @@ Use [docs/developer-source-of-truth.md](C:/FloorConnector/docs/developer-source-
 
 Use [docs/document-map.md](C:/FloorConnector/docs/document-map.md) for
 documentation authority and navigation. Use
+[docs/product-operating-model.md](C:/FloorConnector/docs/product-operating-model.md)
+for target Product + UX operating-model direction and
+[docs/design-system-governance.md](C:/FloorConnector/docs/design-system-governance.md)
+for UX governance. Those docs do not replace this document for implemented
+truth.
+Use
 [docs/capability-registry.md](C:/FloorConnector/docs/capability-registry.md)
 for capability maturity and Capability -> Program -> Wave -> Stream progress;
 use [docs/capability-map.md](C:/FloorConnector/docs/capability-map.md) for
@@ -230,6 +236,11 @@ These high-value route notes exist to prevent target-vs-current drift:
   estimate generation, material takeoff, guided capture wizard behavior, portal
   contribution, detached room truth, duplicate project truth, duplicate
   estimate truth, or duplicate material/catalog truth.
+- Product operating-model direction now treats Assessment Package as
+  first-class pre-estimate knowledge capture between Opportunity and Estimate,
+  with target Project creation later in the sale-to-operations handoff. That
+  target direction is not fully implemented by this current Project-attached
+  Assessment Package foundation.
 - `/equipment` and `/equipment/:id` now exist as the equipment asset registry foundation. They create and edit tenant-scoped canonical equipment assets, and the first job equipment foundation now adds job equipment requirements, equipment-to-job assignments, and derived advisory readiness warnings. Maintenance, utilization, job costing, procurement/AP, portal exposure, warranty/service behavior, AI automation, autonomous rescheduling, and hard equipment readiness blocks remain future work.
 - `/service-tickets` and `/service-tickets/:id` now exist as the first internal service/warranty continuity foundation. They create, list, search, filter, update, and status-manage tenant-scoped service tickets tied to canonical customers, optional projects, and optional original jobs. Service ticket detail now shows linked punch-derived time and routes users to the shared `/time` composer with service/warranty context prefilled. This is not a detached helpdesk: same-company customer/project/job validation, RLS, and manager/admin/owner mutation policies keep the records on the canonical lifecycle. Portal service-ticket requests/status, outbound warranty sends, delivery proof, billing/manufacturer claims, job-costing mutation, equipment/material automation, and AI automation remain future work.
 - Service tickets can now create linked unscheduled service jobs on the canonical `jobs` table when a ticket has project context. These jobs carry optional `service_ticket_id`, appear on the existing Schedule and Job surfaces, and keep schedule, crew, equipment readiness, daily logs, and time clocking on the same job foundation instead of creating a service-only calendar.
@@ -2157,6 +2168,12 @@ Current design notes:
 - canonical invoices remain the financial source of truth; progress billing prepares or updates those invoices rather than replacing them
 - approved change orders append new immutable snapshot lineage; they do not rewrite the approved estimate snapshot or previously billed rows
 - percent complete, prior billed, current billed, retainage held, and retainage release still leave room for deeper pay-application and AIA export workflows later
+- full contractor-ready AIA / progress billing remains future maturity. Current
+  scaffolding includes SOV, retainage-aware invoice/payment continuity, and
+  progress-invoice foundations; it does not include formal AIA-style pay
+  applications, continuation sheets, billing periods, GC/architect approval
+  workflow, retainage release workflow, document generation/export, or
+  accounting/reconciliation maturity.
 
 ### Notifications And Communications
 

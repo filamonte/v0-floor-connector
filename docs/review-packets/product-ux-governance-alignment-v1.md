@@ -1,0 +1,94 @@
+# Product UX Governance Alignment V1 Review Packet
+
+Status: Active
+Doc Type: Review Packet
+
+## Stream
+
+- Stream: `product-ux-governance-alignment-v1`
+- Branch: `stream/product-ux-governance-alignment-v1`
+- Worktree: `C:\FC-worktrees\product-ux-governance-alignment-v1`
+- Type: docs-only Product + UX governance alignment
+- Lifecycle status: Active
+
+## Purpose
+
+Align active documentation around the target FloorConnector product operating
+model, design-system governance, and commercial-finance readiness posture
+without changing app code, schema, migrations, Supabase, routes, UI components,
+server actions, packages, tests, or runtime configuration.
+
+## Ownership Area
+
+Product / UX governance owns:
+
+- target operating model from lead through closeout
+- Assessment Package first-class knowledge-capture doctrine
+- pre-sale versus sold-work boundary
+- Project creation timing as target direction
+- payment schedule, Financial Readiness, and Production Readiness doctrine
+- AIA / progress billing posture as required future commercial-finance maturity
+- design-system governance, page type responsibilities, action hierarchy, and
+  color semantics
+
+## Dependencies
+
+- `docs/current-state.md` for implemented truth
+- `docs/workflows.md` and `docs/sales-to-production.md` for current and target
+  workflow framing
+- `docs/graphite-copper-ui-system.md` and `docs/ui-patterns.md` for existing
+  UI doctrine
+- `active-worktrees.md`, `active-waves.md`, and
+  `.codex/active-stream-plan.md` for stream registry truth
+
+## Explicit Non-Goals
+
+- no product feature implementation
+- no app code, route, component, server-action, package, test, or runtime-config
+  changes
+- no schema, migration, generated type, RLS, Supabase, or provider changes
+- no Stripe, payment, invoice math, signature, scheduling, portal, auth, or
+  tenant behavior changes
+- no Notion, Linear, Figma, Stitch, Supabase, Stripe, GitHub PR, or external
+  resource creation
+
+## Drift Review
+
+Findings:
+
+- Current implemented truth still has Project-attached Assessment Packages.
+  Target direction now wants Opportunity/Assessment to own more pre-sale work
+  before Project creation.
+- Existing docs mention deposit readiness heavily; the target model now frames
+  Financial Readiness around configurable contract payment schedules.
+- Existing docs mention SOV, retainage, and progress billing scaffolding, but
+  full AIA-style pay applications and export maturity remain future depth.
+- UI rules existed in `graphite-copper-ui-system.md` and `ui-patterns.md`, but
+  page type responsibilities and dashboard/workspace governance needed one
+  concise governance source.
+
+## Acceptance Criteria
+
+- New product operating model doc exists and distinguishes target direction
+  from current implementation.
+- New design-system governance doc exists and centralizes UX rules.
+- Existing active docs link to the new docs where relevant.
+- Current-state remains implemented truth and does not overclaim target-only
+  behavior.
+- AIA / progress billing is documented as required future maturity while
+  preserving canonical invoice/payment/SOV/retainage continuity.
+- Active stream registries record the docs-only stream.
+- Validation confirms docs formatting and no app/schema changes.
+
+## Validation Plan
+
+Run:
+
+```powershell
+pnpm.cmd exec prettier --write <changed markdown files>
+git diff --check
+git diff --cached --check
+pnpm.cmd worktree:doctor
+```
+
+Do not run app tests unless a later task broadens scope.

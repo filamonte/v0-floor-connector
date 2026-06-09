@@ -43,6 +43,18 @@ when a task mentions Guided Project Capture, Assessment Packages, project area
 capture, customer self-service estimate inputs, capture confidence, or future
 AI-assisted estimating inputs. It is target direction only.
 
+Use [docs/product-operating-model.md](C:/FloorConnector/docs/product-operating-model.md)
+when a task mentions target Lead -> Opportunity -> Assessment Package ->
+Estimate -> Contract -> Financial Readiness -> Project Creation -> Schedule ->
+Production Readiness workflow, Project creation timing, payment schedules, or
+AIA / progress billing posture. It is target direction unless current-state
+confirms implementation.
+
+Use [docs/design-system-governance.md](C:/FloorConnector/docs/design-system-governance.md)
+when a task mentions UX governance, page type responsibilities,
+dashboard-versus-workspace boundaries, status colors, Graphite/Copper usage, or
+beta-readiness UX consistency.
+
 Use [docs/contractor-success-platform.md](C:/FloorConnector/docs/contractor-success-platform.md)
 when a task mentions Specialty Contractor Success Platform, contractor maturity,
 Inbox Zero for Contractors, Google Workspace, Microsoft 365, email/domain
@@ -91,6 +103,25 @@ available for separate approval. Use
 Capability -> Program -> Wave -> Stream navigation. Program B Operational Work
 Management, Program C Communications OS, and Program D Field OS are Planned. No
 next wave is approved by the Program portfolio.
+
+Current Product + UX governance decision: the target workflow for a brand-new
+customer is Lead -> Opportunity -> Assessment Package -> Estimate -> Estimate
+Approval -> Contract -> Contract Signature -> Financial Readiness -> Project
+Creation -> Schedule -> Production Readiness -> Job Start -> Change Orders ->
+Completion -> Final Billing / Payment -> Warranty -> Review Request ->
+Closeout. A Project should not automatically exist for every lead or
+opportunity in the target model. Opportunity is the pre-sale commercial
+container; Assessment Package is first-class knowledge capture between
+Opportunity and Estimate; Project remains the operational root after the work
+becomes real enough to operate. Financial Readiness is calculated from contract
+payment schedule requirements, not hardcoded to deposit paid. Production
+Readiness includes scope, payment terms when required, materials, labor,
+tooling/equipment, schedule, and site blockers. Full AIA / progress billing is
+required future commercial-finance maturity and must extend the same canonical
+estimate/contract scope -> SOV -> progress invoice/pay application -> payment
+-> retainage chain rather than a separate AIA billing silo. UX consistency
+before beta is a product requirement, governed by the new design system
+governance doc.
 
 Program A planning note: Wave A1 `assessment-foundation-a1` is recorded in
 [docs/review-packets/program-a-assessment-foundation-a1-plan.md](C:/FloorConnector/docs/review-packets/program-a-assessment-foundation-a1-plan.md).
@@ -275,6 +306,8 @@ Read these before implementation or documentation work:
 - [docs/autonomous-run-governance.md](C:/FloorConnector/docs/autonomous-run-governance.md)
 - [docs/ai-diagnostics.md](C:/FloorConnector/docs/ai-diagnostics.md)
 - [docs/document-map.md](C:/FloorConnector/docs/document-map.md)
+- [docs/product-operating-model.md](C:/FloorConnector/docs/product-operating-model.md)
+- [docs/design-system-governance.md](C:/FloorConnector/docs/design-system-governance.md)
 - [docs/developer-source-of-truth.md](C:/FloorConnector/docs/developer-source-of-truth.md)
 - [docs/current-state.md](C:/FloorConnector/docs/current-state.md)
 - [docs/capability-registry.md](C:/FloorConnector/docs/capability-registry.md)

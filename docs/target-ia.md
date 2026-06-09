@@ -10,6 +10,8 @@ This document defines the **target information architecture** for the contractor
 It is intended to guide future navigation, workspace structure, and route decisions without forcing an immediate refactor of the current application. It should be read alongside:
 
 - [docs/current-state.md](C:/FloorConnector/docs/current-state.md): source of truth for what is implemented today
+- [docs/product-operating-model.md](C:/FloorConnector/docs/product-operating-model.md): target operating model for pre-sale, sold-work, readiness, and closeout
+- [docs/design-system-governance.md](C:/FloorConnector/docs/design-system-governance.md): UX governance and page type responsibilities
 - [docs/Architecture.md](C:/FloorConnector/docs/Architecture.md): target platform architecture
 - [docs/Roadmap.md](C:/FloorConnector/docs/Roadmap.md): platform maturity roadmap
 - [docs/sales-to-production.md](C:/FloorConnector/docs/sales-to-production.md): target sales and commercial workflow direction
@@ -37,6 +39,11 @@ This document exists to answer:
 Projects should become the main workspace for work delivery. Operational records such as estimates, jobs, files, daily execution, and invoices should feel connected to the project rather than like isolated modules.
 
 That also means project detail should be the primary workflow and readiness hub in page-structure terms, while related record pages support that hub rather than competing with it as parallel workflow homes.
+
+Product operating-model alignment clarifies the target boundary: Opportunity
+and Assessment Package should own more pre-sale work before Project exists.
+Project remains the operational root after sale, contract progression, or other
+approved handoff point where work becomes real enough to operate.
 
 ### 2. Customers Are Relationship Roots, Not Execution Roots
 
@@ -215,12 +222,19 @@ This area should include:
 - global estimate list and approval queues
 - invoices
 - payments
-- retainage and AIA billing later
+- payment schedules, financial readiness, retainage, and AIA / progress billing
+  later
 - change-order financial effects later
 - reporting and collections views later
 - payment-request delivery history later
 
 Financials is where users work across many projects at once, especially for accounting, approvals, and collections.
+
+Financials must support residential terms, commercial net terms, milestone
+billing, and future AIA / progress billing without becoming a separate billing
+product world. Future AIA support should extend canonical estimate/contract
+scope, SOV, invoices, payments, and retainage rather than creating a detached
+pay-application system.
 
 ## People
 

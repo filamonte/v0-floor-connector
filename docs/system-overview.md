@@ -34,6 +34,17 @@ That is the core product idea: one connected contractor workflow, not a collecti
 
 `public acquisition -> opportunity -> customer -> project -> estimate -> contract -> payment -> scheduling -> execution -> follow-up`
 
+Product operating-model alignment refines the target path for brand-new
+customer work:
+
+`Lead -> Opportunity -> Assessment Package -> Estimate -> Estimate Approval -> Contract -> Contract Signature -> Financial Readiness -> Project Creation -> Schedule -> Production Readiness -> Job Start -> Change Orders -> Completion -> Final Billing / Payment -> Warranty -> Review Request -> Closeout`
+
+That sequence is target direction, not an implemented-status claim. The current
+branch still uses the canonical lifecycle and current-state truth documented in
+[docs/current-state.md](C:/FloorConnector/docs/current-state.md). See
+[docs/product-operating-model.md](C:/FloorConnector/docs/product-operating-model.md)
+for the product governance model.
+
 ## Feature Coverage Direction
 
 FloorConnector's implemented backbone already covers the core canonical chain from opportunity through payment, with workforce, field, portal, settings, super-admin, deterministic cues, and import/export foundations around it. The next product direction is not to copy Contractor Foreman feature-for-feature, but to cover serious contractor operating needs and then go deeper for specialty flooring and surface contractors.
@@ -55,6 +66,13 @@ prep requirements, product preferences, visualizer selections, financing
 interest, customer goals, AI observations, and confidence scores. It is not an
 estimate and must not be described as implemented until current-state records an
 implemented slice.
+
+Assessment Package should be treated as first-class knowledge capture, not a
+helper feature. The target model lets Opportunity and Assessment Package carry
+pre-sale context before Project exists, then uses Project as the operational
+root after the work is real enough to operate. Existing Project-attached
+Assessment Package scaffolding remains implemented truth where current-state
+records it.
 
 Another planned layer is Universal Capture + Assistant Action: an operating
 surface for capturing callbacks, reminders, follow-ups, site-visit intent,
@@ -476,6 +494,10 @@ These are still later layers:
 - broader billing-center style self-service
 - deeper reconciliation and retry tooling
 - broader accounting integrations
+- full AIA / progress billing maturity: pay applications, continuation sheets,
+  billing periods, GC/architect/owner approval workflow, retainage release,
+  document generation/export, and accounting/reconciliation support over the
+  same canonical financial chain
 
 #### Deeper E-Sign Features
 
@@ -532,6 +554,11 @@ The next layers should follow the current roadmap direction in a disciplined ord
 - strengthen project as the operational hub
 - tighten readiness, blockers, and next-best-action guidance
 - keep reducing page-to-page friction
+- align the product operating model so Opportunity and Assessment Package own
+  more pre-sale work before Project creation where future implementation
+  supports it
+- replace deposit-only readiness assumptions with payment-schedule based
+  Financial Readiness and broader Production Readiness
 
 2. Scheduling and dispatch depth
 

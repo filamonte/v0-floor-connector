@@ -90,6 +90,7 @@ Core:
 - docs/document-map.md
 - docs/developer-source-of-truth.md
 - docs/current-state.md
+- docs/product-operating-model.md
 - docs/capability-registry.md
 - docs/capability-map.md
 - docs/platform-maturity.md
@@ -103,6 +104,8 @@ Core:
 
 UI:
 
+- docs/design-system-governance.md
+- docs/graphite-copper-ui-system.md
 - docs/ui-system.md
 - docs/floorconnector-ui-build-rules.md
 - docs/v0-ui-cleanup-brief-header-project-estimate.md
@@ -154,6 +157,8 @@ Execution:
   current-state truth, approve waves, or create streams.
 - Treat [docs/automation-tooling-baseline.md](C:/FloorConnector/docs/automation-tooling-baseline.md) as the local automation/tooling baseline before launching or validating governed waves. Run `pnpm.cmd worktree:doctor` before stream work and prefer repo-local commands over global PATH tools.
 - Treat [docs/operational-architecture-v1.md](C:/FloorConnector/docs/operational-architecture-v1.md) as the governing Operational Command Center architecture principle: future work must make FloorConnector feel more like one connected operating command center and less like disconnected modules.
+- Treat [docs/product-operating-model.md](C:/FloorConnector/docs/product-operating-model.md) as the target Product + UX operating model for pre-sale to closeout flow. It records the target Lead -> Opportunity -> Assessment Package -> Estimate -> Contract -> Financial Readiness -> Project Creation -> Schedule -> Production Readiness path, but it does not override [docs/current-state.md](C:/FloorConnector/docs/current-state.md) for implemented truth.
+- Treat [docs/design-system-governance.md](C:/FloorConnector/docs/design-system-governance.md) as the UX governance source for page type responsibilities, dashboard/workspace boundaries, action hierarchy, color semantics, mobile-first assessment capture, and Graphite/Copper consistency.
 - Treat FloorConnector automation readiness as Ready With Human Review Gate:
   agents may plan, build scoped slices, validate, prepare review packets, and
   recommend merge order only after the wave proposal gate is complete. Agents
@@ -378,6 +383,13 @@ Important workflow rules:
 - appointments should stay as canonical visit and meeting records linked to the same opportunity/customer/project chain; do not turn them into duplicate jobs or a second dispatch model
 - punchlists should stay on the canonical project/job execution chain; do not overload daily-log narrative records with durable closeout work, and do not invent a separate field-quality subsystem
 - progress billing should stay on the canonical approved-estimate -> schedule-of-values -> invoice chain; do not invent a detached pay-app subsystem, spreadsheet shadow model, or invoice-replacement billing record
+- AIA / progress billing is required future commercial-finance maturity for
+  real contractor adoption, especially commercial contractors. Current
+  Schedule of Values, retainage, invoice, and payment foundations are
+  scaffolding only unless current-state confirms fuller maturity. Future AIA
+  pay applications must extend the canonical estimate/contract scope -> SOV ->
+  progress invoice/pay application -> payment -> retainage chain rather than
+  creating an AIA-only billing silo.
 - estimate line items are the only authoritative estimate item-row source; do not write new behavior against `estimates.content.itemRows`
 - every `invoice_line_items` row must use one `lineage_type`
 - every `schedule_of_value_items` row must use one `lineage_type`

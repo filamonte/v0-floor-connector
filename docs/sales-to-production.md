@@ -13,6 +13,8 @@ It complements:
 - [docs/workflows.md](C:/FloorConnector/docs/workflows.md): implemented and near-term workflow direction
 - [docs/workflow-spec.md](C:/FloorConnector/docs/workflow-spec.md): primary guided contractor path
 - [docs/documentation-governance.md](C:/FloorConnector/docs/documentation-governance.md): documentation maintenance and archival rules
+- [docs/product-operating-model.md](C:/FloorConnector/docs/product-operating-model.md): official target operating model
+- [docs/design-system-governance.md](C:/FloorConnector/docs/design-system-governance.md): UX governance for command-center and workspace responsibilities
 - [docs/guided-project-capture-vision.md](C:/FloorConnector/docs/guided-project-capture-vision.md): future pre-estimate capture and Assessment Package strategy
 - [docs/contractor-success-platform.md](C:/FloorConnector/docs/contractor-success-platform.md): future Specialty Contractor Success Platform strategy
 
@@ -53,6 +55,13 @@ information into a project-owned Assessment Package before pricing begins. The
 Assessment Package belongs to the Project, not to the Estimate, and should be
 reused downstream instead of re-entered.
 
+Product operating-model alignment now refines this target: Opportunity should
+own more pre-sale work before a Project exists, Assessment Package is the
+first-class knowledge-capture layer between Opportunity and Estimate, and
+Project should be created only when the work becomes real enough to operate.
+The current implementation may still attach Assessment Packages to Projects;
+that is implemented truth, while Opportunity-first capture is target direction.
+
 ### 2. Project As Operational Root
 
 Once work becomes real enough to deliver, the project should become the operational home for:
@@ -87,6 +96,9 @@ Financial readiness may include:
 - financing qualification or approval
 - internal commercial approval
 - readiness-to-schedule checks
+- contract payment-schedule requirements such as net 30, due on completion,
+  50/50, one-third at contract / mobilization / completion, deposit before
+  scheduling, milestone billing, or future AIA / progress billing
 
 The point is not simply whether an invoice exists. The point is whether sold work is truly ready to move into operations.
 
@@ -384,10 +396,17 @@ After contract completion, the work may require:
 - deposit collection
 - financing approval
 - internal green-light checks
+- payment-schedule satisfaction for the next operational move
 
 This is the stage that determines whether work is actually ready for production scheduling.
 
 If deposit readiness is required, deposit invoicing and payment collection should use the existing canonical invoice/payment chain with the `deposit` workflow role. If deposits are not required, signature completion can allow the project to proceed toward scheduling readiness.
+
+Financial Readiness should not be hardcoded to "deposit paid." It should be
+calculated from the contract's payment requirements and canonical
+invoice/payment evidence. Danek-style examples include no money due until net
+30, due on completion, 50/50, deposit before scheduling, milestone billing, and
+future AIA / progress billing for commercial work.
 
 ### 9. Scheduling And Production Readiness
 
@@ -400,6 +419,11 @@ Once work is commercially and financially ready, operations should be able to:
 - invite an approved partner contractor for execution support only through
   explicit project/job-scoped collaboration after readiness, permissions, and
   compliance checks are satisfied
+
+Production Readiness should represent operational readiness before job start:
+agreed scope, required payment terms satisfied when required before production,
+materials ordered or available, labor available, tooling/equipment available,
+schedule readiness, and known site conditions or blockers.
 
 Target appointment scheduling from lead/opportunity:
 
@@ -438,7 +462,15 @@ This stage should support:
 - payment recording
 - balance tracking
 - retainage-aware and future progress-billing-aware financial behavior
+- commercial net terms, milestone billing, and future AIA-style progress
+  billing / pay applications
 - closeout evidence, selected finish/spec references, warranty context, and payment-request delivery proof tied back to canonical records
+
+Future AIA / progress billing is required commercial-contractor maturity, not a
+nice-to-have. It must extend estimate / contract scope -> Schedule of Values ->
+pay application / progress invoice -> payment -> retainage tracking / release.
+It must not create a separate AIA-only billing module or bypass canonical
+invoices and payments.
 
 ## Future Agentic Operations Extension
 

@@ -43,6 +43,56 @@ Wave-launch prompts must also require `pnpm.cmd worktree:doctor` and use
 for local tooling, Playwright, optional CLI, worktree-link, and validation
 guidance.
 
+## Product UX Governance Alignment V1 Gate
+
+Gate date: 2026-06-09.
+
+Wave name: `product-ux-governance-alignment-v1`.
+
+Architecture Coordination approval: Approved for docs-only product and UX
+governance alignment.
+
+Jeff approval gate: Satisfied by the explicit instruction to run this as the
+first alignment pass.
+
+Review packet:
+
+- [docs/review-packets/product-ux-governance-alignment-v1.md](C:/FloorConnector/docs/review-packets/product-ux-governance-alignment-v1.md)
+
+Wave status: Active docs-only alignment. No implementation, schema,
+migrations, Supabase work, provider behavior, route/UI component changes,
+tests, runtime config, external tool/resource creation, PR, merge, or cleanup is
+approved by this gate.
+
+Approved stream:
+
+- `stream/product-ux-governance-alignment-v1`
+
+Approved worktree:
+
+- `C:\FC-worktrees\product-ux-governance-alignment-v1`
+
+Ownership:
+
+- Product operating model from Lead through Closeout.
+- Design-system governance and UX consistency before beta.
+- Target Assessment Package, Project creation timing, payment schedule,
+  Financial Readiness, Production Readiness, and future AIA/progress billing
+  doctrine.
+
+### product-ux-governance-alignment-v1
+
+- Branch: `stream/product-ux-governance-alignment-v1`
+- Worktree: `C:\FC-worktrees\product-ux-governance-alignment-v1`
+- Owns: docs-only Product + UX governance alignment.
+- Mission: align active docs to the target operating model and UX governance
+  source while preserving current-state implemented truth.
+- Forbidden: app code, schema, migrations, Supabase, business logic, routes, UI
+  components, server actions, packages, tests, runtime config, provider
+  behavior, external resources, PRs, implementation waves, and cleanup.
+- Suggested commit: `docs: align product operating model and ux governance`
+- Status: Active.
+
 ## Guided Project Capture V1 Gate
 
 Gate date: 2026-06-08.
