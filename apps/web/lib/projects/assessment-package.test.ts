@@ -1,7 +1,13 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { deriveProjectAssessmentPackageSummary } from "./assessment-package";
+import {
+  assertAssessmentPackageProjectScope,
+  buildAssessmentPackageCreateRecord,
+  canTransitionAssessmentPackageStatus,
+  deriveAssessmentPackageProjectSummary,
+  deriveProjectAssessmentPackageSummary
+} from "./assessment-package";
 
 void test("deriveProjectAssessmentPackageSummary keeps assessment package owned by project context", () => {
   const summary = deriveProjectAssessmentPackageSummary({
@@ -112,4 +118,123 @@ void test("deriveProjectAssessmentPackageSummary reports missing context without
     /No project assessment photos are linked/
   );
   assert.doesNotMatch(JSON.stringify(summary), /assessment_package_id/i);
+});
+
+void test("canTransitionAssessmentPackageStatus allows estimator handoff path and blocks invalid jumps", () => {
+  assert.equal(
+    canTransitionAssessmentPackageStatus("draft", "in_progress"),
+    true
+  );
+  assert.equal(
+    canTransitionAssessmentPackageStatus("in_progress", "ready_for_estimate"),
+    true
+  );
+  assert.equal(
+    canTransitionAssessmentPackageStatus("ready_for_estimate", "draft"),
+    false
+  );
+  assert.equal(
+    canTransitionAssessmentPackageStatus("archived", "ready_for_estimate"),
+    false
+  );
+});
+
+void test("deriveAssessmentPackageProjectSummary keeps persisted packages project-owned", () => {
+  const summary = deriveAssessmentPackageProjectSummary({
+    projectId: "project-1",
+    packages: [
+      {
+        id: "assessment-package-1",
+        organizationId: "org-1",
+        projectId: "project-1",
+        status: "ready_for_estimate",
+        title: "Garage assessment package",
+        assessmentDate: "2026-06-09",
+        siteContactName: "Taylor Customer",
+        siteContactPhone: "555-0100",
+        accessNotes: "Gate code is available from the customer.",
+        parkingNotes: "Park in driveway.",
+        siteNotes: "Garage is clear.",
+        customerGoals: "Durable flake floor.",
+        currentConditionsSummary: "Minor cracks at threshold.",
+        recommendedSystemSummary: "Moisture test before flake system.",
+        riskSummary: "Threshold prep risk.",
+        estimateHandoffSummary: "Estimator should include crack repair.",
+        createdByUserId: "user-1",
+        updatedByUserId: "user-1",
+        createdAt: "2026-06-09T10:00:00.000Z",
+        updatedAt: "2026-06-09T11:00:00.000Z"
+      }
+    ]
+  });
+
+  assert.equal(summary.total, 1);
+  assert.equal(summary.activeCount, 1);
+  assert.equal(summary.readyForEstimateCount, 1);
+  assert.equal(
+    summary.primaryHref,
+    "/projects/project-1/assessment-packages/assessment-package-1"
+  );
+  assert.match(summary.statusDetail, /Estimator should include crack repair/);
+  assert.doesNotMatch(
+    JSON.stringify(summary.latestPackage),
+    /customerId|estimateId|jobId|materialId|workflowId/
+  );
+});
+
+void test("buildAssessmentPackageCreateRecord scopes creation to active tenant project and user", () => {
+  const record = buildAssessmentPackageCreateRecord({
+    organizationId: "org-active",
+    projectId: "project-active",
+    userId: "user-active",
+    title: "Assessment package",
+    assessmentDate: null
+  });
+
+  assert.deepEqual(record, {
+    company_id: "org-active",
+    project_id: "project-active",
+    status: "draft",
+    title: "Assessment package",
+    assessment_date: null,
+    created_by: "user-active",
+    updated_by: "user-active"
+  });
+  assert.doesNotMatch(
+    JSON.stringify(record),
+    /customer_id|estimate_id|job_id|field_id|material_id|workflow_id/
+  );
+});
+
+void test("assertAssessmentPackageProjectScope rejects cross-project or cross-tenant packages", () => {
+  const assessmentPackage = {
+    organizationId: "org-1",
+    projectId: "project-1"
+  };
+
+  assert.doesNotThrow(() =>
+    assertAssessmentPackageProjectScope({
+      assessmentPackage,
+      organizationId: "org-1",
+      projectId: "project-1"
+    })
+  );
+  assert.throws(
+    () =>
+      assertAssessmentPackageProjectScope({
+        assessmentPackage,
+        organizationId: "org-2",
+        projectId: "project-1"
+      }),
+    /organization/
+  );
+  assert.throws(
+    () =>
+      assertAssessmentPackageProjectScope({
+        assessmentPackage,
+        organizationId: "org-1",
+        projectId: "project-2"
+      }),
+    /project/
+  );
 });

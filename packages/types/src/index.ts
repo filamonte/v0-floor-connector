@@ -87,6 +87,7 @@ export type PortalRecordViewId = string;
 export type OpportunityMeasurementId = string;
 export type OpportunityAttachmentId = string;
 export type OpportunityObservationId = string;
+export type AssessmentPackageId = string;
 
 export type MembershipRole = "owner" | "admin" | "manager" | "member";
 export type ContactKind =
@@ -152,6 +153,11 @@ export type GateKeeperSubjectType =
   | "person"
   | "vendor";
 export type SiteAssessmentStatus = "pending" | "scheduled" | "completed";
+export type AssessmentPackageStatus =
+  | "draft"
+  | "in_progress"
+  | "ready_for_estimate"
+  | "archived";
 export type CommercialReadinessStatus =
   | "not_ready"
   | "waiting_on_estimate_approval"
@@ -963,6 +969,29 @@ export interface Project {
   stateRegion: string | null;
   postalCode: string | null;
   countryCode: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AssessmentPackage {
+  id: AssessmentPackageId;
+  organizationId: OrganizationId;
+  projectId: ProjectId;
+  status: AssessmentPackageStatus;
+  title: string;
+  assessmentDate: string | null;
+  siteContactName: string | null;
+  siteContactPhone: string | null;
+  accessNotes: string | null;
+  parkingNotes: string | null;
+  siteNotes: string | null;
+  customerGoals: string | null;
+  currentConditionsSummary: string | null;
+  recommendedSystemSummary: string | null;
+  riskSummary: string | null;
+  estimateHandoffSummary: string | null;
+  createdByUserId: ProfileId | null;
+  updatedByUserId: ProfileId | null;
   createdAt: string;
   updatedAt: string;
 }

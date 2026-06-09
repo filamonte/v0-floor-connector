@@ -1,3 +1,15 @@
+import type {
+  AssessmentPackage,
+  AssessmentPackageStatus
+} from "@floorconnector/types";
+
+export const assessmentPackageStatuses = [
+  "draft",
+  "in_progress",
+  "ready_for_estimate",
+  "archived"
+] as const satisfies AssessmentPackageStatus[];
+
 type AssessmentPackageOpportunity = {
   id: string;
   title: string;
@@ -123,6 +135,25 @@ export type ProjectAssessmentPackageSummary = {
   };
 };
 
+export type AssessmentPackageProjectSummary = {
+  total: number;
+  activeCount: number;
+  readyForEstimateCount: number;
+  latestPackage: AssessmentPackage | null;
+  statusLabel: string;
+  statusDetail: string;
+  primaryHref: string;
+  primaryActionLabel: string;
+};
+
+export type AssessmentPackageCreateRecordInput = {
+  organizationId: string;
+  projectId: string;
+  userId: string;
+  title: string;
+  assessmentDate: string | null;
+};
+
 function trimToNull(value: string | null | undefined) {
   return value?.trim() || null;
 }
@@ -199,6 +230,108 @@ function buildReadiness(input: {
     label: "Missing assessment context",
     detail:
       "Project-owned assessment context is not complete enough for confident estimate handoff."
+  };
+}
+
+export function canTransitionAssessmentPackageStatus(
+  currentStatus: AssessmentPackageStatus,
+  nextStatus: AssessmentPackageStatus
+) {
+  if (currentStatus === nextStatus) {
+    return true;
+  }
+
+  const allowedTransitions: Record<
+    AssessmentPackageStatus,
+    AssessmentPackageStatus[]
+  > = {
+    draft: ["in_progress", "archived"],
+    in_progress: ["draft", "ready_for_estimate", "archived"],
+    ready_for_estimate: ["in_progress", "archived"],
+    archived: ["draft"]
+  };
+
+  return allowedTransitions[currentStatus].includes(nextStatus);
+}
+
+export function formatAssessmentPackageStatusLabel(
+  status: AssessmentPackageStatus
+) {
+  return status.replaceAll("_", " ");
+}
+
+export function buildAssessmentPackageCreateRecord(
+  input: AssessmentPackageCreateRecordInput
+) {
+  return {
+    company_id: input.organizationId,
+    project_id: input.projectId,
+    status: "draft" as const,
+    title: input.title,
+    assessment_date: input.assessmentDate,
+    created_by: input.userId,
+    updated_by: input.userId
+  };
+}
+
+export function assertAssessmentPackageProjectScope(input: {
+  assessmentPackage: Pick<AssessmentPackage, "organizationId" | "projectId">;
+  organizationId: string;
+  projectId: string;
+}) {
+  if (input.assessmentPackage.organizationId !== input.organizationId) {
+    throw new Error("Assessment package not found for this organization.");
+  }
+
+  if (input.assessmentPackage.projectId !== input.projectId) {
+    throw new Error("Assessment package not found for this project.");
+  }
+}
+
+export function deriveAssessmentPackageProjectSummary(input: {
+  projectId: string;
+  packages: AssessmentPackage[];
+}): AssessmentPackageProjectSummary {
+  const activePackages = input.packages.filter(
+    (assessmentPackage) => assessmentPackage.status !== "archived"
+  );
+  const latestPackage =
+    activePackages[0] ??
+    input.packages.find(
+      (assessmentPackage) => assessmentPackage.status === "archived"
+    ) ??
+    null;
+  const readyForEstimateCount = input.packages.filter(
+    (assessmentPackage) => assessmentPackage.status === "ready_for_estimate"
+  ).length;
+
+  if (!latestPackage) {
+    return {
+      total: 0,
+      activeCount: 0,
+      readyForEstimateCount: 0,
+      latestPackage: null,
+      statusLabel: "No assessment package",
+      statusDetail:
+        "Create a project-owned assessment package before estimator handoff needs site context.",
+      primaryHref: `/projects/${input.projectId}`,
+      primaryActionLabel: "Create assessment package"
+    };
+  }
+
+  return {
+    total: input.packages.length,
+    activeCount: activePackages.length,
+    readyForEstimateCount,
+    latestPackage,
+    statusLabel: formatAssessmentPackageStatusLabel(latestPackage.status),
+    statusDetail:
+      latestPackage.estimateHandoffSummary ??
+      latestPackage.currentConditionsSummary ??
+      latestPackage.siteNotes ??
+      "Assessment package is attached to this canonical project.",
+    primaryHref: `/projects/${input.projectId}/assessment-packages/${latestPackage.id}`,
+    primaryActionLabel: "Open assessment package"
   };
 }
 
