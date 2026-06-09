@@ -100,8 +100,13 @@ and adds the canonical schema-backed Assessment Package foundation attached to
 Project. This stream targets Assessment Intelligence movement from 5 / 100 to
 8-10 / 100 only, recorded as 9 / 100 after implementation; it does not move the
 capability to 20 / 100. Batch 1 also approved `area-space-model-v1` for
-branch/worktree creation, but that worktree remains separate and must not be
-modified by the assessment package stream.
+branch/worktree creation. The explicit implementation prompt for
+`C:\FC-worktrees\area-space-model-v1` adds the schema-backed package-owned Area
+/ Space foundation and records Assessment Intelligence at 12 / 100. It does
+not claim Wave A1 completion or 20 / 100, and it does not implement photo
+capture, AI risk detection, estimate generation, material takeoff, guided
+capture wizard behavior, portal contribution, detached room truth, duplicate
+project truth, duplicate estimate truth, or duplicate material/catalog truth.
 `guided-project-capture-workflow-v1`, `estimate-handoff-v1`, and
 `verification-assessment-foundation-v1` remain proposed. Provider behavior,
 portal-owned state, autonomous AI, PR, and merge remain unapproved unless Jeff
