@@ -60,9 +60,10 @@ Capability maturity advancement is the primary progress metric.
 
 ## Assessment Intelligence
 
-Purpose: create a project-owned pre-estimate assessment, capture, review, and
-handoff capability so contractors miss fewer details, reduce estimator rework,
-and reuse site/scope context downstream.
+Purpose: create an Opportunity-first pre-estimate assessment, capture, review,
+and handoff capability with Project continuity after sale so contractors miss
+fewer details, reduce estimator rework, and reuse site/scope context
+downstream.
 
 Status: Active.
 
@@ -111,7 +112,9 @@ Linked active, approved, or recently merged Streams:
 
 Dependencies:
 
-- canonical Project ownership of assessment context
+- canonical Opportunity-first assessment context before Project creation
+- Project continuity that surfaces and continues linked assessment context after
+  sale or contract progression
 - Estimate consumption of reviewed assessment context
 - customer-safe Portal input without portal-owned operational truth
 - existing documents, photos, attachments, opportunities, customers, projects,
@@ -133,14 +136,18 @@ Future expansion opportunities:
 
 Recommended next implementation areas:
 
-1. Assessment Package depth over project-owned source context.
+1. Opportunity-first Assessment Package depth as the pre-sale source context.
 2. Guided Project Capture workflow depth for internal capture and review.
 3. Area / Space Modeling for rooms, zones, measurements, and conditions.
-4. Photo Capture tied to project assessment context and downstream estimate
-   review.
+4. Project continuity that surfaces and continues assessment context after
+   Project creation without making Project a holding place for unsold
+   opportunities.
 5. Site Conditions and Risk Detection as review-first signals.
 6. Estimate Handoff that prepares estimator review without auto-pricing or
    direct estimate-line generation.
+7. Estimate, contract, schedule, Production Readiness, change order, closeout,
+   and future AI continuity that inherits Assessment Package context instead of
+   recreating it downstream.
 
 ## Operational Work Management
 

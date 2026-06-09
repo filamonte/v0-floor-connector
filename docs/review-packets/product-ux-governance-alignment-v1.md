@@ -188,3 +188,43 @@ git diff --check
 git diff --cached --check
 pnpm.cmd worktree:doctor
 ```
+
+## Final Planning-Drift Correction
+
+Final review found two active planning-doc conflicts that still preserved older
+Project-owned Assessment Package direction:
+
+- `docs/capability-registry.md` still used Project-owned Assessment wording in
+  the active Assessment Intelligence capability row and Allowed direction.
+- `docs/capability-map.md` still recommended Assessment Package depth over
+  project-owned source context in future implementation sequencing.
+
+Correction made:
+
+- `docs/capability-registry.md` now frames Assessment Intelligence as
+  Opportunity-first pre-estimate Assessment Package capture before Project
+  creation, with Project context inheriting, surfacing, and continuing linked
+  Assessment Package / Area / Space context after sale or contract
+  progression.
+- `docs/capability-map.md` now prioritizes Opportunity-first Assessment
+  Package depth as the pre-sale source context and Project continuity after
+  Project creation, while warning against using Project as a holding place for
+  unsold opportunities.
+- Future estimate, contract, schedule, Production Readiness, change order,
+  closeout, and AI continuity should inherit Assessment Package context rather
+  than recreate it downstream.
+
+Validation rerun:
+
+```powershell
+pnpm.cmd exec prettier --write docs/capability-registry.md docs/capability-map.md docs/review-packets/product-ux-governance-alignment-v1.md
+git diff --check
+git diff --cached --check
+pnpm.cmd worktree:doctor
+```
+
+Scope confirmation:
+
+- No app code changed.
+- No schema, migration, Supabase, route, UI component, server action, package,
+  test, runtime config, or environment variable changed.
