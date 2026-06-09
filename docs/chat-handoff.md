@@ -1018,11 +1018,14 @@ Recent staging/demo work is remote-Supabase-first and no-write by default:
 - Do not describe Guided Project Capture, Assessment Packages, Area / Space
   Modeling, capture confidence scoring, or AI-assisted capture as implemented
   unless `docs/current-state.md` explicitly records an implemented slice.
-- Guided Project Capture is future pre-estimate project capture, not an
-  estimating feature. Assessment Packages belong to Projects, not Estimates.
-  The strategy is to collect information once and reuse it through estimating,
-  change orders, scheduling, production planning, field handoff, job execution,
-  invoicing, and customer communication.
+- Guided Project Capture is future pre-estimate Opportunity/Assessment capture,
+  not an estimating feature. Current implementation may still attach
+  Assessment Packages to Projects where current-state records it, but target
+  direction is Opportunity-first Assessment Package capture before Project
+  creation. The strategy is to collect information once and reuse it through
+  estimating, Project continuity after sale, change orders, scheduling,
+  production planning, field handoff, job execution, invoicing, and customer
+  communication.
 - Do not add local database seed workflows. FloorConnector demos and QA use real
   remote Supabase-backed canonical records; missing coverage should be created
   through app workflows or treated as a blocker.

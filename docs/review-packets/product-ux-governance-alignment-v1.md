@@ -92,3 +92,37 @@ pnpm.cmd worktree:doctor
 ```
 
 Do not run app tests unless a later task broadens scope.
+
+## Review Correction
+
+Review found an active-doc conflict around Project-owned Assessment Package
+wording. `docs/guided-project-capture-vision.md` and `docs/target-ia.md`
+still described future Assessment Package ownership as Project-first, which
+competed with the new Opportunity-first target operating model.
+
+Correction made:
+
+- `docs/guided-project-capture-vision.md` now frames Guided Project Capture as
+  Opportunity-first Assessment Package capture before Project creation, while
+  preserving current Project-attached implementation truth where
+  `docs/current-state.md` records it.
+- `docs/target-ia.md` now separates pre-sale Opportunity/Assessment queues from
+  Project workspace continuity after the work becomes operational.
+- `docs/chat-handoff.md` received the matching continuity correction so future
+  runs do not reintroduce Project-first target wording.
+
+Rebase:
+
+- Branch rebased onto current `origin/main`.
+- Rebase conflict in `docs/current-state.md` was resolved by preserving the
+  new implemented Area / Space foundation note from `origin/main` and retaining
+  the target operating-model caveat from this stream.
+
+Validation rerun:
+
+```powershell
+pnpm.cmd exec prettier --write docs/guided-project-capture-vision.md docs/target-ia.md docs/review-packets/product-ux-governance-alignment-v1.md docs/chat-handoff.md
+git diff --check
+git diff --cached --check
+pnpm.cmd worktree:doctor
+```

@@ -201,9 +201,9 @@ This area should include:
   FieldTrail, MessageCenter, CloseoutTrail, and Proof Center layers should stay
   project-scoped rather than becoming disconnected top-level modules
 - future takeoff status, generated quantities, linked estimate context, and scope summary
-- future Guided Project Capture status, project-owned Assessment Package
-  completeness, area/space capture, confidence signals, and estimate-readiness
-  handoff
+- future linked Assessment Package context after the work becomes operational:
+  capture completeness, area/space context, confidence signals, and
+  estimate-readiness handoff
 
 Projects should answer:
 
@@ -517,27 +517,29 @@ Summary of project health, stage, customer, location, assigned people, and curre
 
 ### Guided Project Capture
 
-Future pre-estimate project workspace section for structured customer, sales,
-estimator, or field capture before estimate creation.
+Future pre-estimate capture should start in Opportunity/Assessment before a
+Project exists. Standalone or global pre-sale work areas may be needed for
+Opportunity and Assessment queues so the Project workspace does not become a
+junk drawer of unsold leads.
 
-This section should manage project-owned Assessment Package context such as
-measurements, area layouts, photos, videos, site conditions, substrate
-information, moisture observations, cracks/joints, prep requirements, product
-preferences, visualizer selections, financing interest, customer goals,
-customer requirements, AI observations, and confidence scores.
+Once a Project exists, this section should surface linked Assessment Package
+context for continuity: measurements, area layouts, photos, videos, site
+conditions, substrate information, moisture observations, cracks/joints, prep
+requirements, product preferences, visualizer selections, financing interest,
+customer goals, customer requirements, AI observations, and confidence scores.
 
 Guided Project Capture is not an estimating workspace. It should prepare
-estimate-ready project context, qualification signals, and Assessment
-Confidence so a human estimator can decide whether remote estimating,
-estimator review, or an onsite visit is appropriate. The Assessment Package
-belongs to the Project and may later be reused by estimates, revised estimates,
-change orders, scheduling, production planning, field handoff, job execution,
-invoicing, and customer communication.
+estimate-ready context, qualification signals, and Assessment Confidence so a
+human estimator can decide whether remote estimating, estimator review, or an
+onsite visit is appropriate. The Assessment Package should bridge into
+Estimate, Contract, Project, Schedule, Production Readiness, Change Orders,
+Closeout, revised estimates, field handoff, job execution, invoicing, and
+customer communication as the work progresses.
 
-Future Area / Space Modeling may let a project organize capture by rooms or
-zones such as Living Room, Kitchen, Basement, Bedroom 1, and Bedroom 2. Area
-records should remain project-scoped capture context, not duplicate projects,
-estimate records, or field subsystems.
+Future Area / Space Modeling may let an Assessment Package or linked Project
+organize capture by rooms or zones such as Living Room, Kitchen, Basement,
+Bedroom 1, and Bedroom 2. Area records should remain capture context, not
+duplicate opportunities, projects, estimate records, or field subsystems.
 
 ### Takeoff & Scope
 
