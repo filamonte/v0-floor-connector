@@ -16,11 +16,12 @@ not add schema, migrations, routes, server actions, provider calls, autonomous
 AI behavior, estimate line generation, direct pricing, or duplicate business
 models.
 
-Direct worktree inspection shows all five streams are clean and their expected
-committed slices are present. Because `main` now includes the live-status docs
-commit, each stream is currently `1 ahead / 1 behind` versus `origin/main`.
-They are therefore ready for the standard rebase, validation refresh, and
-controlled merge sequence, not direct merge from current tips.
+Direct worktree inspection after the current-main refresh shows all five
+streams are clean and their expected committed slices are present. The four
+implementation streams are current with `origin/main` and `1 ahead / 0 behind`.
+The verification stream is current with `origin/main` and `2 ahead / 0 behind`
+because it contains the rebased verification commit plus a verification-only
+evidence refresh for the updated implementation heads.
 
 ## Streams Completed
 
@@ -34,13 +35,13 @@ controlled merge sequence, not direct merge from current tips.
 
 ## Commits By Stream
 
-| Stream                                   | Commit     | Message                                 |
-| ---------------------------------------- | ---------- | --------------------------------------- |
-| `assessment-package-model-v1`            | `38093cdf` | `feat: add assessment package model`    |
-| `guided-capture-workspace-v1`            | `ebfc42fc` | `feat: add guided capture workspace`    |
-| `customer-assessment-capture-v1`         | `799b40ca` | `feat: add customer assessment capture` |
-| `assessment-to-estimate-handoff-v1`      | `ebb45fa9` | `feat: add assessment estimate handoff` |
-| `verification-guided-project-capture-v1` | `b90dae4a` | `test: protect guided project capture`  |
+| Stream                                   | Commit     | Message                                            |
+| ---------------------------------------- | ---------- | -------------------------------------------------- |
+| `assessment-package-model-v1`            | `e40b7c3a` | `feat: add assessment package model`               |
+| `guided-capture-workspace-v1`            | `f42f4918` | `feat: add guided capture workspace`               |
+| `customer-assessment-capture-v1`         | `e7f31352` | `feat: add customer assessment capture`            |
+| `assessment-to-estimate-handoff-v1`      | `e94d726b` | `feat: add assessment estimate handoff`            |
+| `verification-guided-project-capture-v1` | `4077a90d` | `test: update guided project capture verification` |
 
 ## Files Changed By Stream
 
@@ -145,6 +146,25 @@ wave is actually merged into `main` as implemented truth.
 - `pnpm.cmd worktree:doctor`: PASS.
 - `pnpm.cmd tooling:baseline -CommandsOnly`: PASS.
 
+### Current-Main Validation Refresh
+
+Main was pushed with the review packet and confirmed clean/even with
+`origin/main` before stream rebases. `pnpm.cmd worktree:doctor` passed with
+`PASS: 20`, and `pnpm.cmd tooling:baseline -CommandsOnly` returned the expected
+repo-local command set.
+
+| Stream                                   | Updated head | Ahead / behind | Focused tests                                                                                                              | Typecheck | Lint   | `fc:preflight:fast`             | `git diff --check` |
+| ---------------------------------------- | ------------ | -------------- | -------------------------------------------------------------------------------------------------------------------------- | --------- | ------ | ------------------------------- | ------------------ |
+| `assessment-package-model-v1`            | `e40b7c3a`   | `1 / 0`        | `lib/projects/assessment-package.test.ts` passed, 2 tests                                                                  | Passed    | Passed | Passed                          | Passed             |
+| `guided-capture-workspace-v1`            | `f42f4918`   | `1 / 0`        | `lib/projects/guided-capture-workspace.test.ts` passed, 2 tests                                                            | Passed    | Passed | Passed                          | Passed             |
+| `customer-assessment-capture-v1`         | `e7f31352`   | `1 / 0`        | `lib/portal/assessment-capture.test.ts` passed, 2 tests                                                                    | Passed    | Passed | Passed                          | Passed             |
+| `assessment-to-estimate-handoff-v1`      | `e94d726b`   | `1 / 0`        | `lib/estimates/assessment-handoff.test.ts` passed, 2 tests                                                                 | Passed    | Passed | Passed                          | Passed             |
+| `verification-guided-project-capture-v1` | `4077a90d`   | `2 / 0`        | Guided capture verification passed, 5 tests; operational ownership passed, 4 tests; golden workflow checks passed, 5 tests | Passed    | Passed | Passed after formatting refresh | Passed             |
+
+No stream has schema or migration file changes after rebase. The reviewed file
+sets remain inside the expected project, portal, estimate, and verification
+helper/test boundaries.
+
 ## Governance Review
 
 - No merge performed.
@@ -206,8 +226,7 @@ Assessment To Estimate Handoff:
 - Explicitly avoids estimate-line generation, price generation, and customer
   approval.
 
-No ownership or workflow concern blocks merge after rebase and validation
-refresh.
+No ownership or workflow concern blocks controlled merge after Jeff approval.
 
 ## Workflow Review
 
@@ -244,14 +263,16 @@ Rationale:
 - Verification should land last after implementation commits have been rebased
   and refreshed.
 
-Current direct status for all five stream branches is clean and `1 ahead / 1
-behind` versus `origin/main`; rebase and validation refresh are required before
-each merge.
+Current direct status after rebase and validation refresh:
+
+- implementation streams are clean and `1 ahead / 0 behind` versus
+  `origin/main`;
+- verification is clean and `2 ahead / 0 behind` versus `origin/main`;
+- the recommended merge order remains unchanged.
 
 ## Risks And Follow-Ups
 
-- Stream branches are behind the live-status docs commit and need the standard
-  rebase/validation refresh before merge.
+- No current-main rebase caveat remains after the validation refresh.
 - Route/UI integration should remain explicit future scope where not already
   handled.
 - After controlled merge, update implemented-truth docs only for behavior that

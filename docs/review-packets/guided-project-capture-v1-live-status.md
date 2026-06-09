@@ -16,31 +16,34 @@ production code, or approve live review.
 - `git fetch origin`: complete
 - Main status: clean
 - Ahead / behind vs `origin/main`: `0 / 0`
-- Current main commit: `aad5af12`
+- Current main commit before this packet update: `9d5ec485`
 
 ## Wave Status
 
 `guided-project-capture-v1` implementation and verification are locally
 complete across the approved stream set. Each stream worktree exists, is clean,
-and is one commit ahead of `origin/main`. No stream is merged. No PRs are open
-from this status packet.
+and has been rebased onto current `origin/main`. The four implementation streams
+are `1 ahead / 0 behind`; the verification stream is `2 ahead / 0 behind`
+because it includes the rebased verification commit plus the verification-only
+evidence refresh. No stream is merged. No PRs are open from this status packet.
 
 Verification is complete in
-`C:\FC-worktrees\verification-guided-project-capture-v1` as commit `b90dae4a`
-with the requested boundary coverage for Project ownership, Estimate
-consumption, Portal customer safety, AI review-only behavior, duplicate-model
-prevention, schema/migration drift prevention, and no direct pricing or
-estimate-line generation.
+`C:\FC-worktrees\verification-guided-project-capture-v1` as commit `4077a90d`
+with the requested boundary coverage refreshed against the current
+implementation heads for Project ownership, Estimate consumption, Portal
+customer safety, AI review-only behavior, duplicate-model prevention,
+schema/migration drift prevention, and no direct pricing or estimate-line
+generation.
 
 ## Stream Status Table
 
-| Stream                                   | Worktree exists | Branch                                          | Clean / dirty | Ahead / behind vs `origin/main` | Latest commit | Latest message                          | Implementation complete | Verification complete          | Blockers |
-| ---------------------------------------- | --------------- | ----------------------------------------------- | ------------- | ------------------------------- | ------------- | --------------------------------------- | ----------------------- | ------------------------------ | -------- |
-| `assessment-package-model-v1`            | Yes             | `stream/assessment-package-model-v1`            | Clean         | `1 / 0`                         | `38093cdf`    | `feat: add assessment package model`    | Yes                     | Covered by verification stream | None     |
-| `guided-capture-workspace-v1`            | Yes             | `stream/guided-capture-workspace-v1`            | Clean         | `1 / 0`                         | `ebfc42fc`    | `feat: add guided capture workspace`    | Yes                     | Covered by verification stream | None     |
-| `customer-assessment-capture-v1`         | Yes             | `stream/customer-assessment-capture-v1`         | Clean         | `1 / 0`                         | `799b40ca`    | `feat: add customer assessment capture` | Yes                     | Covered by verification stream | None     |
-| `assessment-to-estimate-handoff-v1`      | Yes             | `stream/assessment-to-estimate-handoff-v1`      | Clean         | `1 / 0`                         | `ebb45fa9`    | `feat: add assessment estimate handoff` | Yes                     | Covered by verification stream | None     |
-| `verification-guided-project-capture-v1` | Yes             | `stream/verification-guided-project-capture-v1` | Clean         | `1 / 0`                         | `b90dae4a`    | `test: protect guided project capture`  | Yes, verification-only  | Yes                            | None     |
+| Stream                                   | Worktree exists | Branch                                          | Clean / dirty | Ahead / behind vs `origin/main` | Latest commit | Latest message                                     | Implementation complete | Verification complete          | Blockers |
+| ---------------------------------------- | --------------- | ----------------------------------------------- | ------------- | ------------------------------- | ------------- | -------------------------------------------------- | ----------------------- | ------------------------------ | -------- |
+| `assessment-package-model-v1`            | Yes             | `stream/assessment-package-model-v1`            | Clean         | `1 / 0`                         | `e40b7c3a`    | `feat: add assessment package model`               | Yes                     | Covered by verification stream | None     |
+| `guided-capture-workspace-v1`            | Yes             | `stream/guided-capture-workspace-v1`            | Clean         | `1 / 0`                         | `f42f4918`    | `feat: add guided capture workspace`               | Yes                     | Covered by verification stream | None     |
+| `customer-assessment-capture-v1`         | Yes             | `stream/customer-assessment-capture-v1`         | Clean         | `1 / 0`                         | `e7f31352`    | `feat: add customer assessment capture`            | Yes                     | Covered by verification stream | None     |
+| `assessment-to-estimate-handoff-v1`      | Yes             | `stream/assessment-to-estimate-handoff-v1`      | Clean         | `1 / 0`                         | `e94d726b`    | `feat: add assessment estimate handoff`            | Yes                     | Covered by verification stream | None     |
+| `verification-guided-project-capture-v1` | Yes             | `stream/verification-guided-project-capture-v1` | Clean         | `2 / 0`                         | `4077a90d`    | `test: update guided project capture verification` | Yes, verification-only  | Yes                            | None     |
 
 ## Implementation Completion Status
 
@@ -60,13 +63,13 @@ All four implementation streams have one focused commit and clean worktrees:
 
 ## Commits By Stream
 
-| Stream                                   | Commit                                           |
-| ---------------------------------------- | ------------------------------------------------ |
-| `assessment-package-model-v1`            | `38093cdf feat: add assessment package model`    |
-| `guided-capture-workspace-v1`            | `ebfc42fc feat: add guided capture workspace`    |
-| `customer-assessment-capture-v1`         | `799b40ca feat: add customer assessment capture` |
-| `assessment-to-estimate-handoff-v1`      | `ebb45fa9 feat: add assessment estimate handoff` |
-| `verification-guided-project-capture-v1` | `b90dae4a test: protect guided project capture`  |
+| Stream                                   | Commit                                                      |
+| ---------------------------------------- | ----------------------------------------------------------- |
+| `assessment-package-model-v1`            | `e40b7c3a feat: add assessment package model`               |
+| `guided-capture-workspace-v1`            | `f42f4918 feat: add guided capture workspace`               |
+| `customer-assessment-capture-v1`         | `e7f31352 feat: add customer assessment capture`            |
+| `assessment-to-estimate-handoff-v1`      | `e94d726b feat: add assessment estimate handoff`            |
+| `verification-guided-project-capture-v1` | `4077a90d test: update guided project capture verification` |
 
 ## Files Changed By Stream
 
@@ -97,85 +100,83 @@ All four implementation streams have one focused commit and clean worktrees:
 
 ## Validations By Stream
 
+All validation below was rerun after rebasing the streams onto current
+`origin/main`.
+
 ### `assessment-package-model-v1`
 
 - Focused test passed:
-  `pnpm.cmd exec tsx --test apps/web/lib/projects/assessment-package.test.ts`
-- Stream completion validation reported passed:
+  `pnpm.cmd --filter @floorconnector/web exec tsx --test lib/projects/assessment-package.test.ts`
+- Required validation passed:
   `pnpm.cmd --filter @floorconnector/web typecheck`
-- Stream completion validation reported passed:
+- Required validation passed:
   `pnpm.cmd --filter @floorconnector/web lint`
-- Stream completion validation reported passed: `pnpm.cmd fc:preflight:fast`
-- Stream completion validation reported passed: `git diff --check`
-- Stream completion validation reported passed: `git diff --cached --check`
+- Required validation passed: `pnpm.cmd fc:preflight:fast`
+- Required validation passed: `git diff --check`
 
 ### `guided-capture-workspace-v1`
 
 - Focused test passed:
-  `pnpm.cmd exec tsx --test apps/web/lib/projects/guided-capture-workspace.test.ts`
-- Stream completion validation reported passed:
+  `pnpm.cmd --filter @floorconnector/web exec tsx --test lib/projects/guided-capture-workspace.test.ts`
+- Required validation passed:
   `pnpm.cmd --filter @floorconnector/web typecheck`
-- Stream completion validation reported passed:
+- Required validation passed:
   `pnpm.cmd --filter @floorconnector/web lint`
-- Stream completion validation reported passed: `pnpm.cmd fc:preflight:fast`
-- Stream completion validation reported passed: `git diff --check`
-- Stream completion validation reported passed: `git diff --cached --check`
+- Required validation passed: `pnpm.cmd fc:preflight:fast`
+- Required validation passed: `git diff --check`
 
 ### `customer-assessment-capture-v1`
 
 - Focused test passed:
-  `pnpm.cmd exec tsx --test apps/web/lib/portal/assessment-capture.test.ts`
-- Stream completion validation reported passed:
+  `pnpm.cmd --filter @floorconnector/web exec tsx --test lib/portal/assessment-capture.test.ts`
+- Required validation passed:
   `pnpm.cmd --filter @floorconnector/web typecheck`
-- Stream completion validation reported passed:
+- Required validation passed:
   `pnpm.cmd --filter @floorconnector/web lint`
-- Stream completion validation reported passed: `pnpm.cmd fc:preflight:fast`
-- Stream completion validation reported passed: `git diff --check`
-- Stream completion validation reported passed: `git diff --cached --check`
+- Required validation passed: `pnpm.cmd fc:preflight:fast`
+- Required validation passed: `git diff --check`
 
 ### `assessment-to-estimate-handoff-v1`
 
 - Focused test passed:
-  `pnpm.cmd exec tsx --test apps/web/lib/estimates/assessment-handoff.test.ts`
-- Stream completion validation reported passed:
+  `pnpm.cmd --filter @floorconnector/web exec tsx --test lib/estimates/assessment-handoff.test.ts`
+- Required validation passed:
   `pnpm.cmd --filter @floorconnector/web typecheck`
-- Stream completion validation reported passed:
+- Required validation passed:
   `pnpm.cmd --filter @floorconnector/web lint`
-- Stream completion validation reported passed: `pnpm.cmd fc:preflight:fast`
-- Stream completion validation reported passed: `git diff --check`
-- Stream completion validation reported passed: `git diff --cached --check`
+- Required validation passed: `pnpm.cmd fc:preflight:fast`
+- Required validation passed: `git diff --check`
 
 ### `verification-guided-project-capture-v1`
 
 - Focused verification test passed:
-  `pnpm.cmd exec tsx --test apps/web/lib/verification/guided-project-capture.test.ts`
+  `pnpm.cmd --filter @floorconnector/web exec tsx --test lib/verification/guided-project-capture.test.ts`
 - Operational ownership test passed:
-  `pnpm.cmd exec tsx --test apps/web/lib/verification/operational-ownership.test.ts`
+  `pnpm.cmd --filter @floorconnector/web exec tsx --test lib/verification/operational-ownership.test.ts`
 - Golden workflow checks passed:
-  `pnpm.cmd exec tsx --test apps/web/lib/verification/golden-workflow-checks.test.ts`
-- Implementation focused tests were re-run during verification and passed:
-  assessment package, guided capture workspace, customer assessment capture, and
-  assessment-to-estimate handoff.
+  `pnpm.cmd --filter @floorconnector/web exec tsx --test lib/verification/golden-workflow-checks.test.ts`
+- Verification evidence was updated and committed as `4077a90d` so the boundary
+  helper references the rebased implementation heads.
 - Required verification validation passed:
   `pnpm.cmd --filter @floorconnector/web typecheck`
 - Required verification validation passed:
   `pnpm.cmd --filter @floorconnector/web lint`
 - Required verification validation passed: `pnpm.cmd fc:preflight:fast`
 - Required verification validation passed: `git diff --check`
-- Required verification validation passed: `git diff --cached --check`
 
 ## Blockers
 
-No current blockers were found for live-status or review-packet creation.
+No current blockers were found for controlled merge approval.
 
 Known governance caveat: the active registry docs still describe the wave as
-Approved / Not Started because this status packet is being created before the
-review packet and any integration/merge step. Direct worktree inspection shows
-all five guided capture streams are locally complete, clean, and unmerged.
+Approved / Not Started because registry lifecycle updates are intentionally
+deferred until Jeff approves merge and cleanup. Direct worktree inspection shows
+all five guided capture streams are complete, clean, current with `origin/main`,
+validated, and unmerged.
 
 ## Verification Complete
 
-Yes. Verification is complete as commit `b90dae4a` on
+Yes. Verification is complete as commit `4077a90d` on
 `stream/verification-guided-project-capture-v1`.
 
 Verification covered:
@@ -194,9 +195,9 @@ Verification covered:
 
 ## Next Recommended Action
 
-Create the guided project capture review packet next. The review packet should
-summarize stream commits, changed files, product capability, validation
-evidence, boundary verification, merge order, risks, and Jeff decision options.
+Ask Jeff to approve the controlled merge sequence next. The implementation and
+verification streams are rebased onto current `origin/main`, validated, clean,
+and ready to merge in the recommended order.
 
 Recommended merge order remains:
 
