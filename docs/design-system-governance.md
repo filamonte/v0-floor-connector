@@ -140,6 +140,46 @@ Rules:
 - Dashboard must not create a private task, metric, AI, financial, or workflow
   truth layer.
 
+## Role-Aware Dashboards And Workspace Personalization
+
+As FloorConnector grows, dashboard layouts and workspace defaults should become
+role-aware while preserving one shared canonical workflow and data model.
+
+The preferred personalization model is:
+
+```text
+Platform Defaults -> Organization Presets -> User Personalization
+```
+
+Role-aware layouts are presentation only. They may reorder, prioritize, filter,
+or emphasize cards, queues, actions, and summaries based on a user's
+responsibilities, but they must not change canonical ownership, storage,
+permissions, or workflow state.
+
+Examples:
+
+- Owners may prioritize financial performance, pipeline visibility, scheduling
+  pressure, and company-wide health.
+- Sales personnel may prioritize leads, appointments, follow-ups, and estimate
+  progression.
+- Estimators may prioritize assigned estimates, scope capture, measurements,
+  and review queues.
+- Office administrators may prioritize contracts, invoices, payments, customer
+  communications, and document workflows.
+- Operations and field personnel may prioritize schedules, handoff packets, job
+  execution, daily logs, and blockers.
+
+Rules:
+
+- Dashboard still answers "what needs attention?"
+- The owning workspace still answers "what do I do about it?"
+- All role-aware views must operate on the same underlying project, estimate,
+  contract, job, invoice, payment, communication, and operational records.
+- Do not create role-specific data silos, duplicate queues, alternate workflow
+  state, or separate module worlds.
+- Role-aware dashboards may improve entry experience and adoption, but the
+  source of truth remains the shared canonical record chain.
+
 ## Action Hierarchy
 
 - Prefer one primary next action where possible.

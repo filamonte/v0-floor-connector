@@ -161,3 +161,30 @@ git diff --check
 git diff --cached --check
 pnpm.cmd worktree:doctor
 ```
+
+## Role-Aware Dashboard Personalization Addition
+
+Role-aware dashboards and workspace personalization were added as target
+direction only.
+
+Guidance added:
+
+- Preferred model: Platform Defaults -> Organization Presets -> User
+  Personalization.
+- Role-aware views may change presentation, filtering, ordering, queue emphasis,
+  action priority, and default workspace layout.
+- Owners, sales personnel, estimators, office administrators, operations, and
+  field users may have different entry experiences.
+- All users continue to operate on the same canonical records, workflow states,
+  and source of truth.
+- Role-aware dashboards must not create role-specific data models, duplicate
+  queues, separate systems, module-local ownership, or alternate workflow state.
+
+Validation rerun:
+
+```powershell
+pnpm.cmd exec prettier --write docs/design-system-governance.md docs/target-ia.md docs/Roadmap.md docs/vision.md docs/system-overview.md docs/developer-source-of-truth.md docs/chat-handoff.md docs/review-packets/product-ux-governance-alignment-v1.md
+git diff --check
+git diff --cached --check
+pnpm.cmd worktree:doctor
+```

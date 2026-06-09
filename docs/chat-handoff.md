@@ -123,6 +123,13 @@ estimate/contract scope -> SOV -> progress invoice/pay application -> payment
 before beta is a product requirement, governed by the new design system
 governance doc.
 
+Role-aware dashboards and workspace personalization are approved target
+direction only. Preferred model: Platform Defaults -> Organization Presets ->
+User Personalization. These layers may change presentation, ordering, filtering,
+queue emphasis, and action priority for owners, sales, estimators, office
+administrators, operations, and field users, but they must use the same
+canonical records and must not create role-specific systems or data silos.
+
 Program A planning note: Wave A1 `assessment-foundation-a1` is recorded in
 [docs/review-packets/program-a-assessment-foundation-a1-plan.md](C:/FloorConnector/docs/review-packets/program-a-assessment-foundation-a1-plan.md).
 The explicit implementation prompt for

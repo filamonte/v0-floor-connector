@@ -376,6 +376,10 @@ Important workflow rules:
 - dashboard, projects, leads, invoices, contracts, customers, estimates, daily logs, time, people, vendors, and jobs now follow that newer Manager Page surface direction; avoid reintroducing a full-time left sidebar as the primary navigation model
 - the protected contractor app now shares the accepted Graphite & Copper visual foundation across the shell, Manager Pages, Quick-Create surfaces, and common cards; do not reintroduce blue-heavy overview chrome on new or updated contractor pages
 - dashboards are entry surfaces into the same lifecycle, not separate product worlds
+- role-aware dashboard or workspace personalization may tailor presentation,
+  filtering, ordering, and action priority only; it must not introduce
+  role-specific data models, duplicate queues, module-local ownership, or
+  alternate workflow state
 - Quick-Create must create canonical records first and then route into the relevant `<Resource> Workspace`
 - creation must remain context-aware: project-launched creation auto-links the project, customer-launched creation requires project selection or creation, and global creation requires explicit customer and project selection
 - global search should stay shell-level, tenant-safe, and canonical-record-based; do not invent search-only records, search-only summaries, or disconnected module search systems

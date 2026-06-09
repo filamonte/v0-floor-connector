@@ -394,6 +394,15 @@ FloorConnector is implemented as a modular monolith:
 
 This gives the product clean module boundaries without fragmenting the source of truth.
 
+Role-aware dashboards and workspace personalization are future presentation
+layers over this same canonical workflow. FloorConnector may eventually support
+Platform Defaults -> Organization Presets -> User Personalization so owners,
+sales personnel, estimators, office administrators, operations, and field teams
+see different default layouts and queue emphasis. That personalization must
+change presentation, filtering, ordering, and action priority only; it must not
+create role-specific systems, duplicate records, alternate workflow state, or
+new data ownership.
+
 ### Contractor App And Portal Are Two Surfaces On The Same System
 
 The contractor app and the portal are not two separate systems.

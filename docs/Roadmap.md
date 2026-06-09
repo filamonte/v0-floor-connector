@@ -97,6 +97,8 @@ The current product/UX governance sequence is:
 5. payment schedule / readiness model
 6. AIA / progress billing maturity for commercial-contractor readiness
 7. UX cleanup before beta
+8. role-aware dashboards and workspace personalization after shared dashboard
+   and design-system governance are stable
 
 This sequence is planning guidance only. It does not mean these items are
 implemented, and it does not authorize implementation streams by itself. AIA /
@@ -171,6 +173,8 @@ Roadmap sequencing should account for these future areas without turning them in
 - AI-assisted takeoff and workflow intelligence later, with human approval and no AI-only records
 - Guided Project Capture and Opportunity-first Assessment Packages before
   Project creation, with customer mobile web capture before native applications
+- role-aware dashboards and workspace personalization later as UX/adoption
+  maturity over the same canonical records, not as a role-specific data model
 
 The field-operations connection map now lives in [docs/field-operations-architecture-map.md](C:/FloorConnector/docs/field-operations-architecture-map.md). The equipment depth layer is planned in [docs/equipment-management-plan.md](C:/FloorConnector/docs/equipment-management-plan.md), with maintenance/utilization/costing detail in [docs/equipment-maintenance-utilization-plan.md](C:/FloorConnector/docs/equipment-maintenance-utilization-plan.md). The registry and assignment/readiness foundations now exist; the intended next equipment sequence is maintenance, utilization, rental-return, and job-costing inputs. Equipment must remain attached to vendors, people, projects, jobs, schedule, time, warranty/service, documents, and future job costing.
 

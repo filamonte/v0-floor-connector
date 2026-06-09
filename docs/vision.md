@@ -440,6 +440,9 @@ The expansion path is:
 - first, strengthen workflow continuity across the existing operational chain
 - then make `Project` the practical operational hub for active work
 - then deepen scheduling, materials, execution, notifications, and financial controls
+- then make dashboards and workspace defaults role-aware so owners, sales,
+  estimators, office administrators, operations, and field users see the most
+  relevant canonical work first
 - then strengthen communications continuity, canonical metrics, and deterministic workflow automation
 - then add project-scoped Takeoff & Scope Intelligence where plans, photos, and measurements feed catalog-mapped estimate line items
 - then add Guided Project Capture where customers, sales, estimators, and field
@@ -453,6 +456,12 @@ The expansion path is:
   intelligent operating guidance where those layers strengthen canonical
   project continuity
 - then consider broader connected platform layers such as materials ecosystems, contractor network collaboration, or marketplace behavior where they align with the same job lifecycle
+
+Role-aware personalization should make FloorConnector feel enterprise-grade
+without becoming complicated. It is future direction only: different users may
+see different dashboard layouts, priorities, queues, and workspace defaults, but
+they all continue to operate on the same canonical workflow, records, and
+source of truth.
 
 That means future platform growth should feel like a widening circle around the same shared contractor workflow, not a collection of disconnected products.
 

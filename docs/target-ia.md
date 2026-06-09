@@ -135,6 +135,29 @@ It should eventually include:
 
 Dashboard is not the operational root. It is the summary and prioritization surface.
 
+### Role-Aware Defaults And Personalization
+
+The target IA remains shared. Role-aware dashboards and workspace defaults may
+change a user's landing layout, queue emphasis, card order, action priority, and
+summary density, but they must not create separate role-specific systems.
+
+The preferred model is:
+
+```text
+Platform Defaults -> Organization Presets -> User Personalization
+```
+
+Owners, sales personnel, estimators, office administrators, operations staff,
+and field personnel may need different default entry experiences. Those
+differences should help each person see the most relevant work first while all
+users continue to operate on the same canonical customers, opportunities,
+projects, estimates, contracts, jobs, invoices, payments, communications, and
+operational records.
+
+Role-specific dashboards should not create separate module worlds, duplicate
+queues, duplicate records, or alternate workflow ownership. They are a
+presentation and prioritization layer over the shared operating system.
+
 ## Growth
 
 Growth is a future target surface, not a current route claim.
