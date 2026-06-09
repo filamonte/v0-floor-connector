@@ -13,6 +13,8 @@ For documentation authority, use
 [docs/document-map.md](C:/FloorConnector/docs/document-map.md). For capability
 maturity and Capability -> Program -> Wave -> Stream mapping, use
 [docs/capability-registry.md](C:/FloorConnector/docs/capability-registry.md).
+For strategic capability navigation, use
+[docs/capability-map.md](C:/FloorConnector/docs/capability-map.md).
 
 For active stream status, use
 [active-worktrees.md](C:/FloorConnector/active-worktrees.md) and
@@ -64,6 +66,39 @@ center and less like disconnected modules.
 Program health statuses are `Planned`, `Active`, `Blocked`, `Verification`,
 and `Complete`. Program status does not replace wave status or stream status.
 No next wave is approved by listing a Program here.
+
+## Program A Execution Preparation
+
+Program A: Assessment Intelligence is the recommended next execution focus
+after this final documentation architecture pass. Current maturity is
+Foundation, 5 / 100 in
+[docs/capability-registry.md](C:/FloorConnector/docs/capability-registry.md).
+Use [docs/capability-map.md](C:/FloorConnector/docs/capability-map.md) for the
+capability navigation and linked dependencies.
+
+Recommended next implementation areas:
+
+- Assessment Packages
+- Guided Project Capture
+- Area / Space Modeling
+- Photo Capture
+- Site Conditions
+- Risk Detection
+- Estimate Handoff
+
+Candidate future wave or stream names may include:
+
+- `assessment-package-depth-v1`
+- `guided-project-capture-depth-v1`
+- `area-space-model-v1`
+- `photo-capture-foundation-v1`
+- `site-conditions-risk-detection-v1`
+- `estimate-handoff-depth-v1`
+
+These are preparation notes only. No candidate is approved by this registry
+until Product Council prioritization, Architecture Coordination approval,
+dependency review, active registry update, verification strategy, merge-order
+planning, and Jeff approval are recorded.
 
 ## Operational Capability Waves v1
 

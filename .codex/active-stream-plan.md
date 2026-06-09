@@ -21,6 +21,8 @@ and
 documentation authority and navigation.
 [docs/capability-registry.md](C:/FloorConnector/docs/capability-registry.md)
 owns Capability -> Program -> Wave -> Stream maturity tracking.
+[docs/capability-map.md](C:/FloorConnector/docs/capability-map.md)
+owns strategic Capability -> Program -> Wave -> Stream navigation.
 [docs/program-architecture.md](C:/FloorConnector/docs/program-architecture.md)
 defines the permanent Program model. The governed execution model is
 Capability -> Program -> Wave -> Stream -> PR -> Verification -> Merge.
@@ -201,6 +203,40 @@ Status: Merged to `main`. Jeff approved controlled merge of the reviewed ready
 stream set. This does not approve schema/migrations, provider/customer-facing
 actions, PRs, next-wave continuation, destructive cleanup, or work in
 dirty/out-of-scope worktrees.
+
+## Program A Execution Preparation
+
+Preparation date: 2026-06-09.
+
+Recommended focus after the final documentation architecture pass: Program A,
+Assessment Intelligence.
+
+Current maturity: Foundation, 5 / 100 in
+[docs/capability-registry.md](C:/FloorConnector/docs/capability-registry.md).
+Strategic navigation:
+[docs/capability-map.md](C:/FloorConnector/docs/capability-map.md).
+
+Recommended next implementation areas:
+
+- Assessment Packages
+- Guided Project Capture
+- Area / Space Modeling
+- Photo Capture
+- Site Conditions
+- Risk Detection
+- Estimate Handoff
+
+Candidate future stream or wave names may include
+`assessment-package-depth-v1`, `guided-project-capture-depth-v1`,
+`area-space-model-v1`, `photo-capture-foundation-v1`,
+`site-conditions-risk-detection-v1`, and `estimate-handoff-depth-v1`.
+
+These names are preparation notes only. They do not authorize branches,
+worktrees, PRs, implementation, schema/migration work, provider actions, portal
+state changes, autonomous AI, or next-wave continuation. Any Program A
+execution wave still requires Product Council prioritization, Architecture
+Coordination approval, dependency review, active registry update, verification
+strategy, merge-order planning, and Jeff approval.
 
 ## Proposed Governance Infrastructure Stream
 

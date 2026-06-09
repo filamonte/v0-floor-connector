@@ -38,6 +38,8 @@ Use these first for most implementation or documentation tasks:
 - [docs/capability-registry.md](C:/FloorConnector/docs/capability-registry.md):
   capability maturity and Capability -> Program -> Wave -> Stream progress
   model
+- [docs/capability-map.md](C:/FloorConnector/docs/capability-map.md):
+  strategic Capability -> Program -> Wave -> Stream navigation
 - [docs/workflows.md](C:/FloorConnector/docs/workflows.md): canonical and
   near-term workflow behavior
 - [docs/system-overview.md](C:/FloorConnector/docs/system-overview.md):
@@ -246,6 +248,9 @@ be archived or removed when they stop serving one of those jobs.
 - [docs/floorconnector-build-list-and-completion-timeline.md](C:/FloorConnector/docs/floorconnector-build-list-and-completion-timeline.md):
   founder/product-owner build list, completion horizons, immediate build order,
   Core Complete definition, and risk guardrails
+- [docs/capability-map.md](C:/FloorConnector/docs/capability-map.md):
+  strategic capability navigation across Programs, Waves, Streams,
+  dependencies, linked documentation, and future expansion opportunities
 - [docs/ai-native-development-architecture.md](C:/FloorConnector/docs/ai-native-development-architecture.md):
   AI-native multi-agent development operating manual covering worktrees, build
   streams, capability waves, merge governance, hotspot ownership, and

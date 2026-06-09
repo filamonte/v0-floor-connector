@@ -15,7 +15,9 @@ Use [docs/document-map.md](C:/FloorConnector/docs/document-map.md) for
 documentation authority and navigation. Use
 [docs/capability-registry.md](C:/FloorConnector/docs/capability-registry.md)
 for capability maturity and Capability -> Program -> Wave -> Stream progress;
-the capability registry does not replace this document for implemented truth.
+use [docs/capability-map.md](C:/FloorConnector/docs/capability-map.md) for
+strategic capability navigation. The capability registry and capability map do
+not replace this document for implemented truth.
 
 Use these docs together:
 
@@ -26,6 +28,7 @@ Use these docs together:
 - [docs/known-gaps.md](C:/FloorConnector/docs/known-gaps.md): important depth gaps around the implemented core
 - [docs/Architecture.md](C:/FloorConnector/docs/Architecture.md): target platform architecture
 - [docs/Roadmap.md](C:/FloorConnector/docs/Roadmap.md): platform maturity roadmap
+- [docs/capability-map.md](C:/FloorConnector/docs/capability-map.md): strategic Capability -> Program -> Wave -> Stream navigation
 - [docs/future-platform-expansion.md](C:/FloorConnector/docs/future-platform-expansion.md): future expansion direction
 - [docs/architecture-principles.md](C:/FloorConnector/docs/architecture-principles.md): stable architecture principles
 - [docs/canonical-lifecycle.md](C:/FloorConnector/docs/canonical-lifecycle.md): canonical lifecycle and lineage rules

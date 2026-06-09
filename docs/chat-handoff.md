@@ -17,6 +17,11 @@ primary documentation navigation and authority map. Use
 when a task involves Capability -> Program -> Wave -> Stream progress,
 maturity scoring, capability ownership, or quarterly capability review.
 
+Use [docs/capability-map.md](C:/FloorConnector/docs/capability-map.md)
+when a task needs strategic Capability -> Program -> Wave -> Stream navigation,
+linked documentation, dependencies, active Waves, active Streams, or what to
+build next after governance work freezes.
+
 Use [docs/floorconnector-build-list-and-completion-timeline.md](C:/FloorConnector/docs/floorconnector-build-list-and-completion-timeline.md)
 when a task needs the founder/product-owner build list, realistic completion
 horizons, next build order, or Core Complete definition. It is planning
@@ -81,9 +86,11 @@ auto-continue, or bypass Jeff approval.
 
 Current Program portfolio: Program A Assessment Intelligence is Active because
 `guided-project-capture-v1` is merged and future assessment depth remains
-available for separate approval. Program B Operational Work Management, Program
-C Communications OS, and Program D Field OS are Planned. No next wave is
-approved by the Program portfolio.
+available for separate approval. Use
+[docs/capability-map.md](C:/FloorConnector/docs/capability-map.md) for current
+Capability -> Program -> Wave -> Stream navigation. Program B Operational Work
+Management, Program C Communications OS, and Program D Field OS are Planned. No
+next wave is approved by the Program portfolio.
 
 Current wave gate note: `guided-project-capture-v1` has merged to `main` under
 Jeff's controlled merge approval. Assessment Package Model V1 merged as

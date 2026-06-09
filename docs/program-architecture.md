@@ -16,6 +16,8 @@ worktree, verification, and merge rules, use
 [.codex/active-stream-plan.md](C:/FloorConnector/.codex/active-stream-plan.md).
 For capability maturity and Capability -> Program -> Wave -> Stream mapping,
 use [docs/capability-registry.md](C:/FloorConnector/docs/capability-registry.md).
+For strategic Capability -> Program -> Wave -> Stream navigation, use
+[docs/capability-map.md](C:/FloorConnector/docs/capability-map.md).
 For documentation authority, use
 [docs/document-map.md](C:/FloorConnector/docs/document-map.md).
 
@@ -37,6 +39,12 @@ Program approval does not authorize implementation. A wave still needs Product
 Council prioritization, Architecture Coordination approval, dependency review,
 active registry updates, verification strategy, merge-order planning, and Jeff
 approval before any stream or worktree is created.
+
+Program planning should link back to
+[docs/capability-map.md](C:/FloorConnector/docs/capability-map.md) instead of
+creating new top-level navigation docs. New Program or capability docs must
+follow the documentation registration and anti-sprawl rules in
+[docs/documentation-governance.md](C:/FloorConnector/docs/documentation-governance.md).
 
 ## Program Definition
 

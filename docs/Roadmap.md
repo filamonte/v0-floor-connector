@@ -14,6 +14,8 @@ Roadmap items should now be framed as Capability -> Program -> Wave -> Stream
 
 For capability maturity, use
 [docs/capability-registry.md](C:/FloorConnector/docs/capability-registry.md).
+For strategic Capability -> Program -> Wave -> Stream navigation, use
+[docs/capability-map.md](C:/FloorConnector/docs/capability-map.md).
 For documentation authority and navigation, use
 [docs/document-map.md](C:/FloorConnector/docs/document-map.md). Roadmap
 sequencing does not replace capability maturity scores or implemented truth.

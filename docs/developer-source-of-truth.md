@@ -91,6 +91,7 @@ Core:
 - docs/developer-source-of-truth.md
 - docs/current-state.md
 - docs/capability-registry.md
+- docs/capability-map.md
 - docs/platform-maturity.md
 - docs/module-status.md
 - docs/known-gaps.md
@@ -128,8 +129,10 @@ Execution:
 3. Read this file
 4. Read current-state.md + workflows.md
 5. Use docs/capability-registry.md for capability maturity, not implemented truth
-6. Follow rules strictly
-7. Ask if anything is unclear
+6. Use docs/capability-map.md for Capability -> Program -> Wave -> Stream
+   navigation, not implementation status or wave approval
+7. Follow rules strictly
+8. Ask if anything is unclear
 
 ---
 
@@ -145,6 +148,10 @@ Execution:
 - Treat customer portal access as contact-centered for new contractor-created invites: the customer account is the business relationship, the customer contact is the person, Supabase Auth proves identity, `portal_access_grants` authorize access, and `portal_project_access` scopes visible projects. Project visibility is explicit per customer contact; do not silently grant every contact the primary contact's projects. Null-contact grants are legacy compatibility only.
 - Treat [docs/parallel-development-governance.md](C:/FloorConnector/docs/parallel-development-governance.md) as the permanent stream lifecycle and stream creation rule before creating, approving, activating, verifying, merging, or retiring AI-native development streams.
 - Treat [docs/program-architecture.md](C:/FloorConnector/docs/program-architecture.md) as the permanent Program layer beneath capability maturity. Future governed planning follows Capability -> Program -> Wave -> Stream -> PR -> Verification -> Merge, but Capability or Program planning does not create branches, worktrees, PRs, merges, schemas, migrations, or implemented truth.
+- Treat [docs/capability-map.md](C:/FloorConnector/docs/capability-map.md)
+  as the strategic navigation map from Capability to Program, Wave, and
+  Stream. It points contributors to owning docs but does not replace
+  current-state truth, approve waves, or create streams.
 - Treat [docs/automation-tooling-baseline.md](C:/FloorConnector/docs/automation-tooling-baseline.md) as the local automation/tooling baseline before launching or validating governed waves. Run `pnpm.cmd worktree:doctor` before stream work and prefer repo-local commands over global PATH tools.
 - Treat [docs/operational-architecture-v1.md](C:/FloorConnector/docs/operational-architecture-v1.md) as the governing Operational Command Center architecture principle: future work must make FloorConnector feel more like one connected operating command center and less like disconnected modules.
 - Treat FloorConnector automation readiness as Ready With Human Review Gate:

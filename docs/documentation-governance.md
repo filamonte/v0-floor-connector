@@ -35,6 +35,10 @@ audit, and archive candidates.
 
 - Documentation is part of FloorConnector's product architecture.
 - [docs/current-state.md](C:/FloorConnector/docs/current-state.md) owns implemented truth.
+- [docs/capability-map.md](C:/FloorConnector/docs/capability-map.md)
+  owns strategic Capability -> Program -> Wave -> Stream navigation, while
+  [docs/capability-registry.md](C:/FloorConnector/docs/capability-registry.md)
+  owns maturity and progress tracking.
 - Active docs must not compete with each other; if two active docs disagree, resolve the conflict or add a clear current/future boundary.
 - ADRs are mandatory for architecture decisions that affect canonical data, lifecycle semantics, portal/contractor boundaries, financial/payment/signature history, tenant isolation, navigation shell, or universal create/workspace patterns.
 - Diagrams should be updated when architecture-impacting changes alter system context, containers, lifecycle flow, or shared record relationships.
@@ -46,6 +50,79 @@ audit, and archive candidates.
 - Feature coverage docs are target direction unless [docs/current-state.md](C:/FloorConnector/docs/current-state.md) says the capability is implemented.
 - Agents may recommend archive candidates, but they must not move, delete, or
   archive documents without explicit owner approval.
+
+## Documentation Registration Rule
+
+No new top-level documentation file may be created in `docs/` unless all of
+these are true:
+
+- owner is defined
+- tier is defined
+- lifecycle state is defined
+- `docs/document-map.md` registration exists or is added in the same change
+- authority level is defined
+- review trigger is defined
+
+Top-level documentation means a new Markdown file directly under `docs/`.
+Subdirectory docs under `docs/design/`, `docs/review-packets/`, `docs/demo/`,
+`docs/adr/`, `docs/diagrams/`, `docs/ai/`, or `docs/archive/` still need clear
+metadata and links to their authority doc, but may be indexed by the owning
+folder when they are checkpoint evidence, review packets, diagrams, ADRs, or
+historical material.
+
+Exceptions are allowed only for short-lived review packets, ADRs, diagrams,
+demo runbooks, or archive stubs when the owning folder's README or index
+already defines owner, lifecycle, authority, and review expectations. If an
+exception becomes durable active guidance, register it in
+[docs/document-map.md](C:/FloorConnector/docs/document-map.md).
+
+## Documentation Anti-Sprawl Rules
+
+Do not create a new document if:
+
+- an authoritative document already covers the topic
+- the information belongs in an existing document
+- the new document would create competing authority
+- the document would mainly repeat current-state, roadmap, registry, or handoff
+  content
+- the document would make future work sound implemented without current-state
+  support
+
+Prefer:
+
+- updating the authoritative document
+- adding a focused cross-link
+- adding a short section to the owner document
+- relabeling a planning note
+- archiving or recommending archive review for superseded material
+
+over creating additional top-level documents.
+
+## Documentation Architecture Freeze
+
+The active documentation architecture is now considered established.
+
+Future effort should prioritize:
+
+- capability delivery
+- workflow depth
+- operational maturity
+- verification evidence for shipped slices
+
+rather than expanding governance or documentation frameworks.
+
+Future documentation work should generally be:
+
+- maintenance
+- updates after implementation or portfolio decisions
+- capability tracking
+- review-packet evidence
+- archive reviews
+- cross-link repair
+
+New governance frameworks, new top-level source-of-truth documents, or broad
+documentation-system redesigns should happen only when an existing authority
+breaks, becomes misleading, or cannot reasonably absorb the needed guidance.
 
 ## Lifecycle States
 

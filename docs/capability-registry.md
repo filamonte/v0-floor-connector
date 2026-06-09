@@ -12,10 +12,16 @@ approval in [active-waves.md](C:/FloorConnector/active-waves.md) and
 [.codex/active-stream-plan.md](C:/FloorConnector/.codex/active-stream-plan.md).
 
 Use this registry with
+[docs/capability-map.md](C:/FloorConnector/docs/capability-map.md),
 [docs/document-map.md](C:/FloorConnector/docs/document-map.md),
 [docs/developer-source-of-truth.md](C:/FloorConnector/docs/developer-source-of-truth.md),
 [docs/program-architecture.md](C:/FloorConnector/docs/program-architecture.md),
 and [docs/chat-handoff.md](C:/FloorConnector/docs/chat-handoff.md).
+
+Use [docs/capability-map.md](C:/FloorConnector/docs/capability-map.md) when
+you need strategic Capability -> Program -> Wave -> Stream navigation. Use this
+registry when you need maturity, status, dependencies, success metrics, and
+quarterly capability review inputs.
 
 ## Purpose
 

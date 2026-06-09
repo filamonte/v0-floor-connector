@@ -27,7 +27,9 @@ Use this discoverable backbone for most sessions:
    branch implementation truth.
 5. [docs/capability-registry.md](C:/FloorConnector/docs/capability-registry.md):
    capability maturity and Program/Wave/Stream progress model.
-6. [docs/Roadmap.md](C:/FloorConnector/docs/Roadmap.md): product sequencing and
+6. [docs/capability-map.md](C:/FloorConnector/docs/capability-map.md):
+   strategic Capability -> Program -> Wave -> Stream navigation.
+7. [docs/Roadmap.md](C:/FloorConnector/docs/Roadmap.md): product sequencing and
    maturity direction.
 
 The backbone rule is bidirectional: when one of these docs changes in a way that
@@ -55,6 +57,7 @@ the highest authority for implemented behavior.
 | [docs/current-state.md](C:/FloorConnector/docs/current-state.md)                         | Current branch implementation truth.                                      | Highest                         | Architecture Coordination                   | Every implementation merge.                    |
 | [docs/developer-source-of-truth.md](C:/FloorConnector/docs/developer-source-of-truth.md) | Developer guardrails and canonical implementation rules.                  | Highest                         | Architecture Coordination                   | Monthly and after guardrail-impacting changes. |
 | [docs/capability-registry.md](C:/FloorConnector/docs/capability-registry.md)             | Capability maturity and Capability -> Program -> Wave -> Stream registry. | Highest for capability progress | Product Council + Architecture Coordination | Every Wave review packet and quarterly.        |
+| [docs/capability-map.md](C:/FloorConnector/docs/capability-map.md)                       | Strategic Capability -> Program -> Wave -> Stream navigation.             | Highest for capability map      | Product Council + Architecture Coordination | Every Wave review packet and quarterly.        |
 | [docs/platform-maturity.md](C:/FloorConnector/docs/platform-maturity.md)                 | Concise platform maturity framing.                                        | Current status summary          | Product Council                             | Monthly or after major merge.                  |
 | [docs/module-status.md](C:/FloorConnector/docs/module-status.md)                         | Concise module status map.                                                | Current status summary          | Architecture Coordination                   | Monthly or after module-impacting merge.       |
 | [docs/known-gaps.md](C:/FloorConnector/docs/known-gaps.md)                               | Important current gaps around implemented foundations.                    | Current gap summary             | Product Council                             | Monthly or after gap-closing merge.            |
@@ -171,25 +174,34 @@ Core ownership examples:
 | [docs/current-state.md](C:/FloorConnector/docs/current-state.md)                         | Architecture Coordination                   | Implemented truth.                         | Highest                  | Every implementation merge.             | Never archive unless replaced by a new implemented-truth document. |
 | [docs/developer-source-of-truth.md](C:/FloorConnector/docs/developer-source-of-truth.md) | Architecture Coordination                   | Developer guardrails.                      | Highest                  | Guardrail-impacting changes.            | Replacement guardrail document approved.                           |
 | [docs/capability-registry.md](C:/FloorConnector/docs/capability-registry.md)             | Product Council + Architecture Coordination | Capability maturity and progress.          | Highest for capabilities | Wave review packet or quarterly review. | Replacement registry approved.                                     |
+| [docs/capability-map.md](C:/FloorConnector/docs/capability-map.md)                       | Product Council + Architecture Coordination | Capability navigation.                     | Highest for map          | Wave review packet or quarterly review. | Replacement capability map approved.                               |
 | [docs/Roadmap.md](C:/FloorConnector/docs/Roadmap.md)                                     | Product Council                             | Product sequencing.                        | Planning                 | Portfolio decision or quarterly review. | Replacement roadmap approved.                                      |
 | [docs/vision.md](C:/FloorConnector/docs/vision.md)                                       | Product Council                             | Long-term vision.                          | Strategic                | Quarterly strategy review.              | Vision replaced or strategy abandoned.                             |
 | [docs/documentation-governance.md](C:/FloorConnector/docs/documentation-governance.md)   | Documentation Governance                    | Documentation lifecycle and archive rules. | Governance               | Quarterly document review.              | Replacement governance doc approved.                               |
 
-## Health Audit
+## Final Documentation Architecture Audit
+
+Audit date: 2026-06-09.
+
+This is the final documentation architecture pass before the repository shifts
+primary effort back to capability delivery. No archive actions are approved by
+this audit. Recommendations require owner review before files are moved,
+deleted, deprecated, or split.
 
 Current findings:
 
-| Finding                                                                                        | Risk                                                                          | Recommendation                                                                                               |
-| ---------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
-| `docs/chat-handoff.md` carries both live handoff and long chronological wave history.          | It can become a second status inventory and obscure the latest durable state. | Keep it active, but compact older history into review packets or archive only after explicit approval.       |
-| `docs/README.md` is a broad index while this file is now the tiered authority map.             | New sessions may start in the wrong index and miss authority tiers.           | Keep `docs/README.md` as the general docs entry point, but make it point to this document for map/authority. |
-| `docs/documentation-governance.md` and `docs/documentation-standards.md` overlap.              | Governance and writing standards may drift.                                   | Treat governance as lifecycle/authority rules and standards as formatting/AI-readability rules.              |
-| `docs/Roadmap.md`, `docs/program-architecture.md`, and this registry all discuss Programs.     | Planning authority could blur.                                                | Roadmap owns sequencing, Program Architecture owns Program structure, Capability Registry owns maturity.     |
-| `docs/ai-native-development-architecture.md` includes older operating examples.                | Historical examples may be mistaken for current stream authorization.         | Keep active for architecture doctrine; refresh or split old examples in a later docs cleanup.                |
-| Many checkpoint and design docs remain marked `Active` after their slice landed.               | Old evidence can compete with implemented truth.                              | Run a quarterly metadata normalization and archive-candidate review.                                         |
-| Review packets are authoritative evidence during review, then historical evidence after merge. | Old review packets can look like current direction.                           | Keep packets, but classify closed packets as evidence and link current truth back to `current-state.md`.     |
-| Several feature-specific docs under `docs/design/` lack obvious owner/review cadence.          | Orphaned planning docs may drift.                                             | Assign owners during documentation review or mark as archive candidates.                                     |
-| Cross-linking between core truth, roadmap, registry, map, and handoff was incomplete.          | Agents may miss the intended reading path.                                    | This task establishes the backbone links.                                                                    |
+| Category              | Finding                                                                                          | Risk                                                                          | Recommendation                                                                                             |
+| --------------------- | ------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| Duplicated authority  | `docs/chat-handoff.md` carries both live handoff and long chronological wave history.            | It can become a second status inventory and obscure the latest durable state. | Keep it active, but compact older history into review packets or archive only after explicit approval.     |
+| Duplicated authority  | `docs/documentation-governance.md` and `docs/documentation-standards.md` overlap.                | Governance and writing standards may drift.                                   | Treat governance as lifecycle/authority rules and standards as formatting/AI-readability rules.            |
+| Duplicated authority  | `docs/Roadmap.md`, `docs/program-architecture.md`, and capability docs all discuss Programs.     | Planning authority could blur.                                                | Roadmap owns sequencing, Program Architecture owns Program structure, Capability Registry owns maturity.   |
+| Navigation weakness   | Capability navigation spans registry, roadmap, active waves, active streams, and review packets. | Contributors may not know where to start.                                     | Use `docs/capability-map.md` for navigation, then follow links to the authority document that owns detail. |
+| Navigation weakness   | `docs/README.md` is a broad index while this file is now the tiered authority map.               | New sessions may start in the wrong index and miss authority tiers.           | Keep `docs/README.md` as the general docs entry point, but make it point to this document for authority.   |
+| Conflicting ownership | Some active docs and design checkpoints are evidence logs but still read like active direction.  | Old evidence can compete with implemented truth.                              | Run a quarterly metadata normalization and archive-candidate review.                                       |
+| Missing cross-links   | Cross-linking between core truth, roadmap, registry, capability map, and handoff was incomplete. | Agents may miss the intended reading path.                                    | This task establishes the backbone links.                                                                  |
+| Obsolete references   | `docs/ai-native-development-architecture.md` includes older operating examples.                  | Historical examples may be mistaken for current stream authorization.         | Keep active for architecture doctrine; refresh or split old examples in a later docs cleanup.              |
+| Archive candidate     | Review packets are authoritative evidence during review, then historical evidence after merge.   | Old review packets can look like current direction.                           | Keep packets, but classify closed packets as evidence and link current truth back to `current-state.md`.   |
+| Archive candidate     | Several feature-specific docs under `docs/design/` lack obvious owner/review cadence.            | Orphaned planning docs may drift.                                             | Assign owners during documentation review or mark as archive candidates.                                   |
 
 ## Archive Review
 
@@ -211,16 +223,19 @@ owner review only.
 Backbone link expectations:
 
 - `docs/current-state.md` links to `docs/developer-source-of-truth.md`,
-  `docs/capability-registry.md`, `docs/Roadmap.md`, and this map.
+  `docs/capability-registry.md`, `docs/capability-map.md`,
+  `docs/Roadmap.md`, and this map.
 - `docs/developer-source-of-truth.md` links to this map, current-state,
-  capability registry, roadmap, and chat handoff.
-- `docs/capability-registry.md` links to current-state, roadmap, document map,
-  developer source of truth, and chat handoff.
+  capability registry, capability map, roadmap, and chat handoff.
+- `docs/capability-registry.md` links to current-state, roadmap, capability
+  map, document map, developer source of truth, and chat handoff.
+- `docs/capability-map.md` links to current-state, capability registry,
+  program architecture, roadmap, active waves, active streams, and this map.
 - `docs/Roadmap.md` links to current-state, program architecture, capability
-  registry, and this map.
+  registry, capability map, and this map.
 - `docs/document-map.md` links across the full backbone.
 - `docs/chat-handoff.md` links to this map, current-state, developer source of
-  truth, capability registry, and roadmap.
+  truth, capability registry, capability map, and roadmap.
 
 ## Quarterly Reviews
 
