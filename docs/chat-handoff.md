@@ -94,14 +94,18 @@ next wave is approved by the Program portfolio.
 
 Program A planning note: Wave A1 `assessment-foundation-a1` is recorded in
 [docs/review-packets/program-a-assessment-foundation-a1-plan.md](C:/FloorConnector/docs/review-packets/program-a-assessment-foundation-a1-plan.md).
-It targets Assessment Intelligence movement from 5 / 100 to 20 / 100 after
-verified delivery. Batch 1 approves `assessment-package-depth-v1` and
-`area-space-model-v1` for branch/worktree creation only. The next prompt should
-start implementation in `C:\FC-worktrees\assessment-package-depth-v1` before any
-app code, schema, migration, UI, server utility, or test implementation begins.
+The explicit implementation prompt for
+`C:\FC-worktrees\assessment-package-depth-v1` starts the first Batch 1 stream
+and adds the canonical schema-backed Assessment Package foundation attached to
+Project. This stream targets Assessment Intelligence movement from 5 / 100 to
+8-10 / 100 only, recorded as 9 / 100 after implementation; it does not move the
+capability to 20 / 100. Batch 1 also approved `area-space-model-v1` for
+branch/worktree creation, but that worktree remains separate and must not be
+modified by the assessment package stream.
 `guided-project-capture-workflow-v1`, `estimate-handoff-v1`, and
-`verification-assessment-foundation-v1` remain proposed. No implementation,
-schema, migration, PR, or merge is approved by the Batch 1 registry entry.
+`verification-assessment-foundation-v1` remain proposed. Provider behavior,
+portal-owned state, autonomous AI, PR, and merge remain unapproved unless Jeff
+explicitly approves them.
 
 Current wave gate note: `guided-project-capture-v1` has merged to `main` under
 Jeff's controlled merge approval. Assessment Package Model V1 merged as

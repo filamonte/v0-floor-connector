@@ -1,6 +1,6 @@
 # Program A Assessment Foundation A1 Plan
 
-Status: Batch 1 Approved / Not Started
+Status: Batch 1 In Implementation
 
 Doc Type: Review Packet / Program and Wave Plan
 
@@ -12,7 +12,7 @@ Wave: Wave A1: Assessment Foundation
 
 Wave id: `assessment-foundation-a1`
 
-Current Capability Maturity: 5 / 100
+Current Capability Maturity: 9 / 100
 
 Target Capability Maturity After Verified Wave Delivery: 20 / 100
 
@@ -22,9 +22,11 @@ into estimating without losing or recreating work.
 This packet prepares Program A for execution under the governed
 Capability -> Program -> Wave -> Stream model. Batch 1 approves only
 `assessment-package-depth-v1` and `area-space-model-v1` for branch/worktree
-creation. It does not approve application code, schema, migrations,
-implementation, PRs, provider behavior, portal-owned state, autonomous AI, or
-merge.
+creation. A later explicit implementation prompt started
+`assessment-package-depth-v1`, which adds the first schema-backed canonical
+Assessment Package foundation. `area-space-model-v1` remains separate and is
+not modified by this stream. Provider behavior, portal-owned state, autonomous
+AI, and merge remain unapproved.
 
 ## Program Plan
 
@@ -93,7 +95,7 @@ starts the specific stream from its approved worktree.
 | Owning Program                       | Program A                                                                                              | Program A                                                                                              |
 | Owning Wave                          | `assessment-foundation-a1`                                                                             | `assessment-foundation-a1`                                                                             |
 | Current maturity                     | 5 / 100                                                                                                | 5 / 100                                                                                                |
-| Expected maturity impact             | Enables Wave A1 movement toward 20 / 100 after verified delivery                                       | Enables Wave A1 movement toward 20 / 100 after verified delivery                                       |
+| Expected maturity impact             | Moves Assessment Intelligence from 5 / 100 to 8-10 / 100 after verified delivery of this stream        | Enables later Wave A1 movement; not part of this stream                                                |
 | Dependency review                    | Pass; builds on merged guided project capture foundation and existing canonical Project context        | Pass with sequencing caveat; must consume Assessment Package depth decisions                           |
 | Overlap risk review                  | Pass; owns package depth, not area/space detail, estimate handoff, or capture workflow                 | Pass with constraint; must not create detached room, material, field, or estimate truth                |
 | Merge order                          | 1                                                                                                      | 2                                                                                                      |
@@ -102,23 +104,26 @@ starts the specific stream from its approved worktree.
 | Worktree path                        | `C:\FC-worktrees\assessment-package-depth-v1`                                                          | `C:\FC-worktrees\area-space-model-v1`                                                                  |
 | Branch name                          | `stream/assessment-package-depth-v1`                                                                   | `stream/area-space-model-v1`                                                                           |
 | Validation commands                  | `pnpm.cmd worktree:doctor`; targeted tests; typecheck; lint; `pnpm.cmd fc:preflight:fast`; diff checks | `pnpm.cmd worktree:doctor`; targeted tests; typecheck; lint; `pnpm.cmd fc:preflight:fast`; diff checks |
-| Readiness status                     | Approved / Not Started                                                                                 | Approved / Not Started                                                                                 |
+| Readiness status                     | Implementation started                                                                                 | Approved / Not Started                                                                                 |
 
 ### assessment-package-depth-v1
 
 - Capability: Assessment Intelligence
-- Current maturity: 5 / 100
-- Target contribution: define enough Assessment Package depth to support Wave
-  A1 maturity movement toward 20 / 100 after verified delivery.
+- Current maturity: 9 / 100 after the schema-backed Assessment Package
+  foundation in this stream.
+- Target contribution: define enough Assessment Package depth to support
+  current maturity movement from 5 / 100 to 8-10 / 100 after verified delivery
+  of this stream.
 - Ownership: Project-owned Assessment Package context.
 - Objective: define Assessment Package ownership, canonical relationships,
   project linkage, source-record reuse, and future expansion points.
-- Success criteria: assessment context is explicitly project-owned, can link to
-  customer/opportunity/project/attachment/observation/estimate context, and does
-  not duplicate project, estimate, workflow, task, attachment, or pricing truth.
-- Non-goals: no schema, migrations, duplicate package persistence, pricing, AI
-  approval, portal-owned state, or estimate-line generation unless separately
-  approved later.
+- Success criteria: assessment context is explicitly project-owned, persists in
+  tenant-scoped `assessment_packages`, can be created/opened from Project
+  Workspace, and does not duplicate project, customer, estimate, job, field,
+  material, workflow, task, attachment, or pricing truth.
+- Non-goals: no guided capture UI, area/space model, photo capture, AI risk
+  detection, pricing, AI approval, portal-owned state, or estimate-line
+  generation unless separately approved later.
 
 ### guided-project-capture-workflow-v1
 
@@ -187,8 +192,9 @@ starts the specific stream from its approved worktree.
 
 ## Capability Advancement Impact
 
-Current maturity remains 5 / 100 until verified implementation and review
-evidence exists.
+Current maturity for Assessment Intelligence is 9 / 100 after the
+`assessment-package-depth-v1` foundation. This stream is intentionally bounded
+to 8-10 / 100 evidence and does not update the capability to 20 / 100.
 
 Expected maturity after Wave A1: 20 / 100, if the wave lands verified evidence
 that FloorConnector can structure assessment context, capture site/area detail,

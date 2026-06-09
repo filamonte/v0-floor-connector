@@ -141,6 +141,15 @@ import {
 } from "@/lib/portal-access/data";
 import { listProgressBillingByProject } from "@/lib/progress-billing/data";
 import { updateProjectAction } from "@/lib/projects/actions";
+import { createAssessmentPackageAction } from "@/lib/projects/assessment-package-actions";
+import {
+  formatAssessmentPackageStatusLabel,
+  type AssessmentPackageProjectSummary
+} from "@/lib/projects/assessment-package";
+import {
+  getAssessmentPackageProjectReadModel,
+  type AssessmentPackageListItem
+} from "@/lib/projects/assessment-package-data";
 import { buildProjectCues, type ProjectCue } from "@/lib/projects/cues";
 import { buildProjectNextActions } from "@/lib/projects/project-next-actions";
 import { getProjectById } from "@/lib/projects/data";
@@ -536,6 +545,141 @@ function SectionOverview({
         </Link>
       </div>
     </div>
+  );
+}
+
+function ProjectAssessmentPackagePanel({
+  projectId,
+  summary,
+  packages
+}: {
+  projectId: string;
+  summary: AssessmentPackageProjectSummary;
+  packages: AssessmentPackageListItem[];
+}) {
+  return (
+    <DetailPanel
+      title="Assessment Package"
+      description="Project-owned site context for estimator handoff. This summarizes assessment notes without creating separate customer, project, estimate, job, field, material, or workflow truth."
+    >
+      <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(18rem,0.48fr)]">
+        <div className="space-y-4">
+          <div className="rounded-lg border border-[var(--border-warm)] bg-[var(--highlight)] px-4 py-4">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <div className="min-w-0">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
+                  Current package
+                </p>
+                <p className="mt-1 text-base font-semibold text-[var(--text-primary)]">
+                  {summary.latestPackage?.title ?? summary.statusLabel}
+                </p>
+                <p className="mt-2 text-sm leading-6 text-[var(--text-secondary)]">
+                  {summary.statusDetail}
+                </p>
+              </div>
+              <span className="inline-flex shrink-0 rounded-full border border-[var(--border-warm)] bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-[var(--text-secondary)]">
+                {summary.statusLabel}
+              </span>
+            </div>
+            {summary.latestPackage ? (
+              <div className="mt-4">
+                <Link
+                  href={summary.primaryHref}
+                  className={getWorkspaceActionLinkClassName("primary")}
+                >
+                  {summary.primaryActionLabel}
+                </Link>
+              </div>
+            ) : null}
+          </div>
+
+          {packages.length > 0 ? (
+            <div className="grid gap-3">
+              {packages.slice(0, 3).map((assessmentPackage) => (
+                <Link
+                  key={assessmentPackage.id}
+                  href={`/projects/${projectId}/assessment-packages/${assessmentPackage.id}`}
+                  className="rounded-lg border border-[var(--border-warm)] bg-white px-4 py-3 text-sm leading-6 transition hover:border-[var(--copper)]"
+                >
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                    <div className="min-w-0">
+                      <p className="font-semibold text-[var(--text-primary)]">
+                        {assessmentPackage.title}
+                      </p>
+                      <p className="text-[var(--text-secondary)]">
+                        {assessmentPackage.assessmentDate
+                          ? new Date(
+                              `${assessmentPackage.assessmentDate}T00:00:00`
+                            ).toLocaleDateString()
+                          : "Assessment date not set"}
+                      </p>
+                    </div>
+                    <span className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--text-secondary)]">
+                      {formatAssessmentPackageStatusLabel(
+                        assessmentPackage.status
+                      )}
+                    </span>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          ) : null}
+        </div>
+
+        <form
+          action={createAssessmentPackageAction}
+          className="rounded-lg border border-[var(--border-warm)] bg-white px-4 py-4"
+        >
+          <input type="hidden" name="projectId" value={projectId} />
+          <p className="text-sm font-semibold text-[var(--text-primary)]">
+            Create package
+          </p>
+          <label className="mt-4 block text-sm font-medium text-[var(--text-primary)]">
+            Title
+            <input
+              name="title"
+              defaultValue="Site assessment package"
+              className="mt-2 w-full rounded-md border border-[var(--border-warm)] px-3 py-2 text-sm"
+              required
+            />
+          </label>
+          <label className="mt-4 block text-sm font-medium text-[var(--text-primary)]">
+            Assessment date
+            <input
+              type="date"
+              name="assessmentDate"
+              className="mt-2 w-full rounded-md border border-[var(--border-warm)] px-3 py-2 text-sm"
+            />
+          </label>
+          <button type="submit" className={`${primaryActionClassName} mt-4`}>
+            Create assessment package
+          </button>
+        </form>
+      </div>
+
+      <div className="mt-4 grid gap-3 text-xs leading-5 text-[var(--text-secondary)] sm:grid-cols-3">
+        <div className="rounded-md border border-[var(--border-warm)] bg-[var(--highlight)] px-3 py-2">
+          <p className="font-semibold uppercase tracking-[0.14em]">Active</p>
+          <p className="mt-1 text-base font-semibold text-[var(--text-primary)]">
+            {summary.activeCount}
+          </p>
+        </div>
+        <div className="rounded-md border border-[var(--border-warm)] bg-[var(--highlight)] px-3 py-2">
+          <p className="font-semibold uppercase tracking-[0.14em]">
+            Ready for estimate
+          </p>
+          <p className="mt-1 text-base font-semibold text-[var(--text-primary)]">
+            {summary.readyForEstimateCount}
+          </p>
+        </div>
+        <div className="rounded-md border border-[var(--border-warm)] bg-[var(--highlight)] px-3 py-2">
+          <p className="font-semibold uppercase tracking-[0.14em]">Total</p>
+          <p className="mt-1 text-base font-semibold text-[var(--text-primary)]">
+            {summary.total}
+          </p>
+        </div>
+      </div>
+    </DetailPanel>
   );
 }
 
@@ -3315,7 +3459,8 @@ export default async function ProjectDetailPage({
     projectAppointments,
     projectPunchlistItems,
     projectProgressBilling,
-    gateKeeperMemory
+    gateKeeperMemory,
+    assessmentPackageReadModel
   ] = await Promise.all([
     getProjectById(projectId, `/projects/${projectId}`),
     listCustomers(),
@@ -3332,7 +3477,8 @@ export default async function ProjectDetailPage({
       subjectType: "project",
       subjectId: projectId,
       limit: 6
-    })
+    }),
+    getAssessmentPackageProjectReadModel(projectId)
   ]);
 
   if (!project) {
@@ -6013,6 +6159,12 @@ export default async function ProjectDetailPage({
             </div>
           </section>
         </CoreWorkflowSection>
+
+        <ProjectAssessmentPackagePanel
+          projectId={project.id}
+          summary={assessmentPackageReadModel}
+          packages={assessmentPackageReadModel.packages}
+        />
 
         {showNextBestActionGuidance && nextActionQueue.length > 1 ? (
           <DetailPanel

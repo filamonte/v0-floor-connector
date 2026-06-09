@@ -205,6 +205,19 @@ These high-value route notes exist to prevent target-vs-current drift:
   context. It is not a stored PDF, document-management subsystem, delivery
   proof, generated artifact record, or customer/portal download route.
 - `/materials`, `/forms-checklists`, `/directory`, and `/cost-items-database` exist as current contractor routes/foundations, but their deeper production workflows are not complete. `/materials` is currently an intentional route alias that redirects to `/cost-items-database/items`.
+- Project Workspace now has a first schema-backed Assessment Package
+  foundation through tenant-scoped `assessment_packages` records attached to
+  canonical Projects. The Project detail page shows a compact Assessment
+  Package panel, can create a package for the current project, and links to a
+  nested detail route at
+  `/projects/:projectId/assessment-packages/:assessmentPackageId` for
+  summary-level site contact, access, parking, site notes, customer goals,
+  current conditions, recommended system, risk, and estimate handoff notes.
+  RLS and relationship validation keep packages scoped to the active
+  organization and project. This is not guided capture, area/space modeling,
+  photo capture, AI risk detection, material takeoff, estimate-line generation,
+  portal-owned assessment truth, or duplicate customer/project/estimate/job/
+  field/material/workflow truth.
 - `/equipment` and `/equipment/:id` now exist as the equipment asset registry foundation. They create and edit tenant-scoped canonical equipment assets, and the first job equipment foundation now adds job equipment requirements, equipment-to-job assignments, and derived advisory readiness warnings. Maintenance, utilization, job costing, procurement/AP, portal exposure, warranty/service behavior, AI automation, autonomous rescheduling, and hard equipment readiness blocks remain future work.
 - `/service-tickets` and `/service-tickets/:id` now exist as the first internal service/warranty continuity foundation. They create, list, search, filter, update, and status-manage tenant-scoped service tickets tied to canonical customers, optional projects, and optional original jobs. Service ticket detail now shows linked punch-derived time and routes users to the shared `/time` composer with service/warranty context prefilled. This is not a detached helpdesk: same-company customer/project/job validation, RLS, and manager/admin/owner mutation policies keep the records on the canonical lifecycle. Portal service-ticket requests/status, outbound warranty sends, delivery proof, billing/manufacturer claims, job-costing mutation, equipment/material automation, and AI automation remain future work.
 - Service tickets can now create linked unscheduled service jobs on the canonical `jobs` table when a ticket has project context. These jobs carry optional `service_ticket_id`, appear on the existing Schedule and Job surfaces, and keep schedule, crew, equipment readiness, daily logs, and time clocking on the same job foundation instead of creating a service-only calendar.
