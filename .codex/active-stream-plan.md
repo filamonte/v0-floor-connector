@@ -53,11 +53,12 @@ Review packet:
 
 - [docs/review-packets/beta-readiness-operating-core-v1.md](C:/FloorConnector/docs/review-packets/beta-readiness-operating-core-v1.md)
 
-Wave status: Active for first stream only. Jeff authorized
-`payment-schedule-readiness-v1` implementation on 2026-06-09 after review.
-The other proposed streams remain gated. This does not authorize full AIA,
-Project creation alignment, scheduling board work, provider behavior, customer
-self-service, AI automation, PRs, merges, or cleanup.
+Wave status: Active for second stream only. `payment-schedule-readiness-v1`
+merged to `main` as `9b26f481` via PR #19. Jeff authorized
+`opportunity-assessment-package-v1` implementation on 2026-06-09 after PR #19
+merged. The other proposed streams remain gated. This does not authorize full
+AIA, Project creation alignment, scheduling board work, provider behavior,
+customer self-service, AI automation, PRs, merges, or cleanup.
 
 Purpose: plan coordinated beta-readiness streams that close operating-core
 gaps while preserving the canonical lifecycle, current-state truth, and
@@ -82,9 +83,8 @@ Dependency order:
 1. `payment-schedule-readiness-v1` should start first because Financial
    Readiness affects Project creation, schedule readiness, and production
    readiness.
-2. `opportunity-assessment-package-v1` may run in parallel only after
-   Architecture Coordination resolves overlap with active Program A assessment
-   streams.
+2. `opportunity-assessment-package-v1` is active after conflict review found
+   prior Program A assessment patches contained in `origin/main`.
 3. `project-handoff-alignment-v1` waits for payment readiness and assessment
    ownership clarity.
 4. `ux-governance-beta-cleanup-v1` can run in parallel if it remains
@@ -101,27 +101,30 @@ Shared forbidden scope:
 - duplicate financial, assessment, project, portal, signature, checkout,
   payment, provider, AIA, or AI source of truth
 
-Active first stream:
+Merged first stream:
 
 - Branch: `stream/payment-schedule-readiness-v1`
 - Worktree: `C:\FC-worktrees\payment-schedule-readiness-v1`
-- Owns: contract-owned payment requirements and Financial Readiness rules over
-  canonical contracts, projects, invoices, payments, and payment events.
-- Mission: replace deposit-hardcoded readiness with payment-schedule based
-  readiness while preserving current deposit invoice compatibility.
-- Forbidden: full AIA, pay applications, continuation sheets, retainage release
-  workflow, Project creation alignment, scheduling board work, customer
-  self-service, AI automation, accounting integration, external payment
-  provider changes, dashboard redesign, role-aware personalization, duplicate
-  payment ledgers, detached checkout/payment models, portal-only billing
-  copies, and AIA-only billing silos.
+- Status: Merged to `main` as `9b26f481` via PR #19.
+
+Active second stream:
+
+- Branch: `stream/opportunity-assessment-package-v1`
+- Worktree: `C:\FC-worktrees\opportunity-assessment-package-v1`
+- Owns: Opportunity-owned Assessment Package ownership and pre-estimate Lead
+  Workspace visibility while preserving Project continuity compatibility.
+- Mission: make Assessment Package first-class before Project creation without
+  duplicating assessment, customer, project, estimate, portal, field, material,
+  workflow, or AI truth.
+- Forbidden: customer self-service, AI automation, Project creation timing
+  refactor, scheduling board work, full AIA, milestone billing, dashboard
+  redesign, provider behavior, and any detached assessment source of truth.
 - Suggested commit:
-  `feat: add contract payment schedule readiness foundation`
+  `feat: add opportunity assessment package foundation`
 - Status: Active.
 
 Required next gate after this stream: review the committed implementation
-before launching Project handoff, Assessment Package, UX cleanup, full AIA, or
-scheduling work.
+before launching Project handoff, UX cleanup, full AIA, or scheduling work.
 
 ## Product UX Governance Alignment V1 Gate
 

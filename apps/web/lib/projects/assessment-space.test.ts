@@ -58,6 +58,7 @@ void test("buildAssessmentSpaceCreateRecord scopes area creation to tenant packa
 
   assert.equal(record.company_id, "org-1");
   assert.equal(record.project_id, "project-1");
+  assert.equal(record.opportunity_id, null);
   assert.equal(record.assessment_package_id, "package-1");
   assert.equal(record.square_feet, "528.00");
   assert.equal(record.created_by, "user-1");
@@ -67,9 +68,44 @@ void test("buildAssessmentSpaceCreateRecord scopes area creation to tenant packa
   );
 });
 
+void test("buildAssessmentSpaceCreateRecord supports opportunity-owned package areas before project creation", () => {
+  const record = buildAssessmentSpaceCreateRecord({
+    organizationId: "org-1",
+    opportunityId: "opportunity-1",
+    projectId: null,
+    assessmentPackageId: "package-1",
+    userId: "user-1",
+    name: "Garage",
+    spaceType: "garage",
+    floorLevel: null,
+    lengthFeet: null,
+    widthFeet: null,
+    squareFeet: "528.00",
+    perimeterFeet: null,
+    substrate: "Concrete",
+    currentFlooring: null,
+    conditionSummary: null,
+    prepNotes: null,
+    moistureNotes: null,
+    accessNotes: null,
+    sortOrder: 1
+  });
+
+  assert.equal(record.company_id, "org-1");
+  assert.equal(record.opportunity_id, "opportunity-1");
+  assert.equal(record.project_id, null);
+  assert.equal(record.assessment_package_id, "package-1");
+  assert.equal(record.square_feet, "528.00");
+  assert.doesNotMatch(
+    JSON.stringify(record),
+    /customer_id|estimate_id|job_id|material_id|catalog_id|workflow_id/
+  );
+});
+
 void test("assertAssessmentSpacePackageScope rejects cross-tenant project or package records", () => {
   const assessmentSpace = {
     organizationId: "org-1",
+    opportunityId: null,
     projectId: "project-1",
     assessmentPackageId: "package-1"
   };
@@ -119,6 +155,7 @@ void test("deriveAssessmentSpacePackageSummary rolls up measurements without dup
     {
       id: "space-1",
       organizationId: "org-1",
+      opportunityId: null,
       projectId: "project-1",
       assessmentPackageId: "package-1",
       name: "Garage",
@@ -143,6 +180,7 @@ void test("deriveAssessmentSpacePackageSummary rolls up measurements without dup
     {
       id: "space-2",
       organizationId: "org-1",
+      opportunityId: null,
       projectId: "project-1",
       assessmentPackageId: "package-1",
       name: "Patio",

@@ -1010,7 +1010,8 @@ export interface Project {
 export interface AssessmentPackage {
   id: AssessmentPackageId;
   organizationId: OrganizationId;
-  projectId: ProjectId;
+  opportunityId: OpportunityId | null;
+  projectId: ProjectId | null;
   status: AssessmentPackageStatus;
   title: string;
   assessmentDate: string | null;
@@ -1034,7 +1035,8 @@ export interface AssessmentSpace {
   id: AssessmentSpaceId;
   organizationId: OrganizationId;
   assessmentPackageId: AssessmentPackageId;
-  projectId: ProjectId;
+  opportunityId: OpportunityId | null;
+  projectId: ProjectId | null;
   name: string;
   spaceType: AssessmentSpaceType;
   floorLevel: string | null;
