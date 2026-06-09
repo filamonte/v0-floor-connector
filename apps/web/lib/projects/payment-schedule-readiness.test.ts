@@ -371,6 +371,31 @@ void test("percentage requirement without invoice total remains blocked", () => 
   assert.ok(readiness.blockers.includes("payment_requirement_unsatisfied"));
 });
 
+void test("satisfies percentage requirement with missing total when linked invoice is paid", () => {
+  const readiness = computeCommercialReadiness(
+    baseInput({
+      paymentRequirements: [
+        requirement({
+          id: "paid-percentage-no-total",
+          scheduleType: "fifty_fifty",
+          dueBasis: "contract_signing",
+          amountMode: "percentage",
+          amount: null,
+          percentage: "50.00",
+          scheduleBlocking: true,
+          linkedInvoiceStatus: "paid",
+          linkedInvoiceTotalAmount: null,
+          linkedInvoiceBalanceDueAmount: null,
+          linkedInvoiceRecordedPaymentAmount: null
+        })
+      ]
+    })
+  );
+
+  assert.equal(readiness.status, "ready_to_schedule");
+  assert.equal(readiness.isReadyToSchedule, true);
+});
+
 void test("milestone placeholder does not become fake billing completion", () => {
   const readiness = computeCommercialReadiness(
     baseInput({

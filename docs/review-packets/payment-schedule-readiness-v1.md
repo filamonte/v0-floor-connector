@@ -185,3 +185,14 @@ Correction made:
   plus percentage requirements without linked invoice total.
 - No full AIA, milestone automation, provider behavior, checkout behavior,
   invoice generation, or new financial silo was added.
+
+## Final Review Correction
+
+- Final review requested explicit regression coverage for the deliberate
+  paid-invoice fallback when a percentage requirement is missing invoice-total
+  threshold input.
+- Added a targeted test proving a linked canonical invoice with `paid` status
+  satisfies the percentage payment requirement without requiring percentage
+  threshold math to run.
+- No behavior change, migration, provider behavior, AIA, milestone billing,
+  invoice generation, app scope expansion, or new financial silo was added.
