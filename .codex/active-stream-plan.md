@@ -328,13 +328,13 @@ Batch 1 merge order:
 `assessment-package-depth-v1` should merge before `area-space-model-v1` unless
 Architecture Coordination records a narrower parallel implementation split.
 `area-space-model-v1` must not create detached area, room, measurement, surface,
-material, field, or estimate truth outside project-owned Assessment Packages.
+material, field, or estimate truth outside canonical Assessment Packages.
 
 ### assessment-package-depth-v1
 
 - Branch: `stream/assessment-package-depth-v1`
 - Worktree: `C:\FC-worktrees\assessment-package-depth-v1`
-- Owns: Project-owned Assessment Package depth foundation.
+- Owns: Assessment Package depth and Project continuity foundation.
 - Mission: create the canonical Assessment Package foundation connected to
   Project, with ownership rules, tenant isolation expectations, readiness
   relationship to existing project workflow, and future expansion points for

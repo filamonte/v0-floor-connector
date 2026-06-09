@@ -157,7 +157,7 @@ Wave A1 stream plan:
 
 | Stream                                  | Status                 | Role                                      | Merge priority |
 | --------------------------------------- | ---------------------- | ----------------------------------------- | -------------- |
-| `assessment-package-depth-v1`           | Approved / Not Started | Project-owned Assessment Package depth    | 1              |
+| `assessment-package-depth-v1`           | Approved / Not Started | Assessment Package depth and continuity   | 1              |
 | `area-space-model-v1`                   | Approved / Not Started | Area, room, space, and measurement depth  | 2              |
 | `guided-project-capture-workflow-v1`    | Proposed               | Contractor capture workflow depth         | 3              |
 | `estimate-handoff-v1`                   | Proposed               | Assessment-to-estimate continuity         | 4              |

@@ -96,11 +96,13 @@ and is future direction only.
 
 Guided Project Capture is a future expression of that company-brain direction.
 It should sit between lead intake and estimate creation, producing a
-project-owned Assessment Package before pricing begins. The package should
-collect information once, then make it reusable across estimating, revised
-estimates, change orders, scheduling, production planning, field handoff, job
-execution, invoicing, and customer communication. Guided Project Capture is not
-an estimating feature; it is a pre-estimate project-readiness stage. See
+pre-estimate Assessment Package before pricing begins. Opportunity/Assessment
+owns pre-sale capture before Project exists, then Project surfaces and
+continues that context after sold-work handoff. The package should collect
+information once, then make it reusable across estimating, revised estimates,
+change orders, scheduling, production planning, field handoff, job execution,
+invoicing, and customer communication. Guided Project Capture is not an
+estimating feature; it is a pre-estimate knowledge-capture stage. See
 [docs/guided-project-capture-vision.md](C:/FloorConnector/docs/guided-project-capture-vision.md).
 
 The target operating model now further clarifies that Opportunity and
@@ -441,8 +443,8 @@ The expansion path is:
 - then strengthen communications continuity, canonical metrics, and deterministic workflow automation
 - then add project-scoped Takeoff & Scope Intelligence where plans, photos, and measurements feed catalog-mapped estimate line items
 - then add Guided Project Capture where customers, sales, estimators, and field
-  personnel can create project-owned Assessment Packages before estimate work
-  begins
+  personnel can create Opportunity-first Assessment Packages before Project
+  creation, with Project workspaces later continuing linked assessment context
 - then mature the Intelligence Layer from trusted reporting and workflow evidence
 - then extend outward into customer-facing experiences and external integrations
 - then extend the public acquisition layer through contractor-owned websites, tenant-owned domains, landing pages, SEO/service/location pages, public forms, campaign attribution, AI-assisted content generation, and review/reputation/project-proof loops that feed the same canonical opportunity and revenue chain

@@ -50,10 +50,10 @@ That flow may tighten over time into a more project-centered UX, but the key rul
 Future pre-lead visual/product/finish selection may happen before a formal opportunity exists. That should extend the lifecycle concept, not replace it: selected finish/spec context can begin early, then attach to `opportunity -> customer -> project -> estimate -> contract -> change order -> job -> invoice -> payment` when the contractor accepts it into the operational workflow.
 
 Future Guided Project Capture should sit after lead intake and before estimate
-creation. It should turn customer, sales, estimator, or field-provided project
-information into a project-owned Assessment Package before pricing begins. The
-Assessment Package belongs to the Project, not to the Estimate, and should be
-reused downstream instead of re-entered.
+creation. It should turn customer, sales, estimator, or field-provided site
+information into an Opportunity-first Assessment Package before pricing begins.
+Assessment Package is the pre-estimate knowledge-capture layer, not an
+Estimate, and should be reused downstream instead of re-entered.
 
 Product operating-model alignment now refines this target: Opportunity should
 own more pre-sale work before a Project exists, Assessment Package is the
@@ -227,7 +227,8 @@ Future Guided Project Capture:
 
 - acts as a structured pre-estimate workflow stage between lead intake and
   estimate creation
-- creates or enriches a project-owned Assessment Package
+- creates or enriches an Opportunity-first Assessment Package before Project
+  creation
 - may include measurements, area layouts, photos, videos, site conditions,
   substrate information, moisture observations, cracks/joints, prep
   requirements, product preferences, visualizer selections, financing interest,
@@ -245,6 +246,10 @@ Package that can inform estimates, revised estimates, change orders, scheduling,
 production planning, field handoff, job execution, invoicing, and customer
 communication while preserving the estimate as the reviewed commercial scope and
 price.
+
+Once a Project exists, Project workspaces should surface and continue linked
+Assessment Package, Area, and Space context for operational continuity rather
+than requiring pre-sale assessment work to start as a Project.
 
 Future Assessment Confidence may classify Measurement Confidence, Condition
 Confidence, and Product Confidence to decide whether remote estimating is

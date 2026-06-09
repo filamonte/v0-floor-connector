@@ -126,3 +126,38 @@ git diff --check
 git diff --cached --check
 pnpm.cmd worktree:doctor
 ```
+
+## Second Review Correction
+
+Second review found the corrected four docs were aligned, but remaining active
+docs still used future-facing Project-owned Assessment wording in system
+overview, roadmap, vision, and sales-to-production references.
+
+Correction made:
+
+- `docs/system-overview.md` now describes Guided Project Capture as
+  Opportunity-first Assessment Package capture before Project creation, with
+  Project workspaces later surfacing linked assessment, area, and space context
+  after the work becomes operational.
+- `docs/Roadmap.md` now frames Assessment Package maturity as
+  Opportunity-first pre-estimate workflow and keeps Project creation/handoff as
+  later operational continuity.
+- `docs/vision.md` now describes Assessment Package as pre-estimate knowledge
+  capture before Project exists, with Project continuity after sold-work
+  handoff.
+- `docs/sales-to-production.md` now removes the older "belongs to the Project"
+  target wording and keeps Assessment Package as the pre-estimate knowledge
+  layer.
+- Active capability and stream registry references now use Assessment Package
+  depth, canonical Assessment Package, or Project continuity wording where they
+  guide future work, while older review packets and merged-stream notes may
+  still describe the already-implemented Project-attached foundation.
+
+Validation rerun:
+
+```powershell
+pnpm.cmd exec prettier --write docs/system-overview.md docs/Roadmap.md docs/vision.md docs/sales-to-production.md docs/review-packets/product-ux-governance-alignment-v1.md
+git diff --check
+git diff --cached --check
+pnpm.cmd worktree:doctor
+```

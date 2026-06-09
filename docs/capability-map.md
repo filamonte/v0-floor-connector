@@ -67,11 +67,11 @@ and reuse site/scope context downstream.
 Status: Active.
 
 Maturity: Foundation, 12 / 100. The first guided project capture Wave has
-merged to `main`; `assessment-package-depth-v1` adds the first schema-backed
-project-owned Assessment Package foundation, and `area-space-model-v1` adds the
-package-owned Area / Space foundation. Guided capture depth, photo capture, AI
-risk detection, material takeoff, portal contribution, and estimate handoff
-depth still require later approved work.
+merged to `main`; `assessment-package-depth-v1` deepens the schema-backed
+Assessment Package foundation, and `area-space-model-v1` adds the package-owned
+Area / Space foundation. Guided capture depth, photo capture, AI risk
+detection, material takeoff, portal contribution, and estimate handoff depth
+still require later approved work.
 
 Owning Program:
 
@@ -290,7 +290,8 @@ architecture freeze because:
 
 - the Program and capability are defined
 - `guided-project-capture-v1` has merged
-- the merged streams establish the first project-owned assessment foundation
+- the merged streams establish the first schema-backed Assessment Package
+  foundation
 - the review packet records validation and boundary evidence
 - the remaining work is product capability depth rather than governance system
   design

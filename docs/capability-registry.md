@@ -131,18 +131,19 @@ Heatmap colors:
 
 Current posture: Foundation, active at 12 percent maturity.
 
-Program A owns the direction for project-owned Assessment Packages, guided
+Program A owns the direction for Opportunity-first Assessment Packages, guided
 capture review, customer-safe capture input, risk signal visibility, missing
-information guidance, and estimate handoff continuity.
+information guidance, and estimate handoff continuity. Project workspaces should
+surface linked assessment context after the work becomes operational.
 
 Planning packet
 [docs/review-packets/program-a-assessment-foundation-a1-plan.md](C:/FloorConnector/docs/review-packets/program-a-assessment-foundation-a1-plan.md)
 prepares Wave A1: Assessment Foundation. The
-`assessment-package-depth-v1` implementation adds the first schema-backed
-project-owned Assessment Package foundation, and `area-space-model-v1` adds
-package-owned area/space modeling for rooms, zones, dimensions, substrates,
-conditions, prep notes, moisture notes, access notes, and future handoff
-support. Current capability evidence is 12 percent. Full Wave A1 movement
+`assessment-package-depth-v1` implementation deepens the existing schema-backed
+Assessment Package foundation, and `area-space-model-v1` adds package-owned
+area/space modeling for rooms, zones, dimensions, substrates, conditions, prep
+notes, moisture notes, access notes, and future handoff support. Current
+capability evidence is 12 percent. Full Wave A1 movement
 remains below 20 percent until later approved streams, verification, review,
 and merge evidence exists.
 

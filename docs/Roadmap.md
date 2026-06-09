@@ -169,8 +169,8 @@ Roadmap sequencing should account for these future areas without turning them in
   [docs/design/universal-capture-ui-blueprint.md](C:/FloorConnector/docs/design/universal-capture-ui-blueprint.md)
 - QuickBooks/accounting integration later, as sync/export from FloorConnector financial truth
 - AI-assisted takeoff and workflow intelligence later, with human approval and no AI-only records
-- Guided Project Capture and project-owned Assessment Packages before estimate
-  creation, with customer mobile web capture before native applications
+- Guided Project Capture and Opportunity-first Assessment Packages before
+  Project creation, with customer mobile web capture before native applications
 
 The field-operations connection map now lives in [docs/field-operations-architecture-map.md](C:/FloorConnector/docs/field-operations-architecture-map.md). The equipment depth layer is planned in [docs/equipment-management-plan.md](C:/FloorConnector/docs/equipment-management-plan.md), with maintenance/utilization/costing detail in [docs/equipment-maintenance-utilization-plan.md](C:/FloorConnector/docs/equipment-maintenance-utilization-plan.md). The registry and assignment/readiness foundations now exist; the intended next equipment sequence is maintenance, utilization, rental-return, and job-costing inputs. Equipment must remain attached to vendors, people, projects, jobs, schedule, time, warranty/service, documents, and future job costing.
 
@@ -280,10 +280,11 @@ Future depth:
 - richer document-template and output controls
 - shared file/evidence layer with multi-record links
 - Takeoff & Scope Intelligence as project-scoped, human-reviewed estimate input
-- Guided Project Capture as a project-scoped pre-estimate workflow for
+- Guided Project Capture as an Opportunity-first pre-estimate workflow for
   Assessment Packages, Area / Space Modeling, customer mobile web capture,
   qualification signals, financing interest, confidence scoring, and
-  human-reviewed AI observations
+  human-reviewed AI observations, with Project workspaces later surfacing
+  linked assessment context after the work becomes operational
 
 Catalog, materials, systems, takeoff, and documents must feed canonical estimates, contracts, jobs, invoices, and closeout evidence rather than become separate estimating or file silos. The founder-demo rehearsal path now lives in [docs/founder-demo-readiness.md](C:/FloorConnector/docs/founder-demo-readiness.md), the first prospect-facing script lives in [docs/founder-prospect-demo-script.md](C:/FloorConnector/docs/founder-prospect-demo-script.md), and the structured worksheet lives in [docs/founder-prospect-feedback.md](C:/FloorConnector/docs/founder-prospect-feedback.md). Use those docs to decide whether the next product slice should be estimate/catalog/materials depth, scheduling/dispatch depth, manager/mobile polish, import/export readiness, reporting/dashboard depth, live billing readiness controls, or onboarding/marketing polish after explicit release decisions.
 

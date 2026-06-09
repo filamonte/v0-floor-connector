@@ -59,13 +59,13 @@ are future platform services only; they are not current implementation claims.
 
 Guided Project Capture is a planned future layer between lead intake and
 estimate creation. It should let customers, sales representatives, estimators,
-and field personnel create a project-owned Assessment Package before estimating
-begins. That package may include measurements, area layouts, photos, videos,
-site conditions, substrate and moisture observations, crack/joint observations,
-prep requirements, product preferences, visualizer selections, financing
-interest, customer goals, AI observations, and confidence scores. It is not an
-estimate and must not be described as implemented until current-state records an
-implemented slice.
+and field personnel create an Opportunity-first Assessment Package before
+estimating begins. That package may include measurements, area layouts, photos,
+videos, site conditions, substrate and moisture observations, crack/joint
+observations, prep requirements, product preferences, visualizer selections,
+financing interest, customer goals, AI observations, and confidence scores. It
+is not an estimate and must not be described as implemented until current-state
+records an implemented slice.
 
 Assessment Package should be treated as first-class knowledge capture, not a
 helper feature. The target model lets Opportunity and Assessment Package carry
@@ -515,7 +515,7 @@ These are still later layers:
 #### Guided Project Capture
 
 - customer mobile web capture before native mobile applications
-- project-owned Assessment Packages before estimate creation
+- Opportunity-first Assessment Packages before Project creation
 - Area / Space Modeling for room or zone-level measurements, conditions,
   photos, product selections, and AI observations
 - Assessment Confidence signals for measurement, condition, and product
@@ -569,9 +569,9 @@ The next layers should follow the current roadmap direction in a disciplined ord
 3. Materials, reusable catalogs, and richer shared document tooling
 
 - deepen reusable operational content on the same canonical system
-- add Guided Project Capture and project-owned Assessment Packages before
-  estimate creation, keeping capture separate from pricing and estimate
-  approval
+- add Guided Project Capture and Opportunity-first Assessment Packages before
+  Project creation, while Project workspaces later surface linked assessment,
+  area, and space context after the work becomes operational
 
 4. External integrations
 
