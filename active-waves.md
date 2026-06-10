@@ -76,10 +76,13 @@ Wave name: `ux-beta-readiness-v1`.
 Review packet:
 [docs/review-packets/ux-beta-readiness-v1.md](C:/FloorConnector/docs/review-packets/ux-beta-readiness-v1.md).
 
-Status: Active for the first implementation stream. The prompt explicitly
-approved the wave after PR #19 and PR #20 were confirmed merged.
-`ux-architecture-audit-v1` completed the docs/report-only audit and approved
-`ux-design-system-foundation-v1` as the first UI-touching stream.
+Status: Active for tooling readiness review after the first implementation
+stream. The prompt explicitly approved the wave after PR #19 and PR #20 were
+confirmed merged. `ux-architecture-audit-v1` completed the docs/report-only
+audit and approved `ux-design-system-foundation-v1` as the first UI-touching
+stream. PR #21 merged `ux-design-system-foundation-v1` to `main`; the current
+active stream is `mcp-tool-readiness-v1` to verify external tool readiness and
+fallbacks before dashboard cleanup starts.
 
 Purpose: make the contractor app cohesive, trustworthy, role-aware-ready, and
 usable for real beta testing while preserving the canonical operating model.
@@ -92,19 +95,25 @@ Approved first stream:
 
 Approved implementation stream:
 
-| Stream                           | Review packet                                                                     | Ownership area                                                                                                   | Dependency posture                                      |
-| -------------------------------- | --------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------- |
-| `ux-design-system-foundation-v1` | [packet](C:/FloorConnector/docs/review-packets/ux-design-system-foundation-v1.md) | Shared status/readiness badge semantics, action hierarchy, empty-state variants, and reusable UX primitives only | Starts after `ux-architecture-audit-v1` review approval |
+| Stream                           | Review packet                                                                     | Ownership area                                                                                                   | Dependency posture                               |
+| -------------------------------- | --------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- | ------------------------------------------------ |
+| `ux-design-system-foundation-v1` | [packet](C:/FloorConnector/docs/review-packets/ux-design-system-foundation-v1.md) | Shared status/readiness badge semantics, action hierarchy, empty-state variants, and reusable UX primitives only | Merged via PR #21; upstream for later UX cleanup |
+
+Approved tooling readiness stream:
+
+| Stream                  | Review packet                                                            | Ownership area                                                                                                                                                                                                             | Dependency posture                                                                                                     |
+| ----------------------- | ------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| `mcp-tool-readiness-v1` | [packet](C:/FloorConnector/docs/review-packets/mcp-tool-readiness-v1.md) | MCP/tool readiness and usage rules for the UX Beta Readiness wave, including GitHub, Notion, Linear, Figma/FigJam, Stitch, v0, Supabase, Stripe, OpenAI Platform, B12, Assessment Generator, Mem, and Vercel check posture | Starts after PR #21 merge; must be reviewed or explicitly accepted before `dashboard-command-center-cleanup-v1` starts |
 
 Proposed later streams:
 
-| Stream                                | Ownership area                                                                                         | Gate before activation                                                                              |
-| ------------------------------------- | ------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------- |
-| `dashboard-command-center-cleanup-v1` | Dashboard attention hierarchy and role-aware-ready layout posture                                      | Wait for design-system foundation review and conflict review against dashboard/read-model ownership |
-| `record-workspace-rhythm-v1`          | Lead/Opportunity, Project, Estimate, Contract, Invoice, and Job workspace rhythm                       | Wait for design-system foundation review and page ownership review                                  |
-| `financial-schedule-readiness-ux-v1`  | Financial Readiness, Schedule Readiness, Production Readiness, Financials, Payments, and Field clarity | Wait for design-system foundation review and readiness/ownership boundary review                    |
-| `mobile-field-beta-pass-v1`           | Mobile assessment capture and field-facing responsive polish                                           | Wait for field/portal/customer-safety boundary review                                               |
-| `settings-super-admin-boundary-ux-v1` | Settings tenant configuration and Super Admin platform-policy boundary clarity                         | Wait for admin-boundary review                                                                      |
+| Stream                                | Ownership area                                                                                         | Gate before activation                                                                                                          |
+| ------------------------------------- | ------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------- |
+| `dashboard-command-center-cleanup-v1` | Dashboard attention hierarchy and role-aware-ready layout posture                                      | Wait for design-system foundation review, MCP/tool readiness review, and conflict review against dashboard/read-model ownership |
+| `record-workspace-rhythm-v1`          | Lead/Opportunity, Project, Estimate, Contract, Invoice, and Job workspace rhythm                       | Wait for design-system foundation review and page ownership review                                                              |
+| `financial-schedule-readiness-ux-v1`  | Financial Readiness, Schedule Readiness, Production Readiness, Financials, Payments, and Field clarity | Wait for design-system foundation review and readiness/ownership boundary review                                                |
+| `mobile-field-beta-pass-v1`           | Mobile assessment capture and field-facing responsive polish                                           | Wait for field/portal/customer-safety boundary review                                                                           |
+| `settings-super-admin-boundary-ux-v1` | Settings tenant configuration and Super Admin platform-policy boundary clarity                         | Wait for admin-boundary review                                                                                                  |
 
 Required tool posture:
 
