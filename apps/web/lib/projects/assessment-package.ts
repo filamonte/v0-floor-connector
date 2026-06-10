@@ -148,11 +148,14 @@ export type AssessmentPackageProjectSummary = {
 
 export type AssessmentPackageCreateRecordInput = {
   organizationId: string;
-  projectId: string;
+  opportunityId?: string | null;
+  projectId?: string | null;
   userId: string;
   title: string;
   assessmentDate: string | null;
 };
+
+export type AssessmentPackageOwnershipStage = "pre_sale" | "project_continuity";
 
 function trimToNull(value: string | null | undefined) {
   return value?.trim() || null;
@@ -263,9 +266,16 @@ export function formatAssessmentPackageStatusLabel(
 export function buildAssessmentPackageCreateRecord(
   input: AssessmentPackageCreateRecordInput
 ) {
+  if (!input.opportunityId && !input.projectId) {
+    throw new Error(
+      "Assessment package must be linked to an opportunity or project."
+    );
+  }
+
   return {
     company_id: input.organizationId,
-    project_id: input.projectId,
+    opportunity_id: input.opportunityId ?? null,
+    project_id: input.projectId ?? null,
     status: "draft" as const,
     title: input.title,
     assessment_date: input.assessmentDate,
@@ -286,6 +296,29 @@ export function assertAssessmentPackageProjectScope(input: {
   if (input.assessmentPackage.projectId !== input.projectId) {
     throw new Error("Assessment package not found for this project.");
   }
+}
+
+export function assertAssessmentPackageOpportunityScope(input: {
+  assessmentPackage: Pick<
+    AssessmentPackage,
+    "organizationId" | "opportunityId"
+  >;
+  organizationId: string;
+  opportunityId: string;
+}) {
+  if (input.assessmentPackage.organizationId !== input.organizationId) {
+    throw new Error("Assessment package not found for this organization.");
+  }
+
+  if (input.assessmentPackage.opportunityId !== input.opportunityId) {
+    throw new Error("Assessment package not found for this opportunity.");
+  }
+}
+
+export function getAssessmentPackageOwnershipStage(
+  assessmentPackage: Pick<AssessmentPackage, "opportunityId" | "projectId">
+): AssessmentPackageOwnershipStage {
+  return assessmentPackage.projectId ? "project_continuity" : "pre_sale";
 }
 
 export function deriveAssessmentPackageProjectSummary(input: {
@@ -313,7 +346,7 @@ export function deriveAssessmentPackageProjectSummary(input: {
       latestPackage: null,
       statusLabel: "No assessment package",
       statusDetail:
-        "Create a project-owned assessment package before estimator handoff needs site context.",
+        "Create an assessment package before estimator handoff needs site context.",
       primaryHref: `/projects/${input.projectId}`,
       primaryActionLabel: "Create assessment package"
     };

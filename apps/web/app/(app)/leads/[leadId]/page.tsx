@@ -26,6 +26,8 @@ import {
 import { getOpportunityById } from "@/lib/opportunities/data";
 import { deriveSalesEstimateReadiness } from "@/lib/opportunities/follow-up-read-model";
 import { listPeople } from "@/lib/people/data";
+import { createOpportunityAssessmentPackageAction } from "@/lib/projects/assessment-package-actions";
+import { listAssessmentPackagesByOpportunity } from "@/lib/projects/assessment-package-data";
 import { updateOpportunityRoleSlotsAction } from "@/lib/role-slots/actions";
 import { selectRoleSlotPersonOptions } from "@/lib/role-slots/read-model";
 import {
@@ -261,6 +263,7 @@ export default async function LeadDetailPage({
     communicationMessages,
     gateKeeperMemory,
     linkedWorkItems,
+    assessmentPackages,
     people
   ] = await Promise.all([
     listAppointmentsByOpportunity(leadId, `/leads/${leadId}`),
@@ -274,6 +277,7 @@ export default async function LeadDetailPage({
       sourceType: "opportunity",
       sourceId: leadId
     }),
+    listAssessmentPackagesByOpportunity(leadId),
     listPeople()
   ]);
 
@@ -448,6 +452,12 @@ export default async function LeadDetailPage({
           label: "Site Visit",
           iconName: "check-square",
           href: "#site-visit"
+        },
+        {
+          id: "assessment-package",
+          label: "Assessment Package",
+          iconName: "notebook-pen",
+          href: "#assessment-package"
         },
         {
           id: "scope-intake",
@@ -866,6 +876,148 @@ export default async function LeadDetailPage({
                 />
               </div>
             </div>
+
+            <section
+              id="assessment-package"
+              className="mt-8 rounded-3xl border border-slate-200 bg-white/90 p-6 shadow-[0_24px_80px_-40px_rgba(15,23,42,0.35)] backdrop-blur sm:p-8"
+            >
+              <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                <div>
+                  <p className="text-sm font-semibold uppercase tracking-[0.24em] text-brand-700">
+                    Assessment Package
+                  </p>
+                  <h2 className="mt-3 text-2xl font-semibold tracking-tight text-slate-950">
+                    Pre-estimate capture
+                  </h2>
+                  <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
+                    Capture site knowledge against the opportunity before a
+                    project exists. Project-linked packages remain available
+                    after sale for operational continuity.
+                  </p>
+                </div>
+                <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-600 md:w-72">
+                  <p className="font-semibold text-slate-950">Package status</p>
+                  <p className="mt-1 text-xs leading-5 text-slate-500">
+                    {assessmentPackages.length > 0
+                      ? `${assessmentPackages.length} package${assessmentPackages.length === 1 ? "" : "s"} linked to this opportunity.`
+                      : "No assessment package has been started yet."}
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-6 grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,0.85fr)]">
+                <div className="space-y-3">
+                  {assessmentPackages.length > 0 ? (
+                    assessmentPackages.map((assessmentPackage) => {
+                      const packageHref = assessmentPackage.projectId
+                        ? `/projects/${assessmentPackage.projectId}/assessment-packages/${assessmentPackage.id}`
+                        : null;
+
+                      return (
+                        <article
+                          key={assessmentPackage.id}
+                          className="rounded-2xl border border-slate-200 bg-slate-50/80 px-5 py-4"
+                        >
+                          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                            <div>
+                              <p className="text-sm font-semibold text-slate-950">
+                                {assessmentPackage.title}
+                              </p>
+                              <p className="mt-1 text-xs leading-5 text-slate-500">
+                                {assessmentPackage.projectId
+                                  ? "Project-linked continuity package"
+                                  : "Opportunity-owned pre-sale package"}
+                              </p>
+                            </div>
+                            <span className="inline-flex w-fit rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-slate-600">
+                              {formatStatusLabel(assessmentPackage.status)}
+                            </span>
+                          </div>
+                          <dl className="mt-4 grid gap-3 text-sm text-slate-600 sm:grid-cols-2">
+                            <div>
+                              <dt className="font-medium text-slate-950">
+                                Assessment date
+                              </dt>
+                              <dd>
+                                {formatDate(assessmentPackage.assessmentDate)}
+                              </dd>
+                            </div>
+                            <div>
+                              <dt className="font-medium text-slate-950">
+                                Updated
+                              </dt>
+                              <dd>
+                                {formatDateTime(assessmentPackage.updatedAt)}
+                              </dd>
+                            </div>
+                          </dl>
+                          {packageHref ? (
+                            <Link
+                              href={packageHref}
+                              className="mt-4 inline-flex text-sm font-medium text-brand-700 transition hover:text-brand-900"
+                            >
+                              Open project assessment package
+                            </Link>
+                          ) : null}
+                        </article>
+                      );
+                    })
+                  ) : (
+                    <AppEmptyState
+                      eyebrow="No package yet"
+                      title="Start the pre-estimate package"
+                      description="Create the shared package here, then add measurements, spaces, photos, conditions, product selections, and notes as the site context becomes available."
+                    />
+                  )}
+                </div>
+
+                <form
+                  action={createOpportunityAssessmentPackageAction}
+                  className="rounded-2xl border border-slate-200 bg-slate-50/80 px-5 py-5"
+                >
+                  <input
+                    type="hidden"
+                    name="opportunityId"
+                    value={opportunity.id}
+                  />
+                  <div>
+                    <label
+                      htmlFor="assessment-package-title"
+                      className="text-sm font-medium text-slate-950"
+                    >
+                      Package title
+                    </label>
+                    <input
+                      id="assessment-package-title"
+                      name="title"
+                      type="text"
+                      defaultValue={`${opportunity.title} assessment package`}
+                      className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-950 shadow-sm outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-200"
+                    />
+                  </div>
+                  <div className="mt-4">
+                    <label
+                      htmlFor="assessment-package-date"
+                      className="text-sm font-medium text-slate-950"
+                    >
+                      Assessment date
+                    </label>
+                    <input
+                      id="assessment-package-date"
+                      name="assessmentDate"
+                      type="date"
+                      className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-950 shadow-sm outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-200"
+                    />
+                  </div>
+                  <button
+                    type="submit"
+                    className="mt-5 inline-flex w-full items-center justify-center rounded-full bg-brand-700 px-4 py-3 text-sm font-semibold text-white transition hover:bg-brand-900"
+                  >
+                    Start assessment package
+                  </button>
+                </form>
+              </div>
+            </section>
 
             <section
               id="communication"

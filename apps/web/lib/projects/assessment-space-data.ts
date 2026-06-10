@@ -20,7 +20,8 @@ type AssessmentSpaceRow = {
   id: string;
   company_id: string;
   assessment_package_id: string;
-  project_id: string;
+  opportunity_id: string | null;
+  project_id: string | null;
   name: string;
   space_type: AssessmentSpaceType;
   floor_level: string | null;
@@ -45,6 +46,7 @@ const assessmentSpaceSelect = `
   id,
   company_id,
   assessment_package_id,
+  opportunity_id,
   project_id,
   name,
   space_type,
@@ -81,7 +83,8 @@ function isAssessmentSpaceRow(value: unknown): value is AssessmentSpaceRow {
     typeof row.id === "string" &&
     typeof row.company_id === "string" &&
     typeof row.assessment_package_id === "string" &&
-    typeof row.project_id === "string" &&
+    (row.opportunity_id === null || typeof row.opportunity_id === "string") &&
+    (row.project_id === null || typeof row.project_id === "string") &&
     typeof row.name === "string" &&
     typeof row.space_type === "string" &&
     typeof row.sort_order === "number" &&
@@ -101,6 +104,7 @@ function mapAssessmentSpace(row: AssessmentSpaceRow): AssessmentSpace {
     id: row.id,
     organizationId: row.company_id,
     assessmentPackageId: row.assessment_package_id,
+    opportunityId: row.opportunity_id,
     projectId: row.project_id,
     name: row.name,
     spaceType: row.space_type,
@@ -208,7 +212,7 @@ export async function createAssessmentSpace(
   assessmentPackageId: string,
   input: AssessmentSpaceInput
 ) {
-  const { scope } = await requireAssessmentPackageScope({
+  const { scope, assessmentPackage } = await requireAssessmentPackageScope({
     projectId,
     assessmentPackageId
   });
@@ -219,6 +223,7 @@ export async function createAssessmentSpace(
     .insert(
       buildAssessmentSpaceCreateRecord({
         organizationId: scope.organizationId,
+        opportunityId: assessmentPackage.opportunityId,
         projectId,
         assessmentPackageId,
         userId: scope.userId,

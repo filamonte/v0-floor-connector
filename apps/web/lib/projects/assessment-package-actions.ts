@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import {
+  createAssessmentPackageForOpportunity,
   createAssessmentPackageForProject,
   updateAssessmentPackage,
   updateAssessmentPackageStatus
@@ -128,6 +129,55 @@ export async function createAssessmentPackageAction(formData: FormData) {
         message: "Assessment package was created."
       }
     )
+  );
+}
+
+export async function createOpportunityAssessmentPackageAction(
+  formData: FormData
+) {
+  const opportunityId = getFieldValue(formData, "opportunityId");
+  const result = assessmentPackageCreateInputSchema.safeParse({
+    title: getFieldValue(formData, "title"),
+    assessmentDate: getFieldValue(formData, "assessmentDate")
+  });
+
+  if (!opportunityId) {
+    redirect(
+      buildRedirect("/leads", {
+        error: "Opportunity id is required for assessment package creation."
+      })
+    );
+  }
+
+  if (!result.success) {
+    redirect(
+      buildRedirect(`/leads/${opportunityId}`, {
+        error:
+          result.error.issues[0]?.message ??
+          "Unable to create assessment package."
+      })
+    );
+  }
+
+  try {
+    await createAssessmentPackageForOpportunity(opportunityId, result.data);
+  } catch (error) {
+    redirect(
+      buildRedirect(`/leads/${opportunityId}`, {
+        error:
+          error instanceof Error
+            ? error.message
+            : "Unable to create assessment package."
+      })
+    );
+  }
+
+  revalidatePath(`/leads/${opportunityId}`);
+
+  redirect(
+    buildRedirect(`/leads/${opportunityId}`, {
+      message: "Assessment package was created."
+    })
   );
 }
 

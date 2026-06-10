@@ -1,6 +1,6 @@
 # Opportunity Assessment Package V1
 
-Status: Proposed
+Status: Implemented in stream
 Doc Type: Stream Review Packet
 
 Stream id: `opportunity-assessment-package-v1`
@@ -66,13 +66,22 @@ Likely pages/components:
 
 ## Data Model Impact Expectation
 
-Likely migration needs exist if `assessment_packages` must become
-opportunity-owned before Project exists. The transition must either support a
-nullable/project-link-later model or an explicit source-record relationship
-without duplicating package rows.
+Implemented migration `20260609231500_opportunity_assessment_package_alignment`
+extends the existing canonical `assessment_packages` and `assessment_spaces`
+tables instead of creating a separate pre-sale package model:
 
-Any schema change must preserve organization tenancy, RLS, forward links into
-Project after sale, and compatibility with current Project-attached packages.
+- `assessment_packages.opportunity_id` is nullable and references canonical
+  `opportunities`.
+- `assessment_packages.project_id` is nullable so an Opportunity-owned package
+  can exist before Project creation.
+- `assessment_packages_owner_check` requires Opportunity or Project ownership.
+- tenant relationship validation checks Opportunity and Project company scope.
+- `assessment_spaces.opportunity_id` is denormalized from the parent package
+  for scoped Opportunity queries while spaces remain owned by the package.
+
+The implementation preserves current Project-attached package compatibility and
+does not create customer, portal, estimate, job, material, field, workflow, or
+AI-owned assessment truth.
 
 ## UX Impact Expectation
 
@@ -80,6 +89,12 @@ UX should support mobile-first onsite capture for measurements, areas, spaces,
 photos/attachments, conditions, product selections, timeline, financing
 interest, and notes. It must make estimator handoff clear without making
 Assessment Package an Estimate or a Project junk drawer.
+
+Implemented V1 adds a bounded Lead Workspace Assessment Package panel that can
+create and list Opportunity-owned packages before a Project exists. Project
+detail and Project Assessment Package detail remain the existing continuity
+surfaces. Mobile-first capture, customer self-service, AI assistance, and
+Project handoff timing remain future work.
 
 ## Anti-Silo Checks
 
@@ -115,6 +130,33 @@ git diff --check
 git diff --cached --check
 pnpm.cmd worktree:doctor
 ```
+
+## Implementation Summary
+
+- Added Opportunity ownership to the existing Assessment Package foundation.
+- Kept Project ownership nullable for continuity instead of duplicating package
+  records during pre-sale work.
+- Added opportunity-scoped package list/create helpers and Lead Workspace
+  surface.
+- Carried Opportunity ownership into Assessment Spaces from their parent
+  package.
+- Added targeted package, space, and migration regression coverage.
+
+No customer self-service, AI automation, full mobile capture, estimate-line
+generation, Project creation alignment, scheduling board, AIA, dashboard
+redesign, provider behavior, or duplicate assessment source of truth was added.
+
+## Implementation Validation
+
+Focused validation added for:
+
+- Opportunity-owned package creation before Project creation.
+- package ownership requires Opportunity or Project.
+- Opportunity scope rejects cross-tenant or cross-opportunity packages.
+- ownership stage distinguishes pre-sale from Project continuity.
+- Opportunity-owned spaces carry parent package Opportunity ownership.
+- migration adds Opportunity ownership, nullable Project linkage, owner check,
+  tenant validation, and space denormalization.
 
 ## Merge / Readiness Gates
 

@@ -23,7 +23,8 @@ export type AssessmentSpaceMeasurementInput = {
 
 export type AssessmentSpaceCreateRecordInput = {
   organizationId: string;
-  projectId: string;
+  opportunityId?: string | null;
+  projectId?: string | null;
   assessmentPackageId: string;
   userId: string;
   name: string;
@@ -95,18 +96,29 @@ export function formatAssessmentSpaceTypeLabel(type: AssessmentSpaceType) {
 export function assertAssessmentSpacePackageScope(input: {
   assessmentSpace: Pick<
     AssessmentSpace,
-    "organizationId" | "projectId" | "assessmentPackageId"
+    "organizationId" | "opportunityId" | "projectId" | "assessmentPackageId"
   >;
   organizationId: string;
-  projectId: string;
+  opportunityId?: string | null;
+  projectId?: string | null;
   assessmentPackageId: string;
 }) {
   if (input.assessmentSpace.organizationId !== input.organizationId) {
     throw new Error("Assessment space not found for this organization.");
   }
 
-  if (input.assessmentSpace.projectId !== input.projectId) {
+  if (
+    input.projectId !== undefined &&
+    input.assessmentSpace.projectId !== input.projectId
+  ) {
     throw new Error("Assessment space not found for this project.");
+  }
+
+  if (
+    input.opportunityId !== undefined &&
+    input.assessmentSpace.opportunityId !== input.opportunityId
+  ) {
+    throw new Error("Assessment space not found for this opportunity.");
   }
 
   if (input.assessmentSpace.assessmentPackageId !== input.assessmentPackageId) {
@@ -119,7 +131,8 @@ export function buildAssessmentSpaceCreateRecord(
 ) {
   return {
     company_id: input.organizationId,
-    project_id: input.projectId,
+    opportunity_id: input.opportunityId ?? null,
+    project_id: input.projectId ?? null,
     assessment_package_id: input.assessmentPackageId,
     name: input.name,
     space_type: input.spaceType,

@@ -7,6 +7,7 @@ import type {
 } from "@floorconnector/types";
 
 import {
+  assertAssessmentPackageOpportunityScope,
   assertAssessmentPackageProjectScope,
   buildAssessmentPackageCreateRecord,
   canTransitionAssessmentPackageStatus,
@@ -19,12 +20,14 @@ import type {
   AssessmentPackageStatusInput
 } from "./assessment-package-schemas";
 import { requireProjectScope } from "./data";
+import { requireOpportunityScope } from "@/lib/opportunities/data";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 
 type AssessmentPackageRow = {
   id: string;
   company_id: string;
-  project_id: string;
+  opportunity_id: string | null;
+  project_id: string | null;
   status: AssessmentPackageStatus;
   title: string;
   assessment_date: string | null;
@@ -52,9 +55,23 @@ type AssessmentPackageRow = {
       company_name: string | null;
     } | null;
   } | null;
+  opportunities?: {
+    id: string;
+    title: string;
+    status: string;
+    customer_id: string | null;
+    project_id: string | null;
+  } | null;
 };
 
 export type AssessmentPackageListItem = AssessmentPackage & {
+  opportunity?: {
+    id: string;
+    title: string;
+    status: string;
+    customerId: string | null;
+    projectId: string | null;
+  } | null;
   project?: { id: string; name: string; customerId: string } | null;
   customer?: { id: string; name: string; companyName: string | null } | null;
 };
@@ -67,6 +84,7 @@ export type AssessmentPackageProjectReadModel =
 const assessmentPackageSelect = `
   id,
   company_id,
+  opportunity_id,
   project_id,
   status,
   title,
@@ -94,6 +112,13 @@ const assessmentPackageSelect = `
       name,
       company_name
     )
+  ),
+  opportunities (
+    id,
+    title,
+    status,
+    customer_id,
+    project_id
   )
 `;
 
@@ -107,7 +132,8 @@ function isAssessmentPackageRow(value: unknown): value is AssessmentPackageRow {
   return (
     typeof row.id === "string" &&
     typeof row.company_id === "string" &&
-    typeof row.project_id === "string" &&
+    (row.opportunity_id === null || typeof row.opportunity_id === "string") &&
+    (row.project_id === null || typeof row.project_id === "string") &&
     typeof row.status === "string" &&
     typeof row.title === "string" &&
     typeof row.created_at === "string" &&
@@ -125,6 +151,7 @@ function mapAssessmentPackage(row: AssessmentPackageRow): AssessmentPackage {
   return {
     id: row.id,
     organizationId: row.company_id,
+    opportunityId: row.opportunity_id,
     projectId: row.project_id,
     status: row.status,
     title: row.title,
@@ -151,6 +178,15 @@ function mapAssessmentPackageListItem(
 ): AssessmentPackageListItem {
   return {
     ...mapAssessmentPackage(row),
+    opportunity: row.opportunities
+      ? {
+          id: row.opportunities.id,
+          title: row.opportunities.title,
+          status: row.opportunities.status,
+          customerId: row.opportunities.customer_id,
+          projectId: row.opportunities.project_id
+        }
+      : null,
     project: row.projects
       ? {
           id: row.projects.id,
@@ -190,6 +226,30 @@ async function assertProjectBelongsToScope(input: {
   }
 }
 
+async function assertOpportunityBelongsToScope(input: {
+  organizationId: string;
+  opportunityId: string;
+}) {
+  const supabase = await getSupabaseServerClient();
+  const response = await supabase
+    .from("opportunities")
+    .select("id")
+    .eq("company_id", input.organizationId)
+    .eq("id", input.opportunityId)
+    .maybeSingle();
+  const opportunity = response.data as { id?: string } | null;
+
+  if (response.error) {
+    throw new Error(
+      `Unable to validate opportunity: ${response.error.message}`
+    );
+  }
+
+  if (!opportunity?.id) {
+    throw new Error("Opportunity not found for this organization.");
+  }
+}
+
 export const listAssessmentPackagesByProject = cache(
   async (projectId: string): Promise<AssessmentPackageListItem[]> => {
     const scope = await requireProjectScope(`/projects/${projectId}`);
@@ -211,6 +271,36 @@ export const listAssessmentPackagesByProject = cache(
     if (response.error) {
       throw new Error(
         `Unable to load assessment packages: ${response.error.message}`
+      );
+    }
+
+    return isAssessmentPackageRowArray(data)
+      ? data.map(mapAssessmentPackageListItem)
+      : [];
+  }
+);
+
+export const listAssessmentPackagesByOpportunity = cache(
+  async (opportunityId: string): Promise<AssessmentPackageListItem[]> => {
+    const scope = await requireOpportunityScope(`/leads/${opportunityId}`);
+
+    await assertOpportunityBelongsToScope({
+      organizationId: scope.organizationId,
+      opportunityId
+    });
+
+    const supabase = await getSupabaseServerClient();
+    const response = await supabase
+      .from("assessment_packages")
+      .select(assessmentPackageSelect)
+      .eq("company_id", scope.organizationId)
+      .eq("opportunity_id", opportunityId)
+      .order("updated_at", { ascending: false });
+    const data: unknown = response.data;
+
+    if (response.error) {
+      throw new Error(
+        `Unable to load opportunity assessment packages: ${response.error.message}`
       );
     }
 
@@ -311,6 +401,54 @@ export async function createAssessmentPackageForProject(
   }
 
   return mapAssessmentPackageListItem(data);
+}
+
+export async function createAssessmentPackageForOpportunity(
+  opportunityId: string,
+  input: AssessmentPackageCreateInput
+) {
+  const scope = await requireOpportunityScope(`/leads/${opportunityId}`);
+
+  await assertOpportunityBelongsToScope({
+    organizationId: scope.organizationId,
+    opportunityId
+  });
+
+  const supabase = await getSupabaseServerClient();
+  const response = await supabase
+    .from("assessment_packages")
+    .insert(
+      buildAssessmentPackageCreateRecord({
+        organizationId: scope.organizationId,
+        opportunityId,
+        userId: scope.userId,
+        title: input.title,
+        assessmentDate: input.assessmentDate
+      })
+    )
+    .select(assessmentPackageSelect)
+    .single();
+  const data: unknown = response.data;
+
+  if (response.error) {
+    throw new Error(
+      `Unable to create opportunity assessment package: ${response.error.message}`
+    );
+  }
+
+  if (!isAssessmentPackageRow(data)) {
+    throw new Error("Unexpected assessment package response after create.");
+  }
+
+  const assessmentPackage = mapAssessmentPackageListItem(data);
+
+  assertAssessmentPackageOpportunityScope({
+    assessmentPackage,
+    organizationId: scope.organizationId,
+    opportunityId
+  });
+
+  return assessmentPackage;
 }
 
 export async function updateAssessmentPackage(

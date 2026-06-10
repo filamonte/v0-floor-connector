@@ -2,11 +2,13 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  assertAssessmentPackageOpportunityScope,
   assertAssessmentPackageProjectScope,
   buildAssessmentPackageCreateRecord,
   canTransitionAssessmentPackageStatus,
   deriveAssessmentPackageProjectSummary,
-  deriveProjectAssessmentPackageSummary
+  deriveProjectAssessmentPackageSummary,
+  getAssessmentPackageOwnershipStage
 } from "./assessment-package";
 
 void test("deriveProjectAssessmentPackageSummary keeps assessment package owned by project context", () => {
@@ -146,6 +148,7 @@ void test("deriveAssessmentPackageProjectSummary keeps persisted packages projec
       {
         id: "assessment-package-1",
         organizationId: "org-1",
+        opportunityId: null,
         projectId: "project-1",
         status: "ready_for_estimate",
         title: "Garage assessment package",
@@ -193,6 +196,7 @@ void test("buildAssessmentPackageCreateRecord scopes creation to active tenant p
 
   assert.deepEqual(record, {
     company_id: "org-active",
+    opportunity_id: null,
     project_id: "project-active",
     status: "draft",
     title: "Assessment package",
@@ -206,9 +210,49 @@ void test("buildAssessmentPackageCreateRecord scopes creation to active tenant p
   );
 });
 
+void test("buildAssessmentPackageCreateRecord supports opportunity-owned packages before project creation", () => {
+  const record = buildAssessmentPackageCreateRecord({
+    organizationId: "org-active",
+    opportunityId: "opportunity-active",
+    projectId: null,
+    userId: "user-active",
+    title: "Pre-estimate assessment package",
+    assessmentDate: "2026-06-09"
+  });
+
+  assert.deepEqual(record, {
+    company_id: "org-active",
+    opportunity_id: "opportunity-active",
+    project_id: null,
+    status: "draft",
+    title: "Pre-estimate assessment package",
+    assessment_date: "2026-06-09",
+    created_by: "user-active",
+    updated_by: "user-active"
+  });
+  assert.doesNotMatch(
+    JSON.stringify(record),
+    /customer_id|estimate_id|job_id|field_id|material_id|workflow_id/
+  );
+});
+
+void test("buildAssessmentPackageCreateRecord requires opportunity or project ownership", () => {
+  assert.throws(
+    () =>
+      buildAssessmentPackageCreateRecord({
+        organizationId: "org-active",
+        userId: "user-active",
+        title: "Unowned assessment package",
+        assessmentDate: null
+      }),
+    /opportunity or project/
+  );
+});
+
 void test("assertAssessmentPackageProjectScope rejects cross-project or cross-tenant packages", () => {
   const assessmentPackage = {
     organizationId: "org-1",
+    opportunityId: null,
     projectId: "project-1"
   };
 
@@ -236,5 +280,56 @@ void test("assertAssessmentPackageProjectScope rejects cross-project or cross-te
         projectId: "project-2"
       }),
     /project/
+  );
+});
+
+void test("assertAssessmentPackageOpportunityScope rejects cross-opportunity or cross-tenant packages", () => {
+  const assessmentPackage = {
+    organizationId: "org-1",
+    opportunityId: "opportunity-1",
+    projectId: null
+  };
+
+  assert.doesNotThrow(() =>
+    assertAssessmentPackageOpportunityScope({
+      assessmentPackage,
+      organizationId: "org-1",
+      opportunityId: "opportunity-1"
+    })
+  );
+  assert.throws(
+    () =>
+      assertAssessmentPackageOpportunityScope({
+        assessmentPackage,
+        organizationId: "org-2",
+        opportunityId: "opportunity-1"
+      }),
+    /organization/
+  );
+  assert.throws(
+    () =>
+      assertAssessmentPackageOpportunityScope({
+        assessmentPackage,
+        organizationId: "org-1",
+        opportunityId: "opportunity-2"
+      }),
+    /opportunity/
+  );
+});
+
+void test("getAssessmentPackageOwnershipStage distinguishes pre-sale from project continuity", () => {
+  assert.equal(
+    getAssessmentPackageOwnershipStage({
+      opportunityId: "opportunity-1",
+      projectId: null
+    }),
+    "pre_sale"
+  );
+  assert.equal(
+    getAssessmentPackageOwnershipStage({
+      opportunityId: "opportunity-1",
+      projectId: "project-1"
+    }),
+    "project_continuity"
   );
 });
