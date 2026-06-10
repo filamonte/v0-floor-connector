@@ -59,16 +59,17 @@ docs-only audit stream by the explicit UX Beta Readiness prompt.
 Jeff approval gate: Satisfied for first stream start by the explicit prompt
 after PR #19 and PR #20 were confirmed merged.
 
-Wave status: Active for mobile field beta polish after financial, schedule,
-and production readiness UX merged. The docs-only audit stream approved
+Wave status: Active for Settings / Super Admin boundary UX after visual QA
+route smoke merged and was retired. The docs-only audit stream approved
 `ux-design-system-foundation-v1` as the first UI-touching stream, PR #21 merged
 that foundation stream to `main`, PR #22 merged `mcp-tool-readiness-v1` to
 `main`, PR #23 merged `dashboard-command-center-cleanup-v1` to `main`, and PR
 #24 merged `record-workspace-rhythm-v1` to `main`; PR #25 merged
 `financial-schedule-readiness-ux-v1` to `main`; PR #26 merged
-`mobile-field-beta-pass-v1` to `main`. The active tooling stream is
-`visual-qa-route-smoke-v1`. Later implementation streams remain proposed until
-explicitly started. This gate does not authorize schema,
+`mobile-field-beta-pass-v1` to `main`; PR #27 merged
+`visual-qa-route-smoke-v1` to `main` and the stream was retired. The active
+implementation stream is `settings-super-admin-boundary-ux-v1`. This gate does
+not authorize schema,
 migrations, provider/customer-facing sends, payment/signature/scheduling/portal
 access mutation, PRs, merges, cleanup, or next-wave continuation.
 
@@ -98,6 +99,14 @@ Approved visual QA route smoke stream:
 Approved visual QA route smoke worktree:
 
 - `C:\FC-worktrees\visual-qa-route-smoke-v1`
+
+Approved Settings / Super Admin boundary UX stream:
+
+- `stream/settings-super-admin-boundary-ux-v1`
+
+Approved Settings / Super Admin boundary UX worktree:
+
+- `C:\FC-worktrees\settings-super-admin-boundary-ux-v1`
 
 Approved implementation worktree:
 
@@ -142,10 +151,6 @@ Approved mobile field beta pass stream:
 Approved mobile field beta pass worktree:
 
 - `C:\FC-worktrees\mobile-field-beta-pass-v1`
-
-Proposed later streams:
-
-- `stream/settings-super-admin-boundary-ux-v1`
 
 ### ux-architecture-audit-v1
 
@@ -401,12 +406,49 @@ pnpm.cmd worktree:doctor
   fake persistence, hardcoded runtime tenant/user IDs, hiding real route
   exceptions, dashboard/workspace redesign, customer self-service, AI, and AIA.
 - Suggested commit: `test: add authenticated route smoke coverage`
-- Status: Active.
+- Status: Merged to `main` via PR #27 and retired after explicit cleanup
+  approval.
 
 Validation expectation:
 
 ```powershell
 pnpm.cmd exec playwright test e2e/authenticated-route-smoke.spec.js --project=chromium-protected
+pnpm.cmd --filter @floorconnector/web typecheck
+pnpm.cmd --filter @floorconnector/web lint
+pnpm.cmd fc:preflight:fast
+git diff --check
+git diff --cached --check
+pnpm.cmd worktree:doctor
+```
+
+### settings-super-admin-boundary-ux-v1
+
+- Branch: `stream/settings-super-admin-boundary-ux-v1`
+- Worktree: `C:\FC-worktrees\settings-super-admin-boundary-ux-v1`
+- Owns: presentation-only clarity between contractor Company Controls,
+  company feature overrides, company admin controls, Super Admin platform
+  policy, tenant lifecycle oversight, and platform billing operations.
+- Mission: make it clear where company configuration lives versus where
+  platform/operator controls live, without changing canonical workflow truth or
+  moving workflow action into admin surfaces.
+- Dependencies: PR #21 UX design-system foundation, PR #22 MCP readiness, PR
+  #23 dashboard cleanup, PR #24 record workspace rhythm, PR #25
+  financial/schedule readiness UX, PR #26 mobile field beta pass, PR #27 visual
+  QA route smoke, UX Beta Readiness packet, UX architecture audit packet,
+  design-system governance, UI patterns, current-state truth, developer source
+  of truth, target IA, and existing platform-admin controls.
+- Forbidden: schema/data changes, migrations, Supabase changes, business logic
+  changes, duplicate settings models, moving platform/admin state into
+  contractor Settings, moving contractor workflow actions into Super Admin,
+  role-specific data models, personalization engine, fake persistence,
+  billing/provider mutations, payment/signature/scheduling behavior changes,
+  AIA, customer self-service, and AI.
+- Suggested commit: `feat: clarify settings super admin boundary ux`
+- Status: Active.
+
+Validation expectation:
+
+```powershell
 pnpm.cmd --filter @floorconnector/web typecheck
 pnpm.cmd --filter @floorconnector/web lint
 pnpm.cmd fc:preflight:fast

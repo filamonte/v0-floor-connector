@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { SettingsBoundaryNotice } from "@/components/settings-boundary-notice";
 import { SettingsFeedback } from "@/components/settings-feedback";
 import { SettingsOverviewCard } from "@/components/settings-overview-card";
 import { getOrganizationFinancialSettings } from "@/lib/organizations/financial-settings";
@@ -74,6 +75,27 @@ export default async function SettingsPage({
       <SettingsFeedback
         error={resolvedSearchParams.error}
         message={resolvedSearchParams.message}
+      />
+
+      <SettingsBoundaryNotice
+        title="Company Controls configure this contractor organization"
+        items={[
+          {
+            label: "Company-owned settings",
+            description:
+              "Profile, templates, documents, catalogs, workflow defaults, financial defaults, team access, exports, and company feature overrides live here."
+          },
+          {
+            label: "Platform-owned controls",
+            description:
+              "Starter records, platform feature policy, tenant lifecycle, SaaS billing operations, and cross-tenant oversight stay in Super Admin."
+          },
+          {
+            label: "Workflow action stays in workspaces",
+            description:
+              "Settings can unblock configuration gaps, but estimates, contracts, invoices, schedules, jobs, and collections still act in their owning workspaces."
+          }
+        ]}
       />
 
       <div className="grid gap-4 md:grid-cols-3">
@@ -396,10 +418,10 @@ export default async function SettingsPage({
         </SettingsOverviewCard>
 
         <SettingsOverviewCard
-          title="Admin and Feature Controls"
-          description="Review members, roles, and feature overrides allowed under the platform policy."
+          title="Company Admin and Feature Controls"
+          description="Review company members, organization roles, and feature overrides allowed under the platform-owned policy."
           href="/settings/admin"
-          ctaLabel="Open admin controls"
+          ctaLabel="Open company admin"
         >
           <div className="space-y-3">
             <div className={settingsMiniStatClassName}>
