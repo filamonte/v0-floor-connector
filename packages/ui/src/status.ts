@@ -1,5 +1,14 @@
 export type StatusTone = "neutral" | "info" | "warning" | "danger" | "success";
 
+export type ReadinessTone =
+  | "ready"
+  | "attention"
+  | "blocked"
+  | "neutral"
+  | "informational"
+  | "financial"
+  | "production";
+
 const neutralStatuses = new Set([
   "draft",
   "neutral",
@@ -7,11 +16,13 @@ const neutralStatuses = new Set([
   "not started",
   "pending",
   "upcoming",
-  "void",
   "estimate_file",
   "estimate file",
   "sent_pdf",
-  "sent pdf"
+  "sent pdf",
+  "not_applicable",
+  "not applicable",
+  "none"
 ]);
 
 const infoStatuses = new Set([
@@ -20,21 +31,37 @@ const infoStatuses = new Set([
   "in progress",
   "current",
   "scheduled",
-  "viewed"
+  "viewed",
+  "plan",
+  "planning",
+  "assigned",
+  "dispatched",
+  "requested"
 ]);
 
 const warningStatuses = new Set([
   "needs_action",
   "needs action",
+  "needs_attention",
+  "needs attention",
+  "needs_review",
+  "needs review",
   "waiting",
   "readiness_warning",
   "readiness warning",
   "sent",
+  "awaiting",
+  "awaiting_signature",
+  "awaiting signature",
+  "awaiting_payment",
+  "awaiting payment",
   "partially_paid",
   "partially paid",
   "unpaid",
   "open",
-  "unscheduled"
+  "unscheduled",
+  "ready_but_not_scheduled",
+  "ready but not scheduled"
 ]);
 
 const dangerStatuses = new Set([
@@ -44,7 +71,10 @@ const dangerStatuses = new Set([
   "rejected",
   "declined",
   "overdue",
-  "voided"
+  "void",
+  "voided",
+  "cancelled",
+  "canceled"
 ]);
 
 const successStatuses = new Set([
@@ -55,7 +85,13 @@ const successStatuses = new Set([
   "signed",
   "succeeded",
   "closed",
-  "ready"
+  "ready",
+  "ready_to_schedule",
+  "ready to schedule",
+  "settled",
+  "recorded",
+  "accepted",
+  "finished"
 ]);
 
 export const statusToneClasses: Record<StatusTone, string> = {
@@ -74,6 +110,17 @@ export const statusConnectorClasses: Record<StatusTone, string> = {
   success: "bg-emerald-300"
 };
 
+export const readinessToneClasses: Record<ReadinessTone, string> = {
+  ready: statusToneClasses.success,
+  attention: statusToneClasses.warning,
+  blocked: statusToneClasses.danger,
+  neutral: statusToneClasses.neutral,
+  informational: statusToneClasses.info,
+  financial: "border-[var(--border-medium)] bg-white text-[var(--graphite)]",
+  production:
+    "border-[var(--border-medium)] bg-[var(--highlight)] text-[var(--graphite)]"
+};
+
 export function normalizeStatusLabel(status: string) {
   return status.trim().toLowerCase().replaceAll("-", "_");
 }
@@ -81,7 +128,10 @@ export function normalizeStatusLabel(status: string) {
 export function getStatusTone(status: string): StatusTone {
   const normalized = normalizeStatusLabel(status);
 
-  if (normalized.startsWith("waiting_on") || normalized.startsWith("waiting on")) {
+  if (
+    normalized.startsWith("waiting_on") ||
+    normalized.startsWith("waiting on")
+  ) {
     return "warning";
   }
 
@@ -112,6 +162,53 @@ export function getStatusTone(status: string): StatusTone {
   return "neutral";
 }
 
+export function getReadinessTone(status: string): ReadinessTone {
+  const normalized = normalizeStatusLabel(status);
+
+  if (
+    normalized.includes("financial") ||
+    normalized.includes("payment") ||
+    normalized.includes("invoice") ||
+    normalized.includes("billing") ||
+    normalized.includes("collections")
+  ) {
+    return normalized.includes("blocked") ||
+      normalized.includes("overdue") ||
+      normalized.includes("failed")
+      ? "blocked"
+      : "financial";
+  }
+
+  if (
+    normalized.includes("production") ||
+    normalized.includes("field") ||
+    normalized.includes("schedule") ||
+    normalized.includes("scheduled") ||
+    normalized.includes("crew") ||
+    normalized.includes("dispatch")
+  ) {
+    return normalized.includes("blocked") || normalized.includes("failed")
+      ? "blocked"
+      : "production";
+  }
+
+  const statusTone = getStatusTone(status);
+
+  switch (statusTone) {
+    case "success":
+      return "ready";
+    case "warning":
+      return "attention";
+    case "danger":
+      return "blocked";
+    case "info":
+      return "informational";
+    case "neutral":
+    default:
+      return "neutral";
+  }
+}
+
 export function getStatusToneClassName(tone: StatusTone) {
   return statusToneClasses[tone];
 }
@@ -122,4 +219,12 @@ export function getStatusConnectorClassName(tone: StatusTone) {
 
 export function getStatusBadgeClassName(status: string) {
   return statusToneClasses[getStatusTone(status)];
+}
+
+export function getReadinessToneClassName(tone: ReadinessTone) {
+  return readinessToneClasses[tone];
+}
+
+export function getReadinessBadgeClassName(status: string) {
+  return readinessToneClasses[getReadinessTone(status)];
 }

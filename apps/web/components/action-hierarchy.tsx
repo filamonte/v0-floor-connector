@@ -1,13 +1,10 @@
 import type { ReactNode } from "react";
 
-export const primaryActionClassName =
-  "inline-flex h-9 items-center justify-center rounded-[4px] border border-[var(--copper)] bg-[var(--copper)] px-3 text-sm font-semibold text-white transition hover:bg-[var(--copper-light)]";
-
-export const secondaryActionClassName =
-  "inline-flex h-9 items-center justify-center rounded-[4px] border border-[var(--border-warm)] bg-white px-3 text-sm font-medium text-[var(--text-primary)] transition hover:bg-[var(--highlight)]";
-
-export const overflowActionClassName =
-  "block w-full px-3 py-2 text-left text-sm font-medium text-[var(--text-secondary)] transition hover:bg-[var(--highlight)] hover:text-[var(--text-primary)]";
+export {
+  overflowActionClassName,
+  primaryActionClassName,
+  secondaryActionClassName
+} from "@floorconnector/ui";
 
 type ActionOverflowMenuProps = {
   children: ReactNode;

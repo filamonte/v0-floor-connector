@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { getStatusBadgeClassName } from "@floorconnector/ui";
+import { StatusBadge } from "@floorconnector/ui";
 
 import { secondaryActionClassName } from "@/components/action-hierarchy";
 
@@ -104,14 +104,5 @@ export function ProjectConnectedRecordLanes({
 }
 
 function renderStatusBadge(label: string) {
-  return (
-    <span
-      className={[
-        "inline-flex rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em]",
-        getStatusBadgeClassName(label)
-      ].join(" ")}
-    >
-      {label}
-    </span>
-  );
+  return <StatusBadge status={label}>{label}</StatusBadge>;
 }

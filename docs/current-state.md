@@ -2954,6 +2954,14 @@ Implemented UI behavior now:
   export system, automation, AI, schema, migrations, reporting persistence, or
   payment/signature behavior.
 - Estimate, Contract, Invoice, Job, and Project Workspaces share the same baseline grammar: compact header band, semantic status pill, next-action card, workflow summary, state facts, primary record surface, context rail, connected records, and internal follow-through sections.
+- The UX Design System Foundation adds shared `@floorconnector/ui` primitives
+  for status badges, readiness badges, compact readiness summaries, action
+  hierarchy class names, and empty-state copy variants. Representative shared
+  Dashboard, Project, and Schedule components now consume the shared status
+  badge primitive where low-risk. This is a foundation only; it does not mean
+  every route has been redesigned or that readiness, scheduling, financial,
+  workflow, schema, RLS, tenant, portal, provider, payment, or signature
+  behavior changed.
 - Dashboard, Project, Schedule, Contract, Invoice, Job, and Daily Log surfaces now share grouped lifecycle language around `opportunity -> customer/project -> estimate/contract -> job/schedule -> invoice/payment`. Contract Workspace clarifies draft, approval, signature, decline, countersign, deposit, and downstream handoff context; Invoice Workspace clarifies draft, sent/open, partial, paid, void, billing-source, collection, payment, and upstream-readiness context; Job Workspace clarifies schedule, crew, field evidence, closeout, and downstream billing handoff; Daily Log Workspace clarifies project-day narrative, field notes, labor/time continuity, attachments, and upstream Project Workspace resolution. This is presentation-only and does not change signature, readiness, scheduling, time-card, billing, payment, portal, schema, RLS, or server-action behavior.
 - Projects, Estimates, Invoices, Jobs, Contracts, and Customers Manager Pages use the shared Manager Page rhythm with clearer status scanning, primary create actions, and compact continuity cues.
 - Portal and super-admin received only safe consistency cleanup; they do not copy contractor operational patterns wholesale.

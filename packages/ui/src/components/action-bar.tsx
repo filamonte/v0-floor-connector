@@ -1,17 +1,12 @@
 import type { ReactNode } from "react";
 
-import {
-  getStatusToneClassName,
-  type StatusTone
-} from "../status";
-
-type ActionBarTone = Exclude<StatusTone, "info">;
+import { getStatusToneClassName, type StatusTone } from "../status";
 
 export type ActionBarProps = {
   title: string;
   description?: ReactNode;
   statusLabel?: string;
-  statusTone?: ActionBarTone;
+  statusTone?: StatusTone;
   nextActionLabel?: string;
   primaryAction?: ReactNode;
   secondaryActions?: ReactNode;
@@ -69,7 +64,11 @@ export function ActionBar({
               </div>
             ) : null}
           </div>
-          {meta ? <div className="text-[12px] text-[var(--text-secondary)]">{meta}</div> : null}
+          {meta ? (
+            <div className="text-[12px] text-[var(--text-secondary)]">
+              {meta}
+            </div>
+          ) : null}
         </div>
 
         {primaryAction || secondaryActions ? (
