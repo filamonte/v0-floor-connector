@@ -43,6 +43,81 @@ Wave-launch prompts must also require `pnpm.cmd worktree:doctor` and use
 for local tooling, Playwright, optional CLI, worktree-link, and validation
 guidance.
 
+## UX Beta Readiness V1 Gate
+
+Gate date: 2026-06-10.
+
+Wave name: `ux-beta-readiness-v1`.
+
+Review packet:
+
+- [docs/review-packets/ux-beta-readiness-v1.md](C:/FloorConnector/docs/review-packets/ux-beta-readiness-v1.md)
+
+Architecture Coordination approval: Approved for wave planning and first
+docs-only audit stream by the explicit UX Beta Readiness prompt.
+
+Jeff approval gate: Satisfied for first stream start by the explicit prompt
+after PR #19 and PR #20 were confirmed merged.
+
+Wave status: Active for first audit stream only. Later implementation streams
+remain proposed until the audit records exact route findings, overlap, and
+priority. This gate does not authorize app UI changes, schema, migrations,
+provider/customer-facing sends, payment/signature/scheduling/portal access
+mutation, PRs, merges, cleanup, or next-wave continuation.
+
+Required tool posture:
+
+- repo docs remain source of truth
+- use outside tools for planning/design support where available
+- record tool availability, outputs, and fallbacks in the packet
+- do not directly implement generated UI from external tools
+
+Approved first stream:
+
+- `stream/ux-architecture-audit-v1`
+
+Approved first worktree:
+
+- `C:\FC-worktrees\ux-architecture-audit-v1`
+
+Proposed later streams:
+
+- `stream/design-system-foundation-v1`
+- `stream/contractor-dashboard-cleanup-v1`
+- `stream/workspace-rhythm-v1`
+- `stream/command-centers-cleanup-v1`
+- `stream/mobile-assessment-field-polish-v1`
+
+### ux-architecture-audit-v1
+
+- Branch: `stream/ux-architecture-audit-v1`
+- Worktree: `C:\FC-worktrees\ux-architecture-audit-v1`
+- Owns: docs-only UX beta-readiness audit across contractor app surfaces.
+- Mission: identify route-by-route UX drift against design-system governance,
+  duplicated summaries/metrics, inconsistent status/color semantics, unclear
+  action hierarchy, dashboard/workspace boundary issues, and later stream
+  priorities.
+- Required audit surfaces: Dashboard, Lead/Opportunity detail, Assessment
+  Package panel, Projects list/detail, Estimate detail, Contract detail,
+  Invoice detail, Payments/Financials, Schedule, Jobs, Communications if
+  present, Settings/Super Admin boundary where relevant, shared components,
+  badges, empty states, and status components.
+- Forbidden: app UI changes, schemas, migrations, server actions, provider
+  calls, payment/signature/scheduling/portal access mutation, customer-facing
+  sends, AI automation, duplicate records, PRs, merges, cleanup, and applying
+  external generated UI directly.
+- Suggested commit: `docs: audit contractor ux beta readiness`
+- Status: Active.
+
+Validation expectation:
+
+```powershell
+pnpm.cmd exec prettier --write docs/review-packets/ux-architecture-audit-v1.md
+git diff --check
+git diff --cached --check
+pnpm.cmd worktree:doctor
+```
+
 ## Beta Readiness Operating Core V1 Proposal
 
 Proposal date: 2026-06-09.
