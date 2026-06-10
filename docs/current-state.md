@@ -2962,6 +2962,15 @@ Implemented UI behavior now:
   every route has been redesigned or that readiness, scheduling, financial,
   workflow, schema, RLS, tenant, portal, provider, payment, or signature
   behavior changed.
+- Dashboard command-center cleanup now makes the existing dashboard action
+  queues the primary attention layer when they are available, keeps the older
+  priority strip as fallback, and reuses shared status badge, action hierarchy,
+  and empty-state primitives in the dashboard queue surfaces. The dashboard
+  remains a prioritization and routing surface over existing read models and
+  canonical records; it does not create dashboard-owned workflow state,
+  duplicate queues, role-specific persistence, schema changes, migrations,
+  financial/schedule/readiness truth changes, provider behavior, AI, AIA, or
+  customer self-service.
 - Dashboard, Project, Schedule, Contract, Invoice, Job, and Daily Log surfaces now share grouped lifecycle language around `opportunity -> customer/project -> estimate/contract -> job/schedule -> invoice/payment`. Contract Workspace clarifies draft, approval, signature, decline, countersign, deposit, and downstream handoff context; Invoice Workspace clarifies draft, sent/open, partial, paid, void, billing-source, collection, payment, and upstream-readiness context; Job Workspace clarifies schedule, crew, field evidence, closeout, and downstream billing handoff; Daily Log Workspace clarifies project-day narrative, field notes, labor/time continuity, attachments, and upstream Project Workspace resolution. This is presentation-only and does not change signature, readiness, scheduling, time-card, billing, payment, portal, schema, RLS, or server-action behavior.
 - Projects, Estimates, Invoices, Jobs, Contracts, and Customers Manager Pages use the shared Manager Page rhythm with clearer status scanning, primary create actions, and compact continuity cues.
 - Portal and super-admin received only safe consistency cleanup; they do not copy contractor operational patterns wholesale.
