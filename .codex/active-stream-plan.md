@@ -59,10 +59,12 @@ docs-only audit stream by the explicit UX Beta Readiness prompt.
 Jeff approval gate: Satisfied for first stream start by the explicit prompt
 after PR #19 and PR #20 were confirmed merged.
 
-Wave status: Active for first implementation stream. The docs-only audit stream
-approved `ux-design-system-foundation-v1` as the first UI-touching stream.
-Later implementation streams remain proposed until the foundation stream is
-reviewed. This gate does not authorize schema, migrations,
+Wave status: Active for MCP/tool readiness after the first implementation
+stream. The docs-only audit stream approved `ux-design-system-foundation-v1` as
+the first UI-touching stream, and PR #21 merged that foundation stream to
+`main`. Later implementation streams remain proposed until the tooling
+readiness stream is reviewed or its known gaps are explicitly accepted. This
+gate does not authorize schema, migrations,
 provider/customer-facing sends, payment/signature/scheduling/portal access
 mutation, PRs, merges, cleanup, or next-wave continuation.
 
@@ -88,6 +90,14 @@ Approved implementation stream:
 Approved implementation worktree:
 
 - `C:\FC-worktrees\ux-design-system-foundation-v1`
+
+Approved tooling readiness stream:
+
+- `stream/mcp-tool-readiness-v1`
+
+Approved tooling readiness worktree:
+
+- `C:\FC-worktrees\mcp-tool-readiness-v1`
 
 Proposed later streams:
 
@@ -157,6 +167,36 @@ pnpm.cmd exec tsx packages/ui/src/status.test.ts
 pnpm.cmd --filter @floorconnector/web typecheck
 pnpm.cmd --filter @floorconnector/web lint
 pnpm.cmd fc:preflight:fast
+git diff --check
+git diff --cached --check
+pnpm.cmd worktree:doctor
+```
+
+### mcp-tool-readiness-v1
+
+- Branch: `stream/mcp-tool-readiness-v1`
+- Worktree: `C:\FC-worktrees\mcp-tool-readiness-v1`
+- Owns: MCP/tool readiness, safe usage rules, blocked-tool documentation, and
+  fallbacks for UX Beta Readiness after PR #21 merged.
+- Mission: verify GitHub, Notion, Linear, Figma/FigJam, Stitch, v0, Supabase,
+  Stripe, OpenAI Platform, B12, Assessment Generator, Mem, and Vercel check
+  posture before dashboard cleanup starts.
+- Dependencies: PR #21 merged to `main`, UX Beta Readiness packet, UX
+  Architecture Audit packet, UX Design System Foundation packet, design-system
+  governance, current-state truth, developer source of truth, and active
+  registries.
+- Forbidden: dashboard cleanup implementation, UI redesign, app behavior
+  changes, schema/data changes, migrations, Supabase mutation, Stripe resource
+  creation, OpenAI API key creation, websites, assessment generation,
+  production/business-system mutation, duplicate tool-owned truth, PRs, merges,
+  pushes, and next-stream start.
+- Suggested commit: `docs: verify mcp tooling readiness`
+- Status: Active.
+
+Validation expectation:
+
+```powershell
+pnpm.cmd exec prettier --write docs/review-packets/mcp-tool-readiness-v1.md active-waves.md active-worktrees.md .codex/active-stream-plan.md
 git diff --check
 git diff --cached --check
 pnpm.cmd worktree:doctor
