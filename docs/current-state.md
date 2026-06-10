@@ -2971,6 +2971,14 @@ Implemented UI behavior now:
   duplicate queues, role-specific persistence, schema changes, migrations,
   financial/schedule/readiness truth changes, provider behavior, AI, AIA, or
   customer self-service.
+- Record Workspace rhythm now has a shared presentation contract in
+  `@floorconnector/ui` plus a reusable `RecordWorkspaceSection` primitive.
+  Estimate, Contract, Invoice, and Job command bands use shared status badges,
+  and representative Project linked-context panels use the shared section
+  shell. This standardizes the identity -> state/next action -> primary work ->
+  linked context -> details/history reading order without changing business
+  logic, data models, schemas, readiness calculations, payment/signature/
+  scheduling behavior, or canonical ownership.
 - Dashboard, Project, Schedule, Contract, Invoice, Job, and Daily Log surfaces now share grouped lifecycle language around `opportunity -> customer/project -> estimate/contract -> job/schedule -> invoice/payment`. Contract Workspace clarifies draft, approval, signature, decline, countersign, deposit, and downstream handoff context; Invoice Workspace clarifies draft, sent/open, partial, paid, void, billing-source, collection, payment, and upstream-readiness context; Job Workspace clarifies schedule, crew, field evidence, closeout, and downstream billing handoff; Daily Log Workspace clarifies project-day narrative, field notes, labor/time continuity, attachments, and upstream Project Workspace resolution. This is presentation-only and does not change signature, readiness, scheduling, time-card, billing, payment, portal, schema, RLS, or server-action behavior.
 - Projects, Estimates, Invoices, Jobs, Contracts, and Customers Manager Pages use the shared Manager Page rhythm with clearer status scanning, primary create actions, and compact continuity cues.
 - Portal and super-admin received only safe consistency cleanup; they do not copy contractor operational patterns wholesale.

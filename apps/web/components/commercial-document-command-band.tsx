@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { StatusBadge } from "@floorconnector/ui";
 
 type CommercialDocumentCommandItem = {
   label: string;
@@ -51,9 +52,7 @@ export function CommercialDocumentCommandBand({
         </div>
 
         <div className="flex shrink-0 flex-wrap gap-2">
-          <span className="inline-flex h-9 items-center rounded-[4px] border border-[var(--border-warm)] bg-white px-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--text-secondary)]">
-            {statusLabel}
-          </span>
+          <StatusBadge status={statusLabel}>{statusLabel}</StatusBadge>
           {projectHref ? (
             <Link
               href={projectHref}

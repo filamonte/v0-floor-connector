@@ -76,14 +76,15 @@ Wave name: `ux-beta-readiness-v1`.
 Review packet:
 [docs/review-packets/ux-beta-readiness-v1.md](C:/FloorConnector/docs/review-packets/ux-beta-readiness-v1.md).
 
-Status: Active for dashboard command-center cleanup after the first
-implementation stream and MCP/tool readiness review. The prompt explicitly
-approved the wave after PR #19 and PR #20 were confirmed merged.
+Status: Active for record workspace rhythm after dashboard command-center
+cleanup merged. The prompt explicitly approved the wave after PR #19 and PR #20
+were confirmed merged.
 `ux-architecture-audit-v1` completed the docs/report-only audit and approved
 `ux-design-system-foundation-v1` as the first UI-touching stream. PR #21 merged
 `ux-design-system-foundation-v1` to `main`; PR #22 merged
-`mcp-tool-readiness-v1` to `main`. The current active stream is
-`dashboard-command-center-cleanup-v1`.
+`mcp-tool-readiness-v1` to `main`; PR #23 merged
+`dashboard-command-center-cleanup-v1` to `main`. The current active stream is
+`record-workspace-rhythm-v1`.
 
 Purpose: make the contractor app cohesive, trustworthy, role-aware-ready, and
 usable for real beta testing while preserving the canonical operating model.
@@ -108,15 +109,20 @@ Approved tooling readiness stream:
 
 Approved dashboard cleanup stream:
 
-| Stream                                | Review packet                                                                          | Ownership area                                                           | Dependency posture                                     |
-| ------------------------------------- | -------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ | ------------------------------------------------------ |
-| `dashboard-command-center-cleanup-v1` | [packet](C:/FloorConnector/docs/review-packets/dashboard-command-center-cleanup-v1.md) | Dashboard attention hierarchy, shared badge/action usage, and scan order | Active after PR #21 design foundation and PR #22 merge |
+| Stream                                | Review packet                                                                          | Ownership area                                                           | Dependency posture                                      |
+| ------------------------------------- | -------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ | ------------------------------------------------------- |
+| `dashboard-command-center-cleanup-v1` | [packet](C:/FloorConnector/docs/review-packets/dashboard-command-center-cleanup-v1.md) | Dashboard attention hierarchy, shared badge/action usage, and scan order | Merged via PR #23; upstream for record workspace rhythm |
+
+Approved record workspace rhythm stream:
+
+| Stream                       | Review packet                                                                 | Ownership area                                                                   | Dependency posture                                                                        |
+| ---------------------------- | ----------------------------------------------------------------------------- | -------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| `record-workspace-rhythm-v1` | [packet](C:/FloorConnector/docs/review-packets/record-workspace-rhythm-v1.md) | Lead/Opportunity, Project, Estimate, Contract, Invoice, and Job workspace rhythm | Active after PR #21 design foundation, PR #22 MCP readiness, and PR #23 dashboard cleanup |
 
 Proposed later streams:
 
 | Stream                                | Ownership area                                                                                         | Gate before activation                                                           |
 | ------------------------------------- | ------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------- |
-| `record-workspace-rhythm-v1`          | Lead/Opportunity, Project, Estimate, Contract, Invoice, and Job workspace rhythm                       | Wait for design-system foundation review and page ownership review               |
 | `financial-schedule-readiness-ux-v1`  | Financial Readiness, Schedule Readiness, Production Readiness, Financials, Payments, and Field clarity | Wait for design-system foundation review and readiness/ownership boundary review |
 | `mobile-field-beta-pass-v1`           | Mobile assessment capture and field-facing responsive polish                                           | Wait for field/portal/customer-safety boundary review                            |
 | `settings-super-admin-boundary-ux-v1` | Settings tenant configuration and Super Admin platform-policy boundary clarity                         | Wait for admin-boundary review                                                   |

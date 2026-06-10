@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { StatusBadge } from "@floorconnector/ui";
 
 type FieldExecutionCommandItem = {
   label: string;
@@ -55,9 +56,7 @@ export function FieldExecutionCommandBand({
         </div>
 
         <div className="flex flex-wrap gap-2 lg:justify-end">
-          <span className="inline-flex items-center rounded-md border border-[var(--border-warm)] bg-white px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--text-secondary)]">
-            {statusLabel}
-          </span>
+          <StatusBadge status={statusLabel}>{statusLabel}</StatusBadge>
           <Link
             href={projectHref}
             className="inline-flex items-center rounded-md border border-[var(--copper)] bg-[var(--copper)] px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-white transition hover:bg-[var(--copper-light)]"

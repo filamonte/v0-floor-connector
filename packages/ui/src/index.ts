@@ -13,6 +13,8 @@ export type {
   ProjectStateItem,
   ProjectStateSummaryProps
 } from "./components/project-state-summary";
+export { RecordWorkspaceSection } from "./components/record-workspace-section";
+export type { RecordWorkspaceSectionProps } from "./components/record-workspace-section";
 export { SecondarySection } from "./components/secondary-section";
 export type { SecondarySectionProps } from "./components/secondary-section";
 export { ReadinessBadge, StatusBadge } from "./components/status-badge";
@@ -30,6 +32,15 @@ export {
   secondaryActionClassName
 } from "./action-hierarchy";
 export type { EmptyStateCopy, EmptyStateKind } from "./action-hierarchy";
+export {
+  getRecordWorkspaceRhythmStep,
+  recordWorkspaceRhythmStepIds,
+  recordWorkspaceRhythmSteps
+} from "./record-workspace-rhythm";
+export type {
+  RecordWorkspaceRhythmStep,
+  RecordWorkspaceRhythmStepId
+} from "./record-workspace-rhythm";
 export {
   getReadinessBadgeClassName,
   getReadinessTone,

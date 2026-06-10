@@ -59,13 +59,13 @@ docs-only audit stream by the explicit UX Beta Readiness prompt.
 Jeff approval gate: Satisfied for first stream start by the explicit prompt
 after PR #19 and PR #20 were confirmed merged.
 
-Wave status: Active for dashboard command-center cleanup after the first
-implementation stream and MCP/tool readiness review. The docs-only audit stream
-approved `ux-design-system-foundation-v1` as the first UI-touching stream, PR
-#21 merged that foundation stream to `main`, and PR #22 merged
-`mcp-tool-readiness-v1` to `main`. The active implementation stream is
-`dashboard-command-center-cleanup-v1`. Later implementation streams remain
-proposed until explicitly started. This gate does not authorize schema,
+Wave status: Active for record workspace rhythm after dashboard command-center
+cleanup merged. The docs-only audit stream approved
+`ux-design-system-foundation-v1` as the first UI-touching stream, PR #21 merged
+that foundation stream to `main`, PR #22 merged `mcp-tool-readiness-v1` to
+`main`, and PR #23 merged `dashboard-command-center-cleanup-v1` to `main`. The
+active implementation stream is `record-workspace-rhythm-v1`. Later
+implementation streams remain proposed until explicitly started. This gate does not authorize schema,
 migrations, provider/customer-facing sends, payment/signature/scheduling/portal
 access mutation, PRs, merges, cleanup, or next-wave continuation.
 
@@ -108,9 +108,16 @@ Approved dashboard cleanup worktree:
 
 - `C:\FC-worktrees\dashboard-command-center-cleanup-v1`
 
-Proposed later streams:
+Approved record workspace rhythm stream:
 
 - `stream/record-workspace-rhythm-v1`
+
+Approved record workspace rhythm worktree:
+
+- `C:\FC-worktrees\record-workspace-rhythm-v1`
+
+Proposed later streams:
+
 - `stream/financial-schedule-readiness-ux-v1`
 - `stream/mobile-field-beta-pass-v1`
 - `stream/settings-super-admin-boundary-ux-v1`
@@ -230,12 +237,47 @@ pnpm.cmd worktree:doctor
   schedule, or readiness truth changes, provider/customer-facing behavior, AIA,
   customer self-service, AI, and full dashboard/workspace redesign.
 - Suggested commit: `feat: clean up dashboard command center`
-- Status: Active.
+- Status: Merged to `main` via PR #23.
 
 Validation expectation:
 
 ```powershell
 pnpm.cmd exec prettier --write apps/web/components/dashboard/contractor-dashboard-surface.tsx apps/web/components/dashboard/priority-strip.tsx docs/review-packets/dashboard-command-center-cleanup-v1.md active-waves.md active-worktrees.md .codex/active-stream-plan.md docs/current-state.md docs/ui-patterns.md
+pnpm.cmd --filter @floorconnector/web typecheck
+pnpm.cmd --filter @floorconnector/web lint
+pnpm.cmd fc:preflight:fast
+git diff --check
+git diff --cached --check
+pnpm.cmd worktree:doctor
+```
+
+### record-workspace-rhythm-v1
+
+- Branch: `stream/record-workspace-rhythm-v1`
+- Worktree: `C:\FC-worktrees\record-workspace-rhythm-v1`
+- Owns: shared record-workspace rhythm, representative Project continuity
+  panels, and Estimate/Contract/Invoice/Job command-band semantics.
+- Mission: normalize the record workspace reading order so identity, state and
+  next action, primary work, linked canonical context, and secondary
+  details/history appear consistently without changing workflow truth.
+- Dependencies: PR #21 UX design-system foundation, PR #22 MCP/tool readiness,
+  PR #23 dashboard command-center cleanup, UX Beta Readiness packet, UX
+  architecture audit packet, dashboard cleanup packet, current-state truth,
+  developer source of truth, UI patterns, design-system governance, product
+  operating model, and target IA.
+- Forbidden: full workspace redesign, full dashboard redesign, business logic
+  changes, schema/data changes, Supabase changes, migrations, duplicate queues,
+  workspace-owned operational state, personalization engine, role-specific
+  records, portal copies, financial/schedule/readiness truth changes,
+  payment/signature/scheduling behavior changes, provider/customer-facing
+  behavior, AIA, customer self-service, and AI.
+- Suggested commit: `feat: normalize record workspace rhythm`
+- Status: Active.
+
+Validation expectation:
+
+```powershell
+pnpm.cmd exec tsx packages/ui/src/record-workspace-rhythm.test.ts
 pnpm.cmd --filter @floorconnector/web typecheck
 pnpm.cmd --filter @floorconnector/web lint
 pnpm.cmd fc:preflight:fast

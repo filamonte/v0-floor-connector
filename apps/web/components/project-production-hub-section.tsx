@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { StatusBadge } from "@floorconnector/ui";
+import { RecordWorkspaceSection, StatusBadge } from "@floorconnector/ui";
 
 import { AppEmptyState } from "@/components/app-empty-state";
 import { secondaryActionClassName } from "@/components/action-hierarchy";
@@ -173,27 +173,22 @@ function ProjectProductionOverviewCard({
   overview: ProjectProductionOverview;
 }) {
   return (
-    <div className="flex flex-col gap-3 border-b border-[var(--border-warm)] pb-4 sm:flex-row sm:items-end sm:justify-between">
-      <div className="min-w-0">
-        <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[var(--text-secondary)]">
-          {overview.eyebrow}
-        </p>
-        <h3 className="mt-2 text-lg font-semibold tracking-tight text-[var(--text-primary)]">
-          {overview.title}
-        </h3>
-        <p className="mt-2 max-w-[60ch] text-sm leading-6 text-[var(--text-secondary)]">
-          {overview.description}
-        </p>
-      </div>
-      <div className="flex items-center gap-3 sm:flex-shrink-0">
-        <span className="rounded-full border border-[var(--border-warm)] bg-[var(--highlight)] px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.16em] text-[var(--text-secondary)]">
-          {overview.stat}
-        </span>
-        <Link href={overview.href} className={secondaryActionClassName}>
-          {overview.linkLabel}
-        </Link>
-      </div>
-    </div>
+    <RecordWorkspaceSection
+      eyebrow={overview.eyebrow}
+      title={overview.title}
+      description={overview.description}
+      className="rounded-none border-0 shadow-none"
+      meta={
+        <>
+          <span className="rounded-full border border-[var(--border-warm)] bg-[var(--highlight)] px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.16em] text-[var(--text-secondary)]">
+            {overview.stat}
+          </span>
+          <Link href={overview.href} className={secondaryActionClassName}>
+            {overview.linkLabel}
+          </Link>
+        </>
+      }
+    />
   );
 }
 
