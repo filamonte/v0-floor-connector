@@ -198,6 +198,20 @@ Ready/Attention/Blocked states. Use `ReadinessSummary` only as a compact
 presentational summary over readiness labels already derived by the route or
 read model; it must not calculate readiness.
 
+Financial, Schedule, and Production Readiness lane copy now lives in
+`@floorconnector/ui` through `getReadinessLaneCopy()`,
+`getReadinessLaneCopies()`, and `readinessLaneOrder`. Use this copy when a
+Project, Schedule, Job, Financials, Invoice, or Field-facing surface needs to
+explain ownership boundaries:
+
+- Financial Readiness routes action to Financials or Invoice Workspace.
+- Schedule Readiness routes action to Job Workspace or Schedule.
+- Production Readiness routes action to Job Workspace or Field.
+
+The lane copy is presentational. It must not calculate readiness, create queue
+state, move workflow ownership into Project, or duplicate financial, schedule,
+or field truth.
+
 Use `RecordWorkspaceSection` for shared record-workspace sections that need a
 consistent header, short description, action/meta area, and contained content.
 It is a section/surface primitive, not a workflow owner. Project continuity

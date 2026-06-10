@@ -2979,6 +2979,15 @@ Implemented UI behavior now:
   linked context -> details/history reading order without changing business
   logic, data models, schemas, readiness calculations, payment/signature/
   scheduling behavior, or canonical ownership.
+- Financial, Schedule, and Production Readiness now have shared UI lane copy in
+  `@floorconnector/ui`. The Project Readiness + Blockers panel, Ready to
+  Schedule handoff, Project Financial Hub overview, Project Production Hub
+  overview, and Schedule Field Handoff readiness packet use that language to
+  clarify which owning workspace acts next. This is presentation-only over
+  existing read models and does not change readiness calculations, financial
+  state, schedule fields, production/field records, schema, migrations,
+  Supabase, payment behavior, signature behavior, scheduling mutation, or
+  canonical ownership.
 - Dashboard, Project, Schedule, Contract, Invoice, Job, and Daily Log surfaces now share grouped lifecycle language around `opportunity -> customer/project -> estimate/contract -> job/schedule -> invoice/payment`. Contract Workspace clarifies draft, approval, signature, decline, countersign, deposit, and downstream handoff context; Invoice Workspace clarifies draft, sent/open, partial, paid, void, billing-source, collection, payment, and upstream-readiness context; Job Workspace clarifies schedule, crew, field evidence, closeout, and downstream billing handoff; Daily Log Workspace clarifies project-day narrative, field notes, labor/time continuity, attachments, and upstream Project Workspace resolution. This is presentation-only and does not change signature, readiness, scheduling, time-card, billing, payment, portal, schema, RLS, or server-action behavior.
 - Projects, Estimates, Invoices, Jobs, Contracts, and Customers Manager Pages use the shared Manager Page rhythm with clearer status scanning, primary create actions, and compact continuity cues.
 - Portal and super-admin received only safe consistency cleanup; they do not copy contractor operational patterns wholesale.

@@ -1,5 +1,9 @@
 import Link from "next/link";
-import { ActionBar } from "@floorconnector/ui";
+import {
+  ActionBar,
+  ReadinessBadge,
+  getReadinessLaneCopies
+} from "@floorconnector/ui";
 
 import {
   primaryActionClassName,
@@ -128,6 +132,7 @@ function ProjectReadinessBlockersPanel({
   blockers: ProjectReadinessBlockerItem[];
 }) {
   const hasBlockers = blockers.length > 0;
+  const readinessLanes = getReadinessLaneCopies();
 
   return (
     <section
@@ -169,6 +174,30 @@ function ProjectReadinessBlockersPanel({
               ? `Ready ${formatDateTime(readyToScheduleAt)}`
               : "Clear"}
         </span>
+      </div>
+
+      <div className="grid gap-px border-t border-[var(--border-warm)] bg-[var(--border-warm)] lg:grid-cols-3">
+        {readinessLanes.map((lane) => (
+          <div
+            key={lane.id}
+            className="min-w-0 bg-white px-4 py-3 text-sm leading-6 sm:px-5"
+          >
+            <div className="flex flex-wrap items-center gap-2">
+              <ReadinessBadge status={lane.label} size="sm">
+                {lane.shortLabel}
+              </ReadinessBadge>
+              <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--text-tertiary)]">
+                {lane.owner}
+              </span>
+            </div>
+            <p className="mt-2 font-semibold text-[var(--text-primary)]">
+              {lane.actionSurface}
+            </p>
+            <p className="mt-1 text-xs leading-5 text-[var(--text-secondary)]">
+              {lane.boundary}
+            </p>
+          </div>
+        ))}
       </div>
 
       {hasBlockers ? (

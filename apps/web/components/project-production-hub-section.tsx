@@ -1,5 +1,10 @@
 import Link from "next/link";
-import { RecordWorkspaceSection, StatusBadge } from "@floorconnector/ui";
+import {
+  ReadinessBadge,
+  RecordWorkspaceSection,
+  StatusBadge,
+  getReadinessLaneCopy
+} from "@floorconnector/ui";
 
 import { AppEmptyState } from "@/components/app-empty-state";
 import { secondaryActionClassName } from "@/components/action-hierarchy";
@@ -172,6 +177,8 @@ function ProjectProductionOverviewCard({
 }: {
   overview: ProjectProductionOverview;
 }) {
+  const productionLane = getReadinessLaneCopy("production-readiness");
+
   return (
     <RecordWorkspaceSection
       eyebrow={overview.eyebrow}
@@ -180,6 +187,9 @@ function ProjectProductionOverviewCard({
       className="rounded-none border-0 shadow-none"
       meta={
         <>
+          <ReadinessBadge status={productionLane.label}>
+            {productionLane.label}
+          </ReadinessBadge>
           <span className="rounded-full border border-[var(--border-warm)] bg-[var(--highlight)] px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.16em] text-[var(--text-secondary)]">
             {overview.stat}
           </span>

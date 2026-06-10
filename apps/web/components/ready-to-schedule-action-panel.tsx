@@ -1,5 +1,11 @@
 import Link from "next/link";
 import { CalendarDays, Plus } from "lucide-react";
+import { ReadinessBadge, getReadinessLaneCopy } from "@floorconnector/ui";
+
+import {
+  primaryActionClassName,
+  secondaryActionClassName
+} from "@/components/action-hierarchy";
 
 type ReadyToScheduleActionPanelProps = {
   projectId: string;
@@ -70,24 +76,33 @@ export function ReadyToScheduleActionPanel({
 }: ReadyToScheduleActionPanelProps) {
   const hasJobs = jobCount > 0;
   const hasUnscheduledJobs = unscheduledJobCount > 0;
-  const createJobHref = buildJobsCreateHref({ projectId, estimateId, contractId });
+  const createJobHref = buildJobsCreateHref({
+    projectId,
+    estimateId,
+    contractId
+  });
   const scheduleHref = buildScheduleHref(
     projectId,
     unscheduledJobCount,
     unscheduledJobId
   );
-  const primaryActionHref = hasJobs || hasUnscheduledJobs ? scheduleHref : createJobHref;
+  const primaryActionHref =
+    hasJobs || hasUnscheduledJobs ? scheduleHref : createJobHref;
   const primaryActionLabel = hasUnscheduledJobs
     ? "Schedule job"
     : hasJobs
       ? "Open schedule"
       : "Create job";
-  const secondaryActionHref = hasJobs || hasUnscheduledJobs ? createJobHref : scheduleHref;
+  const secondaryActionHref =
+    hasJobs || hasUnscheduledJobs ? createJobHref : scheduleHref;
   const secondaryActionLabel = hasUnscheduledJobs
     ? "Create another job"
     : hasJobs
       ? "Create another job"
       : "Open schedule";
+  const financialLane = getReadinessLaneCopy("financial-readiness");
+  const scheduleLane = getReadinessLaneCopy("schedule-readiness");
+  const productionLane = getReadinessLaneCopy("production-readiness");
 
   return (
     <section className="rounded-lg border border-emerald-200 bg-emerald-50 px-5 py-4 text-sm leading-6 text-emerald-950">
@@ -112,20 +127,22 @@ export function ReadyToScheduleActionPanel({
 
       <div className="mt-4 grid gap-3 md:grid-cols-3">
         <div className="rounded-md border border-emerald-200 bg-white px-4 py-3">
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-700">
-            1. Signed
-          </p>
+          <ReadinessBadge status={financialLane.label} size="sm">
+            1. {financialLane.shortLabel}
+          </ReadinessBadge>
           <p className="mt-2 font-medium text-slate-950">{projectName}</p>
           <p className="mt-1 text-xs leading-5 text-slate-600">
             The commercial gate is complete on the shared project record.
           </p>
         </div>
         <div className="rounded-md border border-emerald-200 bg-white px-4 py-3">
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-700">
-            2. Create job
-          </p>
+          <ReadinessBadge status={productionLane.label} size="sm">
+            2. {productionLane.shortLabel}
+          </ReadinessBadge>
           <p className="mt-2 font-medium text-slate-950">
-            {hasJobs ? `${jobCount} job${jobCount === 1 ? "" : "s"} created` : "No job yet"}
+            {hasJobs
+              ? `${jobCount} job${jobCount === 1 ? "" : "s"} created`
+              : "No job yet"}
           </p>
           <p className="mt-1 text-xs leading-5 text-slate-600">
             {hasJobs
@@ -134,9 +151,9 @@ export function ReadyToScheduleActionPanel({
           </p>
         </div>
         <div className="rounded-md border border-emerald-200 bg-white px-4 py-3">
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-700">
-            3. Schedule job
-          </p>
+          <ReadinessBadge status={scheduleLane.label} size="sm">
+            3. {scheduleLane.shortLabel}
+          </ReadinessBadge>
           <p className="mt-2 font-medium text-slate-950">
             {hasUnscheduledJobs
               ? `${unscheduledJobCount} waiting on schedule`
@@ -155,10 +172,7 @@ export function ReadyToScheduleActionPanel({
       </div>
 
       <div className="mt-4 flex flex-wrap gap-2.5">
-        <Link
-          href={primaryActionHref}
-          className="inline-flex items-center gap-2 rounded-full bg-brand-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-900"
-        >
+        <Link href={primaryActionHref} className={primaryActionClassName}>
           {hasJobs || hasUnscheduledJobs ? (
             <CalendarDays className="h-4 w-4" />
           ) : (
@@ -166,10 +180,7 @@ export function ReadyToScheduleActionPanel({
           )}
           {primaryActionLabel}
         </Link>
-        <Link
-          href={secondaryActionHref}
-          className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-white px-4 py-2 text-sm font-medium text-emerald-900 transition hover:border-emerald-300 hover:bg-emerald-50"
-        >
+        <Link href={secondaryActionHref} className={secondaryActionClassName}>
           {hasJobs || hasUnscheduledJobs ? (
             <Plus className="h-4 w-4" />
           ) : (
