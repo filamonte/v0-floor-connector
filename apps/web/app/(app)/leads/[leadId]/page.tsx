@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { StatusBadge } from "@floorconnector/ui";
 
 import { AppEmptyState } from "@/components/app-empty-state";
 import { DirectoryContextCard } from "@/components/directory-context-card";
@@ -906,7 +907,7 @@ export default async function LeadDetailPage({
               </div>
 
               <div className="mt-6 grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,0.85fr)]">
-                <div className="space-y-3">
+                <div className="space-y-3 xl:order-1">
                   {assessmentPackages.length > 0 ? (
                     assessmentPackages.map((assessmentPackage) => {
                       const packageHref = assessmentPackage.projectId
@@ -929,9 +930,13 @@ export default async function LeadDetailPage({
                                   : "Opportunity-owned pre-sale package"}
                               </p>
                             </div>
-                            <span className="inline-flex w-fit rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-slate-600">
+                            <StatusBadge
+                              status={assessmentPackage.status}
+                              size="sm"
+                              className="w-fit"
+                            >
                               {formatStatusLabel(assessmentPackage.status)}
-                            </span>
+                            </StatusBadge>
                           </div>
                           <dl className="mt-4 grid gap-3 text-sm text-slate-600 sm:grid-cols-2">
                             <div>
@@ -954,7 +959,7 @@ export default async function LeadDetailPage({
                           {packageHref ? (
                             <Link
                               href={packageHref}
-                              className="mt-4 inline-flex text-sm font-medium text-brand-700 transition hover:text-brand-900"
+                              className="mt-4 inline-flex min-h-10 w-full items-center justify-center rounded-[6px] border border-brand-200 bg-white px-3 text-sm font-medium text-brand-700 transition hover:border-brand-300 hover:text-brand-900 sm:w-auto"
                             >
                               Open project assessment package
                             </Link>
@@ -973,7 +978,7 @@ export default async function LeadDetailPage({
 
                 <form
                   action={createOpportunityAssessmentPackageAction}
-                  className="rounded-2xl border border-slate-200 bg-slate-50/80 px-5 py-5"
+                  className="order-first rounded-2xl border border-slate-200 bg-slate-50/80 px-5 py-5 xl:order-2"
                 >
                   <input
                     type="hidden"

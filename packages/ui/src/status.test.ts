@@ -27,6 +27,7 @@ void test("status mapping keeps common workflow states semantic", () => {
   assert.equal(getStatusTone("scheduled"), "info");
   assert.equal(getStatusTone("in progress"), "info");
   assert.equal(getStatusTone("completed"), "success");
+  assert.equal(getStatusTone("finalized"), "success");
   assert.equal(getStatusTone("needs attention"), "warning");
 });
 

@@ -59,14 +59,15 @@ docs-only audit stream by the explicit UX Beta Readiness prompt.
 Jeff approval gate: Satisfied for first stream start by the explicit prompt
 after PR #19 and PR #20 were confirmed merged.
 
-Wave status: Active for financial, schedule, and production readiness UX after
-record workspace rhythm merged. The docs-only audit stream approved
+Wave status: Active for mobile field beta polish after financial, schedule,
+and production readiness UX merged. The docs-only audit stream approved
 `ux-design-system-foundation-v1` as the first UI-touching stream, PR #21 merged
 that foundation stream to `main`, PR #22 merged `mcp-tool-readiness-v1` to
 `main`, PR #23 merged `dashboard-command-center-cleanup-v1` to `main`, and PR
-#24 merged `record-workspace-rhythm-v1` to `main`. The active implementation
-stream is `financial-schedule-readiness-ux-v1`. Later
-implementation streams remain proposed until explicitly started. This gate does not authorize schema,
+#24 merged `record-workspace-rhythm-v1` to `main`; PR #25 merged
+`financial-schedule-readiness-ux-v1` to `main`. The active implementation
+stream is `mobile-field-beta-pass-v1`. Later implementation streams remain
+proposed until explicitly started. This gate does not authorize schema,
 migrations, provider/customer-facing sends, payment/signature/scheduling/portal
 access mutation, PRs, merges, cleanup, or next-wave continuation.
 
@@ -125,9 +126,16 @@ Approved financial/schedule readiness UX worktree:
 
 - `C:\FC-worktrees\financial-schedule-readiness-ux-v1`
 
-Proposed later streams:
+Approved mobile field beta pass stream:
 
 - `stream/mobile-field-beta-pass-v1`
+
+Approved mobile field beta pass worktree:
+
+- `C:\FC-worktrees\mobile-field-beta-pass-v1`
+
+Proposed later streams:
+
 - `stream/settings-super-admin-boundary-ux-v1`
 
 ### ux-architecture-audit-v1
@@ -316,12 +324,48 @@ pnpm.cmd worktree:doctor
   payment/signature/scheduling mutation, provider/customer-facing behavior,
   AIA, customer self-service, and AI.
 - Suggested commit: `feat: clarify financial schedule production readiness ux`
-- Status: Active.
+- Status: Merged to `main` via PR #25.
 
 Validation expectation:
 
 ```powershell
 pnpm.cmd exec tsx packages/ui/src/readiness-lanes.test.ts
+pnpm.cmd --filter @floorconnector/web typecheck
+pnpm.cmd --filter @floorconnector/web lint
+pnpm.cmd fc:preflight:fast
+git diff --check
+git diff --cached --check
+pnpm.cmd worktree:doctor
+```
+
+### mobile-field-beta-pass-v1
+
+- Branch: `stream/mobile-field-beta-pass-v1`
+- Worktree: `C:\FC-worktrees\mobile-field-beta-pass-v1`
+- Owns: presentation-only mobile scanability for Lead Assessment Package,
+  Schedule Field Handoff, Daily Logs, and assigned Field Work surfaces.
+- Mission: make mobile assessment capture and field-facing handoffs easier to
+  scan and tap while preserving the existing canonical Lead/Opportunity,
+  Project, Job, Daily Log, Field Work, Communication, schedule, and readiness
+  ownership model.
+- Dependencies: PR #21 UX design-system foundation, PR #23 dashboard cleanup,
+  PR #24 record workspace rhythm, PR #25 financial/schedule/production
+  readiness UX, UX Beta Readiness packet, UX architecture audit packet,
+  financial/schedule readiness packet, design-system governance, UI patterns,
+  current-state truth, developer source of truth, and target IA.
+- Forbidden: business logic changes, readiness calculation changes,
+  schema/data changes, Supabase changes, migrations, duplicate field queues,
+  mobile-only/offline persistence, dashboard-owned or field-local operational
+  state, personalization engine, role-specific records, portal copies,
+  financial/schedule/readiness truth changes, payment/signature/scheduling
+  mutation, provider/customer-facing behavior, AIA, customer self-service, and
+  AI.
+- Suggested commit: `feat: polish mobile field beta surfaces`
+- Status: Active.
+
+Validation expectation:
+
+```powershell
 pnpm.cmd --filter @floorconnector/web typecheck
 pnpm.cmd --filter @floorconnector/web lint
 pnpm.cmd fc:preflight:fast

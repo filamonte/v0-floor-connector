@@ -68,6 +68,9 @@ const assignedJobGroupCopy: Record<
   }
 };
 
+const mobileFieldLinkClassName =
+  "inline-flex min-h-10 items-center justify-center rounded-[6px] border border-slate-300 bg-white px-3 py-2 text-center text-xs font-semibold text-slate-700 transition hover:border-[#d8731f] hover:text-slate-950";
+
 function labelize(value: string) {
   return value.replaceAll("_", " ");
 }
@@ -328,14 +331,14 @@ export default async function FieldWorkItemsPage() {
                                   <div className="flex shrink-0 flex-wrap gap-2">
                                     <Link
                                       href={`/jobs/${job.id}`}
-                                      className="rounded-[6px] border border-slate-300 bg-white px-2 py-1 text-xs font-semibold text-slate-700 transition hover:border-[#d8731f] hover:text-slate-950"
+                                      className={`${mobileFieldLinkClassName} flex-1 sm:flex-none`}
                                     >
                                       Job
                                     </Link>
                                     {job.project ? (
                                       <Link
                                         href={`/projects/${job.project.id}`}
-                                        className="rounded-[6px] border border-slate-300 bg-white px-2 py-1 text-xs font-semibold text-slate-700 transition hover:border-[#d8731f] hover:text-slate-950"
+                                        className={`${mobileFieldLinkClassName} flex-1 sm:flex-none`}
                                       >
                                         Project
                                       </Link>
@@ -385,7 +388,7 @@ export default async function FieldWorkItemsPage() {
                                       href={
                                         dailyExecutionCommand.nextActionHref
                                       }
-                                      className="inline-flex shrink-0 items-center rounded-[6px] border border-slate-300 bg-white px-2 py-1 text-xs font-semibold text-slate-700 transition hover:border-[#d8731f] hover:text-slate-950"
+                                      className={`${mobileFieldLinkClassName} w-full shrink-0 sm:w-auto`}
                                     >
                                       {dailyExecutionCommand.nextActionLabel}
                                     </Link>
@@ -419,7 +422,7 @@ export default async function FieldWorkItemsPage() {
                                           </div>
                                           <Link
                                             href={item.href}
-                                            className="inline-flex shrink-0 items-center rounded-[6px] border border-slate-300 bg-white px-2 py-1 text-[11px] font-semibold text-slate-700 transition hover:border-[#d8731f] hover:text-slate-950"
+                                            className={`${mobileFieldLinkClassName} shrink-0 text-[11px]`}
                                           >
                                             {item.actionLabel}
                                           </Link>
@@ -450,7 +453,7 @@ export default async function FieldWorkItemsPage() {
                                     </div>
                                     <Link
                                       href={communicationsHandoff.handoffHref}
-                                      className="inline-flex shrink-0 items-center rounded-[6px] border border-slate-300 bg-white px-2 py-1 text-xs font-semibold text-slate-700 transition hover:border-[#d8731f] hover:text-slate-950"
+                                      className={`${mobileFieldLinkClassName} w-full shrink-0 sm:w-auto`}
                                     >
                                       {communicationsHandoff.handoffActionLabel}
                                     </Link>

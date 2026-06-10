@@ -91,6 +91,7 @@ const successStatuses = new Set([
   "settled",
   "recorded",
   "accepted",
+  "finalized",
   "finished"
 ]);
 
