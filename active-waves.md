@@ -85,8 +85,9 @@ PR #19 and PR #20 were confirmed merged.
 `mcp-tool-readiness-v1` to `main`; PR #23 merged
 `dashboard-command-center-cleanup-v1` to `main`; PR #24 merged
 `record-workspace-rhythm-v1` to `main`; PR #25 merged
-`financial-schedule-readiness-ux-v1` to `main`. The current active stream is
-`mobile-field-beta-pass-v1`.
+`financial-schedule-readiness-ux-v1` to `main`; PR #26 merged
+`mobile-field-beta-pass-v1` to `main`. The current active stream is
+`visual-qa-route-smoke-v1`.
 
 Purpose: make the contractor app cohesive, trustworthy, role-aware-ready, and
 usable for real beta testing while preserving the canonical operating model.
@@ -129,9 +130,15 @@ Approved financial/schedule readiness UX stream:
 
 Approved mobile field beta pass stream:
 
-| Stream                      | Review packet                                                                | Ownership area                                    | Dependency posture                                                    |
-| --------------------------- | ---------------------------------------------------------------------------- | ------------------------------------------------- | --------------------------------------------------------------------- |
-| `mobile-field-beta-pass-v1` | [packet](C:/FloorConnector/docs/review-packets/mobile-field-beta-pass-v1.md) | Mobile assessment capture and field-facing polish | Active after PR #25 financial/schedule/production readiness UX merged |
+| Stream                      | Review packet                                                                | Ownership area                                    | Dependency posture                                                |
+| --------------------------- | ---------------------------------------------------------------------------- | ------------------------------------------------- | ----------------------------------------------------------------- |
+| `mobile-field-beta-pass-v1` | [packet](C:/FloorConnector/docs/review-packets/mobile-field-beta-pass-v1.md) | Mobile assessment capture and field-facing polish | Merged via PR #26; upstream for visual QA route smoke reliability |
+
+Approved visual QA route smoke stream:
+
+| Stream                     | Review packet                                                               | Ownership area                                            | Dependency posture                                                    |
+| -------------------------- | --------------------------------------------------------------------------- | --------------------------------------------------------- | --------------------------------------------------------------------- |
+| `visual-qa-route-smoke-v1` | [packet](C:/FloorConnector/docs/review-packets/visual-qa-route-smoke-v1.md) | Local authenticated visual QA and route smoke reliability | Active after PR #26 mobile field beta pass merged; tooling-only scope |
 
 Proposed later streams:
 

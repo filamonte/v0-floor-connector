@@ -65,9 +65,10 @@ and production readiness UX merged. The docs-only audit stream approved
 that foundation stream to `main`, PR #22 merged `mcp-tool-readiness-v1` to
 `main`, PR #23 merged `dashboard-command-center-cleanup-v1` to `main`, and PR
 #24 merged `record-workspace-rhythm-v1` to `main`; PR #25 merged
-`financial-schedule-readiness-ux-v1` to `main`. The active implementation
-stream is `mobile-field-beta-pass-v1`. Later implementation streams remain
-proposed until explicitly started. This gate does not authorize schema,
+`financial-schedule-readiness-ux-v1` to `main`; PR #26 merged
+`mobile-field-beta-pass-v1` to `main`. The active tooling stream is
+`visual-qa-route-smoke-v1`. Later implementation streams remain proposed until
+explicitly started. This gate does not authorize schema,
 migrations, provider/customer-facing sends, payment/signature/scheduling/portal
 access mutation, PRs, merges, cleanup, or next-wave continuation.
 
@@ -89,6 +90,14 @@ Approved first worktree:
 Approved implementation stream:
 
 - `stream/ux-design-system-foundation-v1`
+
+Approved visual QA route smoke stream:
+
+- `stream/visual-qa-route-smoke-v1`
+
+Approved visual QA route smoke worktree:
+
+- `C:\FC-worktrees\visual-qa-route-smoke-v1`
 
 Approved implementation worktree:
 
@@ -361,11 +370,43 @@ pnpm.cmd worktree:doctor
   mutation, provider/customer-facing behavior, AIA, customer self-service, and
   AI.
 - Suggested commit: `feat: polish mobile field beta surfaces`
+- Status: Merged to `main` via PR #26.
+
+Validation expectation:
+
+```powershell
+pnpm.cmd --filter @floorconnector/web typecheck
+pnpm.cmd --filter @floorconnector/web lint
+pnpm.cmd fc:preflight:fast
+git diff --check
+git diff --cached --check
+pnpm.cmd worktree:doctor
+```
+
+### visual-qa-route-smoke-v1
+
+- Branch: `stream/visual-qa-route-smoke-v1`
+- Worktree: `C:\FC-worktrees\visual-qa-route-smoke-v1`
+- Owns: local authenticated visual QA route smoke reliability and diagnostics
+  for UX Beta Readiness routes.
+- Mission: make protected route screenshot validation reliable by verifying
+  authenticated Playwright storage state, rejecting login redirects and generic
+  app error pages, and documenting the local auth refresh path.
+- Dependencies: PR #26 mobile field beta pass merge, UX Beta Readiness packet,
+  MCP readiness packet, mobile field beta pass packet, current-state truth,
+  developer source of truth, auth setup docs, Playwright config, and local auth
+  QA recovery docs.
+- Forbidden: production business logic changes, schema/data changes,
+  migrations, Supabase production mutation, auth weakening, RLS weakening,
+  fake persistence, hardcoded runtime tenant/user IDs, hiding real route
+  exceptions, dashboard/workspace redesign, customer self-service, AI, and AIA.
+- Suggested commit: `test: add authenticated route smoke coverage`
 - Status: Active.
 
 Validation expectation:
 
 ```powershell
+pnpm.cmd exec playwright test e2e/authenticated-route-smoke.spec.js --project=chromium-protected
 pnpm.cmd --filter @floorconnector/web typecheck
 pnpm.cmd --filter @floorconnector/web lint
 pnpm.cmd fc:preflight:fast

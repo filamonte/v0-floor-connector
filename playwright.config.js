@@ -56,7 +56,7 @@ module.exports = defineConfig({
       name: "chromium-protected",
       dependencies: ["setup"],
       testMatch:
-        /(?:estimate-.*|project-detail-ui|customer-detail-ui|people-directory-access|project-ai-cue-work-item-bridge|operational-cues-record-panels|schedule-ready-handoff|golden-workflow-verification|dashboard-ui|dashboard-ui-my-work-queue-modes|detail-workspace-ui|data-export)\.spec\.js/,
+        /(?:estimate-.*|project-detail-ui|customer-detail-ui|people-directory-access|project-ai-cue-work-item-bridge|operational-cues-record-panels|schedule-ready-handoff|golden-workflow-verification|dashboard-ui|dashboard-ui-my-work-queue-modes|detail-workspace-ui|data-export|authenticated-route-smoke)\.spec\.js/,
       use: {
         ...devices["Desktop Chrome"],
         storageState: authStatePath
