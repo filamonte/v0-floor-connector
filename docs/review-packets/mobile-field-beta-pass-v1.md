@@ -53,6 +53,18 @@ Schedule, Financials, and Invoice work in their existing owning workspaces.
   - standardized mobile field action link sizing for Job, Project, Daily Log,
     quick capture, and communication handoff actions
 
+## Review Correction
+
+PR #26 review found that the Daily Logs manager adopted shared `StatusBadge` for
+`dailyLog.status`, but `finalized` was missing from the shared success status
+mapping even though the Daily Log detail page already treats finalized logs as a
+success state. The correction adds `finalized` to the shared success mapping and
+covers it in `packages/ui/src/status.test.ts`.
+
+This is status semantics only. It does not change Daily Log behavior, schema,
+persistence, workflow ownership, readiness calculations, field data, server
+actions, or any mutation path.
+
 ## Non-Goals
 
 - no full dashboard redesign
