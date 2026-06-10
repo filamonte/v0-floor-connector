@@ -1,5 +1,10 @@
 import Link from "next/link";
-import { RecordWorkspaceSection, StatusBadge } from "@floorconnector/ui";
+import {
+  ReadinessBadge,
+  RecordWorkspaceSection,
+  StatusBadge,
+  getReadinessLaneCopy
+} from "@floorconnector/ui";
 
 import { secondaryActionClassName } from "@/components/action-hierarchy";
 import { AppEmptyState } from "@/components/app-empty-state";
@@ -102,6 +107,8 @@ function ProjectFinancialOverviewCard({
 }: {
   overview: ProjectFinancialOverview;
 }) {
+  const financialLane = getReadinessLaneCopy("financial-readiness");
+
   return (
     <RecordWorkspaceSection
       eyebrow={overview.eyebrow}
@@ -110,6 +117,9 @@ function ProjectFinancialOverviewCard({
       className="rounded-none border-0 shadow-none"
       meta={
         <>
+          <ReadinessBadge status={financialLane.label}>
+            {financialLane.label}
+          </ReadinessBadge>
           <span className="rounded-full border border-[var(--border-warm)] bg-[var(--highlight)] px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.16em] text-[var(--text-secondary)]">
             {overview.stat}
           </span>

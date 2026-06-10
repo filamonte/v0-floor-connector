@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { ReadinessBadge, getReadinessLaneCopy } from "@floorconnector/ui";
 
 import type {
   ScheduleFieldHandoffCommandLane,
@@ -636,6 +637,8 @@ export function ScheduleFieldHandoffPanel(input: {
   packet?: ScheduleFieldHandoffPacket | null;
   compact?: boolean;
 }) {
+  const scheduleLane = getReadinessLaneCopy("schedule-readiness");
+  const productionLane = getReadinessLaneCopy("production-readiness");
   const statClassName =
     "rounded-[4px] border border-[var(--border-warm)] bg-white px-3 py-2";
   const actionClassName =
@@ -808,9 +811,14 @@ export function ScheduleFieldHandoffPanel(input: {
             </div>
 
             <div className={statClassName}>
-              <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--text-tertiary)]">
-                Readiness
-              </p>
+              <div className="flex flex-wrap items-center gap-2">
+                <ReadinessBadge status={scheduleLane.label} size="sm">
+                  {scheduleLane.shortLabel}
+                </ReadinessBadge>
+                <ReadinessBadge status={productionLane.label} size="sm">
+                  {productionLane.shortLabel}
+                </ReadinessBadge>
+              </div>
               <p className="mt-1 font-semibold text-[var(--text-primary)]">
                 {input.packet.readiness.label}
               </p>
@@ -824,6 +832,9 @@ export function ScheduleFieldHandoffPanel(input: {
                 {input.packet.fieldNotes.dailyLogLabel} ·{" "}
                 {input.packet.fieldNotes.blockersLabel} ·{" "}
                 {input.packet.fieldNotes.latestActivityLabel}
+              </p>
+              <p className="mt-2 text-xs leading-5 text-[var(--text-secondary)]">
+                {scheduleLane.boundary} {productionLane.boundary}
               </p>
             </div>
 
