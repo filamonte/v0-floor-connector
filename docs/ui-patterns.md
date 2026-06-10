@@ -275,6 +275,10 @@ Rules:
 - Keep right rails short and supportive; they should not become a second full page.
 - Portal pages must be customer-safe, simpler than contractor pages, and free of contractor-only implementation vocabulary.
 - Protected pages must be checked while logged in with the correct role. A login page, access-denied page, or unauthenticated redirect is not a successful visual review.
+- UX route smoke should also reject the generic app error page (`We could not
+load this page`) even when HTTP status is 200. Refresh Playwright auth through
+  the existing setup project against the same `PLAYWRIGHT_BASE_URL` before
+  accepting screenshots as route evidence.
 
 ## Copper CTA Rule
 

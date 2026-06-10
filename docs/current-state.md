@@ -2997,6 +2997,14 @@ Implemented UI behavior now:
   and Communication surfaces. It does not add schema, migrations, Supabase
   changes, mobile-only/offline persistence, duplicate field queues, duplicate
   schedule/readiness truth, customer self-service, AI, or business logic.
+- Authenticated Route Smoke V1 adds focused Playwright coverage for protected
+  UX Beta Readiness routes at desktop and mobile widths. The smoke runs through
+  the existing contractor auth setup project, rejects `/login` redirects and the
+  generic app error page, checks for route-specific protected content, and
+  stores screenshots as ignored Playwright artifacts. This is local QA/test
+  infrastructure only and does not change auth, RLS, schema, Supabase data,
+  business logic, route behavior, dashboard/workspace design, customer
+  self-service, AI, or AIA.
 - Dashboard, Project, Schedule, Contract, Invoice, Job, and Daily Log surfaces now share grouped lifecycle language around `opportunity -> customer/project -> estimate/contract -> job/schedule -> invoice/payment`. Contract Workspace clarifies draft, approval, signature, decline, countersign, deposit, and downstream handoff context; Invoice Workspace clarifies draft, sent/open, partial, paid, void, billing-source, collection, payment, and upstream-readiness context; Job Workspace clarifies schedule, crew, field evidence, closeout, and downstream billing handoff; Daily Log Workspace clarifies project-day narrative, field notes, labor/time continuity, attachments, and upstream Project Workspace resolution. This is presentation-only and does not change signature, readiness, scheduling, time-card, billing, payment, portal, schema, RLS, or server-action behavior.
 - Projects, Estimates, Invoices, Jobs, Contracts, and Customers Manager Pages use the shared Manager Page rhythm with clearer status scanning, primary create actions, and compact continuity cues.
 - Portal and super-admin received only safe consistency cleanup; they do not copy contractor operational patterns wholesale.
