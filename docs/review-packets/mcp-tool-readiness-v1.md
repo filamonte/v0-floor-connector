@@ -116,6 +116,103 @@ inspection, GitHub, Notion, Stitch read access, and local validation. It should
 not depend on Linear, v0, OpenAI Platform, B12, Assessment Generator, Stripe, or
 Supabase mutation.
 
+## Recheck After MCP Changes
+
+Recheck date: 2026-06-10
+
+Reason: the user made MCP/tooling changes after the first readiness pass and
+asked for a fresh recheck before dashboard cleanup starts.
+
+### What Changed Since Prior Pass
+
+- The branch now has an upstream: `origin/stream/mcp-tool-readiness-v1`.
+- PR #22, `docs: verify MCP tooling readiness`, is open from
+  `stream/mcp-tool-readiness-v1` into `main`.
+- Linear reauthentication is fixed enough for project listing. The connector
+  can read the `FloorConnector-Dev` project and the `FloorConnector-Dev` team
+  with key `FLO`.
+- Figma authentication is fixed. The connector identifies Jeff Filamonte
+  (`jfilamonte@gmail.com`) with a View seat on `Jeff Filamonte's team`.
+- The prior Figma/FigJam link is still only an
+  `online-whiteboard/create-diagram/...` URL, not an inspectable
+  `figma.com/board/...` or `figma.com/design/...` file URL.
+- Stitch remains callable and lists `projects/779484556394119641`.
+- Supabase metadata remains readable and the critical RLS-disabled advisory is
+  still present.
+- The stale PR #21 Vercel check named `Vercel - v0-floor-connector` is still
+  visible as failed, while `Vercel - lkjlkjlsdf` succeeded.
+
+### Updated Tool Readiness Table
+
+| Tool                          | Recheck result                                                                                                                                                                    | Read status                                                 | Write status                                                       | Updated readiness                                             | Fallback / boundary                                                                                                          |
+| ----------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------- | ------------------------------------------------------------------ | ------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| GitHub CLI / GitHub connector | Authenticated as `filamonte`; repo reachable; PR #22 open; PR #21 merged; stale Vercel status still visible on PR #21                                                             | Works                                                       | Not tested in this pass                                            | Ready                                                         | Use for repo/PR/check inspection. Do not auto-merge, push, or create PRs without explicit approval.                          |
+| Notion                        | Existing UX wave page fetched with discussions; search found the page; progress comment added with id `37beeff1-07fa-8109-95a1-001d5cdd6a1b`                                      | Works                                                       | Page comments work                                                 | Ready with repo-source-of-truth limit                         | Use as external planning log only. Do not create duplicate pages or make Notion the roadmap source of truth.                 |
+| Linear                        | Project listing works. Found project `FloorConnector-Dev` (`6212e79d-0827-463a-b016-b5cb63d9046f`) and team `FloorConnector-Dev` / `FLO` (`8be9bec2-e8db-4bc3-8bc1-2f360e5b9427`) | Works for project/team discovery                            | Not tested; no issue created because no ticket creation was needed | Newly available for later ticket creation with human approval | Repo packets remain execution truth. Do not create Linear-only work or tickets without an explicit ticketing prompt.         |
+| Figma / FigJam                | `whoami` works for Jeff Filamonte; prior online-whiteboard link is still not a normal inspectable file URL; repo search found no normal `/board/...` or `/design/...` URL         | Auth works; file inspection not possible without normal URL | Not tested; file creation/editing forbidden                        | Partially fixed                                               | Provide a normal FigJam `/board/...` or Figma `/design/...` URL before expecting MCP inspection. No Figma-only design truth. |
+| Stitch                        | `list_projects` works and includes `projects/779484556394119641`, `FloorConnector UX Beta Readiness V1`, owner role, private visibility                                           | Works                                                       | Not tested; mutation forbidden                                     | Ready for read/reference                                      | Use as design reference only; repo design-system governance wins.                                                            |
+| v0                            | Tool discovery still did not expose a callable v0 scaffold/generate tool                                                                                                          | No callable app-specific read/generate path found           | Not available                                                      | Still unavailable                                             | Use repo primitives, local code, Figma/Stitch references, and Browser/local screenshots instead.                             |
+| Supabase                      | Project `jcnoraopbwdhshcmplgb` reachable; migrations and public table metadata readable; security advisors readable                                                               | Works                                                       | Forbidden and not tested                                           | Ready for metadata only                                       | UX wave should not mutate Supabase. Security remediation needs a separate approved database/security stream.                 |
+| Stripe                        | Account metadata still works for `acct_1TVeYNBLrrct16go` / `FloorConnector sandbox`; no product-listing tool surfaced in this recheck                                             | Account metadata works                                      | Forbidden and not tested                                           | Partially ready for account metadata                          | Do not create products, prices, customers, subscriptions, checkout sessions, or payment state.                               |
+| OpenAI Platform               | Key setup tools remain discoverable from prior search, but no target-selection or key creation flow was run                                                                       | Not needed for this UX stream                               | Forbidden and not tested                                           | Intentionally unused                                          | Do not create API keys or start setup without explicit trusted key-flow prompt.                                              |
+| B12 Website Generator         | Intentionally unused                                                                                                                                                              | Not tested                                                  | Forbidden and not tested                                           | Not relevant                                                  | Do not create websites for internal contractor app UX.                                                                       |
+| Assessment Generator          | Intentionally unused                                                                                                                                                              | Not tested                                                  | Forbidden and not tested                                           | Not relevant                                                  | Do not generate assessment artifacts or product widgets.                                                                     |
+| Mem                           | Collection and note listing work; no notes or collections returned                                                                                                                | Works                                                       | Not tested; no note created                                        | Ready for read/search; not wave truth                         | Repo packet remains source of truth. Do not write Mem notes without explicit request.                                        |
+| Vercel checks                 | PR #21 still shows failed stale `Vercel - v0-floor-connector` invite/team target and successful `Vercel - lkjlkjlsdf`; PR #22 is open                                             | Visible through GitHub                                      | Not applicable                                                     | Needs configuration cleanup                                   | Treat stale failed integration status separately from app validation until cleaned up.                                       |
+
+### Tools Newly Available
+
+- Linear project/team read access is now available.
+- Figma account authentication is now available.
+- The stream branch now has an upstream and PR #22 is open.
+
+### Tools Still Blocked Or Limited
+
+- Figma/FigJam file inspection still needs a normal `figma.com/board/...` or
+  `figma.com/design/...` URL.
+- v0 still has no callable scaffold/generate tool in this session.
+- Stripe product listing was not available through the exposed connector
+  surface in this recheck.
+- Vercel still has a stale failed `v0-floor-connector` status on PR #21.
+- Supabase has security advisories that are real but out of scope for this UX
+  tooling pass.
+
+### Supabase Advisory Recheck
+
+The critical RLS-disabled advisory remains present for:
+
+- `public.platform_catalog_system_components`
+- `public.platform_catalog_item_seeds`
+- `public.platform_financial_defaults`
+- `public.role_permissions`
+- `public.platform_workflow_defaults`
+- `public.platform_user_roles`
+- `public.subscription_plans`
+- `public.permissions`
+
+The security advisor also reports additional non-remediated advisory categories,
+including RLS-enabled tables with no policies, a security-definer view,
+functions with mutable search paths, executable security-definer functions, and
+leaked password protection disabled. No SQL, DDL, policy, auth, or data mutation
+was run.
+
+### Recheck Decision
+
+`dashboard-command-center-cleanup-v1` is cleared to launch with notes.
+
+Linear and Figma account auth are improved enough that the dashboard cleanup no
+longer needs to treat those connectors as fully blocked. The remaining launch
+notes are:
+
+- use repo docs and current code as canonical truth;
+- use Linear only as a mirrored ticketing aid after explicit ticket creation
+  approval;
+- provide a normal Figma file URL before expecting MCP design inspection;
+- do not rely on v0;
+- do not use Supabase, Stripe, OpenAI Platform, B12, Assessment Generator, or
+  Mem as implementation sources for dashboard cleanup;
+- clean up or explicitly tolerate the stale Vercel `v0-floor-connector` status.
+
 ## Usage Rules For Later UX Streams
 
 - Repo docs, current code, and review packets remain canonical.
