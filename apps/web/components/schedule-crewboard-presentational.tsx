@@ -640,9 +640,9 @@ export function ScheduleFieldHandoffPanel(input: {
   const scheduleLane = getReadinessLaneCopy("schedule-readiness");
   const productionLane = getReadinessLaneCopy("production-readiness");
   const statClassName =
-    "rounded-[4px] border border-[var(--border-warm)] bg-white px-3 py-2";
+    "min-w-0 rounded-[4px] border border-[var(--border-warm)] bg-white px-3 py-2";
   const actionClassName =
-    "inline-flex items-center rounded-[4px] border px-2.5 py-1.5 text-xs font-semibold uppercase tracking-[0.14em] transition";
+    "inline-flex min-h-10 items-center justify-center rounded-[4px] border px-3 py-2 text-center text-xs font-semibold uppercase tracking-[0.14em] transition";
 
   return (
     <div
@@ -661,7 +661,7 @@ export function ScheduleFieldHandoffPanel(input: {
         </div>
         <Link
           href={input.handoff.dailyLogHref}
-          className={`${actionClassName} ${scheduleSecondaryActionToneClassName}`}
+          className={`${actionClassName} ${scheduleSecondaryActionToneClassName} w-full sm:w-auto`}
         >
           {input.handoff.dailyLog ? "Open Daily Log" : "Start Daily Log"}
         </Link>
@@ -670,7 +670,7 @@ export function ScheduleFieldHandoffPanel(input: {
       <div
         className={[
           "mt-3 grid gap-2",
-          input.compact ? "sm:grid-cols-2" : "sm:grid-cols-4"
+          input.compact ? "grid-cols-2" : "grid-cols-2 sm:grid-cols-4"
         ].join(" ")}
       >
         <div className={statClassName}>
@@ -714,21 +714,33 @@ export function ScheduleFieldHandoffPanel(input: {
       </div>
 
       <div className="mt-3 flex flex-wrap items-center gap-2">
-        <span className="text-xs font-medium text-[var(--text-secondary)]">
+        <span className="w-full text-xs font-medium text-[var(--text-secondary)] sm:w-auto">
           Latest activity:{" "}
           {formatFieldActivityDate(input.handoff.latestFieldActivityAt)}
         </span>
-        <Link href={input.handoff.jobHref} className={actionClassName}>
+        <Link
+          href={input.handoff.jobHref}
+          className={`${actionClassName} flex-1 sm:flex-none`}
+        >
           Job
         </Link>
-        <Link href={input.handoff.projectHref} className={actionClassName}>
+        <Link
+          href={input.handoff.projectHref}
+          className={`${actionClassName} flex-1 sm:flex-none`}
+        >
           Project
         </Link>
-        <Link href={input.handoff.fieldWorkHref} className={actionClassName}>
+        <Link
+          href={input.handoff.fieldWorkHref}
+          className={`${actionClassName} flex-1 sm:flex-none`}
+        >
           Field queue
         </Link>
         {input.handoff.openBlockerCount > 0 ? (
-          <Link href={input.handoff.blockerHref} className={actionClassName}>
+          <Link
+            href={input.handoff.blockerHref}
+            className={`${actionClassName} flex-1 sm:flex-none`}
+          >
             Blockers
           </Link>
         ) : null}
@@ -737,7 +749,7 @@ export function ScheduleFieldHandoffPanel(input: {
       {!input.compact && input.packet ? (
         <div className="mt-4 border-t border-current/20 pt-4">
           <div className="grid gap-3 lg:grid-cols-2">
-            <div className={statClassName}>
+            <div className={`${statClassName} order-2 lg:order-none`}>
               <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--text-tertiary)]">
                 Job packet
               </p>
@@ -746,7 +758,7 @@ export function ScheduleFieldHandoffPanel(input: {
                   <dt className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--text-tertiary)]">
                     Status
                   </dt>
-                  <dd className="mt-0.5 font-medium text-[var(--text-primary)]">
+                  <dd className="mt-0.5 break-words font-medium text-[var(--text-primary)] [overflow-wrap:anywhere]">
                     {input.packet.statusLabel}
                   </dd>
                 </div>
@@ -754,7 +766,7 @@ export function ScheduleFieldHandoffPanel(input: {
                   <dt className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--text-tertiary)]">
                     Schedule
                   </dt>
-                  <dd className="mt-0.5 font-medium text-[var(--text-primary)]">
+                  <dd className="mt-0.5 break-words font-medium text-[var(--text-primary)] [overflow-wrap:anywhere]">
                     {input.packet.scheduleLabel}
                   </dd>
                 </div>
@@ -762,14 +774,14 @@ export function ScheduleFieldHandoffPanel(input: {
                   <dt className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--text-tertiary)]">
                     Assigned crew
                   </dt>
-                  <dd className="mt-0.5 font-medium text-[var(--text-primary)]">
+                  <dd className="mt-0.5 break-words font-medium text-[var(--text-primary)] [overflow-wrap:anywhere]">
                     {input.packet.crewLabel}
                   </dd>
                 </div>
               </dl>
             </div>
 
-            <div className={statClassName}>
+            <div className={`${statClassName} order-3 lg:order-none`}>
               <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--text-tertiary)]">
                 Scope context
               </p>
@@ -778,7 +790,7 @@ export function ScheduleFieldHandoffPanel(input: {
                   <dt className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--text-tertiary)]">
                     Project / customer
                   </dt>
-                  <dd className="mt-0.5 font-medium text-[var(--text-primary)]">
+                  <dd className="mt-0.5 break-words font-medium text-[var(--text-primary)] [overflow-wrap:anywhere]">
                     {input.packet.scope.customerLabel} ·{" "}
                     {input.packet.scope.projectLabel}
                   </dd>
@@ -787,7 +799,7 @@ export function ScheduleFieldHandoffPanel(input: {
                   <dt className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--text-tertiary)]">
                     Estimate
                   </dt>
-                  <dd className="mt-0.5 font-medium text-[var(--text-primary)]">
+                  <dd className="mt-0.5 break-words font-medium text-[var(--text-primary)] [overflow-wrap:anywhere]">
                     {input.packet.scope.estimateLabel}
                   </dd>
                 </div>
@@ -795,7 +807,7 @@ export function ScheduleFieldHandoffPanel(input: {
                   <dt className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--text-tertiary)]">
                     Contract
                   </dt>
-                  <dd className="mt-0.5 font-medium text-[var(--text-primary)]">
+                  <dd className="mt-0.5 break-words font-medium text-[var(--text-primary)] [overflow-wrap:anywhere]">
                     {input.packet.scope.contractLabel}
                   </dd>
                 </div>
@@ -803,14 +815,14 @@ export function ScheduleFieldHandoffPanel(input: {
                   <dt className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--text-tertiary)]">
                     Notes
                   </dt>
-                  <dd className="mt-0.5 font-medium text-[var(--text-primary)]">
+                  <dd className="mt-0.5 break-words font-medium text-[var(--text-primary)] [overflow-wrap:anywhere]">
                     {input.packet.scope.scheduleNotesLabel}
                   </dd>
                 </div>
               </dl>
             </div>
 
-            <div className={statClassName}>
+            <div className={`${statClassName} order-1 lg:order-none`}>
               <div className="flex flex-wrap items-center gap-2">
                 <ReadinessBadge status={scheduleLane.label} size="sm">
                   {scheduleLane.shortLabel}
@@ -838,7 +850,7 @@ export function ScheduleFieldHandoffPanel(input: {
               </p>
             </div>
 
-            <div className={statClassName}>
+            <div className={`${statClassName} order-4 lg:order-none`}>
               <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--text-tertiary)]">
                 Owners
               </p>
@@ -848,7 +860,7 @@ export function ScheduleFieldHandoffPanel(input: {
                     <dt className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--text-tertiary)]">
                       {owner.label}
                     </dt>
-                    <dd className="mt-0.5 font-medium text-[var(--text-primary)]">
+                    <dd className="mt-0.5 break-words font-medium text-[var(--text-primary)] [overflow-wrap:anywhere]">
                       {owner.value}
                     </dd>
                   </div>
@@ -856,7 +868,9 @@ export function ScheduleFieldHandoffPanel(input: {
               </dl>
             </div>
 
-            <div className={`${statClassName} lg:col-span-2`}>
+            <div
+              className={`${statClassName} order-5 lg:col-span-2 lg:order-none`}
+            >
               <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--text-tertiary)]">
                 Execution context checklist
               </p>

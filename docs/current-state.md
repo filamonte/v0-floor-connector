@@ -2988,6 +2988,15 @@ Implemented UI behavior now:
   state, schedule fields, production/field records, schema, migrations,
   Supabase, payment behavior, signature behavior, scheduling mutation, or
   canonical ownership.
+- Mobile Field Beta Pass V1 adds presentation-only mobile scanability polish to
+  the Lead Assessment Package panel, Schedule Field Handoff panel, Daily Logs
+  manager, and `/field/work-items` assigned field queue. It reuses shared
+  status/readiness badges where safe, improves narrow-screen ordering, touch
+  targets, wrapping, and field action visibility, and keeps all actions linked
+  to existing canonical Lead/Opportunity, Project, Job, Daily Log, Field Work,
+  and Communication surfaces. It does not add schema, migrations, Supabase
+  changes, mobile-only/offline persistence, duplicate field queues, duplicate
+  schedule/readiness truth, customer self-service, AI, or business logic.
 - Dashboard, Project, Schedule, Contract, Invoice, Job, and Daily Log surfaces now share grouped lifecycle language around `opportunity -> customer/project -> estimate/contract -> job/schedule -> invoice/payment`. Contract Workspace clarifies draft, approval, signature, decline, countersign, deposit, and downstream handoff context; Invoice Workspace clarifies draft, sent/open, partial, paid, void, billing-source, collection, payment, and upstream-readiness context; Job Workspace clarifies schedule, crew, field evidence, closeout, and downstream billing handoff; Daily Log Workspace clarifies project-day narrative, field notes, labor/time continuity, attachments, and upstream Project Workspace resolution. This is presentation-only and does not change signature, readiness, scheduling, time-card, billing, payment, portal, schema, RLS, or server-action behavior.
 - Projects, Estimates, Invoices, Jobs, Contracts, and Customers Manager Pages use the shared Manager Page rhythm with clearer status scanning, primary create actions, and compact continuity cues.
 - Portal and super-admin received only safe consistency cleanup; they do not copy contractor operational patterns wholesale.

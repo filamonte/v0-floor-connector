@@ -76,16 +76,17 @@ Wave name: `ux-beta-readiness-v1`.
 Review packet:
 [docs/review-packets/ux-beta-readiness-v1.md](C:/FloorConnector/docs/review-packets/ux-beta-readiness-v1.md).
 
-Status: Active for financial, schedule, and production readiness UX after
-record workspace rhythm merged. The prompt explicitly approved the wave after
+Status: Active for mobile field beta polish after financial, schedule, and
+production readiness UX merged. The prompt explicitly approved the wave after
 PR #19 and PR #20 were confirmed merged.
 `ux-architecture-audit-v1` completed the docs/report-only audit and approved
 `ux-design-system-foundation-v1` as the first UI-touching stream. PR #21 merged
 `ux-design-system-foundation-v1` to `main`; PR #22 merged
 `mcp-tool-readiness-v1` to `main`; PR #23 merged
 `dashboard-command-center-cleanup-v1` to `main`; PR #24 merged
-`record-workspace-rhythm-v1` to `main`. The current active stream is
-`financial-schedule-readiness-ux-v1`.
+`record-workspace-rhythm-v1` to `main`; PR #25 merged
+`financial-schedule-readiness-ux-v1` to `main`. The current active stream is
+`mobile-field-beta-pass-v1`.
 
 Purpose: make the contractor app cohesive, trustworthy, role-aware-ready, and
 usable for real beta testing while preserving the canonical operating model.
@@ -122,16 +123,21 @@ Approved record workspace rhythm stream:
 
 Approved financial/schedule readiness UX stream:
 
-| Stream                               | Review packet                                                                         | Ownership area                                                                                         | Dependency posture                                                                                         |
-| ------------------------------------ | ------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------- |
-| `financial-schedule-readiness-ux-v1` | [packet](C:/FloorConnector/docs/review-packets/financial-schedule-readiness-ux-v1.md) | Financial Readiness, Schedule Readiness, Production Readiness, Financials, Payments, and Field clarity | Active after PR #21 design foundation, PR #23 dashboard cleanup, and PR #24 record workspace rhythm merged |
+| Stream                               | Review packet                                                                         | Ownership area                                                                                         | Dependency posture                                       |
+| ------------------------------------ | ------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ | -------------------------------------------------------- |
+| `financial-schedule-readiness-ux-v1` | [packet](C:/FloorConnector/docs/review-packets/financial-schedule-readiness-ux-v1.md) | Financial Readiness, Schedule Readiness, Production Readiness, Financials, Payments, and Field clarity | Merged via PR #25; upstream for mobile field beta polish |
+
+Approved mobile field beta pass stream:
+
+| Stream                      | Review packet                                                                | Ownership area                                    | Dependency posture                                                    |
+| --------------------------- | ---------------------------------------------------------------------------- | ------------------------------------------------- | --------------------------------------------------------------------- |
+| `mobile-field-beta-pass-v1` | [packet](C:/FloorConnector/docs/review-packets/mobile-field-beta-pass-v1.md) | Mobile assessment capture and field-facing polish | Active after PR #25 financial/schedule/production readiness UX merged |
 
 Proposed later streams:
 
-| Stream                                | Ownership area                                                                 | Gate before activation                                |
-| ------------------------------------- | ------------------------------------------------------------------------------ | ----------------------------------------------------- |
-| `mobile-field-beta-pass-v1`           | Mobile assessment capture and field-facing responsive polish                   | Wait for field/portal/customer-safety boundary review |
-| `settings-super-admin-boundary-ux-v1` | Settings tenant configuration and Super Admin platform-policy boundary clarity | Wait for admin-boundary review                        |
+| Stream                                | Ownership area                                                                 | Gate before activation         |
+| ------------------------------------- | ------------------------------------------------------------------------------ | ------------------------------ |
+| `settings-super-admin-boundary-ux-v1` | Settings tenant configuration and Super Admin platform-policy boundary clarity | Wait for admin-boundary review |
 
 Required tool posture:
 

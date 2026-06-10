@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { StatusBadge } from "@floorconnector/ui";
 
 import { AppEmptyState } from "@/components/app-empty-state";
 import { ContractorWorkspacePage } from "@/components/contractor-workspace-page";
@@ -33,12 +34,6 @@ function formatDate(value: string) {
 
 function formatStatusLabel(value: string) {
   return value.replaceAll("_", " ");
-}
-
-function getStatusClasses(status: string) {
-  return status === "finalized"
-    ? "border-emerald-200 bg-emerald-50 text-emerald-900"
-    : "border-amber-200 bg-amber-50 text-amber-900";
 }
 
 function buildDailyLogsHref(input: {
@@ -302,7 +297,7 @@ export default async function DailyLogsPage({
                 compose: "1"
               }) + "#daily-log-create"
             }
-            className="inline-flex items-center rounded-[4px] border border-[#171717] bg-[#171717] px-4 py-2.5 text-sm font-medium text-white transition hover:bg-[#2a2a2a]"
+            className="inline-flex min-h-11 w-full items-center justify-center rounded-[4px] border border-[#171717] bg-[#171717] px-4 py-2.5 text-sm font-medium text-white transition hover:bg-[#2a2a2a] sm:w-auto"
           >
             New daily log
           </Link>
@@ -355,40 +350,40 @@ export default async function DailyLogsPage({
                   <Link
                     key={dailyLog.id}
                     href={`/daily-logs/${dailyLog.id}`}
-                    className="group block px-5 py-4 transition hover:bg-slate-50/70 sm:px-6"
+                    className="group block px-5 py-5 transition hover:bg-slate-50/70 sm:px-6"
                   >
                     <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_220px_160px_120px] md:items-start">
                       <div className="min-w-0">
-                        <h3 className="text-base font-semibold text-slate-950 transition group-hover:text-brand-700">
+                        <h3 className="break-words text-base font-semibold text-slate-950 transition [overflow-wrap:anywhere] group-hover:text-brand-700">
                           {dailyLog.summary?.trim() ||
                             `${formatDate(dailyLog.logDate)} field log`}
                         </h3>
                         <p className="mt-2 text-sm leading-6 text-slate-500">
                           {formatDate(dailyLog.logDate)}
                         </p>
-                        <p className="mt-1 text-sm leading-6 text-slate-500">
+                        <p className="mt-1 break-words text-sm leading-6 text-slate-500 [overflow-wrap:anywhere]">
                           {dailyLog.workCompleted?.trim() ||
                             "Work-completed narrative has not been captured yet."}
                         </p>
                       </div>
-                      <div>
+                      <div className="min-w-0">
                         <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400 md:hidden">
                           Attribution
                         </p>
-                        <p className="text-sm font-medium text-slate-700">
+                        <p className="break-words text-sm font-medium text-slate-700 [overflow-wrap:anywhere]">
                           {dailyLog.project?.name ?? "No project"}
                         </p>
-                        <p className="mt-1 text-sm leading-6 text-slate-500">
+                        <p className="mt-1 break-words text-sm leading-6 text-slate-500 [overflow-wrap:anywhere]">
                           {dailyLog.job
                             ? `Job ${dailyLog.job.id.slice(0, 8)} | job/schedule evidence stays tied to the same job record`
                             : "Project-day log | supports the wider project execution chain"}
                         </p>
                       </div>
-                      <div>
+                      <div className="min-w-0">
                         <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400 md:hidden">
                           Weather
                         </p>
-                        <p className="text-sm font-medium text-slate-700">
+                        <p className="break-words text-sm font-medium text-slate-700 [overflow-wrap:anywhere]">
                           {dailyLog.weatherSummary ?? "No weather summary"}
                         </p>
                         <p className="mt-1 text-sm leading-6 text-slate-500">
@@ -403,13 +398,9 @@ export default async function DailyLogsPage({
                         <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400 md:hidden">
                           Status
                         </p>
-                        <span
-                          className={`inline-flex rounded-[4px] border px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] ${getStatusClasses(
-                            dailyLog.status
-                          )}`}
-                        >
+                        <StatusBadge status={dailyLog.status} size="sm">
                           {formatStatusLabel(dailyLog.status)}
-                        </span>
+                        </StatusBadge>
                       </div>
                     </div>
                   </Link>

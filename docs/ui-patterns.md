@@ -160,6 +160,26 @@ Rules:
 - Tables are acceptable on manager/list pages when wrapped in an intentional inner scroll container. Detail pages should prefer compact cards, summaries, or collapsed sections over wide tables.
 - Portal pages should keep customer review actions visible without requiring horizontal scrolling.
 
+## Mobile Field Surfaces
+
+Field-facing contractor surfaces should prioritize quick orientation and safe
+handoff on narrow screens.
+
+Rules:
+
+- Put the next useful capture or handoff action before dense supporting context
+  on phone layouts when that action already exists on the page.
+- Keep Daily Log, Job, Project, Field queue, and communication handoff links at
+  touch-friendly heights and let them wrap into two-column or full-width rows.
+- Use shared `StatusBadge` and `ReadinessBadge` primitives for compact field,
+  schedule, and readiness labels instead of route-local color pills.
+- Let job titles, project/customer names, schedule notes, weather, work
+  narratives, and owner labels wrap with `min-w-0` and safe overflow wrapping.
+- Keep field actions linked to the owning canonical workspace. Do not create
+  mobile-only/offline persistence, duplicate field queues, duplicate schedule
+  or readiness truth, portal copies, fake persistence, or customer-facing field
+  state.
+
 ## Status Color Semantics
 
 Use shared status helpers from `@floorconnector/ui` where practical:
