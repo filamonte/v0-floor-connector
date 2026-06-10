@@ -1,5 +1,16 @@
 # FloorConnector Agent Handoff
 
+## Boundary
+
+`.agent/` is a local task handoff runner only.
+
+It does not define FloorConnector product rules, architecture rules, role definitions, or approval authority.
+
+Universal rules live in `AGENTS.md`.
+Shared role definitions live in `.agents/roles/`.
+Codex stream governance lives in `.codex/`.
+Claude-specific behavior lives in `CLAUDE.md` and `.claude/`.
+
 This folder stores repo-native task handoff artifacts so the owner does not
 need to copy/paste between ChatGPT, VS Code, local Codex CLI, and Codex Cloud.
 
