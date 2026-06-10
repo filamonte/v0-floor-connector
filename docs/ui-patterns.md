@@ -27,6 +27,12 @@ For core workflow records, the preferred top stack is:
 5. Primary review or execution content.
 6. Secondary context such as history, metadata, links, field notes, time, files, or conversations.
 
+The shared record-workspace rhythm is now also recorded in
+`recordWorkspaceRhythmSteps` from `@floorconnector/ui`: record identity, state
+and next action, primary work, linked context, then details/history. This is a
+presentation contract only. It must not create new ownership, persistence,
+queues, or readiness calculations.
+
 Project, Estimate, Contract, Invoice, and Job Workspaces now follow this direction. Project remains the primary workflow/readiness hub. Other record workspaces support their own immediate decision while linking back to the Project Workspace when broader handoff state matters.
 
 Estimates are the contractor app's reference implementation for this pattern. Use the Estimate Workspace to calibrate proposal-first language, commercial context, customer/project continuity, semantic status treatment, connected record rails, internal follow-through, and the separation between customer-facing review content and internal-only operational context.
@@ -191,6 +197,12 @@ Financial Readiness, Schedule Readiness, Production Readiness, and general
 Ready/Attention/Blocked states. Use `ReadinessSummary` only as a compact
 presentational summary over readiness labels already derived by the route or
 read model; it must not calculate readiness.
+
+Use `RecordWorkspaceSection` for shared record-workspace sections that need a
+consistent header, short description, action/meta area, and contained content.
+It is a section/surface primitive, not a workflow owner. Project continuity
+panels and similar linked-context surfaces should use it before creating
+route-local panel shells.
 
 ## Empty State Usage
 
