@@ -76,10 +76,10 @@ Wave name: `ux-beta-readiness-v1`.
 Review packet:
 [docs/review-packets/ux-beta-readiness-v1.md](C:/FloorConnector/docs/review-packets/ux-beta-readiness-v1.md).
 
-Status: Active for first audit stream only. The prompt explicitly approved the
-wave after PR #19 and PR #20 were confirmed merged. Later implementation
-streams remain proposed until `ux-architecture-audit-v1` records page-by-page
-findings, overlap, and priority.
+Status: Active for the first implementation stream. The prompt explicitly
+approved the wave after PR #19 and PR #20 were confirmed merged.
+`ux-architecture-audit-v1` completed the docs/report-only audit and approved
+`ux-design-system-foundation-v1` as the first UI-touching stream.
 
 Purpose: make the contractor app cohesive, trustworthy, role-aware-ready, and
 usable for real beta testing while preserving the canonical operating model.
@@ -90,15 +90,21 @@ Approved first stream:
 | -------------------------- | --------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
 | `ux-architecture-audit-v1` | [packet](C:/FloorConnector/docs/review-packets/ux-architecture-audit-v1.md) | Docs-only UX architecture audit across Dashboard, Manager Pages, Record Workspaces, command centers, status/color semantics, action hierarchy, duplication, mobile assessment, and field surfaces | Starts after PR #19 payment schedule readiness and PR #20 opportunity assessment package merge |
 
+Approved implementation stream:
+
+| Stream                           | Review packet                                                                     | Ownership area                                                                                                   | Dependency posture                                      |
+| -------------------------------- | --------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------- |
+| `ux-design-system-foundation-v1` | [packet](C:/FloorConnector/docs/review-packets/ux-design-system-foundation-v1.md) | Shared status/readiness badge semantics, action hierarchy, empty-state variants, and reusable UX primitives only | Starts after `ux-architecture-audit-v1` review approval |
+
 Proposed later streams:
 
-| Stream                              | Ownership area                                                                   | Gate before activation                                                                        |
-| ----------------------------------- | -------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
-| `design-system-foundation-v1`       | Shared status/badge/card/header/action/empty-state foundations                   | Wait for audit priorities and explicit implementation approval                                |
-| `contractor-dashboard-cleanup-v1`   | Dashboard attention hierarchy and role-aware-ready layout posture                | Wait for audit priorities and conflict review against existing dashboard/read-model ownership |
-| `workspace-rhythm-v1`               | Lead/Opportunity, Project, Estimate, Contract, Invoice, and Job workspace rhythm | Wait for audit priorities and page ownership review                                           |
-| `command-centers-cleanup-v1`        | Financials, Invoices, Payments, Schedule, and Field command-center clarity       | Wait for audit priorities and readiness/ownership boundary review                             |
-| `mobile-assessment-field-polish-v1` | Mobile assessment capture and field-facing responsive polish                     | Wait for audit priorities and field/portal/customer-safety boundary review                    |
+| Stream                                | Ownership area                                                                                         | Gate before activation                                                                              |
+| ------------------------------------- | ------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------- |
+| `dashboard-command-center-cleanup-v1` | Dashboard attention hierarchy and role-aware-ready layout posture                                      | Wait for design-system foundation review and conflict review against dashboard/read-model ownership |
+| `record-workspace-rhythm-v1`          | Lead/Opportunity, Project, Estimate, Contract, Invoice, and Job workspace rhythm                       | Wait for design-system foundation review and page ownership review                                  |
+| `financial-schedule-readiness-ux-v1`  | Financial Readiness, Schedule Readiness, Production Readiness, Financials, Payments, and Field clarity | Wait for design-system foundation review and readiness/ownership boundary review                    |
+| `mobile-field-beta-pass-v1`           | Mobile assessment capture and field-facing responsive polish                                           | Wait for field/portal/customer-safety boundary review                                               |
+| `settings-super-admin-boundary-ux-v1` | Settings tenant configuration and Super Admin platform-policy boundary clarity                         | Wait for admin-boundary review                                                                      |
 
 Required tool posture:
 

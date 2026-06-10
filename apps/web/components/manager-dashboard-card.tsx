@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { getStatusBadgeClassName } from "@floorconnector/ui";
+import { StatusBadge } from "@floorconnector/ui";
 
 type ManagerDashboardItem = {
   href: string;
@@ -70,14 +70,9 @@ export function ManagerDashboardCard({
                     {item.title}
                   </p>
                   {item.badge ? (
-                    <span
-                      className={[
-                        "inline-flex shrink-0 rounded-md border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em]",
-                        getStatusBadgeClassName(item.badge)
-                      ].join(" ")}
-                    >
+                    <StatusBadge status={item.badge} size="sm">
                       {item.badge}
-                    </span>
+                    </StatusBadge>
                   ) : null}
                 </div>
                 <p className="mt-1 whitespace-normal break-words text-sm leading-5 text-[var(--text-secondary)] [overflow-wrap:anywhere]">

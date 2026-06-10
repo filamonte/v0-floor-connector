@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { StatusBadge } from "@floorconnector/ui";
 
 import { secondaryActionClassName } from "@/components/action-hierarchy";
 
@@ -74,9 +75,9 @@ export function ScheduleContextFocusCard({
         >
           {title}
         </Link>
-        <span className="inline-flex rounded-full border border-[var(--border-warm)] bg-[var(--highlight)] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--text-secondary)]">
+        <StatusBadge status={statusLabel} size="sm">
           {statusLabel}
-        </span>
+        </StatusBadge>
       </div>
       <p className="mt-2 text-sm leading-6 text-[var(--text-secondary)]">
         {summary}

@@ -7,42 +7,67 @@ This package currently exposes the decision-first contractor UI primitives and s
 ## Decision-First Components
 
 Exports:
+
 - `ActionBar`
 - `WorkflowBar`
 - `ProjectStateSummary`
+- `ReadinessSummary`
+- `StatusBadge`
+- `ReadinessBadge`
 - `PrimarySection`
 - `SecondarySection`
+- `primaryActionClassName`
+- `secondaryActionClassName`
+- `overflowActionClassName`
+- `getEmptyStateCopy()`
 
 Usage expectations:
+
 - `ActionBar` belongs near the top of workflow Record Workspaces when the page has a truthful next action or waiting state.
 - `WorkflowBar` shows conservative progress through an existing workflow and must not overstate downstream readiness.
 - `ProjectStateSummary` renders compact state facts that support the next decision.
+- `ReadinessSummary` renders compact readiness facts from already-derived labels
+  and statuses. It does not calculate readiness.
+- `StatusBadge` and `ReadinessBadge` provide shared semantic badge styling for
+  compact status/readiness indicators.
 - `PrimarySection` and `SecondarySection` provide consistent section chrome for core workflow content and lower-priority support context.
 
 ## Status Helpers
 
 Exports:
+
 - `getStatusTone()`
 - `getStatusToneClassName()`
 - `getStatusBadgeClassName()`
 - `getStatusConnectorClassName()`
 - `normalizeStatusLabel()`
+- `getReadinessTone()`
+- `getReadinessToneClassName()`
+- `getReadinessBadgeClassName()`
 - `statusToneClasses`
 - `statusConnectorClasses`
+- `readinessToneClasses`
 - `StatusTone`
+- `ReadinessTone`
 
 Status semantics:
+
 - gray: neutral, draft, not started, metadata
 - blue: active, current, in progress
 - amber/yellow: waiting, pending, needs action, warning
 - red: blocked, failed, declined, void, error
 - green: complete, approved, paid, signed
+- financial: billing/payment emphasis when the state is not blocked, failed,
+  overdue, paid, or settled
+- production: field/schedule/crew emphasis when the state is not blocked,
+  failed, or complete
 
 Orange is not a status color. Keep orange for primary contractor CTAs.
 
 ## Theme
 
 Exports:
+
 - `floorConnectorTheme`
 - `FloorConnectorTheme`
 

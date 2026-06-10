@@ -158,14 +158,15 @@ plain Markdown was used for the Notion page.
 
 ## Stream Breakdown
 
-| Stream                              | Status              | Scope                                                                                                                                                                         |
-| ----------------------------------- | ------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `ux-architecture-audit-v1`          | Active first stream | Docs/report only. Audit current UI against governance, page type responsibilities, status color semantics, action hierarchy, duplication, and dashboard/workspace boundaries. |
-| `design-system-foundation-v1`       | Proposed            | Shared tokens/components/patterns for badges, status colors, cards, page headers, action hierarchy, empty states. No domain behavior changes.                                 |
-| `contractor-dashboard-cleanup-v1`   | Proposed            | Make Dashboard answer "what needs attention?" with role-aware-ready structure, no duplicate/noisy metric blocks, canonical read models only.                                  |
-| `workspace-rhythm-v1`               | Proposed            | Normalize high-impact Lead/Opportunity, Project, Estimate, Contract, Invoice, and Job workspaces around shared page structure.                                                |
-| `command-centers-cleanup-v1`        | Proposed            | Clean Financials, Invoices, Payments, Schedule, and Field command-center surfaces with distinct readiness lanes and non-duplicative queues.                                   |
-| `mobile-assessment-field-polish-v1` | Proposed            | Improve responsive/mobile layout for Assessment Package capture and field-facing surfaces. No customer self-service, AI, or offline mode.                                     |
+| Stream                                | Status                       | Scope                                                                                                                                                                         |
+| ------------------------------------- | ---------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `ux-architecture-audit-v1`            | Active first stream          | Docs/report only. Audit current UI against governance, page type responsibilities, status color semantics, action hierarchy, duplication, and dashboard/workspace boundaries. |
+| `ux-design-system-foundation-v1`      | Active implementation stream | Shared tokens/components/patterns for badges, status colors, cards, page headers, action hierarchy, empty states. No domain behavior changes.                                 |
+| `dashboard-command-center-cleanup-v1` | Proposed                     | Make Dashboard answer "what needs attention?" with role-aware-ready structure, no duplicate/noisy metric blocks, canonical read models only.                                  |
+| `record-workspace-rhythm-v1`          | Proposed                     | Normalize high-impact Lead/Opportunity, Project, Estimate, Contract, Invoice, and Job workspaces around shared page structure.                                                |
+| `financial-schedule-readiness-ux-v1`  | Proposed                     | Clean Financials, Invoices, Payments, Schedule, and Field command-center surfaces with distinct readiness lanes and non-duplicative queues.                                   |
+| `mobile-field-beta-pass-v1`           | Proposed                     | Improve responsive/mobile layout for Assessment Package capture and field-facing surfaces. No customer self-service, AI, or offline mode.                                     |
+| `settings-super-admin-boundary-ux-v1` | Proposed                     | Keep tenant configuration and platform policy blockers routed to their owning admin surfaces without turning operating workspaces into settings panels.                       |
 
 ## Dependencies
 
@@ -233,11 +234,12 @@ blocked, or skipped with exact reason.
 Recommended order after audit:
 
 1. `ux-architecture-audit-v1`
-2. `design-system-foundation-v1`
-3. `contractor-dashboard-cleanup-v1`
-4. `workspace-rhythm-v1`
-5. `command-centers-cleanup-v1`
-6. `mobile-assessment-field-polish-v1`
+2. `ux-design-system-foundation-v1`
+3. `dashboard-command-center-cleanup-v1`
+4. `record-workspace-rhythm-v1`
+5. `financial-schedule-readiness-ux-v1`
+6. `mobile-field-beta-pass-v1`
+7. `settings-super-admin-boundary-ux-v1`
 
 The audit may revise this order before implementation starts.
 

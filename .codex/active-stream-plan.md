@@ -59,9 +59,10 @@ docs-only audit stream by the explicit UX Beta Readiness prompt.
 Jeff approval gate: Satisfied for first stream start by the explicit prompt
 after PR #19 and PR #20 were confirmed merged.
 
-Wave status: Active for first audit stream only. Later implementation streams
-remain proposed until the audit records exact route findings, overlap, and
-priority. This gate does not authorize app UI changes, schema, migrations,
+Wave status: Active for first implementation stream. The docs-only audit stream
+approved `ux-design-system-foundation-v1` as the first UI-touching stream.
+Later implementation streams remain proposed until the foundation stream is
+reviewed. This gate does not authorize schema, migrations,
 provider/customer-facing sends, payment/signature/scheduling/portal access
 mutation, PRs, merges, cleanup, or next-wave continuation.
 
@@ -80,13 +81,21 @@ Approved first worktree:
 
 - `C:\FC-worktrees\ux-architecture-audit-v1`
 
+Approved implementation stream:
+
+- `stream/ux-design-system-foundation-v1`
+
+Approved implementation worktree:
+
+- `C:\FC-worktrees\ux-design-system-foundation-v1`
+
 Proposed later streams:
 
-- `stream/design-system-foundation-v1`
-- `stream/contractor-dashboard-cleanup-v1`
-- `stream/workspace-rhythm-v1`
-- `stream/command-centers-cleanup-v1`
-- `stream/mobile-assessment-field-polish-v1`
+- `stream/dashboard-command-center-cleanup-v1`
+- `stream/record-workspace-rhythm-v1`
+- `stream/financial-schedule-readiness-ux-v1`
+- `stream/mobile-field-beta-pass-v1`
+- `stream/settings-super-admin-boundary-ux-v1`
 
 ### ux-architecture-audit-v1
 
@@ -113,6 +122,41 @@ Validation expectation:
 
 ```powershell
 pnpm.cmd exec prettier --write docs/review-packets/ux-architecture-audit-v1.md
+git diff --check
+git diff --cached --check
+pnpm.cmd worktree:doctor
+```
+
+### ux-design-system-foundation-v1
+
+- Branch: `stream/ux-design-system-foundation-v1`
+- Worktree: `C:\FC-worktrees\ux-design-system-foundation-v1`
+- Owns: shared UI semantics and primitives for status/readiness badges, action
+  hierarchy, empty states, compact readiness summaries, and representative
+  adoption in shared dashboard/project/schedule components.
+- Mission: create the reusable UX foundation needed before dashboard and
+  workspace cleanup, without changing canonical ownership, workflow truth,
+  schema, persistence, or business logic.
+- Dependencies: PR #19 payment schedule readiness, PR #20 opportunity
+  assessment package, the UX architecture audit packet, design-system
+  governance, Graphite/Copper UI system, UI pattern guide, product operating
+  model, current-state truth, developer source of truth, and target IA.
+- Forbidden: full dashboard redesign, full workspace redesign, personalization
+  engine, schema/data changes, business logic changes, Supabase changes,
+  migrations, AIA, customer self-service, AI, duplicate queues, dashboard-owned
+  operational state, role-specific records, portal copies, detached
+  financial/signature/payment systems, provider/customer-facing behavior, and
+  readiness calculation changes.
+- Suggested commit: `feat: add ux design system foundation`
+- Status: Active.
+
+Validation expectation:
+
+```powershell
+pnpm.cmd exec tsx packages/ui/src/status.test.ts
+pnpm.cmd --filter @floorconnector/web typecheck
+pnpm.cmd --filter @floorconnector/web lint
+pnpm.cmd fc:preflight:fast
 git diff --check
 git diff --cached --check
 pnpm.cmd worktree:doctor
