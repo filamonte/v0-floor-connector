@@ -118,8 +118,8 @@ export default async function SuperAdminBillingPage({
       />
 
       <DetailPanel
-        title="Billing Operations"
-        description="Platform-admin-only SaaS billing readiness, Stripe configuration health, subscription reconciliation, and activation separation. This page is the durable billing operating console; early access is only one commercial phase inside it."
+        title="Platform Billing Operations"
+        description="Platform-admin-only SaaS billing readiness, Stripe configuration health, subscription reconciliation, and activation separation. Contractor payment collection and invoice work stay in Financials and Invoice Workspaces."
         tone="neutral"
       >
         <div className="grid gap-3 md:grid-cols-4">
@@ -270,8 +270,8 @@ export default async function SuperAdminBillingPage({
               </p>
               <p className="mt-2 text-xs leading-5 text-[var(--text-tertiary)]">
                 Expected recovery key shape:{" "}
-                <span className="font-mono">STRIPE_SECRET_KEY</span> starts
-                with <span className="font-mono">sk_test_</span>. Unknown or
+                <span className="font-mono">STRIPE_SECRET_KEY</span> starts with{" "}
+                <span className="font-mono">sk_test_</span>. Unknown or
                 live-mode keys keep this action disabled.
               </p>
               <form
@@ -339,8 +339,8 @@ export default async function SuperAdminBillingPage({
                   <p className="rounded-md border border-[var(--border-warm)] bg-[var(--highlight)] px-3 py-2 text-xs leading-5 text-[var(--text-tertiary)]">
                     Product/Price setup can run before the webhook signing
                     secret exists, but replay remains blocked until{" "}
-                    <span className="font-mono">STRIPE_WEBHOOK_SECRET</span>{" "}
-                    is configured and the app is restarted.
+                    <span className="font-mono">STRIPE_WEBHOOK_SECRET</span> is
+                    configured and the app is restarted.
                   </p>
                 ) : null}
                 <button

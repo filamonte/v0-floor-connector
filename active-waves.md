@@ -76,8 +76,8 @@ Wave name: `ux-beta-readiness-v1`.
 Review packet:
 [docs/review-packets/ux-beta-readiness-v1.md](C:/FloorConnector/docs/review-packets/ux-beta-readiness-v1.md).
 
-Status: Active for mobile field beta polish after financial, schedule, and
-production readiness UX merged. The prompt explicitly approved the wave after
+Status: Active for Settings / Super Admin boundary UX after visual QA route
+smoke merged and was retired. The prompt explicitly approved the wave after
 PR #19 and PR #20 were confirmed merged.
 `ux-architecture-audit-v1` completed the docs/report-only audit and approved
 `ux-design-system-foundation-v1` as the first UI-touching stream. PR #21 merged
@@ -87,7 +87,7 @@ PR #19 and PR #20 were confirmed merged.
 `record-workspace-rhythm-v1` to `main`; PR #25 merged
 `financial-schedule-readiness-ux-v1` to `main`; PR #26 merged
 `mobile-field-beta-pass-v1` to `main`. The current active stream is
-`visual-qa-route-smoke-v1`.
+`settings-super-admin-boundary-ux-v1`.
 
 Purpose: make the contractor app cohesive, trustworthy, role-aware-ready, and
 usable for real beta testing while preserving the canonical operating model.
@@ -136,15 +136,21 @@ Approved mobile field beta pass stream:
 
 Approved visual QA route smoke stream:
 
-| Stream                     | Review packet                                                               | Ownership area                                            | Dependency posture                                                    |
-| -------------------------- | --------------------------------------------------------------------------- | --------------------------------------------------------- | --------------------------------------------------------------------- |
-| `visual-qa-route-smoke-v1` | [packet](C:/FloorConnector/docs/review-packets/visual-qa-route-smoke-v1.md) | Local authenticated visual QA and route smoke reliability | Active after PR #26 mobile field beta pass merged; tooling-only scope |
+| Stream                     | Review packet                                                               | Ownership area                                            | Dependency posture                                   |
+| -------------------------- | --------------------------------------------------------------------------- | --------------------------------------------------------- | ---------------------------------------------------- |
+| `visual-qa-route-smoke-v1` | [packet](C:/FloorConnector/docs/review-packets/visual-qa-route-smoke-v1.md) | Local authenticated visual QA and route smoke reliability | Merged via PR #27 and retired after cleanup approval |
 
-Proposed later streams:
+Approved Settings / Super Admin boundary stream:
 
-| Stream                                | Ownership area                                                                 | Gate before activation         |
-| ------------------------------------- | ------------------------------------------------------------------------------ | ------------------------------ |
-| `settings-super-admin-boundary-ux-v1` | Settings tenant configuration and Super Admin platform-policy boundary clarity | Wait for admin-boundary review |
+| Stream                                | Review packet                                                                          | Ownership area                                                                 | Dependency posture                                                                  |
+| ------------------------------------- | -------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------- |
+| `settings-super-admin-boundary-ux-v1` | [packet](C:/FloorConnector/docs/review-packets/settings-super-admin-boundary-ux-v1.md) | Settings tenant configuration and Super Admin platform-policy boundary clarity | Active after PR #27 visual QA route smoke merged and the route-smoke stream retired |
+
+Completed visual QA route smoke stream:
+
+| Stream                     | Ownership area                                            | Gate before activation        |
+| -------------------------- | --------------------------------------------------------- | ----------------------------- |
+| `visual-qa-route-smoke-v1` | Local authenticated visual QA and route smoke reliability | Merged via PR #27 and retired |
 
 Required tool posture:
 

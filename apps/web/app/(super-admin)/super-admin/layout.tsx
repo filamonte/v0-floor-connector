@@ -22,7 +22,7 @@ export default async function SuperAdminLayout({
     <div className="min-h-screen bg-[linear-gradient(180deg,var(--graphite)_0,var(--graphite)_172px,#eef2f7_172px,#e6ebf2_100%)]">
       <ProtectedSurfaceHeader
         title="Platform Control Room"
-        description="Global defaults, starter records, tenant governance, and modular platform controls."
+        description="Platform-level defaults, starter records, tenant oversight, SaaS billing operations, and module policy. Contractor company settings and day-to-day workflow action stay outside this surface."
         user={user}
         headingLevel="h2"
       />
@@ -31,7 +31,7 @@ export default async function SuperAdminLayout({
           <SettingsSurfaceLayout
             eyebrow="Platform Control Room"
             title="Platform configuration"
-            description="Manage the global layer that seeds contractor organizations, defines modular platform behavior, and governs cross-tenant defaults without collapsing tenant ownership."
+            description="Manage the global layer that seeds contractor organizations, defines platform feature policy, reviews tenant lifecycle, and governs cross-tenant defaults without becoming a contractor workflow workspace."
             navItems={platformAdminNavItems}
             tone="neutral"
             meta={

@@ -38,8 +38,8 @@ export default async function SettingsAdminPage({ searchParams }: PageProps) {
       />
 
       <DetailPanel
-        title="Organization Admin"
-        description="Manage organization membership roles and review the tenant-scoped system roles available for contractor administration."
+        title="Company Admin"
+        description="Manage contractor organization membership roles and tenant-scoped admin controls. Platform-admin assignment, tenant lifecycle, and global permission policy stay in Super Admin."
       >
         <div className="grid gap-4 md:grid-cols-3">
           <div className={adminSummaryCardClassName}>
@@ -47,12 +47,16 @@ export default async function SettingsAdminPage({ searchParams }: PageProps) {
             <p className="mt-1">{members.length} total</p>
           </div>
           <div className={adminSummaryCardClassName}>
-            <p className="font-medium text-[var(--text-primary)]">Organization roles</p>
+            <p className="font-medium text-[var(--text-primary)]">
+              Organization roles
+            </p>
             <p className="mt-1">{roles.length} seeded system roles</p>
           </div>
           <div className={adminSummaryCardClassName}>
             <p className="font-medium text-[var(--text-primary)]">Guardrail</p>
-            <p className="mt-1">Platform policy still controls deeper permissions.</p>
+            <p className="mt-1">
+              Company admins manage this organization only.
+            </p>
           </div>
         </div>
 
@@ -67,11 +71,16 @@ export default async function SettingsAdminPage({ searchParams }: PageProps) {
               <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                 <div>
                   <p className="text-base font-semibold text-slate-950">
-                    {member.users?.full_name ?? member.users?.email ?? member.invitation_email ?? "Member"}
+                    {member.users?.full_name ??
+                      member.users?.email ??
+                      member.invitation_email ??
+                      "Member"}
                   </p>
                   <p className="mt-1 text-sm leading-6 text-slate-600">
-                    {member.users?.email ?? member.invitation_email ?? "No email available"} |{" "}
-                    {member.membership_status}
+                    {member.users?.email ??
+                      member.invitation_email ??
+                      "No email available"}{" "}
+                    | {member.membership_status}
                   </p>
                 </div>
 
@@ -101,8 +110,8 @@ export default async function SettingsAdminPage({ searchParams }: PageProps) {
       </DetailPanel>
 
       <DetailPanel
-        title="Workflow Error Events"
-        description="Recent tenant-scoped workflow failures recorded for owner/admin review. Contract generation failures are the first logged workflow."
+        title="Company Workflow Error Events"
+        description="Recent tenant-scoped workflow failures recorded for owner/admin review. These help company admins resolve configuration issues without exposing platform operations."
       >
         {workflowErrors.length > 0 ? (
           <div className="divide-y divide-[var(--border-warm)] rounded-lg border border-[var(--border-warm)] bg-white shadow-sm">
@@ -110,8 +119,12 @@ export default async function SettingsAdminPage({ searchParams }: PageProps) {
               <div key={event.id} className="px-5 py-4">
                 <div className="flex flex-col gap-2 lg:flex-row lg:items-start lg:justify-between">
                   <div>
-                    <p className="text-sm font-semibold text-slate-950">{event.action}</p>
-                    <p className="mt-1 text-sm leading-6 text-slate-600">{event.message}</p>
+                    <p className="text-sm font-semibold text-slate-950">
+                      {event.action}
+                    </p>
+                    <p className="mt-1 text-sm leading-6 text-slate-600">
+                      {event.message}
+                    </p>
                     <p className="mt-2 text-xs uppercase tracking-[0.14em] text-slate-500">
                       {event.subjectType}
                       {event.subjectId ? ` ${event.subjectId.slice(0, 8)}` : ""}

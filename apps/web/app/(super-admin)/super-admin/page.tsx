@@ -1,4 +1,5 @@
 import { SettingsOverviewCard } from "@/components/settings-overview-card";
+import { SettingsBoundaryNotice } from "@/components/settings-boundary-notice";
 import { ScopeLegend } from "@/components/super-admin-console";
 import {
   getPlatformFinancialDefaults,
@@ -32,6 +33,28 @@ export default async function SuperAdminHomePage() {
 
   return (
     <div className="space-y-6">
+      <SettingsBoundaryNotice
+        tone="neutral"
+        title="Platform Control Room governs the system layer"
+        items={[
+          {
+            label: "Platform-owned controls",
+            description:
+              "Starter defaults, platform feature policy, tenant lifecycle, SaaS billing operations, packages, and operator oversight live here."
+          },
+          {
+            label: "Contractor-owned settings",
+            description:
+              "Company profile, templates, catalogs, workflow defaults, financial defaults, team access, and company overrides remain in contractor Settings."
+          },
+          {
+            label: "Not workflow execution",
+            description:
+              "Super Admin can activate, seed, inspect, and govern tenants, but it should not become the place to run estimates, contracts, invoices, jobs, or collections."
+          }
+        ]}
+      />
+
       <ScopeLegend
         items={[
           {
@@ -59,8 +82,8 @@ export default async function SuperAdminHomePage() {
 
       <div className="grid gap-6 xl:grid-cols-2">
         <SettingsOverviewCard
-          title="Starter Settings"
-          description="Global financial and workflow baselines used when new organizations have not set their own contractor-owned settings yet."
+          title="Platform Starter Settings"
+          description="Global financial and workflow baselines used before a contractor organization owns settings of its own."
           href="/super-admin/platform"
           ctaLabel="Manage starter settings"
           tone="neutral"
@@ -141,10 +164,10 @@ export default async function SuperAdminHomePage() {
         </SettingsOverviewCard>
 
         <SettingsOverviewCard
-          title="Feature Controls"
-          description="Shared platform feature policies that shape which capability families are available to contractors without becoming entitlement enforcement."
+          title="Platform Feature Policy"
+          description="Shared platform feature policies that shape which capability families are available before company overrides are considered."
           href="/super-admin/modules"
-          ctaLabel="Manage feature controls"
+          ctaLabel="Manage platform policy"
           tone="neutral"
         >
           <div className="rounded-lg border border-[var(--border-warm)] bg-[var(--highlight)] px-4 py-4 text-sm text-[var(--text-secondary)]">
@@ -176,7 +199,7 @@ export default async function SuperAdminHomePage() {
         </SettingsOverviewCard>
 
         <SettingsOverviewCard
-          title="Billing"
+          title="Platform Billing"
           description="Durable SaaS billing operations for Stripe configuration health, Checkout readiness, webhook status, subscription references, and manual activation separation."
           href="/super-admin/billing"
           ctaLabel="Review billing operations"

@@ -38,9 +38,9 @@ export default async function SettingsModulesPage({ searchParams }: PageProps) {
       />
 
       <SettingsSectionCard
-        eyebrow="Module Controls"
-        title="Manage organization overrides under platform policy"
-        description="Super admin owns the platform-wide feature policy. Contractor organizations can only store tenant-level overrides within that shared feature control system."
+        eyebrow="Company Feature Controls"
+        title="Manage company overrides under platform policy"
+        description="Super Admin owns platform-wide feature policy. This company can only store tenant-level overrides within that shared feature control system; workflow action still belongs in the owning workspace."
       >
         <div className="space-y-4">
           {platformPolicies.map((policy) => {
@@ -55,7 +55,7 @@ export default async function SettingsModulesPage({ searchParams }: PageProps) {
                 badges={
                   <>
                     <span className={modulePolicyBadgeClassName}>
-                      {policy.surface ?? "shared surface"}
+                      Platform policy: {policy.surface ?? "shared surface"}
                     </span>
                     <span
                       className={[
@@ -65,7 +65,9 @@ export default async function SettingsModulesPage({ searchParams }: PageProps) {
                           : "border border-amber-200 bg-amber-50 text-amber-700"
                       ].join(" ")}
                     >
-                      {effectiveEnabled ? "effective enabled" : "effective disabled"}
+                      {effectiveEnabled
+                        ? "company effective enabled"
+                        : "company effective disabled"}
                     </span>
                   </>
                 }
@@ -82,8 +84,16 @@ export default async function SettingsModulesPage({ searchParams }: PageProps) {
                       name="description"
                       value={policy.description ?? ""}
                     />
-                    <input type="hidden" name="moduleKey" value={policy.module_key ?? ""} />
-                    <input type="hidden" name="surface" value={policy.surface ?? ""} />
+                    <input
+                      type="hidden"
+                      name="moduleKey"
+                      value={policy.module_key ?? ""}
+                    />
+                    <input
+                      type="hidden"
+                      name="surface"
+                      value={policy.surface ?? ""}
+                    />
 
                     <label className={moduleOverrideControlClassName}>
                       <input
@@ -93,11 +103,12 @@ export default async function SettingsModulesPage({ searchParams }: PageProps) {
                         className="mt-1 h-4 w-4 rounded border-[var(--border-warm)] text-[var(--copper)] focus:ring-[var(--copper)]/20"
                       />
                       <span className="text-sm leading-6 text-slate-700">
-                        Store an organization-scoped enabled/disabled override for this feature family.
+                        Store a company-scoped enabled/disabled override for
+                        this feature family when platform policy allows it.
                       </span>
                     </label>
                     <SaveStateSubmitButton
-                      submitLabel="Save organization override"
+                      submitLabel="Save company override"
                       pendingLabel="Saving..."
                       className="rounded-full"
                       variant="secondary"

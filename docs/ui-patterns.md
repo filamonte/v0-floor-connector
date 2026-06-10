@@ -372,6 +372,38 @@ Super-admin should not copy:
 - Project or workflow bars.
 - Customer/project/job execution hierarchy.
 
+## Settings / Super Admin Boundary
+
+Use the shared `SettingsBoundaryNotice` pattern when an admin surface needs to
+explain who controls what before the user edits settings.
+
+Contractor Settings should frame itself as Company Controls:
+
+- company profile, templates, documents, catalogs, workflow defaults, financial
+  defaults, team access, exports, and company feature overrides
+- configuration that can unblock work, but not the operational workspace where
+  estimates, contracts, invoices, schedules, jobs, or collections are acted on
+- company-scoped overrides only where platform policy allows them
+
+Super Admin should frame itself as the Platform Control Room:
+
+- platform starter settings, starter templates/catalogs, feature policy,
+  tenant lifecycle oversight, SaaS billing operations, packages, and operator
+  controls
+- platform oversight, not day-to-day contractor workflow execution
+- platform-owned policy that may seed or constrain tenant settings without
+  silently rewriting contractor-owned copies or runtime workflow records
+
+Rules:
+
+- avoid ambiguous "Admin" labels when the surface means company admin or
+  platform admin
+- avoid ambiguous "Feature Controls" labels when the surface means company
+  overrides or platform feature policy
+- do not route workflow actions into Settings or Super Admin unless an existing
+  configuration blocker is the truthful next step
+- do not add settings sections that lack implemented backing behavior
+
 ## Validation Expectations
 
 For UI-only pattern work, use scoped validation:

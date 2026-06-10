@@ -95,8 +95,9 @@ export const contractorSettingsNavItems: readonly SettingsNavItem[] = [
   },
   {
     href: "/settings/modules",
-    label: "Feature Controls",
-    description: "Company-level feature overrides within platform policy.",
+    label: "Company Feature Controls",
+    description:
+      "Company-level feature overrides inside platform-owned policy.",
     adminOnly: true
   }
 ] as const;
@@ -109,7 +110,7 @@ export const platformAdminNavItems: readonly SettingsNavItem[] = [
   },
   {
     href: "/super-admin/platform",
-    label: "Starter Settings",
+    label: "Platform Starter Settings",
     description: "Global financial and workflow baselines inherited by tenants."
   },
   {
@@ -124,7 +125,7 @@ export const platformAdminNavItems: readonly SettingsNavItem[] = [
   },
   {
     href: "/super-admin/modules",
-    label: "Feature Controls",
+    label: "Platform Feature Policy",
     description: "Platform feature policy and module availability rules."
   },
   {
@@ -134,7 +135,7 @@ export const platformAdminNavItems: readonly SettingsNavItem[] = [
   },
   {
     href: "/super-admin/billing",
-    label: "Billing",
+    label: "Platform Billing",
     description:
       "SaaS billing configuration, Checkout readiness, webhook health, and tenant status."
   },
@@ -158,6 +159,7 @@ export const platformAdminNavItems: readonly SettingsNavItem[] = [
   {
     href: "/super-admin/admin",
     label: "Platform Control Room",
-    description: "Platform admins, tenant oversight, and system governance."
+    description:
+      "Platform admins, tenant lifecycle oversight, and system governance."
   }
 ] as const;

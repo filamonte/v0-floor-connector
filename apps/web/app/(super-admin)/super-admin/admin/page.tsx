@@ -29,12 +29,13 @@ type PageProps = {
 
 export default async function PlatformAdminPage({ searchParams }: PageProps) {
   const resolvedSearchParams = (await searchParams) ?? {};
-  const [admins, rolesAndPermissions, tenants, workflowDefaults] = await Promise.all([
-    listPlatformAdmins(),
-    listPlatformRolesAndPermissions(),
-    listTenantsForPlatformAdmin(),
-    getPlatformWorkflowDefaults()
-  ]);
+  const [admins, rolesAndPermissions, tenants, workflowDefaults] =
+    await Promise.all([
+      listPlatformAdmins(),
+      listPlatformRolesAndPermissions(),
+      listTenantsForPlatformAdmin(),
+      getPlatformWorkflowDefaults()
+    ]);
 
   return (
     <div className="space-y-6">
@@ -71,7 +72,7 @@ export default async function PlatformAdminPage({ searchParams }: PageProps) {
       <DetailPanel
         id="platform-access"
         title="Platform Admin Access"
-        description="Super-admin access is managed separately from tenant membership so global controls remain explicit and auditable."
+        description="Super-admin access is managed separately from tenant membership so global controls remain explicit and auditable. Company admins are managed in contractor Settings."
         tone="neutral"
       >
         <form
@@ -108,7 +109,8 @@ export default async function PlatformAdminPage({ searchParams }: PageProps) {
                 {admin.users?.full_name ?? admin.users?.email ?? admin.user_id}
               </p>
               <p className="mt-1">
-                {admin.users?.email ?? "No email"} - {admin.roles?.name ?? "Platform admin"}
+                {admin.users?.email ?? "No email"} -{" "}
+                {admin.roles?.name ?? "Platform admin"}
               </p>
             </div>
           ))}
@@ -118,7 +120,7 @@ export default async function PlatformAdminPage({ searchParams }: PageProps) {
       <DetailPanel
         id="tenant-oversight"
         title="Tenant Oversight"
-        description="Manage global tenant lifecycle state and starter numbering without bypassing tenant-owned business records, workflow truth, or contractor-owned settings."
+        description="Manage global tenant lifecycle state and starter numbering without bypassing tenant-owned business records, workflow truth, or contractor-owned settings. This is platform oversight, not a contractor workspace."
         tone="neutral"
       >
         <div className="space-y-4">
@@ -162,7 +164,9 @@ export default async function PlatformAdminPage({ searchParams }: PageProps) {
                       <option value="grace_period">grace_period</option>
                       <option value="locked">locked</option>
                       <option value="retained">retained</option>
-                      <option value="scheduled_for_deletion">scheduled_for_deletion</option>
+                      <option value="scheduled_for_deletion">
+                        scheduled_for_deletion
+                      </option>
                       <option value="deleted">deleted</option>
                       <option value="restorable">restorable</option>
                     </select>
@@ -171,7 +175,9 @@ export default async function PlatformAdminPage({ searchParams }: PageProps) {
 
                 <div className="mt-4 flex items-center justify-between gap-3">
                   <div className="text-xs leading-5 text-slate-500">
-                    Plan: {tenant.company_subscriptions?.[0]?.subscription_plans?.name ?? "No plan"}
+                    Plan:{" "}
+                    {tenant.company_subscriptions?.[0]?.subscription_plans
+                      ?.name ?? "No plan"}
                   </div>
                   <button
                     type="submit"
@@ -199,7 +205,8 @@ export default async function PlatformAdminPage({ searchParams }: PageProps) {
                       min="1"
                       step="1"
                       defaultValue={
-                        tenant.organization_workflow_settings?.[0]?.next_estimate_number ??
+                        tenant.organization_workflow_settings?.[0]
+                          ?.next_estimate_number ??
                         workflowDefaults.defaultEstimateStartNumber
                       }
                       required
@@ -216,7 +223,8 @@ export default async function PlatformAdminPage({ searchParams }: PageProps) {
                       min="1"
                       step="1"
                       defaultValue={
-                        tenant.organization_workflow_settings?.[0]?.next_invoice_number ??
+                        tenant.organization_workflow_settings?.[0]
+                          ?.next_invoice_number ??
                         workflowDefaults.defaultInvoiceStartNumber
                       }
                       required
@@ -233,7 +241,8 @@ export default async function PlatformAdminPage({ searchParams }: PageProps) {
                       min="1"
                       step="1"
                       defaultValue={
-                        tenant.organization_workflow_settings?.[0]?.next_change_order_number ??
+                        tenant.organization_workflow_settings?.[0]
+                          ?.next_change_order_number ??
                         workflowDefaults.defaultChangeOrderStartNumber
                       }
                       required
@@ -250,7 +259,8 @@ export default async function PlatformAdminPage({ searchParams }: PageProps) {
                       min="1"
                       step="1"
                       defaultValue={
-                        tenant.organization_workflow_settings?.[0]?.next_contract_number ??
+                        tenant.organization_workflow_settings?.[0]
+                          ?.next_contract_number ??
                         workflowDefaults.defaultContractStartNumber
                       }
                       required
@@ -260,7 +270,9 @@ export default async function PlatformAdminPage({ searchParams }: PageProps) {
                 </div>
                 <div className="mt-3 flex items-center justify-between gap-3">
                   <p className="text-xs leading-5 text-slate-500">
-                    Super admin can seed per-contractor numbering before first use. After records exist, the next number can only move upward.
+                    Super admin can seed per-contractor numbering before first
+                    use. After records exist, the next number can only move
+                    upward.
                   </p>
                   <SaveStateSubmitButton
                     submitLabel="Save numbering"
@@ -283,14 +295,18 @@ export default async function PlatformAdminPage({ searchParams }: PageProps) {
       >
         <div className="grid gap-6 lg:grid-cols-2">
           <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50 p-5">
-            <p className="text-sm font-semibold text-slate-950">Platform roles</p>
+            <p className="text-sm font-semibold text-slate-950">
+              Platform roles
+            </p>
             <div className="mt-4 space-y-3">
               {rolesAndPermissions.roles.map((role) => (
                 <div
                   key={role.id}
                   className="rounded-2xl border border-slate-200 bg-white px-4 py-3"
                 >
-                  <p className="text-sm font-medium text-slate-950">{role.name}</p>
+                  <p className="text-sm font-medium text-slate-950">
+                    {role.name}
+                  </p>
                   <p className="mt-1 text-xs leading-5 text-slate-500">
                     {role.description ?? role.key}
                   </p>
@@ -299,14 +315,18 @@ export default async function PlatformAdminPage({ searchParams }: PageProps) {
             </div>
           </div>
           <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50 p-5">
-            <p className="text-sm font-semibold text-slate-950">Permission registry</p>
+            <p className="text-sm font-semibold text-slate-950">
+              Permission registry
+            </p>
             <div className="mt-4 space-y-3">
               {rolesAndPermissions.permissions.map((permission) => (
                 <div
                   key={permission.id}
                   className="rounded-2xl border border-slate-200 bg-white px-4 py-3"
                 >
-                  <p className="text-sm font-medium text-slate-950">{permission.name}</p>
+                  <p className="text-sm font-medium text-slate-950">
+                    {permission.name}
+                  </p>
                   <p className="mt-1 text-xs leading-5 text-slate-500">
                     {permission.module_key} - {permission.key}
                   </p>
@@ -319,15 +339,16 @@ export default async function PlatformAdminPage({ searchParams }: PageProps) {
 
       <div id="platform-operations" className="grid gap-4 lg:grid-cols-2">
         <FutureCapabilityPanel title="Platform operations and errors">
-          The dedicated Operations page now centralizes read-only workflow-error,
-          provisioning audit, provisioning attempt, contractor group audit, and
-          tenant-status health signals. It does not create remediation controls,
-          operational logs, retry paths, or tenant-owned record changes.
+          The dedicated Operations page now centralizes read-only
+          workflow-error, provisioning audit, provisioning attempt, contractor
+          group audit, and tenant-status health signals. It does not create
+          remediation controls, operational logs, retry paths, or tenant-owned
+          record changes.
         </FutureCapabilityPanel>
         <FutureCapabilityPanel title="Contractor groups">
           Contractor grouping for template assignment, starter-pack rollout, and
-          entitlement policy remains future work. Existing tenant oversight still
-          operates directly on canonical company records.
+          entitlement policy remains future work. Existing tenant oversight
+          still operates directly on canonical company records.
         </FutureCapabilityPanel>
       </div>
     </div>

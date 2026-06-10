@@ -53,7 +53,7 @@ export default async function PlatformModulesPage({ searchParams }: PageProps) {
         id="policy-matrix"
         eyebrow="Module Controls"
         title="Platform module policy matrix"
-        description="Platform feature policy is the source of truth for module availability and capability family defaults across the whole system. Contractor overrides stay tenant-scoped and separate."
+        description="Platform feature policy is the source of truth for capability-family availability across the whole system. Contractor Settings may store company overrides where allowed, but this matrix stays platform-owned and does not run contractor workflows."
         tone="neutral"
       >
         <div className="overflow-x-auto rounded-lg border border-slate-200">
@@ -70,11 +70,17 @@ export default async function PlatformModulesPage({ searchParams }: PageProps) {
             </thead>
             <tbody>
               {policies.map((policy) => (
-                <tr key={policy.id} className="border-b border-slate-100 align-top">
+                <tr
+                  key={policy.id}
+                  className="border-b border-slate-100 align-top"
+                >
                   <td className="max-w-[280px] px-4 py-4">
-                    <p className="text-sm font-semibold text-slate-950">{policy.name}</p>
+                    <p className="text-sm font-semibold text-slate-950">
+                      {policy.name}
+                    </p>
                     <p className="mt-1 text-xs leading-5 text-slate-500">
-                      {policy.description ?? "No additional description has been added yet."}
+                      {policy.description ??
+                        "No additional description has been added yet."}
                     </p>
                     <p className="mt-2 font-mono text-[11px] text-slate-400">
                       {policy.key}
@@ -99,9 +105,10 @@ export default async function PlatformModulesPage({ searchParams }: PageProps) {
                     </span>
                   </td>
                   <td className="px-4 py-4 text-xs leading-5 text-slate-500">
-                    Contractor-level overrides use the existing organization feature
-                    policy layer where available. This matrix does not enforce plan
-                    entitlements.
+                    Contractor-level overrides use the existing organization
+                    feature policy layer in Company Feature Controls where
+                    available. This matrix does not enforce plan entitlements or
+                    replace company settings.
                   </td>
                   <td className="px-4 py-4">
                     <SaveStateForm
@@ -116,8 +123,16 @@ export default async function PlatformModulesPage({ searchParams }: PageProps) {
                         name="description"
                         value={policy.description ?? ""}
                       />
-                      <input type="hidden" name="moduleKey" value={policy.module_key ?? ""} />
-                      <input type="hidden" name="surface" value={policy.surface ?? ""} />
+                      <input
+                        type="hidden"
+                        name="moduleKey"
+                        value={policy.module_key ?? ""}
+                      />
+                      <input
+                        type="hidden"
+                        name="surface"
+                        value={policy.surface ?? ""}
+                      />
                       <label className="flex items-start gap-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-3">
                         <input
                           type="checkbox"
@@ -146,14 +161,14 @@ export default async function PlatformModulesPage({ searchParams }: PageProps) {
 
       <div className="grid gap-4 lg:grid-cols-2">
         <FutureCapabilityPanel title="Contractor overrides">
-          Future organization override review can summarize tenant-scoped choices
-          beside the platform baseline. This placeholder does not create override
-          records or change contractor module controls.
+          Future organization override review can summarize tenant-scoped
+          choices beside the platform baseline. This placeholder does not create
+          override records or change contractor module controls.
         </FutureCapabilityPanel>
         <FutureCapabilityPanel title="Entitlements">
-          Entitlement enforcement, plans, limits, and billing-linked gates remain
-          future work. Current toggles are platform feature policy only and do not
-          enforce subscription access.
+          Entitlement enforcement, plans, limits, and billing-linked gates
+          remain future work. Current toggles are platform feature policy only
+          and do not enforce subscription access.
         </FutureCapabilityPanel>
       </div>
     </div>

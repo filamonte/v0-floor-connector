@@ -3005,6 +3005,17 @@ Implemented UI behavior now:
   infrastructure only and does not change auth, RLS, schema, Supabase data,
   business logic, route behavior, dashboard/workspace design, customer
   self-service, AI, or AIA.
+- Settings / Super Admin Boundary UX V1 clarifies the presentation boundary
+  between contractor Company Controls and the Platform Control Room. Contractor
+  Settings now identifies company-owned configuration, workflow defaults,
+  templates, billing defaults, team access, exports, and company feature
+  overrides as tenant/company controls, while Super Admin identifies platform
+  starter settings, feature policy, tenant lifecycle oversight, SaaS billing
+  operations, packages, and operator controls as platform-owned. This is
+  presentation-only; it does not change schema, migrations, Supabase data,
+  business logic, settings persistence, provider/billing mutation, payment,
+  signature, scheduling, tenant activation, role models, customer self-service,
+  AI, or AIA.
 - Dashboard, Project, Schedule, Contract, Invoice, Job, and Daily Log surfaces now share grouped lifecycle language around `opportunity -> customer/project -> estimate/contract -> job/schedule -> invoice/payment`. Contract Workspace clarifies draft, approval, signature, decline, countersign, deposit, and downstream handoff context; Invoice Workspace clarifies draft, sent/open, partial, paid, void, billing-source, collection, payment, and upstream-readiness context; Job Workspace clarifies schedule, crew, field evidence, closeout, and downstream billing handoff; Daily Log Workspace clarifies project-day narrative, field notes, labor/time continuity, attachments, and upstream Project Workspace resolution. This is presentation-only and does not change signature, readiness, scheduling, time-card, billing, payment, portal, schema, RLS, or server-action behavior.
 - Projects, Estimates, Invoices, Jobs, Contracts, and Customers Manager Pages use the shared Manager Page rhythm with clearer status scanning, primary create actions, and compact continuity cues.
 - Portal and super-admin received only safe consistency cleanup; they do not copy contractor operational patterns wholesale.
