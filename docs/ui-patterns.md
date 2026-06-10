@@ -67,6 +67,28 @@ low-priority actions when a route does not need the full `ActionBar` primitive.
 These classes are presentational only and must not change what action is
 available.
 
+## Dashboard Command Center
+
+Dashboard should answer "what needs attention?" before it shows passive
+summaries. When action queues are available, they are the primary dashboard
+attention layer. Older priority-strip summaries should be fallback or
+supporting context, not a second competing command surface.
+
+Rules:
+
+- Keep dashboard cards read-only or routing-only unless the existing canonical
+  action already lives there.
+- Route next steps to the owning workspace: Project, Schedule, Financials,
+  Contract, Invoice, Job, Lead/Opportunity, or Field.
+- Use shared `StatusBadge`, action hierarchy classes, and empty-state copy
+  primitives for dashboard queue surfaces where practical.
+- Do not create dashboard-owned operational state, duplicate queue models,
+  role-specific persistence, fake persistence, portal copies, or separate
+  financial/schedule/readiness truth.
+- Role-aware dashboard presentation may be prepared, but personalization engines
+  and saved dashboard-owned queue state remain future work unless explicitly
+  scoped.
+
 ## WorkflowBar Usage
 
 Use `WorkflowBar` to show conservative progress through an existing workflow sequence. It should never imply a downstream record or completion state that the data does not prove.

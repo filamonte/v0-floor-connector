@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { getStatusBadgeClassName } from "@floorconnector/ui";
+import { StatusBadge } from "@floorconnector/ui";
 
 import {
   dashboardGridDividerClassName,
@@ -71,14 +71,13 @@ export function PriorityStrip({ items }: PriorityStripProps) {
                     {item.title}
                   </h3>
                 </div>
-                <span
-                  className={[
-                    "shrink-0 rounded-md border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em]",
-                    getStatusBadgeClassName(item.status)
-                  ].join(" ")}
+                <StatusBadge
+                  status={item.status}
+                  size="sm"
+                  className="shrink-0"
                 >
                   {item.countLabel}
-                </span>
+                </StatusBadge>
               </div>
               <p className="mt-2 line-clamp-2 text-xs leading-5 text-[var(--text-secondary)]">
                 {item.detail}

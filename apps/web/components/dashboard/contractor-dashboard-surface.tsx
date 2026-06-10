@@ -4,7 +4,13 @@ import type { ReactNode } from "react";
 import { startTransition, useDeferredValue, useMemo, useState } from "react";
 import Link from "next/link";
 import type { MembershipRole } from "@floorconnector/types";
-import { getStatusBadgeClassName } from "@floorconnector/ui";
+import {
+  getEmptyStateCopy,
+  primaryActionClassName,
+  secondaryActionClassName,
+  StatusBadge,
+  type EmptyStateKind
+} from "@floorconnector/ui";
 
 import type { AiOperationalDashboardDigest } from "@/lib/ai-operational-copilot/dashboard-digest";
 import type { DashboardActionQueue } from "@/lib/dashboard/action-queues";
@@ -293,6 +299,32 @@ function BoardPanel({
   );
 }
 
+function DashboardEmptyState({
+  title,
+  description,
+  kind = "noRecords"
+}: {
+  title?: string;
+  description?: string;
+  kind?: EmptyStateKind;
+}) {
+  const fallback = getEmptyStateCopy(kind);
+
+  return (
+    <div className="px-4 py-5">
+      <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--text-secondary)]">
+        {fallback.eyebrow}
+      </p>
+      <p className="mt-1 text-sm font-semibold text-[var(--text-primary)]">
+        {title ?? fallback.title}
+      </p>
+      <p className="mt-2 text-sm leading-5 text-[var(--text-secondary)]">
+        {description ?? fallback.description}
+      </p>
+    </div>
+  );
+}
+
 function PriorityGrid({ metrics }: { metrics: DashboardMetric[] }) {
   return (
     <section
@@ -450,15 +482,10 @@ function QueueRows({
                       {item.title}
                     </Link>
                     {item.badge ? (
-                      <span
-                        className={[
-                          "rounded-md border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em]",
-                          getStatusBadgeClassName(item.badge)
-                        ].join(" ")}
-                      >
+                      <StatusBadge status={item.badge} size="sm">
                         <span className="sr-only">Status or priority: </span>
                         {item.badge}
-                      </span>
+                      </StatusBadge>
                     ) : null}
                   </div>
                   <p className="mt-1 text-sm leading-5 text-[var(--text-secondary)]">
@@ -485,7 +512,7 @@ function QueueRows({
                     <Link
                       href={item.contextHref}
                       title={`${item.contextLabel}: ${item.title}`}
-                      className="inline-flex h-8 items-center border border-[var(--border-warm)] bg-white px-2.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--text-secondary)] transition hover:bg-[var(--highlight)]"
+                      className={secondaryActionClassName}
                     >
                       {item.contextLabel}
                     </Link>
@@ -494,7 +521,7 @@ function QueueRows({
                     <Link
                       href={item.bridgeHref}
                       title={`${item.bridgeLabel ?? "Create work item"}: ${item.title}`}
-                      className="inline-flex h-8 items-center border border-[var(--border-warm)] bg-[var(--highlight)] px-2.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--text-secondary)] transition hover:bg-white"
+                      className={secondaryActionClassName}
                     >
                       {item.bridgeLabel ?? "Create work item"}
                     </Link>
@@ -536,14 +563,10 @@ function QueueRows({
             </article>
           ))
         ) : (
-          <div className="px-4 py-5">
-            <p className="text-sm font-semibold text-[var(--text-primary)]">
-              {widget.emptyTitle}
-            </p>
-            <p className="mt-2 text-sm leading-5 text-[var(--text-secondary)]">
-              {widget.emptyDescription}
-            </p>
-          </div>
+          <DashboardEmptyState
+            title={widget.emptyTitle}
+            description={widget.emptyDescription}
+          />
         )}
       </div>
     </BoardPanel>
@@ -553,11 +576,13 @@ function QueueRows({
 function DashboardOperatingSummary({
   header,
   metrics,
-  priorityItems
+  priorityItems,
+  attentionHref
 }: {
   header?: ContractorDashboardSurfaceProps["header"];
   metrics: DashboardMetric[];
   priorityItems: DashboardPriorityItem[];
+  attentionHref: string;
 }) {
   const jobsTodayMetric = metrics.find((metric) => metric.key === "jobs-today");
   const openBlockersCount = priorityItems.filter(
@@ -590,8 +615,8 @@ function DashboardOperatingSummary({
       key: "open-blockers",
       label: "Open Blockers",
       value: String(openBlockersCount),
-      detail: "Attention strip",
-      href: "/dashboard#dashboard-priority-strip"
+      detail: "Attention queues",
+      href: attentionHref
     }
   ];
 
@@ -643,18 +668,24 @@ function DashboardActionQueues({ queues }: { queues: DashboardActionQueue[] }) {
   return (
     <section
       aria-labelledby="dashboard-action-queues-title"
+      id="dashboard-action-queues"
       className="space-y-3"
     >
-      <div>
-        <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--copper)]">
-          Today's priorities
+      <div className="flex flex-col gap-2 lg:flex-row lg:items-end lg:justify-between">
+        <div>
+          <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--copper)]">
+            Today's priorities
+          </p>
+          <h2
+            id="dashboard-action-queues-title"
+            className="mt-1 text-[17px] font-semibold tracking-tight text-[var(--text-primary)]"
+          >
+            Needs attention now
+          </h2>
+        </div>
+        <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
+          Dashboard prioritizes; owning workspaces act
         </p>
-        <h2
-          id="dashboard-action-queues-title"
-          className="mt-1 text-[17px] font-semibold tracking-tight text-[var(--text-primary)]"
-        >
-          Action Queues
-        </h2>
       </div>
       <div className="grid gap-3 xl:grid-cols-5">
         {queues.map((queue) => (
@@ -682,14 +713,9 @@ function DashboardActionQueues({ queues }: { queues: DashboardActionQueue[] }) {
                         {item.title}
                       </Link>
                       {item.badge ? (
-                        <span
-                          className={[
-                            "rounded-md border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em]",
-                            getStatusBadgeClassName(item.badge)
-                          ].join(" ")}
-                        >
+                        <StatusBadge status={item.badge} size="sm">
                           {item.badge}
-                        </span>
+                        </StatusBadge>
                       ) : null}
                     </div>
                     <p className="mt-1 text-xs leading-5 text-[var(--text-secondary)]">
@@ -704,16 +730,13 @@ function DashboardActionQueues({ queues }: { queues: DashboardActionQueue[] }) {
                       </p>
                     ) : null}
                     <div className="mt-3 flex flex-wrap gap-2">
-                      <Link
-                        href={item.href}
-                        className="inline-flex h-8 items-center border border-[var(--border-warm)] bg-[var(--highlight)] px-2.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--text-secondary)] transition hover:bg-white"
-                      >
+                      <Link href={item.href} className={primaryActionClassName}>
                         {item.recommendedActionLabel}
                       </Link>
                       {item.contextHref && item.contextLabel ? (
                         <Link
                           href={item.contextHref}
-                          className="inline-flex h-8 items-center border border-[var(--border-warm)] bg-white px-2.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--text-secondary)] transition hover:bg-[var(--highlight)]"
+                          className={secondaryActionClassName}
                         >
                           {item.contextLabel}
                         </Link>
@@ -722,14 +745,10 @@ function DashboardActionQueues({ queues }: { queues: DashboardActionQueue[] }) {
                   </article>
                 ))
               ) : (
-                <div className="px-4 py-5">
-                  <p className="text-sm font-semibold text-[var(--text-primary)]">
-                    {queue.emptyTitle}
-                  </p>
-                  <p className="mt-2 text-sm leading-5 text-[var(--text-secondary)]">
-                    {queue.emptyDescription}
-                  </p>
-                </div>
+                <DashboardEmptyState
+                  title={queue.emptyTitle}
+                  description={queue.emptyDescription}
+                />
               )}
             </div>
           </BoardPanel>
@@ -1236,14 +1255,11 @@ function FinanceTable({
           </div>
         </div>
       ) : (
-        <div className="px-4 py-5">
-          <p className="text-sm font-semibold text-[var(--text-primary)]">
-            {widget.emptyTitle}
-          </p>
-          <p className="mt-2 text-sm leading-5 text-[var(--text-secondary)]">
-            {widget.emptyDescription}
-          </p>
-        </div>
+        <DashboardEmptyState
+          title={widget.emptyTitle}
+          description={widget.emptyDescription}
+          kind="waitingOnPayment"
+        />
       )}
     </BoardPanel>
   );
@@ -1313,14 +1329,9 @@ function AiOperationalDigestPanel({
                       >
                         {item.title}
                       </Link>
-                      <span
-                        className={[
-                          "rounded-md border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em]",
-                          getStatusBadgeClassName(item.priority)
-                        ].join(" ")}
-                      >
+                      <StatusBadge status={item.priority} size="sm">
                         {item.priority}
-                      </span>
+                      </StatusBadge>
                     </div>
                     <p className="mt-1 text-xs leading-5 text-[var(--text-secondary)]">
                       {item.summary}
@@ -1340,13 +1351,11 @@ function AiOperationalDigestPanel({
                 ))}
               </div>
             ) : (
-              <div className="mt-3 rounded-lg border border-dashed border-[var(--border-warm)] bg-[var(--highlight)] px-3 py-3">
-                <p className="text-sm font-semibold text-[var(--text-primary)]">
-                  {section.emptyTitle}
-                </p>
-                <p className="mt-1 text-xs leading-5 text-[var(--text-secondary)]">
-                  {section.emptyDescription}
-                </p>
+              <div className="mt-3 rounded-lg border border-dashed border-[var(--border-warm)] bg-[var(--highlight)]">
+                <DashboardEmptyState
+                  title={section.emptyTitle}
+                  description={section.emptyDescription}
+                />
               </div>
             )}
           </article>
@@ -1380,6 +1389,7 @@ export function ContractorDashboardSurface({
 }: ContractorDashboardSurfaceProps) {
   const [query, setQuery] = useState("");
   const deferredQuery = useDeferredValue(query.trim().toLowerCase());
+  const hasActionQueues = actionQueues.length > 0;
   const handleQueryChange = (nextValue: string) => {
     startTransition(() => {
       setQuery(nextValue);
@@ -1468,9 +1478,14 @@ export function ContractorDashboardSurface({
           header={header}
           metrics={metrics}
           priorityItems={priorityItems}
+          attentionHref={
+            hasActionQueues
+              ? "/dashboard#dashboard-action-queues"
+              : "/dashboard#dashboard-priority-strip"
+          }
         />
 
-        {actionQueues.length > 0 ? (
+        {hasActionQueues ? (
           <DashboardActionQueues queues={actionQueues} />
         ) : null}
 
@@ -1542,9 +1557,11 @@ export function ContractorDashboardSurface({
           </section>
         ) : null}
 
-        <div id="dashboard-priority-strip">
-          <PriorityStrip items={priorityItems} />
-        </div>
+        {hasActionQueues ? null : (
+          <div id="dashboard-priority-strip">
+            <PriorityStrip items={priorityItems} />
+          </div>
+        )}
 
         {universalCapture ? universalCapture : null}
 
