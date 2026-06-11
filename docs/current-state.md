@@ -906,6 +906,16 @@ Current shell behavior:
   actions. This adds no schema, migrations, dispatch tables, duplicate
   scheduling records, route optimization, automated dispatching, AI scheduling,
   portal schedule promises, or new schedule write paths.
+- CrewBoard / Schedule Calendar MVP keeps `/schedule` on the same canonical
+  job and `job_assignments` foundation while making the primary planner modes
+  explicit: Day, Week, Crew, and Unscheduled. Day and Week render dated jobs
+  and appointments; Crew groups existing operational timing, crew-gap,
+  readiness, and execution lanes; Unscheduled shows ready and blocked jobs that
+  still need a real date commitment. Existing `layout=board` links normalize to
+  Crew. This is presentation and URL-state refinement only; it does not add
+  schema, migrations, routes, dispatch tables, calendar-event persistence,
+  drag/drop save behavior, route optimization, notifications, portal schedule
+  promises, or new schedule write paths.
 - Scheduling / Field handoff visibility adds a read-only Field handoff layer to `/schedule`. The schedule page now derives crew assignment state, scheduled-day Daily Log presence, open field blocker/issue counts, field-note counts, same-day time-card counts, open time-card counts, latest field activity, and canonical Job / Project / Daily Log / Field queue links from existing `jobs`, `job_assignments`, `daily_logs`, `field_notes`, and `time_cards`. CrewBoard selected-job context now also shows a compact Field Handoff Packet with job status/schedule/crew, project/customer scope context, linked estimate/contract readiness context where available, schedule-warning/readiness summary, role-slot owner context for Onsite Rep, Relationship Owner, and Follow-Up Owner, field-note/Daily Log state, and canonical source links. Missing estimate, contract, owner, schedule-note, Daily Log, and field-activity context is labeled truthfully. This is visibility only and does not add schema, migrations, dispatch records, field-packet rows, mobile-only state, field task/issue tables, notifications, portal exposure, server actions, or schedule/field mutations.
 - schedule views can filter between all items, jobs, and appointments, and appointment entries link to appointment detail plus lead/customer/project context where present
 - dashboard appointment visibility now uses the existing `people.membership_user_id` linkage to show `My upcoming appointments` when the current user has an active person record, with a safe company-upcoming fallback when that mapping is unavailable or has no assigned upcoming appointments
