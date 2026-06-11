@@ -769,6 +769,18 @@ Current canonical records involved:
 
 ### Lead / Opportunity Intake
 
+Terminology direction:
+
+- `Lead Intake` means the first inquiry or unqualified contact.
+- `Sales Opportunity` means the active pre-sale commercial record once the work
+  is being qualified, assessed, planned, or handed to estimating.
+- The current implementation still uses `/leads` for the manager and workspace
+  routes, but those routes operate on canonical `opportunities` records.
+- Future user-facing copy should move carefully toward `Leads &
+Opportunities` for the manager surface and `Opportunity Workspace` for detail
+  surfaces while preserving routes and schema until an explicit route strategy
+  is approved.
+
 Implemented flow:
 
 - contractor creates an opportunity in `/leads`
@@ -804,6 +816,14 @@ Current canonical records involved:
 - communication threads/messages for manually logged appointment confirmations where explicitly created
 - appointments for lead-linked visits, meetings, and callbacks
 - optional internal work items for contractor-owned follow-through, when explicitly created through work-item utilities or contractor-side work-item UI
+
+Boundary:
+
+- do not introduce a separate Lead table or duplicate pre-sale source of truth
+  for the current contractor app workflow
+- do not rename `/leads` or `/leads/:leadId` as part of terminology cleanup
+- use display labels first; canonical status values stay stable until a
+  dedicated migration is explicitly approved
 
 ### Customer To Project
 
