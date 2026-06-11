@@ -18,6 +18,25 @@ export type WorkspaceFrameworkV2View = {
   description: string;
 };
 
+export const projectWorkspaceFrameworkV2ViewIds = [
+  "overview",
+  "readiness",
+  "scope",
+  "commercial",
+  "production",
+  "financial",
+  "activity"
+] as const;
+
+export type ProjectWorkspaceFrameworkV2ViewId =
+  (typeof projectWorkspaceFrameworkV2ViewIds)[number];
+
+export type ProjectWorkspaceFrameworkV2View = {
+  id: ProjectWorkspaceFrameworkV2ViewId;
+  label: string;
+  description: string;
+};
+
 export const workspaceFrameworkV2Views: WorkspaceFrameworkV2View[] = [
   {
     id: "overview",
@@ -69,6 +88,52 @@ export const workspaceFrameworkV2Views: WorkspaceFrameworkV2View[] = [
   }
 ];
 
+export const projectWorkspaceFrameworkV2Views: ProjectWorkspaceFrameworkV2View[] =
+  [
+    {
+      id: "overview",
+      label: "Overview",
+      description:
+        "Show project identity, current next action, readiness summary, and linked-record continuity."
+    },
+    {
+      id: "readiness",
+      label: "Readiness",
+      description:
+        "Focus blockers, readiness gates, workflow cues, and the record that owns the next fix."
+    },
+    {
+      id: "scope",
+      label: "Scope / Context",
+      description:
+        "Keep assessment package, appointments, documents, and editable project facts together."
+    },
+    {
+      id: "commercial",
+      label: "Estimates / Contracts",
+      description:
+        "Summarize commercial records while routing estimate and contract work to their owning workspaces."
+    },
+    {
+      id: "production",
+      label: "Jobs / Schedule",
+      description:
+        "Show job, schedule, field, crew, and closeout continuity without replacing CrewBoard or Job Workspace."
+    },
+    {
+      id: "financial",
+      label: "Invoices / Payments",
+      description:
+        "Summarize project financial continuity while keeping billing and collection actions in invoice and financial workspaces."
+    },
+    {
+      id: "activity",
+      label: "Activity / Notes",
+      description:
+        "Collect work items, communication, proof, evidence, service, warranty, and lower-frequency history."
+    }
+  ];
+
 export function normalizeWorkspaceFrameworkV2ViewId(
   value: string | null | undefined,
   fallback: WorkspaceFrameworkV2ViewId = "overview"
@@ -77,5 +142,16 @@ export function normalizeWorkspaceFrameworkV2ViewId(
     value as WorkspaceFrameworkV2ViewId
   )
     ? (value as WorkspaceFrameworkV2ViewId)
+    : fallback;
+}
+
+export function normalizeProjectWorkspaceFrameworkV2ViewId(
+  value: string | null | undefined,
+  fallback: ProjectWorkspaceFrameworkV2ViewId = "overview"
+): ProjectWorkspaceFrameworkV2ViewId {
+  return projectWorkspaceFrameworkV2ViewIds.includes(
+    value as ProjectWorkspaceFrameworkV2ViewId
+  )
+    ? (value as ProjectWorkspaceFrameworkV2ViewId)
     : fallback;
 }
