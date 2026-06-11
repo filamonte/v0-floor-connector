@@ -67,6 +67,73 @@ Program health statuses are `Planned`, `Active`, `Blocked`, `Verification`,
 and `Complete`. Program status does not replace wave status or stream status.
 No next wave is approved by listing a Program here.
 
+## UX Recovery Wave
+
+Foundation date: 2026-06-11.
+
+Wave name: `ux-recovery-wave`.
+
+Review packet:
+[docs/review-packets/ux-recovery-wave.md](C:/FloorConnector/docs/review-packets/ux-recovery-wave.md).
+
+Supporting docs:
+
+- [docs/ux-recovery-findings.md](C:/FloorConnector/docs/ux-recovery-findings.md)
+- [docs/ux-architecture-recovery-plan.md](C:/FloorConnector/docs/ux-architecture-recovery-plan.md)
+
+Status: Active for docs-only foundation and proposed implementation planning.
+No implementation stream, branch, worktree, PR, merge, route rename, schema,
+migration, provider behavior, payment/signature/scheduling mutation,
+portal-access change, or broad UI change is approved by this entry.
+
+Purpose: group the 45 manual UX/IA findings into root-cause epics and prepare a
+fast recovery plan that improves navigation, workspace ownership, density,
+responsive behavior, Settings organization, invoice review, portal
+organization, calendar visibility, naming, visual language, and Universal
+Capture posture without forking canonical truth.
+
+Recommended first implementation wave after explicit approval:
+
+1. Navigation shell cleanup.
+2. Workspace Framework V2 applied to Lead/Sales and Project.
+3. Settings IA cleanup.
+4. Display/overlay/mobile/laptop recovery.
+5. Calendar view MVP.
+6. Invoice Review cleanup.
+7. Portal organization cleanup.
+
+Proposed stream set:
+
+| Proposed stream                          | Ownership area                                                                                                        | Lifecycle status |
+| ---------------------------------------- | --------------------------------------------------------------------------------------------------------------------- | ---------------- |
+| `navigation-shell-recovery-v1`           | Unified contractor shell, route context, project search/recent projects, mobile header, and search overlay model.     | Proposed         |
+| `workspace-framework-v2-lead-project-v1` | Workspace Framework V2 and content placement for Lead/Sales Opportunity and Project.                                  | Proposed         |
+| `settings-ia-recovery-v1`                | Settings IA, account status, Operations Monitor routing, configuration grouping, and template/status setting posture. | Proposed         |
+| `responsive-display-overlay-recovery-v1` | 14 inch laptop, mobile, overlay, popup, action hierarchy, and dense display recovery.                                 | Proposed         |
+| `schedule-calendar-mvp-v1`               | Calendar view MVP over existing canonical jobs, appointments, assignments, people, vendors, projects, and customers.  | Proposed         |
+| `invoice-review-recovery-v1`             | Invoice Review architecture over canonical invoice, line-item, payment, and payment-event evidence.                   | Proposed         |
+| `portal-organization-recovery-v1`        | Customer-safe portal dashboard and multi-record organization.                                                         | Proposed         |
+| `verification-ux-recovery-v1`            | Cross-stream verification and implementation-vs-target docs review.                                                   | Proposed         |
+
+Shared non-goals:
+
+- no database schema changes
+- no route renames
+- no canonical table renames
+- no broad UI implementation in the foundation pass
+- no target-only design ideas described as implemented
+- no duplicate business truth, portal-owned state, provider-owned truth,
+  financial/signature/payment/scheduling mutation, or tenant/auth/RLS weakening
+- no branch/worktree creation until the wave proposal gate and explicit Jeff
+  approval are recorded
+
+Design brief: Stitch/Figma design exploration may generate references for
+Workspace Framework V2, Lead/Sales Opportunity Workspace, Project Workspace,
+Settings IA, Schedule Calendar MVP, Invoice Review, Portal organized dashboard,
+overlay/modal/search/action-menu patterns, and a lighter scalable visual color
+system. Generated design output is reference only and must be adapted to
+FloorConnector governance before implementation.
+
 ## UX Beta Readiness V1
 
 Proposal date: 2026-06-10.

@@ -165,6 +165,22 @@ approved from this merge; agents may not auto-continue, perform schema/migration
 work, change provider behavior, open PRs, or perform cleanup without Jeff
 approval.
 
+Current UX Recovery planning note: `ux-recovery-wave` now has docs-only
+foundation planning in
+[docs/review-packets/ux-recovery-wave.md](C:/FloorConnector/docs/review-packets/ux-recovery-wave.md),
+[docs/ux-recovery-findings.md](C:/FloorConnector/docs/ux-recovery-findings.md),
+and
+[docs/ux-architecture-recovery-plan.md](C:/FloorConnector/docs/ux-architecture-recovery-plan.md).
+It groups 45 manual UX/IA findings into root-cause epics and recommends the
+first implementation sequence: navigation shell cleanup, Workspace Framework V2
+for Lead/Sales and Project, Settings IA cleanup, responsive/overlay/mobile/
+laptop recovery, Calendar MVP, Invoice Review cleanup, Portal organization
+cleanup, and verification. This is not implementation authorization. No
+stream/worktree creation, route rename, schema change, canonical table rename,
+provider behavior, payment/signature/scheduling mutation, portal-access change,
+broad UI change, or target-as-implemented claim is approved by the foundation
+docs.
+
 Current wave gate note: `visual-ux-review-contractor-usability-v1` has merged
 to `main` under Jeff's controlled merge approval. Golden Workflow Usability
 Review V1 merged as `32f2151d`, Workspace Density Polish V1 merged as

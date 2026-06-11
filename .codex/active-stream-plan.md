@@ -43,6 +43,70 @@ Wave-launch prompts must also require `pnpm.cmd worktree:doctor` and use
 for local tooling, Playwright, optional CLI, worktree-link, and validation
 guidance.
 
+## UX Recovery Wave Foundation
+
+Foundation date: 2026-06-11.
+
+Wave name: `ux-recovery-wave`.
+
+Review packet:
+
+- [docs/review-packets/ux-recovery-wave.md](C:/FloorConnector/docs/review-packets/ux-recovery-wave.md)
+
+Supporting docs:
+
+- [docs/ux-recovery-findings.md](C:/FloorConnector/docs/ux-recovery-findings.md)
+- [docs/ux-architecture-recovery-plan.md](C:/FloorConnector/docs/ux-architecture-recovery-plan.md)
+
+Status: Active for docs-only foundation and proposed implementation planning.
+This entry does not approve implementation, stream/worktree creation, PRs,
+merges, route renames, schema changes, migrations, provider behavior, payment,
+signature, scheduling, portal-access mutation, or broad UI changes.
+
+Purpose: recover UX/IA through root-cause epics instead of 45 isolated bugs,
+while preserving the canonical lifecycle, tenant safety, current app
+functionality, and implemented-versus-target truth.
+
+Root-cause epics:
+
+- Workspace Ownership & Content Placement
+- Navigation Architecture
+- Display, Density & Responsive Architecture
+- Settings & Configuration Architecture
+- Sales Lifecycle & Assessment Architecture
+- Financial / Invoice Review Architecture
+- Portal & Customer-Facing Organization
+- Naming & Terminology System
+- Scheduling / Calendar Market Blocker
+- Support, Operations Monitor & Platform Admin Experience
+- Visual Language & Color System
+- Universal Capture / Intent Capture
+
+Recommended first implementation wave after explicit approval:
+
+1. `navigation-shell-recovery-v1`
+2. `workspace-framework-v2-lead-project-v1`
+3. `settings-ia-recovery-v1`
+4. `responsive-display-overlay-recovery-v1`
+5. `schedule-calendar-mvp-v1`
+6. `invoice-review-recovery-v1`
+7. `portal-organization-recovery-v1`
+8. `verification-ux-recovery-v1`
+
+All streams are Proposed only. Before any branch or worktree is created, the
+wave proposal gate in
+[docs/parallel-development-governance.md](C:/FloorConnector/docs/parallel-development-governance.md)
+must record capability/program mapping or governance-only rationale, dependency
+review, ownership conflict review, UX / IA review, canonical model review,
+verification scope, proposed merge order, active registry updates, and explicit
+Jeff approval.
+
+Design-tool posture: Stitch/Figma may generate reference screens and patterns
+for Workspace Framework V2, Lead/Sales Opportunity Workspace, Project
+Workspace, Settings IA, Schedule Calendar MVP, Invoice Review, Portal organized
+dashboard, overlay/modal/search/action-menu patterns, and lighter scalable
+visual language. Generated output must not be applied directly to code.
+
 ## UX Beta Readiness V1 Gate
 
 Gate date: 2026-06-10.
