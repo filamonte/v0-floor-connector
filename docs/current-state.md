@@ -331,6 +331,16 @@ matters now` line from existing list fields only. This does not add portal
   customer messaging, provider integrations, notifications, payment/signature
   mutation beyond existing explicit portal actions, or contractor-only
   intelligence exposure.
+- Customer Portal Organization V1 makes `/portal` action-first across existing
+  shared project summaries: Needs Your Attention, Active Projects, Documents /
+  Approvals, Invoices / Payments, Upcoming Appointments, and History /
+  Completed. The portal Project Workspace now prioritizes Needs Your Attention,
+  Documents / Approvals, Invoices / Payments, and Project Updates before
+  completion records, communication, evidence, timeline, appointments, and full
+  record history. This is presentation and deterministic helper organization
+  only; it does not add schema, migrations, route renames, portal-only records,
+  fake records, access-rule changes, new portal writes, provider behavior, or
+  payment/signature/change-order behavior changes.
 - Portal financial visibility now adds a deterministic
   [apps/web/lib/portal/financial-visibility.ts](C:/FloorConnector/apps/web/lib/portal/financial-visibility.ts)
   explanation layer to the portal Project Workspace and portal invoice review.

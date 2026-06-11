@@ -21,6 +21,7 @@ import {
   listPortalAccessibleProjects,
   listPortalUpcomingAppointments
 } from "@/lib/portal/data";
+import { derivePortalHomeOrganization } from "@/lib/portal/organization";
 import { derivePortalSafeStatusExplanation } from "@/lib/portal/status-explanation";
 
 function formatStatusLabel(status: string | null) {
@@ -187,7 +188,16 @@ export default async function PortalHomePage() {
     listPortalAccessibleProjects("/portal"),
     listPortalUpcomingAppointments("/portal", 5)
   ]);
-  const nextAction = getPortalHomeNextAction(projects);
+  const organization = derivePortalHomeOrganization(projects);
+  const primaryAttentionItem = organization.attentionItems[0] ?? null;
+  const nextAction = primaryAttentionItem
+    ? {
+        title: `${primaryAttentionItem.title} for ${primaryAttentionItem.projectName}`,
+        description: primaryAttentionItem.description,
+        href: primaryAttentionItem.href,
+        label: primaryAttentionItem.label
+      }
+    : getPortalHomeNextAction(projects);
   const primaryProject =
     (nextAction
       ? projects.find(
@@ -208,11 +218,11 @@ export default async function PortalHomePage() {
             Your Portal
           </p>
           <h1 className="mt-4 text-3xl font-semibold tracking-tight text-slate-950 sm:text-4xl">
-            Review the work your contractor has shared
+            Start with what needs your attention
           </h1>
           <p className="mt-3 max-w-3xl text-base leading-7 text-slate-600">
-            Start with the project that needs attention most, then move into its
-            shared estimate, contract, or invoice record from there.
+            Review shared estimates, signatures, payments, and project updates
+            from the project they belong to.
           </p>
 
           <PortalTrustStrip
@@ -226,11 +236,11 @@ export default async function PortalHomePage() {
               },
               {
                 label: "Next step",
-                value: nextAction ? "Available" : "Waiting"
+                value: organization.attentionItems.length
               },
               {
                 label: "Scope",
-                value: "Project access"
+                value: "Project records"
               }
             ]}
           />
@@ -243,11 +253,12 @@ export default async function PortalHomePage() {
                 </p>
                 <div className="mt-4 space-y-3">
                   <p className="text-lg font-semibold tracking-tight text-slate-950">
-                    This portal is organized around shared projects.
+                    Your portal is organized by action first, then project.
                   </p>
                   <p className="text-sm leading-6 text-slate-600">
-                    Each project holds the estimates, contracts, and invoices
-                    your contractor has shared with you.
+                    Items that need review, signature, or payment stay at the
+                    top. Completed or history-only projects stay lower on the
+                    page.
                   </p>
                   {primaryProject ? (
                     <div className={portalInsetPanelClassName}>
@@ -277,10 +288,10 @@ export default async function PortalHomePage() {
                 items={[
                   {
                     key: "next-action",
-                    label: "Your next step",
+                    label: "Needs Your Attention",
                     content: nextAction ? (
                       <NextActionCard
-                        eyebrow="Portal guidance"
+                        eyebrow="Customer action"
                         title={nextAction.title}
                         description={nextAction.description}
                         primaryAction={
@@ -299,14 +310,15 @@ export default async function PortalHomePage() {
                   },
                   {
                     key: "projects",
-                    label: "Accessible projects",
+                    label: "Active Projects",
                     content: (
                       <>
                         <p className="text-2xl font-semibold tracking-tight text-slate-950">
-                          {projects.length}
+                          {organization.activeProjects.length}
                         </p>
                         <p className="mt-1 text-sm text-slate-600">
-                          Shared through customer- and project-scoped access.
+                          Projects with current shared status or customer review
+                          steps.
                         </p>
                       </>
                     )
@@ -316,6 +328,237 @@ export default async function PortalHomePage() {
             </div>
           </div>
         </div>
+
+        <DetailPanel
+          title="Needs Your Attention"
+          description="Shared estimates, signatures, payments, and project items waiting for customer review."
+        >
+          {organization.attentionItems.length > 0 ? (
+            <div className="grid gap-4">
+              {organization.attentionItems.map((item) => (
+                <article key={item.key} className={portalReviewCardClassName}>
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                    <div className="min-w-0">
+                      <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+                        {item.projectName}
+                      </p>
+                      <h2 className="mt-2 text-base font-semibold text-slate-950">
+                        {item.title}
+                      </h2>
+                      <p className="mt-2 text-sm leading-6 text-slate-600">
+                        {item.description}
+                      </p>
+                    </div>
+                    <PortalStatusBadge status={item.tone}>
+                      {item.label}
+                    </PortalStatusBadge>
+                  </div>
+                  <div className="mt-4 flex flex-wrap gap-3">
+                    <PortalSecondaryLink href={item.href}>
+                      {item.label}
+                    </PortalSecondaryLink>
+                    <PortalSecondaryLink
+                      href={`/portal/projects/${item.projectId}`}
+                    >
+                      Open Project
+                    </PortalSecondaryLink>
+                  </div>
+                </article>
+              ))}
+            </div>
+          ) : (
+            <AppEmptyState
+              eyebrow="No action needed"
+              title="Nothing needs your attention right now"
+              description="When an estimate, contract, invoice, or change order is ready for customer action, it will appear here first."
+            />
+          )}
+        </DetailPanel>
+
+        <DetailPanel
+          title="Active Projects"
+          description="Project cards grouped for quick scanning by status and next customer step."
+        >
+          {organization.activeProjects.length > 0 ? (
+            <div className="grid gap-4">
+              {organization.activeProjects.map((item) =>
+                (() => {
+                  const project = item.project;
+                  const recordCues = getPortalHomeRecordCues(project);
+
+                  return (
+                    <article
+                      key={project.id}
+                      className={`${portalReviewCardClassName} space-y-5`}
+                    >
+                      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                        <div className="min-w-0">
+                          <h2 className="text-xl font-semibold tracking-tight text-slate-950">
+                            {project.name}
+                          </h2>
+                          <p className="mt-2 text-sm leading-6 text-slate-600">
+                            {project.description?.trim() ||
+                              "Open this project workspace to review the connected estimate, contract, invoice, and schedule context."}
+                          </p>
+                          <p className="mt-3 text-sm text-slate-500">
+                            {project.customer?.companyName ??
+                              project.customer?.name ??
+                              "Customer record"}{" "}
+                            {project.locationSummary
+                              ? `| ${project.locationSummary}`
+                              : ""}
+                          </p>
+                        </div>
+                        <PortalStatusBadge status={item.explanation.statusTone}>
+                          {item.statusLabel}
+                        </PortalStatusBadge>
+                      </div>
+
+                      <div className="grid gap-3 md:grid-cols-3">
+                        {recordCues.map((cue) => (
+                          <div
+                            key={cue.key}
+                            className={portalMetricPanelClassName}
+                          >
+                            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+                              {cue.label}
+                            </p>
+                            <p className="mt-2 text-sm font-medium capitalize text-slate-950">
+                              {cue.value}
+                            </p>
+                            {cue.href ? (
+                              <div className="mt-3">
+                                <PortalSecondaryLink href={cue.href}>
+                                  {cue.actionLabel}
+                                </PortalSecondaryLink>
+                              </div>
+                            ) : null}
+                          </div>
+                        ))}
+                      </div>
+
+                      <div
+                        className={`${portalMetricPanelClassName} text-sm leading-6 text-slate-600`}
+                      >
+                        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                          <div className="min-w-0">
+                            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+                              Your next step
+                            </p>
+                            <p className="mt-2 font-medium text-slate-950">
+                              {item.explanation.safeNextStep}
+                            </p>
+                            {project.latestInvoicePaymentEventAt ? (
+                              <p className="mt-1 text-slate-500">
+                                Latest billing activity{" "}
+                                {formatDateTime(
+                                  project.latestInvoicePaymentEventAt
+                                )}
+                              </p>
+                            ) : null}
+                          </div>
+                          <PortalSecondaryLink href={item.nextActionHref}>
+                            {item.nextActionLabel}
+                          </PortalSecondaryLink>
+                        </div>
+                      </div>
+                    </article>
+                  );
+                })()
+              )}
+            </div>
+          ) : (
+            <AppEmptyState
+              eyebrow="No active project action"
+              title="No active projects need review right now"
+              description="Current or completed project records will remain available below when your contractor has shared them."
+            />
+          )}
+        </DetailPanel>
+
+        <DetailPanel
+          title="Documents / Approvals"
+          description="Estimates and contracts grouped by project and review state."
+        >
+          {organization.documentItems.length > 0 ? (
+            <div className="grid gap-4 md:grid-cols-2">
+              {organization.documentItems.map((item) => (
+                <article key={item.key} className={portalReviewCardClassName}>
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                    <div className="min-w-0">
+                      <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+                        {item.projectName}
+                      </p>
+                      <h2 className="mt-2 text-base font-semibold text-slate-950">
+                        {item.label}
+                      </h2>
+                    </div>
+                    <PortalStatusBadge status={item.tone}>
+                      {item.statusLabel}
+                    </PortalStatusBadge>
+                  </div>
+                  <div className="mt-4">
+                    <PortalSecondaryLink href={item.href}>
+                      {item.tone === "attention" ? item.statusLabel : "Open"}
+                    </PortalSecondaryLink>
+                  </div>
+                </article>
+              ))}
+            </div>
+          ) : (
+            <AppEmptyState
+              eyebrow="No documents"
+              title="No estimates or contracts are shared yet"
+              description="Shared documents will appear here when your contractor publishes them to a project."
+            />
+          )}
+        </DetailPanel>
+
+        <DetailPanel
+          title="Invoices / Payments"
+          description="Open balances, payment status, and invoice links across your shared projects."
+        >
+          {organization.invoiceItems.length > 0 ? (
+            <div className="grid gap-4 md:grid-cols-2">
+              {organization.invoiceItems.map((item) => (
+                <article key={item.key} className={portalReviewCardClassName}>
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                    <div className="min-w-0">
+                      <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+                        {item.projectName}
+                      </p>
+                      <h2 className="mt-2 text-base font-semibold text-slate-950">
+                        {item.referenceNumber}
+                      </h2>
+                      <p className="mt-2 text-sm leading-6 text-slate-600">
+                        Balance: {item.balanceLabel}
+                      </p>
+                    </div>
+                    <PortalStatusBadge status={item.tone}>
+                      {item.paymentStateLabel}
+                    </PortalStatusBadge>
+                  </div>
+                  <div className="mt-4 flex flex-wrap gap-3">
+                    <PortalSecondaryLink href={item.href}>
+                      Review Invoice
+                    </PortalSecondaryLink>
+                    <PortalSecondaryLink
+                      href={`/portal/projects/${item.projectId}`}
+                    >
+                      Open Project
+                    </PortalSecondaryLink>
+                  </div>
+                </article>
+              ))}
+            </div>
+          ) : (
+            <AppEmptyState
+              eyebrow="No invoices"
+              title="No invoices are shared yet"
+              description="Invoices and payment status will appear here when they are shared for a project."
+            />
+          )}
+        </DetailPanel>
 
         <DetailPanel
           title="Upcoming Appointments"
@@ -367,108 +610,42 @@ export default async function PortalHomePage() {
           )}
         </DetailPanel>
 
-        <DetailPanel
-          title="Projects"
-          description="Start with the project that needs attention most, then move into the shared estimate, contract, or invoice from there."
-        >
-          {projects.length > 0 ? (
-            <div className="grid gap-4">
-              {projects.map((project) =>
-                (() => {
-                  const explanation = getPortalHomeStatusExplanation(project);
-                  const recordCues = getPortalHomeRecordCues(project);
-
-                  return (
-                    <article
-                      key={project.id}
-                      className={`${portalReviewCardClassName} space-y-5`}
+        {organization.historyProjects.length > 0 ? (
+          <DetailPanel
+            title="History / Completed"
+            description="Completed projects and current records that do not need customer action."
+          >
+            <div className="grid gap-4 md:grid-cols-2">
+              {organization.historyProjects.map((item) => (
+                <article
+                  key={item.project.id}
+                  className={portalReviewCardClassName}
+                >
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                    <div className="min-w-0">
+                      <h2 className="text-base font-semibold text-slate-950">
+                        {item.project.name}
+                      </h2>
+                      <p className="mt-2 text-sm leading-6 text-slate-600">
+                        {item.explanation.shortExplanation}
+                      </p>
+                    </div>
+                    <PortalStatusBadge status={item.explanation.statusTone}>
+                      {item.statusLabel}
+                    </PortalStatusBadge>
+                  </div>
+                  <div className="mt-4">
+                    <PortalSecondaryLink
+                      href={`/portal/projects/${item.project.id}`}
                     >
-                      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-                        <div className="min-w-0">
-                          <h2 className="text-xl font-semibold tracking-tight text-slate-950">
-                            {project.name}
-                          </h2>
-                          <p className="mt-2 text-sm leading-6 text-slate-600">
-                            {project.description?.trim() ||
-                              "Open this project workspace to review the connected estimate, contract, invoice, and schedule context."}
-                          </p>
-                          <p className="mt-3 text-sm text-slate-500">
-                            {project.customer?.companyName ??
-                              project.customer?.name ??
-                              "Customer record"}{" "}
-                            {project.locationSummary
-                              ? `| ${project.locationSummary}`
-                              : ""}
-                          </p>
-                        </div>
-                        <PortalStatusBadge status={explanation.statusTone}>
-                          {explanation.headline}
-                        </PortalStatusBadge>
-                      </div>
-
-                      <div className="grid gap-3 md:grid-cols-3">
-                        {recordCues.map((cue) => (
-                          <div
-                            key={cue.key}
-                            className={portalMetricPanelClassName}
-                          >
-                            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
-                              {cue.label}
-                            </p>
-                            <p className="mt-2 text-sm font-medium capitalize text-slate-950">
-                              {cue.value}
-                            </p>
-                            {cue.href ? (
-                              <div className="mt-3">
-                                <PortalSecondaryLink href={cue.href}>
-                                  {cue.actionLabel}
-                                </PortalSecondaryLink>
-                              </div>
-                            ) : null}
-                          </div>
-                        ))}
-                      </div>
-
-                      <div
-                        className={`${portalMetricPanelClassName} text-sm leading-6 text-slate-600`}
-                      >
-                        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-                          <div className="min-w-0">
-                            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
-                              Your next step
-                            </p>
-                            <p className="mt-2 font-medium text-slate-950">
-                              {explanation.safeNextStep}
-                            </p>
-                            {project.latestInvoicePaymentEventAt ? (
-                              <p className="mt-1 text-slate-500">
-                                Latest billing activity{" "}
-                                {formatDateTime(
-                                  project.latestInvoicePaymentEventAt
-                                )}
-                              </p>
-                            ) : null}
-                          </div>
-                          <PortalSecondaryLink
-                            href={`/portal/projects/${project.id}`}
-                          >
-                            Open project hub
-                          </PortalSecondaryLink>
-                        </div>
-                      </div>
-                    </article>
-                  );
-                })()
-              )}
+                      Open Project
+                    </PortalSecondaryLink>
+                  </div>
+                </article>
+              ))}
             </div>
-          ) : (
-            <AppEmptyState
-              eyebrow="No shared projects"
-              title="Your contractor has not shared a project yet"
-              description="This portal only shows projects that have been explicitly granted beneath your customer access. If you expected to see something here, contact your contractor admin."
-            />
-          )}
-        </DetailPanel>
+          </DetailPanel>
+        ) : null}
       </section>
 
       <aside className="space-y-6">

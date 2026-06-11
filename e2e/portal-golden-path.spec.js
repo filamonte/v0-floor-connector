@@ -99,7 +99,7 @@ async function getGrantedProjectPath(page) {
   await page.goto("/portal");
   await expectAuthenticatedPortalPage(
     page,
-    /Review the work your contractor has shared/i
+    /Start with what needs your attention/i
   );
 
   const projectLink = page.locator('a[href^="/portal/projects/"]').first();
@@ -150,7 +150,7 @@ test.describe("portal golden workflow smoke", () => {
       await page.goto("/portal");
       await expectAuthenticatedPortalPage(
         page,
-        /Review the work your contractor has shared/i
+        /Start with what needs your attention/i
       );
       await expect(
         page.getByText(/You can only see projects your contractor has shared/i)
@@ -171,7 +171,7 @@ test.describe("portal golden workflow smoke", () => {
       await expect(page).toHaveURL(/\/portal(?:\?|$)/);
       await expectAuthenticatedPortalPage(
         page,
-        /Review the work your contractor has shared/i
+        /Start with what needs your attention/i
       );
     } finally {
       await context.close();
@@ -189,7 +189,7 @@ test.describe("portal golden workflow smoke", () => {
       await page.goto(projectPath);
       await expectAuthenticatedPortalPage(page, /Shared Project/i);
       await expect(
-        page.getByText("Shared project items", { exact: true })
+        page.getByText("Full Record History", { exact: true })
       ).toBeVisible();
     } finally {
       await context.close();
@@ -385,7 +385,7 @@ test.describe("portal golden workflow smoke", () => {
       await page.goto("/portal");
       await expectAuthenticatedPortalPage(
         page,
-        /Review the work your contractor has shared/i
+        /Start with what needs your attention/i
       );
       await expectNoHorizontalPageOverflow(page, "Portal home mobile layout");
 

@@ -316,7 +316,7 @@ export function derivePortalFinancialVisibility(input: {
       invoiceCountLabel: "0 shared invoices",
       paymentHistoryLabel: "No payment activity is visible yet.",
       billingReadinessLabel:
-        "Billing readiness will appear here when an invoice is shared.",
+        "Payment availability will appear here when an invoice is shared.",
       nextActionLabel: "Review project workspace",
       nextActionHref: `/portal/projects/${input.projectId}`,
       rows,
