@@ -12,7 +12,7 @@ const routeExpectations = [
   { path: "/daily-logs", heading: /field logs/i },
   { path: "/field/work-items", heading: /My Work Items/i },
   { path: "/schedule", heading: "CrewBoard" },
-  { path: "/leads", heading: /Lead manager/i }
+  { path: "/leads", heading: /Leads & Opportunities/i }
 ];
 
 const viewports = [

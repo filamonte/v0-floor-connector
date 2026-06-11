@@ -3,8 +3,7 @@ import type {
   Opportunity,
   OpportunityAttachment,
   OpportunityMeasurement,
-  OpportunityObservation,
-  OpportunityStatus
+  OpportunityObservation
 } from "@floorconnector/types";
 
 import { AuthField } from "@/components/auth-field";
@@ -15,6 +14,7 @@ import {
   SaveStateSubmitButton
 } from "@/components/save-feedback/save-state-form";
 import {
+  formatOpportunityStatusLabel,
   leadSourceOptions,
   opportunityStatusesList,
   serviceTypeOptions
@@ -53,10 +53,6 @@ function getDateValue(value: string | null | undefined) {
 
 function getTimeValue(value: string | null | undefined) {
   return value ? value.slice(11, 16) : "";
-}
-
-function formatStatusLabel(status: OpportunityStatus) {
-  return status.replaceAll("_", " ");
 }
 
 function buildAttachmentRows(
@@ -125,7 +121,7 @@ export function OpportunityForm({
           >
             {opportunityStatusesList.map((status) => (
               <option key={status} value={status}>
-                {formatStatusLabel(status)}
+                {formatOpportunityStatusLabel(status)}
               </option>
             ))}
           </select>
@@ -138,9 +134,10 @@ export function OpportunityForm({
             Primary Contact
           </p>
           <p className="mt-2 text-sm leading-6 text-[var(--text-secondary)]">
-            The opportunity links to a real contact record. Once this lead creates or links a
-            customer, safe email updates can sync forward there, and downstream estimate
-            send uses the customer record instead of a workforce person.
+            The opportunity links to a real contact record. Once this lead
+            creates or links a customer, safe email updates can sync forward
+            there, and downstream estimate send uses the customer record instead
+            of a workforce person.
           </p>
         </div>
         <div className="grid gap-4 md:grid-cols-2">
@@ -193,8 +190,8 @@ export function OpportunityForm({
             Site and Request
           </p>
           <p className="mt-2 text-sm leading-6 text-[var(--text-secondary)]">
-            Keep the request type, source, and primary site structured so this same
-            record can feed estimating and future app intake.
+            Keep the request type, source, and primary site structured so this
+            same record can feed estimating and future app intake.
           </p>
         </div>
         <div className="grid gap-4 md:grid-cols-2">
@@ -235,7 +232,8 @@ export function OpportunityForm({
               ))}
             </datalist>
             <span className="mt-2 block text-xs leading-5 text-[var(--text-secondary)]">
-              Structured for future estimating, without changing estimate generation.
+              Structured for future estimating, without changing estimate
+              generation.
             </span>
           </label>
           <AuthField
@@ -329,8 +327,8 @@ export function OpportunityForm({
             Linked Photos and Files
           </p>
           <p className="mt-2 text-sm leading-6 text-[var(--text-secondary)]">
-            Attach intake evidence as linked records instead of hiding file context
-            inside notes.
+            Attach intake evidence as linked records instead of hiding file
+            context inside notes.
           </p>
         </div>
         <div className="space-y-4">
@@ -406,7 +404,9 @@ export function OpportunityForm({
         </label>
 
         <label className="block">
-          <span className="mb-2 block text-sm font-medium text-[var(--text-primary)]">Notes</span>
+          <span className="mb-2 block text-sm font-medium text-[var(--text-primary)]">
+            Notes
+          </span>
           <textarea
             name="notes"
             defaultValue={getValue(opportunity?.notes)}

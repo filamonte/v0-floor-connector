@@ -26,10 +26,15 @@ import { getGateKeeperSubjectMemory } from "@/lib/gatekeeper/memory";
 import {
   startEstimateFromOpportunityAction,
   updateOpportunityAction,
-  updateOpportunityFollowUpAction
+  updateOpportunityFollowUpAction,
+  updateOpportunityStatusAction
 } from "@/lib/opportunities/actions";
 import { getOpportunityById } from "@/lib/opportunities/data";
 import { deriveSalesEstimateReadiness } from "@/lib/opportunities/follow-up-read-model";
+import {
+  formatOpportunityStatusLabel,
+  opportunityStatusesList
+} from "@/lib/opportunities/schemas";
 import { listPeople } from "@/lib/people/data";
 import { createOpportunityAssessmentPackageAction } from "@/lib/projects/assessment-package-actions";
 import { listAssessmentPackagesByOpportunity } from "@/lib/projects/assessment-package-data";
@@ -155,6 +160,52 @@ function getStatusClasses(status: string) {
   }
 }
 
+function OpportunityStatusControl({
+  opportunity,
+  returnTo
+}: {
+  opportunity: NonNullable<Awaited<ReturnType<typeof getOpportunityById>>>;
+  returnTo: string;
+}) {
+  return (
+    <form
+      action={updateOpportunityStatusAction}
+      className="rounded-2xl border border-[#e2d4c5] bg-[#fbf5ee] px-4 py-3"
+    >
+      <input type="hidden" name="opportunityId" value={opportunity.id} />
+      <input type="hidden" name="returnTo" value={returnTo} />
+      <label className="block">
+        <span className="text-xs font-semibold uppercase tracking-[0.16em] text-[#8f5b32]">
+          Opportunity status
+        </span>
+        <select
+          name="status"
+          defaultValue={opportunity.status}
+          className="mt-2 h-10 w-full rounded-[6px] border border-[#d9cdc2] bg-white px-3 text-sm font-medium text-[#221a14] outline-none transition focus:border-[#ef7d32]"
+        >
+          {opportunityStatusesList.map((status) => (
+            <option key={status} value={status}>
+              {formatOpportunityStatusLabel(status)}
+            </option>
+          ))}
+        </select>
+      </label>
+      <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <p className="text-xs leading-5 text-[#6f6256]">
+          Uses the existing opportunity status list. Site visit scheduling
+          details stay in the Site Visit view.
+        </p>
+        <button
+          type="submit"
+          className="inline-flex h-9 items-center justify-center rounded-full bg-brand-700 px-4 text-sm font-medium text-white transition hover:bg-brand-900"
+        >
+          Save status
+        </button>
+      </div>
+    </form>
+  );
+}
+
 function getReadinessToneClasses(tone: "ready" | "attention" | "blocked") {
   switch (tone) {
     case "ready":
@@ -178,9 +229,9 @@ function getLeadNextAction(input: {
 }) {
   if (input.opportunity.status === "lost") {
     return {
-      title: "Reopen the lead before scheduling or estimating",
+      title: "Reopen the opportunity before scheduling or estimating",
       description:
-        "Lost leads stay out of the appointment and estimate handoff until the status is intentionally changed.",
+        "Lost opportunities stay out of the appointment and estimate handoff until the status is intentionally changed.",
       href: input.qualificationHref,
       label: "Review qualification",
       kind: "link" as const
@@ -196,7 +247,7 @@ function getLeadNextAction(input: {
     return {
       title: "Create the site visit / inspection appointment",
       description:
-        "Finish qualification details, then schedule the site visit on this lead before converting it into the customer and project chain.",
+        "Finish Lead Intake details, then schedule the site visit on this opportunity before it enters the customer and project chain.",
       href: input.appointmentHref,
       label: "Create site visit",
       kind: "link" as const
@@ -224,8 +275,8 @@ function getLeadNextAction(input: {
         ? "Continue estimating handoff"
         : "Assign Estimate Writer",
       description: input.estimateWriterName
-        ? `${input.estimateWriterName} is assigned to write the estimate. Keep the handoff, source notes, and estimate start action on this lead.`
-        : "The site assessment is ready for estimating. Assign the estimate writer from this lead before or alongside starting the estimate flow.",
+        ? `${input.estimateWriterName} is assigned to write the estimate. Keep the handoff, source notes, and estimate start action on this opportunity.`
+        : "The site assessment is ready for estimating. Assign the estimate writer from this opportunity before or alongside starting the estimate flow.",
       href: input.estimateHandoffHref,
       label: input.estimateWriterName
         ? "Open estimating handoff"
@@ -238,7 +289,7 @@ function getLeadNextAction(input: {
     return {
       title: "Continue to project / estimate when ready",
       description:
-        "Assessment context is ready. Starting the estimate creates or links the customer and project records without duplicating the lead.",
+        "Assessment context is ready. Starting the estimate creates or links the customer and project records without duplicating pre-sale truth.",
       href: input.estimatePlanHref,
       label: "Start estimate",
       kind: "estimate" as const
@@ -246,11 +297,11 @@ function getLeadNextAction(input: {
   }
 
   return {
-    title: "Keep lead context current",
+    title: "Keep opportunity context current",
     description:
       "Review contact details, site visit state, scope intake, and estimate planning notes.",
     href: input.qualificationHref,
-    label: "Review lead",
+    label: "Review opportunity",
     kind: "link" as const
   };
 }
@@ -451,17 +502,17 @@ export default async function LeadDetailPage({
   return (
     <StandardWorkspaceLayout
       header={{
-        eyebrow: "Lead Workspace",
+        eyebrow: "Opportunity Workspace",
         title: opportunity.title,
         description:
-          "Qualify the lead, schedule the site visit, capture inspection context, and only then move into the customer, project, and estimate chain.",
+          "Use Lead Intake for the first inquiry, then manage this Sales Opportunity as it is qualified, assessed, planned, and handed to estimating.",
         actions: (
           <div className="flex flex-wrap gap-2.5">
             <Link
               href="/leads"
               className="inline-flex items-center rounded-full border border-[#e2d4c5] bg-[#fbf5ee] px-3.5 py-2 text-sm font-medium text-[#5f4d40] transition hover:border-[#caac88] hover:bg-white hover:text-[#2b2118]"
             >
-              Back to leads
+              Back to Leads & Opportunities
             </Link>
             <Link
               href={leadAppointmentHref}
@@ -529,14 +580,14 @@ export default async function LeadDetailPage({
           items={[
             {
               key: "status",
-              label: "Qualification state",
+              label: "Opportunity status",
               content: (
                 <span
                   className={`inline-flex rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] ${getStatusClasses(
                     opportunity.status
                   )}`}
                 >
-                  {formatStatusLabel(opportunity.status)}
+                  {formatOpportunityStatusLabel(opportunity.status)}
                 </span>
               )
             },
@@ -601,8 +652,13 @@ export default async function LeadDetailPage({
         <>
           <DirectoryContextCard
             href={`/directory?view=leads&q=${encodeURIComponent(opportunity.title)}`}
-            recordLabel="Lead opportunity"
-            description="Directory is the read-only scan-and-jump index. This lead page remains the home for pre-customer commercial context and estimate handoff decisions."
+            recordLabel="Sales opportunity"
+            description="Directory is the read-only scan-and-jump index. This Opportunity Workspace remains the home for pre-sale commercial context and estimate handoff decisions."
+          />
+
+          <OpportunityStatusControl
+            opportunity={opportunity}
+            returnTo={overviewHref}
           />
 
           <section className="border border-slate-200 bg-slate-50/80 px-5 py-5">
@@ -644,15 +700,15 @@ export default async function LeadDetailPage({
             >
               <div>
                 <p className="text-sm font-semibold uppercase tracking-[0.24em] text-brand-700">
-                  Lead Detail
+                  Opportunity Workspace
                 </p>
                 <h2 className="mt-4 text-3xl font-semibold tracking-tight text-slate-950">
                   {opportunity.title}
                 </h2>
                 <p className="mt-3 max-w-2xl text-base leading-7 text-slate-600">
-                  Review the lead, complete the site visit and scope intake,
-                  then start the estimate on the shared customer and project
-                  chain.
+                  Review Lead Intake context, complete the site visit and scope
+                  intake, then hand the active sales opportunity into the shared
+                  customer, project, and estimate chain.
                 </p>
               </div>
               <div className="flex flex-wrap gap-3">
@@ -660,7 +716,7 @@ export default async function LeadDetailPage({
                   href="/leads"
                   className="inline-flex items-center rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:bg-white"
                 >
-                  Back to leads
+                  Back to Leads & Opportunities
                 </Link>
                 {canStartEstimate ? (
                   primaryEstimateHref ? (
@@ -716,9 +772,10 @@ export default async function LeadDetailPage({
                   Primary Contact
                 </p>
                 <p className="mt-2 text-sm leading-6 text-slate-500">
-                  This is the upstream lead contact. When a customer is linked,
-                  safe email updates can sync forward into that customer record,
-                  but downstream estimate send uses the linked customer email.
+                  This is the upstream Lead Intake contact. When a customer is
+                  linked, safe email updates can sync forward into that customer
+                  record, but downstream estimate send uses the linked customer
+                  email.
                 </p>
                 <dl className="mt-4 space-y-3 text-sm leading-6 text-slate-600">
                   <div>
@@ -804,7 +861,7 @@ export default async function LeadDetailPage({
                       opportunity.status
                     )}`}
                   >
-                    {formatStatusLabel(opportunity.status)}
+                    {formatOpportunityStatusLabel(opportunity.status)}
                   </span>
                   <dl className="space-y-3 text-sm leading-6 text-slate-600">
                     <div>
@@ -958,8 +1015,8 @@ export default async function LeadDetailPage({
               <div id="scope-intake">
                 <OpportunityForm
                   action={updateOpportunityAction}
-                  submitLabel="Save lead"
-                  pendingLabel="Saving lead..."
+                  submitLabel="Save opportunity"
+                  pendingLabel="Saving opportunity..."
                   opportunity={opportunity}
                 />
               </div>
@@ -1127,10 +1184,10 @@ export default async function LeadDetailPage({
                     Communication & Follow-Up
                   </p>
                   <h2 className="mt-3 text-2xl font-semibold tracking-tight text-slate-950">
-                    Lead communication context
+                    Opportunity communication context
                   </h2>
                   <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
-                    Log manual lead contact and keep the next contractor
+                    Log manual opportunity contact and keep the next contractor
                     follow-up visible. Automated SMS, email, chat, voice, and AI
                     remain future work.
                   </p>
@@ -1258,13 +1315,13 @@ export default async function LeadDetailPage({
                     Work Items
                   </p>
                   <h2 className="mt-3 text-2xl font-semibold tracking-tight text-slate-950">
-                    Internal lead and estimate actions
+                    Internal opportunity and estimate actions
                   </h2>
                   <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
-                    Assign lead follow-up or estimate handoff work tied to this
+                    Assign follow-up or estimate handoff work tied to this
                     opportunity. These items are internal-only and do not change
-                    the lead follow-up date, estimate state, send behavior, or
-                    customer-visible communication.
+                    the opportunity follow-up date, estimate state, send
+                    behavior, or customer-visible communication.
                   </p>
                 </div>
                 <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-600 md:w-72">
@@ -1304,9 +1361,9 @@ export default async function LeadDetailPage({
                     {estimateHandoffCueRequested &&
                     existingOpenEstimateHandoff ? (
                       <div className="mb-4 rounded-[8px] border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-950">
-                        An open estimate handoff already exists for this lead.
-                        Continue the linked Work Item instead of creating a
-                        duplicate estimate handoff.
+                        An open estimate handoff already exists for this
+                        opportunity. Continue the linked Work Item instead of
+                        creating a duplicate estimate handoff.
                       </div>
                     ) : null}
                     <WorkItemCreateForm
@@ -1355,8 +1412,8 @@ export default async function LeadDetailPage({
                       returnTo={workItemsHref}
                       completeAction={completeWorkItemAction}
                       dismissAction={dismissWorkItemAction}
-                      emptyTitle="No work items are linked to this lead yet."
-                      emptyDescription="Create an internal work item when lead follow-up or estimate handoff work needs an owner, due date, blocker note, or explicit completion state."
+                      emptyTitle="No work items are linked to this opportunity yet."
+                      emptyDescription="Create an internal work item when opportunity follow-up or estimate handoff work needs an owner, due date, blocker note, or explicit completion state."
                     />
                   </div>
                 </section>
@@ -1508,12 +1565,12 @@ export default async function LeadDetailPage({
             {canStartEstimate ? (
               <div className="mt-6 rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-sm leading-6 text-emerald-900">
                 Use the primary action in the header to start estimate from this
-                lead.
+                opportunity.
               </div>
             ) : (
               <div className="mt-6 rounded-2xl border border-rose-200 bg-rose-50 px-5 py-4 text-sm leading-6 text-rose-900">
-                Lost leads do not move into the estimate workflow unless the
-                status is reopened.
+                Lost opportunities do not move into the estimate workflow unless
+                the status is reopened.
               </div>
             )}
 
@@ -1615,7 +1672,7 @@ export default async function LeadDetailPage({
                         subtitle={
                           appointment.project?.name ??
                           appointment.customer?.name ??
-                          "Lead-linked appointment"
+                          "Opportunity-linked appointment"
                         }
                         meta={`${appointment.appointmentType.replaceAll("_", " ")} | ${new Date(appointment.startsAt).toLocaleString()}`}
                         badge={
@@ -1628,8 +1685,8 @@ export default async function LeadDetailPage({
                 ) : (
                   <AppEmptyState
                     eyebrow="No appointments"
-                    title="Schedule the next lead visit here"
-                    description="Use appointments for assessments, estimate meetings, and follow-up visits while keeping the real workflow on the same lead and downstream project chain."
+                    title="Schedule the next opportunity visit here"
+                    description="Use appointments for assessments, estimate meetings, and follow-up visits while keeping the real workflow on the same opportunity and downstream project chain."
                     actionHref={leadAppointmentHref}
                     actionLabel="Create appointment"
                   />

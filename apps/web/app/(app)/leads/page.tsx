@@ -11,7 +11,11 @@ import { listAppointments } from "@/lib/appointments/data";
 import { getActiveOrganizationContext } from "@/lib/organizations/active-context";
 import { quickCreateOpportunityAction } from "@/lib/opportunities/actions";
 import { listOpportunities } from "@/lib/opportunities/data";
-import { parsePerspectiveView, type PerspectiveView } from "@/lib/perspectives/types";
+import { formatOpportunityStatusLabel } from "@/lib/opportunities/schemas";
+import {
+  parsePerspectiveView,
+  type PerspectiveView
+} from "@/lib/perspectives/types";
 import { listLeadFollowUpQueue } from "@/lib/opportunities/follow-up-data";
 import {
   labelLeadFollowUpBucket,
@@ -124,8 +128,12 @@ export default async function LeadsPage({ searchParams }: LeadsPageProps) {
   const dueFollowUps = leadFollowUps.filter(
     (item) => item.bucket === "overdue" || item.bucket === "due_today"
   );
-  const overdueFollowUps = leadFollowUps.filter((item) => item.bucket === "overdue");
-  const noFollowUps = leadFollowUps.filter((item) => item.bucket === "no_follow_up");
+  const overdueFollowUps = leadFollowUps.filter(
+    (item) => item.bucket === "overdue"
+  );
+  const noFollowUps = leadFollowUps.filter(
+    (item) => item.bucket === "no_follow_up"
+  );
   const myLeadIds = new Set(
     appointments
       .filter(
@@ -140,8 +148,7 @@ export default async function LeadsPage({ searchParams }: LeadsPageProps) {
     ...appointments
       .filter(
         (appointment) =>
-          appointment.opportunityId &&
-          appointment.status === "scheduled"
+          appointment.opportunityId && appointment.status === "scheduled"
       )
       .map((appointment) => ({
         opportunityId: appointment.opportunityId as string,
@@ -169,13 +176,15 @@ export default async function LeadsPage({ searchParams }: LeadsPageProps) {
   }
 
   const visibleOpportunities = opportunities.filter((opportunity) => {
-    const matchesView = view === "company" ? true : myLeadIds.has(opportunity.id);
+    const matchesView =
+      view === "company" ? true : myLeadIds.has(opportunity.id);
     const followUpItem = followUpByOpportunityId.get(opportunity.id);
     const matchesFollowUp =
       followUpView === "all"
         ? true
         : followUpView === "due"
-          ? followUpItem?.bucket === "overdue" || followUpItem?.bucket === "due_today"
+          ? followUpItem?.bucket === "overdue" ||
+            followUpItem?.bucket === "due_today"
           : followUpView === "overdue"
             ? followUpItem?.bucket === "overdue"
             : followUpItem?.bucket === "no_follow_up";
@@ -200,53 +209,91 @@ export default async function LeadsPage({ searchParams }: LeadsPageProps) {
     return matchesView && matchesFollowUp && matchesQuery;
   });
 
-  const newLeads = opportunities.filter((opportunity) => opportunity.status === "new");
-  const proposalSentLeads = opportunities.filter(
+  const newIntake = opportunities.filter(
+    (opportunity) => opportunity.status === "new"
+  );
+  const proposalSentOpportunities = opportunities.filter(
     (opportunity) => opportunity.status === "proposal_sent"
   );
-  const myLeads = opportunities.filter((opportunity) => myLeadIds.has(opportunity.id));
+  const myOpportunities = opportunities.filter((opportunity) =>
+    myLeadIds.has(opportunity.id)
+  );
   const nextTasks = leadActivities.filter(
     (activity) => new Date(activity.startsAt) >= new Date()
   );
   const stageFunnel = [
-    { key: "new", label: "New", count: opportunities.filter((o) => o.status === "new").length },
-    { key: "contacted", label: "Contacted", count: opportunities.filter((o) => o.status === "contacted").length },
-    { key: "qualified", label: "Qualified", count: opportunities.filter((o) => o.status === "qualified").length },
-    { key: "site_assessment_scheduled", label: "Assessment scheduled", count: opportunities.filter((o) => o.status === "site_assessment_scheduled").length },
-    { key: "estimating", label: "Estimating", count: opportunities.filter((o) => o.status === "estimating").length },
-    { key: "proposal_sent", label: "Proposal sent", count: proposalSentLeads.length },
-    { key: "won", label: "Won", count: opportunities.filter((o) => o.status === "won").length }
+    { key: "new", label: "New intake", count: newIntake.length },
+    {
+      key: "contacted",
+      label: "Contacted",
+      count: opportunities.filter((o) => o.status === "contacted").length
+    },
+    {
+      key: "qualified",
+      label: "Qualified opportunity",
+      count: opportunities.filter((o) => o.status === "qualified").length
+    },
+    {
+      key: "site_assessment_scheduled",
+      label: "Site visit scheduled",
+      count: opportunities.filter(
+        (o) => o.status === "site_assessment_scheduled"
+      ).length
+    },
+    {
+      key: "estimating",
+      label: "Estimating",
+      count: opportunities.filter((o) => o.status === "estimating").length
+    },
+    {
+      key: "proposal_sent",
+      label: "Proposal sent",
+      count: proposalSentOpportunities.length
+    },
+    {
+      key: "won",
+      label: "Won",
+      count: opportunities.filter((o) => o.status === "won").length
+    }
   ];
 
   return (
     <ContractorWorkspacePage
-      eyebrow="Leads"
-      title={`Lead manager for ${organizationContext.organization.displayName}`}
-      description="Run intake and sales follow-up from one board: all leads, assigned leads, new leads to contact, upcoming tasks, and a real stage funnel grounded in saved opportunities and appointments."
+      eyebrow="Sales"
+      title={`Leads & Opportunities for ${organizationContext.organization.displayName}`}
+      description="Run Lead Intake and active Sales Opportunity follow-up from one board, while preserving the existing /leads route and canonical opportunities records."
       summary={
         <div className="grid gap-px border border-[#d9cdc2] bg-[#d9cdc2] sm:grid-cols-2 xl:grid-cols-4">
           <div className="bg-white px-4 py-3">
-            <p className="text-[11px] uppercase tracking-[0.14em] text-[#8f7f72]">All leads</p>
+            <p className="text-[11px] uppercase tracking-[0.14em] text-[#8f7f72]">
+              All opportunities
+            </p>
             <p className="mt-1 text-2xl font-semibold tracking-tight text-[#221a14]">
               {opportunities.length}
             </p>
           </div>
           <div className="bg-white px-4 py-3">
-            <p className="text-[11px] uppercase tracking-[0.14em] text-[#8f7f72]">My leads</p>
+            <p className="text-[11px] uppercase tracking-[0.14em] text-[#8f7f72]">
+              My opportunities
+            </p>
             <p className="mt-1 text-2xl font-semibold tracking-tight text-[#221a14]">
-              {myLeads.length}
+              {myOpportunities.length}
             </p>
           </div>
           <div className="bg-white px-4 py-3">
-            <p className="text-[11px] uppercase tracking-[0.14em] text-[#8f7f72]">New to contact</p>
+            <p className="text-[11px] uppercase tracking-[0.14em] text-[#8f7f72]">
+              New intake
+            </p>
             <p className="mt-1 text-2xl font-semibold tracking-tight text-[#221a14]">
-              {newLeads.length}
+              {newIntake.length}
             </p>
           </div>
           <div className="bg-white px-4 py-3">
-            <p className="text-[11px] uppercase tracking-[0.14em] text-[#8f7f72]">Proposal sent</p>
+            <p className="text-[11px] uppercase tracking-[0.14em] text-[#8f7f72]">
+              Proposal sent
+            </p>
             <p className="mt-1 text-2xl font-semibold tracking-tight text-[#221a14]">
-              {proposalSentLeads.length}
+              {proposalSentOpportunities.length}
             </p>
           </div>
         </div>
@@ -254,21 +301,27 @@ export default async function LeadsPage({ searchParams }: LeadsPageProps) {
       commandBar={{
         supportSlot: (
           <p>
-            This board stays grounded in real opportunity stages and real scheduled follow-up, with the next estimate handoff kept visible on the same lead chain.
+            This board keeps first inquiries visible as Lead Intake, then tracks
+            active Sales Opportunities through qualification, site visit,
+            estimating, and proposal follow-up.
           </p>
         ),
         searchSlot: (
           <form action="/leads" className="flex flex-col gap-2 sm:flex-row">
-            {view !== "company" ? <input type="hidden" name="view" value={view} /> : null}
+            {view !== "company" ? (
+              <input type="hidden" name="view" value={view} />
+            ) : null}
             {followUpView !== "all" ? (
               <input type="hidden" name="followUp" value={followUpView} />
             ) : null}
-            {showComposer ? <input type="hidden" name="compose" value="1" /> : null}
+            {showComposer ? (
+              <input type="hidden" name="compose" value="1" />
+            ) : null}
             <input
               type="search"
               name="q"
               defaultValue={query}
-              placeholder="Search lead, contact, company, source, job type, or site"
+              placeholder="Search opportunity, contact, company, source, job type, or site"
               className="min-w-0 flex-1 rounded-[4px] border border-[#d9cdc2] bg-white px-4 py-2.5 text-sm text-[#221a14] outline-none transition placeholder:text-[#9a8b80] focus:border-[#c59a6b]"
             />
             <button
@@ -277,7 +330,10 @@ export default async function LeadsPage({ searchParams }: LeadsPageProps) {
             >
               Search
             </button>
-            {query.length > 0 || view !== "company" || followUpView !== "all" || showComposer ? (
+            {query.length > 0 ||
+            view !== "company" ||
+            followUpView !== "all" ||
+            showComposer ? (
               <Link
                 href="/leads"
                 className="inline-flex items-center justify-center rounded-[4px] border border-transparent px-4 py-2.5 text-sm font-medium text-slate-500 transition hover:text-slate-900"
@@ -300,12 +356,26 @@ export default async function LeadsPage({ searchParams }: LeadsPageProps) {
               })
             }
           />,
-          ...([
-            { key: "all", label: "All follow-up", count: leadFollowUps.length },
-            { key: "due", label: "Due", count: dueFollowUps.length },
-            { key: "overdue", label: "Overdue", count: overdueFollowUps.length },
-            { key: "no_follow_up", label: "No follow-up", count: noFollowUps.length }
-          ] as const).map((item) => {
+          ...(
+            [
+              {
+                key: "all",
+                label: "All follow-up",
+                count: leadFollowUps.length
+              },
+              { key: "due", label: "Due", count: dueFollowUps.length },
+              {
+                key: "overdue",
+                label: "Overdue",
+                count: overdueFollowUps.length
+              },
+              {
+                key: "no_follow_up",
+                label: "No follow-up",
+                count: noFollowUps.length
+              }
+            ] as const
+          ).map((item) => {
             const isActive = followUpView === item.key;
 
             return (
@@ -328,7 +398,9 @@ export default async function LeadsPage({ searchParams }: LeadsPageProps) {
                 <span
                   className={[
                     "rounded-full px-2 py-0.5 text-xs font-semibold",
-                    isActive ? "bg-white/15 text-white" : "bg-[#f2e7dc] text-[#8f5b32]"
+                    isActive
+                      ? "bg-white/15 text-white"
+                      : "bg-[#f2e7dc] text-[#8f5b32]"
                   ].join(" ")}
                 >
                   {item.count}
@@ -340,12 +412,16 @@ export default async function LeadsPage({ searchParams }: LeadsPageProps) {
         actionSlot: (
           <Link
             href={
-              buildLeadsHref({ q: query, view, followUp: followUpView, compose: "1" }) +
-              "#lead-create"
+              buildLeadsHref({
+                q: query,
+                view,
+                followUp: followUpView,
+                compose: "1"
+              }) + "#lead-create"
             }
             className="inline-flex items-center rounded-[3px] border border-[#ef7d32] bg-[#ef7d32] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#de6c22]"
           >
-            New lead
+            New intake
           </Link>
         )
       }}
@@ -366,25 +442,33 @@ export default async function LeadsPage({ searchParams }: LeadsPageProps) {
         <section className="order-2 grid gap-3 xl:auto-rows-fr xl:grid-cols-2">
           <ManagerDashboardCard
             eyebrow="Contact now"
-            title="New leads to contact"
-            description="Fresh opportunities that still need the first outreach touch."
-            actionHref={buildLeadsHref({ q: query, view, followUp: followUpView })}
+            title="New intake to contact"
+            description="Fresh inquiries that still need the first outreach touch before they become qualified sales opportunities."
+            actionHref={buildLeadsHref({
+              q: query,
+              view,
+              followUp: followUpView
+            })}
             actionLabel="Open new leads"
-            items={newLeads.slice(0, 5).map((opportunity) => ({
+            items={newIntake.slice(0, 5).map((opportunity) => ({
               href: `/leads/${opportunity.id}`,
               title: opportunity.title,
-              subtitle: opportunity.primaryContact?.displayName ?? opportunity.prospectName,
-              meta: opportunity.source ? `Source: ${opportunity.source}` : opportunity.jobType ?? null,
+              subtitle:
+                opportunity.primaryContact?.displayName ??
+                opportunity.prospectName,
+              meta: opportunity.source
+                ? `Source: ${opportunity.source}`
+                : (opportunity.jobType ?? null),
               trailing: opportunity.siteName ?? "Site pending"
             }))}
-            emptyTitle="No new leads need first contact."
-            emptyDescription="New intake will surface here as soon as an opportunity is created."
+            emptyTitle="No new intake needs first contact."
+            emptyDescription="New Lead Intake will surface here as soon as an opportunity is created."
           />
 
           <ManagerDashboardCard
             eyebrow="Next tasks"
             title="Immediate sales follow-up"
-            description="Real scheduled lead work from opportunity-linked appointments and assessments."
+            description="Real scheduled sales work from opportunity-linked appointments and assessments."
             actionHref={buildLeadsHref({ q: query, view, followUp: "due" })}
             actionLabel="Review tasks"
             items={nextTasks.slice(0, 5).map((activity) => ({
@@ -402,8 +486,12 @@ export default async function LeadsPage({ searchParams }: LeadsPageProps) {
             eyebrow="Upcoming"
             title="Upcoming tasks and assessments"
             description="Keep the next round of sales follow-up visible without inventing a separate task engine."
-            actionHref={buildLeadsHref({ q: query, view, followUp: followUpView })}
-            actionLabel="Open lead board"
+            actionHref={buildLeadsHref({
+              q: query,
+              view,
+              followUp: followUpView
+            })}
+            actionLabel="Open sales board"
             items={nextTasks.slice(5, 10).map((activity) => ({
               href: `/leads/${activity.opportunityId}`,
               title: activity.title,
@@ -421,17 +509,20 @@ export default async function LeadsPage({ searchParams }: LeadsPageProps) {
                 Funnel
               </p>
               <h3 className="mt-1 text-[17px] font-semibold tracking-tight text-[#221a14]">
-                Lead stage funnel
+                Opportunity stage funnel
               </h3>
               <p className="mt-1 text-xs leading-5 text-[#6f6256]">
-                Real opportunity stages only, so the sales view stays honest to the current workflow.
+                Real opportunity stages only, so the sales view stays honest to
+                the current workflow.
               </p>
             </div>
             <div className="space-y-2 px-4 py-3">
               {stageFunnel.map((stage, index) => (
                 <div key={stage.key} className="space-y-2">
                   <div className="flex items-center justify-between gap-4 text-sm">
-                    <span className="font-medium text-[#221a14]">{stage.label}</span>
+                    <span className="font-medium text-[#221a14]">
+                      {stage.label}
+                    </span>
                     <span className="text-[#8f7f72]">{stage.count}</span>
                   </div>
                   <div className="h-3 overflow-hidden rounded-full bg-[#f2e7dc]">
@@ -441,7 +532,8 @@ export default async function LeadsPage({ searchParams }: LeadsPageProps) {
                         width: `${Math.max(
                           8,
                           opportunities.length > 0
-                            ? (stage.count / opportunities.length) * (100 - index * 6)
+                            ? (stage.count / opportunities.length) *
+                                (100 - index * 6)
                             : 8
                         )}%`
                       }}
@@ -457,10 +549,10 @@ export default async function LeadsPage({ searchParams }: LeadsPageProps) {
           <div className="flex items-center justify-between gap-4 border-b border-[#e8ded5] px-4 py-2.5">
             <div>
               <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#a4581a]">
-                Lead records
+                Opportunity records
               </p>
               <h3 className="mt-1 text-[17px] font-semibold tracking-tight text-[#221a14]">
-                {view === "my" ? "Assigned leads" : "All leads"}
+                {view === "my" ? "Assigned opportunities" : "All opportunities"}
               </h3>
             </div>
             <p className="text-sm leading-6 text-slate-500">
@@ -473,9 +565,9 @@ export default async function LeadsPage({ searchParams }: LeadsPageProps) {
               <table className="min-w-full divide-y divide-slate-200 text-sm">
                 <thead className="bg-[#f7f3ef] text-left text-[11px] font-semibold uppercase tracking-[0.18em] text-[#8f7f72]">
                   <tr>
-                    <th className="px-4 py-2.5">Lead</th>
+                    <th className="px-4 py-2.5">Opportunity</th>
                     <th className="px-4 py-2.5">Primary contact</th>
-                    <th className="px-4 py-2.5">Stage</th>
+                    <th className="px-4 py-2.5">Status</th>
                     <th className="px-4 py-2.5">Follow-up / next step</th>
                     <th className="px-4 py-2.5">Assigned</th>
                     <th className="px-4 py-2.5 text-right">Action</th>
@@ -483,8 +575,12 @@ export default async function LeadsPage({ searchParams }: LeadsPageProps) {
                 </thead>
                 <tbody className="divide-y divide-slate-200 bg-white">
                   {visibleOpportunities.map((opportunity) => {
-                    const nextActivity = nextActivityByOpportunity.get(opportunity.id);
-                    const followUpItem = followUpByOpportunityId.get(opportunity.id);
+                    const nextActivity = nextActivityByOpportunity.get(
+                      opportunity.id
+                    );
+                    const followUpItem = followUpByOpportunityId.get(
+                      opportunity.id
+                    );
                     const actionHref =
                       opportunity.status === "lost"
                         ? `/leads/${opportunity.id}`
@@ -492,7 +588,9 @@ export default async function LeadsPage({ searchParams }: LeadsPageProps) {
                           ? `/estimates?projectId=${opportunity.projectId}&opportunityId=${opportunity.id}`
                           : `/leads/${opportunity.id}`;
                     const actionLabel =
-                      opportunity.status === "lost" ? "Open lead" : "Start estimate";
+                      opportunity.status === "lost"
+                        ? "Open opportunity"
+                        : "Start estimate";
 
                     return (
                       <tr key={opportunity.id} className="hover:bg-[#fbf7f2]">
@@ -504,12 +602,15 @@ export default async function LeadsPage({ searchParams }: LeadsPageProps) {
                             {opportunity.title}
                           </Link>
                           <p className="mt-0.5 text-sm leading-5 text-slate-500">
-                            {opportunity.jobType ?? opportunity.serviceType ?? "Job type pending"}
+                            {opportunity.jobType ??
+                              opportunity.serviceType ??
+                              "Job type pending"}
                           </p>
                         </td>
                         <td className="px-4 py-2.5">
                           <p className="font-medium text-slate-700">
-                            {opportunity.primaryContact?.displayName ?? opportunity.prospectName}
+                            {opportunity.primaryContact?.displayName ??
+                              opportunity.prospectName}
                           </p>
                           <p className="mt-0.5 text-sm leading-5 text-slate-500">
                             {opportunity.primaryContact?.companyName ??
@@ -520,7 +621,7 @@ export default async function LeadsPage({ searchParams }: LeadsPageProps) {
                         </td>
                         <td className="px-4 py-2.5">
                           <span className="inline-flex rounded-[3px] border border-[#d9cdc2] bg-[#fbf7f2] px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-[#594839]">
-                            {formatStatusLabel(opportunity.status)}
+                            {formatOpportunityStatusLabel(opportunity.status)}
                           </span>
                           {followUpItem ? (
                             <span
@@ -534,13 +635,16 @@ export default async function LeadsPage({ searchParams }: LeadsPageProps) {
                           ) : null}
                         </td>
                         <td className="px-4 py-2.5">
-                          {followUpItem && followUpItem.bucket !== "no_follow_up" ? (
+                          {followUpItem &&
+                          followUpItem.bucket !== "no_follow_up" ? (
                             <>
                               <p className="font-medium text-slate-700">
                                 {labelLeadFollowUpBucket(followUpItem.bucket)}
                               </p>
                               <p className="mt-0.5 text-sm leading-5 text-slate-500">
-                                {formatDateLabel(followUpItem.nextFollowUpAt as string)}
+                                {formatDateLabel(
+                                  followUpItem.nextFollowUpAt as string
+                                )}
                               </p>
                               {followUpItem.nextFollowUpNote ? (
                                 <p className="mt-0.5 max-w-sm text-sm leading-5 text-slate-500">
@@ -549,13 +653,18 @@ export default async function LeadsPage({ searchParams }: LeadsPageProps) {
                               ) : null}
                               {followUpItem.lastCommunicationAt ? (
                                 <p className="mt-0.5 text-xs leading-5 text-slate-400">
-                                  Last touch {formatDateLabel(followUpItem.lastCommunicationAt)}
+                                  Last touch{" "}
+                                  {formatDateLabel(
+                                    followUpItem.lastCommunicationAt
+                                  )}
                                 </p>
                               ) : null}
                             </>
                           ) : nextActivity ? (
                             <>
-                              <p className="font-medium text-slate-700">{nextActivity.label}</p>
+                              <p className="font-medium text-slate-700">
+                                {nextActivity.label}
+                              </p>
                               <p className="mt-0.5 text-sm leading-5 text-slate-500">
                                 {formatDateLabel(nextActivity.startsAt)}
                               </p>
@@ -563,8 +672,8 @@ export default async function LeadsPage({ searchParams }: LeadsPageProps) {
                           ) : (
                             <p className="text-sm leading-5 text-slate-500">
                               {opportunity.status === "lost"
-                                ? "Reopen this lead before it can move forward."
-                                : "No follow-up date set. Add one from lead detail when the next touch is known."}
+                                ? "Reopen this opportunity before it can move forward."
+                                : "No follow-up date set. Add one from the Opportunity Workspace when the next touch is known."}
                             </p>
                           )}
                         </td>
@@ -599,17 +708,19 @@ export default async function LeadsPage({ searchParams }: LeadsPageProps) {
             <div className="px-6 py-8 sm:px-8">
               <AppEmptyState
                 eyebrow={
-                  opportunities.length > 0 ? "No matching opportunities" : "No leads yet"
+                  opportunities.length > 0
+                    ? "No matching opportunities"
+                    : "No opportunities yet"
                 }
                 title={
                   opportunities.length > 0
                     ? "Adjust the lead filters"
-                    : "Create the first lead"
+                    : "Create the first intake"
                 }
                 description={
                   opportunities.length > 0
                     ? "Try a broader search or switch between all leads and assigned leads."
-                    : "Start here with a real opportunity when the customer and scope are still being qualified. The lead can then move into the shared customer, project, estimate, and billing chain."
+                    : "Start here with Lead Intake while the customer and scope are still being qualified. The opportunity can then move into the shared customer, project, estimate, and billing chain."
                 }
                 actionHref={
                   buildLeadsHref({
@@ -619,7 +730,7 @@ export default async function LeadsPage({ searchParams }: LeadsPageProps) {
                     compose: "1"
                   }) + "#lead-create"
                 }
-                actionLabel="Create your first lead"
+                actionLabel="Create your first intake"
               />
             </div>
           )}
@@ -628,12 +739,17 @@ export default async function LeadsPage({ searchParams }: LeadsPageProps) {
 
       <WorkspaceComposerSheet
         id="lead-create"
-        title="Quick create lead"
-        description="Capture the minimum opportunity context here, create the lead, and then qualify it in the full lead workspace before you start an estimate."
+        title="Quick create Lead Intake"
+        description="Capture the minimum intake context here, create the canonical opportunity, and then qualify it in the Opportunity Workspace before you start an estimate."
         open={showComposer}
-        openHref={buildLeadsHref({ q: query, view, followUp: followUpView, compose: "1" })}
+        openHref={buildLeadsHref({
+          q: query,
+          view,
+          followUp: followUpView,
+          compose: "1"
+        })}
         closeHref={buildLeadsHref({ q: query, view, followUp: followUpView })}
-        openLabel="Open lead quick create"
+        openLabel="Open Lead Intake quick create"
       >
         <OpportunityQuickCreateForm action={quickCreateOpportunityAction} />
       </WorkspaceComposerSheet>

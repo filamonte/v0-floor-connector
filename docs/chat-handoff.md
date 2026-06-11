@@ -137,6 +137,14 @@ surface and `Opportunity Workspace` for detail surfaces. Preserve `/leads`,
 `opportunities` schema for now. Do not create a duplicate Lead table or broad
 route rename as part of status or workflow polish.
 
+Current implementation note: the first UI copy/status slice now applies that
+decision without route or schema churn. `/leads` reads as `Leads &
+Opportunities`, `/leads/:leadId` reads as `Opportunity Workspace`, and the
+detail support column includes a compact status selector backed by the existing
+canonical opportunity statuses. It adds no status configuration, table rename,
+route rename, duplicate Lead model, Supabase migration, provider behavior, or
+portal/customer-facing behavior.
+
 Role-aware dashboards and workspace personalization are approved target
 direction only. Preferred model: Platform Defaults -> Organization Presets ->
 User Personalization. These layers may change presentation, ordering, filtering,
