@@ -2,9 +2,11 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
 import {
+  normalizeProjectWorkspaceFrameworkV2ViewId,
   ProjectStateSummary,
   WorkflowBar,
   getStatusBadgeClassName,
+  type ProjectWorkspaceFrameworkV2ViewId,
   type ProjectStateItem,
   type WorkflowStep
 } from "@floorconnector/ui";
@@ -20,7 +22,6 @@ import { CoreWorkflowSection } from "@/components/layout/core-workflow-section";
 import { ExecutionSection } from "@/components/layout/execution-section";
 import { SupportSection } from "@/components/layout/support-section";
 import { ContextFactsList } from "@/components/context-facts-list";
-import { DetailPageHeader } from "@/components/detail-page-header";
 import { DetailPanel } from "@/components/detail-panel";
 import { GateKeeperSubjectMemoryPanel } from "@/components/gatekeeper-subject-memory-panel";
 import { LinkedRecordCard } from "@/components/linked-record-card";
@@ -66,6 +67,8 @@ import { RoleSlotControls } from "@/components/role-slots/role-slot-controls";
 import { ServiceWarrantyContinuityPanel } from "@/components/service-warranty-continuity-panel";
 import { WorkItemCreateForm } from "@/components/work-items/work-item-create-form";
 import { WorkItemList } from "@/components/work-items/work-item-list";
+import { StandardWorkspaceLayout } from "@/components/workspace/standard-workspace-layout";
+import { WorkspaceSummaryBand } from "@/components/workspace-summary-band";
 import { listContracts } from "@/lib/contracts/data";
 import {
   deriveCloseoutTrailSummary,
@@ -219,6 +222,7 @@ type ProjectDetailPageProps = {
   searchParams?: Promise<{
     error?: string;
     message?: string;
+    view?: string;
     workItemCue?: string;
   }>;
 };
@@ -370,6 +374,22 @@ function formatMoney(value: string | number) {
 
 function formatDateTime(value: string | null) {
   return value ? new Date(value).toLocaleString() : "Not marked yet";
+}
+
+function getProjectWorkspaceHref(
+  projectWorkspaceHref: string,
+  view: ProjectWorkspaceFrameworkV2ViewId,
+  options?: {
+    workItemCue?: string;
+  }
+) {
+  const params = new URLSearchParams({ view });
+
+  if (options?.workItemCue) {
+    params.set("workItemCue", options.workItemCue);
+  }
+
+  return `${projectWorkspaceHref}?${params.toString()}`;
 }
 
 function joinMetaParts(parts: Array<string | null | undefined>) {
@@ -3508,6 +3528,36 @@ export default async function ProjectDetailPage({
     notFound();
   }
 
+  const projectWorkspaceHref = `/projects/${project.id}`;
+  const currentView = normalizeProjectWorkspaceFrameworkV2ViewId(
+    resolvedSearchParams.view
+  );
+  const overviewHref = getProjectWorkspaceHref(
+    projectWorkspaceHref,
+    "overview"
+  );
+  const readinessHref = getProjectWorkspaceHref(
+    projectWorkspaceHref,
+    "readiness"
+  );
+  const scopeHref = getProjectWorkspaceHref(projectWorkspaceHref, "scope");
+  const commercialHref = getProjectWorkspaceHref(
+    projectWorkspaceHref,
+    "commercial"
+  );
+  const productionHref = getProjectWorkspaceHref(
+    projectWorkspaceHref,
+    "production"
+  );
+  const financialHref = getProjectWorkspaceHref(
+    projectWorkspaceHref,
+    "financial"
+  );
+  const activityHref = getProjectWorkspaceHref(
+    projectWorkspaceHref,
+    "activity"
+  );
+
   const customerPortalAccessGrants = project.customerId
     ? await listPortalAccessGrantsByCustomer(
         project.customerId,
@@ -5503,1027 +5553,1399 @@ export default async function ProjectDetailPage({
   ];
 
   return (
-    <div className="grid min-w-0 gap-8 xl:grid-cols-[minmax(0,1.12fr)_320px]">
-      <section className="min-w-0 space-y-10">
-        <div
-          className={["p-5 sm:p-6", projectWorkspacePanelClassName].join(" ")}
-        >
-          <DetailPageHeader
-            eyebrow="Project Workspace"
-            title={project.name}
-            description="Use this workspace to see the connected records behind the project and move the next estimate, contract, progress billing, or invoice step forward without hopping across modules."
-            backHref="/projects"
-            backLabel="Back to projects"
-            actions={
-              <>
-                <div className="flex flex-wrap gap-2.5">
-                  <Link
-                    href={buildProjectEstimateCreateHref(
-                      project.id,
-                      project.customerId,
-                      projectOpportunity?.id
-                    )}
-                    className={secondaryActionClassName}
-                  >
-                    Create Estimate
-                  </Link>
-                  {approvedEstimateId && projectContracts.length === 0 ? (
-                    <Link
-                      href={`/contracts?estimateId=${approvedEstimateId}`}
-                      className={secondaryActionClassName}
-                    >
-                      Generate contract
-                    </Link>
-                  ) : null}
-                  <Link
-                    href={`/appointments?projectId=${project.id}&customerId=${project.customerId}&compose=1#appointment-create`}
-                    className={secondaryActionClassName}
-                  >
-                    Create appointment
-                  </Link>
-                  {readinessSnapshot?.depositRequired &&
-                  !readinessSnapshot.depositSatisfied ? (
-                    <Link
-                      href={`/invoices?projectId=${project.id}&estimateId=${approvedEstimateId ?? ""}&workflowRole=deposit`}
-                      className={secondaryActionClassName}
-                    >
-                      Create deposit invoice
-                    </Link>
-                  ) : null}
-                  {canCreateInvoice && completedJobId ? (
-                    <Link
-                      href={`/invoices?projectId=${project.id}&jobId=${completedJobId}`}
-                      className={secondaryActionClassName}
-                    >
-                      Create invoice
-                    </Link>
-                  ) : null}
-                </div>
-              </>
-            }
-          />
-
-          {resolvedSearchParams.error ? (
-            <div className="mt-6 rounded-2xl border border-rose-200 bg-rose-50 px-5 py-4 text-sm leading-6 text-rose-800">
-              {resolvedSearchParams.error}
-            </div>
-          ) : null}
-
-          {resolvedSearchParams.message ? (
-            <div className="mt-6 rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-sm leading-6 text-emerald-800">
-              {resolvedSearchParams.message}
-            </div>
-          ) : null}
-
-          <div className="mt-6 space-y-4">
-            <ProjectReadinessNextActionPanel
-              showNextBestActionGuidance={showNextBestActionGuidance}
-              nextAction={nextAction}
-              readinessLabel={
-                readinessSnapshot?.isReadyToSchedule
-                  ? "Ready to schedule"
-                  : formatStatusLabel(readinessStatus)
-              }
-              readinessDetail={
-                readinessSnapshot?.isReadyToSchedule
-                  ? "Commercial handoff is complete. The next move should stay on the canonical job and schedule chain."
-                  : "Readiness blockers are linked to the canonical record that can resolve them where the current data makes that link available."
-              }
-              isReadyToSchedule={Boolean(readinessSnapshot?.isReadyToSchedule)}
-              readyToScheduleAt={readyToScheduleAt}
-              blockers={readinessBlockerItems}
-              hasActiveBlockers={workspaceBlockers.length > 0}
-              meta={`${project.customer?.name ?? "Unknown customer"} / ${formatLocation(
-                [
-                  project.addressLine1,
-                  project.city,
-                  project.stateRegion,
-                  project.postalCode
-                ]
-              )}`}
-            />
-
-            <ProjectNextActionsPanel summary={projectNextActions} />
-
-            {showReadinessGuidancePanel ? (
-              <WorkflowBar title="Project workflow" steps={workflowSteps} />
-            ) : null}
-
-            <ProjectStateSummary
-              title="Project state summary"
-              items={projectStateItems}
-            />
-
-            <RoleSlotControls
-              title="Ownership Roles"
-              description="Internal role metadata for customer ownership, onsite context, follow-up, and later sales-credit attribution. This does not calculate commissions or change Work Item assignment."
-              recordIdName="projectId"
-              recordId={project.id}
-              returnTo={`/projects/${project.id}`}
-              action={updateProjectRoleSlotsAction}
-              people={assignablePeople}
-              controls={[
-                {
-                  role: "onsite_rep",
-                  fieldName: "onsiteRepPersonId",
-                  personId: project.onsiteRepPersonId
-                },
-                {
-                  role: "relationship_owner",
-                  fieldName: "relationshipOwnerPersonId",
-                  personId: project.relationshipOwnerPersonId
-                },
-                {
-                  role: "follow_up_owner",
-                  fieldName: "followUpOwnerPersonId",
-                  personId: project.followUpOwnerPersonId
-                },
-                {
-                  role: "sales_credit_owner",
-                  fieldName: "salesCreditOwnerPersonId",
-                  personId: project.salesCreditOwnerPersonId
-                }
-              ]}
-            />
-
-            <OperationalCommandCenter
-              customerName={project.customer?.name ?? "Unknown customer"}
-              projectLocation={formatLocation([
-                project.addressLine1,
-                project.city,
-                project.stateRegion,
-                project.postalCode
-              ])}
-              nextAction={nextAction}
-              blockerCount={workspaceBlockers.length}
-              readinessLabel={
-                readinessSnapshot?.isReadyToSchedule
-                  ? "Ready to schedule"
-                  : formatStatusLabel(readinessStatus)
-              }
-              readinessDetail={
-                readinessSnapshot?.isReadyToSchedule
-                  ? "Commercial handoff is complete."
-                  : "Clear the current gate before operations moves forward."
-              }
-              summaryItems={commandSummaryItems}
-            />
-
-            <ProjectOperationalIntelligenceSection
-              summary={projectOperationalSummary}
-            />
-
-            <ProjectCommandCenterMapSection
-              items={projectCommandCenterMapItems}
-            />
-
-            <ProjectPulseSection summary={projectPulse} />
-
-            <ProjectCommandTimelineSection timeline={projectCommandTimeline} />
-
-            <ProjectAiOperationalCopilotSection
-              summary={aiCopilotSummaryView}
-              fieldSummary={aiFieldSummaryView}
-              draftActions={showAiDraftActionComposer ? aiDraftActionItems : []}
-              providerEnhancementNote={aiProviderAvailability.reason}
-            />
-
-            <OperationalGuidanceSection
-              title="Workflow snapshot"
-              description="Current stage, blocker, next step, and the driving record stay visible without competing with the ProjectPulse Next Move."
-              buckets={projectOperationalGuidanceBuckets}
-            />
-
-            <ProjectConnectedRecordLanes lanes={connectedRecordLanes} />
-
-            <LinkedRecordRecencyPanel items={linkedRecordRecencyItems} />
-
-            <ServiceWarrantyContinuityPanel
-              title="Service & Warranty Continuity"
-              description="Post-install service tickets, warranty documents, and internal signature-request state linked to this project. This is read-only project continuity, not a service-ticket editor."
-              tickets={projectServiceTickets}
-              warrantyDocuments={projectWarrantyDocuments}
-              serviceJobs={projectJobs.filter((job) => job.serviceTicketId)}
-              serviceTicketHref={`/service-tickets?projectId=${project.id}`}
-              closeoutPackageHref={`/projects/${project.id}/closeout-package/pdf`}
-              proofContextCount={
-                proofCenter.counts.evidenceItems +
-                proofCenter.counts.dailyJobLogs +
-                proofCenter.counts.jobNotes +
-                proofCenter.counts.warrantyDocuments +
-                proofCenter.counts.serviceTickets
-              }
-              closeoutReady={closeoutTrail.closeoutTone === "ready"}
-            />
-
-            {showReadinessGuidancePanel ? (
-              <NeedsAttentionPanel
-                cues={projectAttentionCues}
-                description="Linked estimate, contract, invoice, and job follow-up for this project. Review the suggestions, then open the focused workspace that owns the fix."
-                getCueStateControls={(cue) => (
-                  <CueStateControls
-                    identity={buildOperationalCueIdentity(cue)}
-                    support={getCueStateActionSupport(cue)}
-                    returnTo={`/projects/${project.id}`}
-                  />
-                )}
-              />
-            ) : null}
-
-            {showNextBestActionGuidance ? (
-              <ProjectCuePanel
-                cues={projectCues}
-                getCueStateControls={(cue) => (
-                  <CueStateControls
-                    identity={buildProjectCueIdentity(
-                      project.organizationId,
-                      cue
-                    )}
-                    support={getCueStateActionSupport(cue)}
-                    returnTo={`/projects/${project.id}`}
-                  />
-                )}
-              />
-            ) : null}
-
-            <ProjectEstimateHandoffContinuityPanel
-              workItems={estimateHandoffWorkItems}
-              summary={estimateHandoffSummary}
-              estimates={projectEstimates}
-            />
-
-            <section
-              id="work-items"
-              className="rounded-lg border border-slate-200 bg-white px-4 py-4 sm:px-5"
+    <StandardWorkspaceLayout
+      header={{
+        eyebrow: "Project Workspace",
+        title: project.name,
+        description:
+          "Diagnose readiness, linked records, field continuity, and financial pressure from the project hub, then route detailed action to the workspace that owns it.",
+        actions: (
+          <div className="flex flex-wrap gap-2.5">
+            <Link href="/projects" className={secondaryActionClassName}>
+              Back to projects
+            </Link>
+            <Link
+              href={buildProjectEstimateCreateHref(
+                project.id,
+                project.customerId,
+                projectOpportunity?.id
+              )}
+              className={primaryActionClassName}
             >
-              <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-                <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">
-                    Internal work items
+              Create Estimate
+            </Link>
+            <Link href={readinessHref} className={secondaryActionClassName}>
+              Review readiness
+            </Link>
+          </div>
+        )
+      }}
+      sidebar={[
+        {
+          id: "overview",
+          label: "Overview",
+          iconName: "home",
+          href: overviewHref
+        },
+        {
+          id: "readiness",
+          label: "Readiness",
+          iconName: "check-square",
+          href: readinessHref
+        },
+        {
+          id: "scope",
+          label: "Scope / Context",
+          iconName: "notebook-pen",
+          href: scopeHref
+        },
+        {
+          id: "commercial",
+          label: "Estimates / Contracts",
+          iconName: "scroll-text",
+          href: commercialHref
+        },
+        {
+          id: "production",
+          label: "Jobs / Schedule",
+          iconName: "hard-hat",
+          href: productionHref
+        },
+        {
+          id: "financial",
+          label: "Invoices / Payments",
+          iconName: "receipt-text",
+          href: financialHref
+        },
+        {
+          id: "activity",
+          label: "Activity / Notes",
+          iconName: "send",
+          href: activityHref
+        }
+      ]}
+      currentView={currentView}
+      summaryBand={
+        <WorkspaceSummaryBand
+          className="grid gap-4 xl:grid-cols-[minmax(0,0.85fr)_minmax(0,0.85fr)_minmax(0,1.3fr)]"
+          items={[
+            {
+              key: "readiness",
+              label: "Ready Check",
+              content: (
+                <span
+                  className={`inline-flex rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] ${getStatusBadgeClassName(
+                    readinessSnapshot?.isReadyToSchedule
+                      ? "ready"
+                      : workspaceBlockers.length > 0
+                        ? "blocked"
+                        : "needs action"
+                  )}`}
+                >
+                  {readinessSnapshot?.isReadyToSchedule
+                    ? "Ready to schedule"
+                    : formatStatusLabel(readinessStatus)}
+                </span>
+              )
+            },
+            {
+              key: "linked-records",
+              label: "Linked records",
+              content: (
+                <p className="text-sm font-semibold text-[var(--text-primary)]">
+                  {projectEstimates.length} estimates /{" "}
+                  {projectContracts.length} contracts / {projectJobs.length}{" "}
+                  jobs / {projectInvoices.length} invoices
+                </p>
+              )
+            },
+            {
+              key: "next-action",
+              label: "Current next action",
+              content: (
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-[var(--text-primary)]">
+                    {nextAction.title}
                   </p>
-                  <h3 className="mt-1 text-base font-semibold text-slate-950">
-                    Project follow-through
-                  </h3>
-                  <p className="mt-1 max-w-[68ch] text-sm leading-6 text-slate-600">
-                    Create internal contractor work with instructions,
-                    measurement notes, assignee, due date, and priority tied to
-                    this project or a selected guidance source. Nothing is
-                    created until you submit, and submission stays separate from
-                    readiness, scheduling, invoices, contracts, jobs, Daily Job
-                    Logs, and Job Notes.
+                  <p className="mt-1 text-xs leading-5 text-[var(--text-secondary)]">
+                    {nextAction.description}
                   </p>
                 </div>
-                <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-600 md:w-56">
-                  <p className="font-semibold text-slate-950">
-                    Open linked items
-                  </p>
-                  <p className="mt-1 text-2xl font-semibold tracking-tight text-slate-950">
-                    {
-                      linkedWorkItems.filter(
-                        (workItem) => workItem.status === "open"
-                      ).length
-                    }
-                  </p>
-                </div>
+              )
+            }
+          ]}
+        />
+      }
+      contentClassName="p-0"
+    >
+      <div className="grid min-w-0 gap-5 p-4 xl:grid-cols-[minmax(0,1fr)_320px] 2xl:grid-cols-[minmax(0,1fr)_360px] sm:p-5">
+        <section className="min-w-0 space-y-6">
+          <div
+            className={["p-5 sm:p-6", projectWorkspacePanelClassName].join(" ")}
+          >
+            {resolvedSearchParams.error ? (
+              <div className="rounded-2xl border border-rose-200 bg-rose-50 px-5 py-4 text-sm leading-6 text-rose-800">
+                {resolvedSearchParams.error}
               </div>
-
-              <div className="mt-5 grid gap-5 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
-                <section className="rounded-lg border border-slate-200 bg-slate-50/80 px-4 py-4">
-                  <div className="flex flex-col gap-2">
-                    <p className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-500">
-                      Create internal work item
-                    </p>
-                    {projectGuidanceWorkItemPrefill ? (
-                      <p className="text-sm leading-6 text-slate-600">
-                        Prefilled from project guidance. Review the owner, due
-                        date, and context; nothing is created until you submit.
-                      </p>
-                    ) : (
-                      <p className="text-sm leading-6 text-slate-600">
-                        Use this form for explicit contractor-owned
-                        follow-through on the project, including field
-                        instructions and measurement context for the assigned
-                        person.
-                      </p>
-                    )}
-                  </div>
-                  <div className="mt-4">
-                    <WorkItemCreateForm
-                      action={createWorkItemAction}
-                      returnTo={`/projects/${project.id}`}
-                      sourceType={defaultProjectWorkItemSource.sourceType}
-                      sourceId={defaultProjectWorkItemSource.sourceId}
-                      linkPath={defaultProjectWorkItemSource.linkPath}
-                      customerId={project.customerId}
-                      projectId={project.id}
-                      defaultKind={
-                        projectGuidanceWorkItemPrefill?.kind ?? "manual"
-                      }
-                      defaultTitle={projectGuidanceWorkItemPrefill?.title}
-                      defaultDescription={
-                        projectGuidanceWorkItemPrefill?.description
-                      }
-                      defaultDueAt={projectGuidanceWorkItemPrefill?.dueAt}
-                      defaultPriority={projectGuidanceWorkItemPrefill?.priority}
-                      dedupeKey={projectGuidanceWorkItemPrefill?.dedupeKey}
-                      metadata={projectGuidanceWorkItemPrefill?.metadata}
-                      kindOptions={[
-                        {
-                          value: "estimate_follow_up",
-                          label: "Estimate follow-up"
-                        },
-                        {
-                          value: "invoice_follow_up",
-                          label: "Invoice follow-up"
-                        },
-                        { value: "human_handoff", label: "Human handoff" },
-                        { value: "manual", label: "Manual" }
-                      ]}
-                      assignablePeople={assignablePeople}
-                      boundaryCopy="Work items are internal-only and human-submitted. Creating, completing, or dismissing one does not change project readiness, schedule commitments, invoice/payment state, contract signature state, job state, or field-note status."
-                    />
-                  </div>
-                </section>
-
-                <section className="rounded-lg border border-slate-200 bg-slate-50/80 px-4 py-4">
-                  <p className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-500">
-                    Linked work items
-                  </p>
-                  <p className="mt-2 text-sm leading-6 text-slate-600">
-                    Internal project actions tied through the canonical project
-                    relationship. Work-item photos and files stay internal and
-                    are not visible to the customer portal.
-                  </p>
-                  <div className="mt-4">
-                    <WorkItemList
-                      workItems={linkedWorkItems}
-                      returnTo={`/projects/${project.id}`}
-                      completeAction={completeWorkItemAction}
-                      dismissAction={dismissWorkItemAction}
-                      evidenceUploadAction={
-                        createWorkItemEvidenceAttachmentAction
-                      }
-                      evidenceByWorkItemId={projectWorkItemEvidenceById}
-                      emptyTitle="No work items are linked to this project yet."
-                      emptyDescription="Create a manual internal work item when project follow-through needs instructions, measurement notes, an owner, due date, and completion state."
-                    />
-                  </div>
-                </section>
-              </div>
-            </section>
-
-            {readinessSnapshot?.isReadyToSchedule ? (
-              <ReadyToScheduleActionPanel
-                projectId={project.id}
-                projectName={project.name}
-                estimateId={approvedEstimateId}
-                contractId={latestContract?.id ?? null}
-                readyToScheduleAt={readyToScheduleAt}
-                jobCount={projectJobs.length}
-                unscheduledJobCount={unscheduledJobs.length}
-                unscheduledJobId={
-                  unscheduledJobs.length === 1 ? unscheduledJobs[0].id : null
-                }
-                source="project"
-              />
             ) : null}
 
-            <section className="rounded-lg border border-slate-200 bg-white px-4 py-4 sm:px-5">
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">
-                    Key blockers
-                  </p>
-                  <p className="mt-1 text-base font-semibold text-slate-950">
-                    {workspaceBlockers.length > 0
-                      ? `${workspaceBlockers.length} items need attention`
-                      : "No active blockers"}
-                  </p>
-                </div>
-                <p className="text-sm text-slate-500">
-                  Ready to schedule: {formatDateTime(readyToScheduleAt)}
-                </p>
+            {resolvedSearchParams.message ? (
+              <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-sm leading-6 text-emerald-800">
+                {resolvedSearchParams.message}
               </div>
-              {workspaceBlockers.length > 0 ? (
-                <div className="mt-4 grid gap-3 md:grid-cols-2">
-                  {workspaceBlockers.slice(0, 4).map((blocker) => (
-                    <div
-                      key={blocker}
-                      className="rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm leading-6 text-rose-900"
-                    >
-                      {blocker}
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="mt-4 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm leading-6 text-emerald-900">
-                  Commercial, scheduling, and closeout blockers are currently
-                  clear on this project.
-                </div>
-              )}
-            </section>
-          </div>
-        </div>
+            ) : null}
 
-        <CoreWorkflowSection
-          title="Workflow sections"
-          description="Overview, estimate, contract, jobs, and invoices stay in the same order as the canonical lifecycle: opportunity, customer/project, estimate/contract, job/schedule, and invoice/payment. The overview names the linked record or workspace currently driving the next step."
-        >
-          <section className="space-y-3 rounded-2xl border border-slate-200 bg-white px-5 py-4 lg:col-span-2 xl:col-span-4">
-            <div className="flex items-center justify-between gap-3">
-              <p className="text-sm font-medium text-slate-950">Overview</p>
-              <span className="text-xs font-semibold text-slate-500">Hub</span>
-            </div>
-            <div className="space-y-3 text-sm leading-6 text-slate-600">
-              <p>
-                Project is the operational hub for this customer, commercial
-                chain, field work, billing, and payment follow-through.
-              </p>
-              <ContextFactsList
-                items={[
-                  {
-                    label: "Customer",
-                    value: project.customer?.name ?? "Unknown customer"
-                  },
-                  {
-                    label: "Project status",
-                    value: formatStatusLabel(project.status)
-                  },
-                  {
-                    label: "Next step",
-                    value: nextAction.primaryLabel ?? nextAction.title
-                  },
-                  {
-                    label: "Driving record",
-                    value: workflowDriverLabel
-                  }
-                ]}
-              />
-            </div>
-          </section>
-
-          <section className="space-y-3">
-            <div className="flex items-center justify-between gap-3">
-              <p className="text-sm font-medium text-slate-950">Estimate</p>
-              <span className="text-xs font-semibold text-slate-500">
-                {projectEstimates.length}
-              </span>
-            </div>
-            <div className="grid gap-3">
-              {projectEstimates.length > 0 ? (
-                <>
-                  {projectEstimates.slice(0, 2).map((estimate) => (
-                    <LinkedRecordCard
-                      key={estimate.id}
-                      href={`/estimates/${estimate.id}`}
-                      title={estimate.referenceNumber}
-                      subtitle={
-                        estimate.customer?.name ??
-                        project.customer?.name ??
-                        "Unknown customer"
-                      }
-                      meta={joinMetaParts([
-                        `Total ${formatMoney(estimate.totalAmount)}`,
-                        formatUpdatedActivity(estimate.updatedAt)
-                      ])}
-                      badge={renderStatusBadge(
-                        formatStatusLabel(estimate.status)
-                      )}
-                    />
-                  ))}
-                  <WorkflowForwardLink
-                    href={
-                      approvedEstimateId && projectContracts.length === 0
-                        ? `/contracts?estimateId=${approvedEstimateId}`
-                        : null
-                    }
-                  >
-                    Generate contract
-                  </WorkflowForwardLink>
-                </>
-              ) : (
-                <AppEmptyState
-                  eyebrow="No estimates"
-                  title="Create your first estimate for this project"
-                  description="Create an estimate from this project so scope, pricing, and downstream workflow records stay connected."
-                  actionHref={buildProjectEstimateCreateHref(
-                    project.id,
-                    project.customerId,
-                    projectOpportunity?.id
-                  )}
-                  actionLabel="Create estimate"
-                />
-              )}
-            </div>
-          </section>
-
-          <section className="space-y-3">
-            <div className="flex items-center justify-between gap-3">
-              <p className="text-sm font-medium text-slate-950">Contract</p>
-              <span className="text-xs font-semibold text-slate-500">
-                {projectContracts.length}
-              </span>
-            </div>
-            <div className="grid gap-3">
-              {projectContracts.length > 0 ? (
-                <>
-                  {projectContracts.slice(0, 2).map((contract) => (
-                    <LinkedRecordCard
-                      key={contract.id}
-                      href={`/contracts/${contract.id}`}
-                      title={contract.title}
-                      subtitle={
-                        contract.customer?.name ??
-                        project.customer?.name ??
-                        "Unknown customer"
-                      }
-                      meta={joinMetaParts([
-                        getProjectContractSummary({
-                          contract,
-                          readinessSnapshot
-                        }),
-                        formatUpdatedActivity(contract.updatedAt)
-                      ])}
-                      badge={renderStatusBadge(
-                        formatStatusLabel(contract.status)
-                      )}
-                    />
-                  ))}
-                  <WorkflowForwardLink
-                    href={
-                      hasSignedContract && projectJobs.length === 0
-                        ? `/jobs?projectId=${project.id}`
-                        : null
-                    }
-                  >
-                    Create job
-                  </WorkflowForwardLink>
-                </>
-              ) : (
-                <AppEmptyState
-                  eyebrow="No contracts"
-                  title="Generate contract after approval"
-                  description="Contracts are generated from approved estimates."
-                  actionHref={
-                    approvedEstimateId
-                      ? `/contracts?estimateId=${approvedEstimateId}`
-                      : undefined
-                  }
-                  actionLabel={
-                    approvedEstimateId ? "Generate contract" : undefined
-                  }
-                />
-              )}
-            </div>
-          </section>
-
-          <section className="space-y-3">
-            <div className="flex items-center justify-between gap-3">
-              <p className="text-sm font-medium text-slate-950">Jobs</p>
-              <span className="text-xs font-semibold text-slate-500">
-                {projectJobs.length}
-              </span>
-            </div>
-            <div className="grid gap-3">
-              {projectJobs.length > 0 ? (
-                <>
-                  {projectJobs.slice(0, 2).map((job) => (
-                    <LinkedRecordCard
-                      key={job.id}
-                      href={`/jobs/${job.id}`}
-                      title={job.project?.name ?? project.name}
-                      subtitle={
-                        job.customer?.name ??
-                        project.customer?.name ??
-                        "Unknown customer"
-                      }
-                      meta={joinMetaParts([
-                        job.scheduledDate
-                          ? `${job.crewVendor?.name ?? "Crew not assigned"} / Scheduled ${new Date(`${job.scheduledDate}T00:00:00`).toLocaleDateString()}`
-                          : `${job.crewVendor?.name ?? "Crew not assigned"} / Unscheduled`,
-                        formatUpdatedActivity(job.updatedAt)
-                      ])}
-                      badge={renderStatusBadge(
-                        formatStatusLabel(job.dispatchStatus)
-                      )}
-                    />
-                  ))}
-                  <WorkflowForwardLink
-                    href={
-                      projectInvoices.length === 0
-                        ? `/invoices?projectId=${project.id}${
-                            completedJobId ? `&jobId=${completedJobId}` : ""
-                          }`
-                        : null
-                    }
-                  >
-                    Create invoice
-                  </WorkflowForwardLink>
-                </>
-              ) : (
-                <AppEmptyState
-                  eyebrow="No jobs"
-                  title="Create a job once work is ready"
-                  description="Job and schedule work starts only after GateKeeper clears. Until then, resolve the upstream estimate, contract, deposit, or financing gate named above."
-                  actionHref={
-                    readinessSnapshot?.isReadyToSchedule
-                      ? `/jobs?projectId=${project.id}`
-                      : undefined
-                  }
-                  actionLabel={
-                    readinessSnapshot?.isReadyToSchedule
-                      ? "Create job"
-                      : undefined
-                  }
-                />
-              )}
-            </div>
-          </section>
-
-          <section className="space-y-3">
-            <div className="flex items-center justify-between gap-3">
-              <p className="text-sm font-medium text-slate-950">Invoices</p>
-              <span className="text-xs font-semibold text-slate-500">
-                {projectInvoices.length}
-              </span>
-            </div>
-            <div className="grid gap-3">
-              {projectInvoices.length > 0 ? (
-                projectInvoices
-                  .slice(0, 2)
-                  .map((invoice) => (
-                    <LinkedRecordCard
-                      key={invoice.id}
-                      href={`/invoices/${invoice.id}`}
-                      title={invoice.referenceNumber}
-                      subtitle={
-                        invoice.customer?.name ??
-                        project.customer?.name ??
-                        "Unknown customer"
-                      }
-                      meta={joinMetaParts([
-                        getProjectInvoiceSummary(invoice),
-                        formatUpdatedActivity(invoice.updatedAt)
-                      ])}
-                      badge={renderStatusBadge(
-                        formatStatusLabel(invoice.status)
-                      )}
-                    />
-                  ))
-              ) : (
-                <AppEmptyState
-                  eyebrow="No invoices"
-                  title="Invoices follow completed work"
-                  description="Invoices and payments stay downstream of approved scope, deposit rules, and billable job context. Use the project and job records above to confirm what is actually ready to bill."
-                  actionHref={
-                    canCreateInvoice && completedJobId
-                      ? `/invoices?projectId=${project.id}&jobId=${completedJobId}`
-                      : undefined
-                  }
-                  actionLabel={
-                    canCreateInvoice && completedJobId
-                      ? "Create invoice"
-                      : undefined
-                  }
-                />
-              )}
-            </div>
-          </section>
-        </CoreWorkflowSection>
-
-        <ProjectAssessmentPackagePanel
-          projectId={project.id}
-          summary={assessmentPackageReadModel}
-          packages={assessmentPackageReadModel.packages}
-        />
-
-        {showNextBestActionGuidance && nextActionQueue.length > 1 ? (
-          <DetailPanel
-            title="Follow-Up Actions"
-            description="Secondary project actions stay available after the primary next step, without competing with the core workflow above."
-          >
-            <div className="grid gap-3 md:grid-cols-2">
-              {nextActionQueue.slice(1).map((action) => (
-                <section
-                  key={`${action.title}-${action.href ?? "no-link"}`}
-                  className="rounded-lg border border-slate-200 bg-white px-5 py-4"
-                >
-                  <p className="text-base font-semibold text-slate-950">
-                    {action.title}
-                  </p>
-                  <p className="mt-2 text-sm leading-6 text-slate-600">
-                    {action.description}
-                  </p>
-                  {action.href && action.label ? (
-                    <div className="mt-4">
-                      <Link
-                        href={action.href}
-                        className={getWorkspaceActionLinkClassName(action.tone)}
-                      >
-                        {action.label}
-                      </Link>
-                    </div>
-                  ) : null}
-                </section>
-              ))}
-            </div>
-          </DetailPanel>
-        ) : null}
-
-        {showReadinessGuidancePanel ? (
-          <DetailPanel
-            title="Upstream Readiness Chain"
-            description="The project hub reflects the lifecycle in order: opportunity, customer/project, estimate/contract, job/schedule, and invoice/payment. Use this chain to see what is blocking downstream work before opening Schedule."
-          >
             <div className="space-y-4">
-              <WorkflowBar
-                title="Readiness gates"
-                steps={readinessWorkflowSteps}
-              />
-              <div className="grid gap-4 xl:grid-cols-5">
-                {readinessStages.map((stage) => (
-                  <section
-                    key={stage.title}
-                    className={`rounded-2xl border px-5 py-4 ${getStageCardClassName(stage.state)}`}
-                  >
-                    <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">
-                      {stage.title}
-                    </p>
-                    <p className="mt-3 text-sm font-medium capitalize text-slate-950">
-                      {stage.state}
-                    </p>
-                    <p className="mt-3 text-sm leading-6 text-slate-600">
-                      {stage.detail}
-                    </p>
-                  </section>
-                ))}
-              </div>
-            </div>
-          </DetailPanel>
-        ) : null}
+              {currentView === "overview" || currentView === "readiness" ? (
+                <>
+                  <ProjectReadinessNextActionPanel
+                    showNextBestActionGuidance={showNextBestActionGuidance}
+                    nextAction={nextAction}
+                    readinessLabel={
+                      readinessSnapshot?.isReadyToSchedule
+                        ? "Ready to schedule"
+                        : formatStatusLabel(readinessStatus)
+                    }
+                    readinessDetail={
+                      readinessSnapshot?.isReadyToSchedule
+                        ? "Commercial handoff is complete. The next move should stay on the canonical job and schedule chain."
+                        : "Readiness blockers are linked to the canonical record that can resolve them where the current data makes that link available."
+                    }
+                    isReadyToSchedule={Boolean(
+                      readinessSnapshot?.isReadyToSchedule
+                    )}
+                    readyToScheduleAt={readyToScheduleAt}
+                    blockers={readinessBlockerItems}
+                    hasActiveBlockers={workspaceBlockers.length > 0}
+                    meta={`${project.customer?.name ?? "Unknown customer"} / ${formatLocation(
+                      [
+                        project.addressLine1,
+                        project.city,
+                        project.stateRegion,
+                        project.postalCode
+                      ]
+                    )}`}
+                  />
 
-        <DetailPanel
-          title="Coordination"
-          description="Customer-facing appointments stay visible below the core estimate, contract, job, and invoice path."
-          collapsed
-        >
-          <div className="space-y-6">
-            <SectionOverview
-              eyebrow="Appointments"
-              title="Customer coordination stays connected to the project"
-              description="Use appointments for customer meetings, site visits, and follow-up blocks while keeping execution scheduling on canonical jobs."
-              href={`/appointments?projectId=${project.id}`}
-              linkLabel="Open appointments"
-              stat={`${projectAppointments.length} appointments`}
-            />
-            <div className="grid gap-8">
-              <section className="space-y-4">
-                <div>
-                  <p className="text-sm font-medium text-slate-950">
-                    Appointments
-                  </p>
+                  <ProjectNextActionsPanel summary={projectNextActions} />
+
+                  {showReadinessGuidancePanel ? (
+                    <WorkflowBar
+                      title="Project workflow"
+                      steps={workflowSteps}
+                    />
+                  ) : null}
+
+                  <ProjectStateSummary
+                    title="Project state summary"
+                    items={projectStateItems}
+                  />
+                </>
+              ) : null}
+
+              {currentView === "scope" ? (
+                <RoleSlotControls
+                  title="Ownership Roles"
+                  description="Internal role metadata for customer ownership, onsite context, follow-up, and later sales-credit attribution. This does not calculate commissions or change Work Item assignment."
+                  recordIdName="projectId"
+                  recordId={project.id}
+                  returnTo={`/projects/${project.id}`}
+                  action={updateProjectRoleSlotsAction}
+                  people={assignablePeople}
+                  controls={[
+                    {
+                      role: "onsite_rep",
+                      fieldName: "onsiteRepPersonId",
+                      personId: project.onsiteRepPersonId
+                    },
+                    {
+                      role: "relationship_owner",
+                      fieldName: "relationshipOwnerPersonId",
+                      personId: project.relationshipOwnerPersonId
+                    },
+                    {
+                      role: "follow_up_owner",
+                      fieldName: "followUpOwnerPersonId",
+                      personId: project.followUpOwnerPersonId
+                    },
+                    {
+                      role: "sales_credit_owner",
+                      fieldName: "salesCreditOwnerPersonId",
+                      personId: project.salesCreditOwnerPersonId
+                    }
+                  ]}
+                />
+              ) : null}
+
+              {currentView === "overview" ? (
+                <OperationalCommandCenter
+                  customerName={project.customer?.name ?? "Unknown customer"}
+                  projectLocation={formatLocation([
+                    project.addressLine1,
+                    project.city,
+                    project.stateRegion,
+                    project.postalCode
+                  ])}
+                  nextAction={nextAction}
+                  blockerCount={workspaceBlockers.length}
+                  readinessLabel={
+                    readinessSnapshot?.isReadyToSchedule
+                      ? "Ready to schedule"
+                      : formatStatusLabel(readinessStatus)
+                  }
+                  readinessDetail={
+                    readinessSnapshot?.isReadyToSchedule
+                      ? "Commercial handoff is complete."
+                      : "Clear the current gate before operations moves forward."
+                  }
+                  summaryItems={commandSummaryItems}
+                />
+              ) : null}
+
+              {currentView === "overview" ? (
+                <>
+                  <ProjectOperationalIntelligenceSection
+                    summary={projectOperationalSummary}
+                  />
+
+                  <ProjectCommandCenterMapSection
+                    items={projectCommandCenterMapItems}
+                  />
+
+                  <ProjectPulseSection summary={projectPulse} />
+
+                  <ProjectCommandTimelineSection
+                    timeline={projectCommandTimeline}
+                  />
+
+                  <ProjectAiOperationalCopilotSection
+                    summary={aiCopilotSummaryView}
+                    fieldSummary={aiFieldSummaryView}
+                    draftActions={
+                      showAiDraftActionComposer ? aiDraftActionItems : []
+                    }
+                    providerEnhancementNote={aiProviderAvailability.reason}
+                  />
+
+                  <OperationalGuidanceSection
+                    title="Workflow snapshot"
+                    description="Current stage, blocker, next step, and the driving record stay visible without competing with the ProjectPulse Next Move."
+                    buckets={projectOperationalGuidanceBuckets}
+                  />
+
+                  <ProjectConnectedRecordLanes lanes={connectedRecordLanes} />
+
+                  <LinkedRecordRecencyPanel items={linkedRecordRecencyItems} />
+                </>
+              ) : null}
+
+              {currentView === "activity" ? (
+                <ServiceWarrantyContinuityPanel
+                  title="Service & Warranty Continuity"
+                  description="Post-install service tickets, warranty documents, and internal signature-request state linked to this project. This is read-only project continuity, not a service-ticket editor."
+                  tickets={projectServiceTickets}
+                  warrantyDocuments={projectWarrantyDocuments}
+                  serviceJobs={projectJobs.filter((job) => job.serviceTicketId)}
+                  serviceTicketHref={`/service-tickets?projectId=${project.id}`}
+                  closeoutPackageHref={`/projects/${project.id}/closeout-package/pdf`}
+                  proofContextCount={
+                    proofCenter.counts.evidenceItems +
+                    proofCenter.counts.dailyJobLogs +
+                    proofCenter.counts.jobNotes +
+                    proofCenter.counts.warrantyDocuments +
+                    proofCenter.counts.serviceTickets
+                  }
+                  closeoutReady={closeoutTrail.closeoutTone === "ready"}
+                />
+              ) : null}
+
+              {currentView === "readiness" && showReadinessGuidancePanel ? (
+                <NeedsAttentionPanel
+                  cues={projectAttentionCues}
+                  description="Linked estimate, contract, invoice, and job follow-up for this project. Review the suggestions, then open the focused workspace that owns the fix."
+                  getCueStateControls={(cue) => (
+                    <CueStateControls
+                      identity={buildOperationalCueIdentity(cue)}
+                      support={getCueStateActionSupport(cue)}
+                      returnTo={`/projects/${project.id}`}
+                    />
+                  )}
+                />
+              ) : null}
+
+              {currentView === "readiness" && showNextBestActionGuidance ? (
+                <ProjectCuePanel
+                  cues={projectCues}
+                  getCueStateControls={(cue) => (
+                    <CueStateControls
+                      identity={buildProjectCueIdentity(
+                        project.organizationId,
+                        cue
+                      )}
+                      support={getCueStateActionSupport(cue)}
+                      returnTo={`/projects/${project.id}`}
+                    />
+                  )}
+                />
+              ) : null}
+
+              {currentView === "commercial" ? (
+                <ProjectEstimateHandoffContinuityPanel
+                  workItems={estimateHandoffWorkItems}
+                  summary={estimateHandoffSummary}
+                  estimates={projectEstimates}
+                />
+              ) : null}
+
+              {currentView === "activity" ? (
+                <section
+                  id="work-items"
+                  className="rounded-lg border border-slate-200 bg-white px-4 py-4 sm:px-5"
+                >
+                  <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                    <div>
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">
+                        Internal work items
+                      </p>
+                      <h3 className="mt-1 text-base font-semibold text-slate-950">
+                        Project follow-through
+                      </h3>
+                      <p className="mt-1 max-w-[68ch] text-sm leading-6 text-slate-600">
+                        Create internal contractor work with instructions,
+                        measurement notes, assignee, due date, and priority tied
+                        to this project or a selected guidance source. Nothing
+                        is created until you submit, and submission stays
+                        separate from readiness, scheduling, invoices,
+                        contracts, jobs, Daily Job Logs, and Job Notes.
+                      </p>
+                    </div>
+                    <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-600 md:w-56">
+                      <p className="font-semibold text-slate-950">
+                        Open linked items
+                      </p>
+                      <p className="mt-1 text-2xl font-semibold tracking-tight text-slate-950">
+                        {
+                          linkedWorkItems.filter(
+                            (workItem) => workItem.status === "open"
+                          ).length
+                        }
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="mt-5 grid gap-5 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
+                    <section className="rounded-lg border border-slate-200 bg-slate-50/80 px-4 py-4">
+                      <div className="flex flex-col gap-2">
+                        <p className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-500">
+                          Create internal work item
+                        </p>
+                        {projectGuidanceWorkItemPrefill ? (
+                          <p className="text-sm leading-6 text-slate-600">
+                            Prefilled from project guidance. Review the owner,
+                            due date, and context; nothing is created until you
+                            submit.
+                          </p>
+                        ) : (
+                          <p className="text-sm leading-6 text-slate-600">
+                            Use this form for explicit contractor-owned
+                            follow-through on the project, including field
+                            instructions and measurement context for the
+                            assigned person.
+                          </p>
+                        )}
+                      </div>
+                      <div className="mt-4">
+                        <WorkItemCreateForm
+                          action={createWorkItemAction}
+                          returnTo={`/projects/${project.id}`}
+                          sourceType={defaultProjectWorkItemSource.sourceType}
+                          sourceId={defaultProjectWorkItemSource.sourceId}
+                          linkPath={defaultProjectWorkItemSource.linkPath}
+                          customerId={project.customerId}
+                          projectId={project.id}
+                          defaultKind={
+                            projectGuidanceWorkItemPrefill?.kind ?? "manual"
+                          }
+                          defaultTitle={projectGuidanceWorkItemPrefill?.title}
+                          defaultDescription={
+                            projectGuidanceWorkItemPrefill?.description
+                          }
+                          defaultDueAt={projectGuidanceWorkItemPrefill?.dueAt}
+                          defaultPriority={
+                            projectGuidanceWorkItemPrefill?.priority
+                          }
+                          dedupeKey={projectGuidanceWorkItemPrefill?.dedupeKey}
+                          metadata={projectGuidanceWorkItemPrefill?.metadata}
+                          kindOptions={[
+                            {
+                              value: "estimate_follow_up",
+                              label: "Estimate follow-up"
+                            },
+                            {
+                              value: "invoice_follow_up",
+                              label: "Invoice follow-up"
+                            },
+                            { value: "human_handoff", label: "Human handoff" },
+                            { value: "manual", label: "Manual" }
+                          ]}
+                          assignablePeople={assignablePeople}
+                          boundaryCopy="Work items are internal-only and human-submitted. Creating, completing, or dismissing one does not change project readiness, schedule commitments, invoice/payment state, contract signature state, job state, or field-note status."
+                        />
+                      </div>
+                    </section>
+
+                    <section className="rounded-lg border border-slate-200 bg-slate-50/80 px-4 py-4">
+                      <p className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-500">
+                        Linked work items
+                      </p>
+                      <p className="mt-2 text-sm leading-6 text-slate-600">
+                        Internal project actions tied through the canonical
+                        project relationship. Work-item photos and files stay
+                        internal and are not visible to the customer portal.
+                      </p>
+                      <div className="mt-4">
+                        <WorkItemList
+                          workItems={linkedWorkItems}
+                          returnTo={`/projects/${project.id}`}
+                          completeAction={completeWorkItemAction}
+                          dismissAction={dismissWorkItemAction}
+                          evidenceUploadAction={
+                            createWorkItemEvidenceAttachmentAction
+                          }
+                          evidenceByWorkItemId={projectWorkItemEvidenceById}
+                          emptyTitle="No work items are linked to this project yet."
+                          emptyDescription="Create a manual internal work item when project follow-through needs instructions, measurement notes, an owner, due date, and completion state."
+                        />
+                      </div>
+                    </section>
+                  </div>
+                </section>
+              ) : null}
+
+              {(currentView === "readiness" || currentView === "production") &&
+              readinessSnapshot?.isReadyToSchedule ? (
+                <ReadyToScheduleActionPanel
+                  projectId={project.id}
+                  projectName={project.name}
+                  estimateId={approvedEstimateId}
+                  contractId={latestContract?.id ?? null}
+                  readyToScheduleAt={readyToScheduleAt}
+                  jobCount={projectJobs.length}
+                  unscheduledJobCount={unscheduledJobs.length}
+                  unscheduledJobId={
+                    unscheduledJobs.length === 1 ? unscheduledJobs[0].id : null
+                  }
+                  source="project"
+                />
+              ) : null}
+
+              {currentView === "readiness" ? (
+                <section className="rounded-lg border border-slate-200 bg-white px-4 py-4 sm:px-5">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">
+                        Key blockers
+                      </p>
+                      <p className="mt-1 text-base font-semibold text-slate-950">
+                        {workspaceBlockers.length > 0
+                          ? `${workspaceBlockers.length} items need attention`
+                          : "No active blockers"}
+                      </p>
+                    </div>
+                    <p className="text-sm text-slate-500">
+                      Ready to schedule: {formatDateTime(readyToScheduleAt)}
+                    </p>
+                  </div>
+                  {workspaceBlockers.length > 0 ? (
+                    <div className="mt-4 grid gap-3 md:grid-cols-2">
+                      {workspaceBlockers.slice(0, 4).map((blocker) => (
+                        <div
+                          key={blocker}
+                          className="rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm leading-6 text-rose-900"
+                        >
+                          {blocker}
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="mt-4 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm leading-6 text-emerald-900">
+                      Commercial, scheduling, and closeout blockers are
+                      currently clear on this project.
+                    </div>
+                  )}
+                </section>
+              ) : null}
+            </div>
+          </div>
+
+          {currentView === "commercial" ? (
+            <CoreWorkflowSection
+              title="Workflow sections"
+              description="Overview, estimate, contract, jobs, and invoices stay in the same order as the canonical lifecycle: opportunity, customer/project, estimate/contract, job/schedule, and invoice/payment. The overview names the linked record or workspace currently driving the next step."
+            >
+              <section className="space-y-3 rounded-2xl border border-slate-200 bg-white px-5 py-4 lg:col-span-2 xl:col-span-4">
+                <div className="flex items-center justify-between gap-3">
+                  <p className="text-sm font-medium text-slate-950">Overview</p>
+                  <span className="text-xs font-semibold text-slate-500">
+                    Hub
+                  </span>
                 </div>
-                <div className="grid gap-4">
-                  {projectAppointments.length > 0 ? (
-                    projectAppointments
-                      .slice(0, 2)
-                      .map((appointment) => (
+                <div className="space-y-3 text-sm leading-6 text-slate-600">
+                  <p>
+                    Project is the operational hub for this customer, commercial
+                    chain, field work, billing, and payment follow-through.
+                  </p>
+                  <ContextFactsList
+                    items={[
+                      {
+                        label: "Customer",
+                        value: project.customer?.name ?? "Unknown customer"
+                      },
+                      {
+                        label: "Project status",
+                        value: formatStatusLabel(project.status)
+                      },
+                      {
+                        label: "Next step",
+                        value: nextAction.primaryLabel ?? nextAction.title
+                      },
+                      {
+                        label: "Driving record",
+                        value: workflowDriverLabel
+                      }
+                    ]}
+                  />
+                </div>
+              </section>
+
+              <section className="space-y-3">
+                <div className="flex items-center justify-between gap-3">
+                  <p className="text-sm font-medium text-slate-950">Estimate</p>
+                  <span className="text-xs font-semibold text-slate-500">
+                    {projectEstimates.length}
+                  </span>
+                </div>
+                <div className="grid gap-3">
+                  {projectEstimates.length > 0 ? (
+                    <>
+                      {projectEstimates.slice(0, 2).map((estimate) => (
                         <LinkedRecordCard
-                          key={appointment.id}
-                          href={`/appointments/${appointment.id}`}
-                          title={appointment.title}
+                          key={estimate.id}
+                          href={`/estimates/${estimate.id}`}
+                          title={estimate.referenceNumber}
                           subtitle={
-                            appointment.customer?.name ??
+                            estimate.customer?.name ??
                             project.customer?.name ??
                             "Unknown customer"
                           }
-                          meta={`${appointment.appointmentType.replaceAll("_", " ")} / ${new Date(appointment.startsAt).toLocaleString()}`}
+                          meta={joinMetaParts([
+                            `Total ${formatMoney(estimate.totalAmount)}`,
+                            formatUpdatedActivity(estimate.updatedAt)
+                          ])}
                           badge={renderStatusBadge(
-                            formatStatusLabel(appointment.status)
+                            formatStatusLabel(estimate.status)
+                          )}
+                        />
+                      ))}
+                      <WorkflowForwardLink
+                        href={
+                          approvedEstimateId && projectContracts.length === 0
+                            ? `/contracts?estimateId=${approvedEstimateId}`
+                            : null
+                        }
+                      >
+                        Generate contract
+                      </WorkflowForwardLink>
+                    </>
+                  ) : (
+                    <AppEmptyState
+                      eyebrow="No estimates"
+                      title="Create your first estimate for this project"
+                      description="Create an estimate from this project so scope, pricing, and downstream workflow records stay connected."
+                      actionHref={buildProjectEstimateCreateHref(
+                        project.id,
+                        project.customerId,
+                        projectOpportunity?.id
+                      )}
+                      actionLabel="Create estimate"
+                    />
+                  )}
+                </div>
+              </section>
+
+              <section className="space-y-3">
+                <div className="flex items-center justify-between gap-3">
+                  <p className="text-sm font-medium text-slate-950">Contract</p>
+                  <span className="text-xs font-semibold text-slate-500">
+                    {projectContracts.length}
+                  </span>
+                </div>
+                <div className="grid gap-3">
+                  {projectContracts.length > 0 ? (
+                    <>
+                      {projectContracts.slice(0, 2).map((contract) => (
+                        <LinkedRecordCard
+                          key={contract.id}
+                          href={`/contracts/${contract.id}`}
+                          title={contract.title}
+                          subtitle={
+                            contract.customer?.name ??
+                            project.customer?.name ??
+                            "Unknown customer"
+                          }
+                          meta={joinMetaParts([
+                            getProjectContractSummary({
+                              contract,
+                              readinessSnapshot
+                            }),
+                            formatUpdatedActivity(contract.updatedAt)
+                          ])}
+                          badge={renderStatusBadge(
+                            formatStatusLabel(contract.status)
+                          )}
+                        />
+                      ))}
+                      <WorkflowForwardLink
+                        href={
+                          hasSignedContract && projectJobs.length === 0
+                            ? `/jobs?projectId=${project.id}`
+                            : null
+                        }
+                      >
+                        Create job
+                      </WorkflowForwardLink>
+                    </>
+                  ) : (
+                    <AppEmptyState
+                      eyebrow="No contracts"
+                      title="Generate contract after approval"
+                      description="Contracts are generated from approved estimates."
+                      actionHref={
+                        approvedEstimateId
+                          ? `/contracts?estimateId=${approvedEstimateId}`
+                          : undefined
+                      }
+                      actionLabel={
+                        approvedEstimateId ? "Generate contract" : undefined
+                      }
+                    />
+                  )}
+                </div>
+              </section>
+
+              <section className="space-y-3">
+                <div className="flex items-center justify-between gap-3">
+                  <p className="text-sm font-medium text-slate-950">Jobs</p>
+                  <span className="text-xs font-semibold text-slate-500">
+                    {projectJobs.length}
+                  </span>
+                </div>
+                <div className="grid gap-3">
+                  {projectJobs.length > 0 ? (
+                    <>
+                      {projectJobs.slice(0, 2).map((job) => (
+                        <LinkedRecordCard
+                          key={job.id}
+                          href={`/jobs/${job.id}`}
+                          title={job.project?.name ?? project.name}
+                          subtitle={
+                            job.customer?.name ??
+                            project.customer?.name ??
+                            "Unknown customer"
+                          }
+                          meta={joinMetaParts([
+                            job.scheduledDate
+                              ? `${job.crewVendor?.name ?? "Crew not assigned"} / Scheduled ${new Date(`${job.scheduledDate}T00:00:00`).toLocaleDateString()}`
+                              : `${job.crewVendor?.name ?? "Crew not assigned"} / Unscheduled`,
+                            formatUpdatedActivity(job.updatedAt)
+                          ])}
+                          badge={renderStatusBadge(
+                            formatStatusLabel(job.dispatchStatus)
+                          )}
+                        />
+                      ))}
+                      <WorkflowForwardLink
+                        href={
+                          projectInvoices.length === 0
+                            ? `/invoices?projectId=${project.id}${
+                                completedJobId ? `&jobId=${completedJobId}` : ""
+                              }`
+                            : null
+                        }
+                      >
+                        Create invoice
+                      </WorkflowForwardLink>
+                    </>
+                  ) : (
+                    <AppEmptyState
+                      eyebrow="No jobs"
+                      title="Create a job once work is ready"
+                      description="Job and schedule work starts only after GateKeeper clears. Until then, resolve the upstream estimate, contract, deposit, or financing gate named above."
+                      actionHref={
+                        readinessSnapshot?.isReadyToSchedule
+                          ? `/jobs?projectId=${project.id}`
+                          : undefined
+                      }
+                      actionLabel={
+                        readinessSnapshot?.isReadyToSchedule
+                          ? "Create job"
+                          : undefined
+                      }
+                    />
+                  )}
+                </div>
+              </section>
+
+              <section className="space-y-3">
+                <div className="flex items-center justify-between gap-3">
+                  <p className="text-sm font-medium text-slate-950">Invoices</p>
+                  <span className="text-xs font-semibold text-slate-500">
+                    {projectInvoices.length}
+                  </span>
+                </div>
+                <div className="grid gap-3">
+                  {projectInvoices.length > 0 ? (
+                    projectInvoices
+                      .slice(0, 2)
+                      .map((invoice) => (
+                        <LinkedRecordCard
+                          key={invoice.id}
+                          href={`/invoices/${invoice.id}`}
+                          title={invoice.referenceNumber}
+                          subtitle={
+                            invoice.customer?.name ??
+                            project.customer?.name ??
+                            "Unknown customer"
+                          }
+                          meta={joinMetaParts([
+                            getProjectInvoiceSummary(invoice),
+                            formatUpdatedActivity(invoice.updatedAt)
+                          ])}
+                          badge={renderStatusBadge(
+                            formatStatusLabel(invoice.status)
                           )}
                         />
                       ))
                   ) : (
                     <AppEmptyState
-                      eyebrow="No appointments"
-                      title="Schedule project-facing coordination here"
-                      description="Use appointments for customer meetings, site visits, and follow-up blocks while keeping execution scheduling on canonical jobs."
-                      actionHref={`/appointments?projectId=${project.id}&customerId=${project.customerId}&compose=1#appointment-create`}
-                      actionLabel="Create appointment"
+                      eyebrow="No invoices"
+                      title="Invoices follow completed work"
+                      description="Invoices and payments stay downstream of approved scope, deposit rules, and billable job context. Use the project and job records above to confirm what is actually ready to bill."
+                      actionHref={
+                        canCreateInvoice && completedJobId
+                          ? `/invoices?projectId=${project.id}&jobId=${completedJobId}`
+                          : undefined
+                      }
+                      actionLabel={
+                        canCreateInvoice && completedJobId
+                          ? "Create invoice"
+                          : undefined
+                      }
                     />
                   )}
                 </div>
               </section>
-            </div>
-          </div>
-        </DetailPanel>
+            </CoreWorkflowSection>
+          ) : null}
 
-        <SupportSection
-          title="Documents"
-          description="Estimate attachments and sent contract PDFs stay linked to the same project chain here without duplicating file records."
-        >
-          <div className="grid gap-8 xl:grid-cols-2">
-            <section className="space-y-4">
-              <div>
-                <p className="text-sm font-medium text-slate-950">
-                  Estimate attachments
-                </p>
-              </div>
-              <div className="grid gap-4">
-                {projectEstimateAttachments.length > 0 ? (
-                  projectEstimateAttachments
-                    .slice(0, 4)
-                    .map((attachment) => (
-                      <LinkedRecordCard
-                        key={attachment.id}
-                        href={
-                          attachment.downloadUrl ??
-                          `/estimates/${attachment.estimateId}`
-                        }
-                        title={attachment.fileName}
-                        subtitle={attachment.estimateReferenceNumber}
-                        meta={new Date(attachment.createdAt).toLocaleString()}
-                        badge={renderStatusBadge("Estimate file")}
-                      />
-                    ))
-                ) : (
-                  <AppEmptyState
-                    eyebrow="No estimate files"
-                    title="Estimate documents will show up here"
-                    description="Files attached in the estimate workspace remain linked to the same project so sales and operations can reference one shared document chain."
-                  />
-                )}
-              </div>
-            </section>
-
-            <section className="space-y-4">
-              <div>
-                <p className="text-sm font-medium text-slate-950">
-                  Contract PDFs
-                </p>
-              </div>
-              <div className="grid gap-4">
-                {projectContractDocuments.length > 0 ? (
-                  projectContractDocuments
-                    .slice(0, 4)
-                    .map((contract) => (
-                      <LinkedRecordCard
-                        key={contract.id}
-                        href={
-                          contract.sentPdfDownloadUrl ??
-                          `/contracts/${contract.id}`
-                        }
-                        title={
-                          contract.sentPdfFileName ?? `${contract.title}.pdf`
-                        }
-                        subtitle={contract.title}
-                        meta={
-                          contract.sentPdfGeneratedAt
-                            ? `Generated ${new Date(contract.sentPdfGeneratedAt).toLocaleString()}`
-                            : "Sent contract PDF"
-                        }
-                        badge={renderStatusBadge("Sent PDF")}
-                      />
-                    ))
-                ) : (
-                  <AppEmptyState
-                    eyebrow="No sent PDFs"
-                    title="Sent contract files will show up here"
-                    description="Once a contract is sent for signature, its official PDF snapshot stays linked to the same contract and project context."
-                  />
-                )}
-              </div>
-            </section>
-          </div>
-        </SupportSection>
-
-        <ExecutionSection
-          title="Operations Hub"
-          description="Project stays the operating summary for jobs, scheduling pressure, and closeout work while real execution still happens on canonical job and punchlist records."
-        >
-          <div className="space-y-6">
-            <ProjectProductionHubSection {...projectProductionHub} />
-
-            <ProjectFieldTrailSection
-              summary={fieldTrail}
-              emptyDailyLogActionHref={
-                projectJobs[0]
-                  ? buildDailyLogCaptureHref({
-                      projectId: project.id,
-                      jobId: projectJobs[0].id,
-                      logDate: projectJobs[0].scheduledDate
-                    })
-                  : buildDailyLogCaptureHref({ projectId: project.id })
-              }
+          {currentView === "scope" ? (
+            <ProjectAssessmentPackagePanel
+              projectId={project.id}
+              summary={assessmentPackageReadModel}
+              packages={assessmentPackageReadModel.packages}
             />
+          ) : null}
 
-            <ProjectMessageCenterSection
-              summary={messageCenter}
-              communicationComposer={
-                <RecordLinkedCommunicationComposer
-                  subjectType="project"
-                  subjectId={project.id}
-                  returnTo={`/projects/${project.id}#messagecenter`}
-                  title="Add project communication"
-                  description="Create or reuse this project's canonical communication thread, then save an internal note or customer-visible portal-history message without sending email or SMS."
+          {currentView === "overview" &&
+          showNextBestActionGuidance &&
+          nextActionQueue.length > 1 ? (
+            <DetailPanel
+              title="Follow-Up Actions"
+              description="Secondary project actions stay available after the primary next step, without competing with the core workflow above."
+            >
+              <div className="grid gap-3 md:grid-cols-2">
+                {nextActionQueue.slice(1).map((action) => (
+                  <section
+                    key={`${action.title}-${action.href ?? "no-link"}`}
+                    className="rounded-lg border border-slate-200 bg-white px-5 py-4"
+                  >
+                    <p className="text-base font-semibold text-slate-950">
+                      {action.title}
+                    </p>
+                    <p className="mt-2 text-sm leading-6 text-slate-600">
+                      {action.description}
+                    </p>
+                    {action.href && action.label ? (
+                      <div className="mt-4">
+                        <Link
+                          href={action.href}
+                          className={getWorkspaceActionLinkClassName(
+                            action.tone
+                          )}
+                        >
+                          {action.label}
+                        </Link>
+                      </div>
+                    ) : null}
+                  </section>
+                ))}
+              </div>
+            </DetailPanel>
+          ) : null}
+
+          {currentView === "readiness" && showReadinessGuidancePanel ? (
+            <DetailPanel
+              title="Upstream Readiness Chain"
+              description="The project hub reflects the lifecycle in order: opportunity, customer/project, estimate/contract, job/schedule, and invoice/payment. Use this chain to see what is blocking downstream work before opening Schedule."
+            >
+              <div className="space-y-4">
+                <WorkflowBar
+                  title="Readiness gates"
+                  steps={readinessWorkflowSteps}
                 />
-              }
-              emptyCommunicationHref="/communications?source=project"
-            />
-          </div>
-        </ExecutionSection>
+                <div className="grid gap-4 xl:grid-cols-5">
+                  {readinessStages.map((stage) => (
+                    <section
+                      key={stage.title}
+                      className={`rounded-2xl border px-5 py-4 ${getStageCardClassName(stage.state)}`}
+                    >
+                      <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">
+                        {stage.title}
+                      </p>
+                      <p className="mt-3 text-sm font-medium capitalize text-slate-950">
+                        {stage.state}
+                      </p>
+                      <p className="mt-3 text-sm leading-6 text-slate-600">
+                        {stage.detail}
+                      </p>
+                    </section>
+                  ))}
+                </div>
+              </div>
+            </DetailPanel>
+          ) : null}
 
-        <CloseoutTrailSection summary={closeoutTrail} />
+          {currentView === "scope" ? (
+            <DetailPanel
+              title="Coordination"
+              description="Customer-facing appointments stay visible below the core estimate, contract, job, and invoice path."
+              collapsed
+            >
+              <div className="space-y-6">
+                <SectionOverview
+                  eyebrow="Appointments"
+                  title="Customer coordination stays connected to the project"
+                  description="Use appointments for customer meetings, site visits, and follow-up blocks while keeping execution scheduling on canonical jobs."
+                  href={`/appointments?projectId=${project.id}`}
+                  linkLabel="Open appointments"
+                  stat={`${projectAppointments.length} appointments`}
+                />
+                <div className="grid gap-8">
+                  <section className="space-y-4">
+                    <div>
+                      <p className="text-sm font-medium text-slate-950">
+                        Appointments
+                      </p>
+                    </div>
+                    <div className="grid gap-4">
+                      {projectAppointments.length > 0 ? (
+                        projectAppointments
+                          .slice(0, 2)
+                          .map((appointment) => (
+                            <LinkedRecordCard
+                              key={appointment.id}
+                              href={`/appointments/${appointment.id}`}
+                              title={appointment.title}
+                              subtitle={
+                                appointment.customer?.name ??
+                                project.customer?.name ??
+                                "Unknown customer"
+                              }
+                              meta={`${appointment.appointmentType.replaceAll("_", " ")} / ${new Date(appointment.startsAt).toLocaleString()}`}
+                              badge={renderStatusBadge(
+                                formatStatusLabel(appointment.status)
+                              )}
+                            />
+                          ))
+                      ) : (
+                        <AppEmptyState
+                          eyebrow="No appointments"
+                          title="Schedule project-facing coordination here"
+                          description="Use appointments for customer meetings, site visits, and follow-up blocks while keeping execution scheduling on canonical jobs."
+                          actionHref={`/appointments?projectId=${project.id}&customerId=${project.customerId}&compose=1#appointment-create`}
+                          actionLabel="Create appointment"
+                        />
+                      )}
+                    </div>
+                  </section>
+                </div>
+              </div>
+            </DetailPanel>
+          ) : null}
 
-        <div className="flex justify-end">
-          <Link
-            href={buildProjectCloseoutPackagePrintHref(project.id)}
-            className={secondaryActionClassName}
-          >
-            Print Closeout Package
-          </Link>
-        </div>
+          {currentView === "scope" ? (
+            <SupportSection
+              title="Documents"
+              description="Estimate attachments and sent contract PDFs stay linked to the same project chain here without duplicating file records."
+            >
+              <div className="grid gap-8 xl:grid-cols-2">
+                <section className="space-y-4">
+                  <div>
+                    <p className="text-sm font-medium text-slate-950">
+                      Estimate attachments
+                    </p>
+                  </div>
+                  <div className="grid gap-4">
+                    {projectEstimateAttachments.length > 0 ? (
+                      projectEstimateAttachments
+                        .slice(0, 4)
+                        .map((attachment) => (
+                          <LinkedRecordCard
+                            key={attachment.id}
+                            href={
+                              attachment.downloadUrl ??
+                              `/estimates/${attachment.estimateId}`
+                            }
+                            title={attachment.fileName}
+                            subtitle={attachment.estimateReferenceNumber}
+                            meta={new Date(
+                              attachment.createdAt
+                            ).toLocaleString()}
+                            badge={renderStatusBadge("Estimate file")}
+                          />
+                        ))
+                    ) : (
+                      <AppEmptyState
+                        eyebrow="No estimate files"
+                        title="Estimate documents will show up here"
+                        description="Files attached in the estimate workspace remain linked to the same project so sales and operations can reference one shared document chain."
+                      />
+                    )}
+                  </div>
+                </section>
 
-        <ProjectProofCenterSection summary={proofCenter} />
+                <section className="space-y-4">
+                  <div>
+                    <p className="text-sm font-medium text-slate-950">
+                      Contract PDFs
+                    </p>
+                  </div>
+                  <div className="grid gap-4">
+                    {projectContractDocuments.length > 0 ? (
+                      projectContractDocuments
+                        .slice(0, 4)
+                        .map((contract) => (
+                          <LinkedRecordCard
+                            key={contract.id}
+                            href={
+                              contract.sentPdfDownloadUrl ??
+                              `/contracts/${contract.id}`
+                            }
+                            title={
+                              contract.sentPdfFileName ??
+                              `${contract.title}.pdf`
+                            }
+                            subtitle={contract.title}
+                            meta={
+                              contract.sentPdfGeneratedAt
+                                ? `Generated ${new Date(contract.sentPdfGeneratedAt).toLocaleString()}`
+                                : "Sent contract PDF"
+                            }
+                            badge={renderStatusBadge("Sent PDF")}
+                          />
+                        ))
+                    ) : (
+                      <AppEmptyState
+                        eyebrow="No sent PDFs"
+                        title="Sent contract files will show up here"
+                        description="Once a contract is sent for signature, its official PDF snapshot stays linked to the same contract and project context."
+                      />
+                    )}
+                  </div>
+                </section>
+              </div>
+            </SupportSection>
+          ) : null}
 
-        <ProjectEvidenceContinuitySection
-          summary={projectEvidenceContinuity}
-          portalSharing={projectPortalEvidenceSharing}
-          receiptRollup={projectEvidenceReceiptRollup}
-          receiptPrintHref={buildProjectEvidenceReceiptPrintHref(project.id)}
-          renderPortalEvidenceAction={(item) =>
-            item.canShare ? (
-              <form
-                action={shareExecutionAttachmentToPortalAction}
-                className="grid gap-2"
+          {currentView === "production" ? (
+            <ExecutionSection
+              title="Operations Hub"
+              description="Project stays the operating summary for jobs, scheduling pressure, and closeout work while real execution still happens on canonical job and punchlist records."
+            >
+              <div className="space-y-6">
+                <ProjectProductionHubSection {...projectProductionHub} />
+
+                <ProjectFieldTrailSection
+                  summary={fieldTrail}
+                  emptyDailyLogActionHref={
+                    projectJobs[0]
+                      ? buildDailyLogCaptureHref({
+                          projectId: project.id,
+                          jobId: projectJobs[0].id,
+                          logDate: projectJobs[0].scheduledDate
+                        })
+                      : buildDailyLogCaptureHref({ projectId: project.id })
+                  }
+                />
+
+                <ProjectMessageCenterSection
+                  summary={messageCenter}
+                  communicationComposer={
+                    <RecordLinkedCommunicationComposer
+                      subjectType="project"
+                      subjectId={project.id}
+                      returnTo={`/projects/${project.id}#messagecenter`}
+                      title="Add project communication"
+                      description="Create or reuse this project's canonical communication thread, then save an internal note or customer-visible portal-history message without sending email or SMS."
+                    />
+                  }
+                  emptyCommunicationHref="/communications?source=project"
+                />
+              </div>
+            </ExecutionSection>
+          ) : null}
+
+          {currentView === "activity" || currentView === "production" ? (
+            <CloseoutTrailSection summary={closeoutTrail} />
+          ) : null}
+
+          {currentView === "activity" || currentView === "production" ? (
+            <div className="flex justify-end">
+              <Link
+                href={buildProjectCloseoutPackagePrintHref(project.id)}
+                className={secondaryActionClassName}
               >
-                <input type="hidden" name="projectId" value={project.id} />
-                <input type="hidden" name="attachmentId" value={item.id} />
-                <label className="grid gap-1 text-xs font-semibold uppercase tracking-[0.12em] text-[var(--text-tertiary)]">
-                  Customer title
-                  <input
-                    name="titleOverride"
-                    defaultValue={item.title}
-                    className="rounded-md border border-[var(--border-warm)] px-3 py-2 text-sm normal-case tracking-normal text-[var(--text-primary)]"
-                  />
-                </label>
-                <label className="grid gap-1 text-xs font-semibold uppercase tracking-[0.12em] text-[var(--text-tertiary)]">
-                  Customer note
-                  <input
-                    name="customerNote"
-                    placeholder="Optional customer-safe context"
-                    className="rounded-md border border-[var(--border-warm)] px-3 py-2 text-sm normal-case tracking-normal text-[var(--text-primary)]"
-                  />
-                </label>
-                <button type="submit" className={secondaryActionClassName}>
-                  Share with customer
-                </button>
-              </form>
-            ) : item.canRevoke ? (
-              <form action={revokeExecutionAttachmentPortalShareAction}>
-                <input type="hidden" name="projectId" value={project.id} />
-                <input type="hidden" name="attachmentId" value={item.id} />
-                <button type="submit" className={secondaryActionClassName}>
-                  Revoke customer sharing
-                </button>
-              </form>
-            ) : (
-              <p className="text-xs leading-5 text-[var(--text-secondary)]">
-                No portal action is available for this item.
-              </p>
-            )
-          }
-        />
+                Print Closeout Package
+              </Link>
+            </div>
+          ) : null}
 
-        <DetailPanel
-          title="Financial Hub"
-          description="Billing continuity stays visible here from scope change through progress billing, invoicing, and payment, while the project hub remains a summary-first surface."
-        >
-          <ProjectFinancialContinuitySection
-            overview={projectFinancialContinuity.overview}
-            changeOrders={projectFinancialContinuity.changeOrders}
-            progressBilling={projectFinancialContinuity.progressBilling}
-            invoices={projectFinancialContinuity.invoices}
-            payments={projectFinancialContinuity.payments}
-          />
-        </DetailPanel>
+          {currentView === "activity" ? (
+            <ProjectProofCenterSection summary={proofCenter} />
+          ) : null}
 
-        <DetailPanel
-          title="Readiness / Financial"
-          description="Financing lives with commercial readiness, deposit state, and scheduling blockers. Basic project identity stays separate below."
-          collapsed
-        >
-          <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(280px,0.72fr)]">
-            <div className="grid gap-3 sm:grid-cols-2">
-              {[
+          {currentView === "activity" ? (
+            <ProjectEvidenceContinuitySection
+              summary={projectEvidenceContinuity}
+              portalSharing={projectPortalEvidenceSharing}
+              receiptRollup={projectEvidenceReceiptRollup}
+              receiptPrintHref={buildProjectEvidenceReceiptPrintHref(
+                project.id
+              )}
+              renderPortalEvidenceAction={(item) =>
+                item.canShare ? (
+                  <form
+                    action={shareExecutionAttachmentToPortalAction}
+                    className="grid gap-2"
+                  >
+                    <input type="hidden" name="projectId" value={project.id} />
+                    <input type="hidden" name="attachmentId" value={item.id} />
+                    <label className="grid gap-1 text-xs font-semibold uppercase tracking-[0.12em] text-[var(--text-tertiary)]">
+                      Customer title
+                      <input
+                        name="titleOverride"
+                        defaultValue={item.title}
+                        className="rounded-md border border-[var(--border-warm)] px-3 py-2 text-sm normal-case tracking-normal text-[var(--text-primary)]"
+                      />
+                    </label>
+                    <label className="grid gap-1 text-xs font-semibold uppercase tracking-[0.12em] text-[var(--text-tertiary)]">
+                      Customer note
+                      <input
+                        name="customerNote"
+                        placeholder="Optional customer-safe context"
+                        className="rounded-md border border-[var(--border-warm)] px-3 py-2 text-sm normal-case tracking-normal text-[var(--text-primary)]"
+                      />
+                    </label>
+                    <button type="submit" className={secondaryActionClassName}>
+                      Share with customer
+                    </button>
+                  </form>
+                ) : item.canRevoke ? (
+                  <form action={revokeExecutionAttachmentPortalShareAction}>
+                    <input type="hidden" name="projectId" value={project.id} />
+                    <input type="hidden" name="attachmentId" value={item.id} />
+                    <button type="submit" className={secondaryActionClassName}>
+                      Revoke customer sharing
+                    </button>
+                  </form>
+                ) : (
+                  <p className="text-xs leading-5 text-[var(--text-secondary)]">
+                    No portal action is available for this item.
+                  </p>
+                )
+              }
+            />
+          ) : null}
+
+          {currentView === "financial" ? (
+            <DetailPanel
+              title="Financial Hub"
+              description="Billing continuity stays visible here from scope change through progress billing, invoicing, and payment, while the project hub remains a summary-first surface."
+            >
+              <ProjectFinancialContinuitySection
+                overview={projectFinancialContinuity.overview}
+                changeOrders={projectFinancialContinuity.changeOrders}
+                progressBilling={projectFinancialContinuity.progressBilling}
+                invoices={projectFinancialContinuity.invoices}
+                payments={projectFinancialContinuity.payments}
+              />
+            </DetailPanel>
+          ) : null}
+
+          {currentView === "financial" || currentView === "readiness" ? (
+            <DetailPanel
+              title="Readiness / Financial"
+              description="Financing lives with commercial readiness, deposit state, and scheduling blockers. Basic project identity stays separate below."
+              collapsed
+            >
+              <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(280px,0.72fr)]">
+                <div className="grid gap-3 sm:grid-cols-2">
+                  {[
+                    {
+                      label: "Financing status",
+                      value: formatStatusLabel(
+                        readinessSnapshot?.financingStatus ??
+                          project.financingStatus
+                      ),
+                      detail:
+                        "Stored on the canonical project and used only as readiness context."
+                    },
+                    {
+                      label: "Deposit Ready Check",
+                      value: readinessSnapshot?.depositRequired
+                        ? readinessSnapshot.depositSatisfied
+                          ? "Deposit satisfied"
+                          : "Deposit required"
+                        : "No deposit requirement",
+                      detail:
+                        "Deposit behavior continues to use the existing financial chain."
+                    },
+                    {
+                      label: "Ready Check",
+                      value: formatStatusLabel(readinessStatus),
+                      detail: readinessSnapshot?.isReadyToSchedule
+                        ? "GateKeeper checks are clear."
+                        : "Resolve blockers before operational handoff."
+                    },
+                    {
+                      label: "Ready to schedule",
+                      value: formatDateTime(readyToScheduleAt),
+                      detail:
+                        "Readiness is derived from existing project, contract, deposit, and financing state."
+                    }
+                  ].map((item) => (
+                    <section
+                      key={item.label}
+                      className="rounded-[1.45rem] border border-slate-200 bg-slate-50/85 px-4 py-4"
+                    >
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">
+                        {item.label}
+                      </p>
+                      <p className="mt-3 text-base font-semibold capitalize text-slate-950">
+                        {item.value}
+                      </p>
+                      <p className="mt-2 text-sm leading-6 text-slate-600">
+                        {item.detail}
+                      </p>
+                    </section>
+                  ))}
+                </div>
+
+                <form
+                  action={updateProjectAction}
+                  className="rounded-lg border border-[var(--border-warm)] bg-white px-5 py-5"
+                >
+                  <input type="hidden" name="projectId" value={project.id} />
+                  <input type="hidden" name="name" value={project.name} />
+                  <input
+                    type="hidden"
+                    name="customerId"
+                    value={project.customerId}
+                  />
+                  <input type="hidden" name="status" value={project.status} />
+                  <input
+                    type="hidden"
+                    name="description"
+                    value={project.description ?? ""}
+                  />
+                  <input
+                    type="hidden"
+                    name="addressLine1"
+                    value={project.addressLine1 ?? ""}
+                  />
+                  <input
+                    type="hidden"
+                    name="addressLine2"
+                    value={project.addressLine2 ?? ""}
+                  />
+                  <input type="hidden" name="city" value={project.city ?? ""} />
+                  <input
+                    type="hidden"
+                    name="stateRegion"
+                    value={project.stateRegion ?? ""}
+                  />
+                  <input
+                    type="hidden"
+                    name="postalCode"
+                    value={project.postalCode ?? ""}
+                  />
+                  <input
+                    type="hidden"
+                    name="countryCode"
+                    value={project.countryCode ?? ""}
+                  />
+                  <label className="block">
+                    <span className="mb-2 block text-sm font-medium text-slate-800">
+                      Edit financing status
+                    </span>
+                    <select
+                      name="financingStatus"
+                      defaultValue={project.financingStatus}
+                      className="w-full rounded-[4px] border border-[var(--border-warm)] bg-white px-3 py-2 text-sm text-[var(--text-primary)] outline-none transition focus:border-[var(--copper)]"
+                      required
+                    >
+                      {financingStatusesList.map((status) => (
+                        <option key={status} value={status}>
+                          {formatStatusLabel(status)}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <p className="mt-3 text-xs leading-5 text-slate-500">
+                    This updates the existing project readiness field only. It
+                    does not change estimate, invoice, catalog, or contract
+                    behavior.
+                  </p>
+                  <button
+                    type="submit"
+                    className={`${primaryActionClassName} mt-4`}
+                  >
+                    Save financing status
+                  </button>
+                </form>
+              </div>
+            </DetailPanel>
+          ) : null}
+
+          {currentView === "production" ? (
+            <DetailPanel
+              title="Field Signal"
+              description="Supporting labor and time context stays visible here after the commercial and operations picture is understood."
+              collapsed
+            >
+              <div className="grid gap-6 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
+                <div className="space-y-3">
+                  <p className="text-sm font-medium text-slate-950">
+                    Current punch state
+                  </p>
+                  {projectOpenTimeStates.length > 0 ? (
+                    projectOpenTimeStates.slice(0, 3).map((state) => (
+                      <div
+                        key={state.id}
+                        className="rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-4 text-sm leading-6 text-slate-600"
+                      >
+                        <p className="font-medium text-slate-950">
+                          {state.person?.displayName ?? "Unknown worker"}
+                        </p>
+                        <p className="mt-1">
+                          {state.currentPunchState === "on_break"
+                            ? "On break"
+                            : "Punched in"}
+                        </p>
+                        <p className="mt-1">
+                          {state.job
+                            ? `Job ${state.job.id.slice(0, 8)}`
+                            : "Project-level time"}
+                        </p>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-4 text-sm leading-6 text-slate-500">
+                      No open time sessions are currently attributed to this
+                      project.
+                    </div>
+                  )}
+                </div>
+
+                <div className="space-y-3">
+                  <p className="text-sm font-medium text-slate-950">
+                    Recent time cards
+                  </p>
+                  {projectTimeCards.slice(0, 3).length > 0 ? (
+                    projectTimeCards
+                      .slice(0, 3)
+                      .map((timeCard) => (
+                        <LinkedRecordCard
+                          key={timeCard.id}
+                          href={`/time-cards/${timeCard.id}`}
+                          title={
+                            timeCard.person?.displayName ?? "Unknown worker"
+                          }
+                          subtitle={new Date(
+                            `${timeCard.workDate}T00:00:00`
+                          ).toLocaleDateString()}
+                          meta={`${timeCard.workedMinutes} worked minutes${timeCard.job ? ` / Job ${timeCard.job.id.slice(0, 8)}` : ""}`}
+                          badge={renderStatusBadge(
+                            formatStatusLabel(timeCard.status)
+                          )}
+                        />
+                      ))
+                  ) : (
+                    <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-4 text-sm leading-6 text-slate-500">
+                      No time cards are attributed to this project yet.
+                    </div>
+                  )}
+                </div>
+              </div>
+            </DetailPanel>
+          ) : null}
+
+          {currentView === "scope" ? (
+            <DetailPanel
+              id="project-details"
+              title="Edit Project"
+              description="Editing stays on the same record, but it is intentionally lower priority than the readiness workspace above."
+            >
+              <ProjectForm
+                action={updateProjectAction}
+                submitLabel="Save project"
+                pendingLabel="Saving project..."
+                customers={customers}
+                project={project}
+              />
+            </DetailPanel>
+          ) : null}
+        </section>
+
+        <aside className="min-w-0 space-y-6">
+          <DetailPanel
+            title="Project Context"
+            description="The few facts that help interpret the readiness workspace without recreating the project form."
+          >
+            <ContextFactsList
+              items={[
+                {
+                  label: "Ready Check",
+                  value: (
+                    <span className="capitalize">
+                      {formatStatusLabel(readinessStatus)}
+                    </span>
+                  )
+                },
+                {
+                  label: "Ready to schedule",
+                  value: formatDateTime(readyToScheduleAt)
+                },
                 {
                   label: "Financing status",
-                  value: formatStatusLabel(
-                    readinessSnapshot?.financingStatus ??
-                      project.financingStatus
-                  ),
-                  detail:
-                    "Stored on the canonical project and used only as readiness context."
+                  value: (
+                    <span className="capitalize">
+                      {formatStatusLabel(
+                        readinessSnapshot?.financingStatus ??
+                          project.financingStatus
+                      )}
+                    </span>
+                  )
                 },
                 {
                   label: "Deposit Ready Check",
@@ -6531,588 +6953,363 @@ export default async function ProjectDetailPage({
                     ? readinessSnapshot.depositSatisfied
                       ? "Deposit satisfied"
                       : "Deposit required"
-                    : "No deposit requirement",
-                  detail:
-                    "Deposit behavior continues to use the existing financial chain."
+                    : "No deposit requirement"
                 },
                 {
-                  label: "Ready Check",
-                  value: formatStatusLabel(readinessStatus),
-                  detail: readinessSnapshot?.isReadyToSchedule
-                    ? "GateKeeper checks are clear."
-                    : "Resolve blockers before operational handoff."
+                  label: "Linked lead",
+                  value: projectOpportunity ? (
+                    <Link
+                      href={`/leads/${projectOpportunity.id}`}
+                      className="font-medium text-brand-700"
+                    >
+                      {projectOpportunity.title}
+                    </Link>
+                  ) : (
+                    "No linked lead"
+                  )
+                },
+                ...(projectOpportunity
+                  ? [
+                      {
+                        label: "Assessment status",
+                        value: (
+                          <span className="capitalize">
+                            {formatStatusLabel(
+                              projectOpportunity.siteAssessmentStatus
+                            )}
+                          </span>
+                        )
+                      },
+                      {
+                        label: "Requirements summary",
+                        value:
+                          projectOpportunity.requirementsSummary ??
+                          "No requirements summary captured yet"
+                      }
+                    ]
+                  : []),
+                {
+                  label: "Customer",
+                  value: project.customer ? (
+                    <Link
+                      href={`/customers/${project.customer.id}`}
+                      className="font-medium text-brand-700"
+                    >
+                      {project.customer.name}
+                    </Link>
+                  ) : (
+                    "Unknown customer"
+                  )
                 },
                 {
-                  label: "Ready to schedule",
-                  value: formatDateTime(readyToScheduleAt),
-                  detail:
-                    "Readiness is derived from existing project, contract, deposit, and financing state."
+                  label: "Status",
+                  value: (
+                    <span className="capitalize">
+                      {formatStatusLabel(project.status)}
+                    </span>
+                  )
+                },
+                {
+                  label: "Scope notes",
+                  value: project.description ?? "Not provided"
+                },
+                {
+                  label: "Location",
+                  value: formatLocation([
+                    project.addressLine1,
+                    project.addressLine2,
+                    project.city,
+                    project.stateRegion,
+                    project.postalCode,
+                    project.countryCode
+                  ])
                 }
-              ].map((item) => (
-                <section
-                  key={item.label}
-                  className="rounded-[1.45rem] border border-slate-200 bg-slate-50/85 px-4 py-4"
-                >
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">
-                    {item.label}
-                  </p>
-                  <p className="mt-3 text-base font-semibold capitalize text-slate-950">
-                    {item.value}
-                  </p>
-                  <p className="mt-2 text-sm leading-6 text-slate-600">
-                    {item.detail}
-                  </p>
-                </section>
-              ))}
-            </div>
-
-            <form
-              action={updateProjectAction}
-              className="rounded-lg border border-[var(--border-warm)] bg-white px-5 py-5"
-            >
-              <input type="hidden" name="projectId" value={project.id} />
-              <input type="hidden" name="name" value={project.name} />
-              <input
-                type="hidden"
-                name="customerId"
-                value={project.customerId}
-              />
-              <input type="hidden" name="status" value={project.status} />
-              <input
-                type="hidden"
-                name="description"
-                value={project.description ?? ""}
-              />
-              <input
-                type="hidden"
-                name="addressLine1"
-                value={project.addressLine1 ?? ""}
-              />
-              <input
-                type="hidden"
-                name="addressLine2"
-                value={project.addressLine2 ?? ""}
-              />
-              <input type="hidden" name="city" value={project.city ?? ""} />
-              <input
-                type="hidden"
-                name="stateRegion"
-                value={project.stateRegion ?? ""}
-              />
-              <input
-                type="hidden"
-                name="postalCode"
-                value={project.postalCode ?? ""}
-              />
-              <input
-                type="hidden"
-                name="countryCode"
-                value={project.countryCode ?? ""}
-              />
-              <label className="block">
-                <span className="mb-2 block text-sm font-medium text-slate-800">
-                  Edit financing status
-                </span>
-                <select
-                  name="financingStatus"
-                  defaultValue={project.financingStatus}
-                  className="w-full rounded-[4px] border border-[var(--border-warm)] bg-white px-3 py-2 text-sm text-[var(--text-primary)] outline-none transition focus:border-[var(--copper)]"
-                  required
-                >
-                  {financingStatusesList.map((status) => (
-                    <option key={status} value={status}>
-                      {formatStatusLabel(status)}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <p className="mt-3 text-xs leading-5 text-slate-500">
-                This updates the existing project readiness field only. It does
-                not change estimate, invoice, catalog, or contract behavior.
-              </p>
-              <button
-                type="submit"
-                className={`${primaryActionClassName} mt-4`}
-              >
-                Save financing status
-              </button>
-            </form>
-          </div>
-        </DetailPanel>
-
-        <DetailPanel
-          title="Field Signal"
-          description="Supporting labor and time context stays visible here after the commercial and operations picture is understood."
-          collapsed
-        >
-          <div className="grid gap-6 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
-            <div className="space-y-3">
-              <p className="text-sm font-medium text-slate-950">
-                Current punch state
-              </p>
-              {projectOpenTimeStates.length > 0 ? (
-                projectOpenTimeStates.slice(0, 3).map((state) => (
-                  <div
-                    key={state.id}
-                    className="rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-4 text-sm leading-6 text-slate-600"
-                  >
-                    <p className="font-medium text-slate-950">
-                      {state.person?.displayName ?? "Unknown worker"}
-                    </p>
-                    <p className="mt-1">
-                      {state.currentPunchState === "on_break"
-                        ? "On break"
-                        : "Punched in"}
-                    </p>
-                    <p className="mt-1">
-                      {state.job
-                        ? `Job ${state.job.id.slice(0, 8)}`
-                        : "Project-level time"}
-                    </p>
-                  </div>
-                ))
-              ) : (
-                <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-4 text-sm leading-6 text-slate-500">
-                  No open time sessions are currently attributed to this
-                  project.
-                </div>
-              )}
-            </div>
-
-            <div className="space-y-3">
-              <p className="text-sm font-medium text-slate-950">
-                Recent time cards
-              </p>
-              {projectTimeCards.slice(0, 3).length > 0 ? (
-                projectTimeCards
-                  .slice(0, 3)
-                  .map((timeCard) => (
-                    <LinkedRecordCard
-                      key={timeCard.id}
-                      href={`/time-cards/${timeCard.id}`}
-                      title={timeCard.person?.displayName ?? "Unknown worker"}
-                      subtitle={new Date(
-                        `${timeCard.workDate}T00:00:00`
-                      ).toLocaleDateString()}
-                      meta={`${timeCard.workedMinutes} worked minutes${timeCard.job ? ` / Job ${timeCard.job.id.slice(0, 8)}` : ""}`}
-                      badge={renderStatusBadge(
-                        formatStatusLabel(timeCard.status)
-                      )}
-                    />
-                  ))
-              ) : (
-                <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-4 text-sm leading-6 text-slate-500">
-                  No time cards are attributed to this project yet.
-                </div>
-              )}
-            </div>
-          </div>
-        </DetailPanel>
-
-        <DetailPanel
-          id="project-details"
-          title="Edit Project"
-          description="Editing stays on the same record, but it is intentionally lower priority than the readiness workspace above."
-        >
-          <ProjectForm
-            action={updateProjectAction}
-            submitLabel="Save project"
-            pendingLabel="Saving project..."
-            customers={customers}
-            project={project}
-          />
-        </DetailPanel>
-      </section>
-
-      <aside className="min-w-0 space-y-6">
-        <DetailPanel
-          title="Project Context"
-          description="The few facts that help interpret the readiness workspace without recreating the project form."
-        >
-          <ContextFactsList
-            items={[
-              {
-                label: "Ready Check",
-                value: (
-                  <span className="capitalize">
-                    {formatStatusLabel(readinessStatus)}
-                  </span>
-                )
-              },
-              {
-                label: "Ready to schedule",
-                value: formatDateTime(readyToScheduleAt)
-              },
-              {
-                label: "Financing status",
-                value: (
-                  <span className="capitalize">
-                    {formatStatusLabel(
-                      readinessSnapshot?.financingStatus ??
-                        project.financingStatus
-                    )}
-                  </span>
-                )
-              },
-              {
-                label: "Deposit Ready Check",
-                value: readinessSnapshot?.depositRequired
-                  ? readinessSnapshot.depositSatisfied
-                    ? "Deposit satisfied"
-                    : "Deposit required"
-                  : "No deposit requirement"
-              },
-              {
-                label: "Linked lead",
-                value: projectOpportunity ? (
-                  <Link
-                    href={`/leads/${projectOpportunity.id}`}
-                    className="font-medium text-brand-700"
-                  >
-                    {projectOpportunity.title}
-                  </Link>
-                ) : (
-                  "No linked lead"
-                )
-              },
-              ...(projectOpportunity
-                ? [
+              ]}
+            />
+            <details className="mt-4 rounded-lg border border-slate-200 bg-slate-50/80 px-4 py-3 text-sm leading-6 text-slate-600">
+              <summary className="cursor-pointer list-none font-semibold text-slate-950">
+                More project facts
+              </summary>
+              <div className="mt-4">
+                <ContextFactsList
+                  items={[
                     {
-                      label: "Assessment status",
-                      value: (
-                        <span className="capitalize">
-                          {formatStatusLabel(
-                            projectOpportunity.siteAssessmentStatus
-                          )}
-                        </span>
-                      )
+                      label: "Customer company",
+                      value: project.customer?.companyName ?? "Not provided"
                     },
                     {
-                      label: "Requirements summary",
+                      label: "Service address line 1",
+                      value: project.addressLine1 ?? "Not provided"
+                    },
+                    {
+                      label: "Service address line 2",
+                      value: project.addressLine2 ?? "Not provided"
+                    },
+                    {
+                      label: "Service city",
+                      value: project.city ?? "Not provided"
+                    },
+                    {
+                      label: "Service state / postal",
                       value:
-                        projectOpportunity.requirementsSummary ??
-                        "No requirements summary captured yet"
+                        [project.stateRegion, project.postalCode]
+                          .filter(Boolean)
+                          .join(" ") || "Not provided"
+                    },
+                    {
+                      label: "Created",
+                      value: new Date(project.createdAt).toLocaleString()
+                    },
+                    {
+                      label: "Updated",
+                      value: new Date(project.updatedAt).toLocaleString()
                     }
-                  ]
-                : []),
-              {
-                label: "Customer",
-                value: project.customer ? (
-                  <Link
-                    href={`/customers/${project.customer.id}`}
-                    className="font-medium text-brand-700"
-                  >
-                    {project.customer.name}
-                  </Link>
-                ) : (
-                  "Unknown customer"
-                )
-              },
-              {
-                label: "Status",
-                value: (
-                  <span className="capitalize">
-                    {formatStatusLabel(project.status)}
-                  </span>
-                )
-              },
-              {
-                label: "Scope notes",
-                value: project.description ?? "Not provided"
-              },
-              {
-                label: "Location",
-                value: formatLocation([
-                  project.addressLine1,
-                  project.addressLine2,
-                  project.city,
-                  project.stateRegion,
-                  project.postalCode,
-                  project.countryCode
-                ])
-              }
-            ]}
-          />
-          <details className="mt-4 rounded-lg border border-slate-200 bg-slate-50/80 px-4 py-3 text-sm leading-6 text-slate-600">
-            <summary className="cursor-pointer list-none font-semibold text-slate-950">
-              More project facts
-            </summary>
-            <div className="mt-4">
-              <ContextFactsList
-                items={[
-                  {
-                    label: "Customer company",
-                    value: project.customer?.companyName ?? "Not provided"
-                  },
-                  {
-                    label: "Service address line 1",
-                    value: project.addressLine1 ?? "Not provided"
-                  },
-                  {
-                    label: "Service address line 2",
-                    value: project.addressLine2 ?? "Not provided"
-                  },
-                  {
-                    label: "Service city",
-                    value: project.city ?? "Not provided"
-                  },
-                  {
-                    label: "Service state / postal",
-                    value:
-                      [project.stateRegion, project.postalCode]
-                        .filter(Boolean)
-                        .join(" ") || "Not provided"
-                  },
-                  {
-                    label: "Created",
-                    value: new Date(project.createdAt).toLocaleString()
-                  },
-                  {
-                    label: "Updated",
-                    value: new Date(project.updatedAt).toLocaleString()
-                  }
-                ]}
-              />
-            </div>
-          </details>
-        </DetailPanel>
-
-        <DetailPanel
-          title="Customer Contact Access"
-          description="Customer Access visibility for this project. Full contact and account administration stays in People."
-        >
-          <div className="space-y-4 text-sm leading-6 text-slate-600">
-            {projectVisiblePortalGrants.length > 0 ? (
-              <div className="space-y-3">
-                {projectVisiblePortalGrants.map(({ grant }) => (
-                  <div
-                    key={grant.id}
-                    className="rounded-[6px] border border-slate-200 bg-slate-50/80 px-4 py-3"
-                  >
-                    <p className="font-semibold text-slate-950">
-                      {grant.customerContact?.contact?.displayName ??
-                        grant.portalUser?.fullName ??
-                        grant.portalUser?.email ??
-                        grant.invitedEmail ??
-                        "Portal contact"}
-                    </p>
-                    <p className="mt-1 text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
-                      {grant.customerContact?.isPrimary
-                        ? "Primary contact"
-                        : (grant.customerContact?.relationshipLabel?.replaceAll(
-                            "_",
-                            " "
-                          ) ?? "Customer contact")}
-                    </p>
-                    <p className="mt-2">
-                      {grant.portalUser?.email ??
-                        grant.invitedEmail ??
-                        "Email not captured"}
-                    </p>
-                  </div>
-                ))}
+                  ]}
+                />
               </div>
-            ) : (
-              <div className="rounded-[6px] border border-dashed border-slate-300 bg-slate-50 px-4 py-4">
-                No customer contacts currently have active portal visibility for
-                this project.
-              </div>
-            )}
-            <Link
-              href={`/people?accessCustomerId=${project.customerId}#customer-access`}
-              className={getWorkspaceActionLinkClassName("secondary")}
-            >
-              Manage in People
-            </Link>
-          </div>
-        </DetailPanel>
+            </details>
+          </DetailPanel>
 
-        <DetailPanel
-          title="Project Continuity"
-          description="Primary linked records stay visible; lower-frequency activity is tucked away."
-        >
-          <div className="grid gap-4">
-            {projectEstimates[0] ? (
-              <LinkedRecordCard
-                href={`/estimates/${projectEstimates[0].id}`}
-                title={projectEstimates[0].referenceNumber}
-                subtitle="Primary estimate"
-                meta={joinMetaParts([
-                  projectEstimates[0].customer?.name ??
-                    project.customer?.name ??
-                    "Unknown customer",
-                  formatUpdatedActivity(projectEstimates[0].updatedAt)
-                ])}
-                badge={renderStatusBadge(
-                  formatStatusLabel(projectEstimates[0].status)
-                )}
-              />
-            ) : null}
-            {projectContracts[0] ? (
-              <LinkedRecordCard
-                href={`/contracts/${projectContracts[0].id}`}
-                title={projectContracts[0].title}
-                subtitle="Primary contract"
-                meta={joinMetaParts([
-                  getProjectContractSummary({
-                    contract: projectContracts[0],
-                    readinessSnapshot
-                  }),
-                  formatUpdatedActivity(projectContracts[0].updatedAt)
-                ])}
-                badge={renderStatusBadge(
-                  formatStatusLabel(projectContracts[0].status)
-                )}
-              />
-            ) : null}
-            {projectJobs[0] ? (
-              <LinkedRecordCard
-                href={`/jobs/${projectJobs[0].id}`}
-                title={projectJobs[0].project?.name ?? project.name}
-                subtitle="Current job"
-                meta={joinMetaParts([
-                  projectJobs[0].estimate?.referenceNumber ??
-                    "Project-driven job",
-                  formatUpdatedActivity(projectJobs[0].updatedAt)
-                ])}
-                badge={renderStatusBadge(
-                  formatStatusLabel(projectJobs[0].dispatchStatus)
-                )}
-              />
-            ) : null}
-            {projectInvoices[0] ? (
-              <LinkedRecordCard
-                href={`/invoices/${projectInvoices[0].id}`}
-                title={projectInvoices[0].referenceNumber}
-                subtitle={
-                  projectInvoices[0].workflowRole === "deposit"
-                    ? "Deposit invoice"
-                    : "Current invoice"
-                }
-                meta={joinMetaParts([
-                  getProjectInvoiceSummary(projectInvoices[0]),
-                  formatUpdatedActivity(projectInvoices[0].updatedAt)
-                ])}
-                badge={renderStatusBadge(
-                  formatStatusLabel(projectInvoices[0].status)
-                )}
-              />
-            ) : null}
-            {projectChangeOrders[0] ||
-            projectAppointments[0] ||
-            projectPunchlistItems[0] ||
-            projectDailyLogs[0] ? (
-              <details className="rounded-lg border border-slate-200 bg-slate-50/80 px-4 py-3 text-sm leading-6 text-slate-600">
-                <summary className="cursor-pointer list-none font-semibold text-slate-950">
-                  More linked activity
-                </summary>
-                <div className="mt-4 grid gap-4">
-                  {projectChangeOrders[0] ? (
-                    <LinkedRecordCard
-                      href={`/change-orders/${projectChangeOrders[0].id}`}
-                      title={projectChangeOrders[0].title}
-                      subtitle="Current change order"
-                      meta={joinMetaParts([
-                        formatMoney(projectChangeOrders[0].priceAdjustment),
-                        projectChangeOrders[0].invoice
-                          ? `Invoice ${projectChangeOrders[0].invoice.referenceNumber}`
-                          : "Project-linked scope change",
-                        formatUpdatedActivity(projectChangeOrders[0].updatedAt)
-                      ])}
-                      badge={renderStatusBadge(
-                        formatStatusLabel(projectChangeOrders[0].status)
-                      )}
-                    />
-                  ) : null}
-                  {projectAppointments[0] ? (
-                    <LinkedRecordCard
-                      href={`/appointments/${projectAppointments[0].id}`}
-                      title={projectAppointments[0].title}
-                      subtitle="Current appointment"
-                      meta={`${projectAppointments[0].appointmentType.replaceAll("_", " ")} / ${new Date(projectAppointments[0].startsAt).toLocaleString()}`}
-                      badge={renderStatusBadge(
-                        formatStatusLabel(projectAppointments[0].status)
-                      )}
-                    />
-                  ) : null}
-                  {projectPunchlistItems[0] ? (
-                    <LinkedRecordCard
-                      href={`/punchlists/${projectPunchlistItems[0].id}`}
-                      title={projectPunchlistItems[0].title}
-                      subtitle="Current punchlist item"
-                      meta={
-                        projectPunchlistItems[0].assignee?.displayName ??
-                        "Unassigned closeout item"
-                      }
-                      badge={renderStatusBadge(
-                        formatStatusLabel(projectPunchlistItems[0].status)
-                      )}
-                    />
-                  ) : null}
-                  {projectDailyLogs[0] ? (
-                    <LinkedRecordCard
-                      href={`/daily-logs/${projectDailyLogs[0].id}`}
-                      title={
-                        projectDailyLogs[0].summary?.trim() ||
-                        new Date(
-                          `${projectDailyLogs[0].logDate}T00:00:00`
-                        ).toLocaleDateString()
-                      }
-                      subtitle="Current daily log"
-                      meta={joinMetaParts([
-                        projectDailyLogs[0].weatherSummary ??
-                          "Recent field execution record",
-                        formatUpdatedActivity(projectDailyLogs[0].updatedAt)
-                      ])}
-                      badge={renderStatusBadge(
-                        formatStatusLabel(projectDailyLogs[0].status)
-                      )}
-                    />
-                  ) : null}
+          <DetailPanel
+            title="Customer Contact Access"
+            description="Customer Access visibility for this project. Full contact and account administration stays in People."
+          >
+            <div className="space-y-4 text-sm leading-6 text-slate-600">
+              {projectVisiblePortalGrants.length > 0 ? (
+                <div className="space-y-3">
+                  {projectVisiblePortalGrants.map(({ grant }) => (
+                    <div
+                      key={grant.id}
+                      className="rounded-[6px] border border-slate-200 bg-slate-50/80 px-4 py-3"
+                    >
+                      <p className="font-semibold text-slate-950">
+                        {grant.customerContact?.contact?.displayName ??
+                          grant.portalUser?.fullName ??
+                          grant.portalUser?.email ??
+                          grant.invitedEmail ??
+                          "Portal contact"}
+                      </p>
+                      <p className="mt-1 text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
+                        {grant.customerContact?.isPrimary
+                          ? "Primary contact"
+                          : (grant.customerContact?.relationshipLabel?.replaceAll(
+                              "_",
+                              " "
+                            ) ?? "Customer contact")}
+                      </p>
+                      <p className="mt-2">
+                        {grant.portalUser?.email ??
+                          grant.invitedEmail ??
+                          "Email not captured"}
+                      </p>
+                    </div>
+                  ))}
                 </div>
-              </details>
-            ) : null}
-            {!projectEstimates[0] &&
-            !projectContracts[0] &&
-            !projectJobs[0] &&
-            !projectInvoices[0] &&
-            !projectAppointments[0] &&
-            !projectChangeOrders[0] &&
-            !projectPunchlistItems[0] &&
-            !projectDailyLogs[0] ? (
-              <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-5 py-4 text-sm leading-6 text-slate-600">
-                No related estimate, contract, appointment, change order,
-                punchlist item, daily log, job, or invoice has been created yet.
-              </div>
-            ) : null}
-          </div>
-        </DetailPanel>
+              ) : (
+                <div className="rounded-[6px] border border-dashed border-slate-300 bg-slate-50 px-4 py-4">
+                  No customer contacts currently have active portal visibility
+                  for this project.
+                </div>
+              )}
+              <Link
+                href={`/people?accessCustomerId=${project.customerId}#customer-access`}
+                className={getWorkspaceActionLinkClassName("secondary")}
+              >
+                Manage in People
+              </Link>
+            </div>
+          </DetailPanel>
 
-        <DetailPanel
-          title="Production Schedule"
-          description="Compact schedule continuity from canonical jobs and job assignments, with calendar work still handed off to the shared schedule workspace."
-        >
-          <ProjectProductionScheduleContinuityPanel
-            schedule={projectProductionScheduleContinuity}
+          <DetailPanel
+            title="Project Continuity"
+            description="Primary linked records stay visible; lower-frequency activity is tucked away."
+          >
+            <div className="grid gap-4">
+              {projectEstimates[0] ? (
+                <LinkedRecordCard
+                  href={`/estimates/${projectEstimates[0].id}`}
+                  title={projectEstimates[0].referenceNumber}
+                  subtitle="Primary estimate"
+                  meta={joinMetaParts([
+                    projectEstimates[0].customer?.name ??
+                      project.customer?.name ??
+                      "Unknown customer",
+                    formatUpdatedActivity(projectEstimates[0].updatedAt)
+                  ])}
+                  badge={renderStatusBadge(
+                    formatStatusLabel(projectEstimates[0].status)
+                  )}
+                />
+              ) : null}
+              {projectContracts[0] ? (
+                <LinkedRecordCard
+                  href={`/contracts/${projectContracts[0].id}`}
+                  title={projectContracts[0].title}
+                  subtitle="Primary contract"
+                  meta={joinMetaParts([
+                    getProjectContractSummary({
+                      contract: projectContracts[0],
+                      readinessSnapshot
+                    }),
+                    formatUpdatedActivity(projectContracts[0].updatedAt)
+                  ])}
+                  badge={renderStatusBadge(
+                    formatStatusLabel(projectContracts[0].status)
+                  )}
+                />
+              ) : null}
+              {projectJobs[0] ? (
+                <LinkedRecordCard
+                  href={`/jobs/${projectJobs[0].id}`}
+                  title={projectJobs[0].project?.name ?? project.name}
+                  subtitle="Current job"
+                  meta={joinMetaParts([
+                    projectJobs[0].estimate?.referenceNumber ??
+                      "Project-driven job",
+                    formatUpdatedActivity(projectJobs[0].updatedAt)
+                  ])}
+                  badge={renderStatusBadge(
+                    formatStatusLabel(projectJobs[0].dispatchStatus)
+                  )}
+                />
+              ) : null}
+              {projectInvoices[0] ? (
+                <LinkedRecordCard
+                  href={`/invoices/${projectInvoices[0].id}`}
+                  title={projectInvoices[0].referenceNumber}
+                  subtitle={
+                    projectInvoices[0].workflowRole === "deposit"
+                      ? "Deposit invoice"
+                      : "Current invoice"
+                  }
+                  meta={joinMetaParts([
+                    getProjectInvoiceSummary(projectInvoices[0]),
+                    formatUpdatedActivity(projectInvoices[0].updatedAt)
+                  ])}
+                  badge={renderStatusBadge(
+                    formatStatusLabel(projectInvoices[0].status)
+                  )}
+                />
+              ) : null}
+              {projectChangeOrders[0] ||
+              projectAppointments[0] ||
+              projectPunchlistItems[0] ||
+              projectDailyLogs[0] ? (
+                <details className="rounded-lg border border-slate-200 bg-slate-50/80 px-4 py-3 text-sm leading-6 text-slate-600">
+                  <summary className="cursor-pointer list-none font-semibold text-slate-950">
+                    More linked activity
+                  </summary>
+                  <div className="mt-4 grid gap-4">
+                    {projectChangeOrders[0] ? (
+                      <LinkedRecordCard
+                        href={`/change-orders/${projectChangeOrders[0].id}`}
+                        title={projectChangeOrders[0].title}
+                        subtitle="Current change order"
+                        meta={joinMetaParts([
+                          formatMoney(projectChangeOrders[0].priceAdjustment),
+                          projectChangeOrders[0].invoice
+                            ? `Invoice ${projectChangeOrders[0].invoice.referenceNumber}`
+                            : "Project-linked scope change",
+                          formatUpdatedActivity(
+                            projectChangeOrders[0].updatedAt
+                          )
+                        ])}
+                        badge={renderStatusBadge(
+                          formatStatusLabel(projectChangeOrders[0].status)
+                        )}
+                      />
+                    ) : null}
+                    {projectAppointments[0] ? (
+                      <LinkedRecordCard
+                        href={`/appointments/${projectAppointments[0].id}`}
+                        title={projectAppointments[0].title}
+                        subtitle="Current appointment"
+                        meta={`${projectAppointments[0].appointmentType.replaceAll("_", " ")} / ${new Date(projectAppointments[0].startsAt).toLocaleString()}`}
+                        badge={renderStatusBadge(
+                          formatStatusLabel(projectAppointments[0].status)
+                        )}
+                      />
+                    ) : null}
+                    {projectPunchlistItems[0] ? (
+                      <LinkedRecordCard
+                        href={`/punchlists/${projectPunchlistItems[0].id}`}
+                        title={projectPunchlistItems[0].title}
+                        subtitle="Current punchlist item"
+                        meta={
+                          projectPunchlistItems[0].assignee?.displayName ??
+                          "Unassigned closeout item"
+                        }
+                        badge={renderStatusBadge(
+                          formatStatusLabel(projectPunchlistItems[0].status)
+                        )}
+                      />
+                    ) : null}
+                    {projectDailyLogs[0] ? (
+                      <LinkedRecordCard
+                        href={`/daily-logs/${projectDailyLogs[0].id}`}
+                        title={
+                          projectDailyLogs[0].summary?.trim() ||
+                          new Date(
+                            `${projectDailyLogs[0].logDate}T00:00:00`
+                          ).toLocaleDateString()
+                        }
+                        subtitle="Current daily log"
+                        meta={joinMetaParts([
+                          projectDailyLogs[0].weatherSummary ??
+                            "Recent field execution record",
+                          formatUpdatedActivity(projectDailyLogs[0].updatedAt)
+                        ])}
+                        badge={renderStatusBadge(
+                          formatStatusLabel(projectDailyLogs[0].status)
+                        )}
+                      />
+                    ) : null}
+                  </div>
+                </details>
+              ) : null}
+              {!projectEstimates[0] &&
+              !projectContracts[0] &&
+              !projectJobs[0] &&
+              !projectInvoices[0] &&
+              !projectAppointments[0] &&
+              !projectChangeOrders[0] &&
+              !projectPunchlistItems[0] &&
+              !projectDailyLogs[0] ? (
+                <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-5 py-4 text-sm leading-6 text-slate-600">
+                  No related estimate, contract, appointment, change order,
+                  punchlist item, daily log, job, or invoice has been created
+                  yet.
+                </div>
+              ) : null}
+            </div>
+          </DetailPanel>
+
+          <DetailPanel
+            title="Production Schedule"
+            description="Compact schedule continuity from canonical jobs and job assignments, with calendar work still handed off to the shared schedule workspace."
+          >
+            <ProjectProductionScheduleContinuityPanel
+              schedule={projectProductionScheduleContinuity}
+            />
+          </DetailPanel>
+
+          <RelatedConversationsCard
+            source="project"
+            organizationId={project.organizationId}
+            projectId={project.id}
+            description="Project-scoped communication stays on canonical threads and routes back into the shared communications review workspace when follow-through is needed."
+            countLabel="Project and record threads"
+            emptyMessage="No project-scoped communication threads are attached to this canonical project yet."
+            actionClassName={getWorkspaceActionLinkClassName("secondary")}
+            threads={messageCenterTrail.threads}
           />
-        </DetailPanel>
 
-        <RelatedConversationsCard
-          source="project"
-          organizationId={project.organizationId}
-          projectId={project.id}
-          description="Project-scoped communication stays on canonical threads and routes back into the shared communications review workspace when follow-through is needed."
-          countLabel="Project and record threads"
-          emptyMessage="No project-scoped communication threads are attached to this canonical project yet."
-          actionClassName={getWorkspaceActionLinkClassName("secondary")}
-          threads={messageCenterTrail.threads}
-        />
-
-        <GateKeeperSubjectMemoryPanel
-          memory={gateKeeperMemory}
-          actionClassName={getWorkspaceActionLinkClassName("secondary")}
-        />
-      </aside>
-    </div>
+          <GateKeeperSubjectMemoryPanel
+            memory={gateKeeperMemory}
+            actionClassName={getWorkspaceActionLinkClassName("secondary")}
+          />
+        </aside>
+      </div>
+    </StandardWorkspaceLayout>
   );
 }

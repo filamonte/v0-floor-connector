@@ -189,8 +189,19 @@ support column and shared `@floorconnector/ui` Workspace Framework V2 view
 vocabulary. The slice is presentation-only: it preserves Lead/Opportunity data
 loading, server actions, route names, assessment package ownership, internal
 work item behavior, tenant checks, schema, migrations, provider behavior, and
-portal behavior. Project Workspace, Settings, Invoice Review, CrewBoard, and
-Customer Portal recovery remain future slices.
+portal behavior. Settings, Invoice Review, CrewBoard, and Customer Portal
+recovery remain future slices.
+
+Current UX Recovery implementation note: Project Workspace Framework V2 is now
+implemented on `stream/workspace-framework-v2-project-v1`. `/projects/:projectId`
+keeps the same route and uses `?view=` focused workspace views for Overview,
+Readiness, Scope / Context, Estimates / Contracts, Jobs / Schedule, Invoices /
+Payments, and Activity / Notes. Existing Project data loaders, read models,
+server actions, tenant scoping, route names, readiness calculations, financial
+math, scheduling mutation paths, payment/signature state, provider behavior,
+portal access, and owning-workspace boundaries are preserved. Settings, Invoice
+Review, CrewBoard, Customer Portal, and broader sales-lifecycle rename work
+remain future slices.
 
 Current wave gate note: `visual-ux-review-contractor-usability-v1` has merged
 to `main` under Jeff's controlled merge approval. Golden Workflow Usability
