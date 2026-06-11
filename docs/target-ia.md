@@ -66,6 +66,8 @@ This target IA should remain compatible with future organization-level module en
 The target top-level contractor app navigation should be:
 
 - Dashboard
+- Sales, as the eventual home for active opportunities, lead intake,
+  sales appointments, site assessment, follow-up, and estimate handoff
 - Growth, when the public acquisition layer becomes a durable contractor surface
 - Customers
 - Projects
@@ -80,6 +82,12 @@ The target top-level contractor app navigation should be:
 - Settings
 
 This does **not** mean every section is fully implemented today. It defines the intended structure as the contractor app grows.
+
+Current route strategy: keep `/leads` for the existing manager and detail
+routes. The near-term label transition should be `Leads & Opportunities` for
+the current manager/list surface and `Opportunity Workspace` for detail
+surfaces, with `Lead Intake` reserved for the first inquiry stage. Do not rename
+routes or create a duplicate Lead model as part of IA cleanup.
 
 Future AI should also appear contextually inside Record Workspaces, communication threads, scheduling surfaces, and onboarding/support flows. A top-level AI Assistant may be useful for cross-record questions and approval queues, but contextual AI should remain the primary operating pattern for record-specific work.
 
@@ -629,6 +637,8 @@ The activity timeline is the project/company-brain memory layer over canonical r
 Even in a project-centered system, these should still exist as global list pages or work queues:
 
 - Customers Manager Page (`/customers`)
+- Sales Opportunities Manager Page (`/leads` today; target user-facing label:
+  `Leads & Opportunities`)
 - Projects Manager Page (`/projects`)
 - Estimates Manager Page (`/estimates`)
 - Jobs Manager Page (`/jobs`)

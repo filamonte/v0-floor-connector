@@ -123,6 +123,14 @@ estimate/contract scope -> SOV -> progress invoice/pay application -> payment
 before beta is a product requirement, governed by the new design system
 governance doc.
 
+Current sales lifecycle naming decision: keep `Lead Intake` for the first
+inquiry, use `Sales Opportunity` for the active pre-sale commercial container,
+and move future UI labels toward `Leads & Opportunities` for the manager
+surface and `Opportunity Workspace` for detail surfaces. Preserve `/leads`,
+`/leads/:leadId`, `/opportunities` alias behavior, and the canonical
+`opportunities` schema for now. Do not create a duplicate Lead table or broad
+route rename as part of status or workflow polish.
+
 Role-aware dashboards and workspace personalization are approved target
 direction only. Preferred model: Platform Defaults -> Organization Presets ->
 User Personalization. These layers may change presentation, ordering, filtering,

@@ -55,6 +55,13 @@ information into an Opportunity-first Assessment Package before pricing begins.
 Assessment Package is the pre-estimate knowledge-capture layer, not an
 Estimate, and should be reused downstream instead of re-entered.
 
+Terminology decision: use `Lead Intake` for the first inquiry and
+`Sales Opportunity` for the active pre-sale commercial container. The current
+app may continue to expose `/leads` as the route and transition label, but the
+durable model remains the canonical opportunity. UI copy should move toward
+`Leads & Opportunities` and `Opportunity Workspace` without route, schema, or
+table renames until a dedicated route strategy is approved.
+
 Product operating-model alignment now refines this target: Opportunity should
 own more pre-sale work before a Project exists, Assessment Package is the
 first-class knowledge-capture layer between Opportunity and Estimate, and
