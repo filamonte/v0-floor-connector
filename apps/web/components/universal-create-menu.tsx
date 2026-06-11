@@ -28,7 +28,7 @@ const universalCreateGroups: UniversalCreateGroup[] = [
       {
         label: "Universal Capture",
         description:
-          "Save a fast internal follow-up as a Work Item, then organize from the dashboard.",
+          "Tell FloorConnector what needs to happen, then route or capture the safe next step.",
         href: "/dashboard?capture=1#universal-capture"
       }
     ]

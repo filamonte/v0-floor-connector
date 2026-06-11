@@ -28,6 +28,13 @@ type PersonOption = {
   displayName: string;
 };
 
+type AppointmentQuickCreateType =
+  | "site_visit"
+  | "customer_meeting"
+  | "estimate_appointment"
+  | "follow_up"
+  | "internal";
+
 type AppointmentQuickCreateFormProps = {
   action: (formData: FormData) => void | Promise<void>;
   opportunities: OpportunityOption[];
@@ -38,6 +45,9 @@ type AppointmentQuickCreateFormProps = {
   defaultCustomerId?: string;
   defaultProjectId?: string;
   defaultTitle?: string;
+  defaultAppointmentType?: AppointmentQuickCreateType;
+  defaultStartsAt?: string;
+  defaultInternalNotes?: string;
 };
 
 const appointmentTypeOptions = [
@@ -74,10 +84,15 @@ export function AppointmentQuickCreateForm({
   defaultOpportunityId,
   defaultCustomerId,
   defaultProjectId,
-  defaultTitle
+  defaultTitle,
+  defaultAppointmentType = "site_visit",
+  defaultStartsAt,
+  defaultInternalNotes
 }: AppointmentQuickCreateFormProps) {
   const [customerId, setCustomerId] = useState(defaultCustomerId ?? "");
-  const [opportunityId, setOpportunityId] = useState(defaultOpportunityId ?? "");
+  const [opportunityId, setOpportunityId] = useState(
+    defaultOpportunityId ?? ""
+  );
   const selectedOpportunityDefaultTitle = opportunities.find(
     (opportunity) => opportunity.id === opportunityId
   )?.defaultAppointmentTitle;
@@ -105,7 +120,9 @@ export function AppointmentQuickCreateForm({
             name="title"
             placeholder="Example: Final site visit with owner"
             defaultValue={
-              defaultTitle ?? selectedOpportunityDefaultTitle ?? "Site Visit / Inspection"
+              defaultTitle ??
+              selectedOpportunityDefaultTitle ??
+              "Site Visit / Inspection"
             }
             required
           />
@@ -116,7 +133,7 @@ export function AppointmentQuickCreateForm({
             </span>
             <select
               name="appointmentType"
-              defaultValue="site_visit"
+              defaultValue={defaultAppointmentType}
               className="w-full rounded-[4px] border border-[#d6d6d6] bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-[#ef7d32]"
             >
               {appointmentTypeOptions.map((option) => (
@@ -131,7 +148,7 @@ export function AppointmentQuickCreateForm({
             label="Start time"
             name="startsAt"
             type="datetime-local"
-            defaultValue={getInitialStartsAt()}
+            defaultValue={defaultStartsAt || getInitialStartsAt()}
             required
           />
 
@@ -234,6 +251,7 @@ export function AppointmentQuickCreateForm({
             <textarea
               name="internalNotes"
               rows={4}
+              defaultValue={defaultInternalNotes}
               className="w-full rounded-[4px] border border-[#d6d6d6] bg-white px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-[#ef7d32]"
               placeholder="Internal prep notes, access details, or team follow-up context."
             />
@@ -254,7 +272,10 @@ export function AppointmentQuickCreateForm({
       </QuickCreateFormShell>
 
       <div className="flex flex-col gap-3 pt-1">
-        <AuthSubmitButton pendingLabel="Creating appointment..." className="w-full">
+        <AuthSubmitButton
+          pendingLabel="Creating appointment..."
+          className="w-full"
+        >
           <span>Create appointment</span>
         </AuthSubmitButton>
       </div>

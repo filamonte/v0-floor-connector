@@ -642,14 +642,27 @@ Current operating-core surfaces include:
   assignee/due/note or reassigns the existing open handoff Work Item; it does
   not add an opportunity estimate-writer column, create an estimate, mutate
   estimate status, create notifications, or change commission/payroll behavior.
-- Future Universal Capture + Assistant Action Layer planning is now locked into
+- Universal Capture Intent V1 is implemented as a narrow dashboard/shell
+  handoff, not a new persistence model. The shell Create menu opens
+  `/dashboard?capture=1#universal-capture`; the dashboard composer accepts
+  plain-language contractor intent and uses a deterministic local parser for
+  site visit, follow-up, estimate, and contract wording. Contractors can attach
+  existing Sales Opportunity, customer, and project context. A site visit with
+  enough context and date/time detail can route into the existing appointment
+  Quick-Create sheet with safe prefilled values; nothing is booked until that
+  existing form is submitted. Follow-up and unresolved intent still create
+  internal Work Items through the existing action after contractor submission.
+  This slice does not add schema, migrations, `capture_items`, external AI,
+  assistant action staging, notifications, customer-facing sends/bookings,
+  portal visibility, or automatic source-record mutation.
+  Future Universal Capture + Assistant Action Layer planning remains locked into
   the roadmap/workflow docs as planned capability only. The idea is to capture
   callbacks, reminders, follow-ups, site-visit intent, estimate scheduling
   needs, and route/geographic grouping intent from anywhere, then resolve that
   intent into canonical customers, opportunities, projects, jobs, Work Items,
-  communications, appointments, or schedule handoffs where possible. It is not
-  implemented and must not become a disconnected task app, duplicate CRM/project
-  model, AI-only scheduler, or autonomous customer-facing booking/sending layer.
+  communications, appointments, or schedule handoffs where possible. It must not
+  become a disconnected task app, duplicate CRM/project model, AI-only
+  scheduler, or autonomous customer-facing booking/sending layer.
   Manual V1 model design is documented in
   [docs/design/universal-capture-model-design.md](C:/FloorConnector/docs/design/universal-capture-model-design.md):
   Universal Capture is the entry/resolution pattern above canonical records,
