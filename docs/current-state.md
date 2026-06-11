@@ -228,8 +228,18 @@ These high-value route notes exist to prevent target-vs-current drift:
   package to have Opportunity or Project ownership. This is not customer
   self-service, guided capture, mobile capture, AI risk detection, material
   takeoff, estimate-line generation, Project creation timing refactor,
-  portal-owned assessment truth, or duplicate customer/project/estimate/job/
-  field/material/workflow truth.
+  sales-lifecycle route rename, broad workspace redesign, portal-owned
+  assessment truth, or duplicate customer/project/estimate/job/field/material/
+  workflow truth.
+- Lead Workspace now has the first Workspace Framework V2 presentation slice.
+  `/leads/:leadId` uses focused query-param workspace views for Overview,
+  Qualification, Site Visit, Assessment Package, Estimate Plan, Work Items,
+  Communication, and Activity instead of same-page section jump navigation.
+  The slice adds a reusable workspace support-column extension and shared
+  Workspace Framework V2 view vocabulary in `@floorconnector/ui`, while keeping
+  existing Lead/Opportunity data loading, server actions, route names,
+  assessment package ownership, work item behavior, tenant checks, schema, and
+  Supabase migrations unchanged.
 - Assessment Package detail now has a first schema-backed Area / Space
   foundation through tenant-scoped `assessment_spaces` records owned by the
   parent Assessment Package and denormalized to the same canonical Project for

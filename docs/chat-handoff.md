@@ -181,6 +181,17 @@ provider behavior, payment/signature/scheduling mutation, portal-access change,
 broad UI change, or target-as-implemented claim is approved by the foundation
 docs.
 
+Current UX Recovery implementation note: first Lead Workspace Framework V2
+slice is implemented on `stream/workspace-framework-v2-lead-project-v1`.
+`/leads/:leadId` now uses focused query-param workspace views instead of
+same-page section jump navigation, with a reusable `StandardWorkspaceLayout`
+support column and shared `@floorconnector/ui` Workspace Framework V2 view
+vocabulary. The slice is presentation-only: it preserves Lead/Opportunity data
+loading, server actions, route names, assessment package ownership, internal
+work item behavior, tenant checks, schema, migrations, provider behavior, and
+portal behavior. Project Workspace, Settings, Invoice Review, CrewBoard, and
+Customer Portal recovery remain future slices.
+
 Current wave gate note: `visual-ux-review-contractor-usability-v1` has merged
 to `main` under Jeff's controlled merge approval. Golden Workflow Usability
 Review V1 merged as `32f2151d`, Workspace Density Polish V1 merged as
