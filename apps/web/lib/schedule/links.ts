@@ -7,7 +7,7 @@ export type ScheduleViewKey =
   | "in_progress"
   | "completed";
 export type CrewViewKey = "all" | "assigned" | "unassigned";
-export type ScheduleLayoutKey = "week" | "day" | "board";
+export type ScheduleLayoutKey = "day" | "week" | "crew" | "unscheduled";
 export type ScheduleActionKey = "schedule" | "assign";
 export type ScheduleItemViewKey = "all" | "jobs" | "appointments";
 

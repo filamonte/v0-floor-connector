@@ -108,9 +108,10 @@ const CREW_VIEW_OPTIONS = [
 ] as const;
 
 const SCHEDULE_LAYOUT_OPTIONS = [
-  { value: "week", label: "Week planner" },
-  { value: "day", label: "Day focus" },
-  { value: "board", label: "Board" }
+  { value: "day", label: "Day" },
+  { value: "week", label: "Week" },
+  { value: "crew", label: "Crew" },
+  { value: "unscheduled", label: "Unscheduled" }
 ] as const;
 
 const SCHEDULE_ITEM_VIEW_OPTIONS = [
@@ -468,11 +469,15 @@ function normalizeScheduleAction(
 function normalizeScheduleLayout(value?: string | string[]): ScheduleLayoutKey {
   switch (normalizeOptionalSearchParam(value)) {
     case "day":
+      return "day";
+    case "crew":
+      return "crew";
+    case "unscheduled":
+      return "unscheduled";
     case "board":
-      return normalizeOptionalSearchParam(value) as Exclude<
-        ScheduleLayoutKey,
-        "week"
-      >;
+      return "crew";
+    case "week":
+      return "week";
     default:
       return "week";
   }
@@ -1399,6 +1404,8 @@ export default async function SchedulePage({
   const tomorrow = addDays(today, 1);
   const upcomingHorizon = addDays(today, 8);
   const scheduleLayout = resolvedSearchParams.layout;
+  const isGroupedScheduleLayout =
+    scheduleLayout === "crew" || scheduleLayout === "unscheduled";
   const plannerDateKey = resolvedSearchParams.date;
   const plannerAnchorDate = parseDateKey(plannerDateKey) ?? today;
   const plannerRangeStart =
@@ -1929,7 +1936,7 @@ export default async function SchedulePage({
               projectId: projectFilterId ?? undefined,
               view: "scheduled",
               crew: crewFilter,
-              layout: "board",
+              layout: "crew",
               date: plannerDateKey
             })
           : mode.key === "plan"
@@ -2083,6 +2090,17 @@ export default async function SchedulePage({
       surfaceClass: "border-emerald-200 bg-emerald-50/30"
     }
   ] as const;
+  const plannerBoardGroups =
+    scheduleLayout === "unscheduled"
+      ? boardTimingGroups.filter((group) =>
+          ["unscheduled-ready", "unscheduled-blocked"].includes(group.key)
+        )
+      : boardTimingGroups;
+  let groupedPlannerJobCount = 0;
+
+  for (const group of plannerBoardGroups) {
+    groupedPlannerJobCount += group.jobs.length;
+  }
 
   const plannerDays = Array.from(
     { length: scheduleLayout === "day" ? 1 : 7 },
@@ -2152,8 +2170,9 @@ export default async function SchedulePage({
   const plannerJobCount = visibleScheduledJobs.length;
   const plannerAppointmentCount = visiblePlannerAppointments.length;
   const plannerItemCount = plannerJobCount + plannerAppointmentCount;
-  const boardItemCount =
-    scheduleLayout === "board" ? visibleJobs.length : plannerItemCount;
+  const boardItemCount = isGroupedScheduleLayout
+    ? groupedPlannerJobCount
+    : plannerItemCount;
   const plannerNeedsCrewCount = visibleScheduledJobs.filter(
     (job) => job.assignmentCount === 0
   ).length;
@@ -2330,7 +2349,7 @@ export default async function SchedulePage({
         projectId: projectFilterId ?? undefined,
         view: "unscheduled",
         crew: crewFilter,
-        layout: "board",
+        layout: "crew",
         date: plannerDateKey
       }),
       active: false,
@@ -2588,7 +2607,7 @@ export default async function SchedulePage({
         projectId: projectFilterId ?? undefined,
         view: "unscheduled",
         crew: crewFilter,
-        layout: "board",
+        layout: "crew",
         date: plannerDateKey
       }),
       ctaLabel: "Review blockers",
@@ -3642,7 +3661,7 @@ export default async function SchedulePage({
                 description="These jobs stay visible, but CrewBoard should not commit dates until the linked project readiness blocker is resolved."
                 actionHref={buildCurrentScheduleHref({
                   view: "unscheduled",
-                  layout: "board"
+                  layout: "crew"
                 })}
                 actionLabel="Open blocked lane"
                 items={blockedUnscheduledJobs.slice(0, 4).map((job) => {
@@ -3877,15 +3896,20 @@ export default async function SchedulePage({
 
           <ScheduleDispatchBoardShell
             eyebrow="CrewBoard planner"
-            title="Dispatch board"
-            description="Run CrewBoard as a bounded planner on top of jobs. Keep Needs Scheduling work separate, review dated work by day or week, and reschedule through the same job action path."
+            title="Schedule calendar"
+            description="Run CrewBoard as a bounded scheduling command center: Day and Week show dated work, Crew groups operational lanes, and Unscheduled keeps ready and blocked jobs visible until a real date is saved."
             layoutOptions={SCHEDULE_LAYOUT_OPTIONS.map((option) => ({
               key: option.value,
               label: option.label,
               href: buildScheduleHref({
                 q: query,
                 projectId: projectFilterId ?? undefined,
-                view,
+                view:
+                  option.value === "unscheduled"
+                    ? "unscheduled"
+                    : option.value === "crew" && view === "unscheduled"
+                      ? "all"
+                      : view,
                 crew: crewFilter,
                 layout: option.value,
                 date: plannerDateKey
@@ -3893,20 +3917,24 @@ export default async function SchedulePage({
               active: scheduleLayout === option.value
             }))}
             primaryCount={
-              scheduleLayout === "board" ? visibleJobs.length : plannerItemCount
+              isGroupedScheduleLayout
+                ? groupedPlannerJobCount
+                : plannerItemCount
             }
             primaryLabel={
-              scheduleLayout === "board" ? "visible jobs" : "scheduled items"
+              isGroupedScheduleLayout ? "visible jobs" : "scheduled items"
             }
             crewAttentionCount={
-              scheduleLayout === "board"
+              isGroupedScheduleLayout
                 ? visibleJobs.filter((job) => job.assignmentCount === 0).length
                 : plannerNeedsCrewCount
             }
             rangeLabel={
-              scheduleLayout === "board"
-                ? "Grouped by operational timing"
-                : plannerRangeLabel
+              scheduleLayout === "crew"
+                ? "Grouped by crew and operational timing"
+                : scheduleLayout === "unscheduled"
+                  ? "Ready and blocked unscheduled jobs"
+                  : plannerRangeLabel
             }
             previousHref={plannerPrevHref}
             previousLabel={
@@ -3916,9 +3944,11 @@ export default async function SchedulePage({
             nextHref={plannerNextHref}
             nextLabel={scheduleLayout === "day" ? "Next day" : "Next week"}
             boardModeDescription={
-              scheduleLayout === "board"
-                ? "Board mode uses this selected date to preserve handoff context while grouping the filtered jobs by operational timing."
-                : undefined
+              scheduleLayout === "crew"
+                ? "Crew view groups the filtered jobs by timing, crew gaps, and execution state while preserving the selected date for handoffs."
+                : scheduleLayout === "unscheduled"
+                  ? "Unscheduled view shows jobs with no date commitment. Scheduling still happens through the existing Move schedule confirmation."
+                  : undefined
             }
           >
             <CrewBoardDragDropLayer>
@@ -4444,7 +4474,7 @@ export default async function SchedulePage({
                   </div>
                 ) : (
                   <div className="grid gap-4 px-5 py-4 sm:px-6 xl:grid-cols-2 2xl:grid-cols-3">
-                    {boardTimingGroups.map((group) => (
+                    {plannerBoardGroups.map((group) => (
                       <section
                         key={group.key}
                         className={`flex flex-col border ${group.surfaceClass}`}

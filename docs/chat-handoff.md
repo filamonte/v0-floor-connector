@@ -219,6 +219,15 @@ actions, and support context. Internal work items, editing, schedule context,
 connected records, metadata, related conversations, and revisions remain
 available as lower-priority support instead of competing with invoice review.
 
+Current UX Recovery implementation note: CrewBoard / Schedule Calendar MVP is
+implemented on `stream/crewboard-schedule-calendar-v1`. `/schedule` keeps the
+same route, job loaders, schedule actions, crew assignment actions, warnings,
+field handoff context, and GateKeeper / Ready Check enforcement, but the
+planner now exposes Day, Week, Crew, and Unscheduled modes. Existing
+`layout=board` links resolve to Crew. The slice adds no schema, migrations,
+dispatch tables, calendar-event model, route optimization, notifications,
+portal behavior, or new schedule write path.
+
 Current wave gate note: `visual-ux-review-contractor-usability-v1` has merged
 to `main` under Jeff's controlled merge approval. Golden Workflow Usability
 Review V1 merged as `32f2151d`, Workspace Density Polish V1 merged as
