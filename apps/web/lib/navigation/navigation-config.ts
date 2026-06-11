@@ -264,10 +264,10 @@ export const navigationSections: readonly NavigationSection[] = [
       },
       {
         key: "opportunities",
-        label: "Opportunities",
+        label: "Leads & Opportunities",
         href: "/opportunities",
         description:
-          "Run lead and opportunity follow-up before work becomes a project.",
+          "Run Lead Intake and Sales Opportunity follow-up before work becomes a project.",
         minRole: "member",
         status: "live",
         matchPaths: ["/leads"]

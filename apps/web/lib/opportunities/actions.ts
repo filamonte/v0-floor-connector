@@ -7,12 +7,14 @@ import { quickCreateEstimateFromContext } from "@/lib/estimates/data";
 import {
   createOpportunity,
   updateOpportunity,
-  updateOpportunityFollowUp
+  updateOpportunityFollowUp,
+  updateOpportunityStatus
 } from "./data";
 import {
   opportunityFollowUpInputSchema,
   opportunityInputSchema,
-  opportunityQuickCreateInputSchema
+  opportunityQuickCreateInputSchema,
+  opportunityStatusUpdateInputSchema
 } from "./schemas";
 
 function getFieldValue(formData: FormData, key: string) {
@@ -49,11 +51,7 @@ function normalizeMeasurementType(value: string) {
     return "linear";
   }
 
-  if (
-    normalized === "count" ||
-    normalized === "ea" ||
-    normalized === "each"
-  ) {
+  if (normalized === "count" || normalized === "ea" || normalized === "each") {
     return "count";
   }
 
@@ -90,8 +88,28 @@ function buildRedirect(
   return query ? `${pathname}?${query}` : pathname;
 }
 
+function buildReturnRedirect(
+  returnTo: string,
+  params: Record<string, string | undefined>
+) {
+  const [pathname, queryString = ""] = returnTo.split("?");
+  const search = new URLSearchParams(queryString);
+
+  for (const [key, value] of Object.entries(params)) {
+    if (value) {
+      search.set(key, value);
+    }
+  }
+
+  const query = search.toString();
+  return query ? `${pathname}?${query}` : pathname;
+}
+
 function parseOpportunityInput(formData: FormData) {
-  const measurementAreaLabels = getFieldValues(formData, "measurementAreaLabel");
+  const measurementAreaLabels = getFieldValues(
+    formData,
+    "measurementAreaLabel"
+  );
   const measurementTypes = getFieldValues(formData, "measurementType");
   const measurementValues = getFieldValues(formData, "measurementValue");
   const measurementUnits = getFieldValues(formData, "measurementUnit");
@@ -116,7 +134,8 @@ function parseOpportunityInput(formData: FormData) {
 
   const measurements = measurementTypes
     .map((measurementType, index) => {
-      const normalizedMeasurementType = normalizeMeasurementType(measurementType);
+      const normalizedMeasurementType =
+        normalizeMeasurementType(measurementType);
       const derivedUnit = deriveMeasurementUnit(normalizedMeasurementType);
 
       return {
@@ -146,11 +165,12 @@ function parseOpportunityInput(formData: FormData) {
       body: observationBodies[index] ?? "",
       severity: observationSeverities[index] ?? ""
     }))
-    .filter((observation) =>
-      observation.title.trim().length > 0 ||
-      observation.body.trim().length > 0 ||
-      observation.severity.trim().length > 0 ||
-      observation.observationType.trim() !== "general"
+    .filter(
+      (observation) =>
+        observation.title.trim().length > 0 ||
+        observation.body.trim().length > 0 ||
+        observation.severity.trim().length > 0 ||
+        observation.observationType.trim() !== "general"
     );
 
   const attachments = attachmentPaths
@@ -190,9 +210,18 @@ function parseOpportunityInput(formData: FormData) {
     stateRegion: getFieldValue(formData, "stateRegion"),
     postalCode: getFieldValue(formData, "postalCode"),
     countryCode: getFieldValue(formData, "countryCode"),
-    siteAssessmentScheduledOn: getFieldValue(formData, "siteAssessmentScheduledOn"),
-    siteAssessmentScheduledTime: getFieldValue(formData, "siteAssessmentScheduledTime"),
-    siteAssessmentCompletedOn: getFieldValue(formData, "siteAssessmentCompletedOn"),
+    siteAssessmentScheduledOn: getFieldValue(
+      formData,
+      "siteAssessmentScheduledOn"
+    ),
+    siteAssessmentScheduledTime: getFieldValue(
+      formData,
+      "siteAssessmentScheduledTime"
+    ),
+    siteAssessmentCompletedOn: getFieldValue(
+      formData,
+      "siteAssessmentCompletedOn"
+    ),
     requirementsSummary: getFieldValue(formData, "requirementsSummary"),
     notes: getFieldValue(formData, "notes"),
     measurements,
@@ -219,8 +248,14 @@ function parseOpportunityQuickCreateInput(formData: FormData) {
     source: getFieldValue(formData, "source"),
     sourceDetail: getFieldValue(formData, "sourceDetail"),
     serviceType: getFieldValue(formData, "serviceType"),
-    siteAssessmentScheduledOn: getFieldValue(formData, "siteAssessmentScheduledOn"),
-    siteAssessmentScheduledTime: getFieldValue(formData, "siteAssessmentScheduledTime")
+    siteAssessmentScheduledOn: getFieldValue(
+      formData,
+      "siteAssessmentScheduledOn"
+    ),
+    siteAssessmentScheduledTime: getFieldValue(
+      formData,
+      "siteAssessmentScheduledTime"
+    )
   });
 }
 
@@ -229,6 +264,14 @@ function parseOpportunityFollowUpInput(formData: FormData) {
     opportunityId: getFieldValue(formData, "opportunityId"),
     nextFollowUpAt: getFieldValue(formData, "nextFollowUpAt"),
     nextFollowUpNote: getFieldValue(formData, "nextFollowUpNote")
+  });
+}
+
+function parseOpportunityStatusUpdateInput(formData: FormData) {
+  return opportunityStatusUpdateInputSchema.safeParse({
+    opportunityId: getFieldValue(formData, "opportunityId"),
+    status: getFieldValue(formData, "status"),
+    returnTo: getFieldValue(formData, "returnTo")
   });
 }
 
@@ -280,7 +323,8 @@ export async function quickCreateOpportunityAction(formData: FormData) {
   let opportunity;
 
   try {
-    const contactName = `${result.data.firstName} ${result.data.lastName}`.trim();
+    const contactName =
+      `${result.data.firstName} ${result.data.lastName}`.trim();
     const phoneSummary =
       result.data.phoneNumber === result.data.cellPhone
         ? `Primary phone: ${result.data.cellPhone}`
@@ -381,7 +425,8 @@ export async function updateOpportunityFollowUpAction(formData: FormData) {
   if (!result.success) {
     redirect(
       buildRedirect(opportunityId ? `/leads/${opportunityId}` : "/leads", {
-        error: result.error.issues[0]?.message ?? "Unable to update lead follow-up."
+        error:
+          result.error.issues[0]?.message ?? "Unable to update lead follow-up."
       })
     );
   }
@@ -394,7 +439,9 @@ export async function updateOpportunityFollowUpAction(formData: FormData) {
     redirect(
       buildRedirect(`/leads/${result.data.opportunityId}`, {
         error:
-          error instanceof Error ? error.message : "Unable to update lead follow-up."
+          error instanceof Error
+            ? error.message
+            : "Unable to update lead follow-up."
       })
     );
   }
@@ -408,6 +455,50 @@ export async function updateOpportunityFollowUpAction(formData: FormData) {
       message: opportunity
         ? `${opportunity.title} follow-up was updated.`
         : "Lead follow-up was updated."
+    })
+  );
+}
+
+export async function updateOpportunityStatusAction(formData: FormData) {
+  const result = parseOpportunityStatusUpdateInput(formData);
+  const fallbackOpportunityId = getFieldValue(formData, "opportunityId");
+  const fallbackReturnTo = fallbackOpportunityId
+    ? `/leads/${fallbackOpportunityId}`
+    : "/leads";
+
+  if (!result.success) {
+    redirect(
+      buildReturnRedirect(fallbackReturnTo, {
+        error:
+          result.error.issues[0]?.message ??
+          "Unable to update opportunity status."
+      })
+    );
+  }
+
+  const returnTo =
+    result.data.returnTo ?? `/leads/${result.data.opportunityId}`;
+
+  try {
+    await updateOpportunityStatus(result.data);
+  } catch (error) {
+    redirect(
+      buildReturnRedirect(returnTo, {
+        error:
+          error instanceof Error
+            ? error.message
+            : "Unable to update opportunity status."
+      })
+    );
+  }
+
+  revalidatePath("/leads");
+  revalidatePath(`/leads/${result.data.opportunityId}`);
+  revalidatePath("/dashboard");
+
+  redirect(
+    buildReturnRedirect(returnTo, {
+      message: "Opportunity status was updated."
     })
   );
 }
@@ -453,7 +544,8 @@ export async function startEstimateFromOpportunityAction(formData: FormData) {
 
   redirect(
     buildRedirect(`/estimates/${estimate.id}/edit`, {
-      message: "Estimate created from the opportunity. Finish the scope in the estimate workspace."
+      message:
+        "Estimate created from the opportunity. Finish the scope in the estimate workspace."
     })
   );
 }

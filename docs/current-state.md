@@ -240,6 +240,13 @@ These high-value route notes exist to prevent target-vs-current drift:
   existing Lead/Opportunity data loading, server actions, route names,
   assessment package ownership, work item behavior, tenant checks, schema, and
   Supabase migrations unchanged.
+- The Lead / Opportunity UI now applies the sales lifecycle naming decision in
+  presentation: `/leads` reads as `Leads & Opportunities`, `/leads/:leadId`
+  reads as `Opportunity Workspace`, and the detail support column exposes a
+  compact status control over the existing canonical opportunity status enum.
+  This keeps `/leads`, `/leads/:leadId`, the `/opportunities` alias,
+  `opportunities` schema, assessment ownership, tenant checks, and Supabase
+  behavior unchanged.
 - Project Workspace now also uses Workspace Framework V2 presentation views.
   `/projects/:projectId` preserves the same route while using `?view=` focused
   views for Overview, Readiness, Scope / Context, Estimates / Contracts, Jobs /

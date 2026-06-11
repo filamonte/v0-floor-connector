@@ -1551,10 +1551,10 @@ export default async function DashboardPage({
       metrics={[
         {
           key: "leads-follow-up",
-          label: "Lead follow-ups due",
+          label: "Opportunity follow-ups due",
           value: String(dueLeadFollowUps.length),
           detail:
-            "Overdue and due-today opportunity follow-up from the internal queue.",
+            "Overdue and due-today Sales Opportunity follow-up from the internal queue.",
           href: "/leads?followUp=due"
         },
         {
@@ -1819,17 +1819,17 @@ export default async function DashboardPage({
         {
           key: "leads",
           eyebrow: "Commercial follow-up",
-          title: "Lead follow-ups due",
+          title: "Opportunity follow-ups due",
           description:
-            "Overdue, due-today, and near-term opportunity follow-up stays visible without creating a separate reminder system.",
+            "Overdue, due-today, and near-term Sales Opportunity follow-up stays visible without creating a separate reminder system.",
           href: "/leads?followUp=due",
-          actionLabel: "Open leads",
-          emptyTitle: "No lead follow-ups are due right now.",
+          actionLabel: "Open Leads & Opportunities",
+          emptyTitle: "No opportunity follow-ups are due right now.",
           emptyDescription:
-            "Set the next follow-up date from lead detail and due items will surface here.",
+            "Set the next follow-up date from the Opportunity Workspace and due items will surface here.",
           items: leadFollowUpsForDashboard.map((lead) => ({
             id: lead.opportunityId,
-            title: lead.title || lead.contactName || "Untitled lead",
+            title: lead.title || lead.contactName || "Untitled opportunity",
             subtitle:
               lead.customerName ??
               lead.companyName ??

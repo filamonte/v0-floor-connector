@@ -18,7 +18,11 @@ import {
   updateContactForOrganization
 } from "@/lib/contacts/data";
 import { ensurePrimaryCustomerContact } from "@/lib/customers/primary-contact";
-import type { OpportunityFollowUpInput, OpportunityInput } from "./schemas";
+import type {
+  OpportunityFollowUpInput,
+  OpportunityInput,
+  OpportunityStatusUpdateInput
+} from "./schemas";
 import { requireAuthenticatedUser } from "@/lib/auth/session";
 import { getActiveOrganizationContext } from "@/lib/organizations/active-context";
 import { getOrganizationFinancialSettings } from "@/lib/organizations/financial-settings";
@@ -1482,6 +1486,88 @@ export async function updateOpportunityFollowUp(
 
   if (!isOpportunityRow(data)) {
     throw new Error("Lead not found for this organization.");
+  }
+
+  const hydrated = await hydrateOpportunityListItems(scope.organizationId, [
+    data
+  ]);
+  return hydrated[0] ?? null;
+}
+
+export async function updateOpportunityStatus(
+  input: OpportunityStatusUpdateInput
+) {
+  const scope = await requireOpportunityScope(`/leads/${input.opportunityId}`);
+  const currentOpportunity = await getOpportunityById(
+    input.opportunityId,
+    `/leads/${input.opportunityId}`
+  );
+
+  if (!currentOpportunity) {
+    throw new Error("Opportunity not found for this organization.");
+  }
+
+  if (
+    input.status === "site_assessment_scheduled" &&
+    !currentOpportunity.siteAssessmentScheduledAt
+  ) {
+    throw new Error(
+      "Schedule the site visit date and time before changing the opportunity status to Site visit scheduled."
+    );
+  }
+
+  const supabase = await getSupabaseServerClient();
+  const siteAssessmentState = resolveSiteAssessmentState(
+    input.status,
+    {
+      siteAssessmentScheduledOn: null,
+      siteAssessmentScheduledTime: null,
+      siteAssessmentCompletedOn: null
+    },
+    currentOpportunity
+  );
+  const qualifiedAt =
+    input.status === "qualified" && !currentOpportunity.qualifiedAt
+      ? new Date().toISOString()
+      : currentOpportunity.qualifiedAt;
+  const lostAt =
+    input.status === "lost"
+      ? (currentOpportunity.lostAt ?? new Date().toISOString())
+      : null;
+  const response = await supabase
+    .from("opportunities")
+    .update({
+      status: input.status,
+      site_assessment_status: siteAssessmentState.siteAssessmentStatus,
+      site_assessment_scheduled_at:
+        siteAssessmentState.siteAssessmentScheduledAt,
+      site_assessment_completed_at:
+        siteAssessmentState.siteAssessmentCompletedAt,
+      qualified_at: qualifiedAt,
+      lost_at: lostAt,
+      updated_by: scope.userId
+    })
+    .eq("company_id", scope.organizationId)
+    .eq("id", input.opportunityId)
+    .select(opportunitySelect)
+    .maybeSingle();
+  const data: unknown = response.data;
+
+  if (response.error) {
+    throw new Error(
+      `Unable to update the opportunity status: ${response.error.message}`
+    );
+  }
+
+  if (!isOpportunityRow(data)) {
+    throw new Error("Opportunity not found for this organization.");
+  }
+
+  if (currentOpportunity.projectId) {
+    await syncProjectCommercialReadiness({
+      organizationId: scope.organizationId,
+      projectId: currentOpportunity.projectId
+    });
   }
 
   const hydrated = await hydrateOpportunityListItems(scope.organizationId, [

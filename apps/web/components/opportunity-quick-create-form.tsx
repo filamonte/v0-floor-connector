@@ -5,6 +5,7 @@ import { AuthSubmitButton } from "@/components/auth-submit-button";
 import { CountryComboboxField } from "@/components/country-combobox-field";
 import { QuickCreateFormShell } from "@/components/quick-create-form-shell";
 import {
+  opportunityStatusDisplayLabels,
   leadSourceOptions,
   serviceTypeOptions
 } from "@/lib/opportunities/schemas";
@@ -14,12 +15,18 @@ type OpportunityQuickCreateFormProps = {
 };
 
 const leadStageOptions = [
-  { value: "new", label: "New" },
-  { value: "contacted", label: "Contacted" },
-  { value: "qualified", label: "Qualified" },
-  { value: "site_assessment_scheduled", label: "Site Assessment Scheduled" },
-  { value: "site_assessment_complete", label: "Site Assessment Complete" },
-  { value: "estimating", label: "Estimating" }
+  { value: "new", label: opportunityStatusDisplayLabels.new },
+  { value: "contacted", label: opportunityStatusDisplayLabels.contacted },
+  { value: "qualified", label: opportunityStatusDisplayLabels.qualified },
+  {
+    value: "site_assessment_scheduled",
+    label: opportunityStatusDisplayLabels.site_assessment_scheduled
+  },
+  {
+    value: "site_assessment_complete",
+    label: opportunityStatusDisplayLabels.site_assessment_complete
+  },
+  { value: "estimating", label: opportunityStatusDisplayLabels.estimating }
 ] as const;
 
 export function OpportunityQuickCreateForm({
@@ -29,8 +36,8 @@ export function OpportunityQuickCreateForm({
     <form action={action} className="space-y-5">
       <QuickCreateFormShell
         eyebrow="Quick create"
-        title="Create lead"
-        description="Capture the same intake fields the sales team expects first. FloorConnector will create the canonical contact and lead continuity behind the scenes, then take you into the lead workspace."
+        title="Create Lead Intake"
+        description="Capture the first inquiry as Lead Intake. FloorConnector will create the canonical contact and sales opportunity behind the scenes, then take you into the Opportunity Workspace."
         footer="This creates a real opportunity record first. Estimate creation still stays downstream of intake continuity."
       >
         <div className="grid gap-4 md:grid-cols-2">
@@ -68,7 +75,12 @@ export function OpportunityQuickCreateForm({
               placeholder="Suite, unit, building, or floor"
             />
           </div>
-          <AuthField label="City" name="city" placeholder="Westfield" required />
+          <AuthField
+            label="City"
+            name="city"
+            placeholder="Westfield"
+            required
+          />
           <AuthField
             label="State"
             name="stateRegion"
@@ -76,7 +88,8 @@ export function OpportunityQuickCreateForm({
             maxLength={2}
             autoCapitalize="characters"
             onInput={(event) => {
-              event.currentTarget.value = event.currentTarget.value.toUpperCase();
+              event.currentTarget.value =
+                event.currentTarget.value.toUpperCase();
             }}
             hint="Use the 2-letter state code."
             required
@@ -150,7 +163,7 @@ export function OpportunityQuickCreateForm({
           </div>
           <label className="block">
             <span className="mb-2 block text-sm font-medium text-slate-800">
-              Lead Stage
+              Opportunity status
             </span>
             <select
               name="leadStage"
@@ -181,8 +194,11 @@ export function OpportunityQuickCreateForm({
       </QuickCreateFormShell>
 
       <div className="flex flex-col gap-3 pt-1">
-        <AuthSubmitButton pendingLabel="Creating lead..." className="w-full">
-          <span>Create lead</span>
+        <AuthSubmitButton
+          pendingLabel="Creating Lead Intake..."
+          className="w-full"
+        >
+          <span>Create Lead Intake</span>
         </AuthSubmitButton>
       </div>
     </form>

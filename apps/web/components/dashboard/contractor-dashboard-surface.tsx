@@ -989,9 +989,9 @@ function DashboardV0Sections({
 
   const revenueCells = [
     {
-      label: "New Leads",
+      label: "Opportunity Follow-ups",
       value: leadsMetric?.value ?? "0",
-      detail: leadsMetric?.detail ?? "Existing lead follow-up queue",
+      detail: leadsMetric?.detail ?? "Existing opportunity follow-up queue",
       href: leadsMetric?.href ?? "/leads",
       tone: "quiet" as const
     },

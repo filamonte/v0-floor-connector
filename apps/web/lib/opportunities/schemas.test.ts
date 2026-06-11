@@ -2,8 +2,10 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  formatOpportunityStatusLabel,
   opportunityInputSchema,
-  opportunityQuickCreateInputSchema
+  opportunityQuickCreateInputSchema,
+  opportunityStatusUpdateInputSchema
 } from "./schemas";
 
 const baseOpportunityInput = {
@@ -44,7 +46,7 @@ void test("opportunity intake requires assessment date and time when status sche
 
   assert.equal(result.success, false);
   assert.match(
-    result.success ? "" : result.error.issues[0]?.message ?? "",
+    result.success ? "" : (result.error.issues[0]?.message ?? ""),
     /assessment time/i
   );
 });
@@ -88,7 +90,38 @@ void test("quick create lead intake requires assessment date and time when sched
 
   assert.equal(result.success, false);
   assert.match(
-    result.success ? "" : result.error.issues[0]?.message ?? "",
+    result.success ? "" : (result.error.issues[0]?.message ?? ""),
     /assessment time/i
   );
+});
+
+void test("opportunity status labels keep canonical values display-safe", () => {
+  assert.equal(formatOpportunityStatusLabel("new"), "New intake");
+  assert.equal(
+    formatOpportunityStatusLabel("qualified"),
+    "Qualified opportunity"
+  );
+  assert.equal(
+    formatOpportunityStatusLabel("site_assessment_scheduled"),
+    "Site visit scheduled"
+  );
+});
+
+void test("opportunity status update accepts existing status values only", () => {
+  const result = opportunityStatusUpdateInputSchema.safeParse({
+    opportunityId: "b497db9d-9f4d-4cd0-ac72-43817cabb308",
+    status: "proposal_sent",
+    returnTo: "/leads/b497db9d-9f4d-4cd0-ac72-43817cabb308?view=overview"
+  });
+
+  assert.equal(result.success, true);
+  assert.equal(result.success ? result.data.status : null, "proposal_sent");
+
+  const invalidResult = opportunityStatusUpdateInputSchema.safeParse({
+    opportunityId: "b497db9d-9f4d-4cd0-ac72-43817cabb308",
+    status: "custom_status",
+    returnTo: "/leads/b497db9d-9f4d-4cd0-ac72-43817cabb308"
+  });
+
+  assert.equal(invalidResult.success, false);
 });
