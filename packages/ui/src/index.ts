@@ -42,11 +42,16 @@ export type {
   RecordWorkspaceRhythmStepId
 } from "./record-workspace-rhythm";
 export {
+  normalizeProjectWorkspaceFrameworkV2ViewId,
   normalizeWorkspaceFrameworkV2ViewId,
+  projectWorkspaceFrameworkV2ViewIds,
+  projectWorkspaceFrameworkV2Views,
   workspaceFrameworkV2ViewIds,
   workspaceFrameworkV2Views
 } from "./workspace-framework-v2";
 export type {
+  ProjectWorkspaceFrameworkV2View,
+  ProjectWorkspaceFrameworkV2ViewId,
   WorkspaceFrameworkV2View,
   WorkspaceFrameworkV2ViewId
 } from "./workspace-framework-v2";

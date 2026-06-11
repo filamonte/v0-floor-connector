@@ -240,6 +240,18 @@ These high-value route notes exist to prevent target-vs-current drift:
   existing Lead/Opportunity data loading, server actions, route names,
   assessment package ownership, work item behavior, tenant checks, schema, and
   Supabase migrations unchanged.
+- Project Workspace now also uses Workspace Framework V2 presentation views.
+  `/projects/:projectId` preserves the same route while using `?view=` focused
+  views for Overview, Readiness, Scope / Context, Estimates / Contracts, Jobs /
+  Schedule, Invoices / Payments, and Activity / Notes. The Project page still
+  derives readiness, blockers, ProjectPulse, operational intelligence,
+  assessment package context, commercial records, jobs/schedule, financial
+  continuity, field/proof/evidence, work items, and communications from the
+  existing canonical loaders and read models. This slice is presentation-only:
+  it does not change Project data loading, server actions, tenant scoping,
+  Supabase schema, migrations, route names, readiness calculations, financial
+  math, payment/signature state, scheduling mutation, provider behavior, portal
+  access, or owning-workspace boundaries.
 - Assessment Package detail now has a first schema-backed Area / Space
   foundation through tenant-scoped `assessment_spaces` records owned by the
   parent Assessment Package and denormalized to the same canonical Project for
