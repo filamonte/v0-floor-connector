@@ -3036,6 +3036,21 @@ Implemented UI behavior now:
   business logic, settings persistence, provider/billing mutation, payment,
   signature, scheduling, tenant activation, role models, customer self-service,
   AI, or AIA.
+- Settings Company Controls V2 makes the contractor Settings overview a setup
+  health and owner-section routing surface instead of a configuration dump.
+  `/settings` now summarizes existing tenant status, lifecycle state, missing
+  company setup fields, next setup actions, and links into Company, Team &
+  Access, Sales / Workflow, Operations, Financials, Documents / Templates /
+  Catalogs, and Integrations / Modules sections. The Settings side navigation
+  uses those owner groups while preserving existing routes. The company profile
+  accepts plain contractor website domains and normalizes them to usable HTTPS
+  URLs, and the brand accent control is clarified as the protected app header
+  accent preview. Workflow error events inside company admin are relabeled as
+  an Operations Monitor preview for troubleshooting only. This does not change
+  schema, migrations, Supabase data access, settings persistence contracts,
+  tenant activation, route names, workflow action ownership, platform policy,
+  provider behavior, payment, signature, scheduling, customer self-service, AI,
+  or AIA.
 - Dashboard, Project, Schedule, Contract, Invoice, Job, and Daily Log surfaces now share grouped lifecycle language around `opportunity -> customer/project -> estimate/contract -> job/schedule -> invoice/payment`. Contract Workspace clarifies draft, approval, signature, decline, countersign, deposit, and downstream handoff context; Invoice Workspace clarifies draft, sent/open, partial, paid, void, billing-source, collection, payment, and upstream-readiness context; Job Workspace clarifies schedule, crew, field evidence, closeout, and downstream billing handoff; Daily Log Workspace clarifies project-day narrative, field notes, labor/time continuity, attachments, and upstream Project Workspace resolution. This is presentation-only and does not change signature, readiness, scheduling, time-card, billing, payment, portal, schema, RLS, or server-action behavior.
 - Projects, Estimates, Invoices, Jobs, Contracts, and Customers Manager Pages use the shared Manager Page rhythm with clearer status scanning, primary create actions, and compact continuity cues.
 - Portal and super-admin received only safe consistency cleanup; they do not copy contractor operational patterns wholesale.

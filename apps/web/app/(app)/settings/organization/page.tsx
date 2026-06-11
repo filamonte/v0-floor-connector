@@ -19,7 +19,9 @@ const organizationFieldClassName =
 const organizationNoticeClassName =
   "rounded-lg border border-[var(--border-warm)] bg-[var(--highlight)] px-4 py-4 text-sm leading-6 text-[var(--text-secondary)]";
 
-export default async function OrganizationSettingsPage({ searchParams }: PageProps) {
+export default async function OrganizationSettingsPage({
+  searchParams
+}: PageProps) {
   const resolvedSearchParams = (await searchParams) ?? {};
   const scope = await requireOrganizationAdminScope("/settings/organization");
   const brandAccentColor = scope.organization.brandAccentColor ?? "#d8731f";
@@ -66,7 +68,9 @@ export default async function OrganizationSettingsPage({ searchParams }: PagePro
           </div>
 
           <label className="block">
-            <span className="mb-2 block text-sm font-medium text-slate-800">Slug</span>
+            <span className="mb-2 block text-sm font-medium text-slate-800">
+              Slug
+            </span>
             <input
               name="slug"
               defaultValue={scope.organization.slug}
@@ -87,7 +91,8 @@ export default async function OrganizationSettingsPage({ searchParams }: PagePro
               className={organizationFieldClassName}
             />
             <span className="mt-2 block text-xs leading-5 text-slate-500">
-              Use an absolute image URL to show the tenant logo in the shared app header.
+              Use an absolute image URL to show the tenant logo in the shared
+              app header.
             </span>
           </label>
 
@@ -119,15 +124,17 @@ export default async function OrganizationSettingsPage({ searchParams }: PagePro
           <div className="grid gap-4 md:grid-cols-2">
             <label className="block">
               <span className="mb-2 block text-sm font-medium text-slate-800">
-                Website
+                Contractor website URL
               </span>
               <input
                 name="websiteUrl"
-                type="url"
                 defaultValue={scope.organization.websiteUrl ?? ""}
-                placeholder="https://example.com"
+                placeholder="example.com or https://www.example.com"
                 className={organizationFieldClassName}
               />
+              <span className="mt-2 block text-xs leading-5 text-slate-500">
+                Plain domains are saved as usable HTTPS URLs.
+              </span>
             </label>
             <label className="block">
               <span className="mb-2 block text-sm font-medium text-slate-800">
@@ -145,20 +152,26 @@ export default async function OrganizationSettingsPage({ searchParams }: PagePro
           <div className="grid gap-4 md:grid-cols-2">
             <label className="block">
               <span className="mb-2 block text-sm font-medium text-slate-800">
-                Brand accent color
+                App header accent color
               </span>
-              <div className="flex items-center gap-3">
-                <span
-                  aria-hidden="true"
-                  className="h-10 w-10 shrink-0 rounded-[4px] border border-[var(--border-warm)]"
+              <div className="grid gap-3 sm:grid-cols-[44px_minmax(0,1fr)] sm:items-center">
+                <div
+                  aria-label={`Current app header accent preview ${brandAccentColor}`}
+                  className="h-11 w-11 rounded-[4px] border border-[var(--border-warm)] shadow-inner"
                   style={{ backgroundColor: brandAccentColor }}
                 />
-                <input
-                  name="brandAccentColor"
-                  defaultValue={scope.organization.brandAccentColor ?? ""}
-                  placeholder="#d8731f"
-                  className={organizationFieldClassName}
-                />
+                <div>
+                  <input
+                    name="brandAccentColor"
+                    defaultValue={scope.organization.brandAccentColor ?? ""}
+                    placeholder="#d8731f"
+                    className={organizationFieldClassName}
+                  />
+                  <span className="mt-2 block text-xs leading-5 text-slate-500">
+                    Used for the organization mark in the protected app header.
+                    Broader theme controls remain platform-owned.
+                  </span>
+                </div>
               </div>
             </label>
             <label className="block">
@@ -175,7 +188,9 @@ export default async function OrganizationSettingsPage({ searchParams }: PagePro
           </div>
 
           <div className={organizationNoticeClassName}>
-            Platform status is still controlled by super admin. Contractor admins manage only the organization-owned profile layer here. Logo upload remains deferred; use a hosted URL or storage reference.
+            Platform status is still controlled by super admin. Contractor
+            admins manage only the organization-owned profile layer here. Logo
+            upload remains deferred; use a hosted URL or storage reference.
           </div>
 
           <SaveStateSubmitButton

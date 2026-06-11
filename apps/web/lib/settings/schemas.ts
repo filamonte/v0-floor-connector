@@ -65,29 +65,70 @@ function optionalEmailField() {
 }
 
 function optionalHttpUrlField(label: string) {
-  return trimmedNullableString(2000).refine(
-    (value) => {
-      if (value === null) {
-        return true;
-      }
+  return trimmedNullableString(2000)
+    .transform((value) => normalizeWebsiteUrl(value))
+    .refine(
+      (value) => {
+        if (value === null) {
+          return true;
+        }
 
-      const parsed = z.string().url().safeParse(value);
+        const parsed = z.string().url().safeParse(value);
 
-      if (!parsed.success) {
-        return false;
-      }
+        if (!parsed.success) {
+          return false;
+        }
 
-      try {
-        const url = new URL(value);
-        return url.protocol === "http:" || url.protocol === "https:";
-      } catch {
-        return false;
+        try {
+          const url = new URL(value);
+          return url.protocol === "http:" || url.protocol === "https:";
+        } catch {
+          return false;
+        }
+      },
+      {
+        message: `${label} must be a valid http or https URL.`
       }
-    },
-    {
-      message: `${label} must be a valid http or https URL.`
+    );
+}
+
+export function normalizeWebsiteUrl(value: string | null) {
+  if (value === null) {
+    return null;
+  }
+
+  const trimmed = value.trim();
+
+  if (trimmed.length === 0) {
+    return null;
+  }
+
+  if (/^[a-z][a-z0-9+.-]*:\/\//i.test(trimmed)) {
+    return trimmed;
+  }
+
+  const withProtocol = `https://${trimmed}`;
+
+  try {
+    const url = new URL(withProtocol);
+    const hostname = url.hostname.toLowerCase();
+    const isBarePublicDomain =
+      !hostname.startsWith("www.") &&
+      !hostname.includes(":") &&
+      !hostname.endsWith(".local") &&
+      hostname !== "localhost" &&
+      !/^\d{1,3}(?:\.\d{1,3}){3}$/.test(hostname) &&
+      hostname.split(".").length === 2;
+
+    if (isBarePublicDomain) {
+      url.hostname = `www.${hostname}`;
+      return url.toString();
     }
-  );
+
+    return withProtocol;
+  } catch {
+    return withProtocol;
+  }
 }
 
 function optionalBrandAccentColorField() {

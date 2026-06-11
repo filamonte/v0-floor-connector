@@ -186,11 +186,17 @@ slice is implemented on `stream/workspace-framework-v2-lead-project-v1`.
 `/leads/:leadId` now uses focused query-param workspace views instead of
 same-page section jump navigation, with a reusable `StandardWorkspaceLayout`
 support column and shared `@floorconnector/ui` Workspace Framework V2 view
-vocabulary. The slice is presentation-only: it preserves Lead/Opportunity data
-loading, server actions, route names, assessment package ownership, internal
-work item behavior, tenant checks, schema, migrations, provider behavior, and
-portal behavior. Project Workspace, Settings, Invoice Review, CrewBoard, and
-Customer Portal recovery remain future slices.
+vocabulary. Settings Company Controls V2 is implemented on
+`stream/settings-company-controls-v2`: `/settings` is now a setup health and
+owner-section routing overview, Settings navigation is grouped by owner section,
+contractor website plain domains normalize to usable HTTPS URLs, brand accent
+copy/preview is clearer, and company workflow error events are labeled as an
+Operations Monitor preview rather than a Settings-owned workflow area. These
+slices are presentation/configuration-boundary work: they preserve existing data
+loading, server actions, route names, tenant checks, schema, migrations,
+provider behavior, platform policy, workflow action ownership, and portal
+behavior. Invoice Review, CrewBoard, and Customer Portal recovery remain future
+slices.
 
 Current wave gate note: `visual-ux-review-contractor-usability-v1` has merged
 to `main` under Jeff's controlled merge approval. Golden Workflow Usability
