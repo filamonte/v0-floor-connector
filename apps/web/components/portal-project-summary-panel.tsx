@@ -243,15 +243,15 @@ export function PortalProjectCustomerActionHub({
 >) {
   return (
     <DetailPanel
-      title="Next Steps"
-      description="Start with the item that needs your attention, then review the other project items shared with you."
+      title="Needs Your Attention"
+      description="Start with the item waiting for customer review, signature, approval, or payment."
     >
       <div className="grid gap-4 lg:grid-cols-2">
         <section className={`${portalStatePanelClassName} lg:col-span-2`}>
           <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
             <div className="min-w-0">
               <p className="text-[11px] font-semibold uppercase tracking-[0.26em] text-slate-500">
-                Project summary
+                Project Updates
               </p>
               <h2 className="mt-2 text-lg font-semibold tracking-tight text-slate-950">
                 {statusWindow.primaryMessage}
@@ -284,7 +284,9 @@ export function PortalProjectCustomerActionHub({
                 </p>
               </div>
               <PortalStatusBadge status={card.badge}>
-                {card.badge === "attention" ? "Needs review" : card.badge}
+                {card.badge === "attention"
+                  ? "Needs Your Attention"
+                  : card.badge}
               </PortalStatusBadge>
             </div>
             <div className="mt-4">

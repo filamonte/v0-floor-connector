@@ -518,7 +518,7 @@ export default async function PortalInvoiceReviewPage({
               </div>
               <div className={portalInsetPanelClassName}>
                 <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
-                  Billing readiness
+                  Payment availability
                 </p>
                 <p className="mt-2 text-sm leading-6 text-slate-600">
                   {financialClarity.billingReadinessSummary}

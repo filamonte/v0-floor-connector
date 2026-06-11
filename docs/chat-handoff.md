@@ -228,6 +228,18 @@ planner now exposes Day, Week, Crew, and Unscheduled modes. Existing
 dispatch tables, calendar-event model, route optimization, notifications,
 portal behavior, or new schedule write path.
 
+Current UX Recovery implementation note: Customer Portal Organization V1 is
+implemented on `stream/customer-portal-organization-v1`. `/portal` now scans as
+Needs Your Attention, Active Projects, Documents / Approvals, Invoices /
+Payments, Upcoming Appointments, and History / Completed, derived from existing
+portal-accessible project summaries. `/portal/projects/:projectId` now puts
+Needs Your Attention, Documents / Approvals, Invoices / Payments, and Project
+Updates ahead of completion, communication, evidence, timeline, appointments,
+and full record history. The slice adds a pure portal organization helper and
+does not add schema, migrations, route renames, portal-only records, fake
+records, access-rule changes, new portal writes, payment/signature/change-order
+behavior changes, or new provider behavior.
+
 Current wave gate note: `visual-ux-review-contractor-usability-v1` has merged
 to `main` under Jeff's controlled merge approval. Golden Workflow Usability
 Review V1 merged as `32f2151d`, Workspace Density Polish V1 merged as

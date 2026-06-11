@@ -510,7 +510,65 @@ export default async function PortalProjectDetailPage({
         />
 
         <DetailPanel
-          title="Billing"
+          title="Documents / Approvals"
+          description="Open estimates, contracts, invoices, and change orders shared for this project."
+        >
+          {sharedDocuments.documents.length > 0 ? (
+            <div className="grid gap-4 md:grid-cols-2">
+              {sharedDocuments.documents.map((document) => (
+                <div key={document.key} className={portalReviewCardClassName}>
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+                          {document.label}
+                        </p>
+                        {document.customerActionRequired ? (
+                          <PortalStatusBadge status="attention">
+                            Needs Your Attention
+                          </PortalStatusBadge>
+                        ) : null}
+                      </div>
+                      <h2 className="mt-2 text-base font-semibold text-slate-950">
+                        {document.reference}
+                      </h2>
+                      <p className="mt-2 text-sm leading-6 text-slate-600">
+                        {document.helperText}
+                      </p>
+                    </div>
+                    <div className="flex shrink-0 flex-col items-start gap-2 sm:items-end">
+                      <PortalStatusBadge status={document.tone}>
+                        {getSharedDocumentStateLabel(document)}
+                      </PortalStatusBadge>
+                      <p className="text-xs capitalize text-slate-500">
+                        {document.statusLabel}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="mt-4 flex flex-wrap gap-3">
+                    <PortalSecondaryLink href={document.primaryHref}>
+                      {document.actionLabel}
+                    </PortalSecondaryLink>
+                    {document.printHref ? (
+                      <PortalSecondaryLink href={document.printHref}>
+                        Print / Save PDF
+                      </PortalSecondaryLink>
+                    ) : null}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <AppEmptyState
+              eyebrow="Shared documents"
+              title="No documents shared yet"
+              description={sharedDocuments.emptyStateMessage}
+            />
+          )}
+        </DetailPanel>
+
+        <DetailPanel
+          title="Invoices / Payments"
           description="Current invoice, payment, and balance details shared for this project."
         >
           <div className="grid gap-5">
@@ -557,7 +615,7 @@ export default async function PortalProjectDetailPage({
                 </div>
                 <div className={portalInsetPanelClassName}>
                   <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
-                    Billing readiness
+                    Payment availability
                   </p>
                   <p className="mt-2 text-sm leading-6 text-slate-600">
                     {financialVisibility.billingReadinessLabel}
@@ -627,8 +685,8 @@ export default async function PortalProjectDetailPage({
         </DetailPanel>
 
         <DetailPanel
-          title="Project Status"
-          description="A customer-safe summary of the records and actions shared for this project."
+          title="Project Updates"
+          description="A summary of shared records and actions for this project."
         >
           {statusWindow.sharedRecords.length > 0 ? (
             <div className="grid gap-4">
@@ -677,15 +735,15 @@ export default async function PortalProjectDetailPage({
         </DetailPanel>
 
         <DetailPanel
-          title="Closeout Handoff"
-          description="Customer-safe records for project wrap-up, payment status, and warranty handoff."
+          title="Completion Records"
+          description="Project wrap-up, payment status, warranty records, and shared proof."
         >
           <div className="grid gap-5">
             <section className={portalStatePanelClassName}>
               <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                 <div className="min-w-0">
                   <p className="text-[11px] font-semibold uppercase tracking-[0.26em] text-slate-500">
-                    Closeout package
+                    Completion package
                   </p>
                   <h2 className="mt-2 text-lg font-semibold tracking-tight text-slate-950">
                     {closeoutHandoff.statusLabel}
@@ -704,7 +762,7 @@ export default async function PortalProjectDetailPage({
 
               <div className="mt-5">
                 <NextActionCard
-                  eyebrow="Next closeout step"
+                  eyebrow="Next completion step"
                   title={closeoutHandoff.nextAction.label}
                   description={closeoutHandoff.nextAction.description}
                   primaryAction={
@@ -747,12 +805,11 @@ export default async function PortalProjectDetailPage({
               <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
-                    Closeout confidence thread
+                    Completion summary
                   </p>
                   <p className="mt-2 text-sm leading-6 text-slate-600">
-                    Customer-safe status, next step, documents, evidence
-                    receipt, payment, and warranty signals from records already
-                    visible in this portal.
+                    Status, next step, documents, evidence receipt, payment, and
+                    warranty details from records visible in this portal.
                   </p>
                 </div>
                 <PortalStatusBadge status={closeoutHandoff.statusTone}>
@@ -839,8 +896,8 @@ export default async function PortalProjectDetailPage({
               </section>
             ) : (
               <AppEmptyState
-                eyebrow="Closeout records"
-                title="No closeout records shared yet"
+                eyebrow="Completion records"
+                title="No completion records shared yet"
                 description={closeoutHandoff.emptyStateMessage}
               />
             )}
@@ -1277,64 +1334,6 @@ export default async function PortalProjectDetailPage({
         </DetailPanel>
 
         <DetailPanel
-          title="Shared documents"
-          description="Open the project records shared with you, or print and save the documents that already support it."
-        >
-          {sharedDocuments.documents.length > 0 ? (
-            <div className="grid gap-4">
-              {sharedDocuments.documents.map((document) => (
-                <div key={document.key} className={portalReviewCardClassName}>
-                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                    <div className="min-w-0">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
-                          {document.label}
-                        </p>
-                        {document.customerActionRequired ? (
-                          <PortalStatusBadge status="attention">
-                            Needs your attention
-                          </PortalStatusBadge>
-                        ) : null}
-                      </div>
-                      <h2 className="mt-2 text-base font-semibold text-slate-950">
-                        {document.reference}
-                      </h2>
-                      <p className="mt-2 text-sm leading-6 text-slate-600">
-                        {document.helperText}
-                      </p>
-                    </div>
-                    <div className="flex shrink-0 flex-col items-start gap-2 sm:items-end">
-                      <PortalStatusBadge status={document.tone}>
-                        {getSharedDocumentStateLabel(document)}
-                      </PortalStatusBadge>
-                      <p className="text-xs capitalize text-slate-500">
-                        {document.statusLabel}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="mt-4 flex flex-wrap gap-3">
-                    <PortalSecondaryLink href={document.primaryHref}>
-                      {document.actionLabel}
-                    </PortalSecondaryLink>
-                    {document.printHref ? (
-                      <PortalSecondaryLink href={document.printHref}>
-                        Print / Save PDF
-                      </PortalSecondaryLink>
-                    ) : null}
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <AppEmptyState
-              eyebrow="Shared documents"
-              title="No documents shared yet"
-              description={sharedDocuments.emptyStateMessage}
-            />
-          )}
-        </DetailPanel>
-
-        <DetailPanel
           title="Appointments"
           description="Customer-visible appointment times shared by your contractor for this project."
         >
@@ -1370,8 +1369,8 @@ export default async function PortalProjectDetailPage({
         </DetailPanel>
 
         <DetailPanel
-          title="Shared project items"
-          description="Estimates, contracts, invoices, warranties, and changes shared for this project."
+          title="Full Record History"
+          description="All estimates, contracts, invoices, warranties, and changes shared for this project."
         >
           <div className="space-y-8">
             <section className="space-y-4">
