@@ -240,6 +240,20 @@ does not add schema, migrations, route renames, portal-only records, fake
 records, access-rule changes, new portal writes, payment/signature/change-order
 behavior changes, or new provider behavior.
 
+Current UX Recovery verification note: `stream/ux-recovery-verification-v1`
+verified the recovered contractor and portal surfaces after Customer Portal
+Organization V1 merged. Browser coverage checked `/dashboard`, `/leads`, one
+Lead Workspace V2 detail, `/projects`, one Project Workspace V2 detail,
+`/settings`, `/settings/organization`, one Invoice Review detail, `/schedule`
+Day / Week / Crew / Unscheduled, `/portal`, one portal project detail, one
+portal invoice review, one portal estimate review, and one portal contract
+review at `1366px` and `390px`. The pass found no login redirects, console or
+page errors, or horizontal overflow. It made one small portal chrome contrast
+fix for the `/portal` tab-strip helper copy and documented the evidence in
+[docs/review-packets/ux-recovery-verification-v1.md](C:/FloorConnector/docs/review-packets/ux-recovery-verification-v1.md).
+No schema, route, table, loader, auth, tenant access, payment, signature,
+scheduling, portal access, or provider behavior changed.
+
 Current wave gate note: `visual-ux-review-contractor-usability-v1` has merged
 to `main` under Jeff's controlled merge approval. Golden Workflow Usability
 Review V1 merged as `32f2151d`, Workspace Density Polish V1 merged as
