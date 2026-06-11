@@ -32,14 +32,18 @@ type AppointmentTypeFilter =
 
 type AppointmentsPageProps = {
   searchParams?: Promise<{
+    appointmentType?: AppointmentTypeFilter;
     compose?: string;
     customerId?: string;
     error?: string;
+    internalNotes?: string;
     message?: string;
     opportunityId?: string;
     projectId?: string;
     q?: string;
+    startsAt?: string;
     status?: AppointmentStatusFilter;
+    title?: string;
     type?: AppointmentTypeFilter;
   }>;
 };
@@ -86,12 +90,16 @@ function isToday(value: string) {
 }
 
 function buildAppointmentsHref(input: {
+  appointmentType?: string;
   compose?: string;
   customerId?: string;
+  internalNotes?: string;
   opportunityId?: string;
   projectId?: string;
   q?: string;
+  startsAt?: string;
   status?: string;
+  title?: string;
   type?: string;
 }) {
   const searchParams = new URLSearchParams();
@@ -120,6 +128,22 @@ function buildAppointmentsHref(input: {
     searchParams.set("projectId", input.projectId);
   }
 
+  if (input.appointmentType) {
+    searchParams.set("appointmentType", input.appointmentType);
+  }
+
+  if (input.startsAt) {
+    searchParams.set("startsAt", input.startsAt);
+  }
+
+  if (input.title) {
+    searchParams.set("title", input.title);
+  }
+
+  if (input.internalNotes) {
+    searchParams.set("internalNotes", input.internalNotes);
+  }
+
   if (input.compose === "1") {
     searchParams.set("compose", "1");
   }
@@ -128,7 +152,9 @@ function buildAppointmentsHref(input: {
   return query.length > 0 ? `/appointments?${query}` : "/appointments";
 }
 
-function getLeadDisplayName(opportunity: Awaited<ReturnType<typeof listOpportunities>>[number]) {
+function getLeadDisplayName(
+  opportunity: Awaited<ReturnType<typeof listOpportunities>>[number]
+) {
   return (
     opportunity.prospectCompanyName ??
     opportunity.primaryContact?.companyName ??
@@ -138,8 +164,33 @@ function getLeadDisplayName(opportunity: Awaited<ReturnType<typeof listOpportuni
   );
 }
 
-function buildSiteVisitTitle(opportunity: Awaited<ReturnType<typeof listOpportunities>>[number]) {
+function buildSiteVisitTitle(
+  opportunity: Awaited<ReturnType<typeof listOpportunities>>[number]
+) {
   return `Site Visit / Inspection - ${getLeadDisplayName(opportunity)}`;
+}
+
+function isAppointmentQuickCreateType(
+  value: string | undefined
+): value is Exclude<AppointmentTypeFilter, "all"> {
+  return Boolean(
+    value &&
+    [
+      "site_visit",
+      "customer_meeting",
+      "estimate_appointment",
+      "follow_up",
+      "internal"
+    ].includes(value)
+  );
+}
+
+function isDateTimeLocalValue(value: string | undefined) {
+  return Boolean(
+    value &&
+    /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(value) &&
+    !Number.isNaN(new Date(value).getTime())
+  );
 }
 
 export default async function AppointmentsPage({
@@ -158,13 +209,14 @@ export default async function AppointmentsPage({
     );
   }
 
-  const [appointments, opportunities, customers, projects, people] = await Promise.all([
-    listAppointments(),
-    listOpportunities(),
-    listCustomers(),
-    listProjects(),
-    listPeople()
-  ]);
+  const [appointments, opportunities, customers, projects, people] =
+    await Promise.all([
+      listAppointments(),
+      listOpportunities(),
+      listCustomers(),
+      listProjects(),
+      listPeople()
+    ]);
 
   const query = resolvedSearchParams.q?.trim() ?? "";
   const normalizedQuery = query.toLowerCase();
@@ -173,12 +225,30 @@ export default async function AppointmentsPage({
   const linkedOpportunityId = resolvedSearchParams.opportunityId;
   const linkedCustomerId = resolvedSearchParams.customerId;
   const linkedProjectId = resolvedSearchParams.projectId;
+  const defaultAppointmentType = isAppointmentQuickCreateType(
+    resolvedSearchParams.appointmentType
+  )
+    ? resolvedSearchParams.appointmentType
+    : undefined;
+  const defaultAppointmentStartsAt = isDateTimeLocalValue(
+    resolvedSearchParams.startsAt
+  )
+    ? resolvedSearchParams.startsAt
+    : undefined;
+  const defaultAppointmentTitle = resolvedSearchParams.title
+    ?.trim()
+    .slice(0, 160);
+  const defaultInternalNotes = resolvedSearchParams.internalNotes
+    ?.trim()
+    .slice(0, 4000);
   const showComposer =
-    resolvedSearchParams.compose === "1" ||
-    Boolean(resolvedSearchParams.error);
+    resolvedSearchParams.compose === "1" || Boolean(resolvedSearchParams.error);
 
   const scopedAppointments = appointments.filter((appointment) => {
-    if (linkedOpportunityId && appointment.opportunityId !== linkedOpportunityId) {
+    if (
+      linkedOpportunityId &&
+      appointment.opportunityId !== linkedOpportunityId
+    ) {
       return false;
     }
 
@@ -208,12 +278,14 @@ export default async function AppointmentsPage({
   const nextAction =
     scheduledAppointments.length > 0
       ? {
-          title: "Keep the next visit or meeting attached to the right canonical record",
+          title:
+            "Keep the next visit or meeting attached to the right canonical record",
           description:
             "Appointments should move commercial and operational coordination forward without becoming a second job scheduler. Use the linked lead, customer, or project to keep follow-through grounded."
         }
       : {
-          title: "Create the next real appointment when coordination needs a time block",
+          title:
+            "Create the next real appointment when coordination needs a time block",
           description:
             "Use appointments for visits, estimate meetings, and follow-up blocks. Keep execution work itself on canonical jobs."
         };
@@ -246,56 +318,76 @@ export default async function AppointmentsPage({
 
   const appointmentViews = [
     { key: "all", label: "All appointments", count: scopedAppointments.length },
-    { key: "scheduled", label: "Scheduled", count: scheduledAppointments.length },
+    {
+      key: "scheduled",
+      label: "Scheduled",
+      count: scheduledAppointments.length
+    },
     { key: "completed", label: "Completed", count: completedCount },
     {
       key: "canceled",
       label: "Canceled",
-      count: scopedAppointments.filter((appointment) => appointment.status === "canceled").length
+      count: scopedAppointments.filter(
+        (appointment) => appointment.status === "canceled"
+      ).length
     },
     {
       key: "no_show",
       label: "No-show",
-      count: scopedAppointments.filter((appointment) => appointment.status === "no_show").length
+      count: scopedAppointments.filter(
+        (appointment) => appointment.status === "no_show"
+      ).length
     }
   ] as const;
 
   const scopedContextLabel = linkedProjectId
-    ? projects.find((project) => project.id === linkedProjectId)?.name ?? "Selected project"
+    ? (projects.find((project) => project.id === linkedProjectId)?.name ??
+      "Selected project")
     : linkedCustomerId
-      ? customers.find((customer) => customer.id === linkedCustomerId)?.name ??
-        "Selected customer"
+      ? (customers.find((customer) => customer.id === linkedCustomerId)?.name ??
+        "Selected customer")
       : linkedOpportunityId
-        ? opportunities.find((opportunity) => opportunity.id === linkedOpportunityId)?.title ??
-          "Selected lead"
+        ? (opportunities.find(
+            (opportunity) => opportunity.id === linkedOpportunityId
+          )?.title ?? "Selected lead")
         : null;
   const selectedOpportunity = linkedOpportunityId
-    ? opportunities.find((opportunity) => opportunity.id === linkedOpportunityId) ?? null
+    ? (opportunities.find(
+        (opportunity) => opportunity.id === linkedOpportunityId
+      ) ?? null)
     : null;
   const selectedCustomer = linkedCustomerId
-    ? customers.find((customer) => customer.id === linkedCustomerId) ?? null
+    ? (customers.find((customer) => customer.id === linkedCustomerId) ?? null)
     : null;
   const selectedProject = linkedProjectId
-    ? projects.find((project) => project.id === linkedProjectId) ?? null
+    ? (projects.find((project) => project.id === linkedProjectId) ?? null)
     : null;
-  const opportunityOptions = selectedOpportunity ? [selectedOpportunity] : opportunities;
+  const opportunityOptions = selectedOpportunity
+    ? [selectedOpportunity]
+    : opportunities;
   const customerOptions = selectedCustomer
     ? [selectedCustomer]
     : selectedOpportunity?.customerId
-      ? customers.filter((customer) => customer.id === selectedOpportunity.customerId)
+      ? customers.filter(
+          (customer) => customer.id === selectedOpportunity.customerId
+        )
       : selectedOpportunity
         ? []
-      : customers;
+        : customers;
   const projectOptions = selectedProject
     ? [selectedProject]
     : selectedOpportunity?.projectId
-      ? projects.filter((project) => project.id === selectedOpportunity.projectId)
+      ? projects.filter(
+          (project) => project.id === selectedOpportunity.projectId
+        )
       : selectedOpportunity
         ? []
-      : linkedCustomerId
-        ? projects.filter((project) => project.customerId === linkedCustomerId)
-        : projects;
-  const defaultAppointmentTitle = selectedOpportunity
+        : linkedCustomerId
+          ? projects.filter(
+              (project) => project.customerId === linkedCustomerId
+            )
+          : projects;
+  const fallbackAppointmentTitle = selectedOpportunity
     ? buildSiteVisitTitle(selectedOpportunity)
     : undefined;
 
@@ -359,13 +451,22 @@ export default async function AppointmentsPage({
           </p>
         ),
         searchSlot: (
-          <form action="/appointments" className="flex flex-col gap-2 sm:flex-row">
+          <form
+            action="/appointments"
+            className="flex flex-col gap-2 sm:flex-row"
+          >
             {statusFilter !== "all" ? (
               <input type="hidden" name="status" value={statusFilter} />
             ) : null}
-            {showComposer ? <input type="hidden" name="compose" value="1" /> : null}
+            {showComposer ? (
+              <input type="hidden" name="compose" value="1" />
+            ) : null}
             {linkedOpportunityId ? (
-              <input type="hidden" name="opportunityId" value={linkedOpportunityId} />
+              <input
+                type="hidden"
+                name="opportunityId"
+                value={linkedOpportunityId}
+              />
             ) : null}
             {linkedCustomerId ? (
               <input type="hidden" name="customerId" value={linkedCustomerId} />
@@ -381,7 +482,9 @@ export default async function AppointmentsPage({
               <option value="all">All types</option>
               <option value="site_visit">Site visits</option>
               <option value="customer_meeting">Customer meetings</option>
-              <option value="estimate_appointment">Estimate appointments</option>
+              <option value="estimate_appointment">
+                Estimate appointments
+              </option>
               <option value="follow_up">Follow-up visits</option>
               <option value="internal">Internal</option>
             </select>
@@ -440,7 +543,9 @@ export default async function AppointmentsPage({
               <span
                 className={[
                   "rounded-full px-2 py-0.5 text-xs font-semibold",
-                  isActive ? "bg-white/15 text-white" : "bg-slate-100 text-slate-500"
+                  isActive
+                    ? "bg-white/15 text-white"
+                    : "bg-slate-100 text-slate-500"
                 ].join(" ")}
               >
                 {view.count}
@@ -468,7 +573,13 @@ export default async function AppointmentsPage({
         )
       }}
     >
-      <div className={showComposer ? "grid gap-4 xl:grid-cols-[minmax(0,1.18fr)_400px]" : "space-y-4"}>
+      <div
+        className={
+          showComposer
+            ? "grid gap-4 xl:grid-cols-[minmax(0,1.18fr)_400px]"
+            : "space-y-4"
+        }
+      >
         <section className="space-y-6">
           {resolvedSearchParams.error ? (
             <div className="rounded-2xl border border-rose-200 bg-rose-50 px-5 py-4 text-sm leading-6 text-rose-800">
@@ -517,7 +628,9 @@ export default async function AppointmentsPage({
                         </h3>
                         <p className="mt-2 text-sm leading-6 text-slate-500">
                           {formatTypeLabel(appointment.appointmentType)}
-                          {appointment.location ? ` | ${appointment.location}` : ""}
+                          {appointment.location
+                            ? ` | ${appointment.location}`
+                            : ""}
                         </p>
                       </div>
 
@@ -600,19 +713,21 @@ export default async function AppointmentsPage({
               compose: "1",
               opportunityId: linkedOpportunityId,
               customerId: linkedCustomerId,
-              projectId: linkedProjectId
+              projectId: linkedProjectId,
+              appointmentType: defaultAppointmentType,
+              startsAt: defaultAppointmentStartsAt,
+              title: defaultAppointmentTitle,
+              internalNotes: defaultInternalNotes
             }) + "#appointment-create"
           }
-          closeHref={
-            buildAppointmentsHref({
-              q: query,
-              status: statusFilter,
-              type: typeFilter,
-              opportunityId: linkedOpportunityId,
-              customerId: linkedCustomerId,
-              projectId: linkedProjectId
-            })
-          }
+          closeHref={buildAppointmentsHref({
+            q: query,
+            status: statusFilter,
+            type: typeFilter,
+            opportunityId: linkedOpportunityId,
+            customerId: linkedCustomerId,
+            projectId: linkedProjectId
+          })}
           openLabel="Open appointment quick create"
         >
           <AppointmentQuickCreateForm
@@ -640,7 +755,10 @@ export default async function AppointmentsPage({
             defaultOpportunityId={linkedOpportunityId}
             defaultCustomerId={linkedCustomerId}
             defaultProjectId={linkedProjectId}
-            defaultTitle={defaultAppointmentTitle}
+            defaultTitle={defaultAppointmentTitle || fallbackAppointmentTitle}
+            defaultAppointmentType={defaultAppointmentType}
+            defaultStartsAt={defaultAppointmentStartsAt}
+            defaultInternalNotes={defaultInternalNotes}
           />
         </WorkspaceComposerSheet>
       </div>

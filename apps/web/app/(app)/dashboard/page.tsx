@@ -9,12 +9,14 @@ import {
   type AiOperationalDigestSignal
 } from "@/lib/ai-operational-copilot/dashboard-digest";
 import { requireAuthenticatedUser } from "@/lib/auth/session";
+import { listCustomers } from "@/lib/customers/data";
 import { listDashboardProjectCueFieldNotes } from "@/lib/field-notes/data";
 import { listContractorNotificationsForContext } from "@/lib/notifications/data";
 import { getBillingSetupState } from "@/lib/onboarding/billing-setup";
 import { isOrganizationActivatedForProductionAction } from "@/lib/organizations/activation-guard";
 import { listLeadFollowUpQueue } from "@/lib/opportunities/follow-up-data";
 import { labelLeadFollowUpBucket } from "@/lib/opportunities/follow-up-read-model";
+import { listOpportunities } from "@/lib/opportunities/data";
 import { getActiveOrganizationContext } from "@/lib/organizations/active-context";
 import { getOrganizationWorkflowSettings } from "@/lib/organizations/workflow-settings";
 import { hasCompanyProfileFields } from "@/lib/organizations/setup-status";
@@ -31,6 +33,7 @@ import {
 import type { OperationalCue } from "@/lib/operational-cues/types";
 import { listDashboardRecentPayments } from "@/lib/payments/data";
 import { listPeople } from "@/lib/people/data";
+import { listProjects } from "@/lib/projects/data";
 import { countOpenPunchlistItemsForDashboard } from "@/lib/punchlists/data";
 import {
   getDashboardOperationalCockpitReadModel,
@@ -554,6 +557,9 @@ export default async function DashboardPage({
     dashboardOverviewReadModel,
     dashboardProjectCueInputReadModel,
     people,
+    customers,
+    projects,
+    opportunities,
     workflowSettings
   ] = await Promise.all([
     listLeadFollowUpQueue({ upcomingDays: 7 }),
@@ -588,6 +594,9 @@ export default async function DashboardPage({
       today
     }),
     listPeople(),
+    listCustomers(),
+    listProjects(),
+    listOpportunities(),
     getOrganizationWorkflowSettings(organizationContext.organization.id)
   ]);
   const guidancePreferences = normalizeWorkflowGuidancePreferences(
@@ -1545,6 +1554,21 @@ export default async function DashboardPage({
             returnTo="/dashboard?capture=1#universal-capture"
             defaultAssignedPersonId={currentUserPerson?.id ?? null}
             assignablePeople={assignablePeople}
+            customers={customers.map((customer) => ({
+              id: customer.id,
+              name: customer.name
+            }))}
+            projects={projects.map((project) => ({
+              id: project.id,
+              name: project.name,
+              customerId: project.customerId
+            }))}
+            opportunities={opportunities.map((opportunity) => ({
+              id: opportunity.id,
+              title: opportunity.title,
+              customerId: opportunity.customerId,
+              projectId: opportunity.projectId
+            }))}
           />
         ) : null
       }
