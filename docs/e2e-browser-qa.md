@@ -270,18 +270,27 @@ To create or refresh the saved auth state directly:
 ```bash
 $env:FLOORCONNECTOR_E2E_EMAIL="contractor-test@example.com"
 $env:FLOORCONNECTOR_E2E_PASSWORD="your-local-test-password"
-pnpm e2e:auth
+pnpm e2e:auth:setup
 ```
 
-The generated file is:
+The generated file defaults to:
 
 ```text
-playwright/.auth/local-user.json
+.playwright/.auth/contractor.json
 ```
 
-That file is local-only and should not be committed.
+That file is local-only and should not be committed. The legacy
+`playwright/.auth/local-user.json` path is still reused when it already exists,
+but new contractor auth setup should use `.playwright/.auth/contractor.json`
+unless `PLAYWRIGHT_STORAGE_STATE` points somewhere else.
 
-Running protected specs through `pnpm e2e` also runs the setup project first. If either credential variable is missing, auth setup fails with a clear environment-variable error instead of letting protected tests drift into `/login`.
+Running protected specs through `pnpm e2e` also runs the setup project first.
+If a valid storage state already exists, protected specs reuse it. If no
+storage state exists but `FLOORCONNECTOR_E2E_EMAIL` and
+`FLOORCONNECTOR_E2E_PASSWORD` are present, the setup project generates one
+through the real `/login` flow. If neither storage state nor credentials are
+available, the authenticated route smoke skips with a clear prerequisite
+message instead of treating `/login` as successful QA.
 
 If a protected smoke reaches `/login`, the saved storage state is missing, stale, or rejected for the current app URL. Refresh it with `pnpm e2e:auth` using the same `PLAYWRIGHT_BASE_URL` as the smoke run. Do not count the login page as successful protected QA.
 
@@ -296,6 +305,34 @@ If you already have a saved storage-state file, point Playwright to it:
 ```bash
 $env:PLAYWRIGHT_STORAGE_STATE="C:\path\to\local-user.json"
 ```
+
+To run the focused authenticated contractor smoke used by Codex browser checks:
+
+```powershell
+$env:PLAYWRIGHT_BASE_URL="http://localhost:3001"
+pnpm.cmd e2e:smoke:auth
+```
+
+If you already have a local dev server on another port, keep auth setup and the
+smoke on the same origin:
+
+```powershell
+$env:PLAYWRIGHT_BASE_URL="http://localhost:3000"
+$env:PLAYWRIGHT_SKIP_WEB_SERVER="1"
+pnpm.cmd e2e:auth:setup
+pnpm.cmd e2e:smoke:auth
+```
+
+Codex should prefer this order for authenticated browser smoke:
+
+1. Reuse `PLAYWRIGHT_STORAGE_STATE` if it points to an existing contractor
+   state.
+2. Reuse `.playwright/.auth/contractor.json` when present.
+3. Reuse legacy `playwright/.auth/local-user.json` when present.
+4. If no state exists and credentials are configured, run
+   `pnpm.cmd e2e:auth:setup`.
+5. If neither state nor credentials exist, report the blocked smoke honestly;
+   do not patch cookies, hardcode credentials, weaken auth, or bypass RLS.
 
 ## Super Admin Access Regression QA
 

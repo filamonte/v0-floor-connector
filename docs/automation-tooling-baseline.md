@@ -103,6 +103,22 @@ Run focused tests when a helper, read model, action, script, or financial/auth
 boundary changes. Run Playwright when protected route behavior, portal behavior,
 auth state, UI navigation, or route smoke is part of the acceptance evidence.
 
+For authenticated contractor route smoke, use the local storage-state flow:
+
+```powershell
+pnpm.cmd e2e:auth:setup
+pnpm.cmd e2e:smoke:auth
+```
+
+`e2e:auth:setup` logs in through the real `/login` flow when
+`FLOORCONNECTOR_E2E_EMAIL` and `FLOORCONNECTOR_E2E_PASSWORD` are configured,
+then saves local-only storage state to `PLAYWRIGHT_STORAGE_STATE` or
+`.playwright/.auth/contractor.json`. Existing
+`playwright/.auth/local-user.json` state remains supported for older local
+setups. If neither credentials nor storage state are present, the focused smoke
+must skip with a clear prerequisite message rather than counting `/login` as a
+protected-route pass.
+
 ## Playwright
 
 Confirm Playwright package availability with:

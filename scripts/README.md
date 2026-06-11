@@ -20,6 +20,9 @@ Repository automation and maintenance scripts will live here.
   upstreams, doctor checks, and shared build-output mistakes.
 - `refresh-playwright-auth.ps1`: reruns shared Playwright auth setup from the
   canonical repo and relinks auth state into worktrees.
+  Contractor auth setup saves to `PLAYWRIGHT_STORAGE_STATE` or
+  `.playwright/.auth/contractor.json` by default; legacy
+  `playwright/.auth/local-user.json` remains supported when present.
 - `setup-github-cli.ps1`: detects GitHub CLI, prints version/auth status, and
   prints install/auth guidance. It does not install automatically unless run
   with the explicit `-InstallWithWinget` switch.
@@ -59,6 +62,8 @@ pnpm wave:status
 pnpm worktree:create <name>
 pnpm worktree:finish <name>
 pnpm auth:refresh
+pnpm e2e:auth:setup
+pnpm e2e:smoke:auth
 pnpm codex:streams
 pnpm codex:next
 ```

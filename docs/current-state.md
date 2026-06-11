@@ -3005,6 +3005,16 @@ Implemented UI behavior now:
   infrastructure only and does not change auth, RLS, schema, Supabase data,
   business logic, route behavior, dashboard/workspace design, customer
   self-service, AI, or AIA.
+- Contractor authenticated browser smoke now has an explicit local storage-state
+  setup path. `pnpm e2e:auth:setup` uses real
+  `FLOORCONNECTOR_E2E_EMAIL` / `FLOORCONNECTOR_E2E_PASSWORD` credentials to log
+  in through `/login` and save local-only state to `PLAYWRIGHT_STORAGE_STATE` or
+  `.playwright/.auth/contractor.json`, while still reusing legacy
+  `playwright/.auth/local-user.json` when present. `pnpm e2e:smoke:auth`
+  reuses existing state, generates it when credentials are available, and skips
+  with a clear prerequisite message when neither state nor credentials exist.
+  This is test infrastructure only and does not change runtime auth, route
+  protection, RLS, Supabase schema, tenant membership, or credentials handling.
 - Settings / Super Admin Boundary UX V1 clarifies the presentation boundary
   between contractor Company Controls and the Platform Control Room. Contractor
   Settings now identifies company-owned configuration, workflow defaults,

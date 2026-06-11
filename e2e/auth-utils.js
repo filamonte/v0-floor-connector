@@ -1,35 +1,6 @@
 const { expect } = require("@playwright/test");
-const fsSync = require("node:fs");
-const path = require("node:path");
 
-function loadRootEnv() {
-  const envPath = path.resolve(__dirname, "..", ".env.local");
-
-  if (!fsSync.existsSync(envPath)) {
-    return;
-  }
-
-  const envText = fsSync.readFileSync(envPath, "utf8");
-  for (const line of envText.split(/\r?\n/)) {
-    const match = line.match(/^\s*([^#][^=]+)=(.*)$/);
-
-    if (!match) {
-      continue;
-    }
-
-    const key = match[1].trim();
-    let value = match[2].trim();
-
-    if (
-      (value.startsWith("\"") && value.endsWith("\"")) ||
-      (value.startsWith("'") && value.endsWith("'"))
-    ) {
-      value = value.slice(1, -1);
-    }
-
-    process.env[key] ??= value;
-  }
-}
+const { loadRootEnv } = require("./auth-state");
 
 async function loginWithEmail(page, email, password, options = {}) {
   const loginPath = options.next

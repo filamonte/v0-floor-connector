@@ -1,9 +1,14 @@
 const { defineConfig, devices } = require("@playwright/test");
 const path = require("node:path");
+const {
+  canUseOrCreateContractorStorageState,
+  loadRootEnv,
+  resolveContractorStorageStatePath
+} = require("./e2e/auth-state");
 
-const authStatePath = path.resolve(
-  process.env.PLAYWRIGHT_STORAGE_STATE ?? "playwright/.auth/local-user.json"
-);
+loadRootEnv();
+
+const authStatePath = resolveContractorStorageStatePath();
 const platformAdminAuthStatePath = path.resolve(
   process.env.PLAYWRIGHT_PLATFORM_ADMIN_STORAGE_STATE ??
     "playwright/.auth/platform-admin.json"
@@ -59,7 +64,9 @@ module.exports = defineConfig({
         /(?:estimate-.*|project-detail-ui|customer-detail-ui|people-directory-access|project-ai-cue-work-item-bridge|operational-cues-record-panels|schedule-ready-handoff|golden-workflow-verification|dashboard-ui|dashboard-ui-my-work-queue-modes|detail-workspace-ui|data-export|authenticated-route-smoke)\.spec\.js/,
       use: {
         ...devices["Desktop Chrome"],
-        storageState: authStatePath
+        storageState: canUseOrCreateContractorStorageState()
+          ? authStatePath
+          : undefined
       }
     },
     {
@@ -84,10 +91,11 @@ module.exports = defineConfig({
   webServer: process.env.PLAYWRIGHT_SKIP_WEB_SERVER
     ? undefined
     : {
-        command: `pnpm --filter @floorconnector/web dev -p ${devServerPort}`,
+        command: "pnpm --filter @floorconnector/web dev",
         url: baseURL,
         env: {
           ...process.env,
+          PORT: devServerPort,
           FLOORCONNECTOR_E2E_PAYMENT_GATEWAY:
             process.env.FLOORCONNECTOR_E2E_PAYMENT_GATEWAY,
           STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET

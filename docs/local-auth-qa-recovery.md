@@ -73,17 +73,19 @@ FLOORCONNECTOR_E2E_PASSWORD
 Refresh contractor storage state:
 
 ```powershell
-pnpm e2e:auth
+pnpm e2e:auth:setup
 ```
 
-The generated local-only file is:
+The generated local-only file defaults to:
 
 ```text
-playwright/.auth/local-user.json
+.playwright/.auth/contractor.json
 ```
 
-Do not commit storage-state files. Do not print credentials or values from
-`.env.local`.
+The older `playwright/.auth/local-user.json` path is still reused when it
+already exists, and `PLAYWRIGHT_STORAGE_STATE` can point to a different local
+file. Do not commit storage-state files. Do not print credentials or values
+from `.env.local`.
 
 ## Supabase Rate Limit Cooldown
 
@@ -95,6 +97,9 @@ If Supabase returns `AuthApiError: Request rate limit reached`:
 - Wait for the Supabase Auth cooldown before running `pnpm e2e:auth` again.
 - Before the next auth attempt, verify the app origin, credential env names,
   and intended storage-state path.
+- If neither contractor credentials nor a saved contractor storage state exists,
+  run `pnpm e2e:smoke:auth` only as a prerequisite check; it should skip with a
+  clear message rather than failing mysteriously.
 
 Do not loosen auth, disable route protection, bypass RLS, or create backdoor
 test login behavior to work around rate limits.

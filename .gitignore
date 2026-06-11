@@ -8,6 +8,7 @@ dist
 coverage
 *.tsbuildinfo
 playwright/.auth/
+.playwright/.auth/
 playwright-report/
 test-results/
 .playwright-tmp/
