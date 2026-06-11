@@ -87,6 +87,12 @@ for safe autonomous work versus human-approval boundaries. Use
 agent appears to be in the wrong repository, branch, worktree, stale origin, or
 blocked validation state.
 
+Use
+[.codex/prompt-snippets/floorconnector-codex-baseline.md](C:/FloorConnector/.codex/prompt-snippets/floorconnector-codex-baseline.md)
+when a future Codex prompt should apply the standard FloorConnector baseline for
+tool exposure checks, repo safety, validation, and completion reporting. A short
+future prompt can say: `Follow .codex/prompt-snippets/floorconnector-codex-baseline.md.`
+
 Current automation readiness is Ready With Human Review Gate. Future planning
 must follow the loop Strategic Research / Product Council -> Capability, then
 Program, Wave, Stream, PR, Verification, and Merge. Future waves still require

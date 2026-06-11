@@ -38,6 +38,10 @@ See [docs/agent-governance.md](C:/FloorConnector/docs/agent-governance.md) for
 startup sequence, mobile/runtime expectations, approval boundaries, and
 completion reporting.
 
+For future Codex prompts, use the reusable baseline at
+[.codex/prompt-snippets/floorconnector-codex-baseline.md](C:/FloorConnector/.codex/prompt-snippets/floorconnector-codex-baseline.md):
+`Follow .codex/prompt-snippets/floorconnector-codex-baseline.md.`
+
 Operational agent checklists and troubleshooting live in:
 
 - [docs/agent-startup-checklist.md](C:/FloorConnector/docs/agent-startup-checklist.md)
@@ -122,6 +126,9 @@ Use these docs together:
   safe autonomous work, approval boundaries, validation, and reporting rules
 - [docs/ai-diagnostics.md](C:/FloorConnector/docs/ai-diagnostics.md):
   troubleshooting guide for common AI run failures
+- [.codex/prompt-snippets/floorconnector-codex-baseline.md](C:/FloorConnector/.codex/prompt-snippets/floorconnector-codex-baseline.md):
+  reusable Codex prompt baseline for tool exposure, repo safety, validation,
+  and reporting
 - [docs/developer-source-of-truth.md](C:/FloorConnector/docs/developer-source-of-truth.md): primary developer entry point and implementation guardrail summary
 - [docs/current-state.md](C:/FloorConnector/docs/current-state.md): implemented truth on the current branch
 - [docs/product-operating-model.md](C:/FloorConnector/docs/product-operating-model.md): target product operating model for pre-sale, sold-work, readiness, and closeout
