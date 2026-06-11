@@ -110,8 +110,8 @@ export default async function SettingsAdminPage({ searchParams }: PageProps) {
       </DetailPanel>
 
       <DetailPanel
-        title="Company Workflow Error Events"
-        description="Recent tenant-scoped workflow failures recorded for owner/admin review. These help company admins resolve configuration issues without exposing platform operations."
+        title="Operations Monitor preview"
+        description="Recent tenant-scoped workflow failures are shown here only as troubleshooting evidence. A fuller Operations Monitor belongs outside Settings; company admins should use this list to find configuration blockers, then resolve the source record in its owning workspace."
       >
         {workflowErrors.length > 0 ? (
           <div className="divide-y divide-[var(--border-warm)] rounded-lg border border-[var(--border-warm)] bg-white shadow-sm">
