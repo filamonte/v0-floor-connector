@@ -11,6 +11,11 @@ For AI-assisted work, read [AGENTS.md](C:/FloorConnector/AGENTS.md) first. It
 defines repository-level startup verification, worktree safety, and completion
 reporting before this implementation guardrail document is applied.
 
+For standard Codex runs, use
+[.codex/prompt-snippets/floorconnector-codex-baseline.md](C:/FloorConnector/.codex/prompt-snippets/floorconnector-codex-baseline.md)
+to apply the reusable tool exposure, repo safety, validation, and reporting
+baseline without repeating the full prompt text.
+
 You must:
 
 - Read this file first
