@@ -1,6 +1,10 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { StatusBadge } from "@floorconnector/ui";
+import {
+  normalizeWorkspaceFrameworkV2ViewId,
+  StatusBadge,
+  type WorkspaceFrameworkV2ViewId
+} from "@floorconnector/ui";
 
 import { AppEmptyState } from "@/components/app-empty-state";
 import { DirectoryContextCard } from "@/components/directory-context-card";
@@ -55,6 +59,7 @@ type LeadDetailPageProps = {
   searchParams?: Promise<{
     error?: string;
     message?: string;
+    view?: string;
     workItemCue?: string;
   }>;
 };
@@ -165,6 +170,9 @@ function getLeadNextAction(input: {
   opportunity: NonNullable<Awaited<ReturnType<typeof getOpportunityById>>>;
   appointmentHref: string;
   estimateHandoffHref: string;
+  qualificationHref: string;
+  siteVisitHref: string;
+  estimatePlanHref: string;
   canStartEstimate: boolean;
   estimateWriterName: string | null;
 }) {
@@ -173,7 +181,7 @@ function getLeadNextAction(input: {
       title: "Reopen the lead before scheduling or estimating",
       description:
         "Lost leads stay out of the appointment and estimate handoff until the status is intentionally changed.",
-      href: "#qualification",
+      href: input.qualificationHref,
       label: "Review qualification",
       kind: "link" as const
     };
@@ -200,7 +208,7 @@ function getLeadNextAction(input: {
       title: "Complete the site visit and capture requirements",
       description:
         "A site visit is scheduled. Capture the inspection outcome and requirements summary here before estimating.",
-      href: "#site-visit",
+      href: input.siteVisitHref,
       label: "Update site visit",
       kind: "link" as const
     };
@@ -231,7 +239,7 @@ function getLeadNextAction(input: {
       title: "Continue to project / estimate when ready",
       description:
         "Assessment context is ready. Starting the estimate creates or links the customer and project records without duplicating the lead.",
-      href: "#project-handoff",
+      href: input.estimatePlanHref,
       label: "Start estimate",
       kind: "estimate" as const
     };
@@ -241,10 +249,26 @@ function getLeadNextAction(input: {
     title: "Keep lead context current",
     description:
       "Review contact details, site visit state, scope intake, and estimate planning notes.",
-    href: "#qualification",
+    href: input.qualificationHref,
     label: "Review lead",
     kind: "link" as const
   };
+}
+
+function getLeadWorkspaceHref(
+  leadWorkspaceHref: string,
+  view: WorkspaceFrameworkV2ViewId,
+  options?: {
+    workItemCue?: string;
+  }
+) {
+  const params = new URLSearchParams({ view });
+
+  if (options?.workItemCue) {
+    params.set("workItemCue", options.workItemCue);
+  }
+
+  return `${leadWorkspaceHref}?${params.toString()}`;
 }
 
 export default async function LeadDetailPage({
@@ -288,6 +312,34 @@ export default async function LeadDetailPage({
   const canStartEstimate = opportunity.status !== "lost";
   const leadAppointmentHref = `/appointments?compose=1&opportunityId=${opportunity.id}${opportunity.customerId ? `&customerId=${opportunity.customerId}` : ""}${opportunity.projectId ? `&projectId=${opportunity.projectId}` : ""}#appointment-create`;
   const leadWorkspaceHref = `/leads/${opportunity.id}`;
+  const currentView = normalizeWorkspaceFrameworkV2ViewId(
+    resolvedSearchParams.view
+  );
+  const overviewHref = getLeadWorkspaceHref(leadWorkspaceHref, "overview");
+  const qualificationHref = getLeadWorkspaceHref(
+    leadWorkspaceHref,
+    "qualification"
+  );
+  const siteVisitHref = getLeadWorkspaceHref(leadWorkspaceHref, "site-visit");
+  const assessmentPackageHref = getLeadWorkspaceHref(
+    leadWorkspaceHref,
+    "assessment-package"
+  );
+  const estimatePlanHref = getLeadWorkspaceHref(
+    leadWorkspaceHref,
+    "estimate-plan"
+  );
+  const workItemsHref = getLeadWorkspaceHref(leadWorkspaceHref, "work-items");
+  const estimateHandoffCueHref = getLeadWorkspaceHref(
+    leadWorkspaceHref,
+    "work-items",
+    { workItemCue: "estimate_handoff" }
+  );
+  const communicationHref = getLeadWorkspaceHref(
+    leadWorkspaceHref,
+    "communication"
+  );
+  const activityHref = getLeadWorkspaceHref(leadWorkspaceHref, "activity");
   const sourceOwnerPerson = opportunity.createdByUserId
     ? (people.find(
         (person) => person.membershipUserId === opportunity.createdByUserId
@@ -361,8 +413,8 @@ export default async function LeadDetailPage({
     ? getWorkItemNextAction(existingOpenEstimateHandoff)
     : null;
   const estimatingHandoffHref = existingOpenEstimateHandoff
-    ? "#project-handoff"
-    : `${leadWorkspaceHref}?workItemCue=estimate_handoff#work-items`;
+    ? estimatePlanHref
+    : estimateHandoffCueHref;
   const estimateWriterName =
     existingOpenEstimateHandoff?.assignedPerson?.displayName ?? null;
   const salesEstimateReadiness = deriveSalesEstimateReadiness({
@@ -380,6 +432,9 @@ export default async function LeadDetailPage({
     opportunity,
     appointmentHref: leadAppointmentHref,
     estimateHandoffHref: estimatingHandoffHref,
+    qualificationHref,
+    siteVisitHref,
+    estimatePlanHref,
     estimateWriterName,
     canStartEstimate
   });
@@ -419,66 +474,55 @@ export default async function LeadDetailPage({
       }}
       sidebar={[
         {
-          id: "summary",
+          id: "overview",
           label: "Overview",
           iconName: "home",
-          href: "#summary"
+          href: overviewHref
         },
         {
           id: "qualification",
           label: "Qualification",
           iconName: "clipboard-list",
-          href: "#qualification"
-        },
-        {
-          id: "contact",
-          label: "Contact / Address",
-          iconName: "notebook-pen",
-          href: "#contact"
-        },
-        {
-          id: "communication",
-          label: "Communication",
-          iconName: "send",
-          href: "#communication"
-        },
-        {
-          id: "work-items",
-          label: "Work Items",
-          iconName: "clipboard-list",
-          href: "#work-items"
+          href: qualificationHref
         },
         {
           id: "site-visit",
           label: "Site Visit",
           iconName: "check-square",
-          href: "#site-visit"
+          href: siteVisitHref
         },
         {
           id: "assessment-package",
           label: "Assessment Package",
           iconName: "notebook-pen",
-          href: "#assessment-package"
+          href: assessmentPackageHref
         },
         {
-          id: "scope-intake",
-          label: "Scope Intake",
-          iconName: "layers-3",
-          href: "#scope-intake"
-        },
-        {
-          id: "project-handoff",
+          id: "estimate-plan",
           label: "Estimate Plan",
           iconName: "folder-open",
-          href: "#project-handoff"
+          href: estimatePlanHref
+        },
+        {
+          id: "work-items",
+          label: "Work Items",
+          iconName: "clipboard-list",
+          href: workItemsHref
+        },
+        {
+          id: "communication",
+          label: "Communication",
+          iconName: "send",
+          href: communicationHref
         },
         {
           id: "activity",
           label: "Notes / Activity",
           iconName: "file-text",
-          href: "#activity"
+          href: activityHref
         }
       ]}
+      currentView={currentView}
       summaryBand={
         <WorkspaceSummaryBand
           className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1.2fr)]"
@@ -553,14 +597,51 @@ export default async function LeadDetailPage({
           ]}
         />
       }
+      supportArea={
+        <>
+          <DirectoryContextCard
+            href={`/directory?view=leads&q=${encodeURIComponent(opportunity.title)}`}
+            recordLabel="Lead opportunity"
+            description="Directory is the read-only scan-and-jump index. This lead page remains the home for pre-customer commercial context and estimate handoff decisions."
+          />
+
+          <section className="border border-slate-200 bg-slate-50/80 px-5 py-5">
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-brand-700">
+              Estimate Plan
+            </p>
+            <p className="mt-3 text-sm leading-6 text-slate-600">
+              {nextAction.description} Site visits stay lead-linked, while
+              estimate creation links the customer and project before commercial
+              scope is sent.
+            </p>
+            <div className="mt-4 flex flex-wrap gap-2">
+              <Link
+                href={estimatePlanHref}
+                className="inline-flex min-h-9 items-center rounded-[6px] border border-[#e2d4c5] bg-[#fbf5ee] px-3 text-sm font-medium text-[#5f4d40] transition hover:border-[#caac88] hover:bg-white hover:text-[#2b2118]"
+              >
+                Open estimate plan
+              </Link>
+              <Link
+                href={workItemsHref}
+                className="inline-flex min-h-9 items-center rounded-[6px] border border-slate-300 px-3 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:bg-white"
+              >
+                Review linked work
+              </Link>
+            </div>
+          </section>
+        </>
+      }
     >
-      <div
-        id="summary"
-        className="grid gap-6 p-4 xl:grid-cols-[minmax(0,1fr)_340px] sm:p-5"
-      >
-        <section className="space-y-6">
-          <section className="rounded-3xl border border-slate-200 bg-white/90 p-6 shadow-[0_24px_80px_-40px_rgba(15,23,42,0.35)] backdrop-blur sm:p-8">
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+      <div className="space-y-5">
+        <section className="space-y-5">
+          <section className="border border-slate-200 bg-white px-4 py-5 sm:px-5">
+            <div
+              className={
+                currentView === "overview"
+                  ? "flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between"
+                  : "hidden"
+              }
+            >
               <div>
                 <p className="text-sm font-semibold uppercase tracking-[0.24em] text-brand-700">
                   Lead Detail
@@ -620,7 +701,13 @@ export default async function LeadDetailPage({
               </div>
             ) : null}
 
-            <div className="mt-8 grid gap-6 lg:grid-cols-2">
+            <div
+              className={
+                currentView === "qualification"
+                  ? "mt-6 grid gap-4 lg:grid-cols-2"
+                  : "hidden"
+              }
+            >
               <section
                 id="contact"
                 className="rounded-2xl border border-slate-200 bg-slate-50/80 px-5 py-5"
@@ -687,7 +774,7 @@ export default async function LeadDetailPage({
                 description="Internal role metadata for who gathered onsite context and who owns the customer relationship. Work Item assignment remains separate."
                 recordIdName="opportunityId"
                 recordId={opportunity.id}
-                returnTo={leadWorkspaceHref}
+                returnTo={qualificationHref}
                 action={updateOpportunityRoleSlotsAction}
                 people={roleSlotPeople}
                 controls={[
@@ -832,7 +919,7 @@ export default async function LeadDetailPage({
               </section>
             </div>
 
-            <div id="site-visit" className="mt-8">
+            <div className={currentView === "site-visit" ? "mt-6" : "hidden"}>
               <div className="mb-6 rounded-2xl border border-brand-200 bg-brand-50/60 px-5 py-4 text-sm leading-6 text-slate-700">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                   <div>
@@ -879,8 +966,11 @@ export default async function LeadDetailPage({
             </div>
 
             <section
-              id="assessment-package"
-              className="mt-8 rounded-3xl border border-slate-200 bg-white/90 p-6 shadow-[0_24px_80px_-40px_rgba(15,23,42,0.35)] backdrop-blur sm:p-8"
+              className={
+                currentView === "assessment-package"
+                  ? "mt-6 border border-slate-200 bg-white px-4 py-5 sm:px-5"
+                  : "hidden"
+              }
             >
               <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                 <div>
@@ -1025,8 +1115,11 @@ export default async function LeadDetailPage({
             </section>
 
             <section
-              id="communication"
-              className="mt-8 rounded-3xl border border-slate-200 bg-white/90 p-6 shadow-[0_24px_80px_-40px_rgba(15,23,42,0.35)] backdrop-blur sm:p-8"
+              className={
+                currentView === "communication"
+                  ? "mt-6 border border-slate-200 bg-white px-4 py-5 sm:px-5"
+                  : "hidden"
+              }
             >
               <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                 <div>
@@ -1153,8 +1246,11 @@ export default async function LeadDetailPage({
             </section>
 
             <section
-              id="work-items"
-              className="mt-8 rounded-3xl border border-slate-200 bg-white/90 p-6 shadow-[0_24px_80px_-40px_rgba(15,23,42,0.35)] backdrop-blur sm:p-8"
+              className={
+                currentView === "work-items"
+                  ? "mt-6 border border-slate-200 bg-white px-4 py-5 sm:px-5"
+                  : "hidden"
+              }
             >
               <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                 <div>
@@ -1215,7 +1311,7 @@ export default async function LeadDetailPage({
                     ) : null}
                     <WorkItemCreateForm
                       action={createWorkItemAction}
-                      returnTo={leadWorkspaceHref}
+                      returnTo={workItemsHref}
                       sourceType="opportunity"
                       sourceId={opportunity.id}
                       linkPath={leadWorkspaceHref}
@@ -1256,7 +1352,7 @@ export default async function LeadDetailPage({
                   <div className="mt-4">
                     <WorkItemList
                       workItems={linkedWorkItems}
-                      returnTo={leadWorkspaceHref}
+                      returnTo={workItemsHref}
                       completeAction={completeWorkItemAction}
                       dismissAction={dismissWorkItemAction}
                       emptyTitle="No work items are linked to this lead yet."
@@ -1267,7 +1363,13 @@ export default async function LeadDetailPage({
               </div>
             </section>
 
-            <div id="activity" className="mt-8 grid gap-6 lg:grid-cols-3">
+            <div
+              className={
+                currentView === "activity"
+                  ? "mt-6 grid gap-4 lg:grid-cols-3"
+                  : "hidden"
+              }
+            >
               <section className="rounded-2xl border border-slate-200 bg-slate-50/80 px-5 py-5">
                 <p className="text-sm font-semibold uppercase tracking-[0.24em] text-brand-700">
                   Measurements
@@ -1364,17 +1466,14 @@ export default async function LeadDetailPage({
           </section>
         </section>
 
-        <aside className="space-y-6">
-          <DirectoryContextCard
-            href={`/directory?view=leads&q=${encodeURIComponent(opportunity.title)}`}
-            recordLabel="Lead opportunity"
-            description="Directory is the read-only scan-and-jump index. This lead page remains the home for pre-customer commercial context and estimate handoff decisions."
-          />
-
-          <section
-            id="project-handoff"
-            className="rounded-3xl border border-slate-200 bg-white/85 p-8 shadow-[0_24px_80px_-40px_rgba(15,23,42,0.35)] backdrop-blur sm:p-10"
-          >
+        <section
+          className={
+            currentView === "estimate-plan"
+              ? "border border-slate-200 bg-white px-4 py-5 sm:px-5"
+              : "hidden"
+          }
+        >
+          <section className="border border-slate-200 bg-slate-50/80 px-5 py-5">
             <p className="text-sm font-semibold uppercase tracking-[0.24em] text-brand-700">
               Estimate Plan
             </p>
@@ -1386,21 +1485,21 @@ export default async function LeadDetailPage({
             <div className="mt-5 flex flex-wrap gap-2.5">
               {existingOpenEstimateHandoff ? (
                 <Link
-                  href="#work-items"
+                  href={workItemsHref}
                   className="inline-flex items-center rounded-full border border-[#e2d4c5] bg-[#fbf5ee] px-3.5 py-2 text-sm font-medium text-[#5f4d40] transition hover:border-[#caac88] hover:bg-white hover:text-[#2b2118]"
                 >
                   Open existing handoff
                 </Link>
               ) : (
                 <Link
-                  href={`${leadWorkspaceHref}?workItemCue=estimate_handoff#work-items`}
+                  href={estimateHandoffCueHref}
                   className="inline-flex items-center rounded-full border border-[#e2d4c5] bg-[#fbf5ee] px-3.5 py-2 text-sm font-medium text-[#5f4d40] transition hover:border-[#caac88] hover:bg-white hover:text-[#2b2118]"
                 >
                   Assign Estimate Writer
                 </Link>
               )}
               <Link
-                href="#work-items"
+                href={workItemsHref}
                 className="inline-flex items-center rounded-full border border-slate-300 px-3.5 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:bg-white"
               >
                 Review linked work
@@ -1446,7 +1545,7 @@ export default async function LeadDetailPage({
                   <input
                     type="hidden"
                     name="returnTo"
-                    value={leadWorkspaceHref}
+                    value={estimatePlanHref}
                   />
                   <label className="block">
                     <span className="text-xs font-semibold uppercase tracking-[0.14em] text-amber-800">
@@ -1538,7 +1637,7 @@ export default async function LeadDetailPage({
               </div>
             </div>
           </section>
-        </aside>
+        </section>
       </div>
     </StandardWorkspaceLayout>
   );

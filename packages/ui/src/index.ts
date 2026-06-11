@@ -42,6 +42,15 @@ export type {
   RecordWorkspaceRhythmStepId
 } from "./record-workspace-rhythm";
 export {
+  normalizeWorkspaceFrameworkV2ViewId,
+  workspaceFrameworkV2ViewIds,
+  workspaceFrameworkV2Views
+} from "./workspace-framework-v2";
+export type {
+  WorkspaceFrameworkV2View,
+  WorkspaceFrameworkV2ViewId
+} from "./workspace-framework-v2";
+export {
   getReadinessLaneCopies,
   getReadinessLaneCopy,
   readinessLaneCopyById,

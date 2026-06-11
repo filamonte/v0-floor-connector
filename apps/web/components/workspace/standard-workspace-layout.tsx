@@ -85,6 +85,8 @@ export type StandardWorkspaceLayoutProps<TView extends string> = {
   currentView?: TView;
   summaryBand?: ReactNode;
   commandBar?: ReactNode;
+  supportArea?: ReactNode;
+  contentClassName?: string;
   children: ReactNode;
 };
 
@@ -94,6 +96,8 @@ export function StandardWorkspaceLayout<TView extends string>({
   currentView,
   summaryBand,
   commandBar,
+  supportArea,
+  contentClassName,
   children
 }: StandardWorkspaceLayoutProps<TView>) {
   const hasSidebar = Boolean(sidebar && sidebar.length > 0);
@@ -146,7 +150,9 @@ export function StandardWorkspaceLayout<TView extends string>({
             ) : null}
           </div>
           {header.actions ? (
-            <div className="xl:max-w-[420px] xl:flex-shrink-0 xl:self-start">{header.actions}</div>
+            <div className="xl:max-w-[420px] xl:flex-shrink-0 xl:self-start">
+              {header.actions}
+            </div>
           ) : null}
         </div>
       </section>
@@ -158,7 +164,9 @@ export function StandardWorkspaceLayout<TView extends string>({
         <div
           className={[
             "grid min-h-[620px] bg-white",
-            hasSidebar ? "grid-cols-1 lg:grid-cols-[184px_minmax(0,1fr)]" : "grid-cols-1"
+            hasSidebar
+              ? "grid-cols-1 lg:grid-cols-[184px_minmax(0,1fr)]"
+              : "grid-cols-1"
           ].join(" ")}
         >
           {hasSidebar ? (
@@ -231,7 +239,24 @@ export function StandardWorkspaceLayout<TView extends string>({
             </aside>
           ) : null}
 
-          <div className="min-w-0 bg-white">{children}</div>
+          <div
+            className={[
+              "min-w-0 bg-white",
+              supportArea
+                ? "grid gap-4 p-4 xl:grid-cols-[minmax(0,1fr)_320px] 2xl:grid-cols-[minmax(0,1fr)_360px] sm:p-5"
+                : "",
+              contentClassName
+            ]
+              .filter(Boolean)
+              .join(" ")}
+          >
+            <div className="min-w-0">{children}</div>
+            {supportArea ? (
+              <aside className="min-w-0 space-y-4 xl:sticky xl:top-4 xl:self-start">
+                {supportArea}
+              </aside>
+            ) : null}
+          </div>
         </div>
       </section>
     </div>
