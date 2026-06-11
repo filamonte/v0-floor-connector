@@ -30,15 +30,15 @@ export default async function PortalLayout({ children }: PortalLayoutProps) {
           headingLevel="h2"
         />
       </div>
-      <div className="border-y border-white/10 bg-white/[0.08] text-white backdrop-blur print:hidden">
+      <div className="border-y border-slate-200 bg-white/80 text-slate-700 backdrop-blur print:hidden">
         <div className="mx-auto flex w-full max-w-6xl flex-wrap items-center gap-3 px-6 py-4 sm:px-10">
           <Link
             href="/portal"
-            className="inline-flex items-center rounded-full border border-white/15 bg-white px-4 py-2 text-sm font-medium text-[var(--graphite)] transition hover:border-[var(--copper)] hover:text-[var(--copper-dark)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--copper)] focus-visible:ring-offset-2"
+            className="inline-flex items-center rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-[var(--graphite)] transition hover:border-[var(--copper)] hover:text-[var(--copper-dark)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--copper)] focus-visible:ring-offset-2"
           >
             Portal home
           </Link>
-          <p className="text-sm leading-6 text-white/72">
+          <p className="text-sm leading-6 text-slate-600">
             Your access stays scoped to the projects your contractor has
             explicitly shared.
           </p>
