@@ -186,21 +186,15 @@ slice is implemented on `stream/workspace-framework-v2-lead-project-v1`.
 `/leads/:leadId` now uses focused query-param workspace views instead of
 same-page section jump navigation, with a reusable `StandardWorkspaceLayout`
 support column and shared `@floorconnector/ui` Workspace Framework V2 view
-vocabulary. Settings Company Controls V2 is implemented on
-`stream/settings-company-controls-v2`: `/settings` is now a setup health and
-owner-section routing overview, Settings navigation is grouped by owner section,
-contractor website plain domains normalize to usable HTTPS URLs, brand accent
-copy/preview is clearer, and company workflow error events are labeled as an
-Operations Monitor preview rather than a Settings-owned workflow area. These
-slices are presentation/configuration-boundary work: they preserve existing data
-loading, server actions, route names, tenant checks, schema, migrations,
-provider behavior, platform policy, workflow action ownership, and portal
-behavior. Invoice Review, CrewBoard, and Customer Portal recovery remain future
-slices.
-vocabulary. The slice is presentation-only: it preserves Lead/Opportunity data
-loading, server actions, route names, assessment package ownership, internal
-work item behavior, tenant checks, schema, migrations, provider behavior, and
-portal behavior. Settings, Invoice Review, CrewBoard, and Customer Portal
+vocabulary. Settings Company Controls V2 is implemented and merged: `/settings`
+is now a setup health and owner-section routing overview, Settings navigation is
+grouped by owner section, contractor website plain domains normalize to usable
+HTTPS URLs, brand accent copy/preview is clearer, and company workflow error
+events are labeled as an Operations Monitor preview rather than a Settings-owned
+workflow area. These slices are presentation/configuration-boundary work: they
+preserve existing data loading, server actions, route names, tenant checks,
+schema, migrations, provider behavior, platform policy, workflow action
+ownership, and portal behavior. Invoice Review, CrewBoard, and Customer Portal
 recovery remain future slices.
 
 Current UX Recovery implementation note: Project Workspace Framework V2 is now
@@ -213,6 +207,17 @@ math, scheduling mutation paths, payment/signature state, provider behavior,
 portal access, and owning-workspace boundaries are preserved. Settings, Invoice
 Review, CrewBoard, Customer Portal, and broader sales-lifecycle rename work
 remain future slices.
+
+Current UX Recovery implementation note: Invoice Review V2 is implemented on
+`stream/invoice-review-v2`. `/invoices/:invoiceId` keeps the same route,
+loaders, server actions, tax/retainage/payment math, provider-send boundaries,
+Payment Trail continuity, and tenant scoping, but the page now scans as a
+review-first billing workspace: invoice identity and billing summary, existing
+document/payment readiness checks, invoice-specific issue cues, line item
+review, totals review, payment/event continuity, guarded customer-send/payment
+actions, and support context. Internal work items, editing, schedule context,
+connected records, metadata, related conversations, and revisions remain
+available as lower-priority support instead of competing with invoice review.
 
 Current wave gate note: `visual-ux-review-contractor-usability-v1` has merged
 to `main` under Jeff's controlled merge approval. Golden Workflow Usability

@@ -942,9 +942,37 @@ export default async function InvoiceDetailPage({
               items={invoiceStateItems}
             />
 
+            <DetailPanel
+              title="Review Readiness"
+              description="Existing invoice checks stay visible before billing actions, without inventing new readiness scores or bypassing Project Workspace ownership."
+            >
+              <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(280px,0.72fr)]">
+                <DocumentReadinessCard readiness={documentReadiness} />
+                <div className="rounded-lg border border-[var(--border-warm)] bg-[var(--highlight)] px-4 py-4 text-sm leading-6 text-[var(--text-secondary)]">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
+                    Payment Ready Check
+                  </p>
+                  <p className="mt-2 font-semibold text-[var(--text-primary)]">
+                    {invoiceIsSettled
+                      ? "Payment settled"
+                      : onlinePaymentGate.canStartCheckout
+                        ? "Ready for online payment"
+                        : "Not ready for online payment"}
+                  </p>
+                  <p className="mt-2">
+                    {getOnlinePaymentReadinessSummary({
+                      canStartCheckout: onlinePaymentGate.canStartCheckout,
+                      invoiceStatus: invoice.status,
+                      balanceDueAmount: invoice.balanceDueAmount
+                    })}
+                  </p>
+                </div>
+              </div>
+            </DetailPanel>
+
             <NeedsAttentionPanel
               cues={invoiceAttentionCues}
-              description="Invoice-specific Next Move suggestions derived from this invoice and enabled company rules. Use Project Workspace for upstream contract, deposit, job, or GateKeeper blockers."
+              description="Invoice-specific issues derived from this invoice and enabled company rules. Use Project Workspace for upstream contract, deposit, job, or GateKeeper blockers."
               getWorkItemAction={getOperationalCueWorkItemBridgeAction}
               getCueStateControls={(cue) => (
                 <CueStateControls
@@ -954,126 +982,18 @@ export default async function InvoiceDetailPage({
                 />
               )}
             />
-
-            <section
-              id="work-items"
-              className="rounded-lg border border-slate-200 bg-white px-4 py-4 sm:px-5"
-            >
-              <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-                <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">
-                    Internal work items
-                  </p>
-                  <h3 className="mt-1 text-base font-semibold text-slate-950">
-                    Invoice follow-through
-                  </h3>
-                  <p className="mt-1 max-w-[68ch] text-sm leading-6 text-slate-600">
-                    Create an internal contractor work item tied to this
-                    invoice. Cue prefill is only a draft; nothing is created
-                    until you submit.
-                  </p>
-                </div>
-                <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-600 md:w-56">
-                  <p className="font-semibold text-slate-950">
-                    Open linked items
-                  </p>
-                  <p className="mt-1 text-2xl font-semibold tracking-tight text-slate-950">
-                    {
-                      linkedWorkItems.filter(
-                        (workItem) => workItem.status === "open"
-                      ).length
-                    }
-                  </p>
-                </div>
-              </div>
-
-              <div className="mt-5 grid gap-5 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
-                <details className="rounded-lg border border-slate-200 bg-slate-50/80 px-4 py-4">
-                  <summary className="flex cursor-pointer list-none items-start justify-between gap-4">
-                    <div>
-                      <p className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-500">
-                        Create internal work item
-                      </p>
-                      <p className="mt-2 text-sm leading-6 text-slate-600">
-                        Internal follow-through is available when needed, but
-                        billing review stays primary on this invoice.
-                      </p>
-                    </div>
-                    <span className="inline-flex rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-slate-600">
-                      Expand
-                    </span>
-                  </summary>
-                  <div className="mt-4">
-                    <p className="mb-4 text-sm leading-6 text-slate-600">
-                      {invoiceWorkItemPrefill
-                        ? "Prefilled from a deterministic invoice cue. Review the owner, due date, and context; nothing is created until you submit."
-                        : "Use this form when invoice follow-through needs an owner, due date, and explicit completion state."}
-                    </p>
-                    <WorkItemCreateForm
-                      action={createWorkItemAction}
-                      returnTo={`/invoices/${invoice.id}`}
-                      sourceType={defaultInvoiceWorkItemSource.sourceType}
-                      sourceId={defaultInvoiceWorkItemSource.sourceId}
-                      linkPath={defaultInvoiceWorkItemSource.linkPath}
-                      customerId={invoice.customerId}
-                      projectId={invoice.projectId}
-                      defaultKind={
-                        invoiceWorkItemPrefill?.kind ?? "invoice_follow_up"
-                      }
-                      defaultTitle={invoiceWorkItemPrefill?.title}
-                      defaultDescription={invoiceWorkItemPrefill?.description}
-                      defaultDueAt={invoiceWorkItemPrefill?.dueAt}
-                      defaultPriority={
-                        invoiceWorkItemPrefill?.priority ?? "normal"
-                      }
-                      dedupeKey={invoiceWorkItemPrefill?.dedupeKey}
-                      metadata={invoiceWorkItemPrefill?.metadata}
-                      kindOptions={[
-                        {
-                          value: "invoice_follow_up",
-                          label: "Invoice follow-up"
-                        },
-                        { value: "human_handoff", label: "Human handoff" },
-                        { value: "manual", label: "Manual" }
-                      ]}
-                      assignablePeople={assignablePeople}
-                      boundaryCopy="Work items are internal-only and human-submitted. Creating, completing, or dismissing one does not change invoice status, payment state, customer-visible messages, financial calculations, project readiness, or workflow transitions."
-                    />
-                  </div>
-                </details>
-
-                <section className="rounded-lg border border-slate-200 bg-slate-50/80 px-4 py-4">
-                  <p className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-500">
-                    Linked work items
-                  </p>
-                  <p className="mt-2 text-sm leading-6 text-slate-600">
-                    Internal actions tied directly to this canonical invoice.
-                  </p>
-                  <div className="mt-4">
-                    <WorkItemList
-                      workItems={linkedWorkItems}
-                      returnTo={`/invoices/${invoice.id}`}
-                      completeAction={completeWorkItemAction}
-                      dismissAction={dismissWorkItemAction}
-                      emptyTitle="No work items are linked to this invoice yet."
-                      emptyDescription="Create an internal work item when invoice follow-up needs an owner, due date, and completion state."
-                    />
-                  </div>
-                </section>
-              </div>
-            </section>
           </div>
         </div>
 
         <DetailPanel
           title={
             invoice.billingModel === "aia_progress"
-              ? "Invoice Review And SOV Continuity"
+              ? "Line Item Review And SOV Continuity"
               : invoice.workflowRole === "deposit"
-                ? "Invoice Review And Deposit Continuity"
-                : "Invoice Review"
+                ? "Line Item Review And Deposit Continuity"
+                : "Line Item Review"
           }
-          description="Review billing meaning, linked scope, and payment follow-through before dropping into lower-priority metadata."
+          description="Verify saved invoice scope first. Editing, payments, delivery, and support context stay available below without competing with the billing review."
         >
           <div className="grid gap-8 xl:grid-cols-[minmax(0,1.1fr)_minmax(280px,0.9fr)]">
             <div className="space-y-6">
@@ -1090,53 +1010,89 @@ export default async function InvoiceDetailPage({
                 </div>
 
                 {invoice.lineItems.length > 0 ? (
-                  <div className="space-y-3">
-                    {invoice.lineItems.map((lineItem) => (
-                      <div
-                        key={lineItem.id}
-                        className="rounded-2xl border border-[var(--border-warm)] bg-[var(--highlight)] px-5 py-4"
-                      >
-                        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                          <div className="space-y-1">
-                            <p className="text-sm font-semibold text-[var(--text-primary)]">
-                              {lineItem.name}
-                            </p>
+                  <div className="overflow-hidden rounded-lg border border-[var(--border-warm)] bg-white">
+                    <div className="hidden grid-cols-[minmax(0,1.6fr)_96px_112px_112px_120px] gap-4 border-b border-[var(--border-warm)] bg-[var(--highlight)] px-4 py-2.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--text-secondary)] lg:grid">
+                      <span>Line item</span>
+                      <span className="text-right">Qty</span>
+                      <span className="text-right">Rate</span>
+                      <span className="text-right">Tax</span>
+                      <span className="text-right">Amount</span>
+                    </div>
+                    <div className="divide-y divide-[var(--border-warm)]">
+                      {invoice.lineItems.map((lineItem) => (
+                        <div
+                          key={lineItem.id}
+                          className="grid gap-3 px-4 py-4 lg:grid-cols-[minmax(0,1.6fr)_96px_112px_112px_120px] lg:items-start lg:gap-4"
+                        >
+                          <div className="min-w-0">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <p className="min-w-0 text-sm font-semibold text-[var(--text-primary)]">
+                                {lineItem.name}
+                              </p>
+                              <span className="inline-flex rounded-[4px] border border-[var(--border-warm)] bg-[var(--highlight)] px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--text-secondary)]">
+                                {getInvoiceLineageBadge({
+                                  lineageType: lineItem.lineageType,
+                                  invoiceOnlyAdjustmentKind:
+                                    lineItem.invoiceOnlyAdjustmentKind
+                                })}
+                              </span>
+                            </div>
                             {lineItem.description ? (
-                              <p className="text-sm leading-6 text-[var(--text-secondary)]">
+                              <p className="mt-1 text-sm leading-6 text-[var(--text-secondary)]">
                                 {lineItem.description}
                               </p>
                             ) : null}
-                            <p className="text-sm text-[var(--text-secondary)]">
+                          </div>
+                          <div className="flex items-center justify-between gap-4 lg:block lg:text-right">
+                            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--text-secondary)] lg:hidden">
+                              Qty
+                            </p>
+                            <p className="text-sm tabular-nums text-[var(--text-primary)]">
                               {Number(lineItem.quantity).toLocaleString(
                                 "en-US"
                               )}{" "}
-                              {lineItem.unit} at{" "}
-                              {formatMoney(lineItem.unitPrice)}
-                            </p>
-                            <p className="text-xs font-medium uppercase tracking-[0.16em] text-[var(--text-secondary)]">
-                              {getInvoiceLineageBadge({
-                                lineageType: lineItem.lineageType,
-                                invoiceOnlyAdjustmentKind:
-                                  lineItem.invoiceOnlyAdjustmentKind
-                              })}
+                              {lineItem.unit}
                             </p>
                           </div>
-                          <p className="text-sm font-semibold text-[var(--text-primary)]">
-                            {formatMoney(lineItem.lineTotal)}
-                          </p>
+                          <div className="flex items-center justify-between gap-4 lg:block lg:text-right">
+                            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--text-secondary)] lg:hidden">
+                              Rate
+                            </p>
+                            <p className="text-sm tabular-nums text-[var(--text-primary)]">
+                              {formatMoney(lineItem.unitPrice)}
+                            </p>
+                          </div>
+                          <div className="flex items-center justify-between gap-4 lg:block lg:text-right">
+                            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--text-secondary)] lg:hidden">
+                              Tax
+                            </p>
+                            <p className="text-sm text-[var(--text-secondary)]">
+                              {lineItem.taxable
+                                ? formatMoney(lineItem.taxAmount ?? "0.00")
+                                : "Non-taxable"}
+                            </p>
+                          </div>
+                          <div className="flex items-center justify-between gap-4 lg:block lg:text-right">
+                            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--text-secondary)] lg:hidden">
+                              Amount
+                            </p>
+                            <p className="text-sm font-semibold tabular-nums text-[var(--text-primary)]">
+                              {formatMoney(lineItem.lineTotal)}
+                            </p>
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
                   </div>
                 ) : (
-                  <div className="rounded-2xl border border-dashed border-[var(--border-warm)] bg-[var(--highlight)] px-5 py-4 text-sm leading-6 text-[var(--text-secondary)]">
+                  <div className="rounded-lg border border-dashed border-[var(--border-warm)] bg-[var(--highlight)] px-5 py-4 text-sm leading-6 text-[var(--text-secondary)]">
                     No line items are currently attached to this invoice.
                   </div>
                 )}
               </section>
 
               <section className="space-y-3">
-                <div className="rounded-2xl border border-[var(--border-warm)] bg-white px-5 py-5">
+                <div className="rounded-lg border border-[var(--border-warm)] bg-white px-5 py-5">
                   <p className="text-sm font-medium text-[var(--text-primary)]">
                     {invoiceContinuityTitle}
                   </p>
@@ -1167,7 +1123,7 @@ export default async function InvoiceDetailPage({
 
                 {invoice.billingModel === "aia_progress" ? (
                   progressBillingWorkspace ? (
-                    <div className="rounded-2xl border border-[var(--border-warm)] bg-[var(--highlight)] px-5 py-5">
+                    <div className="rounded-lg border border-[var(--border-warm)] bg-[var(--highlight)] px-5 py-5">
                       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                         <div className="space-y-2">
                           <p className="text-sm font-medium text-[var(--text-primary)]">
@@ -1191,7 +1147,7 @@ export default async function InvoiceDetailPage({
                         </span>
                       </div>
                       <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-                        <div className="rounded-2xl border border-[var(--border-warm)] bg-white px-4 py-4">
+                        <div className="rounded-lg border border-[var(--border-warm)] bg-white px-4 py-4">
                           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
                             Previously billed
                           </p>
@@ -1199,7 +1155,7 @@ export default async function InvoiceDetailPage({
                             {formatMoney(linkedProgressSummary.previousBilled)}
                           </p>
                         </div>
-                        <div className="rounded-2xl border border-[var(--border-warm)] bg-white px-4 py-4">
+                        <div className="rounded-lg border border-[var(--border-warm)] bg-white px-4 py-4">
                           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
                             Current billed
                           </p>
@@ -1207,7 +1163,7 @@ export default async function InvoiceDetailPage({
                             {formatMoney(linkedProgressSummary.currentBilling)}
                           </p>
                         </div>
-                        <div className="rounded-2xl border border-[var(--border-warm)] bg-white px-4 py-4">
+                        <div className="rounded-lg border border-[var(--border-warm)] bg-white px-4 py-4">
                           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
                             Retainage held
                           </p>
@@ -1215,7 +1171,7 @@ export default async function InvoiceDetailPage({
                             {formatMoney(linkedProgressSummary.retainageHeld)}
                           </p>
                         </div>
-                        <div className="rounded-2xl border border-[var(--border-warm)] bg-white px-4 py-4">
+                        <div className="rounded-lg border border-[var(--border-warm)] bg-white px-4 py-4">
                           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
                             Balance to finish
                           </p>
@@ -1226,7 +1182,7 @@ export default async function InvoiceDetailPage({
                       </div>
                     </div>
                   ) : (
-                    <div className="rounded-2xl border border-amber-200 bg-amber-50 px-5 py-4 text-sm leading-6 text-amber-900">
+                    <div className="rounded-lg border border-amber-200 bg-amber-50 px-5 py-4 text-sm leading-6 text-amber-900">
                       This invoice is marked as progress-billed, but the linked
                       progress billing workspace could not be resolved from the
                       current estimate chain.
@@ -1240,7 +1196,7 @@ export default async function InvoiceDetailPage({
                   <p className="text-sm font-medium text-[var(--text-primary)]">
                     Billing notes
                   </p>
-                  <div className="rounded-2xl border border-[var(--border-warm)] bg-white px-5 py-4 text-sm leading-6 text-[var(--text-secondary)]">
+                  <div className="rounded-lg border border-[var(--border-warm)] bg-white px-5 py-4 text-sm leading-6 text-[var(--text-secondary)]">
                     {invoice.notes ??
                       "No billing notes have been captured on this invoice yet."}
                   </div>
@@ -1250,7 +1206,7 @@ export default async function InvoiceDetailPage({
                   <p className="text-sm font-medium text-[var(--text-primary)]">
                     Latest payment activity
                   </p>
-                  <div className="rounded-2xl border border-[var(--border-warm)] bg-white px-5 py-4 text-sm leading-6 text-[var(--text-secondary)]">
+                  <div className="rounded-lg border border-[var(--border-warm)] bg-white px-5 py-4 text-sm leading-6 text-[var(--text-secondary)]">
                     <div className="space-y-3">
                       {latestPayment ? (
                         <div className="space-y-1">
@@ -1271,7 +1227,7 @@ export default async function InvoiceDetailPage({
                           No payments have been recorded for this invoice yet.
                         </p>
                       )}
-                      <div className="rounded-2xl border border-[var(--border-warm)] bg-[var(--highlight)] px-4 py-3">
+                      <div className="rounded-lg border border-[var(--border-warm)] bg-[var(--highlight)] px-4 py-3">
                         <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
                           Customer-facing signal
                         </p>
@@ -1844,6 +1800,110 @@ export default async function InvoiceDetailPage({
             </DetailPanel>
           </div>
         </div>
+
+        <DetailPanel
+          id="work-items"
+          title="Support Follow-Through"
+          description="Internal work items remain available after invoice review and billing actions, without changing invoice status, payment state, customer messages, or financial calculations."
+        >
+          <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+            <div>
+              <p className="text-sm font-semibold text-[var(--text-primary)]">
+                Internal invoice work items
+              </p>
+              <p className="mt-1 max-w-[68ch] text-sm leading-6 text-[var(--text-secondary)]">
+                Create an internal contractor work item tied to this invoice.
+                Cue prefill is only a draft; nothing is created until you
+                submit.
+              </p>
+            </div>
+            <div className="rounded-lg border border-[var(--border-warm)] bg-[var(--highlight)] px-4 py-3 text-sm leading-6 text-[var(--text-secondary)] md:w-56">
+              <p className="font-semibold text-[var(--text-primary)]">
+                Open linked items
+              </p>
+              <p className="mt-1 text-2xl font-semibold tracking-tight text-[var(--text-primary)]">
+                {
+                  linkedWorkItems.filter(
+                    (workItem) => workItem.status === "open"
+                  ).length
+                }
+              </p>
+            </div>
+          </div>
+
+          <div className="mt-5 grid gap-5 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
+            <details className="rounded-lg border border-[var(--border-warm)] bg-[var(--highlight)] px-4 py-4">
+              <summary className="flex cursor-pointer list-none items-start justify-between gap-4">
+                <div>
+                  <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
+                    Create internal work item
+                  </p>
+                  <p className="mt-2 text-sm leading-6 text-[var(--text-secondary)]">
+                    Internal follow-through is available when needed, but
+                    billing review stays primary on this invoice.
+                  </p>
+                </div>
+                <span className="inline-flex rounded-full border border-[var(--border-warm)] bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-[var(--text-secondary)]">
+                  Expand
+                </span>
+              </summary>
+              <div className="mt-4">
+                <p className="mb-4 text-sm leading-6 text-[var(--text-secondary)]">
+                  {invoiceWorkItemPrefill
+                    ? "Prefilled from a deterministic invoice cue. Review the owner, due date, and context; nothing is created until you submit."
+                    : "Use this form when invoice follow-through needs an owner, due date, and explicit completion state."}
+                </p>
+                <WorkItemCreateForm
+                  action={createWorkItemAction}
+                  returnTo={`/invoices/${invoice.id}`}
+                  sourceType={defaultInvoiceWorkItemSource.sourceType}
+                  sourceId={defaultInvoiceWorkItemSource.sourceId}
+                  linkPath={defaultInvoiceWorkItemSource.linkPath}
+                  customerId={invoice.customerId}
+                  projectId={invoice.projectId}
+                  defaultKind={
+                    invoiceWorkItemPrefill?.kind ?? "invoice_follow_up"
+                  }
+                  defaultTitle={invoiceWorkItemPrefill?.title}
+                  defaultDescription={invoiceWorkItemPrefill?.description}
+                  defaultDueAt={invoiceWorkItemPrefill?.dueAt}
+                  defaultPriority={invoiceWorkItemPrefill?.priority ?? "normal"}
+                  dedupeKey={invoiceWorkItemPrefill?.dedupeKey}
+                  metadata={invoiceWorkItemPrefill?.metadata}
+                  kindOptions={[
+                    {
+                      value: "invoice_follow_up",
+                      label: "Invoice follow-up"
+                    },
+                    { value: "human_handoff", label: "Human handoff" },
+                    { value: "manual", label: "Manual" }
+                  ]}
+                  assignablePeople={assignablePeople}
+                  boundaryCopy="Work items are internal-only and human-submitted. Creating, completing, or dismissing one does not change invoice status, payment state, customer-visible messages, financial calculations, project readiness, or workflow transitions."
+                />
+              </div>
+            </details>
+
+            <section className="rounded-lg border border-[var(--border-warm)] bg-[var(--highlight)] px-4 py-4">
+              <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
+                Linked work items
+              </p>
+              <p className="mt-2 text-sm leading-6 text-[var(--text-secondary)]">
+                Internal actions tied directly to this canonical invoice.
+              </p>
+              <div className="mt-4">
+                <WorkItemList
+                  workItems={linkedWorkItems}
+                  returnTo={`/invoices/${invoice.id}`}
+                  completeAction={completeWorkItemAction}
+                  dismissAction={dismissWorkItemAction}
+                  emptyTitle="No work items are linked to this invoice yet."
+                  emptyDescription="Create an internal work item when invoice follow-up needs an owner, due date, and completion state."
+                />
+              </div>
+            </section>
+          </div>
+        </DetailPanel>
       </section>
 
       <aside className="space-y-6">
