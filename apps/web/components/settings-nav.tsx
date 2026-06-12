@@ -40,12 +40,12 @@ export function SettingsNav({ items, tone = "warm" }: SettingsNavProps) {
               href={item.href}
               aria-current={active ? "page" : undefined}
               className={[
-                "block rounded-md border px-4 py-3 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--copper)] focus-visible:ring-offset-2",
+                "block rounded-[4px] border px-3 py-3 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#005eb8] focus-visible:ring-offset-2",
                 active
-                  ? "border-[var(--graphite)] bg-[var(--graphite)] text-white shadow-[0_18px_40px_-30px_rgba(23,23,23,0.5)]"
+                  ? "border-[#005eb8] bg-[#005eb8] text-white shadow-none"
                   : neutral
-                    ? "border-[var(--border-warm)] bg-white text-[var(--text-secondary)] hover:border-[var(--graphite-light)] hover:bg-[var(--highlight)] hover:text-[var(--text-primary)]"
-                    : "border-[var(--border-warm)] bg-white text-[var(--text-secondary)] hover:border-[var(--copper)] hover:bg-[var(--cream)]"
+                    ? "border-[#d1d5db] bg-white text-[var(--text-secondary)] hover:border-[#005eb8] hover:bg-[#eef6ff] hover:text-[var(--text-primary)]"
+                    : "border-[#d1d5db] bg-white text-[var(--text-secondary)] hover:border-[#005eb8] hover:bg-[#eef6ff] hover:text-[var(--text-primary)]"
               ].join(" ")}
             >
               <p className="text-sm font-semibold tracking-tight">
@@ -55,7 +55,7 @@ export function SettingsNav({ items, tone = "warm" }: SettingsNavProps) {
                 className={[
                   "mt-2 text-xs leading-5",
                   active
-                    ? "text-[var(--cream)]"
+                    ? "text-white/75"
                     : neutral
                       ? "text-[var(--text-tertiary)]"
                       : "text-[var(--text-tertiary)]"

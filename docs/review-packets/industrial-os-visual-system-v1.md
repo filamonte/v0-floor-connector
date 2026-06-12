@@ -319,3 +319,166 @@ Invoice Review. Keep it presentation-only over existing estimate, invoice,
 payment, and document-readiness data, and target the 900px technical document
 container plus 70/30 billing/status HUD pattern described in the production
 handoff.
+
+## Direct Stitch Composition Fidelity Pass
+
+Date: 2026-06-12
+
+Branch/worktree:
+
+- Branch: `stream/industrial-os-visual-system-v1`
+- Worktree: `C:\FC-worktrees\industrial-os-visual-system-v1`
+
+### Scope
+
+This pass tightened the already-stabilized Industrial OS branch toward the
+Stitch production handoff composition without changing routes, loaders,
+server actions, auth, tenant guards, portal visibility, schema, migrations, or
+business workflows.
+
+Pages and shared surfaces changed:
+
+- Dashboard / first-login command center
+- Sales / Leads Manager
+- Opportunity Workspace / Lead detail
+- Project Workspace / Project detail
+- Settings layout and settings nav
+- Universal Capture surface styling
+- Shared manager/workspace card, summary, and command primitives
+
+### Page Composition Changes
+
+- Dashboard now uses a cooler neutral app background, a darker command-metric
+  band, lighter hard-border panels, blue-led focus/action states, and places
+  the existing onboarding `StartHereCard` immediately after operating health so
+  first-login or forced onboarding states read as a distinct setup moment.
+- Leads Manager keeps the existing `/leads` route, filters, query parameters,
+  quick-create sheet, and canonical opportunity records while making the page
+  read more like a dense manager table: white KPI cells, hard borders,
+  blue-led filters/actions, and less warm card treatment.
+- Opportunity Workspace keeps the existing `/leads/[leadId]` route and
+  `?view=` behavior while renaming contextual sections toward the approved
+  workflow language: `Qualification / Intake`, `Assessment`,
+  `Estimate Handoff`, and `Work Items / Follow-up`.
+- Project Workspace keeps the existing `/projects/[projectId]` route and
+  `?view=` behavior while aligning the contextual section label
+  `Assessment / Scope` with the target project-workspace language.
+- Settings keeps the existing settings layout/loader/nav items while shifting
+  the shell to the Stitch dark header, blue active nav, 272px contextual rail,
+  and lighter white configuration cards.
+- Universal Capture keeps the existing Work Item-only fallback and appointment
+  prefill routing while removing warm focus states and heavy shadow treatment.
+
+### Local Nav Behavior
+
+- No global desktop sidebar was added. Desktop global navigation remains the
+  existing top/header app shell.
+- No mobile left rail was added. Mobile workspace navigation remains compact,
+  horizontally scrollable contextual section controls inside the workspace.
+- Workspace and settings left rails remain contextual only. They use existing
+  route/query/path-backed active state and are not decorative duplicates of
+  global navigation.
+- Browser checks confirmed active contextual nav state on one project detail
+  route, one lead detail route, and settings at `1366px` and `390px`.
+
+### Stitch Fidelity Notes By Page
+
+- Dashboard: closer to Stitch command-center structure through the dark
+  operating canvas, hard metric grid, and immediate action queues. Deviation:
+  the existing FloorConnector global top nav is preserved instead of the Stitch
+  fixed desktop sidebar.
+- Leads Manager: closer to Stitch manager table density with neutral surfaces,
+  hard borders, and blue filter/action emphasis. Deviation: existing
+  FloorConnector command bar and PerspectiveSwitcher are reused to preserve
+  query behavior and role/perspective semantics.
+- Opportunity Workspace: closer to Stitch guided workspace taxonomy through
+  contextual section language and the shared workspace shell. Deviation: no new
+  decorative process rail or duplicate sales workflow data was added.
+- Project Workspace: closer to Stitch 70/30 workspace behavior through the
+  shared shell and context rail. Deviation: existing project readiness,
+  commercial, production, financial, and activity sections remain the owning
+  implementation surfaces.
+- Settings: closer to Stitch settings composition through the dark control
+  header, contextual left nav, and hard white configuration cards. Deviation:
+  existing nav groups and admin filtering remain unchanged.
+- Universal Capture: closer to Stitch overlay tone through lighter hard-border
+  styling and blue focus states. Deviation: the existing inline dashboard
+  capture section is preserved because changing overlay mechanics would touch
+  interaction behavior beyond this visual slice.
+
+### No-Data-Silo Confirmation
+
+This pass added no fake data, local-only persistence, duplicate lead/project/
+invoice/payment records, schema changes, migrations, loaders, actions, auth
+changes, tenant changes, portal-only copies, or workflow silos. All changed
+surfaces continue to render existing canonical records and existing action
+targets.
+
+### Production Safety Confirmation
+
+- Route changes: none.
+- Schema/migration changes: none.
+- Loader/server-action changes: none.
+- Auth/tenant/portal/admin guard changes: none.
+- Payment/signature/scheduling behavior changes: none.
+- Fake/demo data additions: none.
+- Universal Capture persistence behavior changes: none.
+
+### Screens Checked
+
+Browser checks used the restarted local dev server at
+`http://localhost:3004` with saved authenticated Playwright state.
+
+Desktop `1366px` and mobile `390px`:
+
+- `/dashboard`
+- `/projects`
+- `/projects/fe0ba4e8-97c2-4765-9259-c6de6344d82c`
+- `/settings`
+- `/leads`
+- `/leads/b497db9d-9f4d-4cd0-ac72-43817cabb308`
+- `/invoices/c3b636bf-78e7-40a8-ad32-31f4568b961f`
+- `/schedule`
+- `/portal`
+- `/dashboard?capture=1#universal-capture`
+
+Results:
+
+- HTTP 200 on all checked routes.
+- No `ChunkLoadError`, loading-chunk text, or runtime error text.
+- No console/page errors captured.
+- No horizontal overflow at either viewport.
+- Local nav active state present on lead detail, project detail, and settings.
+
+Screenshots saved under
+`test-results/industrial-os-visual-pass/`.
+
+### Validation
+
+Passed:
+
+- `pnpm.cmd --filter @floorconnector/web typecheck`
+- `pnpm.cmd --filter @floorconnector/web lint`
+- `pnpm.cmd --filter @floorconnector/ui test`
+- `pnpm.cmd fc:preflight:fast`
+- `pnpm.cmd e2e:smoke:auth`
+- `git diff --check`
+- `git diff --cached --check`
+- `pnpm.cmd worktree:doctor`
+- Browser matrix at `1366px` and `390px`
+
+### Remaining Gaps
+
+- Invoice Review and Estimate Review still need the dedicated review-screen
+  page-family slice.
+- CrewBoard and schedule-board composition still need a future dedicated
+  workboard/calendar slice.
+- Some older page-local large radii remain in deeper nested route content where
+  changing them broadly would increase review surface.
+
+### Recommended Next Page-Family Slice
+
+Run `industrial-os-review-screens-v1` next for Estimate Review and Invoice
+Review. Keep it presentation-only over existing canonical estimate, invoice,
+payment, and document-readiness records, and target the Stitch 900px document
+review container plus 70/30 billing/status HUD pattern.

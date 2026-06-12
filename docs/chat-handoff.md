@@ -145,6 +145,17 @@ canonical opportunity statuses. It adds no status configuration, table rename,
 route rename, duplicate Lead model, Supabase migration, provider behavior, or
 portal/customer-facing behavior.
 
+Industrial OS visual-system handoff: the
+`stream/industrial-os-visual-system-v1` branch has a direct Stitch composition
+fidelity pass over dashboard, Leads Manager, Opportunity Workspace, Project
+Workspace, Settings, Universal Capture styling, and shared workspace/manager
+primitives. It preserves the existing global top/header app nav and uses
+contextual workspace/settings nav only. The pass is presentation-only over
+existing canonical records and explicitly does not change schema, routes,
+loaders, server actions, auth, tenant, portal, payment, signature, scheduling,
+or workflow behavior. Follow-up visual work should target Estimate Review and
+Invoice Review first, then CrewBoard/schedule-board composition.
+
 Role-aware dashboards and workspace personalization are approved target
 direction only. Preferred model: Platform Defaults -> Organization Presets ->
 User Personalization. These layers may change presentation, ordering, filtering,

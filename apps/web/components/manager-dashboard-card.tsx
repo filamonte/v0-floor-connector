@@ -32,12 +32,12 @@ export function ManagerDashboardCard({
   emptyDescription
 }: ManagerDashboardCardProps) {
   return (
-    <section className="flex h-full min-w-0 flex-col overflow-hidden rounded-[6px] border border-[color-mix(in_oklab,var(--line)_78%,white)] bg-white shadow-[0_1px_0_rgba(9,9,11,0.04)]">
-      <div className="h-1 bg-[#005eb8]" />
-      <div className="flex flex-col items-start gap-3 border-b border-[color-mix(in_oklab,var(--line)_78%,white)] bg-[linear-gradient(180deg,white_0%,#fbfcfd_100%)] px-3 py-3 sm:flex-row sm:justify-between">
+    <section className="flex h-full min-w-0 flex-col overflow-hidden rounded-[4px] border border-[#d1d5db] bg-white shadow-[0_1px_0_rgba(9,9,11,0.035)]">
+      <div className="h-[3px] bg-[#005eb8]" />
+      <div className="flex flex-col items-start gap-3 border-b border-[#e5e7eb] bg-[#fbfcfd] px-3 py-3 sm:flex-row sm:justify-between">
         <div className="min-w-0">
           {eyebrow ? (
-            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--copper)]">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#005eb8]">
               {eyebrow}
             </p>
           ) : null}
@@ -62,7 +62,7 @@ export function ManagerDashboardCard({
             <Link
               key={`${item.href}:${item.title}:${index}`}
               href={item.href}
-              className="group flex min-w-0 flex-col gap-2 px-3 py-3 transition hover:bg-[var(--highlight)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--copper)] focus-visible:ring-inset sm:flex-row sm:items-start sm:justify-between sm:gap-3"
+              className="group flex min-w-0 flex-col gap-2 px-3 py-3 transition hover:bg-[#f7fbff] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#005eb8] focus-visible:ring-inset sm:flex-row sm:items-start sm:justify-between sm:gap-3"
             >
               <div className="min-w-0">
                 <div className="flex min-w-0 items-center gap-2">
@@ -92,7 +92,7 @@ export function ManagerDashboardCard({
             </Link>
           ))
         ) : (
-          <div className="m-3 rounded-[6px] border border-dashed border-[var(--border-warm)] bg-[var(--highlight)] px-3 py-4">
+          <div className="m-3 rounded-[4px] border border-dashed border-[#cbd5e1] bg-[#f9fafb] px-3 py-4">
             <p className="text-sm font-semibold text-[var(--text-primary)]">
               {emptyTitle}
             </p>

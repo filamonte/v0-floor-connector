@@ -28,19 +28,19 @@ export function SettingsSurfaceLayout({
     : "Contractor organization scope";
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       <section
         className={[
-          "rounded-[6px] border p-6 shadow-none sm:p-8",
+          "rounded-[4px] border p-5 shadow-none sm:p-6",
           neutral
-            ? "border-slate-700/70 bg-[linear-gradient(135deg,var(--graphite-dark),#27272a)] text-white"
-            : "border-[var(--graphite-light)]/40 bg-[linear-gradient(135deg,var(--graphite-dark),#242428)] text-white"
+            ? "border-[#27272a] bg-[#09090b] text-white"
+            : "border-[#27272a] bg-[#09090b] text-white"
         ].join(" ")}
       >
         <p
           className={[
             "text-[11px] font-semibold uppercase tracking-[0.24em]",
-            neutral ? "text-slate-300" : "text-[var(--copper-light)]"
+            neutral ? "text-slate-300" : "text-[#8fc7ff]"
           ].join(" ")}
         >
           {eyebrow}
@@ -61,11 +61,11 @@ export function SettingsSurfaceLayout({
         </div>
       </section>
 
-      <div className="grid gap-6 xl:grid-cols-[280px_minmax(0,1fr)]">
+      <div className="grid gap-5 xl:grid-cols-[272px_minmax(0,1fr)]">
         <aside className="xl:sticky xl:top-28 xl:self-start">
           <div
             className={[
-              "rounded-[6px] border bg-white p-4 shadow-none",
+              "rounded-[4px] border bg-white p-3 shadow-none",
               neutral ? "border-slate-200" : "border-[var(--border-warm)]"
             ].join(" ")}
           >

@@ -132,11 +132,11 @@ export function StandardWorkspaceLayout<TView extends string>({
 
   return (
     <div className="space-y-4">
-      <section className="border border-[var(--border-warm)] bg-white px-4 py-4 shadow-none sm:px-6">
+      <section className="border border-[#d1d5db] bg-white px-4 py-4 shadow-none sm:px-6">
         <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
           <div className="min-w-0">
             {header.eyebrow ? (
-              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--copper)]">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#005eb8]">
                 {header.eyebrow}
               </p>
             ) : null}
@@ -160,17 +160,17 @@ export function StandardWorkspaceLayout<TView extends string>({
       {summaryBand}
       {commandBar}
 
-      <section className="overflow-hidden border border-[var(--border-warm)] bg-white shadow-none">
+      <section className="overflow-hidden border border-[#d1d5db] bg-white shadow-none">
         <div
           className={[
-            "grid min-h-[620px] bg-white",
+            "grid min-h-[620px] bg-[#f4f4f5]",
             hasSidebar
-              ? "grid-cols-1 lg:grid-cols-[280px_minmax(0,1fr)]"
+              ? "grid-cols-1 lg:grid-cols-[272px_minmax(0,1fr)]"
               : "grid-cols-1"
           ].join(" ")}
         >
           {hasSidebar ? (
-            <aside className="border-b border-[var(--border-warm)] bg-[#f4f4f5] px-3 py-3 lg:sticky lg:top-[8.5rem] lg:max-h-[calc(100vh-9.5rem)] lg:self-start lg:overflow-y-auto lg:border-b-0 lg:border-r">
+            <aside className="border-b border-[#d1d5db] bg-[#f9fafb] px-3 py-3 lg:sticky lg:top-[8.5rem] lg:max-h-[calc(100vh-9.5rem)] lg:self-start lg:overflow-y-auto lg:border-b-0 lg:border-r">
               <p className="hidden px-2 pb-3 text-[10px] font-semibold uppercase tracking-[0.2em] text-[var(--text-tertiary)] lg:block">
                 Workspace sections
               </p>
@@ -179,7 +179,7 @@ export function StandardWorkspaceLayout<TView extends string>({
                   const Icon = iconMap[item.iconName];
                   const active = item.id === activeView;
                   const className = [
-                    "inline-flex min-h-11 min-w-fit items-center justify-center gap-2 border px-3 py-2 transition lg:w-full lg:justify-start",
+                    "inline-flex min-h-11 min-w-fit items-center justify-center gap-2 rounded-[4px] border px-3 py-2 transition lg:w-full lg:justify-start",
                     active
                       ? "border-[#005eb8] bg-white text-[#003d7c] shadow-[inset_3px_0_0_#005eb8]"
                       : "border-transparent bg-transparent text-[var(--text-secondary)] hover:border-[#c7d2e2] hover:bg-white hover:text-[var(--text-primary)]"
@@ -253,7 +253,7 @@ export function StandardWorkspaceLayout<TView extends string>({
             className={[
               "min-w-0 bg-white",
               supportArea
-                ? "grid gap-5 p-4 xl:grid-cols-[minmax(0,1fr)_340px] 2xl:grid-cols-[minmax(0,1fr)_380px] sm:p-6"
+                ? "grid gap-5 bg-[#f4f4f5] p-4 xl:grid-cols-[minmax(0,1fr)_340px] 2xl:grid-cols-[minmax(0,1fr)_380px] sm:p-6"
                 : "",
               contentClassName
             ]

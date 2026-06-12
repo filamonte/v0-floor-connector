@@ -43,16 +43,16 @@ export function ContractorWorkspacePage({
     <div className="space-y-4">
       <section
         className={[
-          "overflow-hidden border px-4 py-4 shadow-none sm:px-6",
+          "overflow-hidden rounded-[4px] border px-4 py-4 shadow-none sm:px-6",
           darkHeader
-            ? "border-[var(--graphite)] bg-[linear-gradient(135deg,var(--graphite-dark)_0%,var(--graphite)_78%)] text-white"
-            : "border-[var(--border-warm)] bg-white"
+            ? "border-[#27272a] bg-[#09090b] text-white"
+            : "border-[#d1d5db] bg-white"
         ].join(" ")}
       >
         <div
           className={[
             "-mx-4 -mt-4 mb-4 h-1 sm:-mx-6",
-            darkHeader ? "bg-[var(--copper)]" : "bg-[var(--graphite)]"
+            darkHeader ? "bg-[#005eb8]" : "bg-[#005eb8]"
           ].join(" ")}
         />
         <div className="flex min-w-0 flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
@@ -60,9 +60,7 @@ export function ContractorWorkspacePage({
             <p
               className={[
                 "text-[10px] font-semibold uppercase tracking-[0.22em]",
-                darkHeader
-                  ? "text-[var(--copper-light)]"
-                  : "text-[var(--copper)]"
+                darkHeader ? "text-[#8fc7ff]" : "text-[#005eb8]"
               ].join(" ")}
             >
               {eyebrow}
@@ -98,7 +96,7 @@ export function ContractorWorkspacePage({
               ownership.configuration ? "xl:grid-cols-3" : "",
               darkHeader
                 ? "border-white/15 bg-white/15"
-                : "border-[var(--border-warm)] bg-[var(--border-warm)]"
+                : "border-[#d1d5db] bg-[#d1d5db]"
             ].join(" ")}
           >
             {[
@@ -115,9 +113,7 @@ export function ContractorWorkspacePage({
                 <p
                   className={[
                     "text-[10px] font-semibold uppercase tracking-[0.16em]",
-                    darkHeader
-                      ? "text-[var(--copper-light)]"
-                      : "text-[var(--copper)]"
+                    darkHeader ? "text-[#8fc7ff]" : "text-[#005eb8]"
                   ].join(" ")}
                 >
                   {item.label}
@@ -147,9 +143,7 @@ export function ContractorWorkspacePage({
                 <p
                   className={[
                     "text-[10px] font-semibold uppercase tracking-[0.16em]",
-                    darkHeader
-                      ? "text-[var(--copper-light)]"
-                      : "text-[var(--copper)]"
+                    darkHeader ? "text-[#8fc7ff]" : "text-[#005eb8]"
                   ].join(" ")}
                 >
                   Configure in Settings
@@ -174,7 +168,7 @@ export function ContractorWorkspacePage({
           <div
             className={[
               "mt-3 border-t pt-3",
-              darkHeader ? "border-white/12" : "border-[var(--border-warm)]"
+              darkHeader ? "border-white/12" : "border-[#e5e7eb]"
             ].join(" ")}
           >
             <WorkspaceCommandBar {...commandBar} embedded />

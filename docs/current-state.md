@@ -63,6 +63,17 @@ Use these docs together:
 All future UI and module work must follow `docs/floorconnector-ui-build-rules.md` before implementation.
 That includes all future module workspace standardization work, which should align to the shared `StandardWorkspaceLayout` and the documented workspace/sidebar rules there.
 
+Industrial OS visual-system note: the active
+`stream/industrial-os-visual-system-v1` branch continues to refine existing
+contractor surfaces toward the Stitch Industrial OS V2 direction without
+changing canonical data, routes, loaders, actions, auth, tenant boundaries,
+portal visibility, schema, or migrations. The current branch uses the existing
+top/header global app shell, contextual workspace/settings left navigation
+only, blue/neutral status and action treatment, lighter hard-border cards, and
+shared workspace composition over existing dashboard, leads, project, settings,
+and Universal Capture surfaces. Invoice Review, Estimate Review, and CrewBoard
+remain follow-up page-family slices rather than completed visual conversions.
+
 If this document conflicts with a planning, target-design, or historical document, trust this document for implemented status.
 
 Estimate Builder planning docs are planning docs only. V1 estimate builder/system generation is not implemented unless this file and the codebase explicitly say it is. The existing reusable catalog, cost item database, and estimate foundations remain the current implemented baseline.

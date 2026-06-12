@@ -39,15 +39,15 @@ export function StartHereCard({
   return (
     <section
       className={[
-        "rounded-lg bg-white",
+        "rounded-[4px] bg-white",
         shouldEmphasizeFirstStep
-          ? "border-2 border-[#d8731f] shadow-sm"
-          : "border border-[#d6d6d6]"
+          ? "border-2 border-[#005eb8] shadow-none"
+          : "border border-[#d1d5db]"
       ].join(" ")}
     >
-      <div className="flex flex-col gap-4 border-b border-[#d6d6d6] bg-[#11100f] px-4 py-4 text-white lg:flex-row lg:items-center lg:justify-between">
+      <div className="flex flex-col gap-4 border-b border-[#27272a] bg-[#09090b] px-4 py-4 text-white lg:flex-row lg:items-center lg:justify-between">
         <div className="min-w-0">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#f7a35c]">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#8fc7ff]">
             Start here
           </p>
           <h3 className="mt-1 text-[17px] font-semibold tracking-tight">
@@ -61,14 +61,14 @@ export function StartHereCard({
             {forceVisible && incompleteSteps.length === 0
               ? "Fresh QA view is showing the onboarding prompts without changing tenant data."
               : nextStep.key === "estimate"
-              ? "You have a project. Build the first estimate next so the workflow can move toward a contract."
-              : "Create a project, build an estimate, and generate a contract from the same record chain."}
+                ? "You have a project. Build the first estimate next so the workflow can move toward a contract."
+                : "Create a project, build an estimate, and generate a contract from the same record chain."}
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
           <Link
             href={nextStep.href}
-            className="inline-flex items-center justify-center border border-[#d8731f] bg-[#d8731f] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#bf6519]"
+            className="inline-flex items-center justify-center rounded-[4px] border border-[#005eb8] bg-[#005eb8] px-4 py-2.5 text-sm font-semibold text-white transition hover:border-[#004f9e] hover:bg-[#004f9e]"
           >
             {nextStep.actionLabel}
           </Link>
@@ -79,7 +79,7 @@ export function StartHereCard({
                 window.localStorage.setItem(storageKey, "true");
                 setHidden(true);
               }}
-              className="inline-flex items-center justify-center border border-white/20 bg-white/10 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-white/15"
+              className="inline-flex items-center justify-center rounded-[4px] border border-white/20 bg-white/10 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-white/15"
             >
               Hide this
             </button>
@@ -99,16 +99,18 @@ export function StartHereCard({
               </p>
               <span
                 className={[
-                  "shrink-0 border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em]",
+                  "shrink-0 rounded-[3px] border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em]",
                   step.complete
                     ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-                    : "border-amber-200 bg-amber-50 text-amber-700"
+                    : "border-[#c7d2e2] bg-[#eef6ff] text-[#003d7c]"
                 ].join(" ")}
               >
                 {step.complete ? "Done" : "Next"}
               </span>
             </div>
-            <p className="mt-2 text-sm leading-5 text-slate-500">{step.description}</p>
+            <p className="mt-2 text-sm leading-5 text-slate-500">
+              {step.description}
+            </p>
           </Link>
         ))}
       </div>

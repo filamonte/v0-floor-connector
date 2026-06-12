@@ -367,7 +367,7 @@ function PriorityGrid({ metrics }: { metrics: DashboardMetric[] }) {
               <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--text-secondary)]">
                 {metric.label}
               </p>
-              <span className="mt-0.5 h-1.5 w-1.5 rounded-full bg-[var(--copper)] opacity-75 transition group-hover:opacity-100" />
+              <span className="mt-0.5 h-1.5 w-1.5 rounded-full bg-[#005eb8] opacity-75 transition group-hover:opacity-100" />
             </div>
             <p className="mt-2 text-xl font-semibold tracking-tight text-[var(--text-primary)]">
               {metric.value}
@@ -434,7 +434,7 @@ function LifecycleRail({ steps }: { steps: DashboardLifecycleStep[] }) {
             key={step.key}
             href={step.href}
             className={[
-              "min-w-0 px-3 py-3 transition hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--copper)] focus-visible:ring-inset",
+              "min-w-0 px-3 py-3 transition hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#005eb8] focus-visible:ring-inset",
               getLifecycleStepClassName(step.tone)
             ].join(" ")}
           >
@@ -482,7 +482,7 @@ function QueueRows({
                     <Link
                       href={item.href}
                       aria-label={`${item.actionLabel}: ${item.title}`}
-                      className="truncate text-sm font-semibold text-[var(--text-primary)] transition hover:text-[var(--copper)]"
+                      className="truncate text-sm font-semibold text-[var(--text-primary)] transition hover:text-[#005eb8]"
                     >
                       {item.title}
                     </Link>
@@ -681,7 +681,7 @@ function DashboardActionQueues({ queues }: { queues: DashboardActionQueue[] }) {
     >
       <div className="flex flex-col gap-2 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--copper)]">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#005eb8]">
             Today's priorities
           </p>
           <h2
@@ -716,7 +716,7 @@ function DashboardActionQueues({ queues }: { queues: DashboardActionQueue[] }) {
                       <Link
                         href={item.href}
                         aria-label={`${item.recommendedActionLabel}: ${item.title}`}
-                        className="min-w-0 truncate text-sm font-semibold text-[var(--text-primary)] transition hover:text-[var(--copper)]"
+                        className="min-w-0 truncate text-sm font-semibold text-[var(--text-primary)] transition hover:text-[#005eb8]"
                       >
                         {item.title}
                       </Link>
@@ -783,7 +783,7 @@ function UtilityCardGrid({
     <section className="grid gap-3 lg:grid-cols-4">
       <Link href="/schedule" className={dashboardPanelClassName}>
         <div className="px-4 py-4">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--copper)]">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#005eb8]">
             Calendar
           </p>
           <p className="mt-2 text-lg font-semibold text-[var(--text-primary)]">
@@ -797,7 +797,7 @@ function UtilityCardGrid({
       <div className={dashboardPanelClassName}>
         <div className="px-4 py-4">
           <div className="flex items-center justify-between gap-2">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--copper)]">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#005eb8]">
               Weather
             </p>
             <span className="rounded-[4px] border border-[var(--border-warm)] bg-[var(--highlight)] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--text-secondary)]">
@@ -814,7 +814,7 @@ function UtilityCardGrid({
       </div>
       <Link href="/appointments" className={dashboardPanelClassName}>
         <div className="px-4 py-4">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--copper)]">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#005eb8]">
             Appointments
           </p>
           <p className="mt-2 text-lg font-semibold text-[var(--text-primary)]">
@@ -828,7 +828,7 @@ function UtilityCardGrid({
       </Link>
       <Link href="/time" className={dashboardPanelClassName}>
         <div className="px-4 py-4">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--copper)]">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#005eb8]">
             Hours
           </p>
           <p className="mt-2 text-lg font-semibold text-[var(--text-primary)]">
@@ -875,7 +875,7 @@ function PipelineCell({
     <Link
       href={href}
       className={[
-        "group flex min-h-[126px] flex-col rounded-[4px] border px-4 py-4 transition hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--copper)]",
+        "group flex min-h-[126px] flex-col rounded-[4px] border px-4 py-4 transition hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#005eb8]",
         toneClassName
       ].join(" ")}
     >
@@ -883,7 +883,7 @@ function PipelineCell({
         <p className="text-[10px] font-semibold uppercase tracking-[0.16em] opacity-75">
           {label}
         </p>
-        <span className="mt-1 h-1.5 w-1.5 rounded-full bg-[var(--copper)] opacity-50 transition group-hover:opacity-100" />
+        <span className="mt-1 h-1.5 w-1.5 rounded-full bg-[#005eb8] opacity-50 transition group-hover:opacity-100" />
       </div>
       <p className="mt-2 text-2xl font-semibold tracking-tight">{value}</p>
       <p className="mt-1 line-clamp-2 text-xs leading-5 opacity-70">{detail}</p>
@@ -938,7 +938,7 @@ function StageBars({ cells }: { cells: DashboardLifecycleStep[] }) {
               </div>
               <div className="h-6 overflow-hidden rounded-[4px] bg-[var(--highlight)]">
                 <div
-                  className="h-full rounded-[4px] bg-[var(--copper)]"
+                  className="h-full rounded-[4px] bg-[#005eb8]"
                   style={{ width }}
                 />
               </div>
@@ -1234,7 +1234,7 @@ function FinanceTable({
                   <div className="min-w-0">
                     <Link
                       href={item.href}
-                      className="truncate text-sm font-semibold text-[var(--text-primary)] transition hover:text-[var(--copper)]"
+                      className="truncate text-sm font-semibold text-[var(--text-primary)] transition hover:text-[#005eb8]"
                     >
                       {item.title}
                     </Link>
@@ -1290,7 +1290,7 @@ function AiOperationalDigestPanel({
         ].join(" ")}
       >
         <div className="min-w-0">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--copper)]">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#005eb8]">
             AI Operational Digest
           </p>
           <h2
@@ -1303,7 +1303,7 @@ function AiOperationalDigestPanel({
             {digest.headlineSummary}
           </p>
         </div>
-        <div className="shrink-0 rounded-lg border border-[var(--border-warm)] bg-white px-3 py-2 text-right">
+        <div className="shrink-0 rounded-[4px] border border-[var(--border-warm)] bg-white px-3 py-2 text-right">
           <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--text-secondary)]">
             Attention
           </p>
@@ -1319,7 +1319,7 @@ function AiOperationalDigestPanel({
               <h3 className="text-sm font-semibold text-[var(--text-primary)]">
                 {section.title}
               </h3>
-              <span className="rounded-md border border-[var(--border-warm)] bg-[var(--highlight)] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--text-secondary)]">
+              <span className="rounded-[4px] border border-[var(--border-warm)] bg-[var(--highlight)] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--text-secondary)]">
                 {section.items.length}
               </span>
             </div>
@@ -1328,12 +1328,12 @@ function AiOperationalDigestPanel({
                 {section.items.slice(0, 2).map((item) => (
                   <div
                     key={item.id}
-                    className="rounded-lg border border-[var(--border-warm)] bg-[var(--highlight)] px-3 py-3 text-sm leading-5"
+                    className="rounded-[4px] border border-[var(--border-warm)] bg-[var(--highlight)] px-3 py-3 text-sm leading-5"
                   >
                     <div className="flex flex-wrap items-center gap-2">
                       <Link
                         href={item.href}
-                        className="font-semibold text-[var(--text-primary)] transition hover:text-[var(--copper)]"
+                        className="font-semibold text-[var(--text-primary)] transition hover:text-[#005eb8]"
                       >
                         {item.title}
                       </Link>
@@ -1351,7 +1351,7 @@ function AiOperationalDigestPanel({
                       Next: {item.recommendedNextStep}
                     </p>
                     {item.draftActionAvailable ? (
-                      <p className="mt-2 rounded-md border border-[var(--border-warm)] bg-white px-2 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--text-secondary)]">
+                      <p className="mt-2 rounded-[4px] border border-[var(--border-warm)] bg-white px-2 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--text-secondary)]">
                         Draft available in Project Workspace
                       </p>
                     ) : null}
@@ -1359,7 +1359,7 @@ function AiOperationalDigestPanel({
                 ))}
               </div>
             ) : (
-              <div className="mt-3 rounded-lg border border-dashed border-[var(--border-warm)] bg-[var(--highlight)]">
+              <div className="mt-3 rounded-[4px] border border-dashed border-[var(--border-warm)] bg-[var(--highlight)]">
                 <DashboardEmptyState
                   title={section.emptyTitle}
                   description={section.emptyDescription}
@@ -1476,7 +1476,7 @@ export function ContractorDashboardSurface({
   );
 
   return (
-    <div className="overflow-x-hidden bg-[var(--cream)]">
+    <div className="overflow-x-hidden bg-[#f4f4f5]">
       <div className="space-y-4 px-4 py-4 sm:px-6">
         <h1 className="sr-only">Dashboard</h1>
 
@@ -1493,6 +1493,15 @@ export function ContractorDashboardSurface({
           }
         />
 
+        {onboardingSteps &&
+        (startHereForceVisible ||
+          onboardingSteps.some((step) => !step.complete)) ? (
+          <StartHereCard
+            steps={onboardingSteps}
+            forceVisible={startHereForceVisible}
+          />
+        ) : null}
+
         {hasActionQueues ? (
           <DashboardActionQueues queues={actionQueues} />
         ) : null}
@@ -1500,7 +1509,7 @@ export function ContractorDashboardSurface({
         {earlyAccess ? (
           <section
             className={[
-              "rounded-lg border px-4 py-4",
+              "rounded-[4px] border px-4 py-4",
               earlyAccess.isLocked
                 ? "border-amber-200 bg-amber-50"
                 : "border-emerald-200 bg-emerald-50"
@@ -1544,7 +1553,7 @@ export function ContractorDashboardSurface({
                 {earlyAccess.setupHref ? (
                   <Link
                     href={earlyAccess.setupHref}
-                    className="inline-flex h-9 shrink-0 items-center justify-center rounded-full bg-[var(--graphite)] px-4 text-xs font-semibold text-white transition hover:bg-[var(--graphite-light)]"
+                    className="inline-flex h-9 shrink-0 items-center justify-center rounded-[4px] bg-[#005eb8] px-4 text-xs font-semibold text-white transition hover:bg-[var(--graphite-light)]"
                   >
                     {earlyAccess.setupCtaLabel ?? "Finish setup"}
                   </Link>
@@ -1552,7 +1561,7 @@ export function ContractorDashboardSurface({
                 <Link
                   href={earlyAccess.href}
                   className={[
-                    "inline-flex h-9 shrink-0 items-center justify-center rounded-full border bg-white px-4 text-xs font-semibold transition",
+                    "inline-flex h-9 shrink-0 items-center justify-center rounded-[4px] border bg-white px-4 text-xs font-semibold transition",
                     earlyAccess.isLocked
                       ? "border-amber-300 text-amber-950 hover:bg-amber-100"
                       : "border-emerald-300 text-emerald-950 hover:bg-emerald-100"
@@ -1724,15 +1733,6 @@ export function ContractorDashboardSurface({
           </section>
         ) : null}
 
-        {onboardingSteps &&
-        (startHereForceVisible ||
-          onboardingSteps.some((step) => !step.complete)) ? (
-          <StartHereCard
-            steps={onboardingSteps}
-            forceVisible={startHereForceVisible}
-          />
-        ) : null}
-
         <section
           aria-labelledby="dashboard-work-queues-title"
           className="space-y-3"
@@ -1760,7 +1760,7 @@ export function ContractorDashboardSurface({
                   handleQueryChange(event.currentTarget.value)
                 }
                 placeholder="Filter dashboard queues"
-                className="h-9 w-full rounded-md border border-[var(--border-warm)] bg-white pl-9 pr-3 text-sm text-[var(--text-primary)] outline-none placeholder:text-[var(--text-tertiary)] focus:border-[var(--copper)]"
+                className="h-9 w-full rounded-[4px] border border-[#cbd5e1] bg-white pl-9 pr-3 text-sm text-[var(--text-primary)] outline-none placeholder:text-[var(--text-tertiary)] focus:border-[#005eb8]"
               />
             </label>
           </div>

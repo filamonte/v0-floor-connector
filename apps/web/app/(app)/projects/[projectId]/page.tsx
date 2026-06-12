@@ -5595,7 +5595,7 @@ export default async function ProjectDetailPage({
         },
         {
           id: "scope",
-          label: "Scope / Context",
+          label: "Assessment / Scope",
           iconName: "notebook-pen",
           href: scopeHref
         },
