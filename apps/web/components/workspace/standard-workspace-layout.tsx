@@ -132,7 +132,7 @@ export function StandardWorkspaceLayout<TView extends string>({
 
   return (
     <div className="space-y-3">
-      <section className="border border-[var(--border-warm)] bg-white px-4 py-3 sm:px-5">
+      <section className="rounded-[6px] border border-[var(--border-warm)] bg-white px-4 py-3 shadow-none sm:px-5">
         <div className="flex flex-col gap-3 xl:flex-row xl:items-end xl:justify-between">
           <div className="min-w-0">
             {header.eyebrow ? (
@@ -160,7 +160,7 @@ export function StandardWorkspaceLayout<TView extends string>({
       {summaryBand}
       {commandBar}
 
-      <section className="overflow-hidden border border-[var(--border-warm)] bg-white">
+      <section className="overflow-hidden rounded-[6px] border border-[var(--border-warm)] bg-white shadow-none">
         <div
           className={[
             "grid min-h-[620px] bg-white",
@@ -170,7 +170,7 @@ export function StandardWorkspaceLayout<TView extends string>({
           ].join(" ")}
         >
           {hasSidebar ? (
-            <aside className="border-b border-[var(--graphite)] bg-[var(--graphite)] px-2 py-2 text-white lg:border-b-0 lg:border-r">
+            <aside className="border-b border-[var(--graphite-dark)] bg-[var(--graphite-dark)] px-2 py-2 text-white lg:border-b-0 lg:border-r">
               <div className="flex gap-1.5 overflow-x-auto lg:flex-col lg:overflow-visible">
                 {sidebar?.map((item) => {
                   const Icon = iconMap[item.iconName];
@@ -179,7 +179,7 @@ export function StandardWorkspaceLayout<TView extends string>({
                     "inline-flex h-10 min-w-[44px] items-center justify-center gap-2 border px-3 transition lg:w-full lg:justify-start",
                     active
                       ? "border-[var(--copper)] bg-[var(--copper)] text-white"
-                      : "border-white/10 bg-white/5 text-[#f4f4f4] hover:border-[var(--copper)] hover:bg-white/10 hover:text-white"
+                      : "border-white/10 bg-white/[0.06] text-[#f4f4f4] hover:border-[var(--copper)] hover:bg-white/10 hover:text-white"
                   ].join(" ");
 
                   if (item.href && !item.disabled) {

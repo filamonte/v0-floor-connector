@@ -18,7 +18,7 @@ export default async function PortalLayout({ children }: PortalLayoutProps) {
   }
 
   return (
-    <div className="min-h-screen bg-[linear-gradient(180deg,var(--graphite)_0,var(--graphite)_168px,var(--cream)_168px,rgba(255,255,255,0.98)_460px)] print:bg-white">
+    <div className="min-h-screen bg-[linear-gradient(180deg,var(--graphite-dark)_0,var(--graphite-dark)_168px,var(--cream)_168px,rgba(255,255,255,0.98)_460px)] print:bg-white">
       <div className="print:hidden">
         <ProtectedSurfaceHeader
           title="Customer Portal"
@@ -34,7 +34,7 @@ export default async function PortalLayout({ children }: PortalLayoutProps) {
         <div className="mx-auto flex w-full max-w-6xl flex-wrap items-center gap-3 px-6 py-4 sm:px-10">
           <Link
             href="/portal"
-            className="inline-flex items-center rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-[var(--graphite)] transition hover:border-[var(--copper)] hover:text-[var(--copper-dark)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--copper)] focus-visible:ring-offset-2"
+            className="inline-flex items-center rounded-[4px] border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-[var(--graphite)] transition hover:border-[var(--copper)] hover:text-[var(--copper-dark)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--copper)] focus-visible:ring-offset-2"
           >
             Portal home
           </Link>

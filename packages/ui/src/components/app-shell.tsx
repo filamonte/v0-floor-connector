@@ -18,9 +18,9 @@ export function AppShell({
   statusDetail
 }: AppShellProps) {
   return (
-    <main className="flex min-h-screen items-center justify-center px-6 py-16">
-      <section className="w-full max-w-3xl rounded-3xl border border-slate-200 bg-white p-10 shadow-sm">
-        <div className="mb-6 inline-flex rounded-full bg-brand-50 px-3 py-1 text-sm font-medium text-brand-700">
+    <main className="flex min-h-screen items-center justify-center bg-[var(--cream)] px-6 py-16">
+      <section className="w-full max-w-3xl rounded-[6px] border border-slate-300 bg-white p-10 shadow-none">
+        <div className="mb-6 inline-flex rounded-[4px] bg-brand-50 px-3 py-1 text-sm font-medium text-brand-700">
           Monorepo scaffold
         </div>
         <h1 className="text-4xl font-semibold tracking-tight text-slate-950">
@@ -30,7 +30,7 @@ export function AppShell({
           {description}
         </p>
         <div
-          className={`mt-8 rounded-2xl border px-4 py-3 ${statusStyles[status]}`}
+          className={`mt-8 rounded-[6px] border px-4 py-3 ${statusStyles[status]}`}
         >
           <p className="text-sm font-semibold uppercase tracking-[0.2em]">
             Supabase status: {status}

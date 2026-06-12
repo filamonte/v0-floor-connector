@@ -17,7 +17,7 @@ export function QuickCreateFormShell({
 }: QuickCreateFormShellProps) {
   return (
     <div className="space-y-5">
-      <div className="overflow-hidden rounded-lg border border-[var(--border-warm)] bg-[linear-gradient(135deg,white_0%,var(--highlight)_100%)]">
+      <div className="overflow-hidden rounded-[6px] border border-[var(--border-warm)] bg-white">
         <div className="h-1 bg-[var(--copper)]" />
         <div className="space-y-2 px-4 py-4">
           <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--copper)]">
@@ -35,7 +35,7 @@ export function QuickCreateFormShell({
       {children}
 
       {footer ? (
-        <div className="rounded-lg border border-[var(--border-warm)] bg-[var(--highlight)] px-4 py-3 text-[13px] leading-6 text-[var(--text-secondary)]">
+        <div className="rounded-[6px] border border-[var(--border-warm)] bg-[var(--highlight)] px-4 py-3 text-[13px] leading-6 text-[var(--text-secondary)]">
           {footer}
         </div>
       ) : null}

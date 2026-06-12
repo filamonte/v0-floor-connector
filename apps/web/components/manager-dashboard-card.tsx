@@ -32,7 +32,7 @@ export function ManagerDashboardCard({
   emptyDescription
 }: ManagerDashboardCardProps) {
   return (
-    <section className="flex h-full min-w-0 flex-col overflow-hidden rounded-lg border border-[var(--border-warm)] bg-white shadow-[0_16px_44px_-38px_rgba(31,41,55,0.48)]">
+    <section className="flex h-full min-w-0 flex-col overflow-hidden rounded-[6px] border border-[var(--border-warm)] bg-white shadow-none">
       <div className="h-1 bg-[var(--graphite)]" />
       <div className="flex flex-col items-start gap-3 border-b border-[var(--border-warm)] bg-[linear-gradient(135deg,white_0%,var(--highlight)_100%)] px-3 py-3 sm:flex-row sm:justify-between">
         <div className="min-w-0">
@@ -50,7 +50,7 @@ export function ManagerDashboardCard({
         </div>
         <Link
           href={actionHref}
-          className="inline-flex max-w-full items-center whitespace-normal rounded-md border border-[var(--copper)] bg-white px-2.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--copper)] transition hover:bg-[var(--copper)] hover:text-white [overflow-wrap:anywhere] sm:shrink-0"
+          className="inline-flex max-w-full items-center whitespace-normal rounded-[4px] border border-[var(--copper)] bg-white px-2.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--copper)] transition hover:bg-[var(--copper)] hover:text-white [overflow-wrap:anywhere] sm:shrink-0"
         >
           {actionLabel}
         </Link>
@@ -92,7 +92,7 @@ export function ManagerDashboardCard({
             </Link>
           ))
         ) : (
-          <div className="m-3 rounded-lg border border-dashed border-[var(--border-warm)] bg-[var(--highlight)] px-3 py-4">
+          <div className="m-3 rounded-[6px] border border-dashed border-[var(--border-warm)] bg-[var(--highlight)] px-3 py-4">
             <p className="text-sm font-semibold text-[var(--text-primary)]">
               {emptyTitle}
             </p>

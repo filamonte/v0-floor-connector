@@ -31,10 +31,10 @@ export function SettingsSurfaceLayout({
     <div className="space-y-6">
       <section
         className={[
-          "rounded-lg border p-6 shadow-[0_26px_70px_-44px_rgba(34,26,20,0.5)] sm:p-8",
+          "rounded-[6px] border p-6 shadow-none sm:p-8",
           neutral
-            ? "border-slate-700/70 bg-[linear-gradient(135deg,var(--graphite),#26313f)] text-white"
-            : "border-[var(--graphite-light)]/40 bg-[linear-gradient(135deg,var(--graphite),#332821)] text-white"
+            ? "border-slate-700/70 bg-[linear-gradient(135deg,var(--graphite-dark),#27272a)] text-white"
+            : "border-[var(--graphite-light)]/40 bg-[linear-gradient(135deg,var(--graphite-dark),#242428)] text-white"
         ].join(" ")}
       >
         <p
@@ -45,7 +45,7 @@ export function SettingsSurfaceLayout({
         >
           {eyebrow}
         </p>
-        <p className="mt-3 inline-flex rounded-full border border-white/10 bg-white/[0.08] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-white/65">
+        <p className="mt-3 inline-flex rounded-[4px] border border-white/10 bg-white/[0.08] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-white/65">
           {scopeLabel}
         </p>
         <div className="mt-4 flex flex-col gap-6 xl:flex-row xl:items-start xl:justify-between">
@@ -65,7 +65,7 @@ export function SettingsSurfaceLayout({
         <aside className="xl:sticky xl:top-28 xl:self-start">
           <div
             className={[
-              "rounded-lg border bg-white p-4 shadow-[0_18px_48px_-40px_rgba(34,26,20,0.32)]",
+              "rounded-[6px] border bg-white p-4 shadow-none",
               neutral ? "border-slate-200" : "border-[var(--border-warm)]"
             ].join(" ")}
           >

@@ -29,7 +29,7 @@ export function ActionBar({
     <section
       aria-label="Current state and next action"
       className={[
-        "rounded-lg border border-[var(--border-warm)] bg-white px-4 py-3 sm:px-5",
+        "rounded-[6px] border border-[var(--border-warm)] bg-white px-4 py-3 shadow-none sm:px-5",
         className
       ]
         .filter(Boolean)

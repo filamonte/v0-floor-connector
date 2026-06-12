@@ -66,8 +66,8 @@ function UtilityIconFrame({
       className={[
         "inline-flex h-8 w-8 items-center justify-center rounded-[4px] border transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--copper)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--graphite)]",
         active
-          ? "border-[var(--copper)] bg-[var(--copper)]/20 text-white"
-          : "border-white/14 bg-white/8 text-[var(--cream)] hover:border-[var(--copper)] hover:bg-white/12 hover:text-white"
+          ? "border-[var(--copper)] bg-[var(--copper)] text-white"
+          : "border-white/15 bg-white/[0.06] text-zinc-200 hover:border-[var(--copper)] hover:bg-white/10 hover:text-white"
       ].join(" ")}
       style={utilityIconFrameStyle}
     >
@@ -198,7 +198,7 @@ export function ProtectedAppTopNav({
   return (
     <div
       ref={shellRef}
-      className="relative bg-[linear-gradient(180deg,var(--graphite-dark)_0%,#191e25_100%)] text-white shadow-[0_16px_40px_-34px_rgba(31,41,55,0.9)]"
+      className="relative bg-[linear-gradient(180deg,#18181b_0%,#202024_100%)] text-white shadow-none"
     >
       <div className="mx-auto flex min-h-14 w-full max-w-[1680px] items-center justify-between gap-4 border-b border-white/10 px-4 py-2 sm:px-5">
         <Link
@@ -206,7 +206,7 @@ export function ProtectedAppTopNav({
           className="group flex min-w-0 shrink-0 items-center gap-3 rounded-[6px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--copper)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--graphite-dark)]"
         >
           <span
-            className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-[7px] border border-[var(--copper)] bg-[var(--copper)] text-sm font-extrabold text-white shadow-[0_14px_32px_-24px_rgba(180,83,9,0.75)]"
+            className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-[6px] border border-[var(--copper)] bg-[var(--copper)] text-sm font-extrabold text-white shadow-none"
             style={
               organizationBrandAccentColor
                 ? {
@@ -247,7 +247,7 @@ export function ProtectedAppTopNav({
           <div className="hidden flex-col items-end leading-tight xl:flex">
             <Link
               href="/trainings"
-              className="text-[11px] font-medium text-[var(--copper-light)] hover:underline"
+              className="text-[11px] font-medium text-blue-200 hover:underline"
             >
               Free Online Training
             </Link>
@@ -275,7 +275,7 @@ export function ProtectedAppTopNav({
                 {organizationStatus}
               </span>
             </span>
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--copper)] text-sm font-bold text-white shadow">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[6px] bg-[var(--copper)] text-sm font-bold text-white shadow-none">
               {userInitials}
             </span>
             <Chevron open={accountMenuOpen} />
@@ -336,7 +336,7 @@ export function ProtectedAppTopNav({
       </div>
 
       <div className="mx-auto flex min-h-10 w-full max-w-[1680px] flex-wrap items-center gap-3 border-b border-white/10 px-4 py-1.5 sm:px-5">
-        <div className="flex min-w-0 items-center gap-2 pr-1 text-[var(--cream)] sm:pr-3">
+        <div className="flex min-w-0 items-center gap-2 pr-1 text-zinc-200 sm:pr-3">
           <Link
             href={homeHref}
             aria-label="Dashboard home"
@@ -356,10 +356,10 @@ export function ProtectedAppTopNav({
           href={projectLauncherHref}
           aria-current={pathname.startsWith("/projects") ? "page" : undefined}
           className={[
-            "inline-flex h-8 min-w-[170px] items-center justify-between gap-2 rounded-[4px] border px-2.5 text-left text-[var(--cream)] transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--copper)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--graphite)]",
+            "inline-flex h-8 min-w-[170px] items-center justify-between gap-2 rounded-[4px] border px-2.5 text-left text-zinc-200 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--copper)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--graphite)]",
             pathname.startsWith("/projects")
-              ? "border-[var(--copper)] bg-[var(--copper)]/20 text-white"
-              : "border-white/14 bg-white/8 hover:border-[var(--copper)] hover:bg-white/12 hover:text-white"
+              ? "border-[var(--copper)] bg-[var(--copper)] text-white"
+              : "border-white/15 bg-white/[0.06] hover:border-[var(--copper)] hover:bg-white/10 hover:text-white"
           ].join(" ")}
         >
           <FloorConnectorIcon
@@ -382,8 +382,8 @@ export function ProtectedAppTopNav({
           className={[
             "inline-flex h-8 items-center justify-between gap-2 rounded-[4px] border px-2.5 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--copper)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--graphite)]",
             menuOpen
-              ? "border-[var(--copper)] bg-[var(--copper)]/20 text-white"
-              : "border-white/14 bg-white/8 text-[var(--cream)] hover:border-[var(--copper)] hover:bg-white/12 hover:text-white"
+              ? "border-[var(--copper)] bg-[var(--copper)] text-white"
+              : "border-white/15 bg-white/[0.06] text-zinc-200 hover:border-[var(--copper)] hover:bg-white/10 hover:text-white"
           ].join(" ")}
         >
           <span className="text-[10px] font-semibold uppercase tracking-widest text-white/45">
@@ -397,7 +397,7 @@ export function ProtectedAppTopNav({
             <GlobalSearch
               compact
               buttonLabel="Search"
-              buttonClassName="inline-flex h-8 min-w-[170px] max-w-full items-center justify-between rounded-[4px] border border-white/14 bg-white/8 px-2.5 text-xs font-medium text-[var(--cream)] transition hover:border-[var(--copper)] hover:bg-white/12 hover:text-white"
+              buttonClassName="inline-flex h-8 min-w-[170px] max-w-full items-center justify-between rounded-[4px] border border-white/15 bg-white/[0.06] px-2.5 text-xs font-medium text-zinc-200 transition hover:border-[var(--copper)] hover:bg-white/10 hover:text-white"
             />
           </div>
           <UniversalCreateMenu
@@ -422,7 +422,7 @@ export function ProtectedAppTopNav({
         </div>
       </div>
 
-      <div className="mx-auto flex h-8 w-full max-w-[1680px] items-center gap-1 overflow-x-auto px-4 [background:linear-gradient(180deg,#282f38_0%,#23282f_100%)] sm:px-5">
+      <div className="mx-auto flex h-8 w-full max-w-[1680px] items-center gap-1 overflow-x-auto border-b border-white/10 bg-[#242428] px-4 sm:px-5">
         <span className="mr-2 select-none text-[10px] font-semibold uppercase tracking-widest text-white/40">
           Pinned
         </span>
@@ -434,13 +434,13 @@ export function ProtectedAppTopNav({
             className={[
               "inline-flex h-7 items-center rounded-[3px] px-2.5 text-xs transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--copper)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--graphite)]",
               isItemActive(item)
-                ? "bg-white/12 text-white"
+                ? "bg-[var(--copper)] text-white"
                 : "text-white/70 hover:bg-white/10 hover:text-white"
             ].join(" ")}
           >
             <FloorConnectorIcon
               name={getFloorConnectorIconNameForNavigationKey(item.key)}
-              className="mr-1.5 h-3 w-3 text-[var(--copper-light)]"
+              className="mr-1.5 h-3 w-3 text-blue-200"
             />
             {item.label}
           </Link>
@@ -507,7 +507,7 @@ export function ProtectedAppTopNav({
                     </div>
                     <span
                       className={[
-                        "px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em]",
+                        "rounded-[3px] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em]",
                         isSectionActive
                           ? "bg-[var(--graphite)] text-[var(--cream)]"
                           : "bg-[var(--cream)] text-[var(--copper)]"

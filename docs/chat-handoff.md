@@ -276,6 +276,16 @@ fix for the `/portal` tab-strip helper copy and documented the evidence in
 No schema, route, table, loader, auth, tenant access, payment, signature,
 scheduling, portal access, or provider behavior changed.
 
+Current visual-system note: `stream/industrial-os-visual-system-v1` applies the
+first Industrial OS V2 shared visual layer over the existing top-nav-first
+contractor shell. It uses Inter, warm white/slate surfaces, charcoal/zinc
+framing, deep blue `#005EB8` primary/focus/active tokens, calmer semantic
+status helpers, lower-shadow shared cards, sharper workspace wrappers, and
+Universal Create/quick-create chrome cleanup. It intentionally preserves route
+architecture, global navigation architecture, loaders, server actions, schema,
+migrations, auth/tenant/portal/admin boundaries, payment/signature/scheduling
+behavior, and canonical data models.
+
 Current wave gate note: `visual-ux-review-contractor-usability-v1` has merged
 to `main` under Jeff's controlled merge approval. Golden Workflow Usability
 Review V1 merged as `32f2151d`, Workspace Density Polish V1 merged as
