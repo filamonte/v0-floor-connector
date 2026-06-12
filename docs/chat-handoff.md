@@ -286,6 +286,13 @@ architecture, global navigation architecture, loaders, server actions, schema,
 migrations, auth/tenant/portal/admin boundaries, payment/signature/scheduling
 behavior, and canonical data models.
 
+The same stream now also includes a follow-up visual intensification pass after
+local dashboard review at `http://localhost:3004`: the first-login dashboard
+uses dark blue/charcoal command-deck ownership and operating-health panels,
+stronger metric hierarchy, lighter shared cards, and blue-neutral dashboard
+buttons/status pills while preserving the existing top-nav-first architecture
+and all production guardrails.
+
 Current wave gate note: `visual-ux-review-contractor-usability-v1` has merged
 to `main` under Jeff's controlled merge approval. Golden Workflow Usability
 Review V1 merged as `32f2151d`, Workspace Density Polish V1 merged as

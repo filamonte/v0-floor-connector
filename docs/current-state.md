@@ -1099,9 +1099,12 @@ Current contractor UI design notes:
   workspace wrappers, status helpers, quick-create chrome, and reusable section
   primitives toward warm white/slate surfaces, charcoal/zinc framing, deep blue
   `#005EB8` primary actions, subtler borders, lower shadow, and restrained
-  radii. This is presentation-only and adds no routes, schema, migrations,
-  loaders, server actions, duplicate data models, auth/tenant/portal/admin rule
-  changes, or workflow behavior changes.
+  radii. The follow-up intensification pass makes the first-login dashboard
+  visibly more distinct with dark blue/charcoal command-deck ownership and
+  operating-health panels, stronger numeric hierarchy, lighter shared cards, and
+  blue-neutral dashboard action/status treatment. This is presentation-only and
+  adds no routes, schema, migrations, loaders, server actions, duplicate data
+  models, auth/tenant/portal/admin rule changes, or workflow behavior changes.
 - the dashboard and Estimates reference pass now anchor the accepted Graphite & Copper contractor-app visual foundation without authorizing a broad shell redesign
 - existing canonical-record edit forms now use a shared save-state pattern: unchanged records show `Saved`, edits switch the control to `Save`, saving shows `Saving...`, and successful saves reset the dirty baseline to the persisted values
 - the dashboard now reads more like a contractor home base than a light summary page:
@@ -1119,7 +1122,11 @@ Current contractor UI design notes:
   - deep blue `#005EB8` for primary CTAs, save actions, active action emphasis,
     and focus treatment; legacy Graphite/Copper token names remain compatibility
     aliases during the Industrial OS migration
-  - semantic status colors through shared helpers: neutral/Graphite tones for draft/not-started/active/current/in-progress utility states, amber/yellow for waiting or needs-action states, red for blocked/error/failed, and green only for complete/approved/paid/signed states
+  - semantic status colors through shared helpers: blue-neutral tones for
+    draft/not-started/active/current/in-progress and waiting/needs-action
+    utility states, red for blocked/error/failed, and green only for
+    complete/approved/paid/signed states; explicit warning callouts may still
+    use amber where the content is a true alert
   - white or light-neutral surfaces for primary reading and work areas
   - tighter, more practical spacing and typography across manager screens
 - customer portal and super-admin surfaces received only safe visual consistency cleanup after the contractor system stabilized:

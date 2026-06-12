@@ -32,9 +32,9 @@ export function ManagerDashboardCard({
   emptyDescription
 }: ManagerDashboardCardProps) {
   return (
-    <section className="flex h-full min-w-0 flex-col overflow-hidden rounded-[6px] border border-[var(--border-warm)] bg-white shadow-none">
-      <div className="h-1 bg-[var(--graphite)]" />
-      <div className="flex flex-col items-start gap-3 border-b border-[var(--border-warm)] bg-[linear-gradient(135deg,white_0%,var(--highlight)_100%)] px-3 py-3 sm:flex-row sm:justify-between">
+    <section className="flex h-full min-w-0 flex-col overflow-hidden rounded-[6px] border border-[color-mix(in_oklab,var(--line)_78%,white)] bg-white shadow-[0_1px_0_rgba(9,9,11,0.04)]">
+      <div className="h-1 bg-[#005eb8]" />
+      <div className="flex flex-col items-start gap-3 border-b border-[color-mix(in_oklab,var(--line)_78%,white)] bg-[linear-gradient(180deg,white_0%,#fbfcfd_100%)] px-3 py-3 sm:flex-row sm:justify-between">
         <div className="min-w-0">
           {eyebrow ? (
             <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--copper)]">
@@ -50,7 +50,7 @@ export function ManagerDashboardCard({
         </div>
         <Link
           href={actionHref}
-          className="inline-flex max-w-full items-center whitespace-normal rounded-[4px] border border-[var(--copper)] bg-white px-2.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--copper)] transition hover:bg-[var(--copper)] hover:text-white [overflow-wrap:anywhere] sm:shrink-0"
+          className="inline-flex max-w-full items-center whitespace-normal rounded-[4px] border border-[#c7d2e2] bg-white px-2.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-[#004f9e] transition hover:border-[#005eb8] hover:bg-[#eef6ff] hover:text-[#003d7c] [overflow-wrap:anywhere] sm:shrink-0"
         >
           {actionLabel}
         </Link>

@@ -23,6 +23,8 @@ import {
 } from "@/components/operational-guidance-section";
 import {
   dashboardGridDividerClassName,
+  dashboardCommandStatClassName,
+  dashboardCommandSurfaceClassName,
   dashboardMetricCardClassName,
   dashboardPanelActionClassName,
   dashboardPanelClassName,
@@ -224,36 +226,39 @@ function DashboardOwnershipBanner() {
   ];
 
   return (
-    <section className="grid gap-px overflow-hidden border border-[var(--border-warm)] bg-[var(--border-warm)] text-xs leading-5 shadow-[0_18px_42px_-36px_rgba(34,26,20,0.35)] sm:grid-cols-3">
-      {ownershipItems.map((item) => {
-        const content = (
-          <>
-            <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--copper)]">
-              {item.label}
-            </p>
-            <p className="mt-1 font-semibold text-[var(--text-primary)]">
-              {item.title}
-            </p>
-            <p className="mt-1 break-words text-[var(--text-secondary)] [overflow-wrap:anywhere]">
-              {item.detail}
-            </p>
-          </>
-        );
+    <section className={dashboardCommandSurfaceClassName}>
+      <div className="grid gap-px overflow-hidden rounded-[7px] bg-white/10 text-xs leading-5 sm:grid-cols-3">
+        {ownershipItems.map((item) => {
+          const content = (
+            <>
+              <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#8fc7ff]">
+                {item.label}
+              </p>
+              <p className="mt-1 font-semibold text-white">{item.title}</p>
+              <p className="mt-1 break-words text-slate-300 [overflow-wrap:anywhere]">
+                {item.detail}
+              </p>
+            </>
+          );
 
-        return item.label === "Configure in Settings" ? (
-          <Link
-            key={item.label}
-            href="/settings/workflows"
-            className="min-w-0 bg-white px-4 py-3 transition hover:bg-[var(--highlight)]"
-          >
-            {content}
-          </Link>
-        ) : (
-          <div key={item.label} className="min-w-0 bg-white px-4 py-3">
-            {content}
-          </div>
-        );
-      })}
+          return item.label === "Configure in Settings" ? (
+            <Link
+              key={item.label}
+              href="/settings/workflows"
+              className="min-w-0 bg-white/[0.055] px-4 py-3 transition hover:bg-white/[0.09]"
+            >
+              {content}
+            </Link>
+          ) : (
+            <div
+              key={item.label}
+              className="min-w-0 bg-white/[0.055] px-4 py-3"
+            >
+              {content}
+            </div>
+          );
+        })}
+      </div>
     </section>
   );
 }
@@ -380,7 +385,7 @@ function PriorityGrid({ metrics }: { metrics: DashboardMetric[] }) {
 function getLifecycleStepClassName(tone: DashboardLifecycleStep["tone"]) {
   switch (tone) {
     case "attention":
-      return "border-amber-200 bg-amber-50 text-amber-950";
+      return "border-[#c7d2e2] bg-[#f8fafc] text-[#0f172a]";
     case "active":
       return "border-[var(--border-warm)] bg-[var(--highlight)] text-[var(--text-primary)]";
     case "ready":
@@ -623,38 +628,41 @@ function DashboardOperatingSummary({
   return (
     <section
       aria-labelledby="dashboard-operating-summary-title"
-      className="border border-[var(--border-warm)] bg-white shadow-[0_18px_42px_-36px_rgba(34,26,20,0.35)]"
+      className={dashboardCommandSurfaceClassName}
     >
-      <div className="border-b border-[var(--border-warm)] bg-[var(--highlight)] px-4 py-3">
+      <div className="border-b border-white/10 px-4 py-4">
         <div>
-          <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--copper)]">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#8fc7ff]">
             Dashboard command metrics
           </p>
           <h2
             id="dashboard-operating-summary-title"
-            className="mt-1 text-[17px] font-semibold tracking-tight text-[var(--text-primary)]"
+            className="mt-1 text-xl font-semibold tracking-tight text-white"
           >
             Operating health at a glance
           </h2>
         </div>
       </div>
-      <div className="grid divide-y divide-[var(--border-warm)] sm:grid-cols-2 sm:divide-x sm:divide-y-0 xl:grid-cols-4">
+      <div className="grid gap-px bg-white/10 sm:grid-cols-2 xl:grid-cols-4">
         {summaryItems.map((item) => (
           <Link
             key={item.key}
             href={item.href}
-            className="group min-w-0 px-4 py-3 transition hover:bg-[var(--highlight)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--copper)] focus-visible:ring-inset"
+            className={[
+              "group min-w-0 transition hover:bg-white/[0.11] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8fc7ff] focus-visible:ring-inset",
+              dashboardCommandStatClassName
+            ].join(" ")}
           >
             <div className="flex items-start justify-between gap-3">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--text-secondary)]">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-300">
                 {item.label}
               </p>
-              <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-[var(--copper)] opacity-70 transition group-hover:opacity-100" />
+              <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-[#8fc7ff] opacity-80 transition group-hover:opacity-100" />
             </div>
-            <p className="mt-2 truncate text-xl font-semibold tracking-tight text-[var(--text-primary)]">
+            <p className="mt-3 truncate text-2xl font-semibold tracking-tight text-white">
               {item.value}
             </p>
-            <p className="mt-1 text-[11px] leading-4 text-[var(--text-secondary)]">
+            <p className="mt-1 text-[11px] leading-4 text-slate-300">
               {item.detail}
             </p>
           </Link>
@@ -678,7 +686,7 @@ function DashboardActionQueues({ queues }: { queues: DashboardActionQueue[] }) {
           </p>
           <h2
             id="dashboard-action-queues-title"
-            className="mt-1 text-[17px] font-semibold tracking-tight text-[var(--text-primary)]"
+            className="mt-1 text-xl font-semibold tracking-tight text-[var(--text-primary)]"
           >
             Needs attention now
           </h2>
@@ -856,7 +864,7 @@ function PipelineCell({
 }) {
   const toneClassName =
     tone === "attention"
-      ? "border-amber-200 bg-amber-50 text-amber-950"
+      ? "border-[#c7d2e2] bg-[#f8fafc] text-[#0f172a]"
       : tone === "ready"
         ? "border-emerald-200 bg-emerald-50 text-emerald-950"
         : tone === "active"

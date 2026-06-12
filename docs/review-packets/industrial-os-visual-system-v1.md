@@ -74,6 +74,24 @@ map to Industrial OS V2 charcoal/slate/blue decisions.
 - Updated Universal Create to use the shared primary token instead of hardcoded
   orange.
 
+## Follow-Up Intensification Pass
+
+After the first technical pass, the local app still read too much like a light
+admin surface. The follow-up pass stayed on the same branch/worktree and made
+the dashboard entry materially more distinct without changing workflow behavior:
+
+- First-login `/dashboard` ownership and operating-health bands now use a
+  deep-blue/charcoal command surface instead of white cards.
+- Dashboard metrics use stronger numeric scale, cooler blue markers, and a
+  darker first-viewport hierarchy.
+- Shared dashboard panels and manager cards use lighter white surfaces,
+  subtler borders, lower shadows, and cooler action links.
+- Shared status pills and action primitives moved closer to the approved
+  deep-blue/neutral system, reducing amber/orange dominance outside explicit
+  semantic alerts.
+- The Stitch direction is interpreted through FloorConnector's existing
+  top-nav-first architecture rather than copied pixel-for-pixel.
+
 ## Fidelity And Deviations
 
 Close to approved direction:
