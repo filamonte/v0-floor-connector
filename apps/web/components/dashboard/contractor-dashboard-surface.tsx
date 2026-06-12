@@ -6,7 +6,6 @@ import Link from "next/link";
 import type { MembershipRole } from "@floorconnector/types";
 import {
   getEmptyStateCopy,
-  primaryActionClassName,
   secondaryActionClassName,
   StatusBadge,
   type EmptyStateKind
@@ -15,7 +14,6 @@ import {
 import type { AiOperationalDashboardDigest } from "@/lib/ai-operational-copilot/dashboard-digest";
 import type { DashboardActionQueue } from "@/lib/dashboard/action-queues";
 import type { DashboardPriorityItem } from "@/components/dashboard/priority-strip";
-import { PriorityStrip } from "@/components/dashboard/priority-strip";
 import { StartHereCard } from "@/components/onboarding/start-here-card";
 import {
   OperationalGuidanceSection,
@@ -23,7 +21,6 @@ import {
 } from "@/components/operational-guidance-section";
 import {
   dashboardGridDividerClassName,
-  dashboardCommandStatClassName,
   dashboardCommandSurfaceClassName,
   dashboardMetricCardClassName,
   dashboardPanelActionClassName,
@@ -578,23 +575,28 @@ function QueueRows({
   );
 }
 
-function DashboardOperatingSummary({
+function DashboardReferenceCommandCenter({
   header,
   metrics,
   priorityItems,
-  attentionHref
+  actionQueues,
+  onboardingSteps,
+  startHereForceVisible,
+  earlyAccess
 }: {
   header?: ContractorDashboardSurfaceProps["header"];
   metrics: DashboardMetric[];
   priorityItems: DashboardPriorityItem[];
-  attentionHref: string;
+  actionQueues: DashboardActionQueue[];
+  onboardingSteps?: DashboardOnboardingStep[];
+  startHereForceVisible?: boolean;
+  earlyAccess?: ContractorDashboardSurfaceProps["earlyAccess"];
 }) {
   const jobsTodayMetric = metrics.find((metric) => metric.key === "jobs-today");
   const openBlockersCount = priorityItems.filter(
     (item) => !["complete", "paid"].includes(String(item.status))
   ).length;
-
-  const summaryItems = [
+  const commandMetrics = [
     {
       key: "active-projects",
       label: "Active Projects",
@@ -613,155 +615,220 @@ function DashboardOperatingSummary({
       key: "jobs-today",
       label: "Jobs Today",
       value: jobsTodayMetric?.value ?? "0",
-      detail: "Schedule and jobs",
+      detail: "Schedule and field execution",
       href: jobsTodayMetric?.href ?? "/schedule"
     },
     {
-      key: "open-blockers",
-      label: "Open Blockers",
+      key: "needs-attention",
+      label: "Needs Attention",
       value: String(openBlockersCount),
-      detail: "Attention queues",
-      href: attentionHref
+      detail: "Highest signal queues",
+      href: "#dashboard-attention-rail"
     }
   ];
+  const visibleQueues = actionQueues.slice(0, 4);
+  const attentionItems = priorityItems.slice(0, 4);
+  const showStartHere =
+    onboardingSteps &&
+    (startHereForceVisible || onboardingSteps.some((step) => !step.complete));
 
   return (
     <section
-      aria-labelledby="dashboard-operating-summary-title"
-      className={dashboardCommandSurfaceClassName}
+      aria-labelledby="dashboard-reference-command-center-title"
+      className="border border-[#18181b] bg-[#09090b] text-white shadow-none"
     >
-      <div className="border-b border-white/10 px-4 py-4">
-        <div>
-          <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#8fc7ff]">
-            Dashboard command metrics
-          </p>
-          <h2
-            id="dashboard-operating-summary-title"
-            className="mt-1 text-xl font-semibold tracking-tight text-white"
-          >
-            Operating health at a glance
-          </h2>
+      <div className="px-4 py-5 sm:px-6 lg:px-8 lg:py-7">
+        <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(280px,360px)]">
+          <div className="min-w-0">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#8fc7ff]">
+              Industrial OS V2
+            </p>
+            <h1
+              id="dashboard-reference-command-center-title"
+              className="mt-3 max-w-4xl break-words text-[34px] font-semibold leading-[1.05] tracking-tight text-white [overflow-wrap:anywhere] sm:text-[48px]"
+            >
+              Command Center
+            </h1>
+            <p className="mt-3 max-w-3xl text-sm leading-6 text-white/72 sm:text-base sm:leading-7">
+              {header?.organizationName
+                ? `${header.organizationName} operating view across sales, production, field, and cash.`
+                : "Operating view across sales, production, field, and cash."}{" "}
+              Dashboard prioritizes the work; source workspaces remain the place
+              where actions execute.
+            </p>
+          </div>
+
+          <div className="border border-white/10 bg-white/[0.06] p-4">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#8fc7ff]">
+              Operating posture
+            </p>
+            <p className="mt-3 text-sm leading-6 text-white/72">
+              Role:{" "}
+              <span className="font-semibold text-white">
+                {header?.roleLabel ?? "Contractor"}
+              </span>
+            </p>
+            {earlyAccess ? (
+              <div className="mt-4 border border-white/10 bg-black/20 p-3 text-xs leading-5 text-white/70">
+                <p className="font-semibold uppercase tracking-[0.16em] text-white">
+                  {earlyAccess.statusLabel}
+                </p>
+                <p className="mt-1">
+                  Billing/setup controls stay in the existing early-access
+                  routes.
+                </p>
+              </div>
+            ) : null}
+          </div>
         </div>
-      </div>
-      <div className="grid gap-px bg-white/10 sm:grid-cols-2 xl:grid-cols-4">
-        {summaryItems.map((item) => (
-          <Link
-            key={item.key}
-            href={item.href}
-            className={[
-              "group min-w-0 transition hover:bg-white/[0.11] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8fc7ff] focus-visible:ring-inset",
-              dashboardCommandStatClassName
-            ].join(" ")}
-          >
-            <div className="flex items-start justify-between gap-3">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-300">
-                {item.label}
+
+        <div className="mt-6 grid gap-px border border-white/10 bg-white/10 sm:grid-cols-2 xl:grid-cols-4">
+          {commandMetrics.map((metric) => (
+            <Link
+              key={metric.key}
+              href={metric.href}
+              className="group min-w-0 bg-white px-4 py-4 text-[#0f172a] transition hover:bg-[#eef6ff] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8fc7ff] focus-visible:ring-inset"
+            >
+              <div className="flex items-start justify-between gap-3">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#475569]">
+                  {metric.label}
+                </p>
+                <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-[#005eb8] opacity-80 transition group-hover:opacity-100" />
+              </div>
+              <p className="mt-3 truncate text-2xl font-semibold tracking-tight text-[#0f172a]">
+                {metric.value}
               </p>
-              <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-[#8fc7ff] opacity-80 transition group-hover:opacity-100" />
-            </div>
-            <p className="mt-3 truncate text-2xl font-semibold tracking-tight text-white">
-              {item.value}
-            </p>
-            <p className="mt-1 text-[11px] leading-4 text-slate-300">
-              {item.detail}
-            </p>
-          </Link>
-        ))}
-      </div>
-    </section>
-  );
-}
-
-function DashboardActionQueues({ queues }: { queues: DashboardActionQueue[] }) {
-  return (
-    <section
-      aria-labelledby="dashboard-action-queues-title"
-      id="dashboard-action-queues"
-      className="space-y-3"
-    >
-      <div className="flex flex-col gap-2 lg:flex-row lg:items-end lg:justify-between">
-        <div>
-          <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#005eb8]">
-            Today's priorities
-          </p>
-          <h2
-            id="dashboard-action-queues-title"
-            className="mt-1 text-xl font-semibold tracking-tight text-[var(--text-primary)]"
-          >
-            Needs attention now
-          </h2>
+              <p className="mt-1 text-[11px] leading-4 text-[#64748b]">
+                {metric.detail}
+              </p>
+            </Link>
+          ))}
         </div>
-        <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
-          Dashboard prioritizes; owning workspaces act
-        </p>
-      </div>
-      <div className="grid gap-4 xl:grid-cols-3 2xl:grid-cols-5">
-        {queues.map((queue) => (
-          <BoardPanel
-            key={queue.key}
-            eyebrow="Action queue"
-            title={queue.title}
-            description={queue.description}
-            action={
-              <Link href={queue.href} className={dashboardPanelActionClassName}>
-                {queue.actionLabel}
-              </Link>
-            }
-          >
-            <div className="divide-y divide-[var(--border-warm)]">
-              {queue.items.length > 0 ? (
-                queue.items.map((item) => (
-                  <article key={item.id} className="px-4 py-3">
-                    <div className="flex flex-wrap items-center gap-2">
+
+        <div className="mt-6 grid gap-5 xl:grid-cols-[minmax(0,1fr)_360px]">
+          <div className="min-w-0">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#8fc7ff]">
+                  Action lanes
+                </p>
+                <h2 className="mt-1 text-xl font-semibold tracking-tight text-white">
+                  Work that needs movement
+                </h2>
+              </div>
+              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-white/45">
+                Source queues only
+              </p>
+            </div>
+
+            <div className="mt-4 grid gap-3 lg:grid-cols-2">
+              {visibleQueues.length > 0 ? (
+                visibleQueues.map((queue) => {
+                  const firstItem = queue.items[0] ?? null;
+
+                  return (
+                    <article
+                      key={queue.key}
+                      className="min-w-0 border border-white/10 bg-white/[0.06] p-4"
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#8fc7ff]">
+                            {queue.title}
+                          </p>
+                          <p className="mt-2 text-sm leading-6 text-white/72">
+                            {queue.description}
+                          </p>
+                        </div>
+                        <span className="shrink-0 border border-white/10 bg-black/20 px-2 py-1 text-xs font-semibold text-white">
+                          {queue.items.length}
+                        </span>
+                      </div>
+                      {firstItem ? (
+                        <div className="mt-4 border-t border-white/10 pt-4">
+                          <Link
+                            href={firstItem.href}
+                            className="text-sm font-semibold text-white transition hover:text-[#8fc7ff]"
+                          >
+                            {firstItem.title}
+                          </Link>
+                          <p className="mt-1 line-clamp-2 text-xs leading-5 text-white/60">
+                            {firstItem.subtitle}
+                          </p>
+                        </div>
+                      ) : (
+                        <p className="mt-4 border-t border-white/10 pt-4 text-xs leading-5 text-white/55">
+                          {queue.emptyTitle}
+                        </p>
+                      )}
                       <Link
-                        href={item.href}
-                        aria-label={`${item.recommendedActionLabel}: ${item.title}`}
-                        className="min-w-0 truncate text-sm font-semibold text-[var(--text-primary)] transition hover:text-[#005eb8]"
+                        href={queue.href}
+                        className="mt-4 inline-flex min-h-8 items-center border border-white/15 bg-white px-3 text-xs font-semibold uppercase tracking-[0.12em] text-[#0f172a] transition hover:bg-[#eef6ff]"
                       >
-                        {item.title}
+                        {queue.actionLabel}
                       </Link>
-                      {item.badge ? (
-                        <StatusBadge status={item.badge} size="sm">
-                          {item.badge}
-                        </StatusBadge>
-                      ) : null}
-                    </div>
-                    <p className="mt-1 text-xs leading-5 text-[var(--text-secondary)]">
-                      {item.subtitle}
-                    </p>
-                    <p className="mt-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--text-secondary)]">
-                      Why: {item.reason}
-                    </p>
-                    {item.metadata ? (
-                      <p className="mt-1 text-xs leading-5 text-[var(--text-secondary)]">
-                        {item.metadata}
-                      </p>
-                    ) : null}
-                    <div className="mt-3 flex flex-wrap gap-2">
-                      <Link href={item.href} className={primaryActionClassName}>
-                        {item.recommendedActionLabel}
-                      </Link>
-                      {item.contextHref && item.contextLabel ? (
-                        <Link
-                          href={item.contextHref}
-                          className={secondaryActionClassName}
-                        >
-                          {item.contextLabel}
-                        </Link>
-                      ) : null}
-                    </div>
-                  </article>
-                ))
+                    </article>
+                  );
+                })
               ) : (
-                <DashboardEmptyState
-                  title={queue.emptyTitle}
-                  description={queue.emptyDescription}
-                />
+                <div className="border border-white/10 bg-white/[0.06] p-4 text-sm leading-6 text-white/65">
+                  No action lanes were returned by the current dashboard read
+                  model.
+                </div>
               )}
             </div>
-          </BoardPanel>
-        ))}
+          </div>
+
+          <aside
+            id="dashboard-attention-rail"
+            className="min-w-0 border border-white/10 bg-white p-4 text-[#0f172a]"
+          >
+            <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#005eb8]">
+              Needs attention
+            </p>
+            <h2 className="mt-1 text-lg font-semibold tracking-tight text-[#0f172a]">
+              Highest signal records
+            </h2>
+            <div className="mt-4 divide-y divide-[#e5e7eb]">
+              {attentionItems.length > 0 ? (
+                attentionItems.map((item) => (
+                  <Link
+                    key={item.key}
+                    href={item.href}
+                    className="block py-3 transition first:pt-0 last:pb-0 hover:text-[#005eb8]"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <p className="text-sm font-semibold text-[#0f172a]">
+                        {item.title}
+                      </p>
+                      <StatusBadge status={item.status} size="sm">
+                        {item.countLabel}
+                      </StatusBadge>
+                    </div>
+                    <p className="mt-1 text-xs leading-5 text-[#64748b]">
+                      {item.detail}
+                    </p>
+                  </Link>
+                ))
+              ) : (
+                <p className="py-3 text-sm leading-6 text-[#64748b]">
+                  No priority records were returned by the current dashboard
+                  read model.
+                </p>
+              )}
+            </div>
+          </aside>
+        </div>
       </div>
+
+      {showStartHere ? (
+        <div className="border-t border-white/10 bg-[#f4f4f5] p-4 text-[#0f172a] sm:p-6">
+          <StartHereCard
+            steps={onboardingSteps}
+            forceVisible={startHereForceVisible}
+          />
+        </div>
+      ) : null}
     </section>
   );
 }
@@ -1397,7 +1464,6 @@ export function ContractorDashboardSurface({
 }: ContractorDashboardSurfaceProps) {
   const [query, setQuery] = useState("");
   const deferredQuery = useDeferredValue(query.trim().toLowerCase());
-  const hasActionQueues = actionQueues.length > 0;
   const handleQueryChange = (nextValue: string) => {
     startTransition(() => {
       setQuery(nextValue);
@@ -1480,107 +1546,19 @@ export function ContractorDashboardSurface({
       <div className="space-y-4 px-4 py-4 sm:px-6">
         <h1 className="sr-only">Dashboard</h1>
 
-        <DashboardOwnershipBanner />
-
-        <DashboardOperatingSummary
+        <DashboardReferenceCommandCenter
           header={header}
           metrics={metrics}
           priorityItems={priorityItems}
-          attentionHref={
-            hasActionQueues
-              ? "/dashboard#dashboard-action-queues"
-              : "/dashboard#dashboard-priority-strip"
-          }
+          actionQueues={actionQueues}
+          onboardingSteps={onboardingSteps}
+          startHereForceVisible={startHereForceVisible}
+          earlyAccess={earlyAccess}
         />
 
-        {onboardingSteps &&
-        (startHereForceVisible ||
-          onboardingSteps.some((step) => !step.complete)) ? (
-          <StartHereCard
-            steps={onboardingSteps}
-            forceVisible={startHereForceVisible}
-          />
-        ) : null}
-
-        {hasActionQueues ? (
-          <DashboardActionQueues queues={actionQueues} />
-        ) : null}
-
-        {earlyAccess ? (
-          <section
-            className={[
-              "rounded-[4px] border px-4 py-4",
-              earlyAccess.isLocked
-                ? "border-amber-200 bg-amber-50"
-                : "border-emerald-200 bg-emerald-50"
-            ].join(" ")}
-          >
-            <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-              <div className="min-w-0">
-                <p
-                  className={[
-                    "text-[10px] font-semibold uppercase tracking-[0.18em]",
-                    earlyAccess.isLocked ? "text-amber-700" : "text-emerald-700"
-                  ].join(" ")}
-                >
-                  Status: {earlyAccess.statusLabel}
-                </p>
-                <p
-                  className={[
-                    "mt-1 text-sm leading-6",
-                    earlyAccess.isLocked ? "text-amber-950" : "text-emerald-950"
-                  ].join(" ")}
-                >
-                  {earlyAccess.setupMessage ??
-                    (earlyAccess.isLocked
-                      ? "You can explore the real system and create records now. External sends and payment processing unlock after activation."
-                      : "Account active. Guarded production actions are unlocked for this organization.")}
-                </p>
-                {earlyAccess.billingStatusLabel ? (
-                  <p
-                    className={[
-                      "mt-1 text-xs font-semibold",
-                      earlyAccess.isLocked
-                        ? "text-amber-800"
-                        : "text-emerald-800"
-                    ].join(" ")}
-                  >
-                    {earlyAccess.billingStatusLabel}
-                  </p>
-                ) : null}
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {earlyAccess.setupHref ? (
-                  <Link
-                    href={earlyAccess.setupHref}
-                    className="inline-flex h-9 shrink-0 items-center justify-center rounded-[4px] bg-[#005eb8] px-4 text-xs font-semibold text-white transition hover:bg-[var(--graphite-light)]"
-                  >
-                    {earlyAccess.setupCtaLabel ?? "Finish setup"}
-                  </Link>
-                ) : null}
-                <Link
-                  href={earlyAccess.href}
-                  className={[
-                    "inline-flex h-9 shrink-0 items-center justify-center rounded-[4px] border bg-white px-4 text-xs font-semibold transition",
-                    earlyAccess.isLocked
-                      ? "border-amber-300 text-amber-950 hover:bg-amber-100"
-                      : "border-emerald-300 text-emerald-950 hover:bg-emerald-100"
-                  ].join(" ")}
-                >
-                  View activation status
-                </Link>
-              </div>
-            </div>
-          </section>
-        ) : null}
-
-        {hasActionQueues ? null : (
-          <div id="dashboard-priority-strip">
-            <PriorityStrip items={priorityItems} />
-          </div>
-        )}
-
         {universalCapture ? universalCapture : null}
+
+        <DashboardOwnershipBanner />
 
         <UtilityCardGrid
           metrics={metrics}

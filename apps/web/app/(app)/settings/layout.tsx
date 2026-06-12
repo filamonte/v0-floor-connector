@@ -31,9 +31,10 @@ export default async function ContractorSettingsLayout({
       title={`${organizationContext.organization.displayName} controls`}
       description="Manage company-owned configuration, workflow defaults, templates, billing defaults, team access, and feature overrides for this contractor organization. Platform policy, starter records, tenant activation, and operator controls live in Super Admin."
       navItems={navItems}
+      tone="neutral"
       meta={
         <div className="rounded-lg border border-white/10 bg-white/[0.08] px-5 py-5 text-sm text-white/72">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[var(--copper-light)]">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#8fc7ff]">
             Current context
           </p>
           <p className="mt-3 text-base font-semibold text-white">

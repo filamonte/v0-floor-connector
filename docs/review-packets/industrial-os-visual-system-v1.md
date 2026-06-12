@@ -218,6 +218,154 @@ Exposed but not used:
   Responsive were available or selected by the user, but this slice did not need
   remote system mutation or external resource inspection.
 
+## Three-Page Fidelity Proof Pass
+
+The strategy changed from broad polishing to three high-fidelity reference
+implementations. This pass keeps the same branch and worktree and treats these
+routes as the reference candidates for later app-wide refactor:
+
+- `/dashboard` as the Command Center pattern.
+- `/leads/[leadId]` as the Opportunity Workspace pattern.
+- `/settings` and `/settings/organization` as the Company Controls /
+  Configuration pattern.
+
+### Dashboard Reference Implementation
+
+Stitch reference used:
+
+- `contractor_dashboard_industrial_os_v2/screen.png`
+- `contractor_dashboard_industrial_os_v2/code.html`
+- `industrial_os_v2_production_handoff.md`
+
+Current problem addressed:
+
+- The prior dashboard had improved colors but still opened as stacked admin
+  cards instead of an operational command deck.
+
+Implemented:
+
+- A single first-viewport `Command Center` deck with dark industrial shell,
+  operating posture, four real KPI tiles, action lanes, and a `Needs attention`
+  rail.
+- KPI values continue to come from the existing dashboard header, metrics, and
+  priority read models.
+- Action lanes continue to come from existing dashboard action queues.
+- First-login `StartHereCard` remains real and appears inside the command deck
+  only when the existing onboarding data requires it.
+- Lower dashboard operational queues remain available below the command deck.
+
+Could not safely implement:
+
+- The Stitch fixed global desktop sidebar was not implemented. FloorConnector's
+  approved global navigation remains top/header based.
+
+Deviation from Stitch:
+
+- The composition uses the Stitch command-center hierarchy and 70/30 attention
+  rail, but keeps FC top navigation and existing route/action ownership.
+
+Ready as pattern:
+
+- Yes for the command-center first viewport. Broader dashboard queue
+  rationalization should wait for visual approval.
+
+### Opportunity Workspace Reference Implementation
+
+Stitch reference used:
+
+- `sales_manager_industrial_os_v2/screen.png`
+- `job_detail_industrial_os_v2_codex_ready/screen.png`
+- `industrial_os_v2_production_handoff.md`
+
+Current problem addressed:
+
+- The lead detail route had real Workspace Framework V2 navigation, but still
+  read as stacked cards and duplicated the guided next action above the
+  workspace.
+
+Implemented:
+
+- Added an opt-in `industrial-reference` variant to
+  `StandardWorkspaceLayout`.
+- Applied that variant only to `/leads/[leadId]`.
+- The page now uses a dark workspace header, query-backed contextual section
+  rail, mobile horizontal section tabs, and a stronger support rail.
+- The guided next action now lives in the contextual rail instead of duplicated
+  in a large summary band.
+- Opportunity status, site assessment state, estimate handoff, work items, and
+  directory context remain backed by existing lead data and actions.
+
+Could not safely implement:
+
+- No separate Opportunity Workspace screenshot was present in the local Stitch
+  zip files. The implementation used Sales Manager plus Job Detail / Workspace
+  references as the closest available local Stitch sources.
+
+Deviation from Stitch:
+
+- The route preserves the existing FC section list and forms. The shell is
+  closer to Stitch, but the internal cards remain production forms/actions from
+  the current app.
+
+Ready as pattern:
+
+- Directionally yes for complex workspaces. The opt-in layout variant should
+  remain limited to reviewed pages until the user approves the reference.
+
+### Settings Reference Implementation
+
+Stitch reference used:
+
+- `settings_industrial_os_v2_desktop/screen.png`
+- `settings_industrial_os_v2_desktop/code.html`
+- `industrial_os_v2_production_handoff.md`
+
+Current problem addressed:
+
+- Settings had real setup health, but still felt too warm, dense, and
+  settings-index-like.
+
+Implemented:
+
+- Settings now uses the neutral Company Controls shell with blue context
+  marker.
+- The setup health and next setup actions compose as a 70/30 control panel
+  using existing tenant, organization, membership, template, catalog, team, and
+  workflow data.
+- Owner sections are lighter, sharper, and less warm.
+- The existing settings local navigation remains route-backed and contextual.
+
+Could not safely implement:
+
+- No fake setup score, fake integration state, or fake module readiness was
+  added. Stitch elements without a real FC source were omitted.
+
+Deviation from Stitch:
+
+- FC keeps its top global navigation and existing settings routes. The Stitch
+  fixed sidebar is interpreted as contextual settings navigation only.
+
+Ready as pattern:
+
+- Yes for Company Controls overview and settings local-nav structure, pending
+  visual approval.
+
+### Fidelity, Safety, And Refactor Recommendation
+
+- Real FC data, loaders, actions, auth, tenant checks, routes, portal
+  boundaries, and workflow ownership were preserved.
+- No schema, migration, route, loader, server action, auth, tenant, portal,
+  payment, signature, scheduling, or workflow behavior changed.
+- No duplicate models, fake summaries, fake statuses, visual-only records, or
+  parallel workflow state were introduced.
+- The local browser check initially reproduced a stale `settings/layout`
+  ChunkLoadError after the layout edit. Clearing only `apps/web/.next` and
+  restarting the dev server resolved it; the rerun passed without ChunkLoadError
+  or console/page errors.
+- Recommendation: do not refactor the rest of the app yet. Review these three
+  reference pages first, then apply the approved page-family patterns in a
+  separate implementation slice.
+
 Unavailable or skipped:
 
 - No Stitch MCP/browser node was needed because the local handoff zip files were

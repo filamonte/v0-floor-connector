@@ -81,6 +81,7 @@ export type StandardWorkspaceLayoutProps<TView extends string> = {
     description?: string;
     actions?: ReactNode;
   };
+  variant?: "standard" | "industrial-reference";
   sidebar?: Array<StandardWorkspaceSidebarItem<TView>>;
   currentView?: TView;
   summaryBand?: ReactNode;
@@ -92,6 +93,7 @@ export type StandardWorkspaceLayoutProps<TView extends string> = {
 
 export function StandardWorkspaceLayout<TView extends string>({
   header,
+  variant = "standard",
   sidebar,
   currentView,
   summaryBand,
@@ -129,22 +131,47 @@ export function StandardWorkspaceLayout<TView extends string>({
   }, [currentView, sidebar]);
 
   const activeView = currentView ?? hashView;
+  const industrialReference = variant === "industrial-reference";
 
   return (
-    <div className="space-y-4">
-      <section className="border border-[#d1d5db] bg-white px-4 py-4 shadow-none sm:px-6">
+    <div className={industrialReference ? "space-y-5" : "space-y-4"}>
+      <section
+        className={
+          industrialReference
+            ? "border border-[#18181b] bg-[#09090b] px-4 py-5 text-white shadow-none sm:px-6 lg:px-8"
+            : "border border-[#d1d5db] bg-white px-4 py-4 shadow-none sm:px-6"
+        }
+      >
         <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
           <div className="min-w-0">
             {header.eyebrow ? (
-              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#005eb8]">
+              <p
+                className={
+                  industrialReference
+                    ? "text-[11px] font-semibold uppercase tracking-[0.24em] text-[#8fc7ff]"
+                    : "text-[10px] font-semibold uppercase tracking-[0.18em] text-[#005eb8]"
+                }
+              >
                 {header.eyebrow}
               </p>
             ) : null}
-            <h1 className="mt-2 whitespace-normal break-words text-[26px] font-semibold leading-tight tracking-tight text-[var(--text-primary)] [overflow-wrap:anywhere] sm:text-[30px]">
+            <h1
+              className={
+                industrialReference
+                  ? "mt-3 whitespace-normal break-words text-[30px] font-semibold leading-tight tracking-tight text-white [overflow-wrap:anywhere] sm:text-[40px]"
+                  : "mt-2 whitespace-normal break-words text-[26px] font-semibold leading-tight tracking-tight text-[var(--text-primary)] [overflow-wrap:anywhere] sm:text-[30px]"
+              }
+            >
               {header.title}
             </h1>
             {header.description ? (
-              <p className="mt-2 max-w-3xl text-sm leading-6 text-[var(--text-secondary)]">
+              <p
+                className={
+                  industrialReference
+                    ? "mt-3 max-w-4xl text-sm leading-6 text-white/72 sm:text-base sm:leading-7"
+                    : "mt-2 max-w-3xl text-sm leading-6 text-[var(--text-secondary)]"
+                }
+              >
                 {header.description}
               </p>
             ) : null}
@@ -160,19 +187,37 @@ export function StandardWorkspaceLayout<TView extends string>({
       {summaryBand}
       {commandBar}
 
-      <section className="overflow-hidden border border-[#d1d5db] bg-white shadow-none">
+      <section
+        className={
+          industrialReference
+            ? "overflow-hidden border border-[#d1d5db] bg-white shadow-none"
+            : "overflow-hidden border border-[#d1d5db] bg-white shadow-none"
+        }
+      >
         <div
           className={[
-            "grid min-h-[620px] bg-[#f4f4f5]",
+            industrialReference
+              ? "grid min-h-[620px] bg-[#f4f4f5]"
+              : "grid min-h-[620px] bg-[#f4f4f5]",
             hasSidebar
-              ? "grid-cols-1 lg:grid-cols-[272px_minmax(0,1fr)]"
+              ? industrialReference
+                ? "grid-cols-1 lg:grid-cols-[260px_minmax(0,1fr)]"
+                : "grid-cols-1 lg:grid-cols-[272px_minmax(0,1fr)]"
               : "grid-cols-1"
           ].join(" ")}
         >
           {hasSidebar ? (
-            <aside className="border-b border-[#d1d5db] bg-[#f9fafb] px-3 py-3 lg:sticky lg:top-[8.5rem] lg:max-h-[calc(100vh-9.5rem)] lg:self-start lg:overflow-y-auto lg:border-b-0 lg:border-r">
+            <aside
+              className={
+                industrialReference
+                  ? "border-b border-[#d1d5db] bg-[#f9fafb] px-3 py-3 lg:sticky lg:top-[8.5rem] lg:max-h-[calc(100vh-9.5rem)] lg:self-start lg:overflow-y-auto lg:border-b-0 lg:border-r"
+                  : "border-b border-[#d1d5db] bg-[#f9fafb] px-3 py-3 lg:sticky lg:top-[8.5rem] lg:max-h-[calc(100vh-9.5rem)] lg:self-start lg:overflow-y-auto lg:border-b-0 lg:border-r"
+              }
+            >
               <p className="hidden px-2 pb-3 text-[10px] font-semibold uppercase tracking-[0.2em] text-[var(--text-tertiary)] lg:block">
-                Workspace sections
+                {industrialReference
+                  ? "Opportunity sections"
+                  : "Workspace sections"}
               </p>
               <div className="flex gap-2 overflow-x-auto lg:flex-col lg:overflow-visible">
                 {sidebar?.map((item) => {
@@ -181,7 +226,9 @@ export function StandardWorkspaceLayout<TView extends string>({
                   const className = [
                     "inline-flex min-h-11 min-w-fit items-center justify-center gap-2 rounded-[4px] border px-3 py-2 transition lg:w-full lg:justify-start",
                     active
-                      ? "border-[#005eb8] bg-white text-[#003d7c] shadow-[inset_3px_0_0_#005eb8]"
+                      ? industrialReference
+                        ? "border-[#005eb8] bg-white text-[#003d7c] shadow-[inset_3px_0_0_#005eb8]"
+                        : "border-[#005eb8] bg-white text-[#003d7c] shadow-[inset_3px_0_0_#005eb8]"
                       : "border-transparent bg-transparent text-[var(--text-secondary)] hover:border-[#c7d2e2] hover:bg-white hover:text-[var(--text-primary)]"
                   ].join(" ");
 
@@ -253,7 +300,9 @@ export function StandardWorkspaceLayout<TView extends string>({
             className={[
               "min-w-0 bg-white",
               supportArea
-                ? "grid gap-5 bg-[#f4f4f5] p-4 xl:grid-cols-[minmax(0,1fr)_340px] 2xl:grid-cols-[minmax(0,1fr)_380px] sm:p-6"
+                ? industrialReference
+                  ? "grid gap-5 bg-[#f4f4f5] p-4 xl:grid-cols-[minmax(0,1fr)_360px] 2xl:grid-cols-[minmax(0,1fr)_400px] sm:p-6"
+                  : "grid gap-5 bg-[#f4f4f5] p-4 xl:grid-cols-[minmax(0,1fr)_340px] 2xl:grid-cols-[minmax(0,1fr)_380px] sm:p-6"
                 : "",
               contentClassName
             ]

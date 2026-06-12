@@ -10,7 +10,6 @@ import { AppEmptyState } from "@/components/app-empty-state";
 import { DirectoryContextCard } from "@/components/directory-context-card";
 import { GateKeeperSubjectMemoryPanel } from "@/components/gatekeeper-subject-memory-panel";
 import { LinkedRecordCard } from "@/components/linked-record-card";
-import { NextActionCard } from "@/components/next-action-card";
 import { OpportunityCommunicationLogForm } from "@/components/opportunity-communication-log-form";
 import { OpportunityForm } from "@/components/opportunity-form";
 import { OpportunityFollowUpForm } from "@/components/opportunity-follow-up-form";
@@ -501,6 +500,7 @@ export default async function LeadDetailPage({
 
   return (
     <StandardWorkspaceLayout
+      variant="industrial-reference"
       header={{
         eyebrow: "Opportunity Workspace",
         title: opportunity.title,
@@ -576,7 +576,7 @@ export default async function LeadDetailPage({
       currentView={currentView}
       summaryBand={
         <WorkspaceSummaryBand
-          className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1.2fr)]"
+          className="grid gap-4 md:grid-cols-2"
           items={[
             {
               key: "status",
@@ -599,51 +599,6 @@ export default async function LeadDetailPage({
                   {formatStatusLabel(opportunity.siteAssessmentStatus)}
                 </p>
               )
-            },
-            {
-              key: "next-action",
-              label: "Next suggested action",
-              content: (
-                <NextActionCard
-                  eyebrow="Guided workflow"
-                  title={nextAction.title}
-                  description={nextAction.description}
-                  primaryAction={
-                    nextAction.kind === "estimate" ? (
-                      primaryEstimateHref ? (
-                        <Link
-                          href={primaryEstimateHref}
-                          className="inline-flex items-center rounded-[4px] border border-[#005eb8] bg-[#005eb8] px-4 py-2 text-sm font-medium text-white transition hover:bg-[#003d7c]"
-                        >
-                          {nextAction.label}
-                        </Link>
-                      ) : (
-                        <form action={startEstimateFromOpportunityAction}>
-                          <input
-                            type="hidden"
-                            name="opportunityId"
-                            value={opportunity.id}
-                          />
-                          <button
-                            type="submit"
-                            className="inline-flex items-center rounded-[4px] border border-[#005eb8] bg-[#005eb8] px-4 py-2 text-sm font-medium text-white transition hover:bg-[#003d7c]"
-                          >
-                            {nextAction.label}
-                          </button>
-                        </form>
-                      )
-                    ) : (
-                      <Link
-                        href={nextAction.href}
-                        className="inline-flex items-center rounded-[4px] border border-[#005eb8] bg-[#005eb8] px-4 py-2 text-sm font-medium text-white transition hover:bg-[#003d7c]"
-                      >
-                        {nextAction.label}
-                      </Link>
-                    )
-                  }
-                  className="space-y-3 text-sm leading-6 text-slate-600"
-                />
-              )
             }
           ]}
         />
@@ -661,25 +616,68 @@ export default async function LeadDetailPage({
             returnTo={overviewHref}
           />
 
-          <section className="border border-slate-200 bg-slate-50/80 px-5 py-5">
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#005eb8]">
-              Estimate Plan
+          <section className="border border-[#d1d5db] bg-white px-5 py-5 shadow-none">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#005eb8]">
+              Guided next move
+            </p>
+            <h2 className="mt-2 text-lg font-semibold tracking-tight text-[#0f172a]">
+              {nextAction.title}
+            </h2>
+            <p className="mt-3 text-sm leading-6 text-[#475569]">
+              {nextAction.description}
+            </p>
+            <div className="mt-4">
+              {nextAction.kind === "estimate" ? (
+                primaryEstimateHref ? (
+                  <Link
+                    href={primaryEstimateHref}
+                    className="inline-flex min-h-9 items-center rounded-[4px] border border-[#005eb8] bg-[#005eb8] px-3 text-sm font-semibold text-white transition hover:border-[#004f9e] hover:bg-[#004f9e]"
+                  >
+                    {nextAction.label}
+                  </Link>
+                ) : (
+                  <form action={startEstimateFromOpportunityAction}>
+                    <input
+                      type="hidden"
+                      name="opportunityId"
+                      value={opportunity.id}
+                    />
+                    <button
+                      type="submit"
+                      className="inline-flex min-h-9 items-center rounded-[4px] border border-[#005eb8] bg-[#005eb8] px-3 text-sm font-semibold text-white transition hover:border-[#004f9e] hover:bg-[#004f9e]"
+                    >
+                      {nextAction.label}
+                    </button>
+                  </form>
+                )
+              ) : (
+                <Link
+                  href={nextAction.href}
+                  className="inline-flex min-h-9 items-center rounded-[4px] border border-[#005eb8] bg-[#005eb8] px-3 text-sm font-semibold text-white transition hover:border-[#004f9e] hover:bg-[#004f9e]"
+                >
+                  {nextAction.label}
+                </Link>
+              )}
+            </div>
+          </section>
+
+          <section className="border border-[#d1d5db] bg-white px-5 py-5 shadow-none">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#005eb8]">
+              Estimate handoff
             </p>
             <p className="mt-3 text-sm leading-6 text-slate-600">
-              {nextAction.description} Site visits stay lead-linked, while
-              estimate creation links the customer and project before commercial
-              scope is sent.
+              {estimatingReadiness}
             </p>
             <div className="mt-4 flex flex-wrap gap-2">
               <Link
                 href={estimatePlanHref}
-                className="inline-flex min-h-9 items-center rounded-[6px] border border-[#c7d2e2] bg-white px-3 text-sm font-medium text-[#0f172a] transition hover:border-[#005eb8] hover:bg-white hover:text-[#003d7c]"
+                className="inline-flex min-h-9 items-center rounded-[4px] border border-[#c7d2e2] bg-white px-3 text-sm font-medium text-[#0f172a] transition hover:border-[#005eb8] hover:bg-[#eef6ff] hover:text-[#003d7c]"
               >
                 Open estimate plan
               </Link>
               <Link
                 href={workItemsHref}
-                className="inline-flex min-h-9 items-center rounded-[6px] border border-slate-300 px-3 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:bg-white"
+                className="inline-flex min-h-9 items-center rounded-[4px] border border-[#c7d2e2] px-3 text-sm font-medium text-[#475569] transition hover:border-[#005eb8] hover:bg-[#eef6ff] hover:text-[#003d7c]"
               >
                 Review linked work
               </Link>
