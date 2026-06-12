@@ -695,7 +695,7 @@ function DashboardActionQueues({ queues }: { queues: DashboardActionQueue[] }) {
           Dashboard prioritizes; owning workspaces act
         </p>
       </div>
-      <div className="grid gap-3 xl:grid-cols-5">
+      <div className="grid gap-4 xl:grid-cols-3 2xl:grid-cols-5">
         {queues.map((queue) => (
           <BoardPanel
             key={queue.key}

@@ -40,22 +40,22 @@ export function ContractorWorkspacePage({
   const darkHeader = headerTone === "dark";
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
       <section
         className={[
-          "overflow-hidden rounded-lg border px-4 py-3 shadow-[0_16px_44px_-38px_rgba(31,41,55,0.48)] sm:px-5",
+          "overflow-hidden border px-4 py-4 shadow-none sm:px-6",
           darkHeader
             ? "border-[var(--graphite)] bg-[linear-gradient(135deg,var(--graphite-dark)_0%,var(--graphite)_78%)] text-white"
-            : "border-[var(--border-warm)] bg-[linear-gradient(135deg,white_0%,var(--highlight)_100%)]"
+            : "border-[var(--border-warm)] bg-white"
         ].join(" ")}
       >
         <div
           className={[
-            "-mx-4 -mt-3 mb-3 h-1 sm:-mx-5",
+            "-mx-4 -mt-4 mb-4 h-1 sm:-mx-6",
             darkHeader ? "bg-[var(--copper)]" : "bg-[var(--graphite)]"
           ].join(" ")}
         />
-        <div className="flex min-w-0 flex-col gap-2 xl:flex-row xl:items-end xl:justify-between">
+        <div className="flex min-w-0 flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
           <div className="min-w-0">
             <p
               className={[
@@ -69,7 +69,7 @@ export function ContractorWorkspacePage({
             </p>
             <h1
               className={[
-                "mt-1 break-words text-[20px] font-semibold tracking-tight [overflow-wrap:anywhere] sm:text-[22px]",
+                "mt-2 break-words text-[24px] font-semibold tracking-tight [overflow-wrap:anywhere] sm:text-[28px]",
                 darkHeader ? "text-white" : "text-[var(--text-primary)]"
               ].join(" ")}
             >
@@ -77,7 +77,7 @@ export function ContractorWorkspacePage({
             </h1>
             <p
               className={[
-                "mt-1 max-w-4xl break-words text-[13px] leading-5 [overflow-wrap:anywhere]",
+                "mt-2 max-w-4xl break-words text-sm leading-6 [overflow-wrap:anywhere]",
                 darkHeader ? "text-gray-200" : "text-[var(--text-secondary)]"
               ].join(" ")}
             >
@@ -85,7 +85,7 @@ export function ContractorWorkspacePage({
             </p>
           </div>
           {summary ? (
-            <div className="min-w-0 xl:max-w-[560px] xl:flex-shrink-0">
+            <div className="min-w-0 xl:max-w-[620px] xl:flex-shrink-0">
               {summary}
             </div>
           ) : null}

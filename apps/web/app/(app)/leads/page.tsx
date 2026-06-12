@@ -89,11 +89,11 @@ function getFollowUpBadgeClasses(bucket: LeadFollowUpBucket) {
     case "overdue":
       return "border-rose-200 bg-rose-50 text-rose-700";
     case "due_today":
-      return "border-amber-200 bg-amber-50 text-amber-800";
+      return "border-[#c7d2e2] bg-[#f8fafc] text-[#0f172a]";
     case "upcoming":
       return "border-[var(--border-medium)] bg-[var(--highlight)] text-[var(--graphite)]";
     case "no_follow_up":
-      return "border-[#d9cdc2] bg-[#fbf7f2] text-[#594839]";
+      return "border-[#cbd5e1] bg-white text-[#334155]";
   }
 }
 
@@ -263,36 +263,36 @@ export default async function LeadsPage({ searchParams }: LeadsPageProps) {
       title={`Leads & Opportunities for ${organizationContext.organization.displayName}`}
       description="Run Lead Intake and active Sales Opportunity follow-up from one board, while preserving the existing /leads route and canonical opportunities records."
       summary={
-        <div className="grid gap-px border border-[#d9cdc2] bg-[#d9cdc2] sm:grid-cols-2 xl:grid-cols-4">
+        <div className="grid gap-px border border-[#d1d5db] bg-[#d1d5db] sm:grid-cols-2 xl:grid-cols-4">
           <div className="bg-white px-4 py-3">
-            <p className="text-[11px] uppercase tracking-[0.14em] text-[#8f7f72]">
+            <p className="text-[11px] uppercase tracking-[0.14em] text-[var(--text-tertiary)]">
               All opportunities
             </p>
-            <p className="mt-1 text-2xl font-semibold tracking-tight text-[#221a14]">
+            <p className="mt-1 text-2xl font-semibold tracking-tight text-[var(--text-primary)]">
               {opportunities.length}
             </p>
           </div>
           <div className="bg-white px-4 py-3">
-            <p className="text-[11px] uppercase tracking-[0.14em] text-[#8f7f72]">
+            <p className="text-[11px] uppercase tracking-[0.14em] text-[var(--text-tertiary)]">
               My opportunities
             </p>
-            <p className="mt-1 text-2xl font-semibold tracking-tight text-[#221a14]">
+            <p className="mt-1 text-2xl font-semibold tracking-tight text-[var(--text-primary)]">
               {myOpportunities.length}
             </p>
           </div>
           <div className="bg-white px-4 py-3">
-            <p className="text-[11px] uppercase tracking-[0.14em] text-[#8f7f72]">
+            <p className="text-[11px] uppercase tracking-[0.14em] text-[var(--text-tertiary)]">
               New intake
             </p>
-            <p className="mt-1 text-2xl font-semibold tracking-tight text-[#221a14]">
+            <p className="mt-1 text-2xl font-semibold tracking-tight text-[var(--text-primary)]">
               {newIntake.length}
             </p>
           </div>
           <div className="bg-white px-4 py-3">
-            <p className="text-[11px] uppercase tracking-[0.14em] text-[#8f7f72]">
+            <p className="text-[11px] uppercase tracking-[0.14em] text-[var(--text-tertiary)]">
               Proposal sent
             </p>
-            <p className="mt-1 text-2xl font-semibold tracking-tight text-[#221a14]">
+            <p className="mt-1 text-2xl font-semibold tracking-tight text-[var(--text-primary)]">
               {proposalSentOpportunities.length}
             </p>
           </div>
@@ -322,11 +322,11 @@ export default async function LeadsPage({ searchParams }: LeadsPageProps) {
               name="q"
               defaultValue={query}
               placeholder="Search opportunity, contact, company, source, job type, or site"
-              className="min-w-0 flex-1 rounded-[4px] border border-[#d9cdc2] bg-white px-4 py-2.5 text-sm text-[#221a14] outline-none transition placeholder:text-[#9a8b80] focus:border-[#c59a6b]"
+              className="min-w-0 flex-1 rounded-[4px] border border-[#cbd5e1] bg-white px-4 py-2.5 text-sm text-[var(--text-primary)] outline-none transition placeholder:text-[var(--text-tertiary)] focus:border-[#005eb8]"
             />
             <button
               type="submit"
-              className="inline-flex items-center justify-center rounded-[4px] border border-[#d9cdc2] bg-white px-4 py-2.5 text-sm font-medium text-[#594839] transition hover:border-[#ef7d32] hover:bg-[#fbf7f2]"
+              className="inline-flex items-center justify-center rounded-[4px] border border-[#cbd5e1] bg-white px-4 py-2.5 text-sm font-medium text-[#0f172a] transition hover:border-[#005eb8] hover:bg-[#eef6ff]"
             >
               Search
             </button>
@@ -390,8 +390,8 @@ export default async function LeadsPage({ searchParams }: LeadsPageProps) {
                 className={[
                   "inline-flex items-center gap-2 rounded-[4px] px-3 py-2 text-sm font-medium transition",
                   isActive
-                    ? "bg-[#171717] text-white"
-                    : "border border-[#d9cdc2] bg-white text-[#594839] hover:bg-[#fbf7f2]"
+                    ? "bg-[#005eb8] text-white"
+                    : "border border-[#cbd5e1] bg-white text-[#334155] hover:bg-[#eef6ff]"
                 ].join(" ")}
               >
                 <span>{item.label}</span>
@@ -400,7 +400,7 @@ export default async function LeadsPage({ searchParams }: LeadsPageProps) {
                     "rounded-full px-2 py-0.5 text-xs font-semibold",
                     isActive
                       ? "bg-white/15 text-white"
-                      : "bg-[#f2e7dc] text-[#8f5b32]"
+                      : "bg-[#f1f5f9] text-[#334155]"
                   ].join(" ")}
                 >
                   {item.count}
@@ -419,7 +419,7 @@ export default async function LeadsPage({ searchParams }: LeadsPageProps) {
                 compose: "1"
               }) + "#lead-create"
             }
-            className="inline-flex items-center rounded-[3px] border border-[#ef7d32] bg-[#ef7d32] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#de6c22]"
+            className="inline-flex items-center rounded-[3px] border border-[#005eb8] bg-[#005eb8] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#004f9e]"
           >
             New intake
           </Link>
@@ -503,15 +503,15 @@ export default async function LeadsPage({ searchParams }: LeadsPageProps) {
             emptyDescription="When more scheduled lead work is on the calendar, it will appear here."
           />
 
-          <section className="border border-[#d9cdc2] bg-white">
-            <div className="border-b border-[#e8ded5] px-4 py-2.5">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#a4581a]">
+          <section className="border border-[#d1d5db] bg-white">
+            <div className="border-b border-[#e5e7eb] px-4 py-2.5">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#005eb8]">
                 Funnel
               </p>
-              <h3 className="mt-1 text-[17px] font-semibold tracking-tight text-[#221a14]">
+              <h3 className="mt-1 text-[17px] font-semibold tracking-tight text-[var(--text-primary)]">
                 Opportunity stage funnel
               </h3>
-              <p className="mt-1 text-xs leading-5 text-[#6f6256]">
+              <p className="mt-1 text-xs leading-5 text-[var(--text-secondary)]">
                 Real opportunity stages only, so the sales view stays honest to
                 the current workflow.
               </p>
@@ -520,14 +520,16 @@ export default async function LeadsPage({ searchParams }: LeadsPageProps) {
               {stageFunnel.map((stage, index) => (
                 <div key={stage.key} className="space-y-2">
                   <div className="flex items-center justify-between gap-4 text-sm">
-                    <span className="font-medium text-[#221a14]">
+                    <span className="font-medium text-[var(--text-primary)]">
                       {stage.label}
                     </span>
-                    <span className="text-[#8f7f72]">{stage.count}</span>
+                    <span className="text-[var(--text-tertiary)]">
+                      {stage.count}
+                    </span>
                   </div>
-                  <div className="h-3 overflow-hidden rounded-full bg-[#f2e7dc]">
+                  <div className="h-3 overflow-hidden rounded-[3px] bg-[#f1f5f9]">
                     <div
-                      className="h-full rounded-full bg-[#171717]"
+                      className="h-full rounded-[3px] bg-[#005eb8]"
                       style={{
                         width: `${Math.max(
                           8,
@@ -545,13 +547,13 @@ export default async function LeadsPage({ searchParams }: LeadsPageProps) {
           </section>
         </section>
 
-        <section className="order-1 overflow-hidden border border-[#d9cdc2] bg-white">
-          <div className="flex items-center justify-between gap-4 border-b border-[#e8ded5] px-4 py-2.5">
+        <section className="order-1 overflow-hidden border border-[#d1d5db] bg-white">
+          <div className="flex items-center justify-between gap-4 border-b border-[#e5e7eb] px-4 py-3">
             <div>
-              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#a4581a]">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#005eb8]">
                 Opportunity records
               </p>
-              <h3 className="mt-1 text-[17px] font-semibold tracking-tight text-[#221a14]">
+              <h3 className="mt-1 text-[17px] font-semibold tracking-tight text-[var(--text-primary)]">
                 {view === "my" ? "Assigned opportunities" : "All opportunities"}
               </h3>
             </div>
@@ -563,7 +565,7 @@ export default async function LeadsPage({ searchParams }: LeadsPageProps) {
           {visibleOpportunities.length > 0 ? (
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-slate-200 text-sm">
-                <thead className="bg-[#f7f3ef] text-left text-[11px] font-semibold uppercase tracking-[0.18em] text-[#8f7f72]">
+                <thead className="bg-[#f9fafb] text-left text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-tertiary)]">
                   <tr>
                     <th className="px-4 py-2.5">Opportunity</th>
                     <th className="px-4 py-2.5">Primary contact</th>
@@ -593,11 +595,11 @@ export default async function LeadsPage({ searchParams }: LeadsPageProps) {
                         : "Start estimate";
 
                     return (
-                      <tr key={opportunity.id} className="hover:bg-[#fbf7f2]">
+                      <tr key={opportunity.id} className="hover:bg-[#f8fafc]">
                         <td className="px-4 py-2.5">
                           <Link
                             href={`/leads/${opportunity.id}`}
-                            className="font-semibold text-[#221a14] transition hover:text-[#a4581a]"
+                            className="font-semibold text-[var(--text-primary)] transition hover:text-[#005eb8]"
                           >
                             {opportunity.title}
                           </Link>
@@ -620,7 +622,7 @@ export default async function LeadsPage({ searchParams }: LeadsPageProps) {
                           </p>
                         </td>
                         <td className="px-4 py-2.5">
-                          <span className="inline-flex rounded-[3px] border border-[#d9cdc2] bg-[#fbf7f2] px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-[#594839]">
+                          <span className="inline-flex rounded-[3px] border border-[#cbd5e1] bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-[#334155]">
                             {formatOpportunityStatusLabel(opportunity.status)}
                           </span>
                           {followUpItem ? (
@@ -684,14 +686,14 @@ export default async function LeadsPage({ searchParams }: LeadsPageProps) {
                           <div className="flex flex-col items-end gap-2">
                             <Link
                               href={actionHref}
-                              className="inline-flex items-center rounded-[4px] border border-[#d9cdc2] bg-white px-3 py-2 text-sm font-medium text-[#594839] transition hover:border-[#ef7d32] hover:bg-[#fbf7f2] hover:text-[#221a14]"
+                              className="inline-flex items-center rounded-[4px] border border-[#cbd5e1] bg-white px-3 py-2 text-sm font-medium text-[#0f172a] transition hover:border-[#005eb8] hover:bg-[#eef6ff]"
                             >
                               {actionLabel}
                             </Link>
                             {followUpItem ? (
                               <Link
                                 href={`/leads/${opportunity.id}?workItemCue=follow_up#work-items`}
-                                className="text-xs font-medium text-[#a4581a] transition hover:text-[#221a14]"
+                                className="text-xs font-medium text-[#005eb8] transition hover:text-[#003d7c]"
                               >
                                 Create work item
                               </Link>

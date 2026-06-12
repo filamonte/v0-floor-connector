@@ -293,6 +293,16 @@ stronger metric hierarchy, lighter shared cards, and blue-neutral dashboard
 buttons/status pills while preserving the existing top-nav-first architecture
 and all production guardrails.
 
+The stream now also includes a same-branch composition correction pass. Shared
+`StandardWorkspaceLayout` uses a 280px contextual left section rail on desktop,
+labeled horizontal section tabs on mobile, and explicit active-view markers for
+existing `?view=` workspace navigation. Sales Manager and dashboard queue
+surfaces were made less warm, less stacked, and easier to scan. The pass still
+preserves top/header global navigation, route names, loaders, actions, schema,
+auth/tenant/portal boundaries, payment/signature/scheduling behavior, and
+canonical records. Invoice Review, CrewBoard, and a full Settings composition
+cleanup remain better suited to dedicated follow-up slices.
+
 Current wave gate note: `visual-ux-review-contractor-usability-v1` has merged
 to `main` under Jeff's controlled merge approval. Golden Workflow Usability
 Review V1 merged as `32f2151d`, Workspace Density Polish V1 merged as

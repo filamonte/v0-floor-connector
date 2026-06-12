@@ -1102,9 +1102,14 @@ Current contractor UI design notes:
   radii. The follow-up intensification pass makes the first-login dashboard
   visibly more distinct with dark blue/charcoal command-deck ownership and
   operating-health panels, stronger numeric hierarchy, lighter shared cards, and
-  blue-neutral dashboard action/status treatment. This is presentation-only and
-  adds no routes, schema, migrations, loaders, server actions, duplicate data
-  models, auth/tenant/portal/admin rule changes, or workflow behavior changes.
+  blue-neutral dashboard action/status treatment. The same branch now also
+  includes a composition correction pass: `StandardWorkspaceLayout` uses a
+  280px contextual desktop section rail, labeled mobile section tabs, and
+  explicit active-view markers for existing route/query-backed workspace views;
+  Sales Manager and dashboard queue composition are less warm, less stacked, and
+  easier to scan. This is presentation-only and adds no routes, schema,
+  migrations, loaders, server actions, duplicate data models, auth/tenant/
+  portal/admin rule changes, or workflow behavior changes.
 - the dashboard and Estimates reference pass now anchor the accepted Graphite & Copper contractor-app visual foundation without authorizing a broad shell redesign
 - existing canonical-record edit forms now use a shared save-state pattern: unchanged records show `Saved`, edits switch the control to `Save`, saving shows `Saving...`, and successful saves reset the dirty baseline to the persisted values
 - the dashboard now reads more like a contractor home base than a light summary page:

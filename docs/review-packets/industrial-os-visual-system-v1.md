@@ -92,6 +92,43 @@ the dashboard entry materially more distinct without changing workflow behavior:
 - The Stitch direction is interpreted through FloorConnector's existing
   top-nav-first architecture rather than copied pixel-for-pixel.
 
+## Same-Branch Composition Correction Pass
+
+The user review after the intensification pass found that the app still felt
+too heavy and insufficiently organized. This same-branch correction focused on
+composition, local navigation behavior, and representative manager/workspace
+organization while preserving the same routes, data, loaders, actions, schema,
+and canonical workflow boundaries.
+
+Implemented Stitch / Industrial OS layout ideas:
+
+- Workspace Framework pages now use a 280px contextual section rail on desktop,
+  matching the approved local-nav intent without turning it into global app
+  navigation.
+- Workspace section navigation stays route/query-backed where the workspace
+  already uses `?view=` patterns. Active view state is visible and exposed via
+  `aria-current` / `data-active` markers for browser checks.
+- Mobile workspace navigation now appears as labeled horizontal section tabs
+  instead of tiny icon-only left navigation.
+- Shared workspace headers use clearer document-like title hierarchy, more
+  whitespace, and fewer rounded/shadowed card effects.
+- Sales Manager composition is cooler and more tabular: blue primary action,
+  blue-neutral filters/statuses, slate table headers, and reduced warm/copper
+  treatment.
+- Dashboard action queues no longer compress into five narrow columns at
+  laptop width; the layout wraps into wider, more readable queue panels before
+  expanding at very wide desktop sizes.
+
+Intentionally not implemented:
+
+- The Stitch global fixed desktop sidebar remains excluded. FloorConnector keeps
+  its approved top/header-based global navigation; left rails are contextual
+  only.
+- Invoice Review was not rebuilt into the full 900px document plus persistent
+  HUD pattern in this pass. That remains a higher-risk dedicated follow-up.
+- Schedule/CrewBoard was not structurally rewritten. It needs a focused
+  calendar/workboard composition pass to safely preserve scheduling behavior.
+
 ## Fidelity And Deviations
 
 Close to approved direction:
@@ -102,6 +139,10 @@ Close to approved direction:
 - Reduced orange/copper dominance through shared aliases and primary CTAs.
 - Harder borders, lower shadows, and restrained radii.
 - Inter typography and tabular numeric rendering.
+- Contextual workspace section rail and mobile section tabs now align more
+  closely with the Stitch workspace composition.
+- Manager surfaces are less warm, less card-heavy, and closer to the
+  high-density table direction.
 
 Intentional deviations:
 
@@ -109,9 +150,9 @@ Intentional deviations:
   The production decision for this slice preserves FloorConnector's
   top/header-based desktop navigation and interprets left rails as contextual
   workspace navigation only.
-- No page-specific 70/30 rewrites were performed. Existing workspace wrappers
-  were refined instead, because broad page layout changes would increase
-  workflow risk.
+- Only representative 70/30 workspace composition was applied through shared
+  `StandardWorkspaceLayout`. Broader page-family rewrites are deferred where
+  they would increase workflow risk.
 - Existing `--copper` variable names remain as aliases to avoid churn across a
   broad codebase.
 
@@ -150,6 +191,11 @@ records only.
   reach the approved technical-document and billing-HUD targets.
 - Cost items still need a search-first, mobile list-card follow-up if the next
   visual slice focuses on catalog usability.
+- CrewBoard still needs a dedicated workboard/calendar composition pass; this
+  correction preserves scheduling behavior and does not reorganize the schedule
+  data model or action panel.
+- Settings is closer to the approved owner-section model, but still needs a
+  dedicated cleanup if the team wants the full Stitch settings composition.
 - The Graphite/Copper variable names are now compatibility aliases. A later
   cleanup can rename tokens after visual stabilization, but this slice avoided
   broad churn.
@@ -190,6 +236,8 @@ Application and shared UI:
 - `apps/web/app/(portal)/portal/layout.tsx`
 - `apps/web/components/contractor-app-shell.tsx`
 - `apps/web/components/protected-app-top-nav.tsx`
+- `apps/web/app/(app)/leads/page.tsx`
+- `apps/web/components/contractor-workspace-page.tsx`
 - `apps/web/components/manager-dashboard-card.tsx`
 - `apps/web/components/organization-brand-link.tsx`
 - `apps/web/components/quick-create-form-shell.tsx`
@@ -200,6 +248,7 @@ Application and shared UI:
 - `apps/web/components/workspace-command-bar.tsx`
 - `apps/web/components/workspace-summary-band.tsx`
 - `apps/web/components/workspace/standard-workspace-layout.tsx`
+- `apps/web/components/dashboard/contractor-dashboard-surface.tsx`
 - `packages/ui/src/theme.ts`
 - `packages/ui/src/status.ts`
 - `packages/ui/src/components/action-bar.tsx`
