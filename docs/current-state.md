@@ -258,6 +258,13 @@ These high-value route notes exist to prevent target-vs-current drift:
   This keeps `/leads`, `/leads/:leadId`, the `/opportunities` alias,
   `opportunities` schema, assessment ownership, tenant checks, and Supabase
   behavior unchanged.
+- Opportunity Workspace now also reflects the Figma fidelity correction from
+  the Industrial OS board: the duplicated record identity area was removed, the
+  first overview viewport is a compact guided sales workflow over existing
+  `?view=` sections, and the right support column reads as a command rail for
+  status, next action, and estimate handoff context. This remains a
+  presentation-only change over existing opportunity, assessment, estimate, and
+  Work Item records.
 - Project Workspace now also uses Workspace Framework V2 presentation views.
   `/projects/:projectId` preserves the same route while using `?view=` focused
   views for Overview, Readiness, Scope / Context, Estimates / Contracts, Jobs /

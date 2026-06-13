@@ -208,26 +208,31 @@ export function StandardWorkspaceLayout<TView extends string>({
         >
           {hasSidebar ? (
             <aside
+              aria-label={
+                industrialReference
+                  ? "Opportunity workspace sections"
+                  : "Workspace sections"
+              }
               className={
                 industrialReference
-                  ? "border-b border-[#d1d5db] bg-[#f9fafb] px-3 py-3 lg:sticky lg:top-[8.5rem] lg:max-h-[calc(100vh-9.5rem)] lg:self-start lg:overflow-y-auto lg:border-b-0 lg:border-r"
-                  : "border-b border-[#d1d5db] bg-[#f9fafb] px-3 py-3 lg:sticky lg:top-[8.5rem] lg:max-h-[calc(100vh-9.5rem)] lg:self-start lg:overflow-y-auto lg:border-b-0 lg:border-r"
+                  ? "sticky top-0 z-20 border-b border-[#d1d5db] bg-[#f9fafb] px-3 py-3 lg:top-[8.5rem] lg:max-h-[calc(100vh-9.5rem)] lg:self-start lg:overflow-y-auto lg:border-b-0 lg:border-r"
+                  : "sticky top-0 z-20 border-b border-[#d1d5db] bg-[#f9fafb] px-3 py-3 lg:top-[8.5rem] lg:max-h-[calc(100vh-9.5rem)] lg:self-start lg:overflow-y-auto lg:border-b-0 lg:border-r"
               }
             >
-              <p className="hidden px-2 pb-3 text-[10px] font-semibold uppercase tracking-[0.2em] text-[var(--text-tertiary)] lg:block">
+              <p className="px-2 pb-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-[var(--text-tertiary)] lg:pb-3">
                 {industrialReference
                   ? "Opportunity sections"
                   : "Workspace sections"}
               </p>
-              <div className="flex gap-2 overflow-x-auto lg:flex-col lg:overflow-visible">
+              <div className="flex gap-2 overflow-x-auto pb-1 lg:flex-col lg:overflow-visible lg:pb-0">
                 {sidebar?.map((item) => {
                   const Icon = iconMap[item.iconName];
                   const active = item.id === activeView;
                   const className = [
-                    "inline-flex min-h-11 min-w-fit items-center justify-center gap-2 rounded-[4px] border px-3 py-2 transition lg:w-full lg:justify-start",
+                    "inline-flex min-h-10 min-w-fit items-center justify-center gap-2 rounded-[4px] border px-3 py-2 transition lg:min-h-11 lg:w-full lg:justify-start",
                     active
                       ? industrialReference
-                        ? "border-[#005eb8] bg-white text-[#003d7c] shadow-[inset_3px_0_0_#005eb8]"
+                        ? "border-[#005eb8] bg-white text-[#003d7c] shadow-[inset_0_-3px_0_#005eb8] lg:shadow-[inset_3px_0_0_#005eb8]"
                         : "border-[#005eb8] bg-white text-[#003d7c] shadow-[inset_3px_0_0_#005eb8]"
                       : "border-transparent bg-transparent text-[var(--text-secondary)] hover:border-[#c7d2e2] hover:bg-white hover:text-[var(--text-primary)]"
                   ].join(" ");
@@ -301,7 +306,7 @@ export function StandardWorkspaceLayout<TView extends string>({
               "min-w-0 bg-white",
               supportArea
                 ? industrialReference
-                  ? "grid gap-5 bg-[#f4f4f5] p-4 xl:grid-cols-[minmax(0,1fr)_360px] 2xl:grid-cols-[minmax(0,1fr)_400px] sm:p-6"
+                  ? "grid gap-4 bg-[#f4f4f5] p-4 xl:grid-cols-[minmax(0,1fr)_340px] 2xl:grid-cols-[minmax(0,1fr)_380px] sm:p-5"
                   : "grid gap-5 bg-[#f4f4f5] p-4 xl:grid-cols-[minmax(0,1fr)_340px] 2xl:grid-cols-[minmax(0,1fr)_380px] sm:p-6"
                 : "",
               contentClassName
@@ -311,7 +316,10 @@ export function StandardWorkspaceLayout<TView extends string>({
           >
             <div className="min-w-0">{children}</div>
             {supportArea ? (
-              <aside className="min-w-0 space-y-4 xl:sticky xl:top-4 xl:self-start">
+              <aside
+                aria-label="Workspace command rail"
+                className="min-w-0 space-y-3 xl:sticky xl:top-4 xl:self-start"
+              >
                 {supportArea}
               </aside>
             ) : null}

@@ -156,6 +156,13 @@ loaders, server actions, auth, tenant, portal, payment, signature, scheduling,
 or workflow behavior. Follow-up visual work should target Estimate Review and
 Invoice Review first, then CrewBoard/schedule-board composition.
 
+Latest Opportunity Workspace Figma fidelity note: the branch now removes the
+duplicated record identity panel inside `/leads/:leadId`, keeps the route and
+`?view=` section model stable, uses the overview as a compact guided sales
+workflow, and turns the right support column into a status/next-action/estimate
+handoff command rail. Continue to treat Dashboard as the next Figma fidelity
+target before Settings unless a narrower review-screen slice is requested.
+
 Role-aware dashboards and workspace personalization are approved target
 direction only. Preferred model: Platform Defaults -> Organization Presets ->
 User Personalization. These layers may change presentation, ordering, filtering,

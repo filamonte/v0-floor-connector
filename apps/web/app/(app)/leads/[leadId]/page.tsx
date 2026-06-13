@@ -169,18 +169,18 @@ function OpportunityStatusControl({
   return (
     <form
       action={updateOpportunityStatusAction}
-      className="rounded-2xl border border-[#c7d2e2] bg-white px-4 py-3"
+      className="border border-[#d1d5db] bg-white px-5 py-4 shadow-none"
     >
       <input type="hidden" name="opportunityId" value={opportunity.id} />
       <input type="hidden" name="returnTo" value={returnTo} />
       <label className="block">
-        <span className="text-xs font-semibold uppercase tracking-[0.16em] text-[#8f5b32]">
+        <span className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#005eb8]">
           Opportunity status
         </span>
         <select
           name="status"
           defaultValue={opportunity.status}
-          className="mt-2 h-10 w-full rounded-[6px] border border-[#d9cdc2] bg-white px-3 text-sm font-medium text-[#221a14] outline-none transition focus:border-[#ef7d32]"
+          className="mt-2 h-10 w-full rounded-[4px] border border-[#c7d2e2] bg-white px-3 text-sm font-medium text-[#0f172a] outline-none transition focus:border-[#005eb8] focus:ring-2 focus:ring-[#cfe7ff]"
         >
           {opportunityStatusesList.map((status) => (
             <option key={status} value={status}>
@@ -190,7 +190,7 @@ function OpportunityStatusControl({
         </select>
       </label>
       <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <p className="text-xs leading-5 text-[#6f6256]">
+        <p className="text-xs leading-5 text-[#475569]">
           Uses the existing opportunity status list. Site visit scheduling
           details stay in the Site Visit view.
         </p>
@@ -576,7 +576,7 @@ export default async function LeadDetailPage({
       currentView={currentView}
       summaryBand={
         <WorkspaceSummaryBand
-          className="grid gap-4 md:grid-cols-2"
+          className="grid gap-3 md:grid-cols-2 xl:grid-cols-4"
           items={[
             {
               key: "status",
@@ -599,6 +599,29 @@ export default async function LeadDetailPage({
                   {formatStatusLabel(opportunity.siteAssessmentStatus)}
                 </p>
               )
+            },
+            {
+              key: "estimate-writer",
+              label: "Estimate writer",
+              content: (
+                <p className="text-sm font-semibold text-slate-950">
+                  {estimateWriterName ?? "Unassigned"}
+                </p>
+              )
+            },
+            {
+              key: "linked-work",
+              label: "Open linked work",
+              content: (
+                <p className="text-sm font-semibold text-slate-950">
+                  {
+                    linkedWorkItems.filter(
+                      (workItem) => workItem.status === "open"
+                    ).length
+                  }{" "}
+                  open
+                </p>
+              )
             }
           ]}
         />
@@ -618,7 +641,7 @@ export default async function LeadDetailPage({
 
           <section className="border border-[#d1d5db] bg-white px-5 py-5 shadow-none">
             <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#005eb8]">
-              Guided next move
+              Command rail
             </p>
             <h2 className="mt-2 text-lg font-semibold tracking-tight text-[#0f172a]">
               {nextAction.title}
@@ -688,59 +711,102 @@ export default async function LeadDetailPage({
     >
       <div className="space-y-5">
         <section className="space-y-5">
-          <section className="border border-slate-200 bg-white px-4 py-5 sm:px-5">
+          <section className="space-y-5">
             <div
               className={
                 currentView === "overview"
-                  ? "flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between"
+                  ? "grid gap-4 xl:grid-cols-[minmax(0,1.12fr)_minmax(300px,0.88fr)]"
                   : "hidden"
               }
             >
-              <div>
-                <p className="text-sm font-semibold uppercase tracking-[0.24em] text-[#005eb8]">
-                  Opportunity Workspace
+              <section className="border border-[#d1d5db] bg-white px-5 py-5 shadow-none">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#005eb8]">
+                  Guided sales workflow
                 </p>
-                <h2 className="mt-4 text-3xl font-semibold tracking-tight text-slate-950">
-                  {opportunity.title}
+                <h2 className="mt-2 text-2xl font-semibold tracking-tight text-slate-950">
+                  Qualification to estimate handoff
                 </h2>
-                <p className="mt-3 max-w-2xl text-base leading-7 text-slate-600">
-                  Review Lead Intake context, complete the site visit and scope
-                  intake, then hand the active sales opportunity into the shared
-                  customer, project, and estimate chain.
+                <p className="mt-3 text-sm leading-6 text-slate-600">
+                  Keep the pre-sale workflow on this opportunity: qualify the
+                  lead, capture assessment context, and route estimating work
+                  without creating duplicate customer, project, or estimate
+                  truth.
                 </p>
-              </div>
-              <div className="flex flex-wrap gap-3">
-                <Link
-                  href="/leads"
-                  className="inline-flex items-center rounded-[4px] border border-[#c7d2e2] px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:bg-white"
-                >
-                  Back to Leads & Opportunities
-                </Link>
-                {canStartEstimate ? (
-                  primaryEstimateHref ? (
+                <div className="mt-5 grid gap-3 md:grid-cols-3">
+                  {[
+                    {
+                      label: "1. Qualify",
+                      title: "Contact and ownership",
+                      body:
+                        opportunity.primaryContact?.displayName ??
+                        opportunity.prospectName ??
+                        "Contact not provided",
+                      href: qualificationHref
+                    },
+                    {
+                      label: "2. Assess",
+                      title: "Site visit and scope",
+                      body: formatStatusLabel(opportunity.siteAssessmentStatus),
+                      href: siteVisitHref
+                    },
+                    {
+                      label: "3. Handoff",
+                      title: "Estimate readiness",
+                      body: salesEstimateReadiness.title,
+                      href: estimatePlanHref
+                    }
+                  ].map((step) => (
                     <Link
-                      href={primaryEstimateHref}
-                      className="inline-flex items-center rounded-[4px] border border-[#005eb8] bg-[#005eb8] px-4 py-2 text-sm font-medium text-white transition hover:bg-[#003d7c]"
+                      key={step.label}
+                      href={step.href}
+                      className="min-w-0 border border-[#d1d5db] bg-[#f8fafc] px-4 py-4 transition hover:border-[#005eb8] hover:bg-[#eef6ff]"
                     >
-                      Start estimate
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#005eb8]">
+                        {step.label}
+                      </p>
+                      <p className="mt-2 text-sm font-semibold text-slate-950">
+                        {step.title}
+                      </p>
+                      <p className="mt-1 text-xs leading-5 text-slate-600">
+                        {step.body}
+                      </p>
                     </Link>
-                  ) : (
-                    <form action={startEstimateFromOpportunityAction}>
-                      <input
-                        type="hidden"
-                        name="opportunityId"
-                        value={opportunity.id}
-                      />
-                      <button
-                        type="submit"
-                        className="inline-flex items-center rounded-[4px] border border-[#005eb8] bg-[#005eb8] px-4 py-2 text-sm font-medium text-white transition hover:bg-[#003d7c]"
-                      >
-                        Start estimate
-                      </button>
-                    </form>
-                  )
-                ) : null}
-              </div>
+                  ))}
+                </div>
+              </section>
+
+              <section className="border border-[#d1d5db] bg-white px-5 py-5 shadow-none">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#005eb8]">
+                  Opportunity context
+                </p>
+                <dl className="mt-4 grid gap-3 text-sm leading-6 text-slate-600 sm:grid-cols-2 xl:grid-cols-1">
+                  <div>
+                    <dt className="font-medium text-slate-950">Customer</dt>
+                    <dd>{opportunity.customer?.name ?? "Not linked yet"}</dd>
+                  </div>
+                  <div>
+                    <dt className="font-medium text-slate-950">Project</dt>
+                    <dd>{opportunity.project?.name ?? "Not linked yet"}</dd>
+                  </div>
+                  <div>
+                    <dt className="font-medium text-slate-950">Primary site</dt>
+                    <dd>
+                      {formatAddress([
+                        opportunity.siteName,
+                        opportunity.addressLine1,
+                        opportunity.city,
+                        opportunity.stateRegion
+                      ])}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="font-medium text-slate-950">
+                      Next follow-up
+                    </dt>
+                    <dd>{formatDateTime(opportunity.nextFollowUpAt)}</dd>
+                  </div>
+                </dl>
+              </section>
             </div>
 
             {resolvedSearchParams.error ? (

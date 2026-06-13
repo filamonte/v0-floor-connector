@@ -601,6 +601,65 @@ Results:
 Screenshots saved under
 `test-results/industrial-os-visual-pass/`.
 
+## Opportunity Workspace Figma Fidelity Pass
+
+Date: 2026-06-13
+
+Figma reference:
+
+- Board:
+  `https://www.figma.com/design/N0tVE3uKWpHZc4dlF6ytgn`
+- Frame used: `REVIEW / Opportunity Workspace / Desktop` on
+  `03 Side-by-Side Gap Review`
+
+### Gaps Addressed
+
+- Collapsed the duplicate Opportunity identity zone. The record title and
+  primary route actions now live in the top workspace header only.
+- Replaced the repeated overview title panel with a compact guided sales
+  workflow surface that links to Qualification / Intake, Assessment, and
+  Estimate Handoff using the existing `?view=` query model.
+- Converted the right support stack toward a command rail: the status control
+  now uses the blue token set, the next-action panel is labeled as the command
+  rail, and the rail stays separate from record identity.
+- Tightened the first viewport by expanding the summary band to real status,
+  inspection, estimate-writer, and linked-work signals.
+- Updated `StandardWorkspaceLayout` so contextual workspace navigation is
+  sticky on mobile and desktop, query-backed, and still local to the workspace
+  rather than a global nav replacement.
+
+### Production Safety
+
+- No schema, migration, loader, server-action, auth, tenant, portal, payment,
+  signature, scheduling, or route behavior changed.
+- No fake data or duplicate opportunity/customer/project/estimate/work-item
+  structures were introduced.
+- The route remains `/leads/[leadId]`, and Opportunity Workspace section
+  switching remains backed by the existing `?view=` query parameter.
+
+### Deviations
+
+- The approved Stitch sales reference is denser and more table-led than the
+  live FloorConnector opportunity route. This pass preserves existing section
+  ownership and forms instead of replacing them with a decorative process rail.
+- Some deeper page-local cards still use older large radii. Those are left for
+  a broader component-normalization pass so this slice stays focused on the
+  first-viewport and command-rail mismatch.
+
+### Remaining Gaps
+
+- The deeper Qualification, Assessment Package, Communication, Work Items, and
+  Activity views still contain older local card rhythm in places.
+- Mobile should be rechecked after the next protected-route screenshot pass to
+  confirm the sticky contextual tabs remain comfortable with live data density.
+
+### Next Target Recommendation
+
+Dashboard should be the next Figma fidelity target before Settings. The board
+shows Settings is already close to the approved control-room pattern, while
+Dashboard still has the larger first-viewport command deck and queue-density
+composition gap.
+
 ### Validation
 
 Passed:
