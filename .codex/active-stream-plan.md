@@ -43,6 +43,29 @@ Wave-launch prompts must also require `pnpm.cmd worktree:doctor` and use
 for local tooling, Playwright, optional CLI, worktree-link, and validation
 guidance.
 
+## Figma Fidelity Refactor V1
+
+Gate date: 2026-06-13.
+
+Stream: `figma-fidelity-refactor-v1`.
+
+Branch: `stream/figma-fidelity-refactor-v1`.
+
+Worktree: `C:\FC-worktrees\figma-fidelity-refactor-v1`.
+
+Status: Active.
+
+Mission: after PR #41 merged Industrial OS Visual System V1, use the approved
+Figma comparison board directly through Figma MCP to tighten the protected app
+shell, shared Industrial OS primitives, Projects, Leads / Opportunity, Project
+Workspace, Settings, Universal Capture, and Portal presentation toward the
+Industrial OS V2 direction.
+
+Forbidden: schema, migrations, route renames, loaders, server actions, auth,
+tenant boundaries, portal grants, payment/signature/scheduling behavior,
+provider mutation, fake KPIs, fake statuses, fake AI, duplicate queues,
+duplicate data models, and new source-of-truth tables.
+
 ## UX Recovery Wave Foundation
 
 Foundation date: 2026-06-11.

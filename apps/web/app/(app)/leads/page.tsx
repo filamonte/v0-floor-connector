@@ -262,37 +262,38 @@ export default async function LeadsPage({ searchParams }: LeadsPageProps) {
       eyebrow="Sales"
       title={`Leads & Opportunities for ${organizationContext.organization.displayName}`}
       description="Run Lead Intake and active Sales Opportunity follow-up from one board, while preserving the existing /leads route and canonical opportunities records."
+      headerTone="dark"
       summary={
-        <div className="grid gap-px border border-[#d1d5db] bg-[#d1d5db] sm:grid-cols-2 xl:grid-cols-4">
-          <div className="bg-white px-4 py-3">
-            <p className="text-[11px] uppercase tracking-[0.14em] text-[var(--text-tertiary)]">
+        <div className="grid gap-px overflow-hidden rounded-[4px] border border-white/10 bg-white/10 sm:grid-cols-2 xl:grid-cols-4">
+          <div className="bg-white/[0.075] px-4 py-3">
+            <p className="text-[11px] uppercase tracking-[0.14em] text-[#8fc7ff]">
               All opportunities
             </p>
-            <p className="mt-1 text-2xl font-semibold tracking-tight text-[var(--text-primary)]">
+            <p className="mt-1 text-2xl font-semibold tracking-tight text-white">
               {opportunities.length}
             </p>
           </div>
-          <div className="bg-white px-4 py-3">
-            <p className="text-[11px] uppercase tracking-[0.14em] text-[var(--text-tertiary)]">
+          <div className="bg-white/[0.075] px-4 py-3">
+            <p className="text-[11px] uppercase tracking-[0.14em] text-[#8fc7ff]">
               My opportunities
             </p>
-            <p className="mt-1 text-2xl font-semibold tracking-tight text-[var(--text-primary)]">
+            <p className="mt-1 text-2xl font-semibold tracking-tight text-white">
               {myOpportunities.length}
             </p>
           </div>
-          <div className="bg-white px-4 py-3">
-            <p className="text-[11px] uppercase tracking-[0.14em] text-[var(--text-tertiary)]">
+          <div className="bg-white/[0.075] px-4 py-3">
+            <p className="text-[11px] uppercase tracking-[0.14em] text-[#8fc7ff]">
               New intake
             </p>
-            <p className="mt-1 text-2xl font-semibold tracking-tight text-[var(--text-primary)]">
+            <p className="mt-1 text-2xl font-semibold tracking-tight text-white">
               {newIntake.length}
             </p>
           </div>
-          <div className="bg-white px-4 py-3">
-            <p className="text-[11px] uppercase tracking-[0.14em] text-[var(--text-tertiary)]">
+          <div className="bg-white/[0.075] px-4 py-3">
+            <p className="text-[11px] uppercase tracking-[0.14em] text-[#8fc7ff]">
               Proposal sent
             </p>
-            <p className="mt-1 text-2xl font-semibold tracking-tight text-[var(--text-primary)]">
+            <p className="mt-1 text-2xl font-semibold tracking-tight text-white">
               {proposalSentOpportunities.length}
             </p>
           </div>
@@ -547,17 +548,21 @@ export default async function LeadsPage({ searchParams }: LeadsPageProps) {
           </section>
         </section>
 
-        <section className="order-1 overflow-hidden border border-[#d1d5db] bg-white">
-          <div className="flex items-center justify-between gap-4 border-b border-[#e5e7eb] px-4 py-3">
+        <section className="order-1 overflow-hidden rounded-[4px] border border-[#cfd6df] bg-white">
+          <div className="flex flex-col gap-3 border-b border-[#e5e7eb] bg-[#fbfcfd] px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#005eb8]">
-                Opportunity records
+                Sales command surface
               </p>
               <h3 className="mt-1 text-[17px] font-semibold tracking-tight text-[var(--text-primary)]">
                 {view === "my" ? "Assigned opportunities" : "All opportunities"}
               </h3>
+              <p className="mt-1 max-w-2xl text-xs leading-5 text-[#475569]">
+                Intake, qualification, site visits, and estimating handoff
+                remain on the canonical opportunity chain.
+              </p>
             </div>
-            <p className="text-sm leading-6 text-slate-500">
+            <p className="shrink-0 rounded-[4px] border border-[#c7d2e2] bg-white px-3 py-1.5 text-sm font-semibold leading-6 text-[#0f172a]">
               {visibleOpportunities.length} visible
             </p>
           </div>

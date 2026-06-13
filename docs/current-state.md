@@ -88,6 +88,15 @@ focused sheet with an intent-preview rail. This is presentation-only and does
 not change canonical records, schema, routes, loaders, actions, auth, tenant
 boundaries, portal access, payments, signatures, scheduling, providers, or
 workflow state.
+Figma Fidelity Refactor V1 extends that foundation from the approved Figma
+board through Figma MCP. It adds a richer existing-route Projects command menu
+to the top shell, tightens Projects and Leads manager pages into command
+surfaces with dark KPI/action bands, keeps Project / Opportunity Workspace on
+the shared local command-rail pattern with action-first mobile ordering, and
+keeps Settings organization defaults aligned to `#005EB8`. It remains
+presentation-only and does not change canonical records, schema, routes,
+loaders, server actions, auth, tenant boundaries, portal access, payments,
+signatures, scheduling, providers, or workflow state.
 
 If this document conflicts with a planning, target-design, or historical document, trust this document for implemented status.
 

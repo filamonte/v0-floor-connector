@@ -138,11 +138,11 @@ export function StandardWorkspaceLayout<TView extends string>({
       <section
         className={
           industrialReference
-            ? "border border-[#18181b] bg-[#09090b] px-4 py-5 text-white shadow-none sm:px-6 lg:px-8"
+            ? "border border-[#111827] bg-[#080a0f] px-4 py-5 text-white shadow-none sm:px-6 lg:px-8"
             : "border border-[#d1d5db] bg-white px-4 py-4 shadow-none sm:px-6"
         }
       >
-        <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
+        <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(280px,0.34fr)] xl:items-start">
           <div className="min-w-0">
             {header.eyebrow ? (
               <p
@@ -177,9 +177,7 @@ export function StandardWorkspaceLayout<TView extends string>({
             ) : null}
           </div>
           {header.actions ? (
-            <div className="xl:max-w-[420px] xl:flex-shrink-0 xl:self-start">
-              {header.actions}
-            </div>
+            <div className="xl:self-start">{header.actions}</div>
           ) : null}
         </div>
       </section>
@@ -197,8 +195,8 @@ export function StandardWorkspaceLayout<TView extends string>({
         <div
           className={[
             industrialReference
-              ? "grid min-h-[620px] bg-[#f4f4f5]"
-              : "grid min-h-[620px] bg-[#f4f4f5]",
+              ? "grid min-h-[560px] bg-[#f4f4f5]"
+              : "grid min-h-[560px] bg-[#f4f4f5]",
             hasSidebar
               ? industrialReference
                 ? "grid-cols-1 lg:grid-cols-[260px_minmax(0,1fr)]"
@@ -300,7 +298,7 @@ export function StandardWorkspaceLayout<TView extends string>({
               "min-w-0 bg-white",
               supportArea
                 ? industrialReference
-                  ? "grid gap-4 bg-[#f4f4f5] p-4 xl:grid-cols-[minmax(0,1fr)_340px] 2xl:grid-cols-[minmax(0,1fr)_380px] sm:p-5"
+                  ? "grid gap-4 bg-[#f4f4f5] p-3 xl:grid-cols-[minmax(0,1fr)_340px] 2xl:grid-cols-[minmax(0,1fr)_380px] sm:p-5"
                   : "grid gap-5 bg-[#f4f4f5] p-4 xl:grid-cols-[minmax(0,1fr)_340px] 2xl:grid-cols-[minmax(0,1fr)_380px] sm:p-6"
                 : "",
               contentClassName
@@ -312,7 +310,7 @@ export function StandardWorkspaceLayout<TView extends string>({
             {supportArea ? (
               <aside
                 aria-label="Workspace command rail"
-                className="min-w-0 space-y-3 xl:sticky xl:top-4 xl:self-start"
+                className="order-first min-w-0 space-y-3 xl:order-none xl:sticky xl:top-4 xl:self-start"
               >
                 {supportArea}
               </aside>
