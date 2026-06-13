@@ -330,6 +330,7 @@ export default async function PortalHomePage() {
         </div>
 
         <DetailPanel
+          id="portal-action-required"
           title="Needs Your Attention"
           description="Shared estimates, signatures, payments, and project items waiting for customer review."
         >
@@ -376,6 +377,7 @@ export default async function PortalHomePage() {
         </DetailPanel>
 
         <DetailPanel
+          id="portal-projects"
           title="Active Projects"
           description="Project cards grouped for quick scanning by status and next customer step."
         >
@@ -477,6 +479,7 @@ export default async function PortalHomePage() {
         </DetailPanel>
 
         <DetailPanel
+          id="portal-documents"
           title="Documents / Approvals"
           description="Estimates and contracts grouped by project and review state."
         >
@@ -515,6 +518,7 @@ export default async function PortalHomePage() {
         </DetailPanel>
 
         <DetailPanel
+          id="portal-billing"
           title="Invoices / Payments"
           description="Open balances, payment status, and invoice links across your shared projects."
         >

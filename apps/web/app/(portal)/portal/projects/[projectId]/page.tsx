@@ -503,13 +503,16 @@ export default async function PortalProjectDetailPage({
           </div>
         ) : null}
 
-        <PortalProjectCustomerActionHub
-          statusWindow={statusWindow}
-          statusExplanation={statusExplanation}
-          customerHubCards={customerHubCards}
-        />
+        <div id="portal-action-required">
+          <PortalProjectCustomerActionHub
+            statusWindow={statusWindow}
+            statusExplanation={statusExplanation}
+            customerHubCards={customerHubCards}
+          />
+        </div>
 
         <DetailPanel
+          id="portal-documents"
           title="Documents / Approvals"
           description="Open estimates, contracts, invoices, and change orders shared for this project."
         >
@@ -568,6 +571,7 @@ export default async function PortalProjectDetailPage({
         </DetailPanel>
 
         <DetailPanel
+          id="portal-billing"
           title="Invoices / Payments"
           description="Current invoice, payment, and balance details shared for this project."
         >
