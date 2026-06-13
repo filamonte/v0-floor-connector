@@ -101,8 +101,8 @@ function ProjectsSummaryStat({
   value: number;
 }) {
   return (
-    <div className="rounded-lg border border-white/10 bg-white/[0.07] px-4 py-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]">
-      <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--copper-light)]">
+    <div className="rounded-[4px] border border-white/10 bg-white/[0.075] px-4 py-3 shadow-none">
+      <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#8fc7ff]">
         {label}
       </p>
       <p className="mt-1 text-2xl font-semibold tracking-tight text-white">
@@ -378,17 +378,21 @@ export default async function ProjectsPage({
           />
         </section>
 
-        <section className="order-1 overflow-hidden rounded-lg border border-[var(--border-warm)] bg-white shadow-sm">
-          <div className="flex items-center justify-between gap-4 border-b border-[var(--border-warm)] bg-[var(--highlight)]/45 px-4 py-2.5">
+        <section className="order-1 overflow-hidden rounded-[4px] border border-[#cfd6df] bg-white shadow-none">
+          <div className="flex flex-col gap-3 border-b border-[#e5e7eb] bg-[#fbfcfd] px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
-                Recent records
+              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#005eb8]">
+                Project command surface
               </p>
               <h3 className="mt-1 text-[17px] font-semibold tracking-tight text-slate-950">
                 Latest project updates
               </h3>
+              <p className="mt-1 max-w-2xl text-xs leading-5 text-[#475569]">
+                Start with the current project record, then use the linked
+                workspace or status filter that owns the next step.
+              </p>
             </div>
-            <p className="text-sm leading-6 text-slate-500">
+            <p className="shrink-0 rounded-[4px] border border-[#c7d2e2] bg-white px-3 py-1.5 text-sm font-semibold leading-6 text-[#0f172a]">
               {recentProjects.length} visible
             </p>
           </div>

@@ -15,16 +15,16 @@ type PageProps = {
 };
 
 const organizationFieldClassName =
-  "w-full rounded-[4px] border border-[var(--border-warm)] bg-white px-4 py-3 text-sm text-[var(--text-primary)] outline-none transition placeholder:text-[var(--text-tertiary)] focus:border-[var(--copper)] focus:ring-2 focus:ring-[var(--copper)]/15";
+  "w-full rounded-[4px] border border-[#cfd6df] bg-white px-4 py-3 text-sm text-[var(--text-primary)] outline-none transition placeholder:text-[var(--text-tertiary)] focus:border-[#005eb8] focus:ring-2 focus:ring-[#005eb8]/15";
 const organizationNoticeClassName =
-  "rounded-lg border border-[var(--border-warm)] bg-[var(--highlight)] px-4 py-4 text-sm leading-6 text-[var(--text-secondary)]";
+  "rounded-[4px] border border-[#cfd6df] bg-[#f7f9fc] px-4 py-4 text-sm leading-6 text-[var(--text-secondary)]";
 
 export default async function OrganizationSettingsPage({
   searchParams
 }: PageProps) {
   const resolvedSearchParams = (await searchParams) ?? {};
   const scope = await requireOrganizationAdminScope("/settings/organization");
-  const brandAccentColor = scope.organization.brandAccentColor ?? "#d8731f";
+  const brandAccentColor = scope.organization.brandAccentColor ?? "#005EB8";
 
   return (
     <div className="space-y-6">
@@ -164,7 +164,7 @@ export default async function OrganizationSettingsPage({
                   <input
                     name="brandAccentColor"
                     defaultValue={scope.organization.brandAccentColor ?? ""}
-                    placeholder="#d8731f"
+                    placeholder="#005EB8"
                     className={organizationFieldClassName}
                   />
                   <span className="mt-2 block text-xs leading-5 text-slate-500">

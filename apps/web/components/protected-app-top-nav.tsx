@@ -145,9 +145,11 @@ export function ProtectedAppTopNav({
   } = useProtectedNavigationState(currentRole);
   const [menuOpen, setMenuOpen] = useState(false);
   const [accountMenuOpen, setAccountMenuOpen] = useState(false);
+  const [projectMenuOpen, setProjectMenuOpen] = useState(false);
   const shellRef = useRef<HTMLDivElement | null>(null);
   const menuId = "protected-app-top-nav-menu";
   const accountMenuId = "protected-app-account-menu";
+  const projectMenuId = "protected-app-project-menu";
   const organizationInitials = getInitials(organizationName);
   const userInitials = getInitials(userEmail.split("@")[0] ?? userEmail);
   const quickLinks = useMemo(
@@ -161,14 +163,46 @@ export function ProtectedAppTopNav({
         .filter((item): item is NonNullable<typeof item> => Boolean(item)),
     [menuSections]
   );
+  const projectCommandLinks = useMemo(
+    () => [
+      {
+        href: projectLauncherHref,
+        label:
+          projectLauncherHref === "/projects"
+            ? "Project command center"
+            : "Recent Project Workspace",
+        description:
+          projectLauncherHref === "/projects"
+            ? "Review all active projects and lifecycle queues."
+            : "Return to the last Project Workspace opened in this session."
+      },
+      {
+        href: "/projects?status=approved",
+        label: "Approved projects",
+        description: "Review commercial handoffs moving toward operations."
+      },
+      {
+        href: "/schedule",
+        label: "CrewBoard / schedule",
+        description: "Continue timing, crew, and field handoff review."
+      },
+      {
+        href: "/leads",
+        label: "Sales opportunities",
+        description: "Open upstream Lead Intake and Opportunity Workspace."
+      }
+    ],
+    [projectLauncherHref]
+  );
 
   useEffect(() => {
     setMenuOpen(false);
     setAccountMenuOpen(false);
+    setProjectMenuOpen(false);
   }, [pathname]);
 
   useEffect(() => {
-    if (!menuOpen && !accountMenuOpen) {
+    if (!menuOpen && !accountMenuOpen && !projectMenuOpen) {
       return;
     }
 
@@ -176,6 +210,7 @@ export function ProtectedAppTopNav({
       if (!shellRef.current?.contains(event.target as Node)) {
         setMenuOpen(false);
         setAccountMenuOpen(false);
+        setProjectMenuOpen(false);
       }
     }
 
@@ -183,6 +218,7 @@ export function ProtectedAppTopNav({
       if (event.key === "Escape") {
         setMenuOpen(false);
         setAccountMenuOpen(false);
+        setProjectMenuOpen(false);
       }
     }
 
@@ -193,7 +229,7 @@ export function ProtectedAppTopNav({
       window.removeEventListener("pointerdown", handlePointerDown);
       window.removeEventListener("keydown", handleEscape);
     };
-  }, [accountMenuOpen, menuOpen]);
+  }, [accountMenuOpen, menuOpen, projectMenuOpen]);
 
   return (
     <div
@@ -261,6 +297,7 @@ export function ProtectedAppTopNav({
             onClick={() => {
               setAccountMenuOpen((open) => !open);
               setMenuOpen(false);
+              setProjectMenuOpen(false);
             }}
             aria-haspopup="menu"
             aria-expanded={accountMenuOpen}
@@ -352,31 +389,91 @@ export function ProtectedAppTopNav({
 
         <div className="hidden h-5 w-px bg-white/10 sm:block" />
 
-        <Link
-          href={projectLauncherHref}
-          aria-current={pathname.startsWith("/projects") ? "page" : undefined}
-          className={[
-            "inline-flex h-8 min-w-[170px] items-center justify-between gap-2 rounded-[4px] border px-2.5 text-left text-zinc-200 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--copper)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--graphite)]",
-            pathname.startsWith("/projects")
-              ? "border-[var(--copper)] bg-[var(--copper)] text-white"
-              : "border-white/15 bg-white/[0.06] hover:border-[var(--copper)] hover:bg-white/10 hover:text-white"
-          ].join(" ")}
-        >
-          <FloorConnectorIcon
-            name="projects"
-            className="h-3.5 w-3.5 text-white/50"
-          />
-          <span className="min-w-0 truncate text-xs font-medium">
-            {projectLauncherHref === "/projects"
-              ? "Select a project"
-              : "Recent project"}
-          </span>
-          <Chevron open={false} />
-        </Link>
+        <div className="relative">
+          <button
+            type="button"
+            onClick={() => {
+              setProjectMenuOpen((open) => !open);
+              setMenuOpen(false);
+              setAccountMenuOpen(false);
+            }}
+            aria-haspopup="menu"
+            aria-expanded={projectMenuOpen}
+            aria-controls={projectMenuId}
+            aria-current={pathname.startsWith("/projects") ? "page" : undefined}
+            className={[
+              "inline-flex h-8 min-w-[190px] items-center justify-between gap-2 rounded-[4px] border px-2.5 text-left text-zinc-200 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#005eb8] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--graphite)]",
+              pathname.startsWith("/projects") || projectMenuOpen
+                ? "border-[#005eb8] bg-[#005eb8] text-white"
+                : "border-white/15 bg-white/[0.06] hover:border-[#005eb8] hover:bg-white/10 hover:text-white"
+            ].join(" ")}
+          >
+            <FloorConnectorIcon
+              name="projects"
+              className="h-3.5 w-3.5 text-white/70"
+            />
+            <span className="min-w-0 truncate text-xs font-semibold">
+              {projectLauncherHref === "/projects"
+                ? "Projects command"
+                : "Recent project"}
+            </span>
+            <Chevron open={projectMenuOpen} />
+          </button>
+
+          {projectMenuOpen ? (
+            <div
+              id={projectMenuId}
+              role="menu"
+              className="absolute left-0 top-10 z-50 w-[340px] max-w-[calc(100vw-2rem)] border border-[#cfd6df] bg-white p-2 text-[#0f172a] shadow-[0_24px_70px_-36px_rgba(15,23,42,0.55)]"
+            >
+              <div className="border-b border-[#e5e7eb] px-3 py-2.5">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#005eb8]">
+                  Project command
+                </p>
+                <p className="mt-1 text-sm leading-5 text-[#475569]">
+                  Existing routes only. Project work still happens in the owning
+                  workspace.
+                </p>
+              </div>
+              <div className="py-2">
+                {projectCommandLinks.map((item) => (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    role="menuitem"
+                    onClick={() => setProjectMenuOpen(false)}
+                    className="block rounded-[4px] border border-transparent px-3 py-2.5 transition hover:border-[#c7d2e2] hover:bg-[#eef6ff] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#005eb8]"
+                  >
+                    <span className="block text-sm font-semibold text-[#0f172a]">
+                      {item.label}
+                    </span>
+                    <span className="mt-1 block text-xs leading-5 text-[#475569]">
+                      {item.description}
+                    </span>
+                  </Link>
+                ))}
+              </div>
+              <div className="border-t border-[#e5e7eb] px-3 py-2">
+                <Link
+                  href="/projects?compose=1"
+                  role="menuitem"
+                  onClick={() => setProjectMenuOpen(false)}
+                  className="inline-flex min-h-8 w-full items-center justify-center rounded-[4px] border border-[#005eb8] bg-[#005eb8] px-3 py-2 text-xs font-semibold text-white transition hover:bg-[#003d7c] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#005eb8]"
+                >
+                  New project
+                </Link>
+              </div>
+            </div>
+          ) : null}
+        </div>
 
         <button
           type="button"
-          onClick={() => setMenuOpen((open) => !open)}
+          onClick={() => {
+            setMenuOpen((open) => !open);
+            setProjectMenuOpen(false);
+            setAccountMenuOpen(false);
+          }}
           aria-expanded={menuOpen}
           aria-controls={menuId}
           className={[

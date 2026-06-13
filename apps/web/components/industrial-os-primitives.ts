@@ -1,20 +1,29 @@
 export const industrialPanelClassName =
-  "rounded-[4px] border border-[#d1d5db] bg-white shadow-[0_1px_0_rgba(9,9,11,0.035)]";
+  "rounded-[4px] border border-[#cfd6df] bg-white shadow-[0_1px_0_rgba(9,9,11,0.035)]";
 
 export const industrialPanelHeaderClassName =
   "border-b border-[#e5e7eb] bg-[#fbfcfd]";
 
 export const industrialCommandSurfaceClassName =
-  "rounded-[4px] border border-[#18181b] bg-[#09090b] text-white shadow-none";
+  "rounded-[4px] border border-[#111827] bg-[#080a0f] text-white shadow-none";
 
 export const industrialCommandInsetClassName =
   "rounded-[4px] border border-white/10 bg-white/[0.065] shadow-none";
 
 export const industrialMutedPanelClassName =
-  "rounded-[4px] border border-[#d1d5db] bg-[#f9fafb] shadow-none";
+  "rounded-[4px] border border-[#cfd6df] bg-[#f7f9fc] shadow-none";
 
 export const industrialRailClassName =
-  "rounded-[4px] border border-[#d1d5db] bg-white shadow-[inset_3px_0_0_#005eb8]";
+  "rounded-[4px] border border-[#cfd6df] bg-white shadow-[inset_3px_0_0_#005eb8]";
+
+export const industrialCommandDeckClassName =
+  "rounded-[4px] border border-[#111827] bg-[#080a0f] text-white shadow-none";
+
+export const industrialCommandRailClassName =
+  "rounded-[4px] border border-[#cfd6df] bg-white shadow-[inset_4px_0_0_#005eb8]";
+
+export const industrialKpiBandClassName =
+  "grid gap-px overflow-hidden rounded-[4px] border border-[#cfd6df] bg-[#cfd6df]";
 
 export const industrialEyebrowClassName =
   "text-[11px] font-semibold uppercase tracking-[0.22em] text-[#005eb8]";

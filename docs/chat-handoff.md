@@ -93,6 +93,17 @@ when a future Codex prompt should apply the standard FloorConnector baseline for
 tool exposure checks, repo safety, validation, and completion reporting. A short
 future prompt can say: `Follow .codex/prompt-snippets/floorconnector-codex-baseline.md.`
 
+Figma Fidelity Refactor V1 is active in
+`C:\FC-worktrees\figma-fidelity-refactor-v1` on
+`stream/figma-fidelity-refactor-v1`. It starts after PR #41 merged Industrial OS
+Visual System V1 and uses the approved Figma board directly through Figma MCP.
+Current implemented scope is presentation-only: protected shell Projects
+command menu, Projects and Leads command-surface tightening, shared workspace
+70/30 header and mobile command-rail ordering, Settings organization blue
+defaults, and review packet documentation. Do not treat this stream as schema,
+loader, action, auth, tenant, portal, payment, signature, scheduling, provider,
+or canonical workflow work.
+
 Current automation readiness is Ready With Human Review Gate. Future planning
 must follow the loop Strategic Research / Product Council -> Capability, then
 Program, Wave, Stream, PR, Verification, and Merge. Future waves still require

@@ -54,6 +54,24 @@ The governing product architecture principle is defined in
 future waves must make FloorConnector feel more like one operational command
 center and less like disconnected modules.
 
+## Figma Fidelity Refactor V1
+
+Status: Active.
+
+Branch: `stream/figma-fidelity-refactor-v1`.
+Worktree: `C:\FC-worktrees\figma-fidelity-refactor-v1`.
+
+Purpose: apply a production-safe Figma fidelity pass after PR #41 merged the
+Industrial OS Visual System V1 foundation. The stream uses the approved Figma
+board directly through Figma MCP and may adjust protected shell chrome, shared
+visual primitives, Projects, Leads / Opportunity, Project Workspace, Settings,
+Universal Capture, and Portal presentation only.
+
+Shared non-goals: no schema, migrations, route renames, loader rewrites, server
+action rewrites, auth changes, tenant changes, portal-grant changes, payment or
+signature behavior changes, scheduling mutation, provider mutation, fake data,
+fake KPIs, duplicate queues, duplicate models, or new source-of-truth tables.
+
 ## Program Portfolio
 
 | Program | Name                        | Health  | Current wave posture                                                                                                                     |

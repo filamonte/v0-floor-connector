@@ -45,8 +45,8 @@ export function ContractorWorkspacePage({
         className={[
           "overflow-hidden rounded-[4px] border px-4 py-4 shadow-none sm:px-6",
           darkHeader
-            ? "border-[#27272a] bg-[#09090b] text-white"
-            : "border-[#d1d5db] bg-white"
+            ? "border-[#111827] bg-[#080a0f] text-white"
+            : "border-[#cfd6df] bg-white"
         ].join(" ")}
       >
         <div
@@ -55,7 +55,7 @@ export function ContractorWorkspacePage({
             darkHeader ? "bg-[#005eb8]" : "bg-[#005eb8]"
           ].join(" ")}
         />
-        <div className="flex min-w-0 flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
+        <div className="grid min-w-0 gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(320px,0.42fr)] xl:items-start">
           <div className="min-w-0">
             <p
               className={[
@@ -82,21 +82,17 @@ export function ContractorWorkspacePage({
               {description}
             </p>
           </div>
-          {summary ? (
-            <div className="min-w-0 xl:max-w-[620px] xl:flex-shrink-0">
-              {summary}
-            </div>
-          ) : null}
+          {summary ? <div className="min-w-0">{summary}</div> : null}
         </div>
 
         {ownership ? (
           <div
             className={[
-              "mt-3 grid gap-px overflow-hidden rounded-[6px] border text-xs leading-5 sm:grid-cols-2",
+              "mt-3 grid gap-px overflow-hidden rounded-[4px] border text-xs leading-5 sm:grid-cols-2",
               ownership.configuration ? "xl:grid-cols-3" : "",
               darkHeader
                 ? "border-white/15 bg-white/15"
-                : "border-[#d1d5db] bg-[#d1d5db]"
+                : "border-[#cfd6df] bg-[#cfd6df]"
             ].join(" ")}
           >
             {[
