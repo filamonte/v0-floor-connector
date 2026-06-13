@@ -11,6 +11,10 @@ type SettingsNavProps = {
 };
 
 function isActive(pathname: string, href: string) {
+  if (href === "/settings") {
+    return pathname === href;
+  }
+
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 

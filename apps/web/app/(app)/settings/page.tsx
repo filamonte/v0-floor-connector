@@ -36,6 +36,7 @@ type SetupSignal = {
 };
 
 type OwnerSection = {
+  eyebrow: string;
   title: string;
   description: string;
   href: string;
@@ -150,23 +151,26 @@ export default async function SettingsPage({
 
   const ownerSections: OwnerSection[] = [
     {
-      title: "Company",
+      eyebrow: "Company Controls",
+      title: "Company profile and identity",
       description:
-        "Profile, identity, brand header accent, contact details, and contractor website URL.",
+        "Keep the contractor-owned profile, app header identity, contact details, and web presence in one place.",
       href: "/settings/organization",
       ctaLabel: "Open company profile",
       facts: [
         scope.organization.displayName,
         scope.organization.websiteUrl ?? "Website URL missing",
-        scope.organization.primaryTrade ?? "Primary trade not set"
+        scope.organization.primaryTrade ?? "Primary trade not set",
+        "Tenant status remains platform-controlled"
       ]
     },
     {
-      title: "Team & Access",
+      eyebrow: "Users / Access",
+      title: "Company users and role guardrails",
       description:
-        "Organization members, roles, and tenant-scoped access guardrails.",
+        "Review organization members, role assignment, and admin-only troubleshooting without changing platform policy.",
       href: "/settings/admin",
-      ctaLabel: "Open team access",
+      ctaLabel: "Open users / access",
       facts: [
         `${members.length} member${members.length === 1 ? "" : "s"}`,
         "Company admins manage this organization only",
@@ -174,9 +178,10 @@ export default async function SettingsPage({
       ]
     },
     {
-      title: "Sales / Workflow",
+      eyebrow: "Workflow Defaults",
+      title: "Workflow gates and operating defaults",
       description:
-        "Contract generation defaults, Ready Check posture, workflow guidance, and AI assistance preferences.",
+        "Set Ready Check posture, contract approval rules, guidance preferences, and notification-only automation readiness.",
       href: "/settings/workflows",
       ctaLabel: "Open workflow defaults",
       facts: [
@@ -192,42 +197,14 @@ export default async function SettingsPage({
       ]
     },
     {
-      title: "Operations",
+      eyebrow: "Sales / Estimate",
+      title: "Estimate systems and sales setup",
       description:
-        "Next Move cue rules, responsibility defaults, and automation readiness without moving workflow action into Settings.",
-      href: "/settings/operational-intelligence",
-      ctaLabel: "Open operations settings",
-      facts: [
-        "Derived suggestions stay on canonical records",
-        "Dismiss and snooze only affect user visibility",
-        "Automation execution remains separate from notification preferences"
-      ]
-    },
-    {
-      title: "Financials",
-      description:
-        "Tax, retainage, billing defaults, and tax-code settings that seed downstream billing records.",
-      href: "/settings/financial",
-      ctaLabel: "Open financial defaults",
-      facts: [
-        `${financialSettings.defaultTaxBehavior} tax at ${formatPercentFromRate(
-          financialSettings.defaultTaxRate
-        )}%`,
-        `${financialSettings.defaultRetainagePercentage}% retainage baseline`,
-        "Invoice/payment action remains in Financials and Invoice Workspaces"
-      ]
-    },
-    {
-      title: "Documents / Templates / Catalogs",
-      description:
-        "Document templates, company documents, catalogs, systems, add-ons, and selected system admin maintenance.",
+        "Organize reusable estimate templates, catalog items, floor systems, finish products, and selected-system validation.",
       href: "/settings/templates",
-      ctaLabel: "Open reusable setup",
+      ctaLabel: "Open sales setup",
       facts: [
         `${allTemplates.length} template${allTemplates.length === 1 ? "" : "s"}`,
-        `${activeCompanyDocuments} active company document${
-          activeCompanyDocuments === 1 ? "" : "s"
-        }`,
         `${systemCount} system item${systemCount === 1 ? "" : "s"} and ${addOnOptionCount} add-on option${
           addOnOptionCount === 1 ? "" : "s"
         }`,
@@ -239,17 +216,49 @@ export default async function SettingsPage({
       ]
     },
     {
-      title: "Integrations / Modules",
+      eyebrow: "Financial",
+      title: "Billing defaults and tax posture",
       description:
-        "Company feature overrides and tenant-scoped data export without platform policy ownership.",
+        "Own the organization tax behavior, retainage baseline, and tax-code settings that seed downstream billing records.",
+      href: "/settings/financial",
+      ctaLabel: "Open financial defaults",
+      facts: [
+        `${financialSettings.defaultTaxBehavior} tax at ${formatPercentFromRate(
+          financialSettings.defaultTaxRate
+        )}%`,
+        `${financialSettings.defaultRetainagePercentage}% retainage baseline`,
+        "Invoice/payment action remains in Financials and Invoice Workspaces"
+      ]
+    },
+    {
+      eyebrow: "Templates",
+      title: "Reusable company documents",
+      description:
+        "Keep SOPs, policies, agreements, and reusable business documents visible without moving source-record action here.",
+      href: "/settings/company-documents",
+      ctaLabel: "Open company documents",
+      facts: [
+        `${activeCompanyDocuments} active company document${
+          activeCompanyDocuments === 1 ? "" : "s"
+        }`,
+        "Document adoption stays organization-owned",
+        "Source workflow records remain canonical"
+      ]
+    },
+    {
+      eyebrow: "Portal / Admin boundaries",
+      title: "Feature controls and data boundaries",
+      description:
+        "Clarify what company admins can inspect or override while platform policy, portal guards, and tenant lifecycle stay outside local settings.",
       href: "/settings/modules",
-      ctaLabel: "Open module controls",
+      ctaLabel: "Open boundary controls",
       facts: [
         `${featureOverrides.length} company feature override${
           featureOverrides.length === 1 ? "" : "s"
         }`,
         "Platform feature policy remains in Super Admin",
-        "Data export is owner/admin scoped and read-only"
+        "Data export is owner/admin scoped and read-only",
+        "Portal access rules are not changed from Settings overview"
       ]
     }
   ];
@@ -265,17 +274,17 @@ export default async function SettingsPage({
         title="Company Controls configure this contractor organization"
         items={[
           {
-            label: "Overview / setup health",
+            label: "Company Controls",
             description:
-              "This page summarizes activation, missing configuration, and where each owner section lives."
+              "This page summarizes activation, missing configuration, and where each company-owned setting lives."
           },
           {
-            label: "Configuration belongs in owner sections",
+            label: "Owner sections stay focused",
             description:
-              "Company, team, workflow, operations, financial, document, catalog, module, and export controls stay on focused routes."
+              "Workflow defaults, sales setup, financial controls, templates, users, and boundary controls stay on focused routes."
           },
           {
-            label: "Workflow action stays in workspaces",
+            label: "Canonical action stays in workspaces",
             description:
               "Settings can unblock configuration gaps, but estimates, contracts, invoices, schedules, jobs, and collections still act in their owning workspaces."
           }
@@ -349,19 +358,22 @@ export default async function SettingsPage({
               Company
             </Link>
             <Link href="/settings/admin" className={setupLinkClassName}>
-              Team & Access
+              Users / Access
             </Link>
             <Link href="/settings/workflows" className={setupLinkClassName}>
-              Sales / Workflow
+              Workflow Defaults
             </Link>
-            <Link
-              href="/settings/operational-intelligence"
-              className={setupLinkClassName}
-            >
-              Operations
+            <Link href="/settings/templates" className={setupLinkClassName}>
+              Sales / Estimate
             </Link>
             <Link href="/settings/financial" className={setupLinkClassName}>
-              Financials
+              Financial
+            </Link>
+            <Link
+              href="/settings/company-documents"
+              className={setupLinkClassName}
+            >
+              Templates
             </Link>
           </div>
         </section>
@@ -376,6 +388,9 @@ export default async function SettingsPage({
             href={section.href}
             ctaLabel={section.ctaLabel}
           >
+            <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#005eb8]">
+              {section.eyebrow}
+            </p>
             <ul className="space-y-2 rounded-[4px] border border-[#d1d5db] bg-[#f9fafb] px-4 py-4 text-sm leading-6 text-[#475569]">
               {section.facts.map((fact) => (
                 <li key={fact}>{fact}</li>
