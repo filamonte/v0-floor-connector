@@ -1,5 +1,10 @@
 import Link from "next/link";
 
+import {
+  industrialEyebrowClassName,
+  industrialPanelClassName,
+  industrialSecondaryActionClassName
+} from "@/components/industrial-os-primitives";
 import { SettingsBoundaryNotice } from "@/components/settings-boundary-notice";
 import { SettingsFeedback } from "@/components/settings-feedback";
 import { SettingsOverviewCard } from "@/components/settings-overview-card";
@@ -56,16 +61,17 @@ function getSignalClassName(tone: SetupSignal["tone"] = "neutral") {
   }
 
   if (tone === "attention") {
-    return "border-[#f59e0b] bg-[#fffbeb] text-[#78350f]";
+    return "border-[#bfdbfe] bg-[#eff6ff] text-[#1e3a8a]";
   }
 
   return "border-[#d1d5db] bg-[#f9fafb] text-[#475569]";
 }
 
-const setupPanelClassName =
-  "rounded-[4px] border border-[#d1d5db] bg-white p-5 shadow-none";
-const setupLinkClassName =
-  "inline-flex min-h-8 items-center rounded-[4px] border border-[#c7d2e2] bg-white px-3 py-1.5 text-xs font-medium text-[#475569] transition hover:border-[#005eb8] hover:bg-[#eef6ff] hover:text-[#003d7c] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#005eb8]";
+const setupPanelClassName = [industrialPanelClassName, "p-5"].join(" ");
+const setupLinkClassName = [
+  industrialSecondaryActionClassName,
+  "min-h-8 py-1.5 font-medium"
+].join(" ");
 
 export default async function SettingsPage({
   searchParams
@@ -280,7 +286,7 @@ export default async function SettingsPage({
         <section className={setupPanelClassName}>
           <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#005eb8]">
+              <p className={industrialEyebrowClassName}>
                 Overview / setup health
               </p>
               <h2 className="mt-2 text-2xl font-semibold tracking-tight text-[#0f172a]">
@@ -323,9 +329,7 @@ export default async function SettingsPage({
         </section>
 
         <section className={setupPanelClassName}>
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#005eb8]">
-            Next setup actions
-          </p>
+          <p className={industrialEyebrowClassName}>Next setup actions</p>
           <h2 className="mt-2 text-xl font-semibold tracking-tight text-[#0f172a]">
             Resolve missing company configuration before adding more controls
           </h2>

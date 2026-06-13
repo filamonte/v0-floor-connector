@@ -1,5 +1,10 @@
 import Link from "next/link";
 
+import {
+  industrialPanelClassName,
+  industrialPanelHeaderClassName
+} from "@/components/industrial-os-primitives";
+
 export type ProjectCommandCenterMapTone =
   | "positive"
   | "warning"
@@ -72,11 +77,9 @@ export type ProjectAiOperationalCopilotSectionProps = {
   providerEnhancementNote: string;
 };
 
-const projectWorkspacePanelClassName =
-  "rounded-lg border border-[var(--border-warm)] bg-white shadow-[0_18px_44px_-38px_rgba(31,41,55,0.42)]";
+const projectWorkspacePanelClassName = industrialPanelClassName;
 
-const projectWorkspacePanelHeaderClassName =
-  "border-b border-[var(--border-warm)] bg-[linear-gradient(135deg,white_0%,var(--highlight)_100%)]";
+const projectWorkspacePanelHeaderClassName = industrialPanelHeaderClassName;
 
 function getCommandSummaryToneClassName(
   tone: ProjectCommandCenterMapTone = "neutral"
@@ -85,11 +88,11 @@ function getCommandSummaryToneClassName(
     case "positive":
       return "border-emerald-200 bg-emerald-50 text-emerald-950";
     case "warning":
-      return "border-amber-200 bg-amber-50 text-amber-950";
+      return "border-[#bfdbfe] bg-[#eff6ff] text-[#1e3a8a]";
     case "critical":
       return "border-rose-200 bg-rose-50 text-rose-950";
     case "neutral":
-      return "border-[var(--border-warm)] bg-white text-[var(--text-primary)]";
+      return "border-[#d1d5db] bg-white text-[var(--text-primary)]";
   }
 }
 
@@ -98,11 +101,11 @@ function getAiOperationalCopilotToneClassName(tone: ProjectAiCopilotTone) {
     case "ready":
       return "border-emerald-200 bg-emerald-50 text-emerald-950";
     case "attention":
-      return "border-amber-200 bg-amber-50 text-amber-950";
+      return "border-[#bfdbfe] bg-[#eff6ff] text-[#1e3a8a]";
     case "blocked":
       return "border-rose-200 bg-rose-50 text-rose-950";
     case "neutral":
-      return "border-[var(--border-warm)] bg-white text-[var(--text-primary)]";
+      return "border-[#d1d5db] bg-white text-[var(--text-primary)]";
   }
 }
 
@@ -121,7 +124,7 @@ export function ProjectCommandCenterMapSection({
         ].join(" ")}
       >
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--copper)]">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#005eb8]">
             Command center map
           </p>
           <h2
@@ -137,12 +140,12 @@ export function ProjectCommandCenterMapSection({
             canonical workspaces.
           </p>
         </div>
-        <span className="rounded-full border border-[var(--border-warm)] bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-[var(--text-secondary)]">
+        <span className="rounded-[4px] border border-[#c7d2e2] bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-[#004f9e]">
           No automatic actions
         </span>
       </div>
 
-      <div className="grid gap-px bg-[var(--border-warm)] md:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-px bg-[#d1d5db] md:grid-cols-2 xl:grid-cols-4">
         {items.map((item) => (
           <a
             key={item.eyebrow}
@@ -157,7 +160,7 @@ export function ProjectCommandCenterMapSection({
             </p>
             <p className="mt-2 font-semibold">{item.title}</p>
             <p className="mt-2 opacity-80">{item.description}</p>
-            <span className="mt-auto pt-4 text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--copper)]">
+            <span className="mt-auto pt-4 text-[11px] font-semibold uppercase tracking-[0.12em] text-[#005eb8]">
               {item.label}
             </span>
           </a>
@@ -182,7 +185,7 @@ export function ProjectAiOperationalCopilotSection({
         <div
           className={`${projectWorkspacePanelHeaderClassName} px-4 py-4 sm:px-5`}
         >
-          <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--copper)]">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#005eb8]">
             AI Operational Copilot
           </p>
           <h3 className="mt-2 text-lg font-semibold tracking-tight text-[var(--text-primary)]">
@@ -208,7 +211,7 @@ export function ProjectAiOperationalCopilotSection({
       >
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div className="min-w-0">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--copper)]">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#005eb8]">
               AI Operational Copilot
             </p>
             <h3 className="mt-2 text-lg font-semibold tracking-tight text-[var(--text-primary)]">
@@ -233,13 +236,13 @@ export function ProjectAiOperationalCopilotSection({
         </p>
       </div>
 
-      <div className="grid gap-px bg-[var(--border-warm)] lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
+      <div className="grid gap-px bg-[#d1d5db] lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
         <div className="bg-white px-4 py-4 sm:px-5">
           <div className="grid gap-3 md:grid-cols-2">
             {summary.statusItems.map((item) => (
               <div
                 key={item.label}
-                className="rounded-lg border border-[var(--border-warm)] bg-[var(--highlight)] px-3 py-3"
+                className="rounded-[4px] border border-[#d1d5db] bg-[#f9fafb] px-3 py-3"
               >
                 <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
                   {item.label}
@@ -259,7 +262,7 @@ export function ProjectAiOperationalCopilotSection({
               {summary.recommendedNextActions.map((action) => (
                 <div
                   key={action.id}
-                  className="rounded-lg border border-slate-200 bg-white px-3 py-3 text-sm leading-5"
+                  className="rounded-[4px] border border-slate-200 bg-white px-3 py-3 text-sm leading-5"
                 >
                   <div className="flex flex-wrap items-start justify-between gap-2">
                     <p className="font-semibold text-slate-950">
@@ -285,7 +288,7 @@ export function ProjectAiOperationalCopilotSection({
           </div>
         </div>
 
-        <div className="space-y-px bg-[var(--border-warm)]">
+        <div className="space-y-px bg-[#d1d5db]">
           <div className="bg-white px-4 py-4 sm:px-5">
             <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--text-secondary)]">
               Review-first draft composer
@@ -295,7 +298,7 @@ export function ProjectAiOperationalCopilotSection({
                 {draftActions.slice(0, 3).map((action) => (
                   <div
                     key={action.id}
-                    className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-3 text-sm leading-5"
+                    className="rounded-[4px] border border-slate-200 bg-slate-50 px-3 py-3 text-sm leading-5"
                   >
                     <div className="flex flex-wrap items-start justify-between gap-2">
                       <p className="font-semibold text-slate-950">
@@ -327,7 +330,7 @@ export function ProjectAiOperationalCopilotSection({
                 ))}
               </div>
             ) : (
-              <div className="mt-3 rounded-lg border border-dashed border-[var(--border-warm)] bg-[var(--highlight)] px-3 py-3">
+              <div className="mt-3 rounded-[4px] border border-dashed border-[#d1d5db] bg-[#f9fafb] px-3 py-3">
                 <p className="text-sm font-semibold text-[var(--text-primary)]">
                   Draft actions are disabled
                 </p>
