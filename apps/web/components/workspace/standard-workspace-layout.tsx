@@ -208,11 +208,7 @@ export function StandardWorkspaceLayout<TView extends string>({
         >
           {hasSidebar ? (
             <aside
-              aria-label={
-                industrialReference
-                  ? "Opportunity workspace sections"
-                  : "Workspace sections"
-              }
+              aria-label="Workspace sections"
               className={
                 industrialReference
                   ? "sticky top-0 z-20 border-b border-[#d1d5db] bg-[#f9fafb] px-3 py-3 lg:top-[8.5rem] lg:max-h-[calc(100vh-9.5rem)] lg:self-start lg:overflow-y-auto lg:border-b-0 lg:border-r"
@@ -220,9 +216,7 @@ export function StandardWorkspaceLayout<TView extends string>({
               }
             >
               <p className="px-2 pb-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-[var(--text-tertiary)] lg:pb-3">
-                {industrialReference
-                  ? "Opportunity sections"
-                  : "Workspace sections"}
+                Workspace sections
               </p>
               <div className="flex gap-2 overflow-x-auto pb-1 lg:flex-col lg:overflow-visible lg:pb-0">
                 {sidebar?.map((item) => {

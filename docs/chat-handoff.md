@@ -183,6 +183,20 @@ instead of competing in the default view. Next visual target should be Estimate
 Review and Invoice Review unless CrewBoard/schedule-board composition is
 prioritized.
 
+Latest Industrial OS Pattern Extraction note: the branch now has shared
+`industrial-os-primitives` consumed by Dashboard primitives, Project Workspace,
+Settings overview cards, portal review primitives, and Universal Capture. The
+Project Workspace uses the Industrial reference workspace shell and a dark
+opening command hub; Settings keeps the Company Controls / Configuration
+pattern with blue owner-section actions; Portal uses lighter customer-safe
+hard-border cards and blue actions; Universal Capture is framed as a focused
+sheet with an intent-preview rail. The pass is presentation-only over existing
+canonical records and does not change schema, routes, loaders, server actions,
+auth, tenant, portal access, payment, signature, scheduling, provider, or
+workflow behavior. Schedule / CrewBoard, Invoice Review, Estimate Review,
+Assessment Workspace, and Estimate Workspace remain follow-up page-family
+slices unless a later prompt scopes them.
+
 Role-aware dashboards and workspace personalization are approved target
 direction only. Preferred model: Platform Defaults -> Organization Presets ->
 User Personalization. These layers may change presentation, ordering, filtering,

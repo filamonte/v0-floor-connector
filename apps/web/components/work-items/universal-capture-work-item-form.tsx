@@ -7,6 +7,13 @@ import {
   SaveStateSubmitButton
 } from "@/components/save-feedback/save-state-form";
 import {
+  industrialEyebrowClassName,
+  industrialPanelClassName,
+  industrialPrimaryActionClassName,
+  industrialRailClassName,
+  industrialSecondaryActionClassName
+} from "@/components/industrial-os-primitives";
+import {
   formatCaptureDateTimeForInput,
   parseUniversalCaptureIntent
 } from "@/lib/universal-capture/intent-parser";
@@ -189,13 +196,11 @@ export function UniversalCaptureWorkItemForm({
     <section
       id="universal-capture"
       aria-labelledby="universal-capture-title"
-      className="rounded-[4px] border border-[#d1d5db] bg-white p-4 shadow-[0_1px_0_rgba(9,9,11,0.035)]"
+      className={["overflow-hidden", industrialPanelClassName].join(" ")}
     >
-      <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
+      <div className="flex flex-col gap-3 border-b border-[#d1d5db] bg-[#fbfcfd] px-4 py-4 md:flex-row md:items-start md:justify-between sm:px-5">
         <div className="min-w-0">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
-            Universal Capture
-          </p>
+          <p className={industrialEyebrowClassName}>Universal Capture</p>
           <h2
             id="universal-capture-title"
             className="mt-1 text-[17px] font-semibold tracking-tight text-[var(--text-primary)]"
@@ -210,7 +215,7 @@ export function UniversalCaptureWorkItemForm({
         </div>
         <a
           href="#dashboard-my-work-title"
-          className="inline-flex h-9 shrink-0 items-center justify-center rounded-[4px] border border-[#c7d2e2] bg-white px-3 text-xs font-semibold text-[#0f172a] transition hover:border-[#005eb8] hover:bg-[#eef6ff]"
+          className={[industrialSecondaryActionClassName, "shrink-0"].join(" ")}
         >
           View queues
         </a>
@@ -220,7 +225,7 @@ export function UniversalCaptureWorkItemForm({
         action={action}
         pendingLabel="Capturing..."
         enabled={false}
-        className="mt-4 space-y-4"
+        className="space-y-4 p-4 sm:p-5"
       >
         <input type="hidden" name="returnTo" value={returnTo} />
         <input
@@ -250,7 +255,7 @@ export function UniversalCaptureWorkItemForm({
         <input type="hidden" name="kind" value={workItemKind} />
         <input type="hidden" name="metadata" value={JSON.stringify(metadata)} />
 
-        <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(260px,0.38fr)]">
+        <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(280px,0.38fr)]">
           <label className="block">
             <span className="mb-2 block text-sm font-medium text-slate-800">
               Capture intent
@@ -261,12 +266,17 @@ export function UniversalCaptureWorkItemForm({
               rows={4}
               value={intentText}
               onChange={(event) => setIntentText(event.target.value)}
-              className="w-full rounded-[4px] border border-[#cbd5e1] bg-white px-3 py-2.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-[#005eb8]"
+              className="min-h-[148px] w-full rounded-[4px] border border-[#cbd5e1] bg-white px-3 py-2.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-[#005eb8]"
               placeholder="Example: Schedule a site visit for ABC Manufacturing on 4/10 at 5 PM."
             />
           </label>
 
-          <div className="rounded-[4px] border border-[#cbd5e1] bg-[#f9fafb] p-3 text-xs leading-5 text-slate-600">
+          <div
+            className={[
+              industrialRailClassName,
+              "p-3 text-xs leading-5 text-slate-600"
+            ].join(" ")}
+          >
             <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#005eb8]">
               Intent preview
             </p>
@@ -414,7 +424,7 @@ export function UniversalCaptureWorkItemForm({
             </p>
             <a
               href={appointmentHref}
-              className="mt-3 inline-flex h-9 items-center justify-center rounded-[4px] bg-emerald-700 px-3 text-xs font-semibold text-white transition hover:bg-emerald-800"
+              className={[industrialPrimaryActionClassName, "mt-3"].join(" ")}
             >
               Review site visit quick-create
             </a>
@@ -431,6 +441,7 @@ export function UniversalCaptureWorkItemForm({
         <SaveStateSubmitButton
           submitLabel="Create internal Work Item"
           pendingLabel="Capturing..."
+          className={industrialPrimaryActionClassName}
         />
       </SaveStateForm>
     </section>

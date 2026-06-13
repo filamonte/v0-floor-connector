@@ -930,3 +930,139 @@ Run `industrial-os-review-screens-v1` next for Estimate Review and Invoice
 Review. Keep it presentation-only over existing canonical estimate, invoice,
 payment, and document-readiness records, and target the Stitch 900px document
 review container plus 70/30 billing/status HUD pattern.
+
+## Pattern Extraction V1
+
+Date: 2026-06-13
+
+Figma source:
+
+- Board:
+  `https://www.figma.com/design/N0tVE3uKWpHZc4dlF6ytgn`
+- Frames referenced from `01 Approved Stitch References`:
+  `APPROVED / Dashboard / Desktop`, `APPROVED / Dashboard / Mobile`,
+  `APPROVED / Settings / Desktop`,
+  `APPROVED / Universal Capture / Desktop`,
+  `APPROVED / Universal Capture / Mobile`,
+  `APPROVED / Portal / Desktop`, and `APPROVED / Portal / Mobile`.
+
+### Summary
+
+This pass extracted the approved Dashboard and Opportunity Workspace visual
+rhythm into shared Industrial OS presentation primitives, then applied those
+primitives to Project Workspace, Settings, Customer Portal, and Universal
+Capture. The pass stayed presentation-only over existing loaders, read models,
+actions, links, tenant boundaries, and portal visibility rules.
+
+### Approved Reference Patterns Used
+
+- Command Center pattern from `/dashboard`: dark command shell, hard-border
+  panels, blue `#005EB8` active states, and isolated action/attention rhythm.
+- Workspace pattern from `/leads/[leadId]`: one record identity zone, local
+  contextual workspace navigation, and right-side command rail behavior.
+- Configuration pattern from `APPROVED / Settings / Desktop`: dark
+  company-control header, compact setup/status band, contextual settings nav,
+  and focused owner-section cards.
+- Portal pattern from approved Portal desktop/mobile frames: simpler
+  customer-safe cards, action-first opening order, blue customer actions, and
+  lighter project-scoped summary rhythm.
+- Overlay / Capture pattern from approved Universal Capture desktop/mobile
+  frames: focused sheet framing, capture content with a right-side intent
+  preview rail, and blue primary submit action.
+
+### Shared Components / Patterns Extracted
+
+- Added shared Industrial OS primitive class exports for:
+  - hard-border panels
+  - panel headers
+  - dark command surfaces
+  - command insets
+  - muted panels
+  - command rails
+  - blue primary and secondary actions
+  - blue eyebrow labels
+- Updated Dashboard primitives to consume the shared Industrial OS classes
+  instead of owning a separate duplicate class island.
+- Updated `StandardWorkspaceLayout` so the Industrial reference variant uses
+  record-neutral `Workspace sections` copy instead of Opportunity-specific
+  local-nav labels.
+
+### Pages Updated
+
+- Project Workspace (`/projects/[projectId]`): switched to the Industrial
+  reference workspace shell, widened the command rail, and converted the
+  opening operational command hub to the dark Command Center shell while
+  preserving existing readiness, next-action, linked-record, financial,
+  schedule, field, and activity data.
+- Settings (`/settings`): reused the shared panel/action primitives for setup
+  health, next setup actions, and owner-section cards; reduced old copper/amber
+  emphasis in favor of blue Industrial OS active/action states.
+- Customer Portal (`/portal` and shared portal project detail primitives):
+  normalized portal hero, state, inset, metric, review, action, and summary
+  card classes to the lighter hard-border portal pattern with blue actions.
+- Universal Capture (`/dashboard?capture=1#universal-capture`): reframed the
+  existing capture form as a focused sheet with a tighter header, right-side
+  intent preview rail, and blue primary action while preserving the existing
+  parser, fields, appointment prefill route, and Work Item submission.
+
+### Pages Intentionally Skipped
+
+- Schedule / CrewBoard: left for a dedicated workboard/calendar slice because
+  it needs broader board composition and drag/drop/read-model QA.
+- Invoice Review and Estimate Review: left for the recommended review-screen
+  page-family slice because those pages need document review composition, not
+  only primitive class swaps.
+- Assessment Workspace and Estimate Workspace: not broadened in this pass
+  because safe shared primitive adoption was not obvious without touching
+  deeper authoring/review surfaces.
+
+### Deviations And Why
+
+- The approved Stitch references use a fixed left app rail. FloorConnector
+  continues to preserve the existing top/header global app navigation and uses
+  contextual rails only inside complex workspaces, settings, dashboard lenses,
+  and portal surfaces.
+- Deeper Project Workspace sections still contain older local card/radius
+  styles. This pass targeted the opening command hub and shared primitives so
+  it did not become a broad uncontrolled Project redesign.
+- Portal remains simpler and friendlier than the contractor app. It inherits
+  hard-border and blue action treatment but does not expose contractor-only
+  readiness, internal field notes, provider metadata, or operational blockers.
+
+### No-Data-Silo Confirmation
+
+This pass added no duplicate models, duplicate records, visual-only data
+structures, fake summaries, fake KPIs, fake statuses, fake AI, local
+persistence, schema, migrations, loader changes, server actions, route changes,
+auth changes, tenant changes, portal access changes, financial changes,
+payment/signature/scheduling behavior changes, provider calls, or new
+workflow state.
+
+### Production Safety Notes
+
+- Route changes: none.
+- Schema/migration changes: none.
+- Loader/server-action changes: none.
+- Auth/tenant/portal/admin guard changes: none.
+- Payment/signature/scheduling behavior changes: none.
+- Universal Capture continues to open through the existing
+  `/dashboard?capture=1#universal-capture` route and still routes parsed site
+  visits to the existing appointment quick-create prefill path.
+
+### Remaining Visual Debt
+
+- Deeper Project Workspace subpanels still need a follow-up component
+  normalization pass.
+- Invoice Review and Estimate Review remain the highest-value unconverted
+  review surfaces.
+- CrewBoard needs a dedicated board composition pass rather than incidental
+  primitive swapping.
+- Portal Project Detail can receive a second mobile-first polish pass after
+  the shared portal primitive changes are reviewed with live customer data.
+
+### Recommended Follow-Up Slices
+
+1. `industrial-os-review-screens-v1` for Estimate Review and Invoice Review.
+2. `industrial-os-crewboard-composition-v1` for Schedule / CrewBoard.
+3. `industrial-os-project-deep-panels-v1` for deeper Project Workspace panel
+   normalization after the command hub is accepted.

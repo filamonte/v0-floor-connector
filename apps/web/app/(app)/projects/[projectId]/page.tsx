@@ -24,6 +24,12 @@ import { SupportSection } from "@/components/layout/support-section";
 import { ContextFactsList } from "@/components/context-facts-list";
 import { DetailPanel } from "@/components/detail-panel";
 import { GateKeeperSubjectMemoryPanel } from "@/components/gatekeeper-subject-memory-panel";
+import {
+  industrialCommandInsetClassName,
+  industrialCommandSurfaceClassName,
+  industrialPanelClassName,
+  industrialPanelHeaderClassName
+} from "@/components/industrial-os-primitives";
 import { LinkedRecordCard } from "@/components/linked-record-card";
 import { NeedsAttentionPanel } from "@/components/operational-cues/needs-attention-panel";
 import {
@@ -274,17 +280,13 @@ type LifecycleStepId =
   | "job-schedule"
   | "invoice-payment";
 
-const projectWorkspacePanelClassName =
-  "rounded-lg border border-[var(--border-warm)] bg-white shadow-[0_18px_44px_-38px_rgba(31,41,55,0.42)]";
+const projectWorkspacePanelClassName = industrialPanelClassName;
 
-const projectWorkspacePanelHeaderClassName =
-  "border-b border-[var(--border-warm)] bg-[linear-gradient(135deg,white_0%,var(--highlight)_100%)]";
+const projectWorkspacePanelHeaderClassName = industrialPanelHeaderClassName;
 
-const projectCommandSurfaceClassName =
-  "rounded-lg border border-[var(--border-warm)] bg-[var(--highlight)] shadow-[0_14px_36px_-34px_rgba(31,41,55,0.42)]";
+const projectPrimaryCommandSurfaceClassName = industrialCommandSurfaceClassName;
 
-const projectCommandInsetClassName =
-  "border border-[var(--border-warm)] bg-white";
+const projectPrimaryCommandInsetClassName = industrialCommandInsetClassName;
 
 type SectionOverviewProps = {
   eyebrow: string;
@@ -1497,20 +1499,20 @@ function OperationalCommandCenter({
   return (
     <section
       aria-labelledby="project-command-center-title"
-      className={projectCommandSurfaceClassName}
+      className={projectPrimaryCommandSurfaceClassName}
     >
       <div className="flex flex-col gap-4 px-4 py-3 lg:flex-row lg:items-start lg:justify-between sm:px-5">
         <div className="min-w-0">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--copper)]">
-            Project summary
+          <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#8fc7ff]">
+            Project command hub
           </p>
           <h2
             id="project-command-center-title"
-            className="mt-1 text-base font-semibold tracking-tight text-[var(--text-primary)]"
+            className="mt-1 text-base font-semibold tracking-tight text-white"
           >
             Operational continuity
           </h2>
-          <p className="mt-2 max-w-[76ch] text-sm leading-6 text-[var(--text-secondary)]">
+          <p className="mt-2 max-w-[76ch] text-sm leading-6 text-white/72">
             {customerName} / {projectLocation}. This project hub reads the
             opportunity, customer/project, estimate/contract, job/schedule, and
             invoice/payment chain in one place.
@@ -1518,26 +1520,24 @@ function OperationalCommandCenter({
         </div>
         <div
           className={[
-            "px-4 py-3 text-sm leading-6 text-[var(--text-secondary)] lg:w-72",
-            projectCommandInsetClassName
+            "px-4 py-3 text-sm leading-6 text-white/72 lg:w-72",
+            projectPrimaryCommandInsetClassName
           ].join(" ")}
         >
-          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-muted)]">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#8fc7ff]">
             Readiness
           </p>
-          <p className="mt-1 font-semibold text-[var(--text-primary)]">
-            {readinessLabel}
-          </p>
+          <p className="mt-1 font-semibold text-white">{readinessLabel}</p>
           <p className="mt-1">{readinessDetail}</p>
         </div>
       </div>
 
-      <div className="grid gap-px border-y border-[var(--border-warm)] bg-[var(--border-warm)] lg:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]">
-        <div className="bg-white px-4 py-4 text-sm leading-6 text-[var(--text-secondary)]">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--copper)]">
+      <div className="grid gap-px border-y border-white/10 bg-white/10 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]">
+        <div className="bg-white px-4 py-4 text-sm leading-6 text-[#475569]">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#005eb8]">
             Workflow step
           </p>
-          <p className="mt-1 text-base font-semibold text-[var(--text-primary)]">
+          <p className="mt-1 text-base font-semibold text-[#0f172a]">
             {nextAction.title}
           </p>
           <p className="mt-1">{nextAction.description}</p>
@@ -1568,9 +1568,9 @@ function OperationalCommandCenter({
 
         <div
           className={[
-            "border-l border-[var(--border-warm)] px-4 py-4 text-sm leading-6",
+            "border-l border-white/10 px-4 py-4 text-sm leading-6",
             blockerCount > 0
-              ? "bg-amber-50 text-amber-950"
+              ? "bg-[#eef6ff] text-[#003d7c]"
               : "bg-emerald-50 text-emerald-950"
           ].join(" ")}
         >
@@ -1590,7 +1590,7 @@ function OperationalCommandCenter({
         </div>
       </div>
 
-      <div className="grid gap-px bg-[var(--border-warm)] md:grid-cols-2 xl:grid-cols-5">
+      <div className="grid gap-px bg-white/10 md:grid-cols-2 xl:grid-cols-5">
         {summaryItems.map((item) => (
           <div
             key={item.label}
@@ -5554,6 +5554,7 @@ export default async function ProjectDetailPage({
 
   return (
     <StandardWorkspaceLayout
+      variant="industrial-reference"
       header={{
         eyebrow: "Project Workspace",
         title: project.name,
@@ -5678,7 +5679,7 @@ export default async function ProjectDetailPage({
       }
       contentClassName="p-0"
     >
-      <div className="grid min-w-0 gap-5 p-4 xl:grid-cols-[minmax(0,1fr)_320px] 2xl:grid-cols-[minmax(0,1fr)_360px] sm:p-5">
+      <div className="grid min-w-0 gap-5 p-4 xl:grid-cols-[minmax(0,1fr)_340px] 2xl:grid-cols-[minmax(0,1fr)_380px] sm:p-5">
         <section className="min-w-0 space-y-6">
           <div
             className={["p-5 sm:p-6", projectWorkspacePanelClassName].join(" ")}

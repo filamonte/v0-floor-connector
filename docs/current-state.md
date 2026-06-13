@@ -77,6 +77,17 @@ and Follow-ups so users can inspect one operating purpose at a time while
 keeping all content backed by existing dashboard widgets and source-record
 links. Invoice Review, Estimate Review, and CrewBoard remain follow-up
 page-family slices rather than completed visual conversions.
+The Industrial OS Pattern Extraction V1 pass now adds shared
+`industrial-os-primitives` for hard-border panels, dark command surfaces,
+rails, blue primary/secondary actions, and blue eyebrow labels. Dashboard
+primitives consume those shared classes, Project Workspace uses the Industrial
+reference workspace shell and a dark opening command hub, Settings overview
+cards use the blue configuration pattern, portal shared cards/actions use the
+lighter customer-safe portal pattern, and Universal Capture is framed as a
+focused sheet with an intent-preview rail. This is presentation-only and does
+not change canonical records, schema, routes, loaders, actions, auth, tenant
+boundaries, portal access, payments, signatures, scheduling, providers, or
+workflow state.
 
 If this document conflicts with a planning, target-design, or historical document, trust this document for implemented status.
 
