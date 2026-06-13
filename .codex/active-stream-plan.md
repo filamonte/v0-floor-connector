@@ -66,6 +66,75 @@ tenant boundaries, portal grants, payment/signature/scheduling behavior,
 provider mutation, fake KPIs, fake statuses, fake AI, duplicate queues,
 duplicate data models, and new source-of-truth tables.
 
+## Industrial OS Conveyor Wave V1
+
+Gate date: 2026-06-13.
+
+Wave: `industrial-os-conveyor-wave-v1`.
+
+Base: `main` at `ddf9e2bd`, confirmed clean and even with `origin/main`.
+
+Status: Active for stream setup and controlled presentation-only
+implementation.
+
+Mission: finish the remaining high-priority Industrial OS / Figma refinement
+work faster through isolated stream worktrees while preserving FloorConnector's
+canonical lifecycle, global top/header navigation, existing routes, real
+actions, tenant/auth boundaries, customer-safe portal boundary, and source
+records.
+
+Design source: `https://www.figma.com/design/N0tVE3uKWpHZc4dlF6ytgn`.
+Each stream must use Figma MCP where relevant and record Figma frames used,
+deviations, no-data-silo confirmation, production safety confirmation, and
+remaining visual debt in its review packet.
+
+Approved streams:
+
+| Stream                            | Branch                                   | Worktree                                          | Scope summary                                                 | Merge priority |
+| --------------------------------- | ---------------------------------------- | ------------------------------------------------- | ------------------------------------------------------------- | -------------- |
+| `mobile-workspace-compression-v1` | `stream/mobile-workspace-compression-v1` | `C:\FC-worktrees\mobile-workspace-compression-v1` | Compress mobile Project and Opportunity Workspace headers     | 1              |
+| `leads-command-lanes-v1`          | `stream/leads-command-lanes-v1`          | `C:\FC-worktrees\leads-command-lanes-v1`          | Make `/leads` a Sales Command lane surface over existing data | 2              |
+| `settings-organization-v1`        | `stream/settings-organization-v1`        | `C:\FC-worktrees\settings-organization-v1`        | Clarify Settings and organization grouping                    | 3              |
+| `portal-industrial-rail-v1`       | `stream/portal-industrial-rail-v1`       | `C:\FC-worktrees\portal-industrial-rail-v1`       | Align customer portal toward approved Industrial rail frame   | 4              |
+
+Shared forbidden scope: schema changes, migrations, database/table/column
+renames, route renames, canonical model changes, duplicate visual-only records,
+local-only workflow persistence, fake records, fake statuses, fake KPIs, fake
+health scores, fake AI/copilot claims, fake queues/counts, dashboard-owned
+state, lead-owned project state, project-owned invoice duplicates, auth/tenant
+guard changes, portal/admin guard changes, payment/signature/scheduling
+business logic changes, estimate/contract/invoice workflow logic changes,
+global permanent desktop sidebar changes, and removal of real actions unless
+access remains obvious.
+
+Expected file overlap risks:
+
+- `mobile-workspace-compression-v1` and `leads-command-lanes-v1` may both need
+  Opportunity Workspace presentation files; land mobile compression first.
+- `settings-organization-v1` should stay out of portal and shell files unless a
+  shared primitive is already owned by Settings presentation.
+- `portal-industrial-rail-v1` should treat portal shared primitives as a
+  customer-safe hotspot and avoid contractor-only data or internal action copy.
+
+Validation expectation for each stream:
+
+```powershell
+pnpm.cmd --filter @floorconnector/web typecheck
+pnpm.cmd --filter @floorconnector/web lint
+pnpm.cmd --filter @floorconnector/ui test
+pnpm.cmd fc:preflight:fast
+pnpm.cmd e2e:smoke:auth
+git diff --check
+git diff --cached --check
+pnpm.cmd worktree:doctor
+```
+
+Browser expectation for each stream: check target pages and `/dashboard`,
+`/settings`, `/leads`, `/projects`, `/portal`, and
+`/dashboard?capture=1#universal-capture` at `1366px` and `390px`, with no
+chunk/load errors, console/page errors, favicon errors, horizontal overflow,
+auth redirect regressions, or portal customer-safety regressions.
+
 ## UX Recovery Wave Foundation
 
 Foundation date: 2026-06-11.

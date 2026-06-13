@@ -72,6 +72,72 @@ action rewrites, auth changes, tenant changes, portal-grant changes, payment or
 signature behavior changes, scheduling mutation, provider mutation, fake data,
 fake KPIs, duplicate queues, duplicate models, or new source-of-truth tables.
 
+## Industrial OS Conveyor Wave V1
+
+Status: Active for stream setup and controlled presentation-only
+implementation.
+
+Base branch: `main` at `ddf9e2bd`, synced with `origin/main` on 2026-06-13.
+
+Design source: `https://www.figma.com/design/N0tVE3uKWpHZc4dlF6ytgn`.
+Implementation streams must use Figma MCP where relevant and document frames
+used, deviations, and visual debt in their review packets.
+
+Goal: finish the remaining high-priority Industrial OS / Figma UI refinement
+work as a controlled conveyor wave without changing schema, migrations,
+canonical models, routes, loaders, server actions, auth, tenant boundaries,
+portal grants, payment/signature/scheduling behavior, provider behavior, fake
+data, fake KPIs, fake queues, or local-only workflow persistence.
+
+Approved stream set:
+
+| Stream                            | Branch                                   | Worktree                                          | Ownership area                                                | Merge priority |
+| --------------------------------- | ---------------------------------------- | ------------------------------------------------- | ------------------------------------------------------------- | -------------- |
+| `mobile-workspace-compression-v1` | `stream/mobile-workspace-compression-v1` | `C:\FC-worktrees\mobile-workspace-compression-v1` | Mobile Project and Opportunity Workspace viewport compression | 1              |
+| `leads-command-lanes-v1`          | `stream/leads-command-lanes-v1`          | `C:\FC-worktrees\leads-command-lanes-v1`          | `/leads` Sales Command lanes over existing real data          | 2              |
+| `settings-organization-v1`        | `stream/settings-organization-v1`        | `C:\FC-worktrees\settings-organization-v1`        | `/settings` and `/settings/organization` grouping clarity     | 3              |
+| `portal-industrial-rail-v1`       | `stream/portal-industrial-rail-v1`       | `C:\FC-worktrees\portal-industrial-rail-v1`       | Customer-safe portal Industrial rail alignment                | 4              |
+
+Review packets:
+
+- [docs/review-packets/mobile-workspace-compression-v1.md](C:/FloorConnector/docs/review-packets/mobile-workspace-compression-v1.md)
+- [docs/review-packets/leads-command-lanes-v1.md](C:/FloorConnector/docs/review-packets/leads-command-lanes-v1.md)
+- [docs/review-packets/settings-organization-v1.md](C:/FloorConnector/docs/review-packets/settings-organization-v1.md)
+- [docs/review-packets/portal-industrial-rail-v1.md](C:/FloorConnector/docs/review-packets/portal-industrial-rail-v1.md)
+
+Expected file overlap risks:
+
+- `mobile-workspace-compression-v1` and `leads-command-lanes-v1` may both touch
+  Opportunity Workspace shared layout or `/leads/:leadId` presentation; mobile
+  compression should land first.
+- `settings-organization-v1` may overlap with prior Settings Industrial OS and
+  Settings Company Controls files; it owns only Settings organization grouping
+  in this wave.
+- `portal-industrial-rail-v1` should avoid shared portal primitives unless the
+  change is customer-safe and documented, because prior Figma work already
+  touched portal card/action primitives.
+
+Required validation for each implementation stream unless a later prompt narrows
+scope:
+
+```powershell
+pnpm.cmd --filter @floorconnector/web typecheck
+pnpm.cmd --filter @floorconnector/web lint
+pnpm.cmd --filter @floorconnector/ui test
+pnpm.cmd fc:preflight:fast
+pnpm.cmd e2e:smoke:auth
+git diff --check
+git diff --cached --check
+pnpm.cmd worktree:doctor
+```
+
+Browser checks for each stream: at `1366px` and `390px`, check the target pages
+plus `/dashboard`, `/settings`, `/leads`, `/projects`, `/portal`, and
+`/dashboard?capture=1#universal-capture`. Confirm no `ChunkLoadError`, no
+console/page errors, no favicon errors, no horizontal overflow, real
+data/actions render, no auth/login redirect regression after auth warmup, portal
+stays customer-safe where applicable, and Universal Capture still opens.
+
 ## Program Portfolio
 
 | Program | Name                        | Health  | Current wave posture                                                                                                                     |
