@@ -501,6 +501,7 @@ export default async function LeadDetailPage({
   return (
     <StandardWorkspaceLayout
       variant="industrial-reference"
+      mobileOpeningDensity="compact"
       header={{
         eyebrow: "Opportunity Workspace",
         title: opportunity.title,
@@ -576,7 +577,9 @@ export default async function LeadDetailPage({
       currentView={currentView}
       summaryBand={
         <WorkspaceSummaryBand
-          className="grid gap-3 md:grid-cols-2 xl:grid-cols-4"
+          className="grid gap-2 sm:gap-3 md:grid-cols-2 xl:grid-cols-4"
+          itemClassName="rounded-[4px] border border-[#d1d5db] bg-white px-3 py-2.5 shadow-[0_1px_0_rgba(9,9,11,0.035)] sm:px-4 sm:py-3"
+          labelClassName="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#005eb8] sm:text-xs sm:tracking-[0.18em]"
           items={[
             {
               key: "status",
