@@ -1,6 +1,6 @@
 # Settings Organization V1
 
-Status: Setup created
+Status: Complete
 Date: 2026-06-13
 Branch: `stream/settings-organization-v1`
 Worktree: `C:\FC-worktrees\settings-organization-v1`
@@ -68,7 +68,94 @@ Browser checks: `/settings`, `/settings/organization`, `/dashboard`, `/leads`,
 
 ## Completion Notes
 
-To be completed by the stream owner: files changed, Figma frames used, visual
-improvements, deviations from Figma, no-data-silo confirmation, production
-safety confirmation, remaining visual debt, validation results, browser checks,
-final git status, ahead/behind count, and commit SHA.
+### Files Changed
+
+- `apps/web/app/(app)/settings/page.tsx`
+- `apps/web/app/(app)/settings/organization/page.tsx`
+- `apps/web/components/settings-nav.tsx`
+- `apps/web/lib/settings/navigation.ts`
+- `docs/review-packets/settings-organization-v1.md`
+
+### Figma Frames Used
+
+- File `N0tVE3uKWpHZc4dlF6ytgn`, node `28:12`,
+  `APPROVED / Settings / Desktop`.
+
+### Visual Improvements
+
+- Reorganized contractor Settings navigation around the requested groups:
+  Company Controls, Workflow Defaults, Sales / Estimate, Financial, Templates,
+  Users / Access, and Portal / Admin boundaries.
+- Updated `/settings` overview cards to match those owner groups while keeping
+  all displayed facts derived from existing organization, member, workflow,
+  financial, template, catalog, selected-system, company-document, and feature
+  override reads.
+- Split `/settings/organization` into clearer form bands for company identity,
+  public contact, and app presentation, with a compact live-record summary
+  strip above the existing profile form.
+- Tightened Settings nav active-state handling so `/settings` no longer appears
+  active on nested Settings routes.
+
+### Deviations From Figma
+
+- Kept the existing protected app shell and Settings component system instead
+  of recreating the static Figma screenshot exactly.
+- Preserved current route structure, existing card primitives, and live data
+  reads; the Figma reference was used for hierarchy, blue accent posture, and
+  organization-control framing.
+
+### Production Safety
+
+- No schema, migration, route, server action, persistence, auth, tenant guard,
+  provider, billing, payment, signature, scheduling, portal-access, or workflow
+  gate changes.
+- No duplicate settings model or data silo was introduced.
+- No fake setup score or KPI was introduced; setup status remains derived from
+  existing records only.
+
+### Validation Results
+
+```powershell
+pnpm.cmd --filter @floorconnector/web typecheck
+pnpm.cmd --filter @floorconnector/web lint
+pnpm.cmd --filter @floorconnector/ui test
+pnpm.cmd fc:preflight:fast
+pnpm.cmd e2e:smoke:auth
+git diff --check
+pnpm.cmd worktree:doctor
+```
+
+Results: all passed. `pnpm.cmd worktree:doctor` reported the expected warning
+that `stream/settings-organization-v1` has no upstream configured.
+
+### Browser Checks
+
+Dev server: `http://localhost:3113`.
+
+Playwright screenshot/overflow matrix passed at `1366px` and `390px` for:
+
+- `/settings`
+- `/settings/organization`
+- `/dashboard`
+- `/leads`
+- `/projects`
+- `/portal`
+- `/dashboard?capture=1#universal-capture`
+
+All checked routes returned HTTP 200, avoided `/login` redirects, avoided
+server/runtime error text, and had `0px` horizontal overflow.
+
+Screenshots were written under
+`test-results/manual-responsive-proof/settings-organization-v1/`.
+
+### Remaining Visual Debt
+
+- The Settings side navigation is still long on mobile because it exposes the
+  existing full Settings route inventory; this stream only reorganized the
+  inventory and did not introduce new navigation disclosure behavior.
+
+### Final Git State
+
+- Final status: clean after commit.
+- Ahead/behind: `2 0` against `origin/main`.
+- Commit SHA: see stream completion report.

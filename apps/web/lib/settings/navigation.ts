@@ -10,48 +10,48 @@ export const contractorSettingsNavItems: readonly SettingsNavItem[] = [
   {
     href: "/settings/profile",
     label: "Profile",
-    group: "Overview / setup health",
+    group: "Company Controls",
     description: "Personal account identity and current company context."
   },
   {
     href: "/settings",
     label: "Overview",
-    group: "Overview / setup health",
+    group: "Company Controls",
     description: "Review the current company control footprint.",
     adminOnly: true
   },
   {
     href: "/settings/organization",
     label: "Company Profile",
-    group: "Company",
+    group: "Company Controls",
     description: "Profile, identity, and company-level organization details.",
     adminOnly: true
   },
   {
     href: "/settings/admin",
-    label: "Team & Access",
-    group: "Team & Access",
+    label: "Users / Access",
+    group: "Users / Access",
     description: "Organization members, roles, and access guardrails.",
     adminOnly: true
   },
   {
     href: "/settings/workflows",
-    label: "Sales / Workflow",
-    group: "Sales / Workflow",
+    label: "Workflow Defaults",
+    group: "Workflow Defaults",
     description: "Contract generation, Ready Check, and guidance defaults.",
     adminOnly: true
   },
   {
     href: "/settings/operational-intelligence",
     label: "Next Move",
-    group: "Operations",
+    group: "Workflow Defaults",
     description: "Built-in My Work suggestion thresholds and urgency.",
     adminOnly: true
   },
   {
     href: "/settings/automation",
     label: "Automation Readiness",
-    group: "Operations",
+    group: "Workflow Defaults",
     description:
       "Automation readiness plus future notification-only preferences.",
     adminOnly: true
@@ -59,29 +59,22 @@ export const contractorSettingsNavItems: readonly SettingsNavItem[] = [
   {
     href: "/settings/financial",
     label: "Financial Defaults",
-    group: "Financials",
+    group: "Financial",
     description: "Tax, retainage, billing defaults, and tax-code settings.",
     adminOnly: true
   },
   {
     href: "/settings/templates",
-    label: "Document Templates",
-    group: "Documents / Templates / Catalogs",
+    label: "Estimate Templates",
+    group: "Sales / Estimate",
     description:
       "Organization-owned estimate, invoice, and contract templates.",
     adminOnly: true
   },
   {
-    href: "/settings/company-documents",
-    label: "Company Documents",
-    group: "Documents / Templates / Catalogs",
-    description: "Business documents, SOPs, policies, and agreements.",
-    adminOnly: true
-  },
-  {
     href: "/settings/catalogs",
     label: "Catalog Items",
-    group: "Documents / Templates / Catalogs",
+    group: "Sales / Estimate",
     description:
       "Catalog Items, Systems, Add-ons / Options, and inventory behavior.",
     adminOnly: true
@@ -89,22 +82,29 @@ export const contractorSettingsNavItems: readonly SettingsNavItem[] = [
   {
     href: "/settings/system-layers",
     label: "System Layers",
-    group: "Documents / Templates / Catalogs",
+    group: "Sales / Estimate",
     description: "Finish products and floor system template administration.",
     adminOnly: true
   },
   {
     href: "/settings/selected-systems",
     label: "Selected Systems",
-    group: "Documents / Templates / Catalogs",
+    group: "Sales / Estimate",
     description:
       "Admin validation for selected floor systems on real workflow records.",
     adminOnly: true
   },
   {
+    href: "/settings/company-documents",
+    label: "Company Documents",
+    group: "Templates",
+    description: "Business documents, SOPs, policies, and agreements.",
+    adminOnly: true
+  },
+  {
     href: "/settings/modules",
     label: "Company Feature Controls",
-    group: "Integrations / Modules",
+    group: "Portal / Admin boundaries",
     description:
       "Company-level feature overrides inside platform-owned policy.",
     adminOnly: true
@@ -112,7 +112,7 @@ export const contractorSettingsNavItems: readonly SettingsNavItem[] = [
   {
     href: "/settings/export",
     label: "Data Export",
-    group: "Integrations / Modules",
+    group: "Portal / Admin boundaries",
     description: "Tenant-scoped CSV and JSON exports for canonical records.",
     adminOnly: true
   }
