@@ -269,6 +269,68 @@ Ready as pattern:
 - Yes for the command-center first viewport. Broader dashboard queue
   rationalization should wait for visual approval.
 
+## Dashboard Clarity Reduction Pass
+
+User review after the command-lens pass found that `/dashboard` still showed too
+much at once. This follow-up keeps the Industrial OS V2 direction but makes the
+default dashboard behave as an operating cockpit instead of a workspace dump.
+
+Implemented:
+
+- Default `Today` now renders a capped cockpit instead of full dashboard queue
+  panels.
+- The first command deck shows one highest-priority handoff lane instead of two
+  competing action queue cards.
+- `Today` caps the main priority list at five source-record items: top priority
+  records, at most one jobs-today item, and the highest project guidance items.
+- `Today` separates `Do now`, `Review today`, a small business pulse, and `Go to
+owning workspace` links.
+- Mobile ordering puts the Today content before the command lens tabs so narrow
+  screens start with attention, next actions, and a small pulse before deeper
+  lens selection.
+
+Removed from default view:
+
+- Full `Needs Attention` queue panels.
+- Full jobs-today queue panels.
+- Full project guidance queue panels.
+- Repeated lower dashboard queue/table content that duplicated the command deck.
+- Passive utility cards from the default first viewport.
+
+Moved behind lenses:
+
+- Exception and blocker depth moved to `Needs Attention`.
+- Sales queues moved to `Sales`.
+- Project lifecycle/readiness and project cues moved to `Projects`.
+- Schedule, crew, appointments, and field handoff previews moved to `Field`.
+- AR, invoice, payment, and financial snapshots moved to `Money`.
+- Work Items and My Work groups moved to `Follow-ups`.
+
+Owning workspace links preserved:
+
+- Sales Manager: `/leads`
+- Projects: `/projects`
+- Schedule: `/schedule`
+- Financials: `/financials`
+- My Work: `/field/work-items`
+- Universal Capture: `/dashboard?capture=1#universal-capture`
+
+No-data-silo confirmation:
+
+- No schema, migrations, loaders, server actions, route changes, auth/tenant
+  guard changes, portal/admin guard changes, fake data, fake status, fake AI,
+  duplicate dashboard queues, or dashboard-owned workflow records were added.
+- All cards continue to render from existing dashboard props, read models,
+  source-record widgets, and canonical workspace links.
+
+Remaining dashboard gaps:
+
+- The dashboard now prioritizes better, but deeper lens-specific empty states
+  and summary labels can still be tuned after user review.
+- Full role-aware dashboard personalization remains target direction only.
+- Estimate Review, Invoice Review, and CrewBoard composition remain separate
+  follow-up page-family slices.
+
 ### Opportunity Workspace Reference Implementation
 
 Stitch reference used:

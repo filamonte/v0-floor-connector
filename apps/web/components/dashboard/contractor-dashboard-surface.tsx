@@ -130,6 +130,18 @@ type DashboardLensConfig = {
   count: number;
 };
 
+type TodayCockpitItem = {
+  id: string;
+  title: string;
+  subtitle: string;
+  href: string;
+  meta: string;
+  badge?: string | null;
+  actionLabel: string;
+  contextHref?: string | null;
+  contextLabel?: string | null;
+};
+
 export type ContractorDashboardSurfaceProps = {
   header?: {
     organizationName: string;
@@ -214,6 +226,10 @@ function filterItems(items: DashboardQueueItem[], query: string) {
   }
 
   return items.filter((item) => item.searchText.toLowerCase().includes(query));
+}
+
+function getMetric(metrics: DashboardMetric[], key: string) {
+  return metrics.find((metric) => metric.key === key) ?? null;
 }
 
 function DashboardOwnershipBanner() {
@@ -680,7 +696,7 @@ function DashboardReferenceCommandCenter({
   startHereForceVisible?: boolean;
   earlyAccess?: ContractorDashboardSurfaceProps["earlyAccess"];
 }) {
-  const jobsTodayMetric = metrics.find((metric) => metric.key === "jobs-today");
+  const jobsTodayMetric = getMetric(metrics, "jobs-today");
   const openBlockersCount = priorityItems.filter(
     (item) => !["complete", "paid"].includes(String(item.status))
   ).length;
@@ -714,8 +730,8 @@ function DashboardReferenceCommandCenter({
       href: "#dashboard-attention-rail"
     }
   ];
-  const visibleQueues = actionQueues.slice(0, 2);
-  const attentionItems = priorityItems.slice(0, 2);
+  const visibleQueues = actionQueues.slice(0, 1);
+  const attentionItems = priorityItems.slice(0, 3);
   const showStartHere =
     onboardingSteps &&
     (startHereForceVisible || onboardingSteps.some((step) => !step.complete));
@@ -783,18 +799,18 @@ function DashboardReferenceCommandCenter({
             <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
               <div>
                 <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#8fc7ff]">
-                  Action lanes
+                  Do now
                 </p>
                 <h2 className="mt-1 text-xl font-semibold tracking-tight text-white">
-                  Work that needs movement
+                  Highest-priority handoff
                 </h2>
               </div>
               <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-white/45">
-                Source queues only
+                One lane shown
               </p>
             </div>
 
-            <div className="mt-3 grid gap-3 md:grid-cols-2">
+            <div className="mt-3 grid gap-3">
               {visibleQueues.length > 0 ? (
                 visibleQueues.map((queue) => {
                   const firstItem = queue.items[0] ?? null;
@@ -1005,9 +1021,311 @@ function UtilityCardGrid({
       </Link>
       {fieldWidget ? (
         <div className="lg:col-span-4">
-          <QueueRows widget={fieldWidget} items={fieldWidget.items} />
+          <QueueRows
+            widget={fieldWidget}
+            items={fieldWidget.items.slice(0, 3)}
+          />
         </div>
       ) : null}
+    </section>
+  );
+}
+
+function buildTodayCockpitItems({
+  priorityItems,
+  jobsTodayWidget,
+  projectCueWidget
+}: {
+  priorityItems: DashboardPriorityItem[];
+  jobsTodayWidget?: DashboardWidget | null;
+  projectCueWidget?: DashboardWidget | null;
+}): TodayCockpitItem[] {
+  return [
+    ...priorityItems.slice(0, 2).map((item) => ({
+      id: `priority-${item.key}`,
+      title: item.title,
+      subtitle: item.detail,
+      href: item.href,
+      meta: item.countLabel,
+      badge: String(item.status),
+      actionLabel: "Review today"
+    })),
+    ...(jobsTodayWidget?.items.slice(0, 1).map((item) => ({
+      id: `today-job-${item.id}`,
+      title: item.title,
+      subtitle: item.subtitle,
+      href: item.href,
+      meta: item.meta,
+      badge: item.badge,
+      actionLabel: item.actionLabel,
+      contextHref: item.contextHref,
+      contextLabel: item.contextLabel
+    })) ?? []),
+    ...(projectCueWidget?.items.slice(0, 2).map((item) => ({
+      id: `next-action-${item.id}`,
+      title: item.title,
+      subtitle: item.subtitle,
+      href: item.href,
+      meta: item.meta,
+      badge: item.badge,
+      actionLabel: item.actionLabel,
+      contextHref: item.contextHref,
+      contextLabel: item.contextLabel
+    })) ?? [])
+  ].slice(0, 5);
+}
+
+function TodayCockpit({
+  header,
+  metrics,
+  priorityItems,
+  jobsTodayWidget,
+  projectCueWidget
+}: {
+  header?: ContractorDashboardSurfaceProps["header"];
+  metrics: DashboardMetric[];
+  priorityItems: DashboardPriorityItem[];
+  jobsTodayWidget?: DashboardWidget | null;
+  projectCueWidget?: DashboardWidget | null;
+}) {
+  const cockpitItems = buildTodayCockpitItems({
+    priorityItems,
+    jobsTodayWidget,
+    projectCueWidget
+  });
+  const nextActions = projectCueWidget?.items.slice(0, 3) ?? [];
+  const pulseMetrics = [
+    {
+      key: "active-projects",
+      label: "Active Projects",
+      value: String(header?.activeProjectCount ?? "0"),
+      detail: "Project chain",
+      href: "/projects"
+    },
+    {
+      key: "open-ar",
+      label: "Open AR",
+      value: header?.openReceivablesLabel ?? "$0.00",
+      detail: "Invoice/payment chain",
+      href: "/financials"
+    },
+    getMetric(metrics, "jobs-today") ??
+      getMetric(metrics, "appointments-today") ?? {
+        key: "jobs-today-fallback",
+        label: "Jobs today",
+        value: "0",
+        detail: "Schedule and field execution",
+        href: "/schedule"
+      }
+  ];
+  const workspaceLinks = [
+    {
+      label: "Sales Manager",
+      href: "/leads",
+      detail: "Opportunity and estimate follow-up"
+    },
+    {
+      label: "Projects",
+      href: "/projects",
+      detail: "Readiness and active project work"
+    },
+    {
+      label: "Schedule",
+      href: "/schedule",
+      detail: "Crew, jobs, and field handoff"
+    },
+    {
+      label: "Financials",
+      href: "/financials",
+      detail: "AR, invoices, and payment review"
+    },
+    {
+      label: "My Work",
+      href: "/field/work-items",
+      detail: "Internal follow-ups and work items"
+    },
+    {
+      label: "Universal Capture",
+      href: "/dashboard?capture=1#universal-capture",
+      detail: "Quickly add an internal follow-up"
+    }
+  ];
+
+  return (
+    <section aria-labelledby="dashboard-today-lens-title" className="space-y-3">
+      <div>
+        <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
+          Today lens
+        </p>
+        <h2
+          id="dashboard-today-lens-title"
+          className="mt-1 text-[17px] font-semibold tracking-tight text-[var(--text-primary)]"
+        >
+          What to deal with first
+        </h2>
+      </div>
+
+      <div className="grid gap-3 xl:grid-cols-[minmax(0,1.15fr)_minmax(320px,0.85fr)]">
+        <BoardPanel
+          eyebrow="Do now"
+          title="Top priorities"
+          description="Capped at five source-record items so the dashboard stays a triage surface."
+          action={
+            <Link
+              href="#dashboard-attention-rail"
+              className={dashboardPanelActionClassName}
+            >
+              View attention
+            </Link>
+          }
+        >
+          <div className="divide-y divide-[var(--border-warm)]">
+            {cockpitItems.length > 0 ? (
+              cockpitItems.map((item) => (
+                <article key={item.id} className="px-4 py-3">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <Link
+                          href={item.href}
+                          className="truncate text-sm font-semibold text-[var(--text-primary)] transition hover:text-[#005eb8]"
+                        >
+                          {item.title}
+                        </Link>
+                        {item.badge ? (
+                          <StatusBadge status={item.badge} size="sm">
+                            {item.badge}
+                          </StatusBadge>
+                        ) : null}
+                      </div>
+                      <p className="mt-1 text-sm leading-5 text-[var(--text-secondary)]">
+                        {item.subtitle}
+                      </p>
+                      <p className="mt-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--text-secondary)]">
+                        {item.meta}
+                      </p>
+                    </div>
+                    <Link
+                      href={item.href}
+                      className="shrink-0 text-[11px] font-semibold uppercase tracking-[0.12em] text-[#005eb8] transition hover:text-[#003d7c]"
+                    >
+                      {item.actionLabel}
+                    </Link>
+                  </div>
+                  {item.contextHref && item.contextLabel ? (
+                    <Link
+                      href={item.contextHref}
+                      className={[
+                        secondaryActionClassName,
+                        "mt-3 inline-flex"
+                      ].join(" ")}
+                    >
+                      {item.contextLabel}
+                    </Link>
+                  ) : null}
+                </article>
+              ))
+            ) : (
+              <DashboardEmptyState
+                title="No urgent dashboard priorities."
+                description="When source records need same-day review, the highest-signal items appear here."
+              />
+            )}
+          </div>
+        </BoardPanel>
+
+        <div className="space-y-3">
+          <BoardPanel
+            eyebrow="Review today"
+            title="Next recommended actions"
+            description="Deterministic guidance only; execution stays in the owning workspace."
+            action={
+              <Link href="/projects" className={dashboardPanelActionClassName}>
+                View projects
+              </Link>
+            }
+          >
+            <div className="divide-y divide-[var(--border-warm)]">
+              {nextActions.length > 0 ? (
+                nextActions.map((item) => (
+                  <article key={item.id} className="px-4 py-3">
+                    <Link
+                      href={item.href}
+                      className="text-sm font-semibold text-[var(--text-primary)] transition hover:text-[#005eb8]"
+                    >
+                      {item.title}
+                    </Link>
+                    <p className="mt-1 text-xs leading-5 text-[var(--text-secondary)]">
+                      {item.subtitle}
+                    </p>
+                  </article>
+                ))
+              ) : (
+                <DashboardEmptyState
+                  title="No recommended actions."
+                  description="Project guidance appears here when existing cues find a next move."
+                />
+              )}
+            </div>
+          </BoardPanel>
+
+          <BoardPanel
+            eyebrow="Business pulse"
+            title="Small signal"
+            description="A narrow pulse only; fuller metrics live inside the owning lenses."
+          >
+            <div className="grid gap-px bg-[var(--border-warm)] sm:grid-cols-3 xl:grid-cols-1">
+              {pulseMetrics.length > 0 ? (
+                pulseMetrics.map((metric) => (
+                  <Link
+                    key={metric.key}
+                    href={metric.href}
+                    className={dashboardMetricCardClassName}
+                  >
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--text-secondary)]">
+                      {metric.label}
+                    </p>
+                    <p className="mt-2 text-xl font-semibold tracking-tight text-[var(--text-primary)]">
+                      {metric.value}
+                    </p>
+                    <p className="mt-1 line-clamp-2 text-[11px] leading-4 text-[var(--text-secondary)]">
+                      {metric.detail}
+                    </p>
+                  </Link>
+                ))
+              ) : (
+                <DashboardEmptyState
+                  title="No pulse metrics available."
+                  description="Existing dashboard metrics appear here when returned by the current loader."
+                />
+              )}
+            </div>
+          </BoardPanel>
+        </div>
+      </div>
+
+      <BoardPanel
+        eyebrow="Go to owning workspace"
+        title="Where action happens"
+        description="Dashboard points to the source workspace instead of recreating each manager here."
+      >
+        <div className="grid gap-px bg-[var(--border-warm)] sm:grid-cols-2 xl:grid-cols-3">
+          {workspaceLinks.map((link) => (
+            <Link
+              key={link.href}
+              href={link.href}
+              className="min-w-0 bg-white px-4 py-3 transition hover:bg-[#f7fbff]"
+            >
+              <p className="text-sm font-semibold text-[var(--text-primary)]">
+                {link.label}
+              </p>
+              <p className="mt-1 text-xs leading-5 text-[var(--text-secondary)]">
+                {link.detail}
+              </p>
+            </Link>
+          ))}
+        </div>
+      </BoardPanel>
     </section>
   );
 }
@@ -1302,10 +1620,12 @@ export function ContractorDashboardSurface({
         title: "Today / Needs Attention",
         description:
           "The smallest operating view: current work, active blockers, and near-term movement.",
-        count:
+        count: Math.min(
+          5,
           priorityItems.length +
-          (jobsTodayWidget?.items.length ?? 0) +
-          (filteredProjectCueWidget?.items.length ?? 0)
+            (jobsTodayWidget?.items.length ?? 0) +
+            (filteredProjectCueWidget?.items.length ?? 0)
+        )
       },
       {
         key: "attention",
@@ -1392,70 +1712,31 @@ export function ContractorDashboardSurface({
         {universalCapture ? universalCapture : null}
 
         <section className="grid gap-4 lg:grid-cols-[220px_minmax(0,1fr)]">
-          <DashboardLensRail
-            lenses={lensConfigs}
-            selectedLens={selectedLens}
-            onSelectLens={setSelectedLens}
-          />
+          <div className="order-2 lg:order-1">
+            <DashboardLensRail
+              lenses={lensConfigs}
+              selectedLens={selectedLens}
+              onSelectLens={setSelectedLens}
+            />
+          </div>
 
           <div
             id="dashboard-command-lens-panel"
             role="tabpanel"
-            className="min-w-0 space-y-4"
+            className="order-1 min-w-0 space-y-4 lg:order-2"
           >
             {selectedLens === "today" ? (
-              <section
-                aria-labelledby="dashboard-today-lens-title"
-                className="space-y-3"
-              >
-                <div>
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
-                    Today lens
-                  </p>
-                  <h2
-                    id="dashboard-today-lens-title"
-                    className="mt-1 text-[17px] font-semibold tracking-tight text-[var(--text-primary)]"
-                  >
-                    What needs attention now
-                  </h2>
-                </div>
-                <div className="grid gap-3 xl:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)]">
-                  {attentionWidget ? (
-                    <QueueRows
-                      widget={attentionWidget}
-                      items={attentionWidget.items}
-                    />
-                  ) : null}
-                  {filteredOperationsWidgets.find(
+              <TodayCockpit
+                header={header}
+                metrics={metrics}
+                priorityItems={priorityItems}
+                jobsTodayWidget={
+                  filteredOperationsWidgets.find(
                     (widget) => widget.key === "jobs-today"
-                  ) ? (
-                    <QueueRows
-                      widget={
-                        filteredOperationsWidgets.find(
-                          (widget) => widget.key === "jobs-today"
-                        )!
-                      }
-                      items={
-                        filteredOperationsWidgets.find(
-                          (widget) => widget.key === "jobs-today"
-                        )!.items
-                      }
-                    />
-                  ) : null}
-                </div>
-                {filteredProjectCueWidget ? (
-                  <QueueRows
-                    widget={{
-                      ...filteredProjectCueWidget,
-                      eyebrow: "Next Move",
-                      title: "Recommended action",
-                      description:
-                        "Recommended action is deterministic and review-first. Drafting or workflow execution still happens only in existing workspaces."
-                    }}
-                    items={filteredProjectCueWidget.items.slice(0, 5)}
-                  />
-                ) : null}
-              </section>
+                  ) ?? null
+                }
+                projectCueWidget={filteredProjectCueWidget}
+              />
             ) : null}
 
             {selectedLens === "field" ? (
@@ -1493,14 +1774,14 @@ export function ContractorDashboardSurface({
             filteredProjectCueWidget ? (
               <QueueRows
                 widget={filteredProjectCueWidget}
-                items={filteredProjectCueWidget.items}
+                items={filteredProjectCueWidget.items.slice(0, 3)}
               />
             ) : null}
 
             {selectedLens === "follow-ups" && filteredWorkItemsWidget ? (
               <QueueRows
                 widget={filteredWorkItemsWidget}
-                items={filteredWorkItemsWidget.items}
+                items={filteredWorkItemsWidget.items.slice(0, 3)}
                 workItemActions={workItemActions}
               />
             ) : null}
@@ -1603,7 +1884,7 @@ export function ContractorDashboardSurface({
                       <QueueRows
                         key={widget.key}
                         widget={widget}
-                        items={widget.items}
+                        items={widget.items.slice(0, 3)}
                       />
                     ))}
                   </div>
@@ -1650,19 +1931,19 @@ export function ContractorDashboardSurface({
                   {selectedLens === "attention" && attentionWidget ? (
                     <QueueRows
                       widget={attentionWidget}
-                      items={attentionWidget.items}
+                      items={attentionWidget.items.slice(0, 3)}
                     />
                   ) : null}
                   {selectedLens === "sales" && filteredCommercialWidgets[1] ? (
                     <QueueRows
                       widget={filteredCommercialWidgets[1]}
-                      items={filteredCommercialWidgets[1].items}
+                      items={filteredCommercialWidgets[1].items.slice(0, 3)}
                     />
                   ) : null}
                   {selectedLens === "money" && filteredFinanceWidgets[0] ? (
                     <FinanceTable
                       widget={filteredFinanceWidgets[0]}
-                      items={filteredFinanceWidgets[0].items}
+                      items={filteredFinanceWidgets[0].items.slice(0, 4)}
                     />
                   ) : null}
                 </div>
@@ -1671,26 +1952,26 @@ export function ContractorDashboardSurface({
                   {selectedLens === "field" && filteredOperationsWidgets[3] ? (
                     <QueueRows
                       widget={filteredOperationsWidgets[3]}
-                      items={filteredOperationsWidgets[3].items}
+                      items={filteredOperationsWidgets[3].items.slice(0, 3)}
                     />
                   ) : null}
                   {selectedLens === "sales" && filteredCommercialWidgets[0] ? (
                     <QueueRows
                       widget={filteredCommercialWidgets[0]}
-                      items={filteredCommercialWidgets[0].items}
+                      items={filteredCommercialWidgets[0].items.slice(0, 3)}
                     />
                   ) : null}
                   {(selectedLens === "field" || selectedLens === "projects") &&
                   filteredOperationsWidgets[0] ? (
                     <QueueRows
                       widget={filteredOperationsWidgets[0]}
-                      items={filteredOperationsWidgets[0].items}
+                      items={filteredOperationsWidgets[0].items.slice(0, 3)}
                     />
                   ) : null}
                   {selectedLens === "field" && filteredOperationsWidgets[2] ? (
                     <QueueRows
                       widget={filteredOperationsWidgets[2]}
-                      items={filteredOperationsWidgets[2].items}
+                      items={filteredOperationsWidgets[2].items.slice(0, 3)}
                     />
                   ) : null}
                 </div>
@@ -1701,7 +1982,7 @@ export function ContractorDashboardSurface({
                     filteredCommercialWidgets[2] ? (
                       <QueueRows
                         widget={filteredCommercialWidgets[2]}
-                        items={filteredCommercialWidgets[2].items}
+                        items={filteredCommercialWidgets[2].items.slice(0, 3)}
                       />
                     ) : null}
                   </div>
@@ -1710,7 +1991,7 @@ export function ContractorDashboardSurface({
                     {selectedLens === "money" && filteredFinanceWidgets[1] ? (
                       <FinanceTable
                         widget={filteredFinanceWidgets[1]}
-                        items={filteredFinanceWidgets[1].items}
+                        items={filteredFinanceWidgets[1].items.slice(0, 4)}
                       />
                     ) : null}
                   </div>
@@ -1721,7 +2002,7 @@ export function ContractorDashboardSurface({
                   filteredOperationsWidgets[1] ? (
                     <QueueRows
                       widget={filteredOperationsWidgets[1]}
-                      items={filteredOperationsWidgets[1].items}
+                      items={filteredOperationsWidgets[1].items.slice(0, 3)}
                     />
                   ) : null}
                 </div>

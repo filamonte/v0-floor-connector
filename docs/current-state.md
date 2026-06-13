@@ -3078,7 +3078,12 @@ Implemented UI behavior now:
   Field, Money, and Follow-ups. The selector is local to `/dashboard`, becomes
   horizontally scrollable tabs on mobile, and filters/reorders existing
   dashboard widgets rather than creating new records, loaders, statuses, KPIs,
-  tasks, AI output, or dashboard-owned queues.
+  tasks, AI output, or dashboard-owned queues. A follow-up clarity reduction now
+  keeps the default Today view capped to a small cockpit of top priorities,
+  next recommended actions, a narrow business pulse, Universal Capture access,
+  and owning-workspace links; fuller queue/table depth lives behind the command
+  lenses and links back to Sales Manager, Projects, Schedule, Financials, and My
+  Work.
 - Record Workspace rhythm now has a shared presentation contract in
   `@floorconnector/ui` plus a reusable `RecordWorkspaceSection` primitive.
   Estimate, Contract, Invoice, and Job command bands use shared status badges,

@@ -173,7 +173,13 @@ Command Center lens selector with Today, Needs Attention, Sales, Projects,
 Field, Money, and Follow-ups modes so the page no longer shows every
 operational surface at once. The lenses reorganize existing widgets and links
 only; they do not add dashboard-owned records, fake KPIs, new loaders, server
-actions, schema, or route behavior. Next visual target should be Estimate
+actions, schema, or route behavior. The follow-up Dashboard Clarity Reduction
+pass makes default Today more ruthless: one top handoff lane in the command
+deck, a capped five-item Today cockpit, next recommended actions, a small
+business pulse, Universal Capture access, and direct links to Sales Manager,
+Projects, Schedule, Financials, and My Work. Fuller exception, sales, project,
+field, money, and follow-up previews now live behind their command lenses
+instead of competing in the default view. Next visual target should be Estimate
 Review and Invoice Review unless CrewBoard/schedule-board composition is
 prioritized.
 
