@@ -1,6 +1,6 @@
 # Figma Fidelity Refactor V1
 
-Status: Implementation slice
+Status: Review gate complete
 Date: 2026-06-13
 Branch: `stream/figma-fidelity-refactor-v1`
 Worktree: `C:\FC-worktrees\figma-fidelity-refactor-v1`
@@ -54,6 +54,41 @@ the Dashboard, Settings, Opportunity-adjacent, and Portal references.
 - Shared Industrial OS primitives have slightly tighter borders, command deck,
   KPI band, and command rail helpers for later page-family slices.
 
+## Review Verdict
+
+This branch is directionally ready for PR as a presentation-only visual
+foundation pass. The hard review did not find critical regressions requiring
+code changes before PR.
+
+The review rechecked the approved Figma frames through Figma MCP and browser
+tested the implemented app at `1366px` and `390px` on a dedicated local server
+for this worktree. Header consistency, Projects command-menu behavior,
+Dashboard lens behavior, Universal Capture entry, local active states,
+protected-route rendering, portal customer-safe copy, favicon status, and
+horizontal overflow all passed.
+
+## Issues Found
+
+- Projects, Leads, Project Workspace, Opportunity Workspace, and Settings are
+  materially closer to the approved Industrial OS direction, but mobile still
+  carries large dark header zones and long record titles that consume much of
+  the opening viewport.
+- Leads Manager is now a Sales Command surface, but the opportunity table still
+  appears in the first viewport on desktop because the real dataset is large
+  and the current route still needs direct record access.
+- Portal is customer-safe and aligned to the hard-border / action-first
+  pattern, but it does not yet match the approved portal frame's dark left rail
+  composition.
+- The protected header is consistent across tested routes. On non-project
+  routes, the Projects command displays the existing recent-project launcher
+  label when session state is present; this preserves current behavior while
+  adding the command menu.
+
+## Fixes Made During Review
+
+No app-code fixes were made during the review gate. The only post-review change
+was this review-packet update.
+
 ## Production Safety
 
 - No new fake KPIs, statuses, AI claims, queues, persistence, or source tables.
@@ -82,6 +117,13 @@ the Dashboard, Settings, Opportunity-adjacent, and Portal references.
   inspected board metadata.
 - This pass does not expand Schedule / CrewBoard, Invoice Review, Estimate
   Review, Assessment Workspace, or Estimate Workspace beyond smoke coverage.
+- Mobile headers remain taller than the approved mobile references where real
+  FloorConnector record names are long. Compressing those titles should be a
+  focused mobile refinement rather than an incidental change in this review
+  gate.
+- The portal keeps the current customer-safe portal architecture instead of the
+  approved frame's full dark left-rail shell. A portal-specific slice should
+  own that composition change.
 
 ## Remaining Gaps
 
@@ -94,6 +136,61 @@ the Dashboard, Settings, Opportunity-adjacent, and Portal references.
 - The global shell can later add real recent-project data when a safe header
   loader exists; this pass intentionally stayed with the existing
   session-backed recent project and static links.
+- Mobile command headers for Project and Opportunity workspaces should get a
+  title-compression pass.
+- Leads Manager should get a follow-up pass that makes qualification,
+  follow-up, site-visit, and estimate-handoff lanes more visible before the
+  full table.
+
+## Browser Review Evidence
+
+Dedicated review server: `http://localhost:3111`
+
+Discovered real records used for detail smoke:
+
+- Lead detail: `/leads/1b441af7-2ef0-491c-8a52-dc1ed32660d3`
+- Project detail: `/projects/fe0ba4e8-97c2-4765-9259-c6de6344d82c`
+- Invoice detail: `/invoices/12be9e05-2171-428e-a280-8fe6aeb9e035`
+
+Routes checked at `1366px` and `390px`:
+
+- `/dashboard`
+- `/dashboard?capture=1#universal-capture`
+- `/projects`
+- one Project Workspace route
+- `/leads`
+- one Opportunity Workspace route
+- `/settings`
+- `/settings/organization`
+- `/portal`
+- `/schedule`
+- one Invoice Workspace route
+
+Browser results:
+
+- HTTP 200 on all tested routes.
+- No login redirects after saved-auth warmup.
+- No `ChunkLoadError`.
+- No console or page errors.
+- No favicon errors; `/favicon.ico` returned 200.
+- No horizontal overflow at either tested width.
+- Dashboard lenses were present and clickable for Today, Needs Attention,
+  Sales, Projects, Field, Money, and Follow-ups.
+- Universal Capture opened from `/dashboard?capture=1#universal-capture`.
+- Projects command menu opened on desktop and used existing routes only.
+- Local active states rendered on Projects, Project Workspace, Leads,
+  Opportunity Workspace, Settings, Settings Organization, Schedule, and Invoice
+  routes.
+- Portal stayed customer-safe and scoped to explicitly shared records.
+
+## No Data Loss / No Silo Confirmation
+
+This review confirmed the branch remains presentation-only over existing
+FloorConnector data and actions. It adds no schema, migrations, route renames,
+loaders, server actions, tenant/auth behavior, portal grants, payment/signature
+logic, scheduling behavior, provider mutation, fake records, fake statuses,
+fake KPIs, fake AI claims, local-only workflow persistence, dashboard-owned
+state, lead-owned project state, or duplicate invoice/project models.
 
 ## Next Recommendation
 
