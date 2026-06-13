@@ -626,8 +626,8 @@ function DashboardReferenceCommandCenter({
       href: "#dashboard-attention-rail"
     }
   ];
-  const visibleQueues = actionQueues.slice(0, 4);
-  const attentionItems = priorityItems.slice(0, 4);
+  const visibleQueues = actionQueues.slice(0, 2);
+  const attentionItems = priorityItems.slice(0, 2);
   const showStartHere =
     onboardingSteps &&
     (startHereForceVisible || onboardingSteps.some((step) => !step.complete));
@@ -637,28 +637,36 @@ function DashboardReferenceCommandCenter({
       aria-labelledby="dashboard-reference-command-center-title"
       className="border border-[#18181b] bg-[#09090b] text-white shadow-none"
     >
-      <div className="px-4 py-5 sm:px-6 lg:px-8 lg:py-7">
-        <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(280px,360px)]">
+      <div className="px-4 py-4 sm:px-5 lg:px-7 lg:py-6">
+        <div className="grid gap-4 xl:grid-cols-[minmax(0,0.7fr)_minmax(300px,0.3fr)]">
           <div className="min-w-0">
             <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#8fc7ff]">
               Industrial OS V2
             </p>
             <h1
               id="dashboard-reference-command-center-title"
-              className="mt-3 max-w-4xl break-words text-[34px] font-semibold leading-[1.05] tracking-tight text-white [overflow-wrap:anywhere] sm:text-[48px]"
+              className="mt-2 max-w-4xl break-words text-[30px] font-semibold leading-[1.05] tracking-tight text-white [overflow-wrap:anywhere] sm:text-[44px]"
             >
               Command Center
             </h1>
-            <p className="mt-3 max-w-3xl text-sm leading-6 text-white/72 sm:text-base sm:leading-7">
+            <p className="mt-3 max-w-3xl text-sm leading-6 text-white/72">
               {header?.organizationName
                 ? `${header.organizationName} operating view across sales, production, field, and cash.`
                 : "Operating view across sales, production, field, and cash."}{" "}
               Dashboard prioritizes the work; source workspaces remain the place
               where actions execute.
             </p>
+            {earlyAccess ? (
+              <Link
+                href={earlyAccess.href}
+                className="mt-3 inline-flex min-h-8 items-center border border-white/15 bg-white/[0.06] px-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-white transition hover:bg-white/10 sm:hidden"
+              >
+                {earlyAccess.statusLabel}
+              </Link>
+            ) : null}
           </div>
 
-          <div className="border border-white/10 bg-white/[0.06] p-4">
+          <div className="hidden border border-white/10 bg-white/[0.06] p-4 sm:block xl:min-h-[150px]">
             <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#8fc7ff]">
               Operating posture
             </p>
@@ -682,31 +690,8 @@ function DashboardReferenceCommandCenter({
           </div>
         </div>
 
-        <div className="mt-6 grid gap-px border border-white/10 bg-white/10 sm:grid-cols-2 xl:grid-cols-4">
-          {commandMetrics.map((metric) => (
-            <Link
-              key={metric.key}
-              href={metric.href}
-              className="group min-w-0 bg-white px-4 py-4 text-[#0f172a] transition hover:bg-[#eef6ff] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8fc7ff] focus-visible:ring-inset"
-            >
-              <div className="flex items-start justify-between gap-3">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#475569]">
-                  {metric.label}
-                </p>
-                <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-[#005eb8] opacity-80 transition group-hover:opacity-100" />
-              </div>
-              <p className="mt-3 truncate text-2xl font-semibold tracking-tight text-[#0f172a]">
-                {metric.value}
-              </p>
-              <p className="mt-1 text-[11px] leading-4 text-[#64748b]">
-                {metric.detail}
-              </p>
-            </Link>
-          ))}
-        </div>
-
-        <div className="mt-6 grid gap-5 xl:grid-cols-[minmax(0,1fr)_360px]">
-          <div className="min-w-0">
+        <div className="mt-5 grid gap-4 xl:grid-cols-[minmax(0,0.7fr)_minmax(300px,0.3fr)]">
+          <div className="order-2 min-w-0 xl:order-1">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
               <div>
                 <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#8fc7ff]">
@@ -721,7 +706,7 @@ function DashboardReferenceCommandCenter({
               </p>
             </div>
 
-            <div className="mt-4 grid gap-3 lg:grid-cols-2">
+            <div className="mt-3 grid gap-3 md:grid-cols-2">
               {visibleQueues.length > 0 ? (
                 visibleQueues.map((queue) => {
                   const firstItem = queue.items[0] ?? null;
@@ -729,14 +714,14 @@ function DashboardReferenceCommandCenter({
                   return (
                     <article
                       key={queue.key}
-                      className="min-w-0 border border-white/10 bg-white/[0.06] p-4"
+                      className="min-w-0 border border-white/10 bg-white/[0.06] p-3.5"
                     >
                       <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0">
                           <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#8fc7ff]">
                             {queue.title}
                           </p>
-                          <p className="mt-2 text-sm leading-6 text-white/72">
+                          <p className="mt-2 line-clamp-2 text-sm leading-5 text-white/72">
                             {queue.description}
                           </p>
                         </div>
@@ -763,7 +748,7 @@ function DashboardReferenceCommandCenter({
                       )}
                       <Link
                         href={queue.href}
-                        className="mt-4 inline-flex min-h-8 items-center border border-white/15 bg-white px-3 text-xs font-semibold uppercase tracking-[0.12em] text-[#0f172a] transition hover:bg-[#eef6ff]"
+                        className="mt-3 inline-flex min-h-8 items-center border border-white/15 bg-white px-3 text-xs font-semibold uppercase tracking-[0.12em] text-[#0f172a] transition hover:bg-[#eef6ff]"
                       >
                         {queue.actionLabel}
                       </Link>
@@ -777,11 +762,34 @@ function DashboardReferenceCommandCenter({
                 </div>
               )}
             </div>
+
+            <div className="mt-4 grid gap-px border border-white/10 bg-white/10 sm:grid-cols-2 xl:grid-cols-4">
+              {commandMetrics.map((metric) => (
+                <Link
+                  key={metric.key}
+                  href={metric.href}
+                  className="group min-w-0 bg-white px-3 py-3 text-[#0f172a] transition hover:bg-[#eef6ff] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8fc7ff] focus-visible:ring-inset"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#475569]">
+                      {metric.label}
+                    </p>
+                    <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-[#005eb8] opacity-80 transition group-hover:opacity-100" />
+                  </div>
+                  <p className="mt-2 truncate text-2xl font-semibold tracking-tight text-[#0f172a]">
+                    {metric.value}
+                  </p>
+                  <p className="mt-1 line-clamp-2 text-[11px] leading-4 text-[#64748b]">
+                    {metric.detail}
+                  </p>
+                </Link>
+              ))}
+            </div>
           </div>
 
           <aside
             id="dashboard-attention-rail"
-            className="min-w-0 border border-white/10 bg-white p-4 text-[#0f172a]"
+            className="order-1 min-w-0 border border-white/10 bg-white p-4 text-[#0f172a] shadow-[inset_4px_0_0_#005eb8] xl:order-2 xl:min-h-[360px]"
           >
             <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#005eb8]">
               Needs attention
@@ -1543,7 +1551,7 @@ export function ContractorDashboardSurface({
 
   return (
     <div className="overflow-x-hidden bg-[#f4f4f5]">
-      <div className="space-y-4 px-4 py-4 sm:px-6">
+      <div className="space-y-5 px-4 py-4 sm:px-6">
         <h1 className="sr-only">Dashboard</h1>
 
         <DashboardReferenceCommandCenter
@@ -1558,13 +1566,6 @@ export function ContractorDashboardSurface({
 
         {universalCapture ? universalCapture : null}
 
-        <DashboardOwnershipBanner />
-
-        <UtilityCardGrid
-          metrics={metrics}
-          operationsWidgets={filteredOperationsWidgets}
-        />
-
         <DashboardV0Sections
           metrics={metrics}
           lifecycleSteps={lifecycleSteps}
@@ -1573,6 +1574,13 @@ export function ContractorDashboardSurface({
           financeWidgets={filteredFinanceWidgets}
           projectCueWidget={filteredProjectCueWidget}
           attentionWidget={attentionWidget ?? null}
+        />
+
+        <DashboardOwnershipBanner />
+
+        <UtilityCardGrid
+          metrics={metrics}
+          operationsWidgets={filteredOperationsWidgets}
         />
 
         <div className="grid gap-4 2xl:grid-cols-[minmax(0,1.05fr)_minmax(360px,0.95fr)]">

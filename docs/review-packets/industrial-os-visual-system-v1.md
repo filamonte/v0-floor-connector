@@ -655,10 +655,80 @@ Figma reference:
 
 ### Next Target Recommendation
 
-Dashboard should be the next Figma fidelity target before Settings. The board
-shows Settings is already close to the approved control-room pattern, while
-Dashboard still has the larger first-viewport command deck and queue-density
-composition gap.
+Dashboard was selected as the next Figma fidelity target before Settings
+because the board showed Settings was already close to the approved
+control-room pattern, while Dashboard still had the larger first-viewport
+command deck and queue-density composition gap.
+
+## Dashboard Figma Fidelity Pass
+
+Date: 2026-06-13
+
+Figma references:
+
+- Board:
+  `https://www.figma.com/design/N0tVE3uKWpHZc4dlF6ytgn`
+- Frames used on `03 Side-by-Side Gap Review`:
+  `REVIEW / Dashboard / Desktop`, `APPROVED / Dashboard / Desktop`,
+  `CURRENT / Dashboard / Desktop`, `REVIEW / Dashboard / Mobile`,
+  `APPROVED / Dashboard / Mobile`, and `CURRENT / Dashboard / Mobile`.
+
+### Gaps Addressed
+
+- Strengthened the first-screen Command Center composition without changing
+  dashboard data sources.
+- Reworked the top dashboard command deck into a clearer desktop 70/30 layout:
+  existing action lanes and KPI cards on the main side, isolated Needs
+  Attention rail on the right.
+- Tightened the KPI/action band by moving it into the command deck instead of
+  leaving it as a separate passive strip above the action lanes.
+- Isolated the Needs Attention rail with a white rail treatment and blue
+  `#005EB8` command accent.
+- Reduced first-viewport clutter by limiting the top command deck to the
+  highest-signal two action lanes and two attention records; the broader queues
+  continue to render lower on the page from the same real records.
+- Moved passive ownership and utility cards below the main operating blocks so
+  lower-priority sections no longer compete with the opening command deck.
+- Shortened the mobile opening viewport by using a compact account-status link
+  and placing Needs Attention plus the action queue before passive metric and
+  utility content.
+
+### Production Safety
+
+- No schema, migration, route, loader, server-action, auth, tenant, portal,
+  admin, payment, signature, scheduling, or business-logic behavior changed.
+- No fake KPIs, fake AI, fake health scores, fake statuses, demo cards,
+  duplicate queues, local persistence, or dashboard-owned records were added.
+- Early access/account status remains present in the command center; Universal
+  Capture remains controlled by the existing `/dashboard?capture=1` entry.
+
+### Deviations
+
+- The approved Stitch desktop reference uses a fixed-rail app shell. The live
+  FloorConnector app preserves the existing top/header global navigation, per
+  stream scope.
+- The mobile command deck still contains real queue cards rather than a
+  bespoke mobile-only queue component. This preserves existing dashboard links
+  and source-record actions while making the opening viewport action-first.
+- The full dashboard still renders deeper operating blocks, lifecycle,
+  Operational Cockpit, My Work, and workflow queues below the command deck
+  because those sections are real current dashboard surfaces.
+
+### Remaining Gaps
+
+- Further mobile compression could move the first two action lanes into a
+  dedicated compact list component, but that would be a broader dashboard
+  component pass.
+- Some lower dashboard sections still use older card rhythm and can be
+  normalized during a future shared dashboard/manager primitive pass.
+- The top/header global navigation remains visually different from the
+  fixed-rail approved Stitch reference by design.
+
+### Next Target Recommendation
+
+Run `industrial-os-review-screens-v1` next for Estimate Review and Invoice
+Review. After that, run a CrewBoard/schedule-board composition slice so the
+schedule workboard catches up to the command-center and workspace patterns.
 
 ### Validation
 

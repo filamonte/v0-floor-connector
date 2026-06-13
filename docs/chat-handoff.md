@@ -163,6 +163,14 @@ workflow, and turns the right support column into a status/next-action/estimate
 handoff command rail. Continue to treat Dashboard as the next Figma fidelity
 target before Settings unless a narrower review-screen slice is requested.
 
+Latest Dashboard Figma fidelity note: the branch now tightens `/dashboard`
+around the Figma command-center reference with a desktop 70/30 action/KPI deck,
+isolated Needs Attention rail, and mobile opening order that prioritizes
+attention/action content before passive utility sections. It preserves existing
+dashboard read models, links, early-access/account status behavior, and
+Universal Capture entry behavior. Next visual target should be Estimate Review
+and Invoice Review unless CrewBoard/schedule-board composition is prioritized.
+
 Role-aware dashboards and workspace personalization are approved target
 direction only. Preferred model: Platform Defaults -> Organization Presets ->
 User Personalization. These layers may change presentation, ordering, filtering,

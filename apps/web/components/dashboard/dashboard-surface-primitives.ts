@@ -10,10 +10,10 @@ export const dashboardPanelActionClassName =
 export const dashboardGridDividerClassName = "grid gap-px bg-[#d1d5db]";
 
 export const dashboardCommandSurfaceClassName =
-  "rounded-[4px] border border-[#27272a] bg-[#09090b] text-white shadow-none";
+  "rounded-[4px] border border-[#18181b] bg-[#09090b] text-white shadow-none";
 
 export const dashboardCommandStatClassName =
   "border border-white/10 bg-white/[0.065] px-3 py-2.5 shadow-none";
 
 export const dashboardMetricCardClassName =
-  "group bg-white px-3 py-3 transition hover:bg-[#f7fbff] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#005eb8] focus-visible:ring-inset";
+  "group bg-white px-3 py-2.5 transition hover:bg-[#f7fbff] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#005eb8] focus-visible:ring-inset";

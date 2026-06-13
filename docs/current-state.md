@@ -265,6 +265,12 @@ These high-value route notes exist to prevent target-vs-current drift:
   status, next action, and estimate handoff context. This remains a
   presentation-only change over existing opportunity, assessment, estimate, and
   Work Item records.
+- Dashboard now reflects the Industrial OS board's Dashboard Figma fidelity
+  correction: the first viewport is a tighter command-center deck with a
+  desktop 70/30 action/KPI area and isolated Needs Attention rail, while mobile
+  prioritizes Needs Attention and action lanes before passive utility sections.
+  This remains presentation-only over existing dashboard read models, queues,
+  links, early-access status, and Universal Capture entry behavior.
 - Project Workspace now also uses Workspace Framework V2 presentation views.
   `/projects/:projectId` preserves the same route while using `?view=` focused
   views for Overview, Readiness, Scope / Context, Estimates / Contracts, Jobs /
