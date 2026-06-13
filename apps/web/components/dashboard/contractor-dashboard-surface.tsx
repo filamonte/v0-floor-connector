@@ -78,6 +78,14 @@ type DashboardWidget = {
 };
 
 type MyWorkQueueMode = "company" | "mine" | "unresolved";
+type DashboardCommandLens =
+  | "today"
+  | "attention"
+  | "sales"
+  | "projects"
+  | "field"
+  | "money"
+  | "follow-ups";
 
 type MyWorkQueueModeConfig = {
   mode: MyWorkQueueMode;
@@ -112,6 +120,14 @@ type DashboardPlaceholder = {
   title: string;
   description: string;
   priority: "High";
+};
+
+type DashboardLensConfig = {
+  key: DashboardCommandLens;
+  label: string;
+  title: string;
+  description: string;
+  count: number;
 };
 
 export type ContractorDashboardSurfaceProps = {
@@ -575,6 +591,78 @@ function QueueRows({
   );
 }
 
+function DashboardLensRail({
+  lenses,
+  selectedLens,
+  onSelectLens
+}: {
+  lenses: DashboardLensConfig[];
+  selectedLens: DashboardCommandLens;
+  onSelectLens: (lens: DashboardCommandLens) => void;
+}) {
+  const selectedConfig =
+    lenses.find((lens) => lens.key === selectedLens) ?? lenses[0];
+
+  return (
+    <aside
+      aria-label="Dashboard command lenses"
+      className={[
+        dashboardPanelClassName,
+        "sticky top-3 self-start overflow-hidden"
+      ].join(" ")}
+    >
+      <div className={["px-4 py-3", dashboardPanelHeaderClassName].join(" ")}>
+        <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#005eb8]">
+          Command lenses
+        </p>
+        <h2 className="mt-1 text-[17px] font-semibold tracking-tight text-[var(--text-primary)]">
+          {selectedConfig.title}
+        </h2>
+        <p className="mt-1 text-xs leading-5 text-[var(--text-secondary)]">
+          {selectedConfig.description}
+        </p>
+      </div>
+      <div
+        className="flex gap-px overflow-x-auto bg-[var(--border-warm)] p-px lg:block lg:overflow-visible lg:p-0"
+        role="tablist"
+      >
+        {lenses.map((lens) => {
+          const selected = lens.key === selectedLens;
+
+          return (
+            <button
+              key={lens.key}
+              type="button"
+              role="tab"
+              aria-selected={selected}
+              aria-controls="dashboard-command-lens-panel"
+              onClick={() => onSelectLens(lens.key)}
+              className={[
+                "flex min-w-[150px] items-center justify-between gap-3 px-3 py-3 text-left text-xs font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#005eb8] focus-visible:ring-inset lg:min-w-0 lg:w-full",
+                selected
+                  ? "bg-[#09090b] text-white"
+                  : "bg-white text-[var(--text-secondary)] hover:bg-[#f7fbff] hover:text-[var(--text-primary)]"
+              ].join(" ")}
+            >
+              <span className="truncate">{lens.label}</span>
+              <span
+                className={[
+                  "shrink-0 rounded-[3px] px-1.5 py-0.5 text-[10px] font-semibold",
+                  selected
+                    ? "bg-white/15 text-white"
+                    : "bg-[var(--highlight)] text-[var(--text-secondary)]"
+                ].join(" ")}
+              >
+                {lens.count}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+    </aside>
+  );
+}
+
 function DashboardReferenceCommandCenter({
   header,
   metrics,
@@ -924,359 +1012,6 @@ function UtilityCardGrid({
   );
 }
 
-function PipelineCell({
-  label,
-  value,
-  detail,
-  href,
-  tone
-}: {
-  label: string;
-  value: string;
-  detail: string;
-  href: string;
-  tone: "attention" | "active" | "ready" | "quiet";
-}) {
-  const toneClassName =
-    tone === "attention"
-      ? "border-[#c7d2e2] bg-[#f8fafc] text-[#0f172a]"
-      : tone === "ready"
-        ? "border-emerald-200 bg-emerald-50 text-emerald-950"
-        : tone === "active"
-          ? "border-[var(--border-warm)] bg-[var(--highlight)] text-[var(--text-primary)]"
-          : "border-[var(--border-warm)] bg-white text-[var(--text-secondary)]";
-
-  return (
-    <Link
-      href={href}
-      className={[
-        "group flex min-h-[126px] flex-col rounded-[4px] border px-4 py-4 transition hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#005eb8]",
-        toneClassName
-      ].join(" ")}
-    >
-      <div className="flex items-start justify-between gap-3">
-        <p className="text-[10px] font-semibold uppercase tracking-[0.16em] opacity-75">
-          {label}
-        </p>
-        <span className="mt-1 h-1.5 w-1.5 rounded-full bg-[#005eb8] opacity-50 transition group-hover:opacity-100" />
-      </div>
-      <p className="mt-2 text-2xl font-semibold tracking-tight">{value}</p>
-      <p className="mt-1 line-clamp-2 text-xs leading-5 opacity-70">{detail}</p>
-    </Link>
-  );
-}
-
-function StageBars({ cells }: { cells: DashboardLifecycleStep[] }) {
-  const maxValue = Math.max(
-    1,
-    ...cells.map((cell) => {
-      const numericValue = Number.parseInt(cell.value.replace(/[^0-9]/g, ""));
-      return Number.isFinite(numericValue) ? numericValue : 0;
-    })
-  );
-
-  return (
-    <BoardPanel
-      eyebrow="Opportunities"
-      title="Pipeline by stage"
-      description="Display-only stage bars from the existing lifecycle snapshot, not a separate reporting model."
-      action={
-        <span className="rounded-[4px] border border-[var(--border-warm)] bg-[var(--highlight)] px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--text-secondary)]">
-          Live snapshot
-        </span>
-      }
-    >
-      <div className="space-y-3 px-4 py-4">
-        {cells.map((cell) => {
-          const numericValue = Number.parseInt(
-            cell.value.replace(/[^0-9]/g, "")
-          );
-          const width = `${Math.max(
-            8,
-            ((Number.isFinite(numericValue) ? numericValue : 0) / maxValue) *
-              100
-          )}%`;
-
-          return (
-            <Link
-              key={cell.key}
-              href={cell.href}
-              className="grid grid-cols-[minmax(96px,0.38fr)_minmax(0,1fr)_auto] items-center gap-3"
-            >
-              <div className="min-w-0">
-                <p className="truncate text-xs font-semibold text-[var(--text-primary)]">
-                  {cell.label}
-                </p>
-                <p className="mt-0.5 truncate text-[10px] text-[var(--text-tertiary)]">
-                  {cell.detail}
-                </p>
-              </div>
-              <div className="h-6 overflow-hidden rounded-[4px] bg-[var(--highlight)]">
-                <div
-                  className="h-full rounded-[4px] bg-[#005eb8]"
-                  style={{ width }}
-                />
-              </div>
-              <p className="w-14 text-right text-sm font-semibold text-[var(--text-primary)]">
-                {cell.value}
-              </p>
-            </Link>
-          );
-        })}
-      </div>
-    </BoardPanel>
-  );
-}
-
-function DashboardV0Sections({
-  metrics,
-  lifecycleSteps,
-  commercialWidgets,
-  operationsWidgets,
-  financeWidgets,
-  projectCueWidget,
-  attentionWidget
-}: {
-  metrics: DashboardMetric[];
-  lifecycleSteps: DashboardLifecycleStep[];
-  commercialWidgets: DashboardWidget[];
-  operationsWidgets: DashboardWidget[];
-  financeWidgets: DashboardWidget[];
-  projectCueWidget: DashboardWidget | null;
-  attentionWidget: DashboardWidget | null;
-}) {
-  const metricByKey = new Map(metrics.map((metric) => [metric.key, metric]));
-  const leadsMetric = metricByKey.get("leads-follow-up");
-  const estimatesMetric = metricByKey.get("estimates-awaiting-action");
-  const scheduleMetric = metricByKey.get("jobs-needing-schedule");
-  const jobsTodayMetric = metricByKey.get("jobs-today");
-  const contractsWidget = commercialWidgets.find(
-    (widget) => widget.key === "contracts"
-  );
-  const readyWidget = operationsWidgets.find(
-    (widget) => widget.key === "ready-to-schedule-projects"
-  );
-  const projectsWidget = operationsWidgets.find(
-    (widget) => widget.key === "projects"
-  );
-  const jobsScheduleWidget = operationsWidgets.find(
-    (widget) => widget.key === "jobs-needing-schedule"
-  );
-  const jobsTodayWidget = operationsWidgets.find(
-    (widget) => widget.key === "jobs-today"
-  );
-  const collectionsWidget =
-    financeWidgets.find((widget) => widget.key === "unpaid-invoices") ?? null;
-  const recentPaymentsWidget =
-    financeWidgets.find((widget) => widget.key === "recent-payments") ?? null;
-
-  const revenueCells = [
-    {
-      label: "Opportunity Follow-ups",
-      value: leadsMetric?.value ?? "0",
-      detail: leadsMetric?.detail ?? "Existing opportunity follow-up queue",
-      href: leadsMetric?.href ?? "/leads",
-      tone: "quiet" as const
-    },
-    {
-      label: "Estimates Pending",
-      value: estimatesMetric?.value ?? "0",
-      detail: estimatesMetric?.detail ?? "Existing estimate queue",
-      href: estimatesMetric?.href ?? "/estimates",
-      tone: "active" as const
-    },
-    {
-      label: "Awaiting Signature",
-      value: String(contractsWidget?.items.length ?? 0),
-      detail:
-        contractsWidget?.description ??
-        "Existing contract send and signature queue",
-      href: contractsWidget?.href ?? "/contracts",
-      tone:
-        (contractsWidget?.items.length ?? 0) > 0
-          ? ("attention" as const)
-          : ("quiet" as const)
-    },
-    {
-      label: "Won / Not Scheduled",
-      value: String(readyWidget?.items.length ?? 0),
-      detail:
-        readyWidget?.description ??
-        "Ready projects that need canonical job creation",
-      href: readyWidget?.href ?? "/projects",
-      tone:
-        (readyWidget?.items.length ?? 0) > 0
-          ? ("ready" as const)
-          : ("quiet" as const)
-    }
-  ];
-
-  const productionCells = [
-    {
-      label: "Ready to Schedule",
-      value: String(readyWidget?.items.length ?? 0),
-      detail: readyWidget?.description ?? "Ready Check cleared projects",
-      href: readyWidget?.href ?? "/schedule",
-      tone:
-        (readyWidget?.items.length ?? 0) > 0
-          ? ("ready" as const)
-          : ("quiet" as const)
-    },
-    {
-      label: "Blocked Projects",
-      value: String(projectsWidget?.items.length ?? 0),
-      detail: projectsWidget?.description ?? "Projects needing attention",
-      href: projectsWidget?.href ?? "/projects",
-      tone:
-        (projectsWidget?.items.length ?? 0) > 0
-          ? ("attention" as const)
-          : ("quiet" as const)
-    },
-    {
-      label: "Jobs Today",
-      value:
-        jobsTodayMetric?.value ?? String(jobsTodayWidget?.items.length ?? 0),
-      detail: jobsTodayMetric?.detail ?? "Existing jobs today queue",
-      href: jobsTodayMetric?.href ?? jobsTodayWidget?.href ?? "/jobs",
-      tone:
-        (jobsTodayWidget?.items.length ?? 0) > 0
-          ? ("active" as const)
-          : ("quiet" as const)
-    },
-    {
-      label: "Crew Assignment Gaps",
-      value:
-        scheduleMetric?.value ?? String(jobsScheduleWidget?.items.length ?? 0),
-      detail:
-        scheduleMetric?.detail ??
-        "Schedule handoffs and crew follow-through from canonical jobs",
-      href: scheduleMetric?.href ?? jobsScheduleWidget?.href ?? "/schedule",
-      tone:
-        (jobsScheduleWidget?.items.length ?? 0) > 0
-          ? ("attention" as const)
-          : ("quiet" as const)
-    }
-  ];
-
-  return (
-    <section
-      aria-labelledby="dashboard-v0-sections-title"
-      className="space-y-4"
-    >
-      <div>
-        <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
-          Operating blocks
-        </p>
-        <h2
-          id="dashboard-v0-sections-title"
-          className="mt-1 text-[17px] font-semibold tracking-tight text-[var(--text-primary)]"
-        >
-          Pipeline, production, cash, and field
-        </h2>
-      </div>
-
-      <div className="grid gap-4 lg:grid-cols-2">
-        <BoardPanel
-          eyebrow="Revenue pipeline"
-          title="Sales and close stage"
-          description="Existing commercial records grouped into the v0 pipeline card rhythm."
-        >
-          <div className="grid grid-cols-2 gap-3 p-4">
-            {revenueCells.map((cell) => (
-              <PipelineCell key={cell.label} {...cell} />
-            ))}
-          </div>
-        </BoardPanel>
-
-        <BoardPanel
-          eyebrow="Production readiness"
-          title="Scheduling and execution status"
-          description="Readiness and schedule pressure stay derived from canonical projects and jobs."
-        >
-          <div className="grid grid-cols-2 gap-3 p-4">
-            {productionCells.map((cell) => (
-              <PipelineCell key={cell.label} {...cell} />
-            ))}
-          </div>
-        </BoardPanel>
-      </div>
-
-      <div className="grid gap-4 lg:grid-cols-2">
-        <StageBars cells={lifecycleSteps} />
-        {projectCueWidget ? (
-          <QueueRows
-            widget={{
-              ...projectCueWidget,
-              eyebrow: "Quality / Field Notes",
-              title: "Open issues and punch items",
-              description:
-                "Field and quality signals stay on existing project cues, Daily Logs, jobs, and work items. No punchlist-only dashboard model was added.",
-              actionLabel: "Open projects"
-            }}
-            items={projectCueWidget.items}
-          />
-        ) : null}
-      </div>
-
-      <div className="grid gap-4 lg:grid-cols-2">
-        {collectionsWidget ? (
-          <FinanceTable
-            widget={{
-              ...collectionsWidget,
-              eyebrow: "Collections / AR",
-              title: "Receivables and payment status"
-            }}
-            items={collectionsWidget.items}
-          />
-        ) : null}
-        {jobsTodayWidget ? (
-          <QueueRows
-            widget={{
-              ...jobsTodayWidget,
-              eyebrow: "Field activity",
-              title: "Today's jobs, logs, and blockers",
-              description:
-                "Day-of work stays tied to existing jobs, schedule, project, and Daily Log routes."
-            }}
-            items={jobsTodayWidget.items}
-          />
-        ) : null}
-      </div>
-
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]">
-        {projectCueWidget ? (
-          <QueueRows
-            widget={{
-              ...projectCueWidget,
-              eyebrow: "Next Move",
-              title: "Recommended action",
-              description:
-                "Recommended action is deterministic and review-first. Drafting or workflow execution still happens only in existing workspaces."
-            }}
-            items={projectCueWidget.items.slice(0, 3)}
-          />
-        ) : null}
-        {(attentionWidget ?? recentPaymentsWidget) ? (
-          <QueueRows
-            widget={{
-              ...(attentionWidget ?? recentPaymentsWidget!),
-              eyebrow: "Recent activity",
-              title: "Latest events",
-              description:
-                attentionWidget?.description ??
-                "Recent payment movement from the canonical invoice and payment chain.",
-              actionLabel: attentionWidget?.actionLabel ?? "Open payments"
-            }}
-            items={
-              (attentionWidget ?? recentPaymentsWidget)?.items.slice(0, 5) ?? []
-            }
-          />
-        ) : null}
-      </div>
-    </section>
-  );
-}
-
 function FinanceTable({
   widget,
   items
@@ -1470,6 +1205,8 @@ export function ContractorDashboardSurface({
   onboardingSteps,
   startHereForceVisible
 }: ContractorDashboardSurfaceProps) {
+  const [selectedLens, setSelectedLens] =
+    useState<DashboardCommandLens>("today");
   const [query, setQuery] = useState("");
   const deferredQuery = useDeferredValue(query.trim().toLowerCase());
   const handleQueryChange = (nextValue: string) => {
@@ -1548,6 +1285,94 @@ export function ContractorDashboardSurface({
         : null,
     [projectCueWidget, deferredQuery]
   );
+  const lensConfigs = useMemo<DashboardLensConfig[]>(() => {
+    const countItems = (widgets: DashboardWidget[]) =>
+      widgets.reduce((total, widget) => total + widget.items.length, 0);
+    const jobsTodayWidget = filteredOperationsWidgets.find(
+      (widget) => widget.key === "jobs-today"
+    );
+    const projectsWidget = filteredOperationsWidgets.find(
+      (widget) => widget.key === "projects"
+    );
+
+    return [
+      {
+        key: "today",
+        label: "Today",
+        title: "Today / Needs Attention",
+        description:
+          "The smallest operating view: current work, active blockers, and near-term movement.",
+        count:
+          priorityItems.length +
+          (jobsTodayWidget?.items.length ?? 0) +
+          (filteredProjectCueWidget?.items.length ?? 0)
+      },
+      {
+        key: "attention",
+        label: "Needs Attention",
+        title: "Exceptions and blockers",
+        description:
+          "Blocked, overdue, waiting, failed, and review-first items from existing source records.",
+        count:
+          (attentionWidget?.items.length ?? 0) +
+          (filteredProjectCueWidget?.items.length ?? 0) +
+          priorityItems.length
+      },
+      {
+        key: "sales",
+        label: "Sales",
+        title: "Sales command lane",
+        description:
+          "Opportunity, estimate, contract, and commercial follow-up queues.",
+        count: countItems(filteredCommercialWidgets)
+      },
+      {
+        key: "projects",
+        label: "Projects",
+        title: "Project command lane",
+        description:
+          "Project readiness, project continuity, and lifecycle movement.",
+        count:
+          (projectsWidget?.items.length ?? 0) +
+          (filteredProjectCueWidget?.items.length ?? 0)
+      },
+      {
+        key: "field",
+        label: "Field",
+        title: "Field and schedule lane",
+        description:
+          "Schedule, crew, appointments, and day-of execution handoff.",
+        count: countItems(filteredOperationsWidgets)
+      },
+      {
+        key: "money",
+        label: "Money",
+        title: "Money lane",
+        description:
+          "Invoices, AR, payments, and collection visibility from the billing chain.",
+        count: countItems(filteredFinanceWidgets)
+      },
+      {
+        key: "follow-ups",
+        label: "Follow-ups",
+        title: "Follow-up lane",
+        description:
+          "Work Items, My Work, reminders, and assigned follow-through tasks.",
+        count:
+          (filteredWorkItemsWidget?.items.length ?? 0) +
+          countItems(filteredMyWorkWidgets)
+      }
+    ];
+  }, [
+    attentionWidget,
+    filteredCommercialWidgets,
+    filteredFinanceWidgets,
+    filteredMyWorkWidgets,
+    filteredOperationsWidgets,
+    filteredProjectCueWidget,
+    filteredWorkItemsWidget,
+    priorityItems
+  ]);
 
   return (
     <div className="overflow-x-hidden bg-[#f4f4f5]">
@@ -1566,268 +1391,346 @@ export function ContractorDashboardSurface({
 
         {universalCapture ? universalCapture : null}
 
-        <DashboardV0Sections
-          metrics={metrics}
-          lifecycleSteps={lifecycleSteps}
-          commercialWidgets={filteredCommercialWidgets}
-          operationsWidgets={filteredOperationsWidgets}
-          financeWidgets={filteredFinanceWidgets}
-          projectCueWidget={filteredProjectCueWidget}
-          attentionWidget={attentionWidget ?? null}
-        />
-
-        <DashboardOwnershipBanner />
-
-        <UtilityCardGrid
-          metrics={metrics}
-          operationsWidgets={filteredOperationsWidgets}
-        />
-
-        <div className="grid gap-4 2xl:grid-cols-[minmax(0,1.05fr)_minmax(360px,0.95fr)]">
-          <LifecycleRail steps={lifecycleSteps} />
-          <PriorityGrid metrics={metrics} />
-        </div>
-
-        {aiOperationalDigest ? (
-          <AiOperationalDigestPanel digest={aiOperationalDigest} />
-        ) : null}
-
-        {operationalCockpitBuckets.length > 0 ? (
-          <OperationalGuidanceSection
-            title="Command Center"
-            description="The home board groups current work by decision posture: what needs attention, what is ready to move, what is waiting on a customer or payment, and what needs field follow-through."
-            buckets={operationalCockpitBuckets}
+        <section className="grid gap-4 lg:grid-cols-[220px_minmax(0,1fr)]">
+          <DashboardLensRail
+            lenses={lensConfigs}
+            selectedLens={selectedLens}
+            onSelectLens={setSelectedLens}
           />
-        ) : null}
 
-        {filteredProjectCueWidget ? (
-          <QueueRows
-            widget={filteredProjectCueWidget}
-            items={filteredProjectCueWidget.items}
-          />
-        ) : null}
-
-        {filteredWorkItemsWidget ? (
-          <QueueRows
-            widget={filteredWorkItemsWidget}
-            items={filteredWorkItemsWidget.items}
-            workItemActions={workItemActions}
-          />
-        ) : null}
-
-        {filteredMyWorkWidgets.length > 0 ? (
-          <section
-            aria-labelledby="dashboard-my-work-title"
-            className="space-y-3"
+          <div
+            id="dashboard-command-lens-panel"
+            role="tabpanel"
+            className="min-w-0 space-y-4"
           >
-            <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
-              <div>
-                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
-                  Operational intelligence
-                </p>
-                <h2
-                  id="dashboard-my-work-title"
-                  className="mt-1 text-[17px] font-semibold tracking-tight text-[var(--text-primary)]"
-                >
-                  My Work
-                </h2>
-                <p className="mt-1 text-xs leading-5 text-[var(--text-secondary)]">
-                  {selectedMyWorkQueueMode?.description ??
-                    "Derived attention items from saved records."}
-                </p>
-              </div>
-              {myWorkQueueModes ? (
-                <div
-                  aria-label="My Work queue mode"
-                  className="inline-flex w-full flex-col gap-1 border border-[var(--border-warm)] bg-white p-1 sm:w-auto sm:flex-row"
-                  role="tablist"
-                >
-                  {myWorkQueueModes.modes.map((mode) => {
-                    const selected =
-                      mode.mode === selectedMyWorkQueueMode?.mode;
-
-                    return (
-                      <a
-                        key={mode.mode}
-                        href={mode.href}
-                        role="tab"
-                        aria-selected={selected}
-                        aria-controls="dashboard-my-work-queues"
-                        className={[
-                          "flex h-9 items-center justify-between gap-3 px-3 text-left text-[11px] font-semibold uppercase tracking-[0.12em] transition sm:justify-center",
-                          selected
-                            ? "bg-[var(--graphite)] text-white"
-                            : "bg-white text-[var(--text-secondary)] hover:bg-[var(--highlight)]"
-                        ].join(" ")}
-                      >
-                        <span>{mode.label}</span>
-                        <span
-                          className={[
-                            "rounded-sm px-1.5 py-0.5 text-[10px]",
-                            selected
-                              ? "bg-white/15 text-white"
-                              : "bg-[var(--highlight)] text-[var(--text-secondary)]"
-                          ].join(" ")}
-                        >
-                          {mode.count}
-                        </span>
-                      </a>
-                    );
-                  })}
+            {selectedLens === "today" ? (
+              <section
+                aria-labelledby="dashboard-today-lens-title"
+                className="space-y-3"
+              >
+                <div>
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
+                    Today lens
+                  </p>
+                  <h2
+                    id="dashboard-today-lens-title"
+                    className="mt-1 text-[17px] font-semibold tracking-tight text-[var(--text-primary)]"
+                  >
+                    What needs attention now
+                  </h2>
                 </div>
-              ) : null}
-            </div>
-            {myWorkQueueModes?.caveats.noLinkedPerson &&
-            selectedMyWorkQueueMode?.mode === "mine" ? (
-              <div className="border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-5 text-amber-950">
-                No active People record is linked to your app user yet. Mine can
-                still include Next Move suggestions resolved directly to your
-                app user, but linking a Person improves responsibility matching.
-              </div>
-            ) : null}
-            {myWorkQueueModes?.caveats.unresolvedItemsPresent &&
-            selectedMyWorkQueueMode?.mode === "unresolved" ? (
-              <div className="border border-[var(--border-warm)] bg-white px-4 py-3 text-sm leading-5 text-[var(--text-secondary)]">
-                These attention items need a responsible person/default. They
-                also remain visible in Company.
-              </div>
-            ) : null}
-            {selectedMyWorkQueueMode?.count === 0 ? (
-              <div className="border border-[var(--border-warm)] bg-white px-4 py-5">
-                <p className="text-sm font-semibold text-[var(--text-primary)]">
-                  {selectedMyWorkQueueMode.emptyTitle}
-                </p>
-                <p className="mt-2 text-sm leading-5 text-[var(--text-secondary)]">
-                  {selectedMyWorkQueueMode.emptyDescription}
-                </p>
-              </div>
-            ) : null}
-            {selectedMyWorkQueueMode?.count === 0 ? null : (
-              <div
-                id="dashboard-my-work-queues"
-                className="grid gap-3 xl:grid-cols-4"
-              >
-                {filteredMyWorkWidgets.map((widget) => (
+                <div className="grid gap-3 xl:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)]">
+                  {attentionWidget ? (
+                    <QueueRows
+                      widget={attentionWidget}
+                      items={attentionWidget.items}
+                    />
+                  ) : null}
+                  {filteredOperationsWidgets.find(
+                    (widget) => widget.key === "jobs-today"
+                  ) ? (
+                    <QueueRows
+                      widget={
+                        filteredOperationsWidgets.find(
+                          (widget) => widget.key === "jobs-today"
+                        )!
+                      }
+                      items={
+                        filteredOperationsWidgets.find(
+                          (widget) => widget.key === "jobs-today"
+                        )!.items
+                      }
+                    />
+                  ) : null}
+                </div>
+                {filteredProjectCueWidget ? (
                   <QueueRows
-                    key={widget.key}
-                    widget={widget}
-                    items={widget.items}
+                    widget={{
+                      ...filteredProjectCueWidget,
+                      eyebrow: "Next Move",
+                      title: "Recommended action",
+                      description:
+                        "Recommended action is deterministic and review-first. Drafting or workflow execution still happens only in existing workspaces."
+                    }}
+                    items={filteredProjectCueWidget.items.slice(0, 5)}
                   />
-                ))}
+                ) : null}
+              </section>
+            ) : null}
+
+            {selectedLens === "field" ? (
+              <UtilityCardGrid
+                metrics={metrics}
+                operationsWidgets={filteredOperationsWidgets}
+              />
+            ) : null}
+
+            {selectedLens === "projects" || selectedLens === "money" ? (
+              <div className="grid gap-4 2xl:grid-cols-[minmax(0,1.05fr)_minmax(360px,0.95fr)]">
+                {selectedLens === "projects" ? (
+                  <LifecycleRail steps={lifecycleSteps} />
+                ) : null}
+                {selectedLens === "money" ? (
+                  <PriorityGrid metrics={metrics} />
+                ) : null}
               </div>
-            )}
-          </section>
-        ) : null}
+            ) : null}
 
-        <section
-          aria-labelledby="dashboard-work-queues-title"
-          className="space-y-3"
-        >
-          <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
-            <div>
-              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
-                Work queues
-              </p>
-              <h2
-                id="dashboard-work-queues-title"
-                className="mt-1 text-[17px] font-semibold tracking-tight text-[var(--text-primary)]"
+            {selectedLens === "attention" && aiOperationalDigest ? (
+              <AiOperationalDigestPanel digest={aiOperationalDigest} />
+            ) : null}
+
+            {selectedLens === "attention" &&
+            operationalCockpitBuckets.length > 0 ? (
+              <OperationalGuidanceSection
+                title="Needs Attention"
+                description="Exception-style operating signals from existing dashboard read models, grouped by what needs review before work moves."
+                buckets={operationalCockpitBuckets}
+              />
+            ) : null}
+
+            {(selectedLens === "attention" || selectedLens === "projects") &&
+            filteredProjectCueWidget ? (
+              <QueueRows
+                widget={filteredProjectCueWidget}
+                items={filteredProjectCueWidget.items}
+              />
+            ) : null}
+
+            {selectedLens === "follow-ups" && filteredWorkItemsWidget ? (
+              <QueueRows
+                widget={filteredWorkItemsWidget}
+                items={filteredWorkItemsWidget.items}
+                workItemActions={workItemActions}
+              />
+            ) : null}
+
+            {selectedLens === "follow-ups" &&
+            filteredMyWorkWidgets.length > 0 ? (
+              <section
+                aria-labelledby="dashboard-my-work-title"
+                className="space-y-3"
               >
-                Follow up by workflow area
-              </h2>
-            </div>
-            <label className="relative w-full max-w-xl">
-              <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center">
-                <SearchIcon />
-              </span>
-              <input
-                type="search"
-                value={query}
-                onChange={(event) =>
-                  handleQueryChange(event.currentTarget.value)
-                }
-                placeholder="Filter dashboard queues"
-                className="h-9 w-full rounded-[4px] border border-[#cbd5e1] bg-white pl-9 pr-3 text-sm text-[var(--text-primary)] outline-none placeholder:text-[var(--text-tertiary)] focus:border-[#005eb8]"
-              />
-            </label>
-          </div>
+                <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+                  <div>
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
+                      Operational intelligence
+                    </p>
+                    <h2
+                      id="dashboard-my-work-title"
+                      className="mt-1 text-[17px] font-semibold tracking-tight text-[var(--text-primary)]"
+                    >
+                      My Work
+                    </h2>
+                    <p className="mt-1 text-xs leading-5 text-[var(--text-secondary)]">
+                      {selectedMyWorkQueueMode?.description ??
+                        "Derived attention items from saved records."}
+                    </p>
+                  </div>
+                  {myWorkQueueModes ? (
+                    <div
+                      aria-label="My Work queue mode"
+                      className="inline-flex w-full flex-col gap-1 border border-[var(--border-warm)] bg-white p-1 sm:w-auto sm:flex-row"
+                      role="tablist"
+                    >
+                      {myWorkQueueModes.modes.map((mode) => {
+                        const selected =
+                          mode.mode === selectedMyWorkQueueMode?.mode;
 
-          <div className="grid gap-3 xl:grid-cols-[minmax(0,1.15fr)_minmax(0,0.9fr)_minmax(0,0.95fr)]">
-            {attentionWidget ? (
-              <QueueRows
-                widget={attentionWidget}
-                items={attentionWidget.items}
-              />
+                        return (
+                          <a
+                            key={mode.mode}
+                            href={mode.href}
+                            role="tab"
+                            aria-selected={selected}
+                            aria-controls="dashboard-my-work-queues"
+                            className={[
+                              "flex h-9 items-center justify-between gap-3 px-3 text-left text-[11px] font-semibold uppercase tracking-[0.12em] transition sm:justify-center",
+                              selected
+                                ? "bg-[var(--graphite)] text-white"
+                                : "bg-white text-[var(--text-secondary)] hover:bg-[var(--highlight)]"
+                            ].join(" ")}
+                          >
+                            <span>{mode.label}</span>
+                            <span
+                              className={[
+                                "rounded-sm px-1.5 py-0.5 text-[10px]",
+                                selected
+                                  ? "bg-white/15 text-white"
+                                  : "bg-[var(--highlight)] text-[var(--text-secondary)]"
+                              ].join(" ")}
+                            >
+                              {mode.count}
+                            </span>
+                          </a>
+                        );
+                      })}
+                    </div>
+                  ) : null}
+                </div>
+                {myWorkQueueModes?.caveats.noLinkedPerson &&
+                selectedMyWorkQueueMode?.mode === "mine" ? (
+                  <div className="border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-5 text-amber-950">
+                    No active People record is linked to your app user yet. Mine
+                    can still include Next Move suggestions resolved directly to
+                    your app user, but linking a Person improves responsibility
+                    matching.
+                  </div>
+                ) : null}
+                {myWorkQueueModes?.caveats.unresolvedItemsPresent &&
+                selectedMyWorkQueueMode?.mode === "unresolved" ? (
+                  <div className="border border-[var(--border-warm)] bg-white px-4 py-3 text-sm leading-5 text-[var(--text-secondary)]">
+                    These attention items need a responsible person/default.
+                    They also remain visible in Company.
+                  </div>
+                ) : null}
+                {selectedMyWorkQueueMode?.count === 0 ? (
+                  <div className="border border-[var(--border-warm)] bg-white px-4 py-5">
+                    <p className="text-sm font-semibold text-[var(--text-primary)]">
+                      {selectedMyWorkQueueMode.emptyTitle}
+                    </p>
+                    <p className="mt-2 text-sm leading-5 text-[var(--text-secondary)]">
+                      {selectedMyWorkQueueMode.emptyDescription}
+                    </p>
+                  </div>
+                ) : null}
+                {selectedMyWorkQueueMode?.count === 0 ? null : (
+                  <div
+                    id="dashboard-my-work-queues"
+                    className="grid gap-3 xl:grid-cols-4"
+                  >
+                    {filteredMyWorkWidgets.map((widget) => (
+                      <QueueRows
+                        key={widget.key}
+                        widget={widget}
+                        items={widget.items}
+                      />
+                    ))}
+                  </div>
+                )}
+              </section>
             ) : null}
-            {filteredCommercialWidgets[1] ? (
-              <QueueRows
-                widget={filteredCommercialWidgets[1]}
-                items={filteredCommercialWidgets[1].items}
-              />
-            ) : null}
-            {filteredFinanceWidgets[0] ? (
-              <FinanceTable
-                widget={filteredFinanceWidgets[0]}
-                items={filteredFinanceWidgets[0].items}
-              />
-            ) : null}
-          </div>
 
-          <div className="grid gap-3 xl:grid-cols-4">
-            {filteredOperationsWidgets[3] ? (
-              <QueueRows
-                widget={filteredOperationsWidgets[3]}
-                items={filteredOperationsWidgets[3].items}
-              />
-            ) : null}
-            {filteredCommercialWidgets[0] ? (
-              <QueueRows
-                widget={filteredCommercialWidgets[0]}
-                items={filteredCommercialWidgets[0].items}
-              />
-            ) : null}
-            {filteredOperationsWidgets[0] ? (
-              <QueueRows
-                widget={filteredOperationsWidgets[0]}
-                items={filteredOperationsWidgets[0].items}
-              />
-            ) : null}
-            {filteredOperationsWidgets[2] ? (
-              <QueueRows
-                widget={filteredOperationsWidgets[2]}
-                items={filteredOperationsWidgets[2].items}
-              />
-            ) : null}
-          </div>
+            {["attention", "sales", "projects", "field", "money"].includes(
+              selectedLens
+            ) ? (
+              <section
+                aria-labelledby="dashboard-work-queues-title"
+                className="space-y-3"
+              >
+                <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+                  <div>
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
+                      Work queues
+                    </p>
+                    <h2
+                      id="dashboard-work-queues-title"
+                      className="mt-1 text-[17px] font-semibold tracking-tight text-[var(--text-primary)]"
+                    >
+                      Follow up by workflow area
+                    </h2>
+                  </div>
+                  <label className="relative w-full max-w-xl">
+                    <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center">
+                      <SearchIcon />
+                    </span>
+                    <input
+                      type="search"
+                      value={query}
+                      onChange={(event) =>
+                        handleQueryChange(event.currentTarget.value)
+                      }
+                      placeholder="Filter dashboard queues"
+                      className="h-9 w-full rounded-[4px] border border-[#cbd5e1] bg-white pl-9 pr-3 text-sm text-[var(--text-primary)] outline-none placeholder:text-[var(--text-tertiary)] focus:border-[#005eb8]"
+                    />
+                  </label>
+                </div>
 
-          <div className="grid gap-3 xl:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]">
-            <div className="space-y-3">
-              {filteredCommercialWidgets[2] ? (
-                <QueueRows
-                  widget={filteredCommercialWidgets[2]}
-                  items={filteredCommercialWidgets[2].items}
-                />
-              ) : null}
-            </div>
+                <div className="grid gap-3 xl:grid-cols-[minmax(0,1.15fr)_minmax(0,0.9fr)_minmax(0,0.95fr)]">
+                  {selectedLens === "attention" && attentionWidget ? (
+                    <QueueRows
+                      widget={attentionWidget}
+                      items={attentionWidget.items}
+                    />
+                  ) : null}
+                  {selectedLens === "sales" && filteredCommercialWidgets[1] ? (
+                    <QueueRows
+                      widget={filteredCommercialWidgets[1]}
+                      items={filteredCommercialWidgets[1].items}
+                    />
+                  ) : null}
+                  {selectedLens === "money" && filteredFinanceWidgets[0] ? (
+                    <FinanceTable
+                      widget={filteredFinanceWidgets[0]}
+                      items={filteredFinanceWidgets[0].items}
+                    />
+                  ) : null}
+                </div>
 
-            <div className="space-y-3">
-              {filteredFinanceWidgets[1] ? (
-                <FinanceTable
-                  widget={filteredFinanceWidgets[1]}
-                  items={filteredFinanceWidgets[1].items}
-                />
-              ) : null}
-            </div>
-          </div>
+                <div className="grid gap-3 xl:grid-cols-4">
+                  {selectedLens === "field" && filteredOperationsWidgets[3] ? (
+                    <QueueRows
+                      widget={filteredOperationsWidgets[3]}
+                      items={filteredOperationsWidgets[3].items}
+                    />
+                  ) : null}
+                  {selectedLens === "sales" && filteredCommercialWidgets[0] ? (
+                    <QueueRows
+                      widget={filteredCommercialWidgets[0]}
+                      items={filteredCommercialWidgets[0].items}
+                    />
+                  ) : null}
+                  {(selectedLens === "field" || selectedLens === "projects") &&
+                  filteredOperationsWidgets[0] ? (
+                    <QueueRows
+                      widget={filteredOperationsWidgets[0]}
+                      items={filteredOperationsWidgets[0].items}
+                    />
+                  ) : null}
+                  {selectedLens === "field" && filteredOperationsWidgets[2] ? (
+                    <QueueRows
+                      widget={filteredOperationsWidgets[2]}
+                      items={filteredOperationsWidgets[2].items}
+                    />
+                  ) : null}
+                </div>
 
-          <div className="grid gap-3 xl:grid-cols-[minmax(0,1.28fr)_minmax(0,0.72fr)]">
-            {filteredOperationsWidgets[1] ? (
-              <QueueRows
-                widget={filteredOperationsWidgets[1]}
-                items={filteredOperationsWidgets[1].items}
-              />
+                <div className="grid gap-3 xl:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]">
+                  <div className="space-y-3">
+                    {selectedLens === "sales" &&
+                    filteredCommercialWidgets[2] ? (
+                      <QueueRows
+                        widget={filteredCommercialWidgets[2]}
+                        items={filteredCommercialWidgets[2].items}
+                      />
+                    ) : null}
+                  </div>
+
+                  <div className="space-y-3">
+                    {selectedLens === "money" && filteredFinanceWidgets[1] ? (
+                      <FinanceTable
+                        widget={filteredFinanceWidgets[1]}
+                        items={filteredFinanceWidgets[1].items}
+                      />
+                    ) : null}
+                  </div>
+                </div>
+
+                <div className="grid gap-3 xl:grid-cols-[minmax(0,1.28fr)_minmax(0,0.72fr)]">
+                  {selectedLens === "projects" &&
+                  filteredOperationsWidgets[1] ? (
+                    <QueueRows
+                      widget={filteredOperationsWidgets[1]}
+                      items={filteredOperationsWidgets[1].items}
+                    />
+                  ) : null}
+                </div>
+              </section>
             ) : null}
           </div>
         </section>
+
+        <DashboardOwnershipBanner />
       </div>
     </div>
   );

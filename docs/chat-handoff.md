@@ -168,8 +168,14 @@ around the Figma command-center reference with a desktop 70/30 action/KPI deck,
 isolated Needs Attention rail, and mobile opening order that prioritizes
 attention/action content before passive utility sections. It preserves existing
 dashboard read models, links, early-access/account status behavior, and
-Universal Capture entry behavior. Next visual target should be Estimate Review
-and Invoice Review unless CrewBoard/schedule-board composition is prioritized.
+Universal Capture entry behavior. The latest dashboard pass adds a local
+Command Center lens selector with Today, Needs Attention, Sales, Projects,
+Field, Money, and Follow-ups modes so the page no longer shows every
+operational surface at once. The lenses reorganize existing widgets and links
+only; they do not add dashboard-owned records, fake KPIs, new loaders, server
+actions, schema, or route behavior. Next visual target should be Estimate
+Review and Invoice Review unless CrewBoard/schedule-board composition is
+prioritized.
 
 Role-aware dashboards and workspace personalization are approved target
 direction only. Preferred model: Platform Defaults -> Organization Presets ->

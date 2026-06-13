@@ -730,6 +730,115 @@ Run `industrial-os-review-screens-v1` next for Estimate Review and Invoice
 Review. After that, run a CrewBoard/schedule-board composition slice so the
 schedule workboard catches up to the command-center and workspace patterns.
 
+## Dashboard Command Center Lens Pass
+
+Date: 2026-06-13
+
+Figma source:
+
+- Existing comparison board:
+  `https://www.figma.com/design/N0tVE3uKWpHZc4dlF6ytgn`
+- Frames referenced from `01 Approved Stitch References`:
+  `APPROVED / Dashboard / Desktop` and `APPROVED / Dashboard / Mobile`.
+
+### Goal
+
+The prior dashboard pass improved the Industrial OS command-center look, but
+the dashboard still exposed too many operational surfaces at once. This pass
+keeps the same source data and introduces a dashboard-only Command Center lens
+selector so the user can inspect one operating purpose at a time.
+
+### Lens Labels Implemented
+
+- Today
+- Needs Attention
+- Sales
+- Projects
+- Field
+- Money
+- Follow-ups
+
+Default lens:
+
+- Today / Needs Attention
+
+### Data Sources Used
+
+The lenses reorganize the existing dashboard props and widgets already loaded
+by `/dashboard`:
+
+- `priorityItems`
+- `actionQueues`
+- `metrics`
+- `lifecycleSteps`
+- `aiOperationalDigest`
+- `operationalCockpitBuckets`
+- `attentionWidget`
+- `projectCueWidget`
+- `workItemsWidget`
+- `myWorkWidgets`
+- `commercialWidgets`
+- `operationsWidgets`
+- `financeWidgets`
+
+No new dashboard loader, server action, schema, migration, status model, task
+model, KPI model, AI output model, or dashboard-owned queue was introduced.
+
+### Sections Reorganized
+
+- Today keeps the first operating snapshot focused on current action, active
+  blockers, field/utility context, and the existing dashboard operating blocks.
+- Needs Attention groups the existing digest, operational cockpit buckets,
+  attention widget, and project cue widget.
+- Sales shows the existing commercial widgets for opportunity follow-up,
+  estimate action, and contract/signature handoff.
+- Projects shows lifecycle context plus existing project readiness and project
+  continuity queues.
+- Field shows existing schedule, appointment, jobs-today, and scheduling
+  pressure widgets.
+- Money shows existing metric and finance widgets for invoices, AR, and recent
+  payment activity.
+- Follow-ups shows existing Work Items and My Work queues, preserving the
+  existing My Work mode switcher.
+
+### Mobile Behavior
+
+The Command Center lens rail becomes a horizontally scrollable tab strip on
+mobile. On desktop it behaves as a left-side dashboard command lens rail. This
+rail is local to `/dashboard`; it does not replace global navigation, duplicate
+top app navigation, or create workspace-local navigation.
+
+### No-Data-Silo Confirmation
+
+This pass added no duplicate dashboard state, dashboard-owned records,
+dashboard-owned queues, fake KPIs, fake health scores, fake AI, fake statuses,
+local persistence, schema, migrations, loader changes, server actions, route
+changes, auth changes, tenant changes, portal changes, financial changes,
+signature changes, scheduling changes, or provider behavior.
+
+### Production Safety Notes
+
+- Route changes: none.
+- Schema/migration changes: none.
+- Loader/server-action changes: none.
+- Auth/tenant/portal/admin guard changes: none.
+- Payment/signature/scheduling behavior changes: none.
+- Universal Capture remains available through the existing
+  `/dashboard?capture=1#universal-capture` entry.
+- Existing dashboard links and actions remain on their source widgets and
+  source workspaces.
+
+### Remaining Dashboard Gaps
+
+- The lens state is client-local. A future pass could make lens selection
+  URL-backed if users need shareable dashboard modes.
+- Some deeper widget card rhythms still inherit older dashboard primitives.
+  This pass focused on information architecture and mode selection, not a full
+  component-library rewrite.
+- The Today lens still uses the existing operating block component; a future
+  pass could create a tighter mobile-only compact list if review shows the
+  default lens remains too tall.
+
 ### Validation
 
 Passed:

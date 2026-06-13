@@ -71,8 +71,12 @@ portal visibility, schema, or migrations. The current branch uses the existing
 top/header global app shell, contextual workspace/settings left navigation
 only, blue/neutral status and action treatment, lighter hard-border cards, and
 shared workspace composition over existing dashboard, leads, project, settings,
-and Universal Capture surfaces. Invoice Review, Estimate Review, and CrewBoard
-remain follow-up page-family slices rather than completed visual conversions.
+and Universal Capture surfaces. The dashboard now includes a local Command
+Center lens selector for Today, Needs Attention, Sales, Projects, Field, Money,
+and Follow-ups so users can inspect one operating purpose at a time while
+keeping all content backed by existing dashboard widgets and source-record
+links. Invoice Review, Estimate Review, and CrewBoard remain follow-up
+page-family slices rather than completed visual conversions.
 
 If this document conflicts with a planning, target-design, or historical document, trust this document for implemented status.
 
@@ -3069,6 +3073,12 @@ Implemented UI behavior now:
   duplicate queues, role-specific persistence, schema changes, migrations,
   financial/schedule/readiness truth changes, provider behavior, AI, AIA, or
   customer self-service.
+- Dashboard Command Center lenses now organize existing dashboard sections by
+  operating purpose: Today / Needs Attention, Needs Attention, Sales, Projects,
+  Field, Money, and Follow-ups. The selector is local to `/dashboard`, becomes
+  horizontally scrollable tabs on mobile, and filters/reorders existing
+  dashboard widgets rather than creating new records, loaders, statuses, KPIs,
+  tasks, AI output, or dashboard-owned queues.
 - Record Workspace rhythm now has a shared presentation contract in
   `@floorconnector/ui` plus a reusable `RecordWorkspaceSection` primitive.
   Estimate, Contract, Invoice, and Job command bands use shared status badges,
