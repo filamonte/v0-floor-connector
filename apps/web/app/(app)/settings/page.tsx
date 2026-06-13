@@ -56,16 +56,16 @@ function getSignalClassName(tone: SetupSignal["tone"] = "neutral") {
   }
 
   if (tone === "attention") {
-    return "border-amber-200 bg-amber-50 text-amber-950";
+    return "border-[#f59e0b] bg-[#fffbeb] text-[#78350f]";
   }
 
-  return "border-[var(--border-warm)] bg-[var(--highlight)] text-[var(--text-secondary)]";
+  return "border-[#d1d5db] bg-[#f9fafb] text-[#475569]";
 }
 
 const setupPanelClassName =
-  "rounded-lg border border-[var(--border-warm)] bg-white p-5 shadow-[0_18px_48px_-40px_rgba(34,26,20,0.28)]";
+  "rounded-[4px] border border-[#d1d5db] bg-white p-5 shadow-none";
 const setupLinkClassName =
-  "inline-flex rounded-md border border-[var(--border-warm)] bg-white px-3 py-1.5 text-xs font-medium text-[var(--text-secondary)] transition hover:border-[var(--copper)] hover:text-[var(--text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--copper)]";
+  "inline-flex min-h-8 items-center rounded-[4px] border border-[#c7d2e2] bg-white px-3 py-1.5 text-xs font-medium text-[#475569] transition hover:border-[#005eb8] hover:bg-[#eef6ff] hover:text-[#003d7c] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#005eb8]";
 
 export default async function SettingsPage({
   searchParams
@@ -276,61 +276,60 @@ export default async function SettingsPage({
         ]}
       />
 
-      <section className={setupPanelClassName}>
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--copper)]">
-              Overview / setup health
-            </p>
-            <h2 className="mt-2 text-2xl font-semibold tracking-tight text-[var(--text-primary)]">
-              Company setup health
-            </h2>
-            <p className="mt-3 max-w-3xl text-sm leading-6 text-[var(--text-secondary)]">
-              These signals are read from existing tenant, membership, and setup
-              records. No fake score, percentage, integration state, or module
-              readiness is inferred.
-            </p>
-          </div>
-          <Link href="/setup/pending-activation" className={setupLinkClassName}>
-            View activation status
-          </Link>
-        </div>
-
-        <div className="mt-5 grid gap-3 lg:grid-cols-3">
-          {setupSignals.map((signal) => (
-            <div
-              key={signal.label}
-              className={`rounded-lg border px-4 py-4 text-sm ${getSignalClassName(
-                signal.tone
-              )}`}
-            >
-              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] opacity-75">
-                {signal.label}
+      <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_360px]">
+        <section className={setupPanelClassName}>
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#005eb8]">
+                Overview / setup health
               </p>
-              <p className="mt-2 text-base font-semibold capitalize">
-                {signal.value}
+              <h2 className="mt-2 text-2xl font-semibold tracking-tight text-[#0f172a]">
+                Company setup health
+              </h2>
+              <p className="mt-3 max-w-3xl text-sm leading-6 text-[#475569]">
+                These signals are read from existing tenant, membership, and
+                setup records. No fake score, percentage, integration state, or
+                module readiness is inferred.
               </p>
-              <p className="mt-2 leading-6 opacity-80">{signal.description}</p>
             </div>
-          ))}
-        </div>
-      </section>
-
-      <section className={setupPanelClassName}>
-        <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(260px,360px)]">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--copper)]">
-              Next setup actions
-            </p>
-            <h2 className="mt-2 text-xl font-semibold tracking-tight text-[var(--text-primary)]">
-              Resolve missing company configuration before adding more controls
-            </h2>
-            <p className="mt-3 text-sm leading-6 text-[var(--text-secondary)]">
-              The overview routes admins to the right owner section instead of
-              exposing every editable control at the top level.
-            </p>
+            <Link
+              href="/setup/pending-activation"
+              className={setupLinkClassName}
+            >
+              View activation status
+            </Link>
           </div>
-          <div className="rounded-lg border border-[var(--border-warm)] bg-[var(--highlight)] px-4 py-4 text-sm leading-6 text-[var(--text-secondary)]">
+
+          <div className="mt-5 grid gap-3 lg:grid-cols-3">
+            {setupSignals.map((signal) => (
+              <div
+                key={signal.label}
+                className={`rounded-[4px] border px-4 py-4 text-sm ${getSignalClassName(
+                  signal.tone
+                )}`}
+              >
+                <p className="text-[11px] font-semibold uppercase tracking-[0.16em] opacity-75">
+                  {signal.label}
+                </p>
+                <p className="mt-2 text-base font-semibold capitalize">
+                  {signal.value}
+                </p>
+                <p className="mt-2 leading-6 opacity-80">
+                  {signal.description}
+                </p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section className={setupPanelClassName}>
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#005eb8]">
+            Next setup actions
+          </p>
+          <h2 className="mt-2 text-xl font-semibold tracking-tight text-[#0f172a]">
+            Resolve missing company configuration before adding more controls
+          </h2>
+          <div className="mt-4 border border-[#d1d5db] bg-[#f9fafb] px-4 py-4 text-sm leading-6 text-[#475569]">
             {missingSetupItems.length > 0 ? (
               <ul className="space-y-2">
                 {missingSetupItems.map((item) => (
@@ -341,28 +340,28 @@ export default async function SettingsPage({
               <p>No obvious setup gaps were found from the current records.</p>
             )}
           </div>
-        </div>
-        <div className="mt-4 flex flex-wrap gap-2">
-          <Link href="/settings/organization" className={setupLinkClassName}>
-            Company
-          </Link>
-          <Link href="/settings/admin" className={setupLinkClassName}>
-            Team & Access
-          </Link>
-          <Link href="/settings/workflows" className={setupLinkClassName}>
-            Sales / Workflow
-          </Link>
-          <Link
-            href="/settings/operational-intelligence"
-            className={setupLinkClassName}
-          >
-            Operations
-          </Link>
-          <Link href="/settings/financial" className={setupLinkClassName}>
-            Financials
-          </Link>
-        </div>
-      </section>
+          <div className="mt-4 flex flex-wrap gap-2">
+            <Link href="/settings/organization" className={setupLinkClassName}>
+              Company
+            </Link>
+            <Link href="/settings/admin" className={setupLinkClassName}>
+              Team & Access
+            </Link>
+            <Link href="/settings/workflows" className={setupLinkClassName}>
+              Sales / Workflow
+            </Link>
+            <Link
+              href="/settings/operational-intelligence"
+              className={setupLinkClassName}
+            >
+              Operations
+            </Link>
+            <Link href="/settings/financial" className={setupLinkClassName}>
+              Financials
+            </Link>
+          </div>
+        </section>
+      </div>
 
       <div className="grid gap-5 2xl:grid-cols-2">
         {ownerSections.map((section) => (
@@ -373,7 +372,7 @@ export default async function SettingsPage({
             href={section.href}
             ctaLabel={section.ctaLabel}
           >
-            <ul className="space-y-2 rounded-lg border border-[var(--border-warm)] bg-[var(--highlight)] px-4 py-4 text-sm leading-6 text-[var(--text-secondary)]">
+            <ul className="space-y-2 rounded-[4px] border border-[#d1d5db] bg-[#f9fafb] px-4 py-4 text-sm leading-6 text-[#475569]">
               {section.facts.map((fact) => (
                 <li key={fact}>{fact}</li>
               ))}

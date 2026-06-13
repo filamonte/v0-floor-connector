@@ -145,6 +145,44 @@ canonical opportunity statuses. It adds no status configuration, table rename,
 route rename, duplicate Lead model, Supabase migration, provider behavior, or
 portal/customer-facing behavior.
 
+Industrial OS visual-system handoff: the
+`stream/industrial-os-visual-system-v1` branch has a direct Stitch composition
+fidelity pass over dashboard, Leads Manager, Opportunity Workspace, Project
+Workspace, Settings, Universal Capture styling, and shared workspace/manager
+primitives. It preserves the existing global top/header app nav and uses
+contextual workspace/settings nav only. The pass is presentation-only over
+existing canonical records and explicitly does not change schema, routes,
+loaders, server actions, auth, tenant, portal, payment, signature, scheduling,
+or workflow behavior. Follow-up visual work should target Estimate Review and
+Invoice Review first, then CrewBoard/schedule-board composition.
+
+Latest Opportunity Workspace Figma fidelity note: the branch now removes the
+duplicated record identity panel inside `/leads/:leadId`, keeps the route and
+`?view=` section model stable, uses the overview as a compact guided sales
+workflow, and turns the right support column into a status/next-action/estimate
+handoff command rail. Continue to treat Dashboard as the next Figma fidelity
+target before Settings unless a narrower review-screen slice is requested.
+
+Latest Dashboard Figma fidelity note: the branch now tightens `/dashboard`
+around the Figma command-center reference with a desktop 70/30 action/KPI deck,
+isolated Needs Attention rail, and mobile opening order that prioritizes
+attention/action content before passive utility sections. It preserves existing
+dashboard read models, links, early-access/account status behavior, and
+Universal Capture entry behavior. The latest dashboard pass adds a local
+Command Center lens selector with Today, Needs Attention, Sales, Projects,
+Field, Money, and Follow-ups modes so the page no longer shows every
+operational surface at once. The lenses reorganize existing widgets and links
+only; they do not add dashboard-owned records, fake KPIs, new loaders, server
+actions, schema, or route behavior. The follow-up Dashboard Clarity Reduction
+pass makes default Today more ruthless: one top handoff lane in the command
+deck, a capped five-item Today cockpit, next recommended actions, a small
+business pulse, Universal Capture access, and direct links to Sales Manager,
+Projects, Schedule, Financials, and My Work. Fuller exception, sales, project,
+field, money, and follow-up previews now live behind their command lenses
+instead of competing in the default view. Next visual target should be Estimate
+Review and Invoice Review unless CrewBoard/schedule-board composition is
+prioritized.
+
 Role-aware dashboards and workspace personalization are approved target
 direction only. Preferred model: Platform Defaults -> Organization Presets ->
 User Personalization. These layers may change presentation, ordering, filtering,
@@ -275,6 +313,33 @@ fix for the `/portal` tab-strip helper copy and documented the evidence in
 [docs/review-packets/ux-recovery-verification-v1.md](C:/FloorConnector/docs/review-packets/ux-recovery-verification-v1.md).
 No schema, route, table, loader, auth, tenant access, payment, signature,
 scheduling, portal access, or provider behavior changed.
+
+Current visual-system note: `stream/industrial-os-visual-system-v1` applies the
+first Industrial OS V2 shared visual layer over the existing top-nav-first
+contractor shell. It uses Inter, warm white/slate surfaces, charcoal/zinc
+framing, deep blue `#005EB8` primary/focus/active tokens, calmer semantic
+status helpers, lower-shadow shared cards, sharper workspace wrappers, and
+Universal Create/quick-create chrome cleanup. It intentionally preserves route
+architecture, global navigation architecture, loaders, server actions, schema,
+migrations, auth/tenant/portal/admin boundaries, payment/signature/scheduling
+behavior, and canonical data models.
+
+The same stream now also includes a follow-up visual intensification pass after
+local dashboard review at `http://localhost:3004`: the first-login dashboard
+uses dark blue/charcoal command-deck ownership and operating-health panels,
+stronger metric hierarchy, lighter shared cards, and blue-neutral dashboard
+buttons/status pills while preserving the existing top-nav-first architecture
+and all production guardrails.
+
+The stream now also includes a same-branch composition correction pass. Shared
+`StandardWorkspaceLayout` uses a 280px contextual left section rail on desktop,
+labeled horizontal section tabs on mobile, and explicit active-view markers for
+existing `?view=` workspace navigation. Sales Manager and dashboard queue
+surfaces were made less warm, less stacked, and easier to scan. The pass still
+preserves top/header global navigation, route names, loaders, actions, schema,
+auth/tenant/portal boundaries, payment/signature/scheduling behavior, and
+canonical records. Invoice Review, CrewBoard, and a full Settings composition
+cleanup remain better suited to dedicated follow-up slices.
 
 Current wave gate note: `visual-ux-review-contractor-usability-v1` has merged
 to `main` under Jeff's controlled merge approval. Golden Workflow Usability

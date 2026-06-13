@@ -28,24 +28,24 @@ export function SettingsSurfaceLayout({
     : "Contractor organization scope";
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       <section
         className={[
-          "rounded-lg border p-6 shadow-[0_26px_70px_-44px_rgba(34,26,20,0.5)] sm:p-8",
+          "rounded-[4px] border p-5 shadow-none sm:p-6",
           neutral
-            ? "border-slate-700/70 bg-[linear-gradient(135deg,var(--graphite),#26313f)] text-white"
-            : "border-[var(--graphite-light)]/40 bg-[linear-gradient(135deg,var(--graphite),#332821)] text-white"
+            ? "border-[#27272a] bg-[#09090b] text-white"
+            : "border-[#27272a] bg-[#09090b] text-white"
         ].join(" ")}
       >
         <p
           className={[
             "text-[11px] font-semibold uppercase tracking-[0.24em]",
-            neutral ? "text-slate-300" : "text-[var(--copper-light)]"
+            neutral ? "text-slate-300" : "text-[#8fc7ff]"
           ].join(" ")}
         >
           {eyebrow}
         </p>
-        <p className="mt-3 inline-flex rounded-full border border-white/10 bg-white/[0.08] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-white/65">
+        <p className="mt-3 inline-flex rounded-[4px] border border-white/10 bg-white/[0.08] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-white/65">
           {scopeLabel}
         </p>
         <div className="mt-4 flex flex-col gap-6 xl:flex-row xl:items-start xl:justify-between">
@@ -61,11 +61,11 @@ export function SettingsSurfaceLayout({
         </div>
       </section>
 
-      <div className="grid gap-6 xl:grid-cols-[280px_minmax(0,1fr)]">
+      <div className="grid gap-5 xl:grid-cols-[272px_minmax(0,1fr)]">
         <aside className="xl:sticky xl:top-28 xl:self-start">
           <div
             className={[
-              "rounded-lg border bg-white p-4 shadow-[0_18px_48px_-40px_rgba(34,26,20,0.32)]",
+              "rounded-[4px] border bg-white p-3 shadow-none",
               neutral ? "border-slate-200" : "border-[var(--border-warm)]"
             ].join(" ")}
           >

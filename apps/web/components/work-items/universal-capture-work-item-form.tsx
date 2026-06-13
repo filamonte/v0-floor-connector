@@ -189,7 +189,7 @@ export function UniversalCaptureWorkItemForm({
     <section
       id="universal-capture"
       aria-labelledby="universal-capture-title"
-      className="rounded-lg border border-[var(--border-warm)] bg-white p-4 shadow-[0_18px_45px_-34px_rgba(17,24,39,0.32)]"
+      className="rounded-[4px] border border-[#d1d5db] bg-white p-4 shadow-[0_1px_0_rgba(9,9,11,0.035)]"
     >
       <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
         <div className="min-w-0">
@@ -210,7 +210,7 @@ export function UniversalCaptureWorkItemForm({
         </div>
         <a
           href="#dashboard-my-work-title"
-          className="inline-flex h-9 shrink-0 items-center justify-center border border-[var(--border-warm)] bg-[var(--highlight)] px-3 text-xs font-semibold text-[var(--text-primary)] transition hover:bg-white"
+          className="inline-flex h-9 shrink-0 items-center justify-center rounded-[4px] border border-[#c7d2e2] bg-white px-3 text-xs font-semibold text-[#0f172a] transition hover:border-[#005eb8] hover:bg-[#eef6ff]"
         >
           View queues
         </a>
@@ -261,13 +261,13 @@ export function UniversalCaptureWorkItemForm({
               rows={4}
               value={intentText}
               onChange={(event) => setIntentText(event.target.value)}
-              className="w-full border border-[#d6d6d6] bg-white px-3 py-2.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-[#d8731f]"
+              className="w-full rounded-[4px] border border-[#cbd5e1] bg-white px-3 py-2.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-[#005eb8]"
               placeholder="Example: Schedule a site visit for ABC Manufacturing on 4/10 at 5 PM."
             />
           </label>
 
-          <div className="rounded-[4px] border border-slate-200 bg-[var(--highlight)] p-3 text-xs leading-5 text-slate-600">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--copper)]">
+          <div className="rounded-[4px] border border-[#cbd5e1] bg-[#f9fafb] p-3 text-xs leading-5 text-slate-600">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#005eb8]">
               Intent preview
             </p>
             <p className="mt-1 font-semibold text-slate-900">
@@ -306,7 +306,7 @@ export function UniversalCaptureWorkItemForm({
             <select
               value={selectedOpportunityId}
               onChange={(event) => setSelectedOpportunityId(event.target.value)}
-              className="h-10 w-full border border-[#d6d6d6] bg-white px-3 text-sm text-slate-900 outline-none transition focus:border-[#d8731f]"
+              className="h-10 w-full rounded-[4px] border border-[#cbd5e1] bg-white px-3 text-sm text-slate-900 outline-none transition focus:border-[#005eb8]"
             >
               <option value="">No linked Sales Opportunity</option>
               {opportunities.map((opportunity) => (
@@ -324,7 +324,7 @@ export function UniversalCaptureWorkItemForm({
             <select
               value={resolvedCustomerId}
               onChange={(event) => setSelectedCustomerId(event.target.value)}
-              className="h-10 w-full border border-[#d6d6d6] bg-white px-3 text-sm text-slate-900 outline-none transition focus:border-[#d8731f]"
+              className="h-10 w-full rounded-[4px] border border-[#cbd5e1] bg-white px-3 text-sm text-slate-900 outline-none transition focus:border-[#005eb8]"
             >
               <option value="">No linked customer</option>
               {customers.map((customer) => (
@@ -342,7 +342,7 @@ export function UniversalCaptureWorkItemForm({
             <select
               value={resolvedProjectId}
               onChange={(event) => setSelectedProjectId(event.target.value)}
-              className="h-10 w-full border border-[#d6d6d6] bg-white px-3 text-sm text-slate-900 outline-none transition focus:border-[#d8731f]"
+              className="h-10 w-full rounded-[4px] border border-[#cbd5e1] bg-white px-3 text-sm text-slate-900 outline-none transition focus:border-[#005eb8]"
             >
               <option value="">No linked project</option>
               {filteredProjects.map((project) => (
@@ -364,7 +364,7 @@ export function UniversalCaptureWorkItemForm({
               name="dueAt"
               value={manualDueAt || parsedWorkItemDueAt}
               onChange={(event) => setManualDueAt(event.target.value)}
-              className="h-10 w-full border border-[#d6d6d6] bg-white px-3 text-sm text-slate-900 outline-none transition focus:border-[#d8731f]"
+              className="h-10 w-full rounded-[4px] border border-[#cbd5e1] bg-white px-3 text-sm text-slate-900 outline-none transition focus:border-[#005eb8]"
             />
           </label>
 
@@ -375,7 +375,7 @@ export function UniversalCaptureWorkItemForm({
             <select
               name="assignedPersonId"
               defaultValue={defaultAssignedPersonId ?? ""}
-              className="h-10 w-full border border-[#d6d6d6] bg-white px-3 text-sm text-slate-900 outline-none transition focus:border-[#d8731f]"
+              className="h-10 w-full rounded-[4px] border border-[#cbd5e1] bg-white px-3 text-sm text-slate-900 outline-none transition focus:border-[#005eb8]"
             >
               <option value="">Unassigned</option>
               {assignablePeople.map((person) => (
@@ -393,7 +393,7 @@ export function UniversalCaptureWorkItemForm({
             <select
               name="priority"
               defaultValue="normal"
-              className="h-10 w-full border border-[#d6d6d6] bg-white px-3 text-sm text-slate-900 outline-none transition focus:border-[#d8731f]"
+              className="h-10 w-full rounded-[4px] border border-[#cbd5e1] bg-white px-3 text-sm text-slate-900 outline-none transition focus:border-[#005eb8]"
             >
               {priorityOptions.map((option) => (
                 <option key={option.value} value={option.value}>

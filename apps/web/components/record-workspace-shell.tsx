@@ -1,6 +1,23 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { ArrowLeft, CalendarDays, Clock3, FileText, FolderOpen, ListChecks, MoreVertical, Package2, PenSquare, Plane, RefreshCcw, ScrollText, ShieldCheck, SquareStack, UserCircle2, Lock } from "lucide-react";
+import {
+  ArrowLeft,
+  CalendarDays,
+  Clock3,
+  FileText,
+  FolderOpen,
+  ListChecks,
+  MoreVertical,
+  Package2,
+  PenSquare,
+  Plane,
+  RefreshCcw,
+  ScrollText,
+  ShieldCheck,
+  SquareStack,
+  UserCircle2,
+  Lock
+} from "lucide-react";
 
 export type RecordWorkspaceStage = {
   label: string;
@@ -63,10 +80,15 @@ export function RecordWorkspaceShell({
 }: RecordWorkspaceShellProps) {
   return (
     <div className="grid min-h-[calc(100vh-8rem)] grid-cols-1 bg-[var(--cream)] xl:grid-cols-[200px_minmax(0,1fr)]">
-      <aside className="flex flex-col bg-[var(--graphite)] text-white">
+      <aside className="flex flex-col bg-[var(--graphite-dark)] text-white">
         <div className="border-b border-white/10 px-4 py-4">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/65">Home / Estimates</p>
-          <Link href={backHref} className="mt-3 inline-flex items-center gap-2 text-sm font-medium text-white/85 transition hover:text-white">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/65">
+            Home / Estimates
+          </p>
+          <Link
+            href={backHref}
+            className="mt-3 inline-flex items-center gap-2 text-sm font-medium text-white/85 transition hover:text-white"
+          >
             <ArrowLeft className="h-4 w-4" />
             {backLabel}
           </Link>
@@ -77,13 +99,13 @@ export function RecordWorkspaceShell({
             const Icon = sectionIcons[section.id] ?? FileText;
             const isActive = activeSectionId === section.id;
 
-              return (
+            return (
               <Link
                 key={section.id}
                 href={section.href ?? "#"}
                 className={
                   isActive
-                    ? "flex h-10 items-center gap-3 border-l-[3px] border-[var(--copper)] bg-white/10 px-4 text-sm font-semibold text-white"
+                    ? "flex h-10 items-center gap-3 border-l-[3px] border-[var(--copper)] bg-[var(--copper)] px-4 text-sm font-semibold text-white"
                     : "flex h-10 items-center gap-3 border-l-[3px] border-transparent px-4 text-sm font-medium text-white/80 transition hover:bg-white/5 hover:text-white"
                 }
               >
@@ -98,7 +120,7 @@ export function RecordWorkspaceShell({
           <div className="p-4">
             <Link
               href={footerActionHref ?? "#"}
-              className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-md bg-[var(--copper)] px-4 text-sm font-semibold text-white transition hover:bg-[var(--copper-light)]"
+              className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-[4px] bg-[var(--copper)] px-4 text-sm font-semibold text-white transition hover:bg-[var(--copper-light)]"
             >
               <Plane className="h-4 w-4" />
               {footerActionLabel}
@@ -111,19 +133,26 @@ export function RecordWorkspaceShell({
         <header className="border-b border-[var(--border-warm)] bg-white px-6 py-5 shadow-[0_1px_2px_rgba(34,26,20,0.05)]">
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div className="flex min-w-0 items-start gap-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-full border-4 border-orange-100 bg-[var(--copper)] text-white">
+              <div className="flex h-12 w-12 items-center justify-center rounded-[6px] border border-blue-100 bg-[var(--copper)] text-white">
                 <FileText className="h-5 w-5" />
               </div>
               <div className="min-w-0">
-                <h1 className="truncate text-xl font-semibold text-[var(--text-primary)]">{title}</h1>
-                <p className="mt-1 text-sm text-[var(--text-tertiary)]">{subtitle}</p>
+                <h1 className="truncate text-xl font-semibold text-[var(--text-primary)]">
+                  {title}
+                </h1>
+                <p className="mt-1 text-sm text-[var(--text-tertiary)]">
+                  {subtitle}
+                </p>
                 <div className="mt-2 flex flex-wrap items-center gap-3">
                   {statusBadge ? (
-                    <span className="rounded-md bg-orange-50 px-3 py-1 text-sm font-semibold text-[var(--copper)]">{statusBadge}</span>
+                    <span className="rounded-[4px] border border-blue-100 bg-blue-50 px-3 py-1 text-sm font-semibold text-[var(--copper)]">
+                      {statusBadge}
+                    </span>
                   ) : null}
                   {referenceLabel && referenceValue ? (
                     <span className="text-sm font-medium text-[var(--text-primary)]">
-                      {referenceLabel} <span className="font-semibold">{referenceValue}</span>
+                      {referenceLabel}{" "}
+                      <span className="font-semibold">{referenceValue}</span>
                     </span>
                   ) : null}
                 </div>
@@ -142,14 +171,23 @@ export function RecordWorkspaceShell({
                           : "border-[var(--border-warm)] bg-white text-[var(--text-tertiary)]";
 
                     return (
-                      <div key={stage.label} className="flex items-center gap-3">
+                      <div
+                        key={stage.label}
+                        className="flex items-center gap-3"
+                      >
                         <div className="flex flex-col items-center gap-2">
-                          <div className={`flex h-11 w-11 items-center justify-center rounded-full border-2 text-sm font-semibold ${toneClasses}`}>
+                          <div
+                            className={`flex h-11 w-11 items-center justify-center rounded-[6px] border-2 text-sm font-semibold ${toneClasses}`}
+                          >
                             {index + 1}
                           </div>
-                          <span className="max-w-[92px] truncate text-sm font-medium text-[var(--text-primary)]">{stage.label}</span>
+                          <span className="max-w-[92px] truncate text-sm font-medium text-[var(--text-primary)]">
+                            {stage.label}
+                          </span>
                         </div>
-                        {index < stages.length - 1 ? <div className="hidden h-[2px] w-12 bg-[var(--border-warm)] lg:block" /> : null}
+                        {index < stages.length - 1 ? (
+                          <div className="hidden h-[2px] w-12 bg-[var(--border-warm)] lg:block" />
+                        ) : null}
                       </div>
                     );
                   })}
@@ -157,13 +195,22 @@ export function RecordWorkspaceShell({
               ) : null}
 
               <div className="flex items-center gap-2">
-                <button type="button" className="rounded-md border border-[var(--border-warm)] bg-white p-3 text-[var(--text-secondary)] transition hover:bg-[var(--highlight)] hover:text-[var(--text-primary)]">
+                <button
+                  type="button"
+                  className="rounded-md border border-[var(--border-warm)] bg-white p-3 text-[var(--text-secondary)] transition hover:bg-[var(--highlight)] hover:text-[var(--text-primary)]"
+                >
                   <RefreshCcw className="h-4 w-4" />
                 </button>
-                <button type="button" className="rounded-md border border-[var(--border-warm)] bg-white p-3 text-[var(--text-secondary)] transition hover:bg-[var(--highlight)] hover:text-[var(--text-primary)]">
+                <button
+                  type="button"
+                  className="rounded-md border border-[var(--border-warm)] bg-white p-3 text-[var(--text-secondary)] transition hover:bg-[var(--highlight)] hover:text-[var(--text-primary)]"
+                >
                   <Lock className="h-4 w-4" />
                 </button>
-                <button type="button" className="rounded-md border border-[var(--border-warm)] bg-white p-3 text-[var(--text-secondary)] transition hover:bg-[var(--highlight)] hover:text-[var(--text-primary)]">
+                <button
+                  type="button"
+                  className="rounded-md border border-[var(--border-warm)] bg-white p-3 text-[var(--text-secondary)] transition hover:bg-[var(--highlight)] hover:text-[var(--text-primary)]"
+                >
                   <MoreVertical className="h-4 w-4" />
                 </button>
               </div>
@@ -178,7 +225,9 @@ export function RecordWorkspaceShell({
         <footer className="flex h-12 flex-wrap items-center justify-between gap-3 border-t border-[var(--border-warm)] bg-white px-6 text-sm text-[var(--text-secondary)]">
           <div className="flex flex-wrap items-center gap-4">
             <span className="inline-flex items-center gap-2">
-              <span className="font-semibold italic text-[var(--text-primary)]">Created:</span>
+              <span className="font-semibold italic text-[var(--text-primary)]">
+                Created:
+              </span>
               <CalendarDays className="h-4 w-4" />
               04/21/2026
             </span>
@@ -195,10 +244,16 @@ export function RecordWorkspaceShell({
           </div>
           <div className="flex flex-wrap items-center gap-4">
             <label className="inline-flex items-center gap-2">
-              <input type="checkbox" className="h-4 w-4 rounded border-[var(--border-warm)] text-[var(--copper)] focus:ring-[var(--copper-light)]" />
+              <input
+                type="checkbox"
+                className="h-4 w-4 rounded border-[var(--border-warm)] text-[var(--copper)] focus:ring-[var(--copper-light)]"
+              />
               Save Estimate as Template
             </label>
-            <button type="button" className="inline-flex items-center gap-2 font-medium text-[var(--text-primary)]">
+            <button
+              type="button"
+              className="inline-flex items-center gap-2 font-medium text-[var(--text-primary)]"
+            >
               <Clock3 className="h-4 w-4" />
               Timeline
             </button>

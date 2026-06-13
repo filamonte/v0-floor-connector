@@ -6,7 +6,6 @@ import Link from "next/link";
 import type { MembershipRole } from "@floorconnector/types";
 import {
   getEmptyStateCopy,
-  primaryActionClassName,
   secondaryActionClassName,
   StatusBadge,
   type EmptyStateKind
@@ -15,7 +14,6 @@ import {
 import type { AiOperationalDashboardDigest } from "@/lib/ai-operational-copilot/dashboard-digest";
 import type { DashboardActionQueue } from "@/lib/dashboard/action-queues";
 import type { DashboardPriorityItem } from "@/components/dashboard/priority-strip";
-import { PriorityStrip } from "@/components/dashboard/priority-strip";
 import { StartHereCard } from "@/components/onboarding/start-here-card";
 import {
   OperationalGuidanceSection,
@@ -23,6 +21,7 @@ import {
 } from "@/components/operational-guidance-section";
 import {
   dashboardGridDividerClassName,
+  dashboardCommandSurfaceClassName,
   dashboardMetricCardClassName,
   dashboardPanelActionClassName,
   dashboardPanelClassName,
@@ -79,6 +78,14 @@ type DashboardWidget = {
 };
 
 type MyWorkQueueMode = "company" | "mine" | "unresolved";
+type DashboardCommandLens =
+  | "today"
+  | "attention"
+  | "sales"
+  | "projects"
+  | "field"
+  | "money"
+  | "follow-ups";
 
 type MyWorkQueueModeConfig = {
   mode: MyWorkQueueMode;
@@ -113,6 +120,26 @@ type DashboardPlaceholder = {
   title: string;
   description: string;
   priority: "High";
+};
+
+type DashboardLensConfig = {
+  key: DashboardCommandLens;
+  label: string;
+  title: string;
+  description: string;
+  count: number;
+};
+
+type TodayCockpitItem = {
+  id: string;
+  title: string;
+  subtitle: string;
+  href: string;
+  meta: string;
+  badge?: string | null;
+  actionLabel: string;
+  contextHref?: string | null;
+  contextLabel?: string | null;
 };
 
 export type ContractorDashboardSurfaceProps = {
@@ -201,6 +228,10 @@ function filterItems(items: DashboardQueueItem[], query: string) {
   return items.filter((item) => item.searchText.toLowerCase().includes(query));
 }
 
+function getMetric(metrics: DashboardMetric[], key: string) {
+  return metrics.find((metric) => metric.key === key) ?? null;
+}
+
 function DashboardOwnershipBanner() {
   const ownershipItems = [
     {
@@ -224,36 +255,39 @@ function DashboardOwnershipBanner() {
   ];
 
   return (
-    <section className="grid gap-px overflow-hidden border border-[var(--border-warm)] bg-[var(--border-warm)] text-xs leading-5 shadow-[0_18px_42px_-36px_rgba(34,26,20,0.35)] sm:grid-cols-3">
-      {ownershipItems.map((item) => {
-        const content = (
-          <>
-            <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--copper)]">
-              {item.label}
-            </p>
-            <p className="mt-1 font-semibold text-[var(--text-primary)]">
-              {item.title}
-            </p>
-            <p className="mt-1 break-words text-[var(--text-secondary)] [overflow-wrap:anywhere]">
-              {item.detail}
-            </p>
-          </>
-        );
+    <section className={dashboardCommandSurfaceClassName}>
+      <div className="grid gap-px overflow-hidden rounded-[7px] bg-white/10 text-xs leading-5 sm:grid-cols-3">
+        {ownershipItems.map((item) => {
+          const content = (
+            <>
+              <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#8fc7ff]">
+                {item.label}
+              </p>
+              <p className="mt-1 font-semibold text-white">{item.title}</p>
+              <p className="mt-1 break-words text-slate-300 [overflow-wrap:anywhere]">
+                {item.detail}
+              </p>
+            </>
+          );
 
-        return item.label === "Configure in Settings" ? (
-          <Link
-            key={item.label}
-            href="/settings/workflows"
-            className="min-w-0 bg-white px-4 py-3 transition hover:bg-[var(--highlight)]"
-          >
-            {content}
-          </Link>
-        ) : (
-          <div key={item.label} className="min-w-0 bg-white px-4 py-3">
-            {content}
-          </div>
-        );
-      })}
+          return item.label === "Configure in Settings" ? (
+            <Link
+              key={item.label}
+              href="/settings/workflows"
+              className="min-w-0 bg-white/[0.055] px-4 py-3 transition hover:bg-white/[0.09]"
+            >
+              {content}
+            </Link>
+          ) : (
+            <div
+              key={item.label}
+              className="min-w-0 bg-white/[0.055] px-4 py-3"
+            >
+              {content}
+            </div>
+          );
+        })}
+      </div>
     </section>
   );
 }
@@ -362,7 +396,7 @@ function PriorityGrid({ metrics }: { metrics: DashboardMetric[] }) {
               <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--text-secondary)]">
                 {metric.label}
               </p>
-              <span className="mt-0.5 h-1.5 w-1.5 rounded-full bg-[var(--copper)] opacity-75 transition group-hover:opacity-100" />
+              <span className="mt-0.5 h-1.5 w-1.5 rounded-full bg-[#005eb8] opacity-75 transition group-hover:opacity-100" />
             </div>
             <p className="mt-2 text-xl font-semibold tracking-tight text-[var(--text-primary)]">
               {metric.value}
@@ -380,7 +414,7 @@ function PriorityGrid({ metrics }: { metrics: DashboardMetric[] }) {
 function getLifecycleStepClassName(tone: DashboardLifecycleStep["tone"]) {
   switch (tone) {
     case "attention":
-      return "border-amber-200 bg-amber-50 text-amber-950";
+      return "border-[#c7d2e2] bg-[#f8fafc] text-[#0f172a]";
     case "active":
       return "border-[var(--border-warm)] bg-[var(--highlight)] text-[var(--text-primary)]";
     case "ready":
@@ -429,7 +463,7 @@ function LifecycleRail({ steps }: { steps: DashboardLifecycleStep[] }) {
             key={step.key}
             href={step.href}
             className={[
-              "min-w-0 px-3 py-3 transition hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--copper)] focus-visible:ring-inset",
+              "min-w-0 px-3 py-3 transition hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#005eb8] focus-visible:ring-inset",
               getLifecycleStepClassName(step.tone)
             ].join(" ")}
           >
@@ -477,7 +511,7 @@ function QueueRows({
                     <Link
                       href={item.href}
                       aria-label={`${item.actionLabel}: ${item.title}`}
-                      className="truncate text-sm font-semibold text-[var(--text-primary)] transition hover:text-[var(--copper)]"
+                      className="truncate text-sm font-semibold text-[var(--text-primary)] transition hover:text-[#005eb8]"
                     >
                       {item.title}
                     </Link>
@@ -573,23 +607,100 @@ function QueueRows({
   );
 }
 
-function DashboardOperatingSummary({
+function DashboardLensRail({
+  lenses,
+  selectedLens,
+  onSelectLens
+}: {
+  lenses: DashboardLensConfig[];
+  selectedLens: DashboardCommandLens;
+  onSelectLens: (lens: DashboardCommandLens) => void;
+}) {
+  const selectedConfig =
+    lenses.find((lens) => lens.key === selectedLens) ?? lenses[0];
+
+  return (
+    <aside
+      aria-label="Dashboard command lenses"
+      className={[
+        dashboardPanelClassName,
+        "sticky top-3 self-start overflow-hidden"
+      ].join(" ")}
+    >
+      <div className={["px-4 py-3", dashboardPanelHeaderClassName].join(" ")}>
+        <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#005eb8]">
+          Command lenses
+        </p>
+        <h2 className="mt-1 text-[17px] font-semibold tracking-tight text-[var(--text-primary)]">
+          {selectedConfig.title}
+        </h2>
+        <p className="mt-1 text-xs leading-5 text-[var(--text-secondary)]">
+          {selectedConfig.description}
+        </p>
+      </div>
+      <div
+        className="flex gap-px overflow-x-auto bg-[var(--border-warm)] p-px lg:block lg:overflow-visible lg:p-0"
+        role="tablist"
+      >
+        {lenses.map((lens) => {
+          const selected = lens.key === selectedLens;
+
+          return (
+            <button
+              key={lens.key}
+              type="button"
+              role="tab"
+              aria-selected={selected}
+              aria-controls="dashboard-command-lens-panel"
+              onClick={() => onSelectLens(lens.key)}
+              className={[
+                "flex min-w-[150px] items-center justify-between gap-3 px-3 py-3 text-left text-xs font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#005eb8] focus-visible:ring-inset lg:min-w-0 lg:w-full",
+                selected
+                  ? "bg-[#09090b] text-white"
+                  : "bg-white text-[var(--text-secondary)] hover:bg-[#f7fbff] hover:text-[var(--text-primary)]"
+              ].join(" ")}
+            >
+              <span className="truncate">{lens.label}</span>
+              <span
+                className={[
+                  "shrink-0 rounded-[3px] px-1.5 py-0.5 text-[10px] font-semibold",
+                  selected
+                    ? "bg-white/15 text-white"
+                    : "bg-[var(--highlight)] text-[var(--text-secondary)]"
+                ].join(" ")}
+              >
+                {lens.count}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+    </aside>
+  );
+}
+
+function DashboardReferenceCommandCenter({
   header,
   metrics,
   priorityItems,
-  attentionHref
+  actionQueues,
+  onboardingSteps,
+  startHereForceVisible,
+  earlyAccess
 }: {
   header?: ContractorDashboardSurfaceProps["header"];
   metrics: DashboardMetric[];
   priorityItems: DashboardPriorityItem[];
-  attentionHref: string;
+  actionQueues: DashboardActionQueue[];
+  onboardingSteps?: DashboardOnboardingStep[];
+  startHereForceVisible?: boolean;
+  earlyAccess?: ContractorDashboardSurfaceProps["earlyAccess"];
 }) {
-  const jobsTodayMetric = metrics.find((metric) => metric.key === "jobs-today");
+  const jobsTodayMetric = getMetric(metrics, "jobs-today");
   const openBlockersCount = priorityItems.filter(
     (item) => !["complete", "paid"].includes(String(item.status))
   ).length;
-
-  const summaryItems = [
+  const commandMetrics = [
     {
       key: "active-projects",
       label: "Active Projects",
@@ -608,152 +719,228 @@ function DashboardOperatingSummary({
       key: "jobs-today",
       label: "Jobs Today",
       value: jobsTodayMetric?.value ?? "0",
-      detail: "Schedule and jobs",
+      detail: "Schedule and field execution",
       href: jobsTodayMetric?.href ?? "/schedule"
     },
     {
-      key: "open-blockers",
-      label: "Open Blockers",
+      key: "needs-attention",
+      label: "Needs Attention",
       value: String(openBlockersCount),
-      detail: "Attention queues",
-      href: attentionHref
+      detail: "Highest signal queues",
+      href: "#dashboard-attention-rail"
     }
   ];
+  const visibleQueues = actionQueues.slice(0, 1);
+  const attentionItems = priorityItems.slice(0, 3);
+  const showStartHere =
+    onboardingSteps &&
+    (startHereForceVisible || onboardingSteps.some((step) => !step.complete));
 
   return (
     <section
-      aria-labelledby="dashboard-operating-summary-title"
-      className="border border-[var(--border-warm)] bg-white shadow-[0_18px_42px_-36px_rgba(34,26,20,0.35)]"
+      aria-labelledby="dashboard-reference-command-center-title"
+      className="border border-[#18181b] bg-[#09090b] text-white shadow-none"
     >
-      <div className="border-b border-[var(--border-warm)] bg-[var(--highlight)] px-4 py-3">
-        <div>
-          <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--copper)]">
-            Dashboard command metrics
-          </p>
-          <h2
-            id="dashboard-operating-summary-title"
-            className="mt-1 text-[17px] font-semibold tracking-tight text-[var(--text-primary)]"
-          >
-            Operating health at a glance
-          </h2>
-        </div>
-      </div>
-      <div className="grid divide-y divide-[var(--border-warm)] sm:grid-cols-2 sm:divide-x sm:divide-y-0 xl:grid-cols-4">
-        {summaryItems.map((item) => (
-          <Link
-            key={item.key}
-            href={item.href}
-            className="group min-w-0 px-4 py-3 transition hover:bg-[var(--highlight)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--copper)] focus-visible:ring-inset"
-          >
-            <div className="flex items-start justify-between gap-3">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--text-secondary)]">
-                {item.label}
-              </p>
-              <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-[var(--copper)] opacity-70 transition group-hover:opacity-100" />
-            </div>
-            <p className="mt-2 truncate text-xl font-semibold tracking-tight text-[var(--text-primary)]">
-              {item.value}
+      <div className="px-4 py-4 sm:px-5 lg:px-7 lg:py-6">
+        <div className="grid gap-4 xl:grid-cols-[minmax(0,0.7fr)_minmax(300px,0.3fr)]">
+          <div className="min-w-0">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#8fc7ff]">
+              Industrial OS V2
             </p>
-            <p className="mt-1 text-[11px] leading-4 text-[var(--text-secondary)]">
-              {item.detail}
+            <h1
+              id="dashboard-reference-command-center-title"
+              className="mt-2 max-w-4xl break-words text-[30px] font-semibold leading-[1.05] tracking-tight text-white [overflow-wrap:anywhere] sm:text-[44px]"
+            >
+              Command Center
+            </h1>
+            <p className="mt-3 max-w-3xl text-sm leading-6 text-white/72">
+              {header?.organizationName
+                ? `${header.organizationName} operating view across sales, production, field, and cash.`
+                : "Operating view across sales, production, field, and cash."}{" "}
+              Dashboard prioritizes the work; source workspaces remain the place
+              where actions execute.
             </p>
-          </Link>
-        ))}
-      </div>
-    </section>
-  );
-}
-
-function DashboardActionQueues({ queues }: { queues: DashboardActionQueue[] }) {
-  return (
-    <section
-      aria-labelledby="dashboard-action-queues-title"
-      id="dashboard-action-queues"
-      className="space-y-3"
-    >
-      <div className="flex flex-col gap-2 lg:flex-row lg:items-end lg:justify-between">
-        <div>
-          <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--copper)]">
-            Today's priorities
-          </p>
-          <h2
-            id="dashboard-action-queues-title"
-            className="mt-1 text-[17px] font-semibold tracking-tight text-[var(--text-primary)]"
-          >
-            Needs attention now
-          </h2>
-        </div>
-        <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
-          Dashboard prioritizes; owning workspaces act
-        </p>
-      </div>
-      <div className="grid gap-3 xl:grid-cols-5">
-        {queues.map((queue) => (
-          <BoardPanel
-            key={queue.key}
-            eyebrow="Action queue"
-            title={queue.title}
-            description={queue.description}
-            action={
-              <Link href={queue.href} className={dashboardPanelActionClassName}>
-                {queue.actionLabel}
+            {earlyAccess ? (
+              <Link
+                href={earlyAccess.href}
+                className="mt-3 inline-flex min-h-8 items-center border border-white/15 bg-white/[0.06] px-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-white transition hover:bg-white/10 sm:hidden"
+              >
+                {earlyAccess.statusLabel}
               </Link>
-            }
-          >
-            <div className="divide-y divide-[var(--border-warm)]">
-              {queue.items.length > 0 ? (
-                queue.items.map((item) => (
-                  <article key={item.id} className="px-4 py-3">
-                    <div className="flex flex-wrap items-center gap-2">
+            ) : null}
+          </div>
+
+          <div className="hidden border border-white/10 bg-white/[0.06] p-4 sm:block xl:min-h-[150px]">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#8fc7ff]">
+              Operating posture
+            </p>
+            <p className="mt-3 text-sm leading-6 text-white/72">
+              Role:{" "}
+              <span className="font-semibold text-white">
+                {header?.roleLabel ?? "Contractor"}
+              </span>
+            </p>
+            {earlyAccess ? (
+              <div className="mt-4 border border-white/10 bg-black/20 p-3 text-xs leading-5 text-white/70">
+                <p className="font-semibold uppercase tracking-[0.16em] text-white">
+                  {earlyAccess.statusLabel}
+                </p>
+                <p className="mt-1">
+                  Billing/setup controls stay in the existing early-access
+                  routes.
+                </p>
+              </div>
+            ) : null}
+          </div>
+        </div>
+
+        <div className="mt-5 grid gap-4 xl:grid-cols-[minmax(0,0.7fr)_minmax(300px,0.3fr)]">
+          <div className="order-2 min-w-0 xl:order-1">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#8fc7ff]">
+                  Do now
+                </p>
+                <h2 className="mt-1 text-xl font-semibold tracking-tight text-white">
+                  Highest-priority handoff
+                </h2>
+              </div>
+              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-white/45">
+                One lane shown
+              </p>
+            </div>
+
+            <div className="mt-3 grid gap-3">
+              {visibleQueues.length > 0 ? (
+                visibleQueues.map((queue) => {
+                  const firstItem = queue.items[0] ?? null;
+
+                  return (
+                    <article
+                      key={queue.key}
+                      className="min-w-0 border border-white/10 bg-white/[0.06] p-3.5"
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#8fc7ff]">
+                            {queue.title}
+                          </p>
+                          <p className="mt-2 line-clamp-2 text-sm leading-5 text-white/72">
+                            {queue.description}
+                          </p>
+                        </div>
+                        <span className="shrink-0 border border-white/10 bg-black/20 px-2 py-1 text-xs font-semibold text-white">
+                          {queue.items.length}
+                        </span>
+                      </div>
+                      {firstItem ? (
+                        <div className="mt-4 border-t border-white/10 pt-4">
+                          <Link
+                            href={firstItem.href}
+                            className="text-sm font-semibold text-white transition hover:text-[#8fc7ff]"
+                          >
+                            {firstItem.title}
+                          </Link>
+                          <p className="mt-1 line-clamp-2 text-xs leading-5 text-white/60">
+                            {firstItem.subtitle}
+                          </p>
+                        </div>
+                      ) : (
+                        <p className="mt-4 border-t border-white/10 pt-4 text-xs leading-5 text-white/55">
+                          {queue.emptyTitle}
+                        </p>
+                      )}
                       <Link
-                        href={item.href}
-                        aria-label={`${item.recommendedActionLabel}: ${item.title}`}
-                        className="min-w-0 truncate text-sm font-semibold text-[var(--text-primary)] transition hover:text-[var(--copper)]"
+                        href={queue.href}
+                        className="mt-3 inline-flex min-h-8 items-center border border-white/15 bg-white px-3 text-xs font-semibold uppercase tracking-[0.12em] text-[#0f172a] transition hover:bg-[#eef6ff]"
                       >
-                        {item.title}
+                        {queue.actionLabel}
                       </Link>
-                      {item.badge ? (
-                        <StatusBadge status={item.badge} size="sm">
-                          {item.badge}
-                        </StatusBadge>
-                      ) : null}
-                    </div>
-                    <p className="mt-1 text-xs leading-5 text-[var(--text-secondary)]">
-                      {item.subtitle}
-                    </p>
-                    <p className="mt-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--text-secondary)]">
-                      Why: {item.reason}
-                    </p>
-                    {item.metadata ? (
-                      <p className="mt-1 text-xs leading-5 text-[var(--text-secondary)]">
-                        {item.metadata}
-                      </p>
-                    ) : null}
-                    <div className="mt-3 flex flex-wrap gap-2">
-                      <Link href={item.href} className={primaryActionClassName}>
-                        {item.recommendedActionLabel}
-                      </Link>
-                      {item.contextHref && item.contextLabel ? (
-                        <Link
-                          href={item.contextHref}
-                          className={secondaryActionClassName}
-                        >
-                          {item.contextLabel}
-                        </Link>
-                      ) : null}
-                    </div>
-                  </article>
-                ))
+                    </article>
+                  );
+                })
               ) : (
-                <DashboardEmptyState
-                  title={queue.emptyTitle}
-                  description={queue.emptyDescription}
-                />
+                <div className="border border-white/10 bg-white/[0.06] p-4 text-sm leading-6 text-white/65">
+                  No action lanes were returned by the current dashboard read
+                  model.
+                </div>
               )}
             </div>
-          </BoardPanel>
-        ))}
+
+            <div className="mt-4 grid gap-px border border-white/10 bg-white/10 sm:grid-cols-2 xl:grid-cols-4">
+              {commandMetrics.map((metric) => (
+                <Link
+                  key={metric.key}
+                  href={metric.href}
+                  className="group min-w-0 bg-white px-3 py-3 text-[#0f172a] transition hover:bg-[#eef6ff] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8fc7ff] focus-visible:ring-inset"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#475569]">
+                      {metric.label}
+                    </p>
+                    <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-[#005eb8] opacity-80 transition group-hover:opacity-100" />
+                  </div>
+                  <p className="mt-2 truncate text-2xl font-semibold tracking-tight text-[#0f172a]">
+                    {metric.value}
+                  </p>
+                  <p className="mt-1 line-clamp-2 text-[11px] leading-4 text-[#64748b]">
+                    {metric.detail}
+                  </p>
+                </Link>
+              ))}
+            </div>
+          </div>
+
+          <aside
+            id="dashboard-attention-rail"
+            className="order-1 min-w-0 border border-white/10 bg-white p-4 text-[#0f172a] shadow-[inset_4px_0_0_#005eb8] xl:order-2 xl:min-h-[360px]"
+          >
+            <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#005eb8]">
+              Needs attention
+            </p>
+            <h2 className="mt-1 text-lg font-semibold tracking-tight text-[#0f172a]">
+              Highest signal records
+            </h2>
+            <div className="mt-4 divide-y divide-[#e5e7eb]">
+              {attentionItems.length > 0 ? (
+                attentionItems.map((item) => (
+                  <Link
+                    key={item.key}
+                    href={item.href}
+                    className="block py-3 transition first:pt-0 last:pb-0 hover:text-[#005eb8]"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <p className="text-sm font-semibold text-[#0f172a]">
+                        {item.title}
+                      </p>
+                      <StatusBadge status={item.status} size="sm">
+                        {item.countLabel}
+                      </StatusBadge>
+                    </div>
+                    <p className="mt-1 text-xs leading-5 text-[#64748b]">
+                      {item.detail}
+                    </p>
+                  </Link>
+                ))
+              ) : (
+                <p className="py-3 text-sm leading-6 text-[#64748b]">
+                  No priority records were returned by the current dashboard
+                  read model.
+                </p>
+              )}
+            </div>
+          </aside>
+        </div>
       </div>
+
+      {showStartHere ? (
+        <div className="border-t border-white/10 bg-[#f4f4f5] p-4 text-[#0f172a] sm:p-6">
+          <StartHereCard
+            steps={onboardingSteps}
+            forceVisible={startHereForceVisible}
+          />
+        </div>
+      ) : null}
     </section>
   );
 }
@@ -775,7 +962,7 @@ function UtilityCardGrid({
     <section className="grid gap-3 lg:grid-cols-4">
       <Link href="/schedule" className={dashboardPanelClassName}>
         <div className="px-4 py-4">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--copper)]">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#005eb8]">
             Calendar
           </p>
           <p className="mt-2 text-lg font-semibold text-[var(--text-primary)]">
@@ -789,7 +976,7 @@ function UtilityCardGrid({
       <div className={dashboardPanelClassName}>
         <div className="px-4 py-4">
           <div className="flex items-center justify-between gap-2">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--copper)]">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#005eb8]">
               Weather
             </p>
             <span className="rounded-[4px] border border-[var(--border-warm)] bg-[var(--highlight)] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--text-secondary)]">
@@ -806,7 +993,7 @@ function UtilityCardGrid({
       </div>
       <Link href="/appointments" className={dashboardPanelClassName}>
         <div className="px-4 py-4">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--copper)]">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#005eb8]">
             Appointments
           </p>
           <p className="mt-2 text-lg font-semibold text-[var(--text-primary)]">
@@ -820,7 +1007,7 @@ function UtilityCardGrid({
       </Link>
       <Link href="/time" className={dashboardPanelClassName}>
         <div className="px-4 py-4">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--copper)]">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#005eb8]">
             Hours
           </p>
           <p className="mt-2 text-lg font-semibold text-[var(--text-primary)]">
@@ -834,362 +1021,311 @@ function UtilityCardGrid({
       </Link>
       {fieldWidget ? (
         <div className="lg:col-span-4">
-          <QueueRows widget={fieldWidget} items={fieldWidget.items} />
+          <QueueRows
+            widget={fieldWidget}
+            items={fieldWidget.items.slice(0, 3)}
+          />
         </div>
       ) : null}
     </section>
   );
 }
 
-function PipelineCell({
-  label,
-  value,
-  detail,
-  href,
-  tone
+function buildTodayCockpitItems({
+  priorityItems,
+  jobsTodayWidget,
+  projectCueWidget
 }: {
-  label: string;
-  value: string;
-  detail: string;
-  href: string;
-  tone: "attention" | "active" | "ready" | "quiet";
-}) {
-  const toneClassName =
-    tone === "attention"
-      ? "border-amber-200 bg-amber-50 text-amber-950"
-      : tone === "ready"
-        ? "border-emerald-200 bg-emerald-50 text-emerald-950"
-        : tone === "active"
-          ? "border-[var(--border-warm)] bg-[var(--highlight)] text-[var(--text-primary)]"
-          : "border-[var(--border-warm)] bg-white text-[var(--text-secondary)]";
-
-  return (
-    <Link
-      href={href}
-      className={[
-        "group flex min-h-[126px] flex-col rounded-[4px] border px-4 py-4 transition hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--copper)]",
-        toneClassName
-      ].join(" ")}
-    >
-      <div className="flex items-start justify-between gap-3">
-        <p className="text-[10px] font-semibold uppercase tracking-[0.16em] opacity-75">
-          {label}
-        </p>
-        <span className="mt-1 h-1.5 w-1.5 rounded-full bg-[var(--copper)] opacity-50 transition group-hover:opacity-100" />
-      </div>
-      <p className="mt-2 text-2xl font-semibold tracking-tight">{value}</p>
-      <p className="mt-1 line-clamp-2 text-xs leading-5 opacity-70">{detail}</p>
-    </Link>
-  );
+  priorityItems: DashboardPriorityItem[];
+  jobsTodayWidget?: DashboardWidget | null;
+  projectCueWidget?: DashboardWidget | null;
+}): TodayCockpitItem[] {
+  return [
+    ...priorityItems.slice(0, 2).map((item) => ({
+      id: `priority-${item.key}`,
+      title: item.title,
+      subtitle: item.detail,
+      href: item.href,
+      meta: item.countLabel,
+      badge: String(item.status),
+      actionLabel: "Review today"
+    })),
+    ...(jobsTodayWidget?.items.slice(0, 1).map((item) => ({
+      id: `today-job-${item.id}`,
+      title: item.title,
+      subtitle: item.subtitle,
+      href: item.href,
+      meta: item.meta,
+      badge: item.badge,
+      actionLabel: item.actionLabel,
+      contextHref: item.contextHref,
+      contextLabel: item.contextLabel
+    })) ?? []),
+    ...(projectCueWidget?.items.slice(0, 2).map((item) => ({
+      id: `next-action-${item.id}`,
+      title: item.title,
+      subtitle: item.subtitle,
+      href: item.href,
+      meta: item.meta,
+      badge: item.badge,
+      actionLabel: item.actionLabel,
+      contextHref: item.contextHref,
+      contextLabel: item.contextLabel
+    })) ?? [])
+  ].slice(0, 5);
 }
 
-function StageBars({ cells }: { cells: DashboardLifecycleStep[] }) {
-  const maxValue = Math.max(
-    1,
-    ...cells.map((cell) => {
-      const numericValue = Number.parseInt(cell.value.replace(/[^0-9]/g, ""));
-      return Number.isFinite(numericValue) ? numericValue : 0;
-    })
-  );
-
-  return (
-    <BoardPanel
-      eyebrow="Opportunities"
-      title="Pipeline by stage"
-      description="Display-only stage bars from the existing lifecycle snapshot, not a separate reporting model."
-      action={
-        <span className="rounded-[4px] border border-[var(--border-warm)] bg-[var(--highlight)] px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--text-secondary)]">
-          Live snapshot
-        </span>
-      }
-    >
-      <div className="space-y-3 px-4 py-4">
-        {cells.map((cell) => {
-          const numericValue = Number.parseInt(
-            cell.value.replace(/[^0-9]/g, "")
-          );
-          const width = `${Math.max(
-            8,
-            ((Number.isFinite(numericValue) ? numericValue : 0) / maxValue) *
-              100
-          )}%`;
-
-          return (
-            <Link
-              key={cell.key}
-              href={cell.href}
-              className="grid grid-cols-[minmax(96px,0.38fr)_minmax(0,1fr)_auto] items-center gap-3"
-            >
-              <div className="min-w-0">
-                <p className="truncate text-xs font-semibold text-[var(--text-primary)]">
-                  {cell.label}
-                </p>
-                <p className="mt-0.5 truncate text-[10px] text-[var(--text-tertiary)]">
-                  {cell.detail}
-                </p>
-              </div>
-              <div className="h-6 overflow-hidden rounded-[4px] bg-[var(--highlight)]">
-                <div
-                  className="h-full rounded-[4px] bg-[var(--copper)]"
-                  style={{ width }}
-                />
-              </div>
-              <p className="w-14 text-right text-sm font-semibold text-[var(--text-primary)]">
-                {cell.value}
-              </p>
-            </Link>
-          );
-        })}
-      </div>
-    </BoardPanel>
-  );
-}
-
-function DashboardV0Sections({
+function TodayCockpit({
+  header,
   metrics,
-  lifecycleSteps,
-  commercialWidgets,
-  operationsWidgets,
-  financeWidgets,
-  projectCueWidget,
-  attentionWidget
+  priorityItems,
+  jobsTodayWidget,
+  projectCueWidget
 }: {
+  header?: ContractorDashboardSurfaceProps["header"];
   metrics: DashboardMetric[];
-  lifecycleSteps: DashboardLifecycleStep[];
-  commercialWidgets: DashboardWidget[];
-  operationsWidgets: DashboardWidget[];
-  financeWidgets: DashboardWidget[];
-  projectCueWidget: DashboardWidget | null;
-  attentionWidget: DashboardWidget | null;
+  priorityItems: DashboardPriorityItem[];
+  jobsTodayWidget?: DashboardWidget | null;
+  projectCueWidget?: DashboardWidget | null;
 }) {
-  const metricByKey = new Map(metrics.map((metric) => [metric.key, metric]));
-  const leadsMetric = metricByKey.get("leads-follow-up");
-  const estimatesMetric = metricByKey.get("estimates-awaiting-action");
-  const scheduleMetric = metricByKey.get("jobs-needing-schedule");
-  const jobsTodayMetric = metricByKey.get("jobs-today");
-  const contractsWidget = commercialWidgets.find(
-    (widget) => widget.key === "contracts"
-  );
-  const readyWidget = operationsWidgets.find(
-    (widget) => widget.key === "ready-to-schedule-projects"
-  );
-  const projectsWidget = operationsWidgets.find(
-    (widget) => widget.key === "projects"
-  );
-  const jobsScheduleWidget = operationsWidgets.find(
-    (widget) => widget.key === "jobs-needing-schedule"
-  );
-  const jobsTodayWidget = operationsWidgets.find(
-    (widget) => widget.key === "jobs-today"
-  );
-  const collectionsWidget =
-    financeWidgets.find((widget) => widget.key === "unpaid-invoices") ?? null;
-  const recentPaymentsWidget =
-    financeWidgets.find((widget) => widget.key === "recent-payments") ?? null;
-
-  const revenueCells = [
+  const cockpitItems = buildTodayCockpitItems({
+    priorityItems,
+    jobsTodayWidget,
+    projectCueWidget
+  });
+  const nextActions = projectCueWidget?.items.slice(0, 3) ?? [];
+  const pulseMetrics = [
     {
-      label: "Opportunity Follow-ups",
-      value: leadsMetric?.value ?? "0",
-      detail: leadsMetric?.detail ?? "Existing opportunity follow-up queue",
-      href: leadsMetric?.href ?? "/leads",
-      tone: "quiet" as const
+      key: "active-projects",
+      label: "Active Projects",
+      value: String(header?.activeProjectCount ?? "0"),
+      detail: "Project chain",
+      href: "/projects"
     },
     {
-      label: "Estimates Pending",
-      value: estimatesMetric?.value ?? "0",
-      detail: estimatesMetric?.detail ?? "Existing estimate queue",
-      href: estimatesMetric?.href ?? "/estimates",
-      tone: "active" as const
+      key: "open-ar",
+      label: "Open AR",
+      value: header?.openReceivablesLabel ?? "$0.00",
+      detail: "Invoice/payment chain",
+      href: "/financials"
     },
-    {
-      label: "Awaiting Signature",
-      value: String(contractsWidget?.items.length ?? 0),
-      detail:
-        contractsWidget?.description ??
-        "Existing contract send and signature queue",
-      href: contractsWidget?.href ?? "/contracts",
-      tone:
-        (contractsWidget?.items.length ?? 0) > 0
-          ? ("attention" as const)
-          : ("quiet" as const)
-    },
-    {
-      label: "Won / Not Scheduled",
-      value: String(readyWidget?.items.length ?? 0),
-      detail:
-        readyWidget?.description ??
-        "Ready projects that need canonical job creation",
-      href: readyWidget?.href ?? "/projects",
-      tone:
-        (readyWidget?.items.length ?? 0) > 0
-          ? ("ready" as const)
-          : ("quiet" as const)
-    }
+    getMetric(metrics, "jobs-today") ??
+      getMetric(metrics, "appointments-today") ?? {
+        key: "jobs-today-fallback",
+        label: "Jobs today",
+        value: "0",
+        detail: "Schedule and field execution",
+        href: "/schedule"
+      }
   ];
-
-  const productionCells = [
+  const workspaceLinks = [
     {
-      label: "Ready to Schedule",
-      value: String(readyWidget?.items.length ?? 0),
-      detail: readyWidget?.description ?? "Ready Check cleared projects",
-      href: readyWidget?.href ?? "/schedule",
-      tone:
-        (readyWidget?.items.length ?? 0) > 0
-          ? ("ready" as const)
-          : ("quiet" as const)
+      label: "Sales Manager",
+      href: "/leads",
+      detail: "Opportunity and estimate follow-up"
     },
     {
-      label: "Blocked Projects",
-      value: String(projectsWidget?.items.length ?? 0),
-      detail: projectsWidget?.description ?? "Projects needing attention",
-      href: projectsWidget?.href ?? "/projects",
-      tone:
-        (projectsWidget?.items.length ?? 0) > 0
-          ? ("attention" as const)
-          : ("quiet" as const)
+      label: "Projects",
+      href: "/projects",
+      detail: "Readiness and active project work"
     },
     {
-      label: "Jobs Today",
-      value:
-        jobsTodayMetric?.value ?? String(jobsTodayWidget?.items.length ?? 0),
-      detail: jobsTodayMetric?.detail ?? "Existing jobs today queue",
-      href: jobsTodayMetric?.href ?? jobsTodayWidget?.href ?? "/jobs",
-      tone:
-        (jobsTodayWidget?.items.length ?? 0) > 0
-          ? ("active" as const)
-          : ("quiet" as const)
+      label: "Schedule",
+      href: "/schedule",
+      detail: "Crew, jobs, and field handoff"
     },
     {
-      label: "Crew Assignment Gaps",
-      value:
-        scheduleMetric?.value ?? String(jobsScheduleWidget?.items.length ?? 0),
-      detail:
-        scheduleMetric?.detail ??
-        "Schedule handoffs and crew follow-through from canonical jobs",
-      href: scheduleMetric?.href ?? jobsScheduleWidget?.href ?? "/schedule",
-      tone:
-        (jobsScheduleWidget?.items.length ?? 0) > 0
-          ? ("attention" as const)
-          : ("quiet" as const)
+      label: "Financials",
+      href: "/financials",
+      detail: "AR, invoices, and payment review"
+    },
+    {
+      label: "My Work",
+      href: "/field/work-items",
+      detail: "Internal follow-ups and work items"
+    },
+    {
+      label: "Universal Capture",
+      href: "/dashboard?capture=1#universal-capture",
+      detail: "Quickly add an internal follow-up"
     }
   ];
 
   return (
-    <section
-      aria-labelledby="dashboard-v0-sections-title"
-      className="space-y-4"
-    >
+    <section aria-labelledby="dashboard-today-lens-title" className="space-y-3">
       <div>
         <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
-          Operating blocks
+          Today lens
         </p>
         <h2
-          id="dashboard-v0-sections-title"
+          id="dashboard-today-lens-title"
           className="mt-1 text-[17px] font-semibold tracking-tight text-[var(--text-primary)]"
         >
-          Pipeline, production, cash, and field
+          What to deal with first
         </h2>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-2">
+      <div className="grid gap-3 xl:grid-cols-[minmax(0,1.15fr)_minmax(320px,0.85fr)]">
         <BoardPanel
-          eyebrow="Revenue pipeline"
-          title="Sales and close stage"
-          description="Existing commercial records grouped into the v0 pipeline card rhythm."
+          eyebrow="Do now"
+          title="Top priorities"
+          description="Capped at five source-record items so the dashboard stays a triage surface."
+          action={
+            <Link
+              href="#dashboard-attention-rail"
+              className={dashboardPanelActionClassName}
+            >
+              View attention
+            </Link>
+          }
         >
-          <div className="grid grid-cols-2 gap-3 p-4">
-            {revenueCells.map((cell) => (
-              <PipelineCell key={cell.label} {...cell} />
-            ))}
+          <div className="divide-y divide-[var(--border-warm)]">
+            {cockpitItems.length > 0 ? (
+              cockpitItems.map((item) => (
+                <article key={item.id} className="px-4 py-3">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <Link
+                          href={item.href}
+                          className="truncate text-sm font-semibold text-[var(--text-primary)] transition hover:text-[#005eb8]"
+                        >
+                          {item.title}
+                        </Link>
+                        {item.badge ? (
+                          <StatusBadge status={item.badge} size="sm">
+                            {item.badge}
+                          </StatusBadge>
+                        ) : null}
+                      </div>
+                      <p className="mt-1 text-sm leading-5 text-[var(--text-secondary)]">
+                        {item.subtitle}
+                      </p>
+                      <p className="mt-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--text-secondary)]">
+                        {item.meta}
+                      </p>
+                    </div>
+                    <Link
+                      href={item.href}
+                      className="shrink-0 text-[11px] font-semibold uppercase tracking-[0.12em] text-[#005eb8] transition hover:text-[#003d7c]"
+                    >
+                      {item.actionLabel}
+                    </Link>
+                  </div>
+                  {item.contextHref && item.contextLabel ? (
+                    <Link
+                      href={item.contextHref}
+                      className={[
+                        secondaryActionClassName,
+                        "mt-3 inline-flex"
+                      ].join(" ")}
+                    >
+                      {item.contextLabel}
+                    </Link>
+                  ) : null}
+                </article>
+              ))
+            ) : (
+              <DashboardEmptyState
+                title="No urgent dashboard priorities."
+                description="When source records need same-day review, the highest-signal items appear here."
+              />
+            )}
           </div>
         </BoardPanel>
 
-        <BoardPanel
-          eyebrow="Production readiness"
-          title="Scheduling and execution status"
-          description="Readiness and schedule pressure stay derived from canonical projects and jobs."
-        >
-          <div className="grid grid-cols-2 gap-3 p-4">
-            {productionCells.map((cell) => (
-              <PipelineCell key={cell.label} {...cell} />
-            ))}
-          </div>
-        </BoardPanel>
-      </div>
-
-      <div className="grid gap-4 lg:grid-cols-2">
-        <StageBars cells={lifecycleSteps} />
-        {projectCueWidget ? (
-          <QueueRows
-            widget={{
-              ...projectCueWidget,
-              eyebrow: "Quality / Field Notes",
-              title: "Open issues and punch items",
-              description:
-                "Field and quality signals stay on existing project cues, Daily Logs, jobs, and work items. No punchlist-only dashboard model was added.",
-              actionLabel: "Open projects"
-            }}
-            items={projectCueWidget.items}
-          />
-        ) : null}
-      </div>
-
-      <div className="grid gap-4 lg:grid-cols-2">
-        {collectionsWidget ? (
-          <FinanceTable
-            widget={{
-              ...collectionsWidget,
-              eyebrow: "Collections / AR",
-              title: "Receivables and payment status"
-            }}
-            items={collectionsWidget.items}
-          />
-        ) : null}
-        {jobsTodayWidget ? (
-          <QueueRows
-            widget={{
-              ...jobsTodayWidget,
-              eyebrow: "Field activity",
-              title: "Today's jobs, logs, and blockers",
-              description:
-                "Day-of work stays tied to existing jobs, schedule, project, and Daily Log routes."
-            }}
-            items={jobsTodayWidget.items}
-          />
-        ) : null}
-      </div>
-
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]">
-        {projectCueWidget ? (
-          <QueueRows
-            widget={{
-              ...projectCueWidget,
-              eyebrow: "Next Move",
-              title: "Recommended action",
-              description:
-                "Recommended action is deterministic and review-first. Drafting or workflow execution still happens only in existing workspaces."
-            }}
-            items={projectCueWidget.items.slice(0, 3)}
-          />
-        ) : null}
-        {(attentionWidget ?? recentPaymentsWidget) ? (
-          <QueueRows
-            widget={{
-              ...(attentionWidget ?? recentPaymentsWidget!),
-              eyebrow: "Recent activity",
-              title: "Latest events",
-              description:
-                attentionWidget?.description ??
-                "Recent payment movement from the canonical invoice and payment chain.",
-              actionLabel: attentionWidget?.actionLabel ?? "Open payments"
-            }}
-            items={
-              (attentionWidget ?? recentPaymentsWidget)?.items.slice(0, 5) ?? []
+        <div className="space-y-3">
+          <BoardPanel
+            eyebrow="Review today"
+            title="Next recommended actions"
+            description="Deterministic guidance only; execution stays in the owning workspace."
+            action={
+              <Link href="/projects" className={dashboardPanelActionClassName}>
+                View projects
+              </Link>
             }
-          />
-        ) : null}
+          >
+            <div className="divide-y divide-[var(--border-warm)]">
+              {nextActions.length > 0 ? (
+                nextActions.map((item) => (
+                  <article key={item.id} className="px-4 py-3">
+                    <Link
+                      href={item.href}
+                      className="text-sm font-semibold text-[var(--text-primary)] transition hover:text-[#005eb8]"
+                    >
+                      {item.title}
+                    </Link>
+                    <p className="mt-1 text-xs leading-5 text-[var(--text-secondary)]">
+                      {item.subtitle}
+                    </p>
+                  </article>
+                ))
+              ) : (
+                <DashboardEmptyState
+                  title="No recommended actions."
+                  description="Project guidance appears here when existing cues find a next move."
+                />
+              )}
+            </div>
+          </BoardPanel>
+
+          <BoardPanel
+            eyebrow="Business pulse"
+            title="Small signal"
+            description="A narrow pulse only; fuller metrics live inside the owning lenses."
+          >
+            <div className="grid gap-px bg-[var(--border-warm)] sm:grid-cols-3 xl:grid-cols-1">
+              {pulseMetrics.length > 0 ? (
+                pulseMetrics.map((metric) => (
+                  <Link
+                    key={metric.key}
+                    href={metric.href}
+                    className={dashboardMetricCardClassName}
+                  >
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--text-secondary)]">
+                      {metric.label}
+                    </p>
+                    <p className="mt-2 text-xl font-semibold tracking-tight text-[var(--text-primary)]">
+                      {metric.value}
+                    </p>
+                    <p className="mt-1 line-clamp-2 text-[11px] leading-4 text-[var(--text-secondary)]">
+                      {metric.detail}
+                    </p>
+                  </Link>
+                ))
+              ) : (
+                <DashboardEmptyState
+                  title="No pulse metrics available."
+                  description="Existing dashboard metrics appear here when returned by the current loader."
+                />
+              )}
+            </div>
+          </BoardPanel>
+        </div>
       </div>
+
+      <BoardPanel
+        eyebrow="Go to owning workspace"
+        title="Where action happens"
+        description="Dashboard points to the source workspace instead of recreating each manager here."
+      >
+        <div className="grid gap-px bg-[var(--border-warm)] sm:grid-cols-2 xl:grid-cols-3">
+          {workspaceLinks.map((link) => (
+            <Link
+              key={link.href}
+              href={link.href}
+              className="min-w-0 bg-white px-4 py-3 transition hover:bg-[#f7fbff]"
+            >
+              <p className="text-sm font-semibold text-[var(--text-primary)]">
+                {link.label}
+              </p>
+              <p className="mt-1 text-xs leading-5 text-[var(--text-secondary)]">
+                {link.detail}
+              </p>
+            </Link>
+          ))}
+        </div>
+      </BoardPanel>
     </section>
   );
 }
@@ -1226,7 +1362,7 @@ function FinanceTable({
                   <div className="min-w-0">
                     <Link
                       href={item.href}
-                      className="truncate text-sm font-semibold text-[var(--text-primary)] transition hover:text-[var(--copper)]"
+                      className="truncate text-sm font-semibold text-[var(--text-primary)] transition hover:text-[#005eb8]"
                     >
                       {item.title}
                     </Link>
@@ -1282,7 +1418,7 @@ function AiOperationalDigestPanel({
         ].join(" ")}
       >
         <div className="min-w-0">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--copper)]">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#005eb8]">
             AI Operational Digest
           </p>
           <h2
@@ -1295,7 +1431,7 @@ function AiOperationalDigestPanel({
             {digest.headlineSummary}
           </p>
         </div>
-        <div className="shrink-0 rounded-lg border border-[var(--border-warm)] bg-white px-3 py-2 text-right">
+        <div className="shrink-0 rounded-[4px] border border-[var(--border-warm)] bg-white px-3 py-2 text-right">
           <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--text-secondary)]">
             Attention
           </p>
@@ -1311,7 +1447,7 @@ function AiOperationalDigestPanel({
               <h3 className="text-sm font-semibold text-[var(--text-primary)]">
                 {section.title}
               </h3>
-              <span className="rounded-md border border-[var(--border-warm)] bg-[var(--highlight)] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--text-secondary)]">
+              <span className="rounded-[4px] border border-[var(--border-warm)] bg-[var(--highlight)] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--text-secondary)]">
                 {section.items.length}
               </span>
             </div>
@@ -1320,12 +1456,12 @@ function AiOperationalDigestPanel({
                 {section.items.slice(0, 2).map((item) => (
                   <div
                     key={item.id}
-                    className="rounded-lg border border-[var(--border-warm)] bg-[var(--highlight)] px-3 py-3 text-sm leading-5"
+                    className="rounded-[4px] border border-[var(--border-warm)] bg-[var(--highlight)] px-3 py-3 text-sm leading-5"
                   >
                     <div className="flex flex-wrap items-center gap-2">
                       <Link
                         href={item.href}
-                        className="font-semibold text-[var(--text-primary)] transition hover:text-[var(--copper)]"
+                        className="font-semibold text-[var(--text-primary)] transition hover:text-[#005eb8]"
                       >
                         {item.title}
                       </Link>
@@ -1343,7 +1479,7 @@ function AiOperationalDigestPanel({
                       Next: {item.recommendedNextStep}
                     </p>
                     {item.draftActionAvailable ? (
-                      <p className="mt-2 rounded-md border border-[var(--border-warm)] bg-white px-2 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--text-secondary)]">
+                      <p className="mt-2 rounded-[4px] border border-[var(--border-warm)] bg-white px-2 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--text-secondary)]">
                         Draft available in Project Workspace
                       </p>
                     ) : null}
@@ -1351,7 +1487,7 @@ function AiOperationalDigestPanel({
                 ))}
               </div>
             ) : (
-              <div className="mt-3 rounded-lg border border-dashed border-[var(--border-warm)] bg-[var(--highlight)]">
+              <div className="mt-3 rounded-[4px] border border-dashed border-[var(--border-warm)] bg-[var(--highlight)]">
                 <DashboardEmptyState
                   title={section.emptyTitle}
                   description={section.emptyDescription}
@@ -1387,9 +1523,10 @@ export function ContractorDashboardSurface({
   onboardingSteps,
   startHereForceVisible
 }: ContractorDashboardSurfaceProps) {
+  const [selectedLens, setSelectedLens] =
+    useState<DashboardCommandLens>("today");
   const [query, setQuery] = useState("");
   const deferredQuery = useDeferredValue(query.trim().toLowerCase());
-  const hasActionQueues = actionQueues.length > 0;
   const handleQueryChange = (nextValue: string) => {
     startTransition(() => {
       setQuery(nextValue);
@@ -1466,374 +1603,415 @@ export function ContractorDashboardSurface({
         : null,
     [projectCueWidget, deferredQuery]
   );
+  const lensConfigs = useMemo<DashboardLensConfig[]>(() => {
+    const countItems = (widgets: DashboardWidget[]) =>
+      widgets.reduce((total, widget) => total + widget.items.length, 0);
+    const jobsTodayWidget = filteredOperationsWidgets.find(
+      (widget) => widget.key === "jobs-today"
+    );
+    const projectsWidget = filteredOperationsWidgets.find(
+      (widget) => widget.key === "projects"
+    );
+
+    return [
+      {
+        key: "today",
+        label: "Today",
+        title: "Today / Needs Attention",
+        description:
+          "The smallest operating view: current work, active blockers, and near-term movement.",
+        count: Math.min(
+          5,
+          priorityItems.length +
+            (jobsTodayWidget?.items.length ?? 0) +
+            (filteredProjectCueWidget?.items.length ?? 0)
+        )
+      },
+      {
+        key: "attention",
+        label: "Needs Attention",
+        title: "Exceptions and blockers",
+        description:
+          "Blocked, overdue, waiting, failed, and review-first items from existing source records.",
+        count:
+          (attentionWidget?.items.length ?? 0) +
+          (filteredProjectCueWidget?.items.length ?? 0) +
+          priorityItems.length
+      },
+      {
+        key: "sales",
+        label: "Sales",
+        title: "Sales command lane",
+        description:
+          "Opportunity, estimate, contract, and commercial follow-up queues.",
+        count: countItems(filteredCommercialWidgets)
+      },
+      {
+        key: "projects",
+        label: "Projects",
+        title: "Project command lane",
+        description:
+          "Project readiness, project continuity, and lifecycle movement.",
+        count:
+          (projectsWidget?.items.length ?? 0) +
+          (filteredProjectCueWidget?.items.length ?? 0)
+      },
+      {
+        key: "field",
+        label: "Field",
+        title: "Field and schedule lane",
+        description:
+          "Schedule, crew, appointments, and day-of execution handoff.",
+        count: countItems(filteredOperationsWidgets)
+      },
+      {
+        key: "money",
+        label: "Money",
+        title: "Money lane",
+        description:
+          "Invoices, AR, payments, and collection visibility from the billing chain.",
+        count: countItems(filteredFinanceWidgets)
+      },
+      {
+        key: "follow-ups",
+        label: "Follow-ups",
+        title: "Follow-up lane",
+        description:
+          "Work Items, My Work, reminders, and assigned follow-through tasks.",
+        count:
+          (filteredWorkItemsWidget?.items.length ?? 0) +
+          countItems(filteredMyWorkWidgets)
+      }
+    ];
+  }, [
+    attentionWidget,
+    filteredCommercialWidgets,
+    filteredFinanceWidgets,
+    filteredMyWorkWidgets,
+    filteredOperationsWidgets,
+    filteredProjectCueWidget,
+    filteredWorkItemsWidget,
+    priorityItems
+  ]);
 
   return (
-    <div className="overflow-x-hidden bg-[var(--cream)]">
-      <div className="space-y-4 px-4 py-4 sm:px-6">
+    <div className="overflow-x-hidden bg-[#f4f4f5]">
+      <div className="space-y-5 px-4 py-4 sm:px-6">
         <h1 className="sr-only">Dashboard</h1>
 
-        <DashboardOwnershipBanner />
-
-        <DashboardOperatingSummary
+        <DashboardReferenceCommandCenter
           header={header}
           metrics={metrics}
           priorityItems={priorityItems}
-          attentionHref={
-            hasActionQueues
-              ? "/dashboard#dashboard-action-queues"
-              : "/dashboard#dashboard-priority-strip"
-          }
+          actionQueues={actionQueues}
+          onboardingSteps={onboardingSteps}
+          startHereForceVisible={startHereForceVisible}
+          earlyAccess={earlyAccess}
         />
-
-        {hasActionQueues ? (
-          <DashboardActionQueues queues={actionQueues} />
-        ) : null}
-
-        {earlyAccess ? (
-          <section
-            className={[
-              "rounded-lg border px-4 py-4",
-              earlyAccess.isLocked
-                ? "border-amber-200 bg-amber-50"
-                : "border-emerald-200 bg-emerald-50"
-            ].join(" ")}
-          >
-            <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-              <div className="min-w-0">
-                <p
-                  className={[
-                    "text-[10px] font-semibold uppercase tracking-[0.18em]",
-                    earlyAccess.isLocked ? "text-amber-700" : "text-emerald-700"
-                  ].join(" ")}
-                >
-                  Status: {earlyAccess.statusLabel}
-                </p>
-                <p
-                  className={[
-                    "mt-1 text-sm leading-6",
-                    earlyAccess.isLocked ? "text-amber-950" : "text-emerald-950"
-                  ].join(" ")}
-                >
-                  {earlyAccess.setupMessage ??
-                    (earlyAccess.isLocked
-                      ? "You can explore the real system and create records now. External sends and payment processing unlock after activation."
-                      : "Account active. Guarded production actions are unlocked for this organization.")}
-                </p>
-                {earlyAccess.billingStatusLabel ? (
-                  <p
-                    className={[
-                      "mt-1 text-xs font-semibold",
-                      earlyAccess.isLocked
-                        ? "text-amber-800"
-                        : "text-emerald-800"
-                    ].join(" ")}
-                  >
-                    {earlyAccess.billingStatusLabel}
-                  </p>
-                ) : null}
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {earlyAccess.setupHref ? (
-                  <Link
-                    href={earlyAccess.setupHref}
-                    className="inline-flex h-9 shrink-0 items-center justify-center rounded-full bg-[var(--graphite)] px-4 text-xs font-semibold text-white transition hover:bg-[var(--graphite-light)]"
-                  >
-                    {earlyAccess.setupCtaLabel ?? "Finish setup"}
-                  </Link>
-                ) : null}
-                <Link
-                  href={earlyAccess.href}
-                  className={[
-                    "inline-flex h-9 shrink-0 items-center justify-center rounded-full border bg-white px-4 text-xs font-semibold transition",
-                    earlyAccess.isLocked
-                      ? "border-amber-300 text-amber-950 hover:bg-amber-100"
-                      : "border-emerald-300 text-emerald-950 hover:bg-emerald-100"
-                  ].join(" ")}
-                >
-                  View activation status
-                </Link>
-              </div>
-            </div>
-          </section>
-        ) : null}
-
-        {hasActionQueues ? null : (
-          <div id="dashboard-priority-strip">
-            <PriorityStrip items={priorityItems} />
-          </div>
-        )}
 
         {universalCapture ? universalCapture : null}
 
-        <UtilityCardGrid
-          metrics={metrics}
-          operationsWidgets={filteredOperationsWidgets}
-        />
+        <section className="grid gap-4 lg:grid-cols-[220px_minmax(0,1fr)]">
+          <div className="order-2 lg:order-1">
+            <DashboardLensRail
+              lenses={lensConfigs}
+              selectedLens={selectedLens}
+              onSelectLens={setSelectedLens}
+            />
+          </div>
 
-        <DashboardV0Sections
-          metrics={metrics}
-          lifecycleSteps={lifecycleSteps}
-          commercialWidgets={filteredCommercialWidgets}
-          operationsWidgets={filteredOperationsWidgets}
-          financeWidgets={filteredFinanceWidgets}
-          projectCueWidget={filteredProjectCueWidget}
-          attentionWidget={attentionWidget ?? null}
-        />
-
-        <div className="grid gap-4 2xl:grid-cols-[minmax(0,1.05fr)_minmax(360px,0.95fr)]">
-          <LifecycleRail steps={lifecycleSteps} />
-          <PriorityGrid metrics={metrics} />
-        </div>
-
-        {aiOperationalDigest ? (
-          <AiOperationalDigestPanel digest={aiOperationalDigest} />
-        ) : null}
-
-        {operationalCockpitBuckets.length > 0 ? (
-          <OperationalGuidanceSection
-            title="Command Center"
-            description="The home board groups current work by decision posture: what needs attention, what is ready to move, what is waiting on a customer or payment, and what needs field follow-through."
-            buckets={operationalCockpitBuckets}
-          />
-        ) : null}
-
-        {filteredProjectCueWidget ? (
-          <QueueRows
-            widget={filteredProjectCueWidget}
-            items={filteredProjectCueWidget.items}
-          />
-        ) : null}
-
-        {filteredWorkItemsWidget ? (
-          <QueueRows
-            widget={filteredWorkItemsWidget}
-            items={filteredWorkItemsWidget.items}
-            workItemActions={workItemActions}
-          />
-        ) : null}
-
-        {filteredMyWorkWidgets.length > 0 ? (
-          <section
-            aria-labelledby="dashboard-my-work-title"
-            className="space-y-3"
+          <div
+            id="dashboard-command-lens-panel"
+            role="tabpanel"
+            className="order-1 min-w-0 space-y-4 lg:order-2"
           >
-            <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
-              <div>
-                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
-                  Operational intelligence
-                </p>
-                <h2
-                  id="dashboard-my-work-title"
-                  className="mt-1 text-[17px] font-semibold tracking-tight text-[var(--text-primary)]"
-                >
-                  My Work
-                </h2>
-                <p className="mt-1 text-xs leading-5 text-[var(--text-secondary)]">
-                  {selectedMyWorkQueueMode?.description ??
-                    "Derived attention items from saved records."}
-                </p>
-              </div>
-              {myWorkQueueModes ? (
-                <div
-                  aria-label="My Work queue mode"
-                  className="inline-flex w-full flex-col gap-1 border border-[var(--border-warm)] bg-white p-1 sm:w-auto sm:flex-row"
-                  role="tablist"
-                >
-                  {myWorkQueueModes.modes.map((mode) => {
-                    const selected =
-                      mode.mode === selectedMyWorkQueueMode?.mode;
-
-                    return (
-                      <a
-                        key={mode.mode}
-                        href={mode.href}
-                        role="tab"
-                        aria-selected={selected}
-                        aria-controls="dashboard-my-work-queues"
-                        className={[
-                          "flex h-9 items-center justify-between gap-3 px-3 text-left text-[11px] font-semibold uppercase tracking-[0.12em] transition sm:justify-center",
-                          selected
-                            ? "bg-[var(--graphite)] text-white"
-                            : "bg-white text-[var(--text-secondary)] hover:bg-[var(--highlight)]"
-                        ].join(" ")}
-                      >
-                        <span>{mode.label}</span>
-                        <span
-                          className={[
-                            "rounded-sm px-1.5 py-0.5 text-[10px]",
-                            selected
-                              ? "bg-white/15 text-white"
-                              : "bg-[var(--highlight)] text-[var(--text-secondary)]"
-                          ].join(" ")}
-                        >
-                          {mode.count}
-                        </span>
-                      </a>
-                    );
-                  })}
-                </div>
-              ) : null}
-            </div>
-            {myWorkQueueModes?.caveats.noLinkedPerson &&
-            selectedMyWorkQueueMode?.mode === "mine" ? (
-              <div className="border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-5 text-amber-950">
-                No active People record is linked to your app user yet. Mine can
-                still include Next Move suggestions resolved directly to your
-                app user, but linking a Person improves responsibility matching.
-              </div>
-            ) : null}
-            {myWorkQueueModes?.caveats.unresolvedItemsPresent &&
-            selectedMyWorkQueueMode?.mode === "unresolved" ? (
-              <div className="border border-[var(--border-warm)] bg-white px-4 py-3 text-sm leading-5 text-[var(--text-secondary)]">
-                These attention items need a responsible person/default. They
-                also remain visible in Company.
-              </div>
-            ) : null}
-            {selectedMyWorkQueueMode?.count === 0 ? (
-              <div className="border border-[var(--border-warm)] bg-white px-4 py-5">
-                <p className="text-sm font-semibold text-[var(--text-primary)]">
-                  {selectedMyWorkQueueMode.emptyTitle}
-                </p>
-                <p className="mt-2 text-sm leading-5 text-[var(--text-secondary)]">
-                  {selectedMyWorkQueueMode.emptyDescription}
-                </p>
-              </div>
-            ) : null}
-            {selectedMyWorkQueueMode?.count === 0 ? null : (
-              <div
-                id="dashboard-my-work-queues"
-                className="grid gap-3 xl:grid-cols-4"
-              >
-                {filteredMyWorkWidgets.map((widget) => (
-                  <QueueRows
-                    key={widget.key}
-                    widget={widget}
-                    items={widget.items}
-                  />
-                ))}
-              </div>
-            )}
-          </section>
-        ) : null}
-
-        {onboardingSteps &&
-        (startHereForceVisible ||
-          onboardingSteps.some((step) => !step.complete)) ? (
-          <StartHereCard
-            steps={onboardingSteps}
-            forceVisible={startHereForceVisible}
-          />
-        ) : null}
-
-        <section
-          aria-labelledby="dashboard-work-queues-title"
-          className="space-y-3"
-        >
-          <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
-            <div>
-              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
-                Work queues
-              </p>
-              <h2
-                id="dashboard-work-queues-title"
-                className="mt-1 text-[17px] font-semibold tracking-tight text-[var(--text-primary)]"
-              >
-                Follow up by workflow area
-              </h2>
-            </div>
-            <label className="relative w-full max-w-xl">
-              <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center">
-                <SearchIcon />
-              </span>
-              <input
-                type="search"
-                value={query}
-                onChange={(event) =>
-                  handleQueryChange(event.currentTarget.value)
+            {selectedLens === "today" ? (
+              <TodayCockpit
+                header={header}
+                metrics={metrics}
+                priorityItems={priorityItems}
+                jobsTodayWidget={
+                  filteredOperationsWidgets.find(
+                    (widget) => widget.key === "jobs-today"
+                  ) ?? null
                 }
-                placeholder="Filter dashboard queues"
-                className="h-9 w-full rounded-md border border-[var(--border-warm)] bg-white pl-9 pr-3 text-sm text-[var(--text-primary)] outline-none placeholder:text-[var(--text-tertiary)] focus:border-[var(--copper)]"
+                projectCueWidget={filteredProjectCueWidget}
               />
-            </label>
-          </div>
+            ) : null}
 
-          <div className="grid gap-3 xl:grid-cols-[minmax(0,1.15fr)_minmax(0,0.9fr)_minmax(0,0.95fr)]">
-            {attentionWidget ? (
-              <QueueRows
-                widget={attentionWidget}
-                items={attentionWidget.items}
+            {selectedLens === "field" ? (
+              <UtilityCardGrid
+                metrics={metrics}
+                operationsWidgets={filteredOperationsWidgets}
               />
             ) : null}
-            {filteredCommercialWidgets[1] ? (
-              <QueueRows
-                widget={filteredCommercialWidgets[1]}
-                items={filteredCommercialWidgets[1].items}
-              />
-            ) : null}
-            {filteredFinanceWidgets[0] ? (
-              <FinanceTable
-                widget={filteredFinanceWidgets[0]}
-                items={filteredFinanceWidgets[0].items}
-              />
-            ) : null}
-          </div>
 
-          <div className="grid gap-3 xl:grid-cols-4">
-            {filteredOperationsWidgets[3] ? (
-              <QueueRows
-                widget={filteredOperationsWidgets[3]}
-                items={filteredOperationsWidgets[3].items}
-              />
+            {selectedLens === "projects" || selectedLens === "money" ? (
+              <div className="grid gap-4 2xl:grid-cols-[minmax(0,1.05fr)_minmax(360px,0.95fr)]">
+                {selectedLens === "projects" ? (
+                  <LifecycleRail steps={lifecycleSteps} />
+                ) : null}
+                {selectedLens === "money" ? (
+                  <PriorityGrid metrics={metrics} />
+                ) : null}
+              </div>
             ) : null}
-            {filteredCommercialWidgets[0] ? (
-              <QueueRows
-                widget={filteredCommercialWidgets[0]}
-                items={filteredCommercialWidgets[0].items}
-              />
-            ) : null}
-            {filteredOperationsWidgets[0] ? (
-              <QueueRows
-                widget={filteredOperationsWidgets[0]}
-                items={filteredOperationsWidgets[0].items}
-              />
-            ) : null}
-            {filteredOperationsWidgets[2] ? (
-              <QueueRows
-                widget={filteredOperationsWidgets[2]}
-                items={filteredOperationsWidgets[2].items}
-              />
-            ) : null}
-          </div>
 
-          <div className="grid gap-3 xl:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]">
-            <div className="space-y-3">
-              {filteredCommercialWidgets[2] ? (
-                <QueueRows
-                  widget={filteredCommercialWidgets[2]}
-                  items={filteredCommercialWidgets[2].items}
-                />
-              ) : null}
-            </div>
+            {selectedLens === "attention" && aiOperationalDigest ? (
+              <AiOperationalDigestPanel digest={aiOperationalDigest} />
+            ) : null}
 
-            <div className="space-y-3">
-              {filteredFinanceWidgets[1] ? (
-                <FinanceTable
-                  widget={filteredFinanceWidgets[1]}
-                  items={filteredFinanceWidgets[1].items}
-                />
-              ) : null}
-            </div>
-          </div>
-
-          <div className="grid gap-3 xl:grid-cols-[minmax(0,1.28fr)_minmax(0,0.72fr)]">
-            {filteredOperationsWidgets[1] ? (
-              <QueueRows
-                widget={filteredOperationsWidgets[1]}
-                items={filteredOperationsWidgets[1].items}
+            {selectedLens === "attention" &&
+            operationalCockpitBuckets.length > 0 ? (
+              <OperationalGuidanceSection
+                title="Needs Attention"
+                description="Exception-style operating signals from existing dashboard read models, grouped by what needs review before work moves."
+                buckets={operationalCockpitBuckets}
               />
+            ) : null}
+
+            {(selectedLens === "attention" || selectedLens === "projects") &&
+            filteredProjectCueWidget ? (
+              <QueueRows
+                widget={filteredProjectCueWidget}
+                items={filteredProjectCueWidget.items.slice(0, 3)}
+              />
+            ) : null}
+
+            {selectedLens === "follow-ups" && filteredWorkItemsWidget ? (
+              <QueueRows
+                widget={filteredWorkItemsWidget}
+                items={filteredWorkItemsWidget.items.slice(0, 3)}
+                workItemActions={workItemActions}
+              />
+            ) : null}
+
+            {selectedLens === "follow-ups" &&
+            filteredMyWorkWidgets.length > 0 ? (
+              <section
+                aria-labelledby="dashboard-my-work-title"
+                className="space-y-3"
+              >
+                <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+                  <div>
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
+                      Operational intelligence
+                    </p>
+                    <h2
+                      id="dashboard-my-work-title"
+                      className="mt-1 text-[17px] font-semibold tracking-tight text-[var(--text-primary)]"
+                    >
+                      My Work
+                    </h2>
+                    <p className="mt-1 text-xs leading-5 text-[var(--text-secondary)]">
+                      {selectedMyWorkQueueMode?.description ??
+                        "Derived attention items from saved records."}
+                    </p>
+                  </div>
+                  {myWorkQueueModes ? (
+                    <div
+                      aria-label="My Work queue mode"
+                      className="inline-flex w-full flex-col gap-1 border border-[var(--border-warm)] bg-white p-1 sm:w-auto sm:flex-row"
+                      role="tablist"
+                    >
+                      {myWorkQueueModes.modes.map((mode) => {
+                        const selected =
+                          mode.mode === selectedMyWorkQueueMode?.mode;
+
+                        return (
+                          <a
+                            key={mode.mode}
+                            href={mode.href}
+                            role="tab"
+                            aria-selected={selected}
+                            aria-controls="dashboard-my-work-queues"
+                            className={[
+                              "flex h-9 items-center justify-between gap-3 px-3 text-left text-[11px] font-semibold uppercase tracking-[0.12em] transition sm:justify-center",
+                              selected
+                                ? "bg-[var(--graphite)] text-white"
+                                : "bg-white text-[var(--text-secondary)] hover:bg-[var(--highlight)]"
+                            ].join(" ")}
+                          >
+                            <span>{mode.label}</span>
+                            <span
+                              className={[
+                                "rounded-sm px-1.5 py-0.5 text-[10px]",
+                                selected
+                                  ? "bg-white/15 text-white"
+                                  : "bg-[var(--highlight)] text-[var(--text-secondary)]"
+                              ].join(" ")}
+                            >
+                              {mode.count}
+                            </span>
+                          </a>
+                        );
+                      })}
+                    </div>
+                  ) : null}
+                </div>
+                {myWorkQueueModes?.caveats.noLinkedPerson &&
+                selectedMyWorkQueueMode?.mode === "mine" ? (
+                  <div className="border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-5 text-amber-950">
+                    No active People record is linked to your app user yet. Mine
+                    can still include Next Move suggestions resolved directly to
+                    your app user, but linking a Person improves responsibility
+                    matching.
+                  </div>
+                ) : null}
+                {myWorkQueueModes?.caveats.unresolvedItemsPresent &&
+                selectedMyWorkQueueMode?.mode === "unresolved" ? (
+                  <div className="border border-[var(--border-warm)] bg-white px-4 py-3 text-sm leading-5 text-[var(--text-secondary)]">
+                    These attention items need a responsible person/default.
+                    They also remain visible in Company.
+                  </div>
+                ) : null}
+                {selectedMyWorkQueueMode?.count === 0 ? (
+                  <div className="border border-[var(--border-warm)] bg-white px-4 py-5">
+                    <p className="text-sm font-semibold text-[var(--text-primary)]">
+                      {selectedMyWorkQueueMode.emptyTitle}
+                    </p>
+                    <p className="mt-2 text-sm leading-5 text-[var(--text-secondary)]">
+                      {selectedMyWorkQueueMode.emptyDescription}
+                    </p>
+                  </div>
+                ) : null}
+                {selectedMyWorkQueueMode?.count === 0 ? null : (
+                  <div
+                    id="dashboard-my-work-queues"
+                    className="grid gap-3 xl:grid-cols-4"
+                  >
+                    {filteredMyWorkWidgets.map((widget) => (
+                      <QueueRows
+                        key={widget.key}
+                        widget={widget}
+                        items={widget.items.slice(0, 3)}
+                      />
+                    ))}
+                  </div>
+                )}
+              </section>
+            ) : null}
+
+            {["attention", "sales", "projects", "field", "money"].includes(
+              selectedLens
+            ) ? (
+              <section
+                aria-labelledby="dashboard-work-queues-title"
+                className="space-y-3"
+              >
+                <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+                  <div>
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
+                      Work queues
+                    </p>
+                    <h2
+                      id="dashboard-work-queues-title"
+                      className="mt-1 text-[17px] font-semibold tracking-tight text-[var(--text-primary)]"
+                    >
+                      Follow up by workflow area
+                    </h2>
+                  </div>
+                  <label className="relative w-full max-w-xl">
+                    <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center">
+                      <SearchIcon />
+                    </span>
+                    <input
+                      type="search"
+                      value={query}
+                      onChange={(event) =>
+                        handleQueryChange(event.currentTarget.value)
+                      }
+                      placeholder="Filter dashboard queues"
+                      className="h-9 w-full rounded-[4px] border border-[#cbd5e1] bg-white pl-9 pr-3 text-sm text-[var(--text-primary)] outline-none placeholder:text-[var(--text-tertiary)] focus:border-[#005eb8]"
+                    />
+                  </label>
+                </div>
+
+                <div className="grid gap-3 xl:grid-cols-[minmax(0,1.15fr)_minmax(0,0.9fr)_minmax(0,0.95fr)]">
+                  {selectedLens === "attention" && attentionWidget ? (
+                    <QueueRows
+                      widget={attentionWidget}
+                      items={attentionWidget.items.slice(0, 3)}
+                    />
+                  ) : null}
+                  {selectedLens === "sales" && filteredCommercialWidgets[1] ? (
+                    <QueueRows
+                      widget={filteredCommercialWidgets[1]}
+                      items={filteredCommercialWidgets[1].items.slice(0, 3)}
+                    />
+                  ) : null}
+                  {selectedLens === "money" && filteredFinanceWidgets[0] ? (
+                    <FinanceTable
+                      widget={filteredFinanceWidgets[0]}
+                      items={filteredFinanceWidgets[0].items.slice(0, 4)}
+                    />
+                  ) : null}
+                </div>
+
+                <div className="grid gap-3 xl:grid-cols-4">
+                  {selectedLens === "field" && filteredOperationsWidgets[3] ? (
+                    <QueueRows
+                      widget={filteredOperationsWidgets[3]}
+                      items={filteredOperationsWidgets[3].items.slice(0, 3)}
+                    />
+                  ) : null}
+                  {selectedLens === "sales" && filteredCommercialWidgets[0] ? (
+                    <QueueRows
+                      widget={filteredCommercialWidgets[0]}
+                      items={filteredCommercialWidgets[0].items.slice(0, 3)}
+                    />
+                  ) : null}
+                  {(selectedLens === "field" || selectedLens === "projects") &&
+                  filteredOperationsWidgets[0] ? (
+                    <QueueRows
+                      widget={filteredOperationsWidgets[0]}
+                      items={filteredOperationsWidgets[0].items.slice(0, 3)}
+                    />
+                  ) : null}
+                  {selectedLens === "field" && filteredOperationsWidgets[2] ? (
+                    <QueueRows
+                      widget={filteredOperationsWidgets[2]}
+                      items={filteredOperationsWidgets[2].items.slice(0, 3)}
+                    />
+                  ) : null}
+                </div>
+
+                <div className="grid gap-3 xl:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]">
+                  <div className="space-y-3">
+                    {selectedLens === "sales" &&
+                    filteredCommercialWidgets[2] ? (
+                      <QueueRows
+                        widget={filteredCommercialWidgets[2]}
+                        items={filteredCommercialWidgets[2].items.slice(0, 3)}
+                      />
+                    ) : null}
+                  </div>
+
+                  <div className="space-y-3">
+                    {selectedLens === "money" && filteredFinanceWidgets[1] ? (
+                      <FinanceTable
+                        widget={filteredFinanceWidgets[1]}
+                        items={filteredFinanceWidgets[1].items.slice(0, 4)}
+                      />
+                    ) : null}
+                  </div>
+                </div>
+
+                <div className="grid gap-3 xl:grid-cols-[minmax(0,1.28fr)_minmax(0,0.72fr)]">
+                  {selectedLens === "projects" &&
+                  filteredOperationsWidgets[1] ? (
+                    <QueueRows
+                      widget={filteredOperationsWidgets[1]}
+                      items={filteredOperationsWidgets[1].items.slice(0, 3)}
+                    />
+                  ) : null}
+                </div>
+              </section>
             ) : null}
           </div>
         </section>
+
+        <DashboardOwnershipBanner />
       </div>
     </div>
   );

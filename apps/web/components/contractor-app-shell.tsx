@@ -62,7 +62,7 @@ export async function ContractorAppShell({
           />
         </header>
 
-        <main className="flex-1 px-3 py-3 sm:px-5 sm:py-4 print:p-0">
+        <main className="flex-1 bg-[linear-gradient(180deg,#ffffff_0%,var(--cream)_26%,#f9fafb_100%)] px-3 py-3 sm:px-5 sm:py-4 print:p-0">
           <div className="mx-auto w-full max-w-[1680px] print:max-w-none">
             {!organizationContext ? (
               <section className="mb-4 rounded-[4px] border border-amber-200 bg-amber-50 px-5 py-4 text-sm leading-6 text-amber-900">

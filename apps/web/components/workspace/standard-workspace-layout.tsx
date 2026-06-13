@@ -81,6 +81,7 @@ export type StandardWorkspaceLayoutProps<TView extends string> = {
     description?: string;
     actions?: ReactNode;
   };
+  variant?: "standard" | "industrial-reference";
   sidebar?: Array<StandardWorkspaceSidebarItem<TView>>;
   currentView?: TView;
   summaryBand?: ReactNode;
@@ -92,6 +93,7 @@ export type StandardWorkspaceLayoutProps<TView extends string> = {
 
 export function StandardWorkspaceLayout<TView extends string>({
   header,
+  variant = "standard",
   sidebar,
   currentView,
   summaryBand,
@@ -129,22 +131,47 @@ export function StandardWorkspaceLayout<TView extends string>({
   }, [currentView, sidebar]);
 
   const activeView = currentView ?? hashView;
+  const industrialReference = variant === "industrial-reference";
 
   return (
-    <div className="space-y-3">
-      <section className="border border-[var(--border-warm)] bg-white px-4 py-3 sm:px-5">
-        <div className="flex flex-col gap-3 xl:flex-row xl:items-end xl:justify-between">
+    <div className={industrialReference ? "space-y-5" : "space-y-4"}>
+      <section
+        className={
+          industrialReference
+            ? "border border-[#18181b] bg-[#09090b] px-4 py-5 text-white shadow-none sm:px-6 lg:px-8"
+            : "border border-[#d1d5db] bg-white px-4 py-4 shadow-none sm:px-6"
+        }
+      >
+        <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
           <div className="min-w-0">
             {header.eyebrow ? (
-              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--copper)]">
+              <p
+                className={
+                  industrialReference
+                    ? "text-[11px] font-semibold uppercase tracking-[0.24em] text-[#8fc7ff]"
+                    : "text-[10px] font-semibold uppercase tracking-[0.18em] text-[#005eb8]"
+                }
+              >
                 {header.eyebrow}
               </p>
             ) : null}
-            <h1 className="mt-1 whitespace-normal break-words text-[22px] font-semibold leading-tight tracking-tight text-[var(--text-primary)] [overflow-wrap:anywhere] sm:text-[24px]">
+            <h1
+              className={
+                industrialReference
+                  ? "mt-3 whitespace-normal break-words text-[30px] font-semibold leading-tight tracking-tight text-white [overflow-wrap:anywhere] sm:text-[40px]"
+                  : "mt-2 whitespace-normal break-words text-[26px] font-semibold leading-tight tracking-tight text-[var(--text-primary)] [overflow-wrap:anywhere] sm:text-[30px]"
+              }
+            >
               {header.title}
             </h1>
             {header.description ? (
-              <p className="mt-1 max-w-3xl text-[13px] leading-5 text-[var(--text-secondary)]">
+              <p
+                className={
+                  industrialReference
+                    ? "mt-3 max-w-4xl text-sm leading-6 text-white/72 sm:text-base sm:leading-7"
+                    : "mt-2 max-w-3xl text-sm leading-6 text-[var(--text-secondary)]"
+                }
+              >
                 {header.description}
               </p>
             ) : null}
@@ -160,26 +187,54 @@ export function StandardWorkspaceLayout<TView extends string>({
       {summaryBand}
       {commandBar}
 
-      <section className="overflow-hidden border border-[var(--border-warm)] bg-white">
+      <section
+        className={
+          industrialReference
+            ? "overflow-hidden border border-[#d1d5db] bg-white shadow-none"
+            : "overflow-hidden border border-[#d1d5db] bg-white shadow-none"
+        }
+      >
         <div
           className={[
-            "grid min-h-[620px] bg-white",
+            industrialReference
+              ? "grid min-h-[620px] bg-[#f4f4f5]"
+              : "grid min-h-[620px] bg-[#f4f4f5]",
             hasSidebar
-              ? "grid-cols-1 lg:grid-cols-[184px_minmax(0,1fr)]"
+              ? industrialReference
+                ? "grid-cols-1 lg:grid-cols-[260px_minmax(0,1fr)]"
+                : "grid-cols-1 lg:grid-cols-[272px_minmax(0,1fr)]"
               : "grid-cols-1"
           ].join(" ")}
         >
           {hasSidebar ? (
-            <aside className="border-b border-[var(--graphite)] bg-[var(--graphite)] px-2 py-2 text-white lg:border-b-0 lg:border-r">
-              <div className="flex gap-1.5 overflow-x-auto lg:flex-col lg:overflow-visible">
+            <aside
+              aria-label={
+                industrialReference
+                  ? "Opportunity workspace sections"
+                  : "Workspace sections"
+              }
+              className={
+                industrialReference
+                  ? "sticky top-0 z-20 border-b border-[#d1d5db] bg-[#f9fafb] px-3 py-3 lg:top-[8.5rem] lg:max-h-[calc(100vh-9.5rem)] lg:self-start lg:overflow-y-auto lg:border-b-0 lg:border-r"
+                  : "sticky top-0 z-20 border-b border-[#d1d5db] bg-[#f9fafb] px-3 py-3 lg:top-[8.5rem] lg:max-h-[calc(100vh-9.5rem)] lg:self-start lg:overflow-y-auto lg:border-b-0 lg:border-r"
+              }
+            >
+              <p className="px-2 pb-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-[var(--text-tertiary)] lg:pb-3">
+                {industrialReference
+                  ? "Opportunity sections"
+                  : "Workspace sections"}
+              </p>
+              <div className="flex gap-2 overflow-x-auto pb-1 lg:flex-col lg:overflow-visible lg:pb-0">
                 {sidebar?.map((item) => {
                   const Icon = iconMap[item.iconName];
                   const active = item.id === activeView;
                   const className = [
-                    "inline-flex h-10 min-w-[44px] items-center justify-center gap-2 border px-3 transition lg:w-full lg:justify-start",
+                    "inline-flex min-h-10 min-w-fit items-center justify-center gap-2 rounded-[4px] border px-3 py-2 transition lg:min-h-11 lg:w-full lg:justify-start",
                     active
-                      ? "border-[var(--copper)] bg-[var(--copper)] text-white"
-                      : "border-white/10 bg-white/5 text-[#f4f4f4] hover:border-[var(--copper)] hover:bg-white/10 hover:text-white"
+                      ? industrialReference
+                        ? "border-[#005eb8] bg-white text-[#003d7c] shadow-[inset_0_-3px_0_#005eb8] lg:shadow-[inset_3px_0_0_#005eb8]"
+                        : "border-[#005eb8] bg-white text-[#003d7c] shadow-[inset_3px_0_0_#005eb8]"
+                      : "border-transparent bg-transparent text-[var(--text-secondary)] hover:border-[#c7d2e2] hover:bg-white hover:text-[var(--text-primary)]"
                   ].join(" ");
 
                   if (item.href && !item.disabled) {
@@ -188,7 +243,10 @@ export function StandardWorkspaceLayout<TView extends string>({
                         key={item.id}
                         href={item.href}
                         onClick={(event) => {
-                          if (item.id === activeView) {
+                          if (
+                            item.id === activeView &&
+                            item.href?.startsWith("#")
+                          ) {
                             event.preventDefault();
                             return;
                           }
@@ -199,10 +257,12 @@ export function StandardWorkspaceLayout<TView extends string>({
                         }}
                         title={item.label}
                         aria-label={item.label}
+                        aria-current={active ? "page" : undefined}
+                        data-active={active ? "true" : undefined}
                         className={className}
                       >
                         <Icon className="h-[15px] w-[15px]" />
-                        <span className="hidden whitespace-normal break-words text-left text-[12px] font-semibold leading-4 [overflow-wrap:anywhere] lg:inline">
+                        <span className="whitespace-nowrap text-left text-[12px] font-semibold leading-4 [overflow-wrap:anywhere] lg:whitespace-normal">
                           {item.label}
                         </span>
                       </Link>
@@ -222,6 +282,8 @@ export function StandardWorkspaceLayout<TView extends string>({
                       }}
                       title={item.label}
                       aria-label={item.label}
+                      aria-current={active ? "page" : undefined}
+                      data-active={active ? "true" : undefined}
                       disabled={item.disabled}
                       className={[
                         className,
@@ -229,7 +291,7 @@ export function StandardWorkspaceLayout<TView extends string>({
                       ].join(" ")}
                     >
                       <Icon className="h-[15px] w-[15px]" />
-                      <span className="hidden whitespace-normal break-words text-left text-[12px] font-semibold leading-4 [overflow-wrap:anywhere] lg:inline">
+                      <span className="whitespace-nowrap text-left text-[12px] font-semibold leading-4 [overflow-wrap:anywhere] lg:whitespace-normal">
                         {item.label}
                       </span>
                     </button>
@@ -243,7 +305,9 @@ export function StandardWorkspaceLayout<TView extends string>({
             className={[
               "min-w-0 bg-white",
               supportArea
-                ? "grid gap-4 p-4 xl:grid-cols-[minmax(0,1fr)_320px] 2xl:grid-cols-[minmax(0,1fr)_360px] sm:p-5"
+                ? industrialReference
+                  ? "grid gap-4 bg-[#f4f4f5] p-4 xl:grid-cols-[minmax(0,1fr)_340px] 2xl:grid-cols-[minmax(0,1fr)_380px] sm:p-5"
+                  : "grid gap-5 bg-[#f4f4f5] p-4 xl:grid-cols-[minmax(0,1fr)_340px] 2xl:grid-cols-[minmax(0,1fr)_380px] sm:p-6"
                 : "",
               contentClassName
             ]
@@ -252,7 +316,10 @@ export function StandardWorkspaceLayout<TView extends string>({
           >
             <div className="min-w-0">{children}</div>
             {supportArea ? (
-              <aside className="min-w-0 space-y-4 xl:sticky xl:top-4 xl:self-start">
+              <aside
+                aria-label="Workspace command rail"
+                className="min-w-0 space-y-3 xl:sticky xl:top-4 xl:self-start"
+              >
                 {supportArea}
               </aside>
             ) : null}

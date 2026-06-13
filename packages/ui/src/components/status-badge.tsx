@@ -18,8 +18,8 @@ type StatusBadgeProps = {
 type ReadinessBadgeProps = StatusBadgeProps;
 
 const badgeSizeClasses: Record<BadgeSize, string> = {
-  sm: "px-2 py-0.5 text-[10px] tracking-[0.12em]",
-  md: "px-3 py-1 text-xs tracking-[0.16em]"
+  sm: "px-2 py-0.5 text-[10px] tracking-[0.1em]",
+  md: "px-3 py-1 text-xs tracking-[0.12em]"
 };
 
 function formatBadgeLabel(status: string) {
@@ -32,7 +32,7 @@ function buildBadgeClassName(input: {
   toneClassName: string;
 }) {
   return [
-    "inline-flex shrink-0 items-center rounded-md border font-semibold uppercase",
+    "inline-flex shrink-0 items-center rounded-[4px] border font-semibold uppercase shadow-[inset_0_1px_0_rgba(255,255,255,0.56)]",
     badgeSizeClasses[input.size],
     input.toneClassName,
     input.className

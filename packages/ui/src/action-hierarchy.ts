@@ -1,8 +1,8 @@
 export const primaryActionClassName =
-  "inline-flex h-9 items-center justify-center gap-2 rounded-[4px] border border-[var(--copper)] bg-[var(--copper)] px-3 text-sm font-semibold text-white transition hover:bg-[var(--copper-light)]";
+  "inline-flex h-9 items-center justify-center gap-2 rounded-[4px] border border-[#005eb8] bg-[#005eb8] px-3 text-sm font-semibold text-white shadow-[0_1px_0_rgba(255,255,255,0.16)_inset] transition hover:border-[#004f9e] hover:bg-[#004f9e]";
 
 export const secondaryActionClassName =
-  "inline-flex h-9 items-center justify-center gap-2 rounded-[4px] border border-[var(--border-warm)] bg-white px-3 text-sm font-medium text-[var(--text-primary)] transition hover:bg-[var(--highlight)]";
+  "inline-flex h-9 items-center justify-center gap-2 rounded-[4px] border border-[#c7d2e2] bg-white px-3 text-sm font-medium text-[#0f172a] transition hover:border-[#005eb8] hover:bg-[#eef6ff] hover:text-[#003d7c]";
 
 export const overflowActionClassName =
   "block w-full px-3 py-2 text-left text-sm font-medium text-[var(--text-secondary)] transition hover:bg-[var(--highlight)] hover:text-[var(--text-primary)]";

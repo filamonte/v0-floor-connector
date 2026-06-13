@@ -10,7 +10,6 @@ import { AppEmptyState } from "@/components/app-empty-state";
 import { DirectoryContextCard } from "@/components/directory-context-card";
 import { GateKeeperSubjectMemoryPanel } from "@/components/gatekeeper-subject-memory-panel";
 import { LinkedRecordCard } from "@/components/linked-record-card";
-import { NextActionCard } from "@/components/next-action-card";
 import { OpportunityCommunicationLogForm } from "@/components/opportunity-communication-log-form";
 import { OpportunityForm } from "@/components/opportunity-form";
 import { OpportunityFollowUpForm } from "@/components/opportunity-follow-up-form";
@@ -170,18 +169,18 @@ function OpportunityStatusControl({
   return (
     <form
       action={updateOpportunityStatusAction}
-      className="rounded-2xl border border-[#e2d4c5] bg-[#fbf5ee] px-4 py-3"
+      className="border border-[#d1d5db] bg-white px-5 py-4 shadow-none"
     >
       <input type="hidden" name="opportunityId" value={opportunity.id} />
       <input type="hidden" name="returnTo" value={returnTo} />
       <label className="block">
-        <span className="text-xs font-semibold uppercase tracking-[0.16em] text-[#8f5b32]">
+        <span className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#005eb8]">
           Opportunity status
         </span>
         <select
           name="status"
           defaultValue={opportunity.status}
-          className="mt-2 h-10 w-full rounded-[6px] border border-[#d9cdc2] bg-white px-3 text-sm font-medium text-[#221a14] outline-none transition focus:border-[#ef7d32]"
+          className="mt-2 h-10 w-full rounded-[4px] border border-[#c7d2e2] bg-white px-3 text-sm font-medium text-[#0f172a] outline-none transition focus:border-[#005eb8] focus:ring-2 focus:ring-[#cfe7ff]"
         >
           {opportunityStatusesList.map((status) => (
             <option key={status} value={status}>
@@ -191,13 +190,13 @@ function OpportunityStatusControl({
         </select>
       </label>
       <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <p className="text-xs leading-5 text-[#6f6256]">
+        <p className="text-xs leading-5 text-[#475569]">
           Uses the existing opportunity status list. Site visit scheduling
           details stay in the Site Visit view.
         </p>
         <button
           type="submit"
-          className="inline-flex h-9 items-center justify-center rounded-full bg-brand-700 px-4 text-sm font-medium text-white transition hover:bg-brand-900"
+          className="inline-flex h-9 items-center justify-center rounded-[4px] border border-[#005eb8] bg-[#005eb8] px-4 text-sm font-medium text-white transition hover:bg-[#003d7c]"
         >
           Save status
         </button>
@@ -501,6 +500,7 @@ export default async function LeadDetailPage({
 
   return (
     <StandardWorkspaceLayout
+      variant="industrial-reference"
       header={{
         eyebrow: "Opportunity Workspace",
         title: opportunity.title,
@@ -510,13 +510,13 @@ export default async function LeadDetailPage({
           <div className="flex flex-wrap gap-2.5">
             <Link
               href="/leads"
-              className="inline-flex items-center rounded-full border border-[#e2d4c5] bg-[#fbf5ee] px-3.5 py-2 text-sm font-medium text-[#5f4d40] transition hover:border-[#caac88] hover:bg-white hover:text-[#2b2118]"
+              className="inline-flex h-9 items-center justify-center rounded-[4px] border border-[#c7d2e2] bg-white px-3 text-sm font-medium text-[#0f172a] transition hover:border-[#005eb8] hover:bg-[#eef6ff] hover:text-[#003d7c]"
             >
               Back to Leads & Opportunities
             </Link>
             <Link
               href={leadAppointmentHref}
-              className="inline-flex items-center rounded-full bg-brand-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-900"
+              className="inline-flex h-9 items-center justify-center rounded-[4px] border border-[#005eb8] bg-[#005eb8] px-3 text-sm font-semibold text-white transition hover:border-[#004f9e] hover:bg-[#004f9e]"
             >
               Create site visit
             </Link>
@@ -532,13 +532,13 @@ export default async function LeadDetailPage({
         },
         {
           id: "qualification",
-          label: "Qualification",
+          label: "Qualification / Intake",
           iconName: "clipboard-list",
           href: qualificationHref
         },
         {
           id: "site-visit",
-          label: "Site Visit",
+          label: "Assessment",
           iconName: "check-square",
           href: siteVisitHref
         },
@@ -550,13 +550,13 @@ export default async function LeadDetailPage({
         },
         {
           id: "estimate-plan",
-          label: "Estimate Plan",
+          label: "Estimate Handoff",
           iconName: "folder-open",
           href: estimatePlanHref
         },
         {
           id: "work-items",
-          label: "Work Items",
+          label: "Work Items / Follow-up",
           iconName: "clipboard-list",
           href: workItemsHref
         },
@@ -576,14 +576,14 @@ export default async function LeadDetailPage({
       currentView={currentView}
       summaryBand={
         <WorkspaceSummaryBand
-          className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1.2fr)]"
+          className="grid gap-3 md:grid-cols-2 xl:grid-cols-4"
           items={[
             {
               key: "status",
               label: "Opportunity status",
               content: (
                 <span
-                  className={`inline-flex rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] ${getStatusClasses(
+                  className={`inline-flex rounded-[3px] border px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] ${getStatusClasses(
                     opportunity.status
                   )}`}
                 >
@@ -601,48 +601,26 @@ export default async function LeadDetailPage({
               )
             },
             {
-              key: "next-action",
-              label: "Next suggested action",
+              key: "estimate-writer",
+              label: "Estimate writer",
               content: (
-                <NextActionCard
-                  eyebrow="Guided workflow"
-                  title={nextAction.title}
-                  description={nextAction.description}
-                  primaryAction={
-                    nextAction.kind === "estimate" ? (
-                      primaryEstimateHref ? (
-                        <Link
-                          href={primaryEstimateHref}
-                          className="inline-flex items-center rounded-full bg-brand-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-900"
-                        >
-                          {nextAction.label}
-                        </Link>
-                      ) : (
-                        <form action={startEstimateFromOpportunityAction}>
-                          <input
-                            type="hidden"
-                            name="opportunityId"
-                            value={opportunity.id}
-                          />
-                          <button
-                            type="submit"
-                            className="inline-flex items-center rounded-full bg-brand-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-900"
-                          >
-                            {nextAction.label}
-                          </button>
-                        </form>
-                      )
-                    ) : (
-                      <Link
-                        href={nextAction.href}
-                        className="inline-flex items-center rounded-full bg-brand-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-900"
-                      >
-                        {nextAction.label}
-                      </Link>
-                    )
-                  }
-                  className="space-y-3 text-sm leading-6 text-slate-600"
-                />
+                <p className="text-sm font-semibold text-slate-950">
+                  {estimateWriterName ?? "Unassigned"}
+                </p>
+              )
+            },
+            {
+              key: "linked-work",
+              label: "Open linked work",
+              content: (
+                <p className="text-sm font-semibold text-slate-950">
+                  {
+                    linkedWorkItems.filter(
+                      (workItem) => workItem.status === "open"
+                    ).length
+                  }{" "}
+                  open
+                </p>
               )
             }
           ]}
@@ -661,25 +639,68 @@ export default async function LeadDetailPage({
             returnTo={overviewHref}
           />
 
-          <section className="border border-slate-200 bg-slate-50/80 px-5 py-5">
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-brand-700">
-              Estimate Plan
+          <section className="border border-[#d1d5db] bg-white px-5 py-5 shadow-none">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#005eb8]">
+              Command rail
+            </p>
+            <h2 className="mt-2 text-lg font-semibold tracking-tight text-[#0f172a]">
+              {nextAction.title}
+            </h2>
+            <p className="mt-3 text-sm leading-6 text-[#475569]">
+              {nextAction.description}
+            </p>
+            <div className="mt-4">
+              {nextAction.kind === "estimate" ? (
+                primaryEstimateHref ? (
+                  <Link
+                    href={primaryEstimateHref}
+                    className="inline-flex min-h-9 items-center rounded-[4px] border border-[#005eb8] bg-[#005eb8] px-3 text-sm font-semibold text-white transition hover:border-[#004f9e] hover:bg-[#004f9e]"
+                  >
+                    {nextAction.label}
+                  </Link>
+                ) : (
+                  <form action={startEstimateFromOpportunityAction}>
+                    <input
+                      type="hidden"
+                      name="opportunityId"
+                      value={opportunity.id}
+                    />
+                    <button
+                      type="submit"
+                      className="inline-flex min-h-9 items-center rounded-[4px] border border-[#005eb8] bg-[#005eb8] px-3 text-sm font-semibold text-white transition hover:border-[#004f9e] hover:bg-[#004f9e]"
+                    >
+                      {nextAction.label}
+                    </button>
+                  </form>
+                )
+              ) : (
+                <Link
+                  href={nextAction.href}
+                  className="inline-flex min-h-9 items-center rounded-[4px] border border-[#005eb8] bg-[#005eb8] px-3 text-sm font-semibold text-white transition hover:border-[#004f9e] hover:bg-[#004f9e]"
+                >
+                  {nextAction.label}
+                </Link>
+              )}
+            </div>
+          </section>
+
+          <section className="border border-[#d1d5db] bg-white px-5 py-5 shadow-none">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#005eb8]">
+              Estimate handoff
             </p>
             <p className="mt-3 text-sm leading-6 text-slate-600">
-              {nextAction.description} Site visits stay lead-linked, while
-              estimate creation links the customer and project before commercial
-              scope is sent.
+              {estimatingReadiness}
             </p>
             <div className="mt-4 flex flex-wrap gap-2">
               <Link
                 href={estimatePlanHref}
-                className="inline-flex min-h-9 items-center rounded-[6px] border border-[#e2d4c5] bg-[#fbf5ee] px-3 text-sm font-medium text-[#5f4d40] transition hover:border-[#caac88] hover:bg-white hover:text-[#2b2118]"
+                className="inline-flex min-h-9 items-center rounded-[4px] border border-[#c7d2e2] bg-white px-3 text-sm font-medium text-[#0f172a] transition hover:border-[#005eb8] hover:bg-[#eef6ff] hover:text-[#003d7c]"
               >
                 Open estimate plan
               </Link>
               <Link
                 href={workItemsHref}
-                className="inline-flex min-h-9 items-center rounded-[6px] border border-slate-300 px-3 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:bg-white"
+                className="inline-flex min-h-9 items-center rounded-[4px] border border-[#c7d2e2] px-3 text-sm font-medium text-[#475569] transition hover:border-[#005eb8] hover:bg-[#eef6ff] hover:text-[#003d7c]"
               >
                 Review linked work
               </Link>
@@ -690,59 +711,102 @@ export default async function LeadDetailPage({
     >
       <div className="space-y-5">
         <section className="space-y-5">
-          <section className="border border-slate-200 bg-white px-4 py-5 sm:px-5">
+          <section className="space-y-5">
             <div
               className={
                 currentView === "overview"
-                  ? "flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between"
+                  ? "grid gap-4 xl:grid-cols-[minmax(0,1.12fr)_minmax(300px,0.88fr)]"
                   : "hidden"
               }
             >
-              <div>
-                <p className="text-sm font-semibold uppercase tracking-[0.24em] text-brand-700">
-                  Opportunity Workspace
+              <section className="border border-[#d1d5db] bg-white px-5 py-5 shadow-none">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#005eb8]">
+                  Guided sales workflow
                 </p>
-                <h2 className="mt-4 text-3xl font-semibold tracking-tight text-slate-950">
-                  {opportunity.title}
+                <h2 className="mt-2 text-2xl font-semibold tracking-tight text-slate-950">
+                  Qualification to estimate handoff
                 </h2>
-                <p className="mt-3 max-w-2xl text-base leading-7 text-slate-600">
-                  Review Lead Intake context, complete the site visit and scope
-                  intake, then hand the active sales opportunity into the shared
-                  customer, project, and estimate chain.
+                <p className="mt-3 text-sm leading-6 text-slate-600">
+                  Keep the pre-sale workflow on this opportunity: qualify the
+                  lead, capture assessment context, and route estimating work
+                  without creating duplicate customer, project, or estimate
+                  truth.
                 </p>
-              </div>
-              <div className="flex flex-wrap gap-3">
-                <Link
-                  href="/leads"
-                  className="inline-flex items-center rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:bg-white"
-                >
-                  Back to Leads & Opportunities
-                </Link>
-                {canStartEstimate ? (
-                  primaryEstimateHref ? (
+                <div className="mt-5 grid gap-3 md:grid-cols-3">
+                  {[
+                    {
+                      label: "1. Qualify",
+                      title: "Contact and ownership",
+                      body:
+                        opportunity.primaryContact?.displayName ??
+                        opportunity.prospectName ??
+                        "Contact not provided",
+                      href: qualificationHref
+                    },
+                    {
+                      label: "2. Assess",
+                      title: "Site visit and scope",
+                      body: formatStatusLabel(opportunity.siteAssessmentStatus),
+                      href: siteVisitHref
+                    },
+                    {
+                      label: "3. Handoff",
+                      title: "Estimate readiness",
+                      body: salesEstimateReadiness.title,
+                      href: estimatePlanHref
+                    }
+                  ].map((step) => (
                     <Link
-                      href={primaryEstimateHref}
-                      className="inline-flex items-center rounded-full bg-brand-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-900"
+                      key={step.label}
+                      href={step.href}
+                      className="min-w-0 border border-[#d1d5db] bg-[#f8fafc] px-4 py-4 transition hover:border-[#005eb8] hover:bg-[#eef6ff]"
                     >
-                      Start estimate
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#005eb8]">
+                        {step.label}
+                      </p>
+                      <p className="mt-2 text-sm font-semibold text-slate-950">
+                        {step.title}
+                      </p>
+                      <p className="mt-1 text-xs leading-5 text-slate-600">
+                        {step.body}
+                      </p>
                     </Link>
-                  ) : (
-                    <form action={startEstimateFromOpportunityAction}>
-                      <input
-                        type="hidden"
-                        name="opportunityId"
-                        value={opportunity.id}
-                      />
-                      <button
-                        type="submit"
-                        className="inline-flex items-center rounded-full bg-brand-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-900"
-                      >
-                        Start estimate
-                      </button>
-                    </form>
-                  )
-                ) : null}
-              </div>
+                  ))}
+                </div>
+              </section>
+
+              <section className="border border-[#d1d5db] bg-white px-5 py-5 shadow-none">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#005eb8]">
+                  Opportunity context
+                </p>
+                <dl className="mt-4 grid gap-3 text-sm leading-6 text-slate-600 sm:grid-cols-2 xl:grid-cols-1">
+                  <div>
+                    <dt className="font-medium text-slate-950">Customer</dt>
+                    <dd>{opportunity.customer?.name ?? "Not linked yet"}</dd>
+                  </div>
+                  <div>
+                    <dt className="font-medium text-slate-950">Project</dt>
+                    <dd>{opportunity.project?.name ?? "Not linked yet"}</dd>
+                  </div>
+                  <div>
+                    <dt className="font-medium text-slate-950">Primary site</dt>
+                    <dd>
+                      {formatAddress([
+                        opportunity.siteName,
+                        opportunity.addressLine1,
+                        opportunity.city,
+                        opportunity.stateRegion
+                      ])}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="font-medium text-slate-950">
+                      Next follow-up
+                    </dt>
+                    <dd>{formatDateTime(opportunity.nextFollowUpAt)}</dd>
+                  </div>
+                </dl>
+              </section>
             </div>
 
             {resolvedSearchParams.error ? (
@@ -768,7 +832,7 @@ export default async function LeadDetailPage({
                 id="contact"
                 className="rounded-2xl border border-slate-200 bg-slate-50/80 px-5 py-5"
               >
-                <p className="text-sm font-semibold uppercase tracking-[0.24em] text-brand-700">
+                <p className="text-sm font-semibold uppercase tracking-[0.24em] text-[#005eb8]">
                   Primary Contact
                 </p>
                 <p className="mt-2 text-sm leading-6 text-slate-500">
@@ -852,12 +916,12 @@ export default async function LeadDetailPage({
                 id="qualification"
                 className="rounded-2xl border border-slate-200 bg-slate-50/80 px-5 py-5"
               >
-                <p className="text-sm font-semibold uppercase tracking-[0.24em] text-brand-700">
+                <p className="text-sm font-semibold uppercase tracking-[0.24em] text-[#005eb8]">
                   Workflow
                 </p>
                 <div className="mt-4 space-y-4">
                   <span
-                    className={`inline-flex rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] ${getStatusClasses(
+                    className={`inline-flex rounded-[3px] border px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] ${getStatusClasses(
                       opportunity.status
                     )}`}
                   >
@@ -923,7 +987,7 @@ export default async function LeadDetailPage({
                           <div className="space-y-1">
                             <Link
                               href={`/customers/${opportunity.customer.id}`}
-                              className="font-medium text-brand-700"
+                              className="font-medium text-[#005eb8]"
                             >
                               {opportunity.customer.name}
                             </Link>
@@ -946,7 +1010,7 @@ export default async function LeadDetailPage({
                         {opportunity.project ? (
                           <Link
                             href={`/projects/${opportunity.project.id}`}
-                            className="font-medium text-brand-700"
+                            className="font-medium text-[#005eb8]"
                           >
                             {opportunity.project.name}
                           </Link>
@@ -977,7 +1041,7 @@ export default async function LeadDetailPage({
             </div>
 
             <div className={currentView === "site-visit" ? "mt-6" : "hidden"}>
-              <div className="mb-6 rounded-2xl border border-brand-200 bg-brand-50/60 px-5 py-4 text-sm leading-6 text-slate-700">
+              <div className="mb-6 rounded-2xl border border-[#c7d2e2] bg-[#f7fbff] px-5 py-4 text-sm leading-6 text-slate-700">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                   <div>
                     <p className="font-medium text-slate-950">
@@ -986,7 +1050,7 @@ export default async function LeadDetailPage({
                     <p className="mt-2">{estimatingReadiness}</p>
                   </div>
                   <span
-                    className={`inline-flex w-fit rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] ${getReadinessToneClasses(
+                    className={`inline-flex w-fit rounded-[3px] border px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] ${getReadinessToneClasses(
                       salesEstimateReadiness.statusTone
                     )}`}
                   >
@@ -1031,7 +1095,7 @@ export default async function LeadDetailPage({
             >
               <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                 <div>
-                  <p className="text-sm font-semibold uppercase tracking-[0.24em] text-brand-700">
+                  <p className="text-sm font-semibold uppercase tracking-[0.24em] text-[#005eb8]">
                     Assessment Package
                   </p>
                   <h2 className="mt-3 text-2xl font-semibold tracking-tight text-slate-950">
@@ -1106,7 +1170,7 @@ export default async function LeadDetailPage({
                           {packageHref ? (
                             <Link
                               href={packageHref}
-                              className="mt-4 inline-flex min-h-10 w-full items-center justify-center rounded-[6px] border border-brand-200 bg-white px-3 text-sm font-medium text-brand-700 transition hover:border-brand-300 hover:text-brand-900 sm:w-auto"
+                              className="mt-4 inline-flex min-h-10 w-full items-center justify-center rounded-[6px] border border-[#c7d2e2] bg-white px-3 text-sm font-medium text-[#005eb8] transition hover:border-[#005eb8] hover:text-[#003d7c] sm:w-auto"
                             >
                               Open project assessment package
                             </Link>
@@ -1144,7 +1208,7 @@ export default async function LeadDetailPage({
                       name="title"
                       type="text"
                       defaultValue={`${opportunity.title} assessment package`}
-                      className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-950 shadow-sm outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-200"
+                      className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-950 shadow-sm outline-none transition focus:border-[#005eb8] focus:ring-2 focus:ring-[#c7d2e2]"
                     />
                   </div>
                   <div className="mt-4">
@@ -1158,12 +1222,12 @@ export default async function LeadDetailPage({
                       id="assessment-package-date"
                       name="assessmentDate"
                       type="date"
-                      className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-950 shadow-sm outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-200"
+                      className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-950 shadow-sm outline-none transition focus:border-[#005eb8] focus:ring-2 focus:ring-[#c7d2e2]"
                     />
                   </div>
                   <button
                     type="submit"
-                    className="mt-5 inline-flex w-full items-center justify-center rounded-full bg-brand-700 px-4 py-3 text-sm font-semibold text-white transition hover:bg-brand-900"
+                    className="mt-5 inline-flex w-full items-center justify-center rounded-[4px] border border-[#005eb8] bg-[#005eb8] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#003d7c]"
                   >
                     Start assessment package
                   </button>
@@ -1180,7 +1244,7 @@ export default async function LeadDetailPage({
             >
               <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                 <div>
-                  <p className="text-sm font-semibold uppercase tracking-[0.24em] text-brand-700">
+                  <p className="text-sm font-semibold uppercase tracking-[0.24em] text-[#005eb8]">
                     Communication & Follow-Up
                   </p>
                   <h2 className="mt-3 text-2xl font-semibold tracking-tight text-slate-950">
@@ -1250,7 +1314,7 @@ export default async function LeadDetailPage({
                     </p>
                     <Link
                       href={`/communications?source=opportunity&q=${encodeURIComponent(opportunity.title)}`}
-                      className="text-sm font-medium text-brand-700 transition hover:text-brand-900"
+                      className="text-sm font-medium text-[#005eb8] transition hover:text-[#003d7c]"
                     >
                       Open communications
                     </Link>
@@ -1270,7 +1334,7 @@ export default async function LeadDetailPage({
                                 {formatCommunicationKind(message.messageKind)}
                               </span>
                               <span
-                                className={`inline-flex rounded-full border px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-[0.14em] ${getVisibilityClasses(
+                                className={`inline-flex rounded-[3px] border px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-[0.14em] ${getVisibilityClasses(
                                   message.visibility
                                 )}`}
                               >
@@ -1311,7 +1375,7 @@ export default async function LeadDetailPage({
             >
               <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                 <div>
-                  <p className="text-sm font-semibold uppercase tracking-[0.24em] text-brand-700">
+                  <p className="text-sm font-semibold uppercase tracking-[0.24em] text-[#005eb8]">
                     Work Items
                   </p>
                   <h2 className="mt-3 text-2xl font-semibold tracking-tight text-slate-950">
@@ -1428,7 +1492,7 @@ export default async function LeadDetailPage({
               }
             >
               <section className="rounded-2xl border border-slate-200 bg-slate-50/80 px-5 py-5">
-                <p className="text-sm font-semibold uppercase tracking-[0.24em] text-brand-700">
+                <p className="text-sm font-semibold uppercase tracking-[0.24em] text-[#005eb8]">
                   Measurements
                 </p>
                 <div className="mt-4 space-y-3 text-sm leading-6 text-slate-600">
@@ -1463,7 +1527,7 @@ export default async function LeadDetailPage({
               </section>
 
               <section className="rounded-2xl border border-slate-200 bg-slate-50/80 px-5 py-5">
-                <p className="text-sm font-semibold uppercase tracking-[0.24em] text-brand-700">
+                <p className="text-sm font-semibold uppercase tracking-[0.24em] text-[#005eb8]">
                   Observations
                 </p>
                 <div className="mt-4 space-y-3 text-sm leading-6 text-slate-600">
@@ -1492,7 +1556,7 @@ export default async function LeadDetailPage({
               </section>
 
               <section className="rounded-2xl border border-slate-200 bg-slate-50/80 px-5 py-5">
-                <p className="text-sm font-semibold uppercase tracking-[0.24em] text-brand-700">
+                <p className="text-sm font-semibold uppercase tracking-[0.24em] text-[#005eb8]">
                   Photos & Files
                 </p>
                 <div className="mt-4 space-y-3 text-sm leading-6 text-slate-600">
@@ -1531,7 +1595,7 @@ export default async function LeadDetailPage({
           }
         >
           <section className="border border-slate-200 bg-slate-50/80 px-5 py-5">
-            <p className="text-sm font-semibold uppercase tracking-[0.24em] text-brand-700">
+            <p className="text-sm font-semibold uppercase tracking-[0.24em] text-[#005eb8]">
               Estimate Plan
             </p>
             <p className="mt-4 text-sm leading-6 text-slate-600">
@@ -1543,21 +1607,21 @@ export default async function LeadDetailPage({
               {existingOpenEstimateHandoff ? (
                 <Link
                   href={workItemsHref}
-                  className="inline-flex items-center rounded-full border border-[#e2d4c5] bg-[#fbf5ee] px-3.5 py-2 text-sm font-medium text-[#5f4d40] transition hover:border-[#caac88] hover:bg-white hover:text-[#2b2118]"
+                  className="inline-flex items-center rounded-[4px] border border-[#c7d2e2] bg-white px-3.5 py-2 text-sm font-medium text-[#0f172a] transition hover:border-[#005eb8] hover:bg-white hover:text-[#003d7c]"
                 >
                   Open existing handoff
                 </Link>
               ) : (
                 <Link
                   href={estimateHandoffCueHref}
-                  className="inline-flex items-center rounded-full border border-[#e2d4c5] bg-[#fbf5ee] px-3.5 py-2 text-sm font-medium text-[#5f4d40] transition hover:border-[#caac88] hover:bg-white hover:text-[#2b2118]"
+                  className="inline-flex items-center rounded-[4px] border border-[#c7d2e2] bg-white px-3.5 py-2 text-sm font-medium text-[#0f172a] transition hover:border-[#005eb8] hover:bg-white hover:text-[#003d7c]"
                 >
                   Assign Estimate Writer
                 </Link>
               )}
               <Link
                 href={workItemsHref}
-                className="inline-flex items-center rounded-full border border-slate-300 px-3.5 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:bg-white"
+                className="inline-flex items-center rounded-[4px] border border-[#c7d2e2] px-3.5 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:bg-white"
               >
                 Review linked work
               </Link>
@@ -1613,7 +1677,7 @@ export default async function LeadDetailPage({
                       defaultValue={
                         existingOpenEstimateHandoff.assignedPersonId ?? ""
                       }
-                      className="mt-2 h-9 w-full border border-amber-200 bg-white px-3 text-sm text-slate-900 outline-none transition focus:border-[#d8731f]"
+                      className="mt-2 h-9 w-full border border-amber-200 bg-white px-3 text-sm text-slate-900 outline-none transition focus:border-[#005eb8]"
                     >
                       <option value="">Unassigned</option>
                       {assignablePeople.map((person) => (
@@ -1625,7 +1689,7 @@ export default async function LeadDetailPage({
                   </label>
                   <button
                     type="submit"
-                    className="inline-flex h-9 items-center justify-center self-end rounded-full bg-brand-700 px-4 text-sm font-medium text-white transition hover:bg-brand-900"
+                    className="inline-flex h-9 items-center justify-center self-end rounded-[4px] border border-[#005eb8] bg-[#005eb8] px-4 text-sm font-medium text-white transition hover:bg-[#003d7c]"
                   >
                     Save assignment
                   </button>
@@ -1650,12 +1714,12 @@ export default async function LeadDetailPage({
 
             <div className="mt-6 rounded-2xl border border-slate-200 bg-slate-50 px-5 py-4">
               <div className="flex items-center justify-between gap-3">
-                <p className="text-sm font-semibold uppercase tracking-[0.18em] text-brand-700">
+                <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#005eb8]">
                   Appointments
                 </p>
                 <Link
                   href={leadAppointmentHref}
-                  className="text-sm font-medium text-brand-700 transition hover:text-brand-900"
+                  className="text-sm font-medium text-[#005eb8] transition hover:text-[#003d7c]"
                 >
                   New appointment
                 </Link>
@@ -1676,7 +1740,7 @@ export default async function LeadDetailPage({
                         }
                         meta={`${appointment.appointmentType.replaceAll("_", " ")} | ${new Date(appointment.startsAt).toLocaleString()}`}
                         badge={
-                          <span className="inline-flex rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-slate-700">
+                          <span className="inline-flex rounded-[3px] border border-slate-200 bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-slate-700">
                             {appointment.status.replaceAll("_", " ")}
                           </span>
                         }

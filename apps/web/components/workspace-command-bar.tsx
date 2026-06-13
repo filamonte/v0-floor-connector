@@ -23,7 +23,7 @@ export function WorkspaceCommandBar({
     <div className="flex flex-col gap-2 xl:flex-row xl:items-center xl:justify-between">
       <div className="min-w-0 flex-1 space-y-1.5">
         {supportSlot ? (
-          <div className="rounded-md border-l-2 border-[var(--copper)] bg-white/70 px-3 py-2 text-[11px] leading-4 text-[var(--text-secondary)]">
+          <div className="rounded-[4px] border-l-2 border-[#005eb8] bg-white px-3 py-2 text-[11px] leading-4 text-[var(--text-secondary)]">
             {supportSlot}
           </div>
         ) : null}
@@ -48,7 +48,7 @@ export function WorkspaceCommandBar({
   }
 
   return (
-    <section className="rounded-lg border border-[var(--border-warm)] bg-white px-3 py-2 shadow-[0_14px_36px_-34px_rgba(31,41,55,0.5)]">
+    <section className="rounded-[6px] border border-[var(--border-warm)] bg-white px-3 py-2 shadow-none">
       {content}
     </section>
   );

@@ -1,17 +1,17 @@
 export const floorConnectorTheme = {
   color: {
-    primary: "#B45309",
-    primaryHover: "#D97706",
+    primary: "#005EB8",
+    primaryHover: "#0B74D1",
     success: "#16a34a",
-    warning: "#EA8C55",
+    warning: "#D97706",
     danger: "#dc2626",
-    info: "#2563eb",
-    background: "#FAFAF8",
+    info: "#005EB8",
+    background: "#F4F4F5",
     card: "#ffffff",
-    border: "#E8E6E1",
-    ink: "#111827",
-    muted: "#6B7280",
-    chrome: "#374151"
+    border: "#D1D5DB",
+    ink: "#09090B",
+    muted: "#3F3F46",
+    chrome: "#18181B"
   },
   spacing: {
     cardPadding: "16px",

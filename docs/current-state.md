@@ -63,6 +63,21 @@ Use these docs together:
 All future UI and module work must follow `docs/floorconnector-ui-build-rules.md` before implementation.
 That includes all future module workspace standardization work, which should align to the shared `StandardWorkspaceLayout` and the documented workspace/sidebar rules there.
 
+Industrial OS visual-system note: the active
+`stream/industrial-os-visual-system-v1` branch continues to refine existing
+contractor surfaces toward the Stitch Industrial OS V2 direction without
+changing canonical data, routes, loaders, actions, auth, tenant boundaries,
+portal visibility, schema, or migrations. The current branch uses the existing
+top/header global app shell, contextual workspace/settings left navigation
+only, blue/neutral status and action treatment, lighter hard-border cards, and
+shared workspace composition over existing dashboard, leads, project, settings,
+and Universal Capture surfaces. The dashboard now includes a local Command
+Center lens selector for Today, Needs Attention, Sales, Projects, Field, Money,
+and Follow-ups so users can inspect one operating purpose at a time while
+keeping all content backed by existing dashboard widgets and source-record
+links. Invoice Review, Estimate Review, and CrewBoard remain follow-up
+page-family slices rather than completed visual conversions.
+
 If this document conflicts with a planning, target-design, or historical document, trust this document for implemented status.
 
 Estimate Builder planning docs are planning docs only. V1 estimate builder/system generation is not implemented unless this file and the codebase explicitly say it is. The existing reusable catalog, cost item database, and estimate foundations remain the current implemented baseline.
@@ -247,6 +262,19 @@ These high-value route notes exist to prevent target-vs-current drift:
   This keeps `/leads`, `/leads/:leadId`, the `/opportunities` alias,
   `opportunities` schema, assessment ownership, tenant checks, and Supabase
   behavior unchanged.
+- Opportunity Workspace now also reflects the Figma fidelity correction from
+  the Industrial OS board: the duplicated record identity area was removed, the
+  first overview viewport is a compact guided sales workflow over existing
+  `?view=` sections, and the right support column reads as a command rail for
+  status, next action, and estimate handoff context. This remains a
+  presentation-only change over existing opportunity, assessment, estimate, and
+  Work Item records.
+- Dashboard now reflects the Industrial OS board's Dashboard Figma fidelity
+  correction: the first viewport is a tighter command-center deck with a
+  desktop 70/30 action/KPI area and isolated Needs Attention rail, while mobile
+  prioritizes Needs Attention and action lanes before passive utility sections.
+  This remains presentation-only over existing dashboard read models, queues,
+  links, early-access status, and Universal Capture entry behavior.
 - Project Workspace now also uses Workspace Framework V2 presentation views.
   `/projects/:projectId` preserves the same route while using `?view=` focused
   views for Overview, Readiness, Scope / Context, Estimates / Contracts, Jobs /
@@ -1092,6 +1120,24 @@ Implemented contractor UI direction now includes:
 
 Current contractor UI design notes:
 
+- Industrial OS Visual System V1 now updates the shared visual foundation toward
+  the approved Industrial OS V2 direction. The implementation keeps the
+  top-nav-first shell and existing route/workspace architecture, but changes
+  shared tokens, Inter typography, primary action/focus color, shell chrome,
+  workspace wrappers, status helpers, quick-create chrome, and reusable section
+  primitives toward warm white/slate surfaces, charcoal/zinc framing, deep blue
+  `#005EB8` primary actions, subtler borders, lower shadow, and restrained
+  radii. The follow-up intensification pass makes the first-login dashboard
+  visibly more distinct with dark blue/charcoal command-deck ownership and
+  operating-health panels, stronger numeric hierarchy, lighter shared cards, and
+  blue-neutral dashboard action/status treatment. The same branch now also
+  includes a composition correction pass: `StandardWorkspaceLayout` uses a
+  280px contextual desktop section rail, labeled mobile section tabs, and
+  explicit active-view markers for existing route/query-backed workspace views;
+  Sales Manager and dashboard queue composition are less warm, less stacked, and
+  easier to scan. This is presentation-only and adds no routes, schema,
+  migrations, loaders, server actions, duplicate data models, auth/tenant/
+  portal/admin rule changes, or workflow behavior changes.
 - the dashboard and Estimates reference pass now anchor the accepted Graphite & Copper contractor-app visual foundation without authorizing a broad shell redesign
 - existing canonical-record edit forms now use a shared save-state pattern: unchanged records show `Saved`, edits switch the control to `Save`, saving shows `Saving...`, and successful saves reset the dirty baseline to the persisted values
 - the dashboard now reads more like a contractor home base than a light summary page:
@@ -1105,9 +1151,15 @@ Current contractor UI design notes:
   - shared settings and linked-record cards
   - shared overview/detail typography and surface treatment
 - the active contractor-app theme direction is now:
-  - Graphite for primary chrome, headers, and strong navigation
-  - Copper reserved for primary CTAs, save actions, active action emphasis, and focus treatment, not passive status or decorative card chrome
-  - semantic status colors through shared helpers: neutral/Graphite tones for draft/not-started/active/current/in-progress utility states, amber/yellow for waiting or needs-action states, red for blocked/error/failed, and green only for complete/approved/paid/signed states
+  - charcoal/zinc for primary chrome, headers, and strong navigation
+  - deep blue `#005EB8` for primary CTAs, save actions, active action emphasis,
+    and focus treatment; legacy Graphite/Copper token names remain compatibility
+    aliases during the Industrial OS migration
+  - semantic status colors through shared helpers: blue-neutral tones for
+    draft/not-started/active/current/in-progress and waiting/needs-action
+    utility states, red for blocked/error/failed, and green only for
+    complete/approved/paid/signed states; explicit warning callouts may still
+    use amber where the content is a true alert
   - white or light-neutral surfaces for primary reading and work areas
   - tighter, more practical spacing and typography across manager screens
 - customer portal and super-admin surfaces received only safe visual consistency cleanup after the contractor system stabilized:
@@ -3021,6 +3073,17 @@ Implemented UI behavior now:
   duplicate queues, role-specific persistence, schema changes, migrations,
   financial/schedule/readiness truth changes, provider behavior, AI, AIA, or
   customer self-service.
+- Dashboard Command Center lenses now organize existing dashboard sections by
+  operating purpose: Today / Needs Attention, Needs Attention, Sales, Projects,
+  Field, Money, and Follow-ups. The selector is local to `/dashboard`, becomes
+  horizontally scrollable tabs on mobile, and filters/reorders existing
+  dashboard widgets rather than creating new records, loaders, statuses, KPIs,
+  tasks, AI output, or dashboard-owned queues. A follow-up clarity reduction now
+  keeps the default Today view capped to a small cockpit of top priorities,
+  next recommended actions, a narrow business pulse, Universal Capture access,
+  and owning-workspace links; fuller queue/table depth lives behind the command
+  lenses and links back to Sales Manager, Projects, Schedule, Financials, and My
+  Work.
 - Record Workspace rhythm now has a shared presentation contract in
   `@floorconnector/ui` plus a reusable `RecordWorkspaceSection` primitive.
   Estimate, Contract, Invoice, and Job command bands use shared status badges,
