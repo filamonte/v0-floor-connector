@@ -1,6 +1,6 @@
 # Leads Command Lanes V1
 
-Status: Setup created
+Status: Implemented
 Date: 2026-06-13
 Branch: `stream/leads-command-lanes-v1`
 Worktree: `C:\FC-worktrees\leads-command-lanes-v1`
@@ -69,7 +69,81 @@ Browser checks: `/leads`, one Opportunity Workspace if touched, `/dashboard`,
 
 ## Completion Notes
 
-To be completed by the stream owner: files changed, Figma frames used, visual
-improvements, deviations from Figma, no-data-silo confirmation, production
-safety confirmation, remaining visual debt, validation results, browser checks,
-final git status, ahead/behind count, and commit SHA.
+Files changed:
+
+- `apps/web/app/(app)/leads/page.tsx`
+- `docs/review-packets/leads-command-lanes-v1.md`
+
+Figma frames used:
+
+- `28:8` - `APPROVED / Opportunity-adjacent Sales Manager / Desktop`
+
+Visual improvements:
+
+- `/leads` now leads with five command lanes derived from existing opportunity
+  and follow-up data: Qualification, Follow-up, Site visit, Estimate, and
+  Missing info.
+- The full opportunity table remains directly below the lanes for direct record
+  access and filtering.
+- The lower support region now keeps the real opportunity stage funnel and real
+  scheduled sales activity from existing appointments and site assessment
+  fields.
+- The mobile KPI band uses two columns so command controls and lane entry arrive
+  sooner in the opening viewport.
+
+Deviations from Figma:
+
+- The approved Figma frame uses a fixed left app sidebar; FloorConnector keeps
+  the current top/header app shell per product governance.
+- The Figma frame shows a compact table-first sales manager. This slice keeps
+  table access but prioritizes command lanes first because the stream scope
+  explicitly called for qualification, follow-up, site visit, estimate waiting,
+  and missing-info lanes.
+
+No-data-silo confirmation:
+
+- The lanes are derived presentation over existing `listOpportunities()`,
+  `listAppointments()`, and `listLeadFollowUpQueue()` data.
+- No schema, migrations, loaders, routes, statuses, fake records, persisted
+  queues, local storage, or duplicate lead/opportunity models were added.
+
+Production safety confirmation:
+
+- No auth, tenant, RLS, server action, portal, payment, signature, scheduling,
+  provider, or workflow mutation behavior changed.
+- Existing Quick-Create and table action links remain available.
+
+Remaining visual debt:
+
+- `/leads` mobile still has a tall dark command header because it preserves the
+  shared Manager Page shell and full search/filter controls.
+- The table remains intentionally dense below the command lanes to preserve
+  current direct-record access.
+
+Validation results:
+
+- `pnpm.cmd --filter @floorconnector/web typecheck` - passed
+- `pnpm.cmd --filter @floorconnector/web lint` - passed
+- `pnpm.cmd --filter @floorconnector/ui test` - passed
+- `pnpm.cmd fc:preflight:fast` - passed
+- `pnpm.cmd e2e:smoke:auth` - passed, 11 passed
+- `git diff --check` - passed
+- `pnpm.cmd worktree:doctor` - passed with expected no-upstream warning
+
+Browser checks:
+
+- Dedicated local server: `http://localhost:3112`
+- Checked at `1366px` and `390px`: `/leads`, one Opportunity Workspace
+  (`/leads/1b441af7-2ef0-491c-8a52-dc1ed32660d3`), `/dashboard`, `/settings`,
+  `/projects`, `/portal`, and `/dashboard?capture=1#universal-capture`.
+- Result: no auth redirects, no console/page errors, no horizontal overflow,
+  and protected route content rendered at both widths.
+
+Final git status, ahead/behind count, and commit SHA:
+
+- Branch: `stream/leads-command-lanes-v1`
+- Worktree: `C:\FC-worktrees\leads-command-lanes-v1`
+- Final status before amend: clean
+- Ahead/behind vs `origin/main`: `2 0`
+- Commit SHA: reported from `git log` in the stream completion response after
+  the final packet amend.
