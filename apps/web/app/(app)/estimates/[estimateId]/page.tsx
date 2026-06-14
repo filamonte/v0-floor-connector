@@ -1428,6 +1428,74 @@ export default async function EstimateDetailPage({
       detail: readinessBlockersLabel
     }
   ];
+  const estimateReviewCommandMetrics = [
+    {
+      key: "status",
+      label: "Proposal state",
+      value: formatStatusLabel(estimate.status),
+      detail:
+        estimate.status === "approved"
+          ? "Approved into downstream handoff"
+          : estimate.status === "sent"
+            ? "Waiting on customer review"
+            : estimate.status === "rejected"
+              ? "Returned for revision"
+              : "Still being prepared"
+    },
+    {
+      key: "total",
+      label: "Proposal total",
+      value: formatMoney(estimate.totalAmount),
+      detail: `${formatMoney(estimate.subtotalAmount)} subtotal`
+    },
+    {
+      key: "scope",
+      label: "Scope lines",
+      value: `${lineItemCount}`,
+      detail:
+        lineItemCount === 1
+          ? "1 proposal line item"
+          : `${lineItemCount} proposal line items`
+    },
+    {
+      key: "revision",
+      label: "Revision trail",
+      value: `${recordRevisions.length}`,
+      detail:
+        recordRevisions.length === 1
+          ? "1 captured snapshot"
+          : `${recordRevisions.length} captured snapshots`
+    }
+  ];
+  const estimateReviewLaneRows = [
+    {
+      label: "Document readiness",
+      value:
+        documentReadiness.blockers.length > 0
+          ? `${documentReadiness.blockers.length} blocker${
+              documentReadiness.blockers.length === 1 ? "" : "s"
+            }`
+          : documentReadiness.safePreviewLabel
+    },
+    {
+      label: "Contract handoff",
+      value: contractHandoffReadiness.title
+    },
+    {
+      label: "Downstream records",
+      value: `${estimateContracts.length} contract${
+        estimateContracts.length === 1 ? "" : "s"
+      } / ${estimateInvoices.length} invoice${
+        estimateInvoices.length === 1 ? "" : "s"
+      }`
+    },
+    {
+      label: "Open estimate work",
+      value: `${estimateHandoffWorkItems.length} handoff item${
+        estimateHandoffWorkItems.length === 1 ? "" : "s"
+      }`
+    }
+  ];
 
   return (
     <div className="mx-auto max-w-6xl space-y-6 print:max-w-none">
@@ -1552,6 +1620,88 @@ export default async function EstimateDetailPage({
               </span>
             }
           />
+
+          <section
+            id="estimate-review-command"
+            className="border border-[#005EB8]/35 bg-white shadow-sm"
+          >
+            <div className="border-b border-[#005EB8]/20 bg-[#f4f8fc] px-5 py-4">
+              <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                <div className="max-w-3xl">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#005EB8]">
+                    Estimate Review Command
+                  </p>
+                  <h2 className="mt-1 text-xl font-semibold tracking-tight text-[var(--text-primary)]">
+                    Review proposal state, pricing, handoff readiness, and
+                    revision context before sending or approving.
+                  </h2>
+                  <p className="mt-2 text-sm leading-6 text-[var(--text-secondary)]">
+                    This command surface summarizes the existing estimate,
+                    document readiness, contract handoff, downstream links, work
+                    items, and revision history without changing pricing,
+                    approval, contract, or billing behavior.
+                  </p>
+                </div>
+                <Link
+                  href={`/projects/${estimate.projectId}`}
+                  className="inline-flex shrink-0 items-center justify-center rounded-[4px] border border-[#005EB8] bg-[#005EB8] px-4 py-2.5 text-sm font-medium text-white transition hover:bg-[#004b94]"
+                >
+                  Open owning project
+                </Link>
+              </div>
+            </div>
+
+            <div className="grid gap-3 p-5 sm:grid-cols-2 xl:grid-cols-4">
+              {estimateReviewCommandMetrics.map((metric) => (
+                <div
+                  key={metric.key}
+                  className="border border-[#005EB8]/25 bg-white px-4 py-3"
+                >
+                  <p className="text-[11px] uppercase tracking-[0.14em] text-[#005EB8]">
+                    {metric.label}
+                  </p>
+                  <p className="mt-2 text-lg font-semibold capitalize tracking-tight text-[var(--text-primary)]">
+                    {metric.value}
+                  </p>
+                  <p className="mt-1 text-xs leading-5 text-[var(--text-secondary)]">
+                    {metric.detail}
+                  </p>
+                </div>
+              ))}
+            </div>
+
+            <div className="grid gap-4 border-t border-[#005EB8]/20 px-5 py-4 lg:grid-cols-[minmax(0,1fr)_minmax(280px,0.72fr)]">
+              <div className="space-y-3">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
+                  Review lanes
+                </p>
+                <div className="grid gap-2 sm:grid-cols-2">
+                  {estimateReviewLaneRows.map((row) => (
+                    <div
+                      key={row.label}
+                      className="border border-[var(--border-warm)] bg-[var(--highlight)] px-3 py-2 text-sm"
+                    >
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--text-secondary)]">
+                        {row.label}
+                      </p>
+                      <p className="mt-1 font-medium text-[var(--text-primary)]">
+                        {row.value}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div className="border border-[var(--border-warm)] bg-[var(--highlight)] px-4 py-3 text-sm leading-6 text-[var(--text-secondary)]">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#005EB8]">
+                  Next review move
+                </p>
+                <p className="mt-2 font-semibold text-[var(--text-primary)]">
+                  {nextAction.title}
+                </p>
+                <p className="mt-1">{nextAction.description}</p>
+              </div>
+            </div>
+          </section>
 
           <section className="rounded-[1.5rem] border border-[var(--border-warm)] bg-white px-5 py-4 text-sm leading-6 text-[var(--text-secondary)] shadow-sm">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">

@@ -120,6 +120,21 @@ Permanent Vercel review rule: ignore `Vercel - v0-floor-connector` and any
 deployment/check under the obsolete `tfc-saas` scope. The active FloorConnector
 Vercel project/check for PR review is `Vercel - lkjlkjlsdf`.
 
+Industrial OS Conveyor Wave 2 Stream 3 is
+`invoice-estimate-review-industrial-os-v1` on branch
+`stream/invoice-estimate-review-industrial-os-v1` in worktree
+`C:\FC-worktrees\invoice-estimate-review-industrial-os-v1`. The stream is
+presentation-only: Invoice Workspace now opens with an Invoice Review Command
+over existing invoice status, balance, Payment Trail signal, revision,
+readiness, line-item, and owning-workspace data; Estimate Workspace now opens
+with an Estimate Review Command over existing proposal status, total, scope,
+revision, document readiness, contract handoff, downstream records, and
+estimate-work handoff data. It does not change schema, routes, loaders, server
+actions, auth, tenant boundaries, portal visibility, invoice/payment state,
+payment events, financial math, estimate pricing, approval logic, contract
+readiness, revision lineage, providers, storage, or canonical workflow
+behavior.
+
 Current automation readiness is Ready With Human Review Gate. Future planning
 must follow the loop Strategic Research / Product Council -> Capability, then
 Program, Wave, Stream, PR, Verification, and Merge. Future waves still require
