@@ -149,6 +149,90 @@ Permanent Vercel review rule: ignore `Vercel - v0-floor-connector` and any
 deployment/check under the obsolete `tfc-saas` scope. The active FloorConnector
 Vercel project/check for PR review is `Vercel - lkjlkjlsdf`.
 
+## Industrial OS Operating Surfaces V2
+
+Status: Setup active. All six streams are registered from current `main`; four
+implementation lanes are Active and two are Queued / Staged.
+
+Wave name: `industrial-os-operating-surfaces-v2`.
+
+Base branch: `main` at `bac926b7`, synced with `origin/main` before setup.
+
+Design source: `https://www.figma.com/design/N0tVE3uKWpHZc4dlF6ytgn`.
+
+Goal: increase Industrial OS conveyor throughput carefully by refactoring
+operating surfaces toward action-first command and review patterns without
+changing schema, migrations, canonical models, routes, loaders, server actions,
+auth, tenant boundaries, portal grants, payment/signature/scheduling behavior,
+provider behavior, fake data, fake KPIs, fake queues, or local-only workflow
+persistence.
+
+Concurrency rule: only four implementation streams may be Active at once.
+`contract-change-order-industrial-os-v1` and
+`daily-logs-fieldtrail-industrial-os-v1` are registered only as Queued /
+Staged until explicitly instructed to start.
+
+Active implementation streams:
+
+| Stream                                           | Review packet                                                                                     | Ownership area                                                   | Dependency posture |
+| ------------------------------------------------ | ------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------- | ------------------ |
+| `schedule-crewboard-industrial-os-v1`            | [packet](C:/FloorConnector/docs/review-packets/schedule-crewboard-industrial-os-v1.md)            | `/schedule`, CrewBoard, schedule cards/lanes/warnings            | Starts first       |
+| `communications-financial-command-v1`            | [packet](C:/FloorConnector/docs/review-packets/communications-financial-command-v1.md)            | Communications and Financials command surfaces                   | Starts second      |
+| `invoice-estimate-review-industrial-os-v1`       | [packet](C:/FloorConnector/docs/review-packets/invoice-estimate-review-industrial-os-v1.md)       | Invoice detail/review and Estimate Review                        | Starts third       |
+| `assessment-estimate-workspace-industrial-os-v1` | [packet](C:/FloorConnector/docs/review-packets/assessment-estimate-workspace-industrial-os-v1.md) | Assessment Package / Assessment Workspace and Estimate Workspace | Starts fourth      |
+
+Queued / staged streams:
+
+| Stream                                   | Review packet                                                                             | Ownership area                            | Dependency posture |
+| ---------------------------------------- | ----------------------------------------------------------------------------------------- | ----------------------------------------- | ------------------ |
+| `contract-change-order-industrial-os-v1` | [packet](C:/FloorConnector/docs/review-packets/contract-change-order-industrial-os-v1.md) | Contract and Change Order review surfaces | Queued / staged    |
+| `daily-logs-fieldtrail-industrial-os-v1` | [packet](C:/FloorConnector/docs/review-packets/daily-logs-fieldtrail-industrial-os-v1.md) | Daily Logs and FieldTrail surfaces        | Queued / staged    |
+
+Expected file overlap risks:
+
+- `invoice-estimate-review-industrial-os-v1` and
+  `assessment-estimate-workspace-industrial-os-v1` may both touch estimate
+  review/workspace files.
+- `communications-financial-command-v1` and
+  `invoice-estimate-review-industrial-os-v1` may both touch invoice/financial
+  cards.
+- `contract-change-order-industrial-os-v1` may overlap invoice/estimate review
+  around review/status components.
+- `daily-logs-fieldtrail-industrial-os-v1` may overlap schedule around field
+  execution cards.
+- `schedule-crewboard-industrial-os-v1` should mostly stand alone.
+
+Recommended merge order:
+
+1. `schedule-crewboard-industrial-os-v1`
+2. `communications-financial-command-v1`
+3. `invoice-estimate-review-industrial-os-v1`
+4. `assessment-estimate-workspace-industrial-os-v1`
+5. `contract-change-order-industrial-os-v1`
+6. `daily-logs-fieldtrail-industrial-os-v1`
+
+Required validation for each active implementation stream unless a later prompt
+narrows scope:
+
+```powershell
+pnpm.cmd --filter @floorconnector/web typecheck
+pnpm.cmd --filter @floorconnector/web lint
+pnpm.cmd --filter @floorconnector/ui test
+pnpm.cmd fc:preflight:fast
+pnpm.cmd e2e:smoke:auth
+git diff --check
+git diff --cached --check
+pnpm.cmd worktree:doctor
+pnpm.cmd wave:status
+```
+
+Run `pnpm.cmd wave:review` after setup and where appropriate after stream
+implementation.
+
+Permanent Vercel review rule: ignore `Vercel - v0-floor-connector` and any
+deployment/check under the obsolete `tfc-saas` scope. The active FloorConnector
+Vercel project/check for PR review is `Vercel - lkjlkjlsdf`.
+
 ## Program Portfolio
 
 | Program | Name                        | Health  | Current wave posture                                                                                                                     |

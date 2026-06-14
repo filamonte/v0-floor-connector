@@ -146,6 +146,105 @@ Permanent Vercel review rule: ignore `Vercel - v0-floor-connector` and any
 deployment/check under the obsolete `tfc-saas` scope. The active FloorConnector
 Vercel project/check for PR review is `Vercel - lkjlkjlsdf`.
 
+## Industrial OS Operating Surfaces V2
+
+Gate date: 2026-06-14.
+
+Wave: `industrial-os-operating-surfaces-v2`.
+
+Base: `main` at `bac926b7`, confirmed clean and even with `origin/main` before
+registration.
+
+Status: Setup active. Six streams are registered; the first four are Active
+implementation lanes and the final two are Queued / Staged only.
+
+Mission: increase Industrial OS conveyor throughput across operating,
+financial, review, assessment, contract/change-order, and field execution
+surfaces while preserving FloorConnector's canonical lifecycle, global
+top/header navigation, existing routes, real actions, tenant/auth boundaries,
+customer-safe portal boundary, and source records.
+
+Design source: `https://www.figma.com/design/N0tVE3uKWpHZc4dlF6ytgn`.
+Each stream must use Figma MCP where relevant and record Figma frames used,
+deviations, no-data-silo confirmation, production safety confirmation, and
+remaining visual debt in its review packet.
+
+Concurrency rule: all six streams may be registered, but only four
+implementation lanes may be Active at once. Streams 5 and 6 must remain
+Queued / Staged until explicitly instructed to start.
+
+Active implementation streams:
+
+| Stream                                           | Branch                                                  | Worktree                                                         | Scope summary                                                 | Merge priority |
+| ------------------------------------------------ | ------------------------------------------------------- | ---------------------------------------------------------------- | ------------------------------------------------------------- | -------------- |
+| `schedule-crewboard-industrial-os-v1`            | `stream/schedule-crewboard-industrial-os-v1`            | `C:\FC-worktrees\schedule-crewboard-industrial-os-v1`            | `/schedule` and CrewBoard operating clarity                   | 1              |
+| `communications-financial-command-v1`            | `stream/communications-financial-command-v1`            | `C:\FC-worktrees\communications-financial-command-v1`            | `/communications` where present, `/financials`, invoice lanes | 2              |
+| `invoice-estimate-review-industrial-os-v1`       | `stream/invoice-estimate-review-industrial-os-v1`       | `C:\FC-worktrees\invoice-estimate-review-industrial-os-v1`       | Invoice and Estimate review surfaces                          | 3              |
+| `assessment-estimate-workspace-industrial-os-v1` | `stream/assessment-estimate-workspace-industrial-os-v1` | `C:\FC-worktrees\assessment-estimate-workspace-industrial-os-v1` | Assessment Package and Estimate Workspace clarity             | 4              |
+
+Queued / staged streams:
+
+| Stream                                   | Branch                                          | Worktree                                                 | Scope summary                                | Merge priority |
+| ---------------------------------------- | ----------------------------------------------- | -------------------------------------------------------- | -------------------------------------------- | -------------- |
+| `contract-change-order-industrial-os-v1` | `stream/contract-change-order-industrial-os-v1` | `C:\FC-worktrees\contract-change-order-industrial-os-v1` | Contract and Change Order review surfaces    | 5              |
+| `daily-logs-fieldtrail-industrial-os-v1` | `stream/daily-logs-fieldtrail-industrial-os-v1` | `C:\FC-worktrees\daily-logs-fieldtrail-industrial-os-v1` | Daily Logs and FieldTrail execution surfaces | 6              |
+
+Shared forbidden scope: schema changes, migrations, database/table/column
+renames, route renames, canonical model changes, duplicate lead/project/job/
+schedule/invoice/payment/assessment/work-item models, duplicate visual-only
+records, local-only workflow persistence, fake records, fake statuses, fake
+KPIs, fake health scores, fake AI/copilot claims, fake queues/counts,
+auth/tenant/portal/admin guard changes, payment/signature/scheduling business
+logic changes, estimate/contract/invoice workflow logic changes, readiness gate
+changes, crew assignment behavior changes, global permanent desktop sidebar
+changes, and removal of real actions unless access remains obvious.
+
+Expected file overlap risks:
+
+- `invoice-estimate-review-industrial-os-v1` and
+  `assessment-estimate-workspace-industrial-os-v1` may both touch estimate
+  review/workspace files; invoice/estimate review should land first.
+- `communications-financial-command-v1` and
+  `invoice-estimate-review-industrial-os-v1` may both touch invoice/financial
+  cards; financial command work should avoid invoice detail review files unless
+  explicitly coordinated.
+- `contract-change-order-industrial-os-v1` may overlap invoice/estimate review
+  around review/status components; it remains queued until active lanes clear.
+- `daily-logs-fieldtrail-industrial-os-v1` may overlap schedule around field
+  execution cards; it remains queued until active lanes clear.
+- `schedule-crewboard-industrial-os-v1` should mostly stand alone, but must
+  avoid shared field execution primitive churn that would collide with the
+  queued Daily Logs / FieldTrail stream.
+
+Validation expectation for each active implementation stream:
+
+```powershell
+pnpm.cmd --filter @floorconnector/web typecheck
+pnpm.cmd --filter @floorconnector/web lint
+pnpm.cmd --filter @floorconnector/ui test
+pnpm.cmd fc:preflight:fast
+pnpm.cmd e2e:smoke:auth
+git diff --check
+git diff --cached --check
+pnpm.cmd worktree:doctor
+pnpm.cmd wave:status
+```
+
+Run `pnpm.cmd wave:review` after setup and where appropriate after stream
+implementation. If it fails, report the exact blocker.
+
+Browser expectation for each active implementation stream: check target pages
+and `/dashboard`, `/projects`, one Project Workspace, `/leads`, one
+Opportunity Workspace, `/settings`, `/portal`, `/schedule`, and
+`/dashboard?capture=1#universal-capture` at `1366px` and `390px`, with no
+chunk/load errors, console/page errors, favicon errors, horizontal overflow,
+auth redirect regressions, portal customer-safety regressions, or Universal
+Capture regression.
+
+Permanent Vercel review rule: ignore `Vercel - v0-floor-connector` and any
+deployment/check under the obsolete `tfc-saas` scope. The active FloorConnector
+Vercel project/check for PR review is `Vercel - lkjlkjlsdf`.
+
 ## UX Recovery Wave Foundation
 
 Foundation date: 2026-06-11.
