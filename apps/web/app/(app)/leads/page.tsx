@@ -43,6 +43,26 @@ type LeadActivity = {
   assignedLabel: string;
 };
 
+type SalesCommandLaneItem = {
+  href: string;
+  title: string;
+  subtitle: string;
+  meta?: string | null;
+  trailing?: string | null;
+};
+
+type SalesCommandLane = {
+  key: string;
+  eyebrow: string;
+  title: string;
+  description: string;
+  actionHref: string;
+  actionLabel: string;
+  items: SalesCommandLaneItem[];
+  emptyTitle: string;
+  emptyDescription: string;
+};
+
 function formatStatusLabel(status: string) {
   return status.replaceAll("_", " ");
 }
@@ -95,6 +115,71 @@ function getFollowUpBadgeClasses(bucket: LeadFollowUpBucket) {
     case "no_follow_up":
       return "border-[#cbd5e1] bg-white text-[#334155]";
   }
+}
+
+function getOpportunityContactLabel(
+  opportunity: Awaited<ReturnType<typeof listOpportunities>>[number]
+) {
+  return (
+    opportunity.primaryContact?.displayName ??
+    opportunity.prospectName ??
+    "Contact pending"
+  );
+}
+
+function getOpportunityContextLabel(
+  opportunity: Awaited<ReturnType<typeof listOpportunities>>[number]
+) {
+  return (
+    opportunity.primaryContact?.companyName ??
+    opportunity.prospectCompanyName ??
+    opportunity.customer?.name ??
+    opportunity.siteName ??
+    "Company or site pending"
+  );
+}
+
+function getMissingOpportunityInfo(
+  opportunity: Awaited<ReturnType<typeof listOpportunities>>[number]
+) {
+  const missing: string[] = [];
+
+  if (!opportunity.customerId) {
+    missing.push("Customer");
+  }
+
+  if (!opportunity.projectId) {
+    missing.push("Project");
+  }
+
+  if (
+    !opportunity.requirementsSummary?.trim() &&
+    opportunity.siteAssessmentStatus !== "completed"
+  ) {
+    missing.push("Requirements");
+  }
+
+  if (!opportunity.nextFollowUpAt) {
+    missing.push("Follow-up");
+  }
+
+  return missing;
+}
+
+function buildOpportunityLaneItem(
+  opportunity: Awaited<ReturnType<typeof listOpportunities>>[number],
+  input: {
+    meta?: string | null;
+    trailing?: string | null;
+  } = {}
+): SalesCommandLaneItem {
+  return {
+    href: `/leads/${opportunity.id}`,
+    title: opportunity.title,
+    subtitle: getOpportunityContactLabel(opportunity),
+    meta: input.meta ?? getOpportunityContextLabel(opportunity),
+    trailing: input.trailing ?? formatOpportunityStatusLabel(opportunity.status)
+  };
 }
 
 export default async function LeadsPage({ searchParams }: LeadsPageProps) {
@@ -256,6 +341,131 @@ export default async function LeadsPage({ searchParams }: LeadsPageProps) {
       count: opportunities.filter((o) => o.status === "won").length
     }
   ];
+  const qualificationOpportunities = opportunities.filter((opportunity) =>
+    ["new", "contacted", "qualified"].includes(opportunity.status)
+  );
+  const siteVisitOpportunities = opportunities.filter(
+    (opportunity) =>
+      opportunity.status === "site_assessment_scheduled" ||
+      opportunity.siteAssessmentStatus === "scheduled"
+  );
+  const estimateWaitingOpportunities = opportunities.filter((opportunity) =>
+    ["site_assessment_complete", "estimating", "proposal_sent"].includes(
+      opportunity.status
+    )
+  );
+  const missingInfoOpportunities = opportunities.filter((opportunity) => {
+    if (["won", "lost", "converted"].includes(opportunity.status)) {
+      return false;
+    }
+
+    return getMissingOpportunityInfo(opportunity).length > 0;
+  });
+  const salesCommandLanes: SalesCommandLane[] = [
+    {
+      key: "qualification",
+      eyebrow: "Qualification",
+      title: "Qualify intake",
+      description:
+        "First inquiries and contacted opportunities that need sales qualification before estimate work.",
+      actionHref: buildLeadsHref({ q: query, view, followUp: followUpView }),
+      actionLabel: "Open intake",
+      items: qualificationOpportunities.slice(0, 4).map((opportunity) =>
+        buildOpportunityLaneItem(opportunity, {
+          meta: opportunity.source
+            ? `Source: ${opportunity.source}`
+            : (opportunity.jobType ?? "Source pending")
+        })
+      ),
+      emptyTitle: "No intake is waiting on qualification.",
+      emptyDescription:
+        "New Lead Intake and early Sales Opportunities will appear here when they need first qualification."
+    },
+    {
+      key: "follow-up",
+      eyebrow: "Follow-up",
+      title: "Contact next",
+      description:
+        "Due and overdue follow-up from the existing opportunity follow-up queue.",
+      actionHref: buildLeadsHref({ q: query, view, followUp: "due" }),
+      actionLabel: "Review due",
+      items: dueFollowUps.slice(0, 4).map((item) => ({
+        href: `/leads/${item.opportunityId}`,
+        title: item.title,
+        subtitle: item.contactName ?? "Contact pending",
+        meta: item.nextFollowUpAt
+          ? `${labelLeadFollowUpBucket(item.bucket)} - ${formatDateLabel(
+              item.nextFollowUpAt
+            )}`
+          : labelLeadFollowUpBucket(item.bucket),
+        trailing: item.projectName ?? item.customerName ?? item.companyName
+      })),
+      emptyTitle: "No due follow-up is waiting.",
+      emptyDescription:
+        "Overdue and due-today opportunity follow-up will collect here from the canonical follow-up fields."
+    },
+    {
+      key: "site-visit",
+      eyebrow: "Site visit",
+      title: "Assess next",
+      description:
+        "Scheduled site assessments and visits that keep sales context moving toward estimate handoff.",
+      actionHref: buildLeadsHref({ q: query, view, followUp: followUpView }),
+      actionLabel: "Open visits",
+      items: siteVisitOpportunities.slice(0, 4).map((opportunity) =>
+        buildOpportunityLaneItem(opportunity, {
+          meta: opportunity.siteAssessmentScheduledAt
+            ? `Visit: ${formatDateLabel(opportunity.siteAssessmentScheduledAt)}`
+            : "Visit scheduled",
+          trailing: opportunity.siteName ?? "Site pending"
+        })
+      ),
+      emptyTitle: "No site visits are waiting.",
+      emptyDescription:
+        "Scheduled opportunity site visits will appear here without creating a separate scheduling lane."
+    },
+    {
+      key: "estimate-handoff",
+      eyebrow: "Estimate",
+      title: "Waiting on estimate",
+      description:
+        "Assessed, estimating, and proposal-sent opportunities that need estimating ownership or proposal follow-through.",
+      actionHref: "/estimates",
+      actionLabel: "Open estimates",
+      items: estimateWaitingOpportunities.slice(0, 4).map((opportunity) =>
+        buildOpportunityLaneItem(opportunity, {
+          meta: opportunity.projectId
+            ? "Project context linked"
+            : "Project context pending",
+          trailing:
+            opportunity.status === "proposal_sent"
+              ? "Proposal sent"
+              : "Estimate handoff"
+        })
+      ),
+      emptyTitle: "No opportunity is waiting on estimate work.",
+      emptyDescription:
+        "Completed assessments and estimating handoffs will show here when sales context is ready for the estimate workspace."
+    },
+    {
+      key: "missing-info",
+      eyebrow: "Missing info",
+      title: "Complete context",
+      description:
+        "Open opportunities missing customer, project, requirements, or follow-up context before handoff.",
+      actionHref: buildLeadsHref({ q: query, view, followUp: "no_follow_up" }),
+      actionLabel: "Fill gaps",
+      items: missingInfoOpportunities.slice(0, 4).map((opportunity) =>
+        buildOpportunityLaneItem(opportunity, {
+          meta: `Missing: ${getMissingOpportunityInfo(opportunity).join(", ")}`,
+          trailing: opportunity.siteName ?? "Context gap"
+        })
+      ),
+      emptyTitle: "No obvious context gaps in active opportunities.",
+      emptyDescription:
+        "Missing customer, project, requirement, or follow-up fields will surface here from the existing opportunity record."
+    }
+  ];
 
   return (
     <ContractorWorkspacePage
@@ -264,7 +474,7 @@ export default async function LeadsPage({ searchParams }: LeadsPageProps) {
       description="Run Lead Intake and active Sales Opportunity follow-up from one board, while preserving the existing /leads route and canonical opportunities records."
       headerTone="dark"
       summary={
-        <div className="grid gap-px overflow-hidden rounded-[4px] border border-white/10 bg-white/10 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="grid grid-cols-2 gap-px overflow-hidden rounded-[4px] border border-white/10 bg-white/10 xl:grid-cols-4">
           <div className="bg-white/[0.075] px-4 py-3">
             <p className="text-[11px] uppercase tracking-[0.14em] text-[#8fc7ff]">
               All opportunities
@@ -440,70 +650,23 @@ export default async function LeadsPage({ searchParams }: LeadsPageProps) {
           </div>
         ) : null}
 
-        <section className="order-2 grid gap-3 xl:auto-rows-fr xl:grid-cols-2">
-          <ManagerDashboardCard
-            eyebrow="Contact now"
-            title="New intake to contact"
-            description="Fresh inquiries that still need the first outreach touch before they become qualified sales opportunities."
-            actionHref={buildLeadsHref({
-              q: query,
-              view,
-              followUp: followUpView
-            })}
-            actionLabel="Open new leads"
-            items={newIntake.slice(0, 5).map((opportunity) => ({
-              href: `/leads/${opportunity.id}`,
-              title: opportunity.title,
-              subtitle:
-                opportunity.primaryContact?.displayName ??
-                opportunity.prospectName,
-              meta: opportunity.source
-                ? `Source: ${opportunity.source}`
-                : (opportunity.jobType ?? null),
-              trailing: opportunity.siteName ?? "Site pending"
-            }))}
-            emptyTitle="No new intake needs first contact."
-            emptyDescription="New Lead Intake will surface here as soon as an opportunity is created."
-          />
+        <section className="order-1 grid gap-3 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-[repeat(5,minmax(0,1fr))]">
+          {salesCommandLanes.map((lane) => (
+            <ManagerDashboardCard
+              key={lane.key}
+              eyebrow={lane.eyebrow}
+              title={lane.title}
+              description={lane.description}
+              actionHref={lane.actionHref}
+              actionLabel={lane.actionLabel}
+              items={lane.items}
+              emptyTitle={lane.emptyTitle}
+              emptyDescription={lane.emptyDescription}
+            />
+          ))}
+        </section>
 
-          <ManagerDashboardCard
-            eyebrow="Next tasks"
-            title="Immediate sales follow-up"
-            description="Real scheduled sales work from opportunity-linked appointments and assessments."
-            actionHref={buildLeadsHref({ q: query, view, followUp: "due" })}
-            actionLabel="Review tasks"
-            items={nextTasks.slice(0, 5).map((activity) => ({
-              href: `/leads/${activity.opportunityId}`,
-              title: activity.title,
-              subtitle: activity.assignedLabel,
-              meta: `${activity.label} - ${formatDateLabel(activity.startsAt)}`,
-              trailing: "Scheduled"
-            }))}
-            emptyTitle="No upcoming lead tasks are scheduled."
-            emptyDescription="Scheduled follow-up and assessment work will show here once it is on the shared calendar."
-          />
-
-          <ManagerDashboardCard
-            eyebrow="Upcoming"
-            title="Upcoming tasks and assessments"
-            description="Keep the next round of sales follow-up visible without inventing a separate task engine."
-            actionHref={buildLeadsHref({
-              q: query,
-              view,
-              followUp: followUpView
-            })}
-            actionLabel="Open sales board"
-            items={nextTasks.slice(5, 10).map((activity) => ({
-              href: `/leads/${activity.opportunityId}`,
-              title: activity.title,
-              subtitle: activity.assignedLabel,
-              meta: `${activity.label} - ${formatDateLabel(activity.startsAt)}`,
-              trailing: "Upcoming"
-            }))}
-            emptyTitle="No later lead tasks are scheduled."
-            emptyDescription="When more scheduled lead work is on the calendar, it will appear here."
-          />
-
+        <section className="order-3 grid gap-3 xl:grid-cols-[minmax(0,1fr)_minmax(320px,0.4fr)]">
           <section className="border border-[#d1d5db] bg-white">
             <div className="border-b border-[#e5e7eb] px-4 py-2.5">
               <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#005eb8]">
@@ -546,9 +709,55 @@ export default async function LeadsPage({ searchParams }: LeadsPageProps) {
               ))}
             </div>
           </section>
+
+          <section className="border border-[#d1d5db] bg-white">
+            <div className="border-b border-[#e5e7eb] px-4 py-2.5">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#005eb8]">
+                Activity
+              </p>
+              <h3 className="mt-1 text-[17px] font-semibold tracking-tight text-[var(--text-primary)]">
+                Scheduled sales work
+              </h3>
+              <p className="mt-1 text-xs leading-5 text-[var(--text-secondary)]">
+                Opportunity-linked appointments and assessments from the
+                existing calendar and sales fields.
+              </p>
+            </div>
+            <div className="divide-y divide-[#e5e7eb]">
+              {nextTasks.slice(0, 6).length > 0 ? (
+                nextTasks.slice(0, 6).map((activity) => (
+                  <Link
+                    key={`${activity.opportunityId}:${activity.startsAt}`}
+                    href={`/leads/${activity.opportunityId}`}
+                    className="block px-4 py-3 transition hover:bg-[#f8fafc]"
+                  >
+                    <p className="text-sm font-semibold text-[var(--text-primary)]">
+                      {activity.title}
+                    </p>
+                    <p className="mt-1 text-xs leading-5 text-[var(--text-secondary)]">
+                      {activity.assignedLabel}
+                    </p>
+                    <p className="mt-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#005eb8]">
+                      {activity.label} - {formatDateLabel(activity.startsAt)}
+                    </p>
+                  </Link>
+                ))
+              ) : (
+                <div className="m-4 rounded-[4px] border border-dashed border-[#cbd5e1] bg-[#f9fafb] px-3 py-4">
+                  <p className="text-sm font-semibold text-[var(--text-primary)]">
+                    No scheduled sales work is waiting.
+                  </p>
+                  <p className="mt-2 text-sm leading-5 text-[var(--text-secondary)]">
+                    Site visits and opportunity appointments will appear here
+                    when they are tied to real sales records.
+                  </p>
+                </div>
+              )}
+            </div>
+          </section>
         </section>
 
-        <section className="order-1 overflow-hidden rounded-[4px] border border-[#cfd6df] bg-white">
+        <section className="order-2 overflow-hidden rounded-[4px] border border-[#cfd6df] bg-white">
           <div className="flex flex-col gap-3 border-b border-[#e5e7eb] bg-[#fbfcfd] px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#005eb8]">
