@@ -385,6 +385,53 @@ export default async function CommunicationsPage({
     contextEvents,
     notificationCount: notifications.totalCount
   });
+  const topCommunicationAttention = workspaceSummary.attentionItems[0] ?? null;
+  const communicationCommandMetrics = [
+    {
+      key: "needs-response",
+      label: "Needs response",
+      value: summary.needsResponseCount,
+      detail:
+        summary.needsResponseCount > 0
+          ? "Customer-visible replies are waiting on contractor follow-up."
+          : "No customer-visible reply is waiting right now.",
+      href: buildCommunicationsHref({
+        q: query,
+        view: "needs_response",
+        source
+      })
+    },
+    {
+      key: "unread",
+      label: "Unread",
+      value: summary.unreadCount,
+      detail:
+        summary.unreadCount > 0
+          ? "Unread notifications need triage against existing threads."
+          : "No unread communication notifications are open.",
+      href: buildCommunicationsHref({ q: query, view: "unread", source })
+    },
+    {
+      key: "finance",
+      label: "Finance context",
+      value: workspaceSummary.financeContextCount,
+      detail:
+        workspaceSummary.financeContextCount > 0
+          ? "Invoice and payment conversations are linked to canonical records."
+          : "No invoice or payment communication pressure is visible.",
+      href: buildCommunicationsHref({ q: query, view, source: "invoice" })
+    },
+    {
+      key: "proof",
+      label: "Proof review",
+      value: workspaceSummary.deliveryProofReviewCount,
+      detail:
+        workspaceSummary.deliveryProofReviewCount > 0
+          ? "Delivery proof or shared evidence needs communications review."
+          : "No delivery proof review is active in the current read model.",
+      href: workspaceSummary.deliveryProofReviewSummary.href
+    }
+  ] as const;
 
   return (
     <ContractorWorkspacePage
@@ -403,50 +450,26 @@ export default async function CommunicationsPage({
       }}
       summary={
         <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
-          <div className="border border-[#e5e5e5] bg-white px-4 py-3">
-            <p className="text-[11px] uppercase tracking-[0.14em] text-[#666666]">
-              Workspace status
-            </p>
-            <p className="mt-1 text-lg font-semibold tracking-tight text-[#171717]">
-              {workspaceSummary.primaryStatus}
-            </p>
-            <p className="mt-1 text-xs leading-5 text-slate-500">
-              {workspaceSummary.workflowCoverageLabel}
-            </p>
-          </div>
-          <div className="border border-[#e5e5e5] bg-white px-4 py-3">
-            <p className="text-[11px] uppercase tracking-[0.14em] text-[#666666]">
-              Reply / review
-            </p>
-            <p className="mt-1 text-2xl font-semibold tracking-tight text-[#171717]">
-              {workspaceSummary.followUpCount}
-            </p>
-            <p className="mt-1 text-xs leading-5 text-slate-500">
-              {workspaceSummary.notificationReviewDetail}
-            </p>
-          </div>
-          <div className="border border-[#e5e5e5] bg-white px-4 py-3">
-            <p className="text-[11px] uppercase tracking-[0.14em] text-[#666666]">
-              Customer boundary
-            </p>
-            <p className="mt-1 text-lg font-semibold tracking-tight text-[#171717]">
-              {workspaceSummary.customerBoundaryLabel}
-            </p>
-            <p className="mt-1 text-xs leading-5 text-slate-500">
-              {workspaceSummary.customerBoundaryDetail}
-            </p>
-          </div>
-          <div className="border border-[#e5e5e5] bg-white px-4 py-3">
-            <p className="text-[11px] uppercase tracking-[0.14em] text-[#666666]">
-              Delivery proof
-            </p>
-            <p className="mt-1 text-lg font-semibold tracking-tight text-[#171717]">
-              {workspaceSummary.deliveryProofLabel}
-            </p>
-            <p className="mt-1 text-xs leading-5 text-slate-500">
-              {workspaceSummary.deliveryProofDetail}
-            </p>
-          </div>
+          {communicationCommandMetrics.map((metric) => (
+            <Link
+              key={metric.key}
+              href={metric.href}
+              className="border border-[#005EB8]/25 bg-white px-4 py-3 transition hover:bg-[#f4f8fc] hover:shadow-[0_10px_30px_rgba(15,23,42,0.08)]"
+            >
+              <p className="text-[11px] uppercase tracking-[0.14em] text-[#005EB8]">
+                {metric.label}
+              </p>
+              <div className="mt-1 flex items-end justify-between gap-3">
+                <p className="text-2xl font-semibold tracking-tight text-[#171717]">
+                  {metric.value}
+                </p>
+                <span className="text-xs font-medium text-slate-500">Open</span>
+              </div>
+              <p className="mt-1 text-xs leading-5 text-slate-500">
+                {metric.detail}
+              </p>
+            </Link>
+          ))}
         </div>
       }
       commandBar={{
@@ -512,7 +535,7 @@ export default async function CommunicationsPage({
               className={[
                 "inline-flex items-center gap-2 rounded-[4px] px-3 py-2 text-sm font-medium transition",
                 isActive
-                  ? "bg-[#171717] text-white"
+                  ? "bg-[#005EB8] text-white"
                   : "border border-[#d6d6d6] bg-white text-slate-700 hover:bg-slate-50"
               ].join(" ")}
             >
@@ -654,402 +677,541 @@ export default async function CommunicationsPage({
           </section>
         ) : null}
 
-        <section className="border border-[#d6d6d6] bg-white px-5 py-5 sm:px-6">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-            <div className="max-w-3xl">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#666666]">
-                Record-linked communication control room
-              </p>
-              <h2 className="mt-2 text-xl font-semibold tracking-tight text-slate-950">
-                {workspaceSummary.primaryStatus}
-              </h2>
-              <p className="mt-2 text-sm leading-6 text-slate-500">
-                {workspaceSummary.primaryDetail}
-              </p>
-              <p className="mt-2 text-sm leading-6 text-slate-500">
-                {workspaceSummary.workflowCoverageDetail}
-              </p>
-            </div>
-            <div className="grid gap-2 text-sm sm:grid-cols-2 lg:min-w-[360px]">
-              <div className="rounded-[4px] border border-[#e5e5e5] bg-[#f8f8f8] px-3 py-2">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#666666]">
-                  Latest customer activity
+        <section
+          id="communications-command-center"
+          className="border border-[#005EB8]/35 bg-white shadow-sm"
+        >
+          <div className="border-b border-[#005EB8]/20 bg-[#f4f8fc] px-5 py-4 sm:px-6">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+              <div className="max-w-3xl">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#005EB8]">
+                  Communications Command
                 </p>
-                <p className="mt-1 font-medium text-slate-950">
-                  {formatDateTime(workspaceSummary.latestCustomerActivityAt)}
+                <h2 className="mt-2 text-xl font-semibold tracking-tight text-slate-950">
+                  {workspaceSummary.primaryStatus}
+                </h2>
+                <p className="mt-2 text-sm leading-6 text-slate-500">
+                  Start with response pressure, unread review, financial
+                  context, and delivery proof. Every lane links back to existing
+                  canonical threads and source records.
                 </p>
               </div>
-              <div className="rounded-[4px] border border-[#e5e5e5] bg-[#f8f8f8] px-3 py-2">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#666666]">
-                  Latest context
-                </p>
-                <p className="mt-1 font-medium text-slate-950">
-                  {formatDateTime(workspaceSummary.latestContextActivityAt)}
-                </p>
+              <div className="grid gap-2 text-sm sm:grid-cols-2 lg:min-w-[360px]">
+                <div className="border border-[#005EB8]/20 bg-white px-3 py-2">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#005EB8]">
+                    Latest customer activity
+                  </p>
+                  <p className="mt-1 font-medium text-slate-950">
+                    {formatDateTime(workspaceSummary.latestCustomerActivityAt)}
+                  </p>
+                </div>
+                <div className="border border-[#005EB8]/20 bg-white px-3 py-2">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#005EB8]">
+                    Latest context
+                  </p>
+                  <p className="mt-1 font-medium text-slate-950">
+                    {formatDateTime(workspaceSummary.latestContextActivityAt)}
+                  </p>
+                </div>
               </div>
             </div>
           </div>
 
-          <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-            {workspaceSummary.lanes.map((lane) => (
-              <Link
-                key={lane.key}
-                href={lane.href}
-                className="rounded-[4px] border border-[#e5e5e5] bg-[#f8f8f8] px-4 py-3 transition hover:border-[#ef7d32] hover:bg-white"
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#666666]">
+          <div className="grid gap-px bg-[#e5e5e5] md:grid-cols-2 xl:grid-cols-4">
+            {workspaceSummary.lanes
+              .filter((lane) => lane.count > 0 || lane.attentionCount > 0)
+              .slice(0, 4)
+              .map((lane) => (
+                <Link
+                  key={lane.key}
+                  href={lane.href}
+                  className="min-w-0 bg-white px-4 py-4 transition hover:bg-[#f8f8f8]"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#666666]">
                       {lane.label}
                     </p>
-                    <div className="mt-2 flex flex-wrap gap-2">
-                      <span className="inline-flex rounded-full border border-[#d6d6d6] bg-white px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-600">
-                        {lane.boundaryLabel}
-                      </span>
-                      <span className="inline-flex rounded-full border border-[#e4d7ca] bg-[#fbf5ee] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#8f5b32]">
-                        {lane.actionLabel}
-                      </span>
-                    </div>
-                    <p className="mt-2 text-sm leading-6 text-slate-500">
-                      {lane.detail}
-                    </p>
+                    <span className="rounded-full border border-[#d6d6d6] bg-[#f8f8f8] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-500">
+                      {lane.boundaryLabel}
+                    </span>
                   </div>
-                  <div className="shrink-0 text-right">
-                    <p className="text-lg font-semibold text-slate-950">
-                      {lane.count}
+                  <p className="mt-3 text-xl font-semibold tracking-tight text-[#171717]">
+                    {lane.count}
+                  </p>
+                  <p className="mt-2 text-sm leading-5 text-slate-500">
+                    {lane.detail}
+                  </p>
+                  {lane.attentionCount > 0 ? (
+                    <p className="mt-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#005EB8]">
+                      {lane.attentionCount} attention
                     </p>
-                    {lane.attentionCount > 0 ? (
-                      <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#8f5b32]">
-                        {lane.attentionCount} attention
-                      </p>
-                    ) : null}
-                  </div>
-                </div>
-              </Link>
-            ))}
+                  ) : null}
+                </Link>
+              ))}
           </div>
 
-          <section className="mt-5 rounded-[4px] border border-[#e5e5e5] bg-white px-4 py-4">
-            <div className="flex flex-wrap items-end justify-between gap-3">
-              <div>
-                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#666666]">
-                  Conversations by linked record
+          <div className="grid gap-px bg-[#e5e5e5] lg:grid-cols-[minmax(0,1fr)_minmax(280px,0.55fr)]">
+            <div className="bg-white px-5 py-4 sm:px-6">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#666666]">
+                Next follow-up
+              </p>
+              {topCommunicationAttention ? (
+                <Link
+                  href={topCommunicationAttention.href}
+                  className="mt-3 block border border-amber-200 bg-amber-50 px-4 py-3 transition hover:bg-white"
+                >
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <h3 className="text-base font-semibold tracking-tight text-slate-950">
+                      {topCommunicationAttention.label}
+                    </h3>
+                    <span className="text-xs font-medium text-slate-500">
+                      {formatDateTime(topCommunicationAttention.occurredAt)}
+                    </span>
+                  </div>
+                  <p className="mt-2 text-sm leading-6 text-slate-600">
+                    {topCommunicationAttention.detail}
+                  </p>
+                </Link>
+              ) : (
+                <p className="mt-3 border border-dashed border-[#d6d6d6] bg-[#f8f8f8] px-4 py-3 text-sm leading-6 text-slate-500">
+                  No unanswered customer message, stale thread, unread
+                  notification, or delivery issue is currently visible.
                 </p>
-                <h3 className="mt-2 text-lg font-semibold tracking-tight text-slate-950">
-                  Communications owns the action surface
-                </h3>
-                <p className="mt-1 max-w-[76ch] text-sm leading-6 text-slate-500">
-                  These groups are derived from existing canonical communication
-                  threads. Record workspaces can show compact evidence, but
-                  message review, replies, unread triage, and portal-safe
-                  boundaries stay here.
+              )}
+            </div>
+            <div className="bg-white px-5 py-4 sm:px-6">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#666666]">
+                Ownership boundary
+              </p>
+              <h3 className="mt-2 text-base font-semibold tracking-tight text-slate-950">
+                Reply here, act on the source record
+              </h3>
+              <p className="mt-2 text-sm leading-6 text-slate-500">
+                Communications reviews threads and message history. Project,
+                invoice, payment, estimate, contract, and customer records
+                remain the owning workspaces for source-record action.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <details className="group space-y-4">
+          <summary className="flex cursor-pointer list-none items-start justify-between gap-4 border border-[#d6d6d6] bg-white px-5 py-4 sm:px-6 [&::-webkit-details-marker]:hidden">
+            <div>
+              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#666666]">
+                Supporting communications detail
+              </p>
+              <h2 className="mt-1 text-xl font-semibold tracking-tight text-slate-950">
+                Workflow coverage, ownership groups, and proof context
+              </h2>
+              <p className="mt-1 max-w-[78ch] text-sm leading-6 text-slate-500">
+                The full continuity map remains available below the action lanes
+                for deeper review without crowding the opening command surface.
+              </p>
+            </div>
+            <span className="mt-0.5 inline-flex shrink-0 items-center rounded-full border border-[#d6d6d6] bg-[#f8f8f8] px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#666666]">
+              <span className="group-open:hidden">Show</span>
+              <span className="hidden group-open:inline">Hide</span>
+            </span>
+          </summary>
+
+          <section className="border border-[#d6d6d6] bg-white px-5 py-5 sm:px-6">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+              <div className="max-w-3xl">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#666666]">
+                  Record-linked communication control room
+                </p>
+                <h2 className="mt-2 text-xl font-semibold tracking-tight text-slate-950">
+                  {workspaceSummary.primaryStatus}
+                </h2>
+                <p className="mt-2 text-sm leading-6 text-slate-500">
+                  {workspaceSummary.primaryDetail}
+                </p>
+                <p className="mt-2 text-sm leading-6 text-slate-500">
+                  {workspaceSummary.workflowCoverageDetail}
                 </p>
               </div>
-              <span className="rounded-full border border-[#d6d6d6] bg-[#f8f8f8] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-600">
-                No duplicate thread model
-              </span>
+              <div className="grid gap-2 text-sm sm:grid-cols-2 lg:min-w-[360px]">
+                <div className="rounded-[4px] border border-[#e5e5e5] bg-[#f8f8f8] px-3 py-2">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#666666]">
+                    Latest customer activity
+                  </p>
+                  <p className="mt-1 font-medium text-slate-950">
+                    {formatDateTime(workspaceSummary.latestCustomerActivityAt)}
+                  </p>
+                </div>
+                <div className="rounded-[4px] border border-[#e5e5e5] bg-[#f8f8f8] px-3 py-2">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#666666]">
+                    Latest context
+                  </p>
+                  <p className="mt-1 font-medium text-slate-950">
+                    {formatDateTime(workspaceSummary.latestContextActivityAt)}
+                  </p>
+                </div>
+              </div>
             </div>
 
-            <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-              {workspaceSummary.recordOwnershipGroups.map((group) => (
+            <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+              {workspaceSummary.lanes.map((lane) => (
                 <Link
-                  key={group.key}
-                  href={group.href}
-                  className="rounded-[4px] border border-[#e5e5e5] bg-[#f8f8f8] px-3 py-3 transition hover:border-[#ef7d32] hover:bg-white"
+                  key={lane.key}
+                  href={lane.href}
+                  className="rounded-[4px] border border-[#e5e5e5] bg-[#f8f8f8] px-4 py-3 transition hover:border-[#ef7d32] hover:bg-white"
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
                       <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#666666]">
-                        {group.label}
+                        {lane.label}
                       </p>
-                      <p className="mt-2 text-sm font-semibold text-slate-950">
-                        {group.count > 0
-                          ? group.latestThreadLabel
-                          : "No conversations yet"}
-                      </p>
-                      <p className="mt-1 text-sm leading-6 text-slate-500">
-                        {group.count > 0 ? group.detail : group.emptyDetail}
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        <span className="inline-flex rounded-full border border-[#d6d6d6] bg-white px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-600">
+                          {lane.boundaryLabel}
+                        </span>
+                        <span className="inline-flex rounded-full border border-[#e4d7ca] bg-[#fbf5ee] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#8f5b32]">
+                          {lane.actionLabel}
+                        </span>
+                      </div>
+                      <p className="mt-2 text-sm leading-6 text-slate-500">
+                        {lane.detail}
                       </p>
                     </div>
                     <div className="shrink-0 text-right">
-                      <p className="text-xl font-semibold text-slate-950">
-                        {group.count}
+                      <p className="text-lg font-semibold text-slate-950">
+                        {lane.count}
                       </p>
-                      <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400">
-                        Threads
-                      </p>
+                      {lane.attentionCount > 0 ? (
+                        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#8f5b32]">
+                          {lane.attentionCount} attention
+                        </p>
+                      ) : null}
                     </div>
-                  </div>
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    {group.needsResponseCount > 0 ? (
-                      <span className="inline-flex rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-amber-800">
-                        {group.needsResponseCount} needs response
-                      </span>
-                    ) : null}
-                    {group.unreadCount > 0 ? (
-                      <span className="inline-flex rounded-full border border-[#d6d6d6] bg-white px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-600">
-                        {group.unreadCount} unread
-                      </span>
-                    ) : null}
-                    <span className="inline-flex rounded-full border border-[#d6d6d6] bg-white px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-600">
-                      {group.customerVisibleCount} customer-visible
-                    </span>
-                    <span className="inline-flex rounded-full border border-[#d6d6d6] bg-white px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-600">
-                      {group.internalCount} internal
-                    </span>
-                  </div>
-                  <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
-                    <span className="text-xs leading-5 text-slate-500">
-                      Latest: {formatDateTime(group.latestActivityAt)}
-                    </span>
-                    <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#8f5b32]">
-                      {group.actionLabel}
-                    </span>
                   </div>
                 </Link>
               ))}
             </div>
-          </section>
 
-          <div className="mt-5 grid gap-4 lg:grid-cols-2">
-            <div className="rounded-[4px] border border-[#e5e5e5] bg-[#fffcf7] px-4 py-4">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#8f5b32]">
-                Follow-up intelligence
-              </p>
-              {workspaceSummary.attentionItems.length > 0 ? (
-                <div className="mt-3 space-y-2">
-                  {workspaceSummary.attentionItems.slice(0, 4).map((item) => (
-                    <Link
-                      key={item.key}
-                      href={item.href}
-                      className={[
-                        "block rounded-[4px] border bg-white px-3 py-2 transition hover:bg-slate-50",
-                        item.tone === "critical"
-                          ? "border-rose-200"
-                          : "border-amber-200"
-                      ].join(" ")}
-                    >
-                      <div className="flex flex-wrap items-start justify-between gap-2">
-                        <p className="text-sm font-semibold text-slate-950">
-                          {item.label}
+            <section className="mt-5 rounded-[4px] border border-[#e5e5e5] bg-white px-4 py-4">
+              <div className="flex flex-wrap items-end justify-between gap-3">
+                <div>
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#666666]">
+                    Conversations by linked record
+                  </p>
+                  <h3 className="mt-2 text-lg font-semibold tracking-tight text-slate-950">
+                    Communications owns the action surface
+                  </h3>
+                  <p className="mt-1 max-w-[76ch] text-sm leading-6 text-slate-500">
+                    These groups are derived from existing canonical
+                    communication threads. Record workspaces can show compact
+                    evidence, but message review, replies, unread triage, and
+                    portal-safe boundaries stay here.
+                  </p>
+                </div>
+                <span className="rounded-full border border-[#d6d6d6] bg-[#f8f8f8] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-600">
+                  No duplicate thread model
+                </span>
+              </div>
+
+              <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+                {workspaceSummary.recordOwnershipGroups.map((group) => (
+                  <Link
+                    key={group.key}
+                    href={group.href}
+                    className="rounded-[4px] border border-[#e5e5e5] bg-[#f8f8f8] px-3 py-3 transition hover:border-[#ef7d32] hover:bg-white"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#666666]">
+                          {group.label}
                         </p>
-                        <p className="text-xs text-slate-500">
-                          {formatDateTime(item.occurredAt)}
+                        <p className="mt-2 text-sm font-semibold text-slate-950">
+                          {group.count > 0
+                            ? group.latestThreadLabel
+                            : "No conversations yet"}
+                        </p>
+                        <p className="mt-1 text-sm leading-6 text-slate-500">
+                          {group.count > 0 ? group.detail : group.emptyDetail}
                         </p>
                       </div>
-                      <p className="mt-1 text-sm leading-6 text-slate-500">
-                        {item.detail}
-                      </p>
-                    </Link>
-                  ))}
-                </div>
-              ) : (
-                <p className="mt-3 text-sm leading-6 text-slate-500">
-                  No unanswered customer message, stale thread, or delivery
-                  issue is currently visible in the communications read model.
-                  Notification read state remains separate from reply triage.
-                </p>
-              )}
-            </div>
-
-            <div className="rounded-[4px] border border-[#e5e5e5] bg-[#f8f8f8] px-4 py-4">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#666666]">
-                Delivery and evidence context
-              </p>
-              <div className="mt-2 rounded-[4px] border border-[#e5e5e5] bg-white px-3 py-2">
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div>
-                    <p className="text-sm font-semibold text-slate-950">
-                      {workspaceSummary.deliveryProofLabel}
-                    </p>
-                    <p className="mt-1 text-sm leading-6 text-slate-500">
-                      {workspaceSummary.deliveryProofDetail}
-                    </p>
-                  </div>
-                  <span
-                    className={[
-                      "inline-flex rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em]",
-                      workspaceSummary.deliveryProofReviewCount > 0
-                        ? "border-rose-200 bg-rose-50 text-rose-700"
-                        : "border-[#d6e6d9] bg-[#f4fbf5] text-[#2f6b3b]"
-                    ].join(" ")}
-                  >
-                    {workspaceSummary.deliveryProofReviewCount > 0
-                      ? "Needs review"
-                      : "Read-only proof"}
-                  </span>
-                </div>
-              </div>
-              <div className="mt-2 rounded-[4px] border border-[#e5e5e5] bg-white px-3 py-2">
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div>
-                    <p className="text-sm font-semibold text-slate-950">
-                      {workspaceSummary.deliveryProofReviewSummary.label}
-                    </p>
-                    <p className="mt-1 text-sm leading-6 text-slate-500">
-                      {workspaceSummary.deliveryProofReviewSummary.detail}
-                    </p>
-                  </div>
-                  <Link
-                    href={workspaceSummary.deliveryProofReviewSummary.href}
-                    className="inline-flex shrink-0 items-center rounded-[4px] border border-[#d6d6d6] bg-white px-2.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#3f3f3f] transition hover:bg-slate-50"
-                  >
-                    Review proof
+                      <div className="shrink-0 text-right">
+                        <p className="text-xl font-semibold text-slate-950">
+                          {group.count}
+                        </p>
+                        <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400">
+                          Threads
+                        </p>
+                      </div>
+                    </div>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {group.needsResponseCount > 0 ? (
+                        <span className="inline-flex rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-amber-800">
+                          {group.needsResponseCount} needs response
+                        </span>
+                      ) : null}
+                      {group.unreadCount > 0 ? (
+                        <span className="inline-flex rounded-full border border-[#d6d6d6] bg-white px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-600">
+                          {group.unreadCount} unread
+                        </span>
+                      ) : null}
+                      <span className="inline-flex rounded-full border border-[#d6d6d6] bg-white px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-600">
+                        {group.customerVisibleCount} customer-visible
+                      </span>
+                      <span className="inline-flex rounded-full border border-[#d6d6d6] bg-white px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-600">
+                        {group.internalCount} internal
+                      </span>
+                    </div>
+                    <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+                      <span className="text-xs leading-5 text-slate-500">
+                        Latest: {formatDateTime(group.latestActivityAt)}
+                      </span>
+                      <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#8f5b32]">
+                        {group.actionLabel}
+                      </span>
+                    </div>
                   </Link>
-                </div>
+                ))}
               </div>
-              <div className="mt-3">
-                <div className="flex flex-wrap items-end justify-between gap-3">
-                  <div>
-                    <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#666666]">
-                      Delivery Proof by Record
-                    </p>
-                    <p className="mt-1 text-xs leading-5 text-slate-500">
-                      Grouped read-only evidence by canonical source record.
-                    </p>
-                  </div>
-                  <span className="text-xs font-medium text-slate-500">
-                    {workspaceSummary.deliveryProofRecordGroups.length} record
-                    {workspaceSummary.deliveryProofRecordGroups.length === 1
-                      ? ""
-                      : "s"}
-                  </span>
-                </div>
-                {workspaceSummary.deliveryProofRecordGroups.length > 0 ? (
+            </section>
+
+            <div className="mt-5 grid gap-4 lg:grid-cols-2">
+              <div className="rounded-[4px] border border-[#e5e5e5] bg-[#fffcf7] px-4 py-4">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#8f5b32]">
+                  Follow-up intelligence
+                </p>
+                {workspaceSummary.attentionItems.length > 0 ? (
                   <div className="mt-3 space-y-2">
-                    {workspaceSummary.deliveryProofRecordGroups
-                      .slice(0, 5)
-                      .map((group) => (
-                        <article
-                          key={group.key}
-                          className="rounded-[4px] border border-[#e5e5e5] bg-white px-3 py-3"
-                        >
-                          <div className="flex flex-wrap items-start justify-between gap-3">
-                            <div className="min-w-0">
-                              <Link
-                                href={group.sourceHref}
-                                className="text-sm font-semibold text-slate-950 transition hover:text-brand-700"
-                              >
-                                {group.sourceLabel}
-                              </Link>
-                              <p className="mt-1 text-sm leading-6 text-slate-500">
-                                {group.latestDescription}
-                              </p>
-                            </div>
-                            <div className="shrink-0 text-left sm:text-right">
-                              <p className="text-xs font-semibold text-slate-900">
-                                {group.proofCount} proof{" "}
-                                {group.proofCount === 1 ? "event" : "events"}
-                              </p>
-                              <p className="mt-1 text-xs text-slate-500">
-                                {formatDateTime(group.latestEventAt)}
-                              </p>
-                            </div>
-                          </div>
-                          <div className="mt-2 flex flex-wrap gap-2">
-                            <span
-                              className={[
-                                "inline-flex rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em]",
-                                group.needsReview
-                                  ? "border-rose-200 bg-rose-50 text-rose-700"
-                                  : "border-[#d6e6d9] bg-[#f4fbf5] text-[#2f6b3b]"
-                              ].join(" ")}
-                            >
-                              {group.needsReview
-                                ? "Needs review"
-                                : group.latestProofStateLabel}
-                            </span>
-                            {[
-                              ...group.proofSourceLabels,
-                              ...group.proofBoundaryLabels,
-                              ...group.audienceLabels
-                            ].map((label) => (
-                              <span
-                                key={`${group.key}:${label}`}
-                                className="inline-flex rounded-full border border-[#d6d6d6] bg-slate-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-600"
-                              >
-                                {label}
-                              </span>
-                            ))}
-                          </div>
-                          <div className="mt-3 flex flex-wrap gap-2">
-                            <Link
-                              href={group.sourceHref}
-                              className="inline-flex items-center rounded-[4px] border border-[#d6d6d6] bg-white px-2.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#3f3f3f] transition hover:bg-slate-50"
-                            >
-                              Open source record
-                            </Link>
-                            <Link
-                              href={group.communicationsHref}
-                              className="inline-flex items-center rounded-[4px] px-2.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500 transition hover:text-slate-900"
-                            >
-                              Review communication activity
-                            </Link>
-                          </div>
-                        </article>
-                      ))}
+                    {workspaceSummary.attentionItems.slice(0, 4).map((item) => (
+                      <Link
+                        key={item.key}
+                        href={item.href}
+                        className={[
+                          "block rounded-[4px] border bg-white px-3 py-2 transition hover:bg-slate-50",
+                          item.tone === "critical"
+                            ? "border-rose-200"
+                            : "border-amber-200"
+                        ].join(" ")}
+                      >
+                        <div className="flex flex-wrap items-start justify-between gap-2">
+                          <p className="text-sm font-semibold text-slate-950">
+                            {item.label}
+                          </p>
+                          <p className="text-xs text-slate-500">
+                            {formatDateTime(item.occurredAt)}
+                          </p>
+                        </div>
+                        <p className="mt-1 text-sm leading-6 text-slate-500">
+                          {item.detail}
+                        </p>
+                      </Link>
+                    ))}
                   </div>
                 ) : (
-                  <p className="mt-3 rounded-[4px] border border-dashed border-[#d6d6d6] bg-white px-3 py-3 text-sm leading-6 text-slate-500">
-                    No delivery proof has been recorded yet. That does not mean
-                    a send failed; it means no proof evidence exists in the
-                    current communications read model.
+                  <p className="mt-3 text-sm leading-6 text-slate-500">
+                    No unanswered customer message, stale thread, or delivery
+                    issue is currently visible in the communications read model.
+                    Notification read state remains separate from reply triage.
                   </p>
                 )}
               </div>
-              {workspaceSummary.recentContextEvents.length > 0 ? (
-                <div className="mt-3 space-y-2">
-                  {workspaceSummary.recentContextEvents.map((event) => (
-                    <Link
-                      key={event.id}
-                      href={event.href}
-                      className="block rounded-[4px] border border-[#e5e5e5] bg-white px-3 py-2 transition hover:border-[#ef7d32]"
-                    >
-                      <div className="flex flex-wrap items-start justify-between gap-2">
-                        <p className="text-sm font-semibold text-slate-950">
-                          {event.title}
-                        </p>
-                        <p className="text-xs text-slate-500">
-                          {formatDateTime(event.occurredAt)}
-                        </p>
-                      </div>
-                      <p className="mt-1 text-sm leading-6 text-slate-500">
-                        {event.description}
-                      </p>
-                      <div className="mt-2 flex flex-wrap gap-2">
-                        <span
-                          className={[
-                            "inline-flex rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em]",
-                            event.needsReview
-                              ? "border-rose-200 bg-rose-50 text-rose-700"
-                              : event.tone === "positive"
-                                ? "border-[#d6e6d9] bg-[#f4fbf5] text-[#2f6b3b]"
-                                : "border-[#d6d6d6] bg-slate-50 text-slate-600"
-                          ].join(" ")}
-                        >
-                          {event.proofStateLabel}
-                        </span>
-                        <span className="inline-flex rounded-full border border-[#d6d6d6] bg-white px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-600">
-                          {event.proofSourceLabel}
-                        </span>
-                        <span className="inline-flex rounded-full border border-[#e4d7ca] bg-[#fbf5ee] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#8f5b32]">
-                          {event.proofBoundaryLabel}
-                        </span>
-                      </div>
-                    </Link>
-                  ))}
-                </div>
-              ) : (
-                <p className="mt-3 text-sm leading-6 text-slate-500">
-                  No delivery proof yet. Document sends and shared-evidence
-                  proof will appear here when canonical delivery or portal
-                  evidence events exist; this panel does not send, resend, or
-                  mutate delivery state.
+
+              <div className="rounded-[4px] border border-[#e5e5e5] bg-[#f8f8f8] px-4 py-4">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#666666]">
+                  Delivery and evidence context
                 </p>
-              )}
+                <div className="mt-2 rounded-[4px] border border-[#e5e5e5] bg-white px-3 py-2">
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                      <p className="text-sm font-semibold text-slate-950">
+                        {workspaceSummary.deliveryProofLabel}
+                      </p>
+                      <p className="mt-1 text-sm leading-6 text-slate-500">
+                        {workspaceSummary.deliveryProofDetail}
+                      </p>
+                    </div>
+                    <span
+                      className={[
+                        "inline-flex rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em]",
+                        workspaceSummary.deliveryProofReviewCount > 0
+                          ? "border-rose-200 bg-rose-50 text-rose-700"
+                          : "border-[#d6e6d9] bg-[#f4fbf5] text-[#2f6b3b]"
+                      ].join(" ")}
+                    >
+                      {workspaceSummary.deliveryProofReviewCount > 0
+                        ? "Needs review"
+                        : "Read-only proof"}
+                    </span>
+                  </div>
+                </div>
+                <div className="mt-2 rounded-[4px] border border-[#e5e5e5] bg-white px-3 py-2">
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                      <p className="text-sm font-semibold text-slate-950">
+                        {workspaceSummary.deliveryProofReviewSummary.label}
+                      </p>
+                      <p className="mt-1 text-sm leading-6 text-slate-500">
+                        {workspaceSummary.deliveryProofReviewSummary.detail}
+                      </p>
+                    </div>
+                    <Link
+                      href={workspaceSummary.deliveryProofReviewSummary.href}
+                      className="inline-flex shrink-0 items-center rounded-[4px] border border-[#d6d6d6] bg-white px-2.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#3f3f3f] transition hover:bg-slate-50"
+                    >
+                      Review proof
+                    </Link>
+                  </div>
+                </div>
+                <div className="mt-3">
+                  <div className="flex flex-wrap items-end justify-between gap-3">
+                    <div>
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#666666]">
+                        Delivery Proof by Record
+                      </p>
+                      <p className="mt-1 text-xs leading-5 text-slate-500">
+                        Grouped read-only evidence by canonical source record.
+                      </p>
+                    </div>
+                    <span className="text-xs font-medium text-slate-500">
+                      {workspaceSummary.deliveryProofRecordGroups.length} record
+                      {workspaceSummary.deliveryProofRecordGroups.length === 1
+                        ? ""
+                        : "s"}
+                    </span>
+                  </div>
+                  {workspaceSummary.deliveryProofRecordGroups.length > 0 ? (
+                    <div className="mt-3 space-y-2">
+                      {workspaceSummary.deliveryProofRecordGroups
+                        .slice(0, 5)
+                        .map((group) => (
+                          <article
+                            key={group.key}
+                            className="rounded-[4px] border border-[#e5e5e5] bg-white px-3 py-3"
+                          >
+                            <div className="flex flex-wrap items-start justify-between gap-3">
+                              <div className="min-w-0">
+                                <Link
+                                  href={group.sourceHref}
+                                  className="text-sm font-semibold text-slate-950 transition hover:text-brand-700"
+                                >
+                                  {group.sourceLabel}
+                                </Link>
+                                <p className="mt-1 text-sm leading-6 text-slate-500">
+                                  {group.latestDescription}
+                                </p>
+                              </div>
+                              <div className="shrink-0 text-left sm:text-right">
+                                <p className="text-xs font-semibold text-slate-900">
+                                  {group.proofCount} proof{" "}
+                                  {group.proofCount === 1 ? "event" : "events"}
+                                </p>
+                                <p className="mt-1 text-xs text-slate-500">
+                                  {formatDateTime(group.latestEventAt)}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="mt-2 flex flex-wrap gap-2">
+                              <span
+                                className={[
+                                  "inline-flex rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em]",
+                                  group.needsReview
+                                    ? "border-rose-200 bg-rose-50 text-rose-700"
+                                    : "border-[#d6e6d9] bg-[#f4fbf5] text-[#2f6b3b]"
+                                ].join(" ")}
+                              >
+                                {group.needsReview
+                                  ? "Needs review"
+                                  : group.latestProofStateLabel}
+                              </span>
+                              {[
+                                ...group.proofSourceLabels,
+                                ...group.proofBoundaryLabels,
+                                ...group.audienceLabels
+                              ].map((label) => (
+                                <span
+                                  key={`${group.key}:${label}`}
+                                  className="inline-flex rounded-full border border-[#d6d6d6] bg-slate-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-600"
+                                >
+                                  {label}
+                                </span>
+                              ))}
+                            </div>
+                            <div className="mt-3 flex flex-wrap gap-2">
+                              <Link
+                                href={group.sourceHref}
+                                className="inline-flex items-center rounded-[4px] border border-[#d6d6d6] bg-white px-2.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#3f3f3f] transition hover:bg-slate-50"
+                              >
+                                Open source record
+                              </Link>
+                              <Link
+                                href={group.communicationsHref}
+                                className="inline-flex items-center rounded-[4px] px-2.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500 transition hover:text-slate-900"
+                              >
+                                Review communication activity
+                              </Link>
+                            </div>
+                          </article>
+                        ))}
+                    </div>
+                  ) : (
+                    <p className="mt-3 rounded-[4px] border border-dashed border-[#d6d6d6] bg-white px-3 py-3 text-sm leading-6 text-slate-500">
+                      No delivery proof has been recorded yet. That does not
+                      mean a send failed; it means no proof evidence exists in
+                      the current communications read model.
+                    </p>
+                  )}
+                </div>
+                {workspaceSummary.recentContextEvents.length > 0 ? (
+                  <div className="mt-3 space-y-2">
+                    {workspaceSummary.recentContextEvents.map((event) => (
+                      <Link
+                        key={event.id}
+                        href={event.href}
+                        className="block rounded-[4px] border border-[#e5e5e5] bg-white px-3 py-2 transition hover:border-[#ef7d32]"
+                      >
+                        <div className="flex flex-wrap items-start justify-between gap-2">
+                          <p className="text-sm font-semibold text-slate-950">
+                            {event.title}
+                          </p>
+                          <p className="text-xs text-slate-500">
+                            {formatDateTime(event.occurredAt)}
+                          </p>
+                        </div>
+                        <p className="mt-1 text-sm leading-6 text-slate-500">
+                          {event.description}
+                        </p>
+                        <div className="mt-2 flex flex-wrap gap-2">
+                          <span
+                            className={[
+                              "inline-flex rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em]",
+                              event.needsReview
+                                ? "border-rose-200 bg-rose-50 text-rose-700"
+                                : event.tone === "positive"
+                                  ? "border-[#d6e6d9] bg-[#f4fbf5] text-[#2f6b3b]"
+                                  : "border-[#d6d6d6] bg-slate-50 text-slate-600"
+                            ].join(" ")}
+                          >
+                            {event.proofStateLabel}
+                          </span>
+                          <span className="inline-flex rounded-full border border-[#d6d6d6] bg-white px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-600">
+                            {event.proofSourceLabel}
+                          </span>
+                          <span className="inline-flex rounded-full border border-[#e4d7ca] bg-[#fbf5ee] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#8f5b32]">
+                            {event.proofBoundaryLabel}
+                          </span>
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="mt-3 text-sm leading-6 text-slate-500">
+                    No delivery proof yet. Document sends and shared-evidence
+                    proof will appear here when canonical delivery or portal
+                    evidence events exist; this panel does not send, resend, or
+                    mutate delivery state.
+                  </p>
+                )}
+              </div>
             </div>
-          </div>
-        </section>
+          </section>
+        </details>
 
         {hasSourceContext ? (
           <section className="border border-[#d6d6d6] bg-[#f8f8f8] px-5 py-4 sm:px-6">
@@ -1150,7 +1312,7 @@ export default async function CommunicationsPage({
                     className={[
                       "inline-flex items-center gap-2 rounded-[4px] px-3 py-2 text-sm font-medium transition",
                       isActive
-                        ? "bg-[#171717] text-white"
+                        ? "bg-[#005EB8] text-white"
                         : "border border-[#d6d6d6] bg-white text-slate-700 hover:bg-slate-50"
                     ].join(" ")}
                   >
