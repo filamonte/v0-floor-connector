@@ -129,7 +129,7 @@ const MOVE_PREVIEW_TIME_BUCKETS = [
 ] as const;
 
 const schedulePrimaryActionToneClassName =
-  "border-[var(--graphite)] bg-[var(--graphite)] text-white hover:bg-[var(--graphite-light)]";
+  "border-[#005EB8] bg-[#005EB8] text-white hover:bg-[#004b94]";
 const scheduleSecondaryActionToneClassName =
   "border-[var(--border-warm)] bg-white text-[var(--text-primary)] hover:bg-[var(--highlight)]";
 const scheduleMutedActionToneClassName =
@@ -2681,6 +2681,64 @@ export default async function SchedulePage({
       empty: recentlyCompletedJobs.length === 0
     }
   ] as const;
+  const crewboardCommandMetrics = [
+    {
+      key: "today",
+      label: "Today",
+      value: activeTodayJobs.length + todayAppointments.length,
+      detail: "Live work and appointments",
+      href: buildScheduleHref({
+        q: query,
+        projectId: projectFilterId ?? undefined,
+        view: "today",
+        crew: crewFilter,
+        layout: scheduleLayout,
+        date: plannerDateKey
+      })
+    },
+    {
+      key: "ready",
+      label: "Ready to schedule",
+      value: unscheduledJobs.length,
+      detail: "Date commitments needed",
+      href: buildScheduleHref({
+        q: query,
+        projectId: projectFilterId ?? undefined,
+        view: "unscheduled",
+        crew: crewFilter,
+        layout: scheduleLayout,
+        date: plannerDateKey
+      })
+    },
+    {
+      key: "crew",
+      label: "Needs crew",
+      value: todayWithoutCrewJobs.length + missingCrewJobs.length,
+      detail: "Assignment gaps",
+      href: buildScheduleHref({
+        q: query,
+        projectId: projectFilterId ?? undefined,
+        view: "scheduled",
+        crew: "unassigned",
+        layout: scheduleLayout,
+        date: plannerDateKey
+      })
+    },
+    {
+      key: "attention",
+      label: "Attention",
+      value: dispatchAttentionItems.length,
+      detail: "Ordered dispatch queue",
+      href: "#schedule-attention-desk"
+    }
+  ] as const;
+  const activeNextActionCount = nextActions.filter(
+    (action) => !action.empty
+  ).length;
+  const visibleNextActions =
+    activeNextActionCount > 0
+      ? nextActions.filter((action) => !action.empty)
+      : nextActions.slice(0, 2);
 
   return (
     <ContractorWorkspacePage
@@ -2699,32 +2757,28 @@ export default async function SchedulePage({
       }}
       summary={
         <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
-          {summaryItems.map((item) => (
+          {crewboardCommandMetrics.map((item) => (
             <Link
               key={item.key}
               href={item.href}
               className={[
-                "border px-4 py-3 transition hover:shadow-[0_10px_30px_rgba(15,23,42,0.08)]",
-                item.borderClass,
-                item.bgClass,
-                item.active ? "ring-1 ring-inset ring-[var(--graphite)]" : ""
+                "border border-[#005EB8]/25 bg-white px-4 py-3 transition hover:bg-[#f4f8fc] hover:shadow-[0_10px_30px_rgba(15,23,42,0.08)]"
               ].join(" ")}
             >
-              <p
-                className={`text-[11px] uppercase tracking-[0.14em] ${item.labelClass}`}
-              >
+              <p className="text-[11px] uppercase tracking-[0.14em] text-[#005EB8]">
                 {item.label}
               </p>
               <div className="mt-1 flex items-end justify-between gap-3">
-                <p
-                  className={`text-2xl font-semibold tracking-tight ${item.valueClass}`}
-                >
+                <p className="text-2xl font-semibold tracking-tight text-[var(--text-primary)]">
                   {item.value}
                 </p>
                 <span className="text-xs font-medium text-[var(--text-secondary)]">
-                  {item.active ? "Current view" : "Open"}
+                  Open
                 </span>
               </div>
+              <p className="mt-1 text-xs leading-5 text-[var(--text-secondary)]">
+                {item.detail}
+              </p>
             </Link>
           ))}
         </div>
@@ -2809,7 +2863,7 @@ export default async function SchedulePage({
                   className={[
                     scheduleFilterChipClassName,
                     isActive
-                      ? "bg-[var(--graphite)] text-white"
+                      ? "bg-[#005EB8] text-white"
                       : `border ${scheduleSecondaryActionToneClassName}`
                   ].join(" ")}
                 >
@@ -2853,7 +2907,7 @@ export default async function SchedulePage({
                   className={[
                     scheduleFilterChipClassName,
                     isActive
-                      ? "bg-[var(--graphite)] text-white"
+                      ? "bg-[#005EB8] text-white"
                       : `border ${scheduleSecondaryActionToneClassName}`
                   ].join(" ")}
                 >
@@ -2887,7 +2941,7 @@ export default async function SchedulePage({
                   className={[
                     scheduleFilterChipClassName,
                     isActive
-                      ? "bg-[var(--graphite)] text-white"
+                      ? "bg-[#005EB8] text-white"
                       : `border ${scheduleSecondaryActionToneClassName}`
                   ].join(" ")}
                 >
@@ -3030,6 +3084,162 @@ export default async function SchedulePage({
             </section>
           ) : null}
 
+          <section
+            id="schedule-command-center"
+            className="rounded-[6px] border border-[#005EB8]/35 bg-white shadow-sm"
+          >
+            <div className="border-b border-[#005EB8]/20 bg-[#f4f8fc] px-5 py-4 sm:px-6">
+              <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                <div className="min-w-0">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#005EB8]">
+                    Next Move
+                  </p>
+                  <h2 className="mt-1 text-lg font-semibold tracking-tight text-[var(--text-primary)]">
+                    CrewBoard command center
+                  </h2>
+                  <p className="mt-1 max-w-3xl text-sm leading-6 text-[var(--text-secondary)]">
+                    Start with the operational answer: what is happening today,
+                    what needs a date, where crew is missing, and which existing
+                    job or project workspace should open next.
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-2 lg:justify-end">
+                  <span className="inline-flex items-center rounded-[4px] border border-[#005EB8]/25 bg-white px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#005EB8]">
+                    {activeNextActionCount} active lanes
+                  </span>
+                  <Link
+                    href="#schedule-attention-desk"
+                    className={`inline-flex items-center rounded-[4px] border px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] transition ${scheduleSecondaryActionToneClassName}`}
+                  >
+                    Attention desk
+                  </Link>
+                </div>
+              </div>
+            </div>
+
+            <div className="grid gap-px bg-[var(--border-warm)] lg:grid-cols-2">
+              {visibleNextActions.map((action) => (
+                <div key={action.key} className="bg-white px-5 py-4 sm:px-6">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--text-secondary)]">
+                    {action.eyebrow}
+                  </p>
+                  <p className="mt-2 text-base font-semibold tracking-tight text-[var(--text-primary)]">
+                    {action.title}
+                  </p>
+                  <p className="mt-2 text-sm leading-6 text-[var(--text-secondary)]">
+                    {action.description}
+                  </p>
+                  <div className="mt-4 flex flex-wrap items-center gap-3">
+                    <Link
+                      href={action.href}
+                      className={`inline-flex items-center rounded-[4px] border px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] transition ${scheduleSecondaryActionToneClassName}`}
+                    >
+                      {action.ctaLabel}
+                    </Link>
+                    {action.empty ? (
+                      <span className="text-sm text-[var(--text-tertiary)]">
+                        Nothing urgent from this lane right now.
+                      </span>
+                    ) : null}
+                  </div>
+                  {action.jobs.length > 0 ? (
+                    <div className="mt-4 space-y-2">
+                      {action.jobs.map((job) => {
+                        const crewState = getCrewState(job);
+                        const primaryAction = getPrimaryScheduleAction(job);
+
+                        return (
+                          <div
+                            key={`${action.key}-${job.id}`}
+                            className="flex flex-wrap items-center justify-between gap-3 rounded-[4px] border border-[var(--border-warm)] bg-[var(--highlight)] px-3 py-2.5"
+                          >
+                            <div className="min-w-0">
+                              <Link
+                                href={`/jobs/${job.id}`}
+                                className="text-sm font-semibold text-[var(--text-primary)] transition hover:text-[var(--copper)]"
+                              >
+                                {getScheduleJobTitle(job)}
+                              </Link>
+                              <p className="mt-1 text-xs leading-5 text-[var(--text-secondary)]">
+                                {job.customer?.name ?? "Unknown customer"} ·{" "}
+                                {formatDate(job.scheduledDate)}
+                              </p>
+                              <p
+                                className={`mt-1 text-xs font-medium ${crewState.emphasisClass}`}
+                              >
+                                {crewState.label} · {crewState.detail}
+                              </p>
+                            </div>
+                            <div className="flex flex-wrap gap-2">
+                              <Link
+                                href={`/projects/${job.projectId}`}
+                                className={scheduleCompactLinkClassName}
+                              >
+                                Project
+                              </Link>
+                              <Link
+                                href={
+                                  buildScheduleHref({
+                                    q: query,
+                                    projectId: projectFilterId ?? undefined,
+                                    view,
+                                    crew: crewFilter,
+                                    action: primaryAction.action,
+                                    jobId: job.id
+                                  }) + "#schedule-action"
+                                }
+                                className={[
+                                  "inline-flex items-center rounded-[4px] border px-2.5 py-1.5 text-xs font-semibold uppercase tracking-[0.14em] transition",
+                                  primaryAction.toneClass
+                                ].join(" ")}
+                              >
+                                {primaryAction.label}
+                              </Link>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : null}
+                </div>
+              ))}
+            </div>
+
+            <details className="border-t border-[var(--border-warm)] bg-white">
+              <summary className="cursor-pointer px-5 py-3 text-sm font-semibold text-[var(--text-primary)] transition hover:bg-[var(--highlight)] sm:px-6">
+                Open all CrewBoard totals
+              </summary>
+              <div className="grid gap-px bg-[var(--border-warm)] sm:grid-cols-2 xl:grid-cols-5">
+                {summaryItems.map((item) => (
+                  <Link
+                    key={item.key}
+                    href={item.href}
+                    className={[
+                      "bg-white px-4 py-3 transition hover:bg-[var(--highlight)]",
+                      item.active ? "ring-1 ring-inset ring-[#005EB8]" : ""
+                    ].join(" ")}
+                  >
+                    <p
+                      className={`text-[11px] uppercase tracking-[0.14em] ${item.labelClass}`}
+                    >
+                      {item.label}
+                    </p>
+                    <div className="mt-1 flex items-end justify-between gap-3">
+                      <p
+                        className={`text-xl font-semibold tracking-tight ${item.valueClass}`}
+                      >
+                        {item.value}
+                      </p>
+                      <span className="text-xs font-medium text-[var(--text-secondary)]">
+                        {item.active ? "Current" : "Open"}
+                      </span>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </details>
+          </section>
+
           <ScheduleFieldCommandCenter
             sections={fieldCommandCenterSections}
             getActionHref={(item) => {
@@ -3068,7 +3278,10 @@ export default async function SchedulePage({
             commandView={fieldHandoffCommandView}
           />
 
-          <section className={schedulePanelClassName}>
+          <section
+            id="schedule-attention-desk"
+            className={schedulePanelClassName}
+          >
             <div className={schedulePanelHeaderClassName}>
               <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                 <div className="min-w-0">
@@ -3290,117 +3503,6 @@ export default async function SchedulePage({
                 />
               </div>
             )}
-          </section>
-
-          <section className={schedulePanelClassName}>
-            <div className={schedulePanelHeaderClassName}>
-              <div className="flex items-center justify-between gap-4">
-                <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
-                    Next Move
-                  </p>
-                  <h2 className="mt-1 text-lg font-semibold tracking-tight text-[var(--text-primary)]">
-                    CrewBoard command center
-                  </h2>
-                  <p className="mt-1 text-sm leading-6 text-[var(--text-secondary)]">
-                    Use the loaded job state to see what needs scheduling, what
-                    is missing crew, and whether the next move belongs in
-                    CrewBoard or the Project Workspace.
-                  </p>
-                </div>
-                <p className="text-sm leading-6 text-[var(--text-secondary)]">
-                  {nextActions.filter((action) => !action.empty).length} active
-                </p>
-              </div>
-            </div>
-
-            <div className="grid gap-px bg-[var(--border-warm)] lg:grid-cols-2">
-              {nextActions.map((action) => (
-                <div key={action.key} className="bg-white px-5 py-4 sm:px-6">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--text-secondary)]">
-                    {action.eyebrow}
-                  </p>
-                  <p className="mt-2 text-base font-semibold tracking-tight text-[var(--text-primary)]">
-                    {action.title}
-                  </p>
-                  <p className="mt-2 text-sm leading-6 text-[var(--text-secondary)]">
-                    {action.description}
-                  </p>
-                  <div className="mt-4 flex flex-wrap items-center gap-3">
-                    <Link
-                      href={action.href}
-                      className={`inline-flex items-center rounded-[4px] border px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] transition ${scheduleSecondaryActionToneClassName}`}
-                    >
-                      {action.ctaLabel}
-                    </Link>
-                    {action.empty ? (
-                      <span className="text-sm text-[var(--text-tertiary)]">
-                        Nothing urgent from this lane right now.
-                      </span>
-                    ) : null}
-                  </div>
-                  {action.jobs.length > 0 ? (
-                    <div className="mt-4 space-y-2">
-                      {action.jobs.map((job) => {
-                        const crewState = getCrewState(job);
-                        const primaryAction = getPrimaryScheduleAction(job);
-
-                        return (
-                          <div
-                            key={`${action.key}-${job.id}`}
-                            className="flex flex-wrap items-center justify-between gap-3 rounded-[4px] border border-[var(--border-warm)] bg-[var(--highlight)] px-3 py-2.5"
-                          >
-                            <div className="min-w-0">
-                              <Link
-                                href={`/jobs/${job.id}`}
-                                className="text-sm font-semibold text-[var(--text-primary)] transition hover:text-[var(--copper)]"
-                              >
-                                {getScheduleJobTitle(job)}
-                              </Link>
-                              <p className="mt-1 text-xs leading-5 text-[var(--text-secondary)]">
-                                {job.customer?.name ?? "Unknown customer"} ·{" "}
-                                {formatDate(job.scheduledDate)}
-                              </p>
-                              <p
-                                className={`mt-1 text-xs font-medium ${crewState.emphasisClass}`}
-                              >
-                                {crewState.label} · {crewState.detail}
-                              </p>
-                            </div>
-                            <div className="flex flex-wrap gap-2">
-                              <Link
-                                href={`/projects/${job.projectId}`}
-                                className={scheduleCompactLinkClassName}
-                              >
-                                Project
-                              </Link>
-                              <Link
-                                href={
-                                  buildScheduleHref({
-                                    q: query,
-                                    projectId: projectFilterId ?? undefined,
-                                    view,
-                                    crew: crewFilter,
-                                    action: primaryAction.action,
-                                    jobId: job.id
-                                  }) + "#schedule-action"
-                                }
-                                className={[
-                                  "inline-flex items-center rounded-[4px] border px-2.5 py-1.5 text-xs font-semibold uppercase tracking-[0.14em] transition",
-                                  primaryAction.toneClass
-                                ].join(" ")}
-                              >
-                                {primaryAction.label}
-                              </Link>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  ) : null}
-                </div>
-              ))}
-            </div>
           </section>
 
           <section className={schedulePanelClassName}>
