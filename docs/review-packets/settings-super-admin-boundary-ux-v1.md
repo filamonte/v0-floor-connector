@@ -1,10 +1,13 @@
 # Settings Super Admin Boundary UX V1
 
-Status: Implementation stream
+Status: Merged via PR #28 as `a33f63cbee6c9de5d74f792d5d8a4cc9c48f2d6b`
 Date: 2026-06-10
 Branch: `stream/settings-super-admin-boundary-ux-v1`
 Worktree: `C:\FC-worktrees\settings-super-admin-boundary-ux-v1`
 Wave: `ux-beta-readiness-v1`
+
+Merge: PR #28, `feat: clarify settings super admin boundary UX`, squash
+merged to `main` as `a33f63cbee6c9de5d74f792d5d8a4cc9c48f2d6b`.
 
 ## Scope
 

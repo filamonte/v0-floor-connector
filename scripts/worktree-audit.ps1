@@ -80,6 +80,10 @@ function Get-RegistryRows {
       continue
     }
 
+    if ($line -match '\|\s*(Archived|Retired|Proposed|Paused / Downstream|Legacy / Superseded|Retired / Superseded)\s*\|') {
+      continue
+    }
+
     $rows +=
       [pscustomobject]@{
         Worktree = $Matches[1]

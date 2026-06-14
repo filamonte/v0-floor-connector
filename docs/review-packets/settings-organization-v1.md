@@ -1,10 +1,13 @@
 # Settings Organization V1
 
-Status: Complete
+Status: Merged via PR #45 as `c55809efcad596baf2d2f1f32eb7fb72a475cc2f`
 Date: 2026-06-13
 Branch: `stream/settings-organization-v1`
 Worktree: `C:\FC-worktrees\settings-organization-v1`
 Base: `origin/main` at `ddf9e2bd`
+
+Merge: PR #45, `style: simplify settings organization`, squash merged to
+`main` as `c55809efcad596baf2d2f1f32eb7fb72a475cc2f`.
 
 ## Purpose
 

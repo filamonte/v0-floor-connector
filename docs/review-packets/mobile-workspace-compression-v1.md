@@ -1,6 +1,6 @@
 # Mobile Workspace Compression V1
 
-Status: Setup created
+Status: Merged via PR #43 as `ce28bdb8c48dd94cdaf47776285e38b2711a9b5c`
 Date: 2026-06-13
 Branch: `stream/mobile-workspace-compression-v1`
 Worktree: `C:\FC-worktrees\mobile-workspace-compression-v1`
@@ -66,7 +66,26 @@ Browser checks: Project Workspace, Opportunity Workspace, `/dashboard`,
 
 ## Completion Notes
 
-To be completed by the stream owner: files changed, Figma frames used, visual
-improvements, deviations from Figma, no-data-silo confirmation, production
-safety confirmation, remaining visual debt, validation results, browser checks,
-final git status, ahead/behind count, and commit SHA.
+Merged to `main` via PR #43, `style: compress mobile workspace headers`, as
+`ce28bdb8c48dd94cdaf47776285e38b2711a9b5c`.
+
+The stream compressed mobile Project and Opportunity Workspace opening
+viewports while preserving record identity, real actions, desktop behavior, and
+canonical data ownership.
+
+Validation passed before merge:
+
+- `pnpm.cmd --filter @floorconnector/web typecheck`
+- `pnpm.cmd --filter @floorconnector/web lint`
+- `pnpm.cmd --filter @floorconnector/ui test`
+- `pnpm.cmd fc:preflight:fast`
+- `pnpm.cmd e2e:smoke:auth`
+- `git diff --check`
+- `git diff --cached --check`
+- `pnpm.cmd worktree:doctor`
+
+Browser checks passed at `390px` and `1366px` with no ChunkLoadError,
+console/page errors, favicon/static errors, auth redirect regressions, or
+horizontal overflow. The obsolete `Vercel - v0-floor-connector` / `tfc-saas`
+check was ignored under the permanent Vercel rule; active
+`Vercel - lkjlkjlsdf` was the relevant Vercel context.

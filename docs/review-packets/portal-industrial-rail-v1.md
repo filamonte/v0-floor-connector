@@ -1,10 +1,13 @@
 # Portal Industrial Rail V1
 
-Status: Complete
+Status: Merged via PR #46 as `2274f3a5d192c033e67d3380188e0741449d9534`
 Date: 2026-06-13
 Branch: `stream/portal-industrial-rail-v1`
 Worktree: `C:\FC-worktrees\portal-industrial-rail-v1`
 Base: `origin/main` at `ddf9e2bd`
+
+Merge: PR #46, `style: align portal industrial rail`, squash merged to `main`
+as `2274f3a5d192c033e67d3380188e0741449d9534`.
 
 ## Purpose
 

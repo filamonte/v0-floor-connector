@@ -53,7 +53,8 @@ Branch: `stream/figma-fidelity-refactor-v1`.
 
 Worktree: `C:\FC-worktrees\figma-fidelity-refactor-v1`.
 
-Status: Active.
+Status: Complete; merged to `main` via PR #42 as
+`ddf9e2bdfd97c0809c81743e7e50c8f1eecfdaeb`.
 
 Mission: after PR #41 merged Industrial OS Visual System V1, use the approved
 Figma comparison board directly through Figma MCP to tighten the protected app
@@ -74,8 +75,8 @@ Wave: `industrial-os-conveyor-wave-v1`.
 
 Base: `main` at `ddf9e2bd`, confirmed clean and even with `origin/main`.
 
-Status: Active for stream setup and controlled presentation-only
-implementation.
+Status: Complete; all four streams merged to `main` on 2026-06-13 / 2026-06-14
+and were retired from active registry tracking.
 
 Mission: finish the remaining high-priority Industrial OS / Figma refinement
 work faster through isolated stream worktrees while preserving FloorConnector's
@@ -88,14 +89,14 @@ Each stream must use Figma MCP where relevant and record Figma frames used,
 deviations, no-data-silo confirmation, production safety confirmation, and
 remaining visual debt in its review packet.
 
-Approved streams:
+Completed streams:
 
-| Stream                            | Branch                                   | Worktree                                          | Scope summary                                                 | Merge priority |
-| --------------------------------- | ---------------------------------------- | ------------------------------------------------- | ------------------------------------------------------------- | -------------- |
-| `mobile-workspace-compression-v1` | `stream/mobile-workspace-compression-v1` | `C:\FC-worktrees\mobile-workspace-compression-v1` | Compress mobile Project and Opportunity Workspace headers     | 1              |
-| `leads-command-lanes-v1`          | `stream/leads-command-lanes-v1`          | `C:\FC-worktrees\leads-command-lanes-v1`          | Make `/leads` a Sales Command lane surface over existing data | 2              |
-| `settings-organization-v1`        | `stream/settings-organization-v1`        | `C:\FC-worktrees\settings-organization-v1`        | Clarify Settings and organization grouping                    | 3              |
-| `portal-industrial-rail-v1`       | `stream/portal-industrial-rail-v1`       | `C:\FC-worktrees\portal-industrial-rail-v1`       | Align customer portal toward approved Industrial rail frame   | 4              |
+| Stream                            | Branch                                   | PR  | Merge commit                               | Scope summary                                                 | Validation/browser status                                 |
+| --------------------------------- | ---------------------------------------- | --- | ------------------------------------------ | ------------------------------------------------------------- | --------------------------------------------------------- |
+| `mobile-workspace-compression-v1` | `stream/mobile-workspace-compression-v1` | #43 | `ce28bdb8c48dd94cdaf47776285e38b2711a9b5c` | Compress mobile Project and Opportunity Workspace headers     | Passed local validation and browser matrix                |
+| `leads-command-lanes-v1`          | `stream/leads-command-lanes-v1`          | #44 | `c7e38a915a543133f20303f20c028ba013df159b` | Make `/leads` a Sales Command lane surface over existing data | Passed local validation and refreshed-auth browser matrix |
+| `settings-organization-v1`        | `stream/settings-organization-v1`        | #45 | `c55809efcad596baf2d2f1f32eb7fb72a475cc2f` | Clarify Settings and organization grouping                    | Passed local validation and browser matrix                |
+| `portal-industrial-rail-v1`       | `stream/portal-industrial-rail-v1`       | #46 | `2274f3a5d192c033e67d3380188e0741449d9534` | Align customer portal toward approved Industrial rail frame   | Passed local validation and browser matrix                |
 
 Shared forbidden scope: schema changes, migrations, database/table/column
 renames, route renames, canonical model changes, duplicate visual-only records,
@@ -134,6 +135,16 @@ Browser expectation for each stream: check target pages and `/dashboard`,
 `/dashboard?capture=1#universal-capture` at `1366px` and `390px`, with no
 chunk/load errors, console/page errors, favicon errors, horizontal overflow,
 auth redirect regressions, or portal customer-safety regressions.
+
+Local cleanup note: Git worktree registrations for the four conveyor streams
+were removed after merge. Windows may still hold ignored physical cache residue
+under the corresponding `C:\FC-worktrees\...\apps\web\.next` folders; those
+folders are not active Git worktrees and should be removed only when no process
+holds a handle.
+
+Permanent Vercel review rule: ignore `Vercel - v0-floor-connector` and any
+deployment/check under the obsolete `tfc-saas` scope. The active FloorConnector
+Vercel project/check for PR review is `Vercel - lkjlkjlsdf`.
 
 ## UX Recovery Wave Foundation
 
@@ -215,7 +226,7 @@ docs-only audit stream by the explicit UX Beta Readiness prompt.
 Jeff approval gate: Satisfied for first stream start by the explicit prompt
 after PR #19 and PR #20 were confirmed merged.
 
-Wave status: Active for Settings / Super Admin boundary UX after visual QA
+Wave status: Complete through Settings / Super Admin boundary UX after visual QA
 route smoke merged and was retired. The docs-only audit stream approved
 `ux-design-system-foundation-v1` as the first UI-touching stream, PR #21 merged
 that foundation stream to `main`, PR #22 merged `mcp-tool-readiness-v1` to
@@ -223,8 +234,9 @@ that foundation stream to `main`, PR #22 merged `mcp-tool-readiness-v1` to
 #24 merged `record-workspace-rhythm-v1` to `main`; PR #25 merged
 `financial-schedule-readiness-ux-v1` to `main`; PR #26 merged
 `mobile-field-beta-pass-v1` to `main`; PR #27 merged
-`visual-qa-route-smoke-v1` to `main` and the stream was retired. The active
-implementation stream is `settings-super-admin-boundary-ux-v1`. This gate does
+`visual-qa-route-smoke-v1` to `main` and the stream was retired. PR #28 merged
+`settings-super-admin-boundary-ux-v1` to `main` as
+`a33f63cbee6c9de5d74f792d5d8a4cc9c48f2d6b`. This gate does
 not authorize schema,
 migrations, provider/customer-facing sends, payment/signature/scheduling/portal
 access mutation, PRs, merges, cleanup, or next-wave continuation.
@@ -327,7 +339,9 @@ Approved mobile field beta pass worktree:
   sends, AI automation, duplicate records, PRs, merges, cleanup, and applying
   external generated UI directly.
 - Suggested commit: `docs: audit contractor ux beta readiness`
-- Status: Active.
+- Status: Merged to `main` via PR #28 as
+  `a33f63cbee6c9de5d74f792d5d8a4cc9c48f2d6b` and retired from active registry
+  tracking.
 
 Validation expectation:
 

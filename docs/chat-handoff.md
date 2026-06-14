@@ -93,16 +93,32 @@ when a future Codex prompt should apply the standard FloorConnector baseline for
 tool exposure checks, repo safety, validation, and completion reporting. A short
 future prompt can say: `Follow .codex/prompt-snippets/floorconnector-codex-baseline.md.`
 
-Figma Fidelity Refactor V1 is active in
-`C:\FC-worktrees\figma-fidelity-refactor-v1` on
-`stream/figma-fidelity-refactor-v1`. It starts after PR #41 merged Industrial OS
-Visual System V1 and uses the approved Figma board directly through Figma MCP.
-Current implemented scope is presentation-only: protected shell Projects
-command menu, Projects and Leads command-surface tightening, shared workspace
-70/30 header and mobile command-rail ordering, Settings organization blue
-defaults, and review packet documentation. Do not treat this stream as schema,
-loader, action, auth, tenant, portal, payment, signature, scheduling, provider,
-or canonical workflow work.
+Figma Fidelity Refactor V1 merged through PR #42 as
+`ddf9e2bdfd97c0809c81743e7e50c8f1eecfdaeb`. It started after PR #41 merged
+Industrial OS Visual System V1 and used the approved Figma board directly
+through Figma MCP. Implemented scope was presentation-only: protected shell
+Projects command menu, Projects and Leads command-surface tightening, shared
+workspace 70/30 header and mobile command-rail ordering, Settings organization
+blue defaults, and review packet documentation. Do not treat this stream as
+schema, loader, action, auth, tenant, portal, payment, signature, scheduling,
+provider, or canonical workflow work.
+
+Industrial OS Conveyor Wave V1 is complete and merged. PR #45
+`settings-organization-v1` merged as
+`c55809efcad596baf2d2f1f32eb7fb72a475cc2f`, PR #46
+`portal-industrial-rail-v1` merged as
+`2274f3a5d192c033e67d3380188e0741449d9534`, PR #43
+`mobile-workspace-compression-v1` merged as
+`ce28bdb8c48dd94cdaf47776285e38b2711a9b5c`, and PR #44
+`leads-command-lanes-v1` merged as
+`c7e38a915a543133f20303f20c028ba013df159b`. The streams are retired from
+active registry tracking. Git worktree registrations were removed; ignored
+physical cache residue may remain under the corresponding
+`C:\FC-worktrees\...\apps\web\.next` paths until Windows releases file handles.
+
+Permanent Vercel review rule: ignore `Vercel - v0-floor-connector` and any
+deployment/check under the obsolete `tfc-saas` scope. The active FloorConnector
+Vercel project/check for PR review is `Vercel - lkjlkjlsdf`.
 
 Current automation readiness is Ready With Human Review Gate. Future planning
 must follow the loop Strategic Research / Product Council -> Capability, then

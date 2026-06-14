@@ -56,7 +56,8 @@ center and less like disconnected modules.
 
 ## Figma Fidelity Refactor V1
 
-Status: Active.
+Status: Complete; merged to `main` via PR #42 as
+`ddf9e2bdfd97c0809c81743e7e50c8f1eecfdaeb`.
 
 Branch: `stream/figma-fidelity-refactor-v1`.
 Worktree: `C:\FC-worktrees\figma-fidelity-refactor-v1`.
@@ -74,14 +75,14 @@ fake KPIs, duplicate queues, duplicate models, or new source-of-truth tables.
 
 ## Industrial OS Conveyor Wave V1
 
-Status: Active for stream setup and controlled presentation-only
-implementation.
+Status: Complete; all four streams merged to `main` on 2026-06-13 / 2026-06-14
+and were retired from active registry tracking.
 
 Base branch: `main` at `ddf9e2bd`, synced with `origin/main` on 2026-06-13.
 
 Design source: `https://www.figma.com/design/N0tVE3uKWpHZc4dlF6ytgn`.
-Implementation streams must use Figma MCP where relevant and document frames
-used, deviations, and visual debt in their review packets.
+The implementation streams used the approved Figma direction where relevant and
+recorded scope, deviations, validation, and visual debt in their review packets.
 
 Goal: finish the remaining high-priority Industrial OS / Figma UI refinement
 work as a controlled conveyor wave without changing schema, migrations,
@@ -89,14 +90,14 @@ canonical models, routes, loaders, server actions, auth, tenant boundaries,
 portal grants, payment/signature/scheduling behavior, provider behavior, fake
 data, fake KPIs, fake queues, or local-only workflow persistence.
 
-Approved stream set:
+Completed stream set:
 
-| Stream                            | Branch                                   | Worktree                                          | Ownership area                                                | Merge priority |
-| --------------------------------- | ---------------------------------------- | ------------------------------------------------- | ------------------------------------------------------------- | -------------- |
-| `mobile-workspace-compression-v1` | `stream/mobile-workspace-compression-v1` | `C:\FC-worktrees\mobile-workspace-compression-v1` | Mobile Project and Opportunity Workspace viewport compression | 1              |
-| `leads-command-lanes-v1`          | `stream/leads-command-lanes-v1`          | `C:\FC-worktrees\leads-command-lanes-v1`          | `/leads` Sales Command lanes over existing real data          | 2              |
-| `settings-organization-v1`        | `stream/settings-organization-v1`        | `C:\FC-worktrees\settings-organization-v1`        | `/settings` and `/settings/organization` grouping clarity     | 3              |
-| `portal-industrial-rail-v1`       | `stream/portal-industrial-rail-v1`       | `C:\FC-worktrees\portal-industrial-rail-v1`       | Customer-safe portal Industrial rail alignment                | 4              |
+| Stream                            | Branch                                   | PR  | Merge commit                               | Ownership area                                                | Validation/browser status                                 |
+| --------------------------------- | ---------------------------------------- | --- | ------------------------------------------ | ------------------------------------------------------------- | --------------------------------------------------------- |
+| `mobile-workspace-compression-v1` | `stream/mobile-workspace-compression-v1` | #43 | `ce28bdb8c48dd94cdaf47776285e38b2711a9b5c` | Mobile Project and Opportunity Workspace viewport compression | Passed local validation and browser matrix                |
+| `leads-command-lanes-v1`          | `stream/leads-command-lanes-v1`          | #44 | `c7e38a915a543133f20303f20c028ba013df159b` | `/leads` Sales Command lanes over existing real data          | Passed local validation and refreshed-auth browser matrix |
+| `settings-organization-v1`        | `stream/settings-organization-v1`        | #45 | `c55809efcad596baf2d2f1f32eb7fb72a475cc2f` | `/settings` and `/settings/organization` grouping clarity     | Passed local validation and browser matrix                |
+| `portal-industrial-rail-v1`       | `stream/portal-industrial-rail-v1`       | #46 | `2274f3a5d192c033e67d3380188e0741449d9534` | Customer-safe portal Industrial rail alignment                | Passed local validation and browser matrix                |
 
 Review packets:
 
@@ -137,6 +138,16 @@ plus `/dashboard`, `/settings`, `/leads`, `/projects`, `/portal`, and
 console/page errors, no favicon errors, no horizontal overflow, real
 data/actions render, no auth/login redirect regression after auth warmup, portal
 stays customer-safe where applicable, and Universal Capture still opens.
+
+Local cleanup note: Git worktree registrations for the four conveyor streams
+were removed after merge. Windows may still hold ignored physical cache residue
+under the corresponding `C:\FC-worktrees\...\apps\web\.next` folders; those
+folders are not active Git worktrees and should be removed only when no process
+holds a handle.
+
+Permanent Vercel review rule: ignore `Vercel - v0-floor-connector` and any
+deployment/check under the obsolete `tfc-saas` scope. The active FloorConnector
+Vercel project/check for PR review is `Vercel - lkjlkjlsdf`.
 
 ## Program Portfolio
 
@@ -227,8 +238,8 @@ Wave name: `ux-beta-readiness-v1`.
 Review packet:
 [docs/review-packets/ux-beta-readiness-v1.md](C:/FloorConnector/docs/review-packets/ux-beta-readiness-v1.md).
 
-Status: Active for Settings / Super Admin boundary UX after visual QA route
-smoke merged and was retired. The prompt explicitly approved the wave after
+Status: Complete through Settings / Super Admin boundary UX after PR #28 merged
+`settings-super-admin-boundary-ux-v1`. The prompt explicitly approved the wave after
 PR #19 and PR #20 were confirmed merged.
 `ux-architecture-audit-v1` completed the docs/report-only audit and approved
 `ux-design-system-foundation-v1` as the first UI-touching stream. PR #21 merged
@@ -237,8 +248,10 @@ PR #19 and PR #20 were confirmed merged.
 `dashboard-command-center-cleanup-v1` to `main`; PR #24 merged
 `record-workspace-rhythm-v1` to `main`; PR #25 merged
 `financial-schedule-readiness-ux-v1` to `main`; PR #26 merged
-`mobile-field-beta-pass-v1` to `main`. The current active stream is
-`settings-super-admin-boundary-ux-v1`.
+`mobile-field-beta-pass-v1` to `main`; PR #27 merged
+`visual-qa-route-smoke-v1` to `main` and retired it; PR #28 merged
+`settings-super-admin-boundary-ux-v1` to `main` as
+`a33f63cbee6c9de5d74f792d5d8a4cc9c48f2d6b`.
 
 Purpose: make the contractor app cohesive, trustworthy, role-aware-ready, and
 usable for real beta testing while preserving the canonical operating model.
@@ -293,9 +306,9 @@ Approved visual QA route smoke stream:
 
 Approved Settings / Super Admin boundary stream:
 
-| Stream                                | Review packet                                                                          | Ownership area                                                                 | Dependency posture                                                                  |
-| ------------------------------------- | -------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------- |
-| `settings-super-admin-boundary-ux-v1` | [packet](C:/FloorConnector/docs/review-packets/settings-super-admin-boundary-ux-v1.md) | Settings tenant configuration and Super Admin platform-policy boundary clarity | Active after PR #27 visual QA route smoke merged and the route-smoke stream retired |
+| Stream                                | Review packet                                                                          | Ownership area                                                                 | Dependency posture                                              |
+| ------------------------------------- | -------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ | --------------------------------------------------------------- |
+| `settings-super-admin-boundary-ux-v1` | [packet](C:/FloorConnector/docs/review-packets/settings-super-admin-boundary-ux-v1.md) | Settings tenant configuration and Super Admin platform-policy boundary clarity | Merged via PR #28 as `a33f63cbee6c9de5d74f792d5d8a4cc9c48f2d6b` |
 
 Completed visual QA route smoke stream:
 

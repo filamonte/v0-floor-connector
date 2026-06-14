@@ -1,10 +1,13 @@
 # Leads Command Lanes V1
 
-Status: Implemented
+Status: Merged via PR #44 as `c7e38a915a543133f20303f20c028ba013df159b`
 Date: 2026-06-13
 Branch: `stream/leads-command-lanes-v1`
 Worktree: `C:\FC-worktrees\leads-command-lanes-v1`
 Base: `origin/main` at `ddf9e2bd`
+
+Merge: PR #44, `style: organize leads command lanes`, squash merged to `main`
+as `c7e38a915a543133f20303f20c028ba013df159b`.
 
 ## Purpose
 
@@ -138,6 +141,22 @@ Browser checks:
   `/projects`, `/portal`, and `/dashboard?capture=1#universal-capture`.
 - Result: no auth redirects, no console/page errors, no horizontal overflow,
   and protected route content rendered at both widths.
+
+Post-merge gate note:
+
+- Before PR #44 merge, stale local Playwright contractor auth state caused
+  intermittent no-active-organization and `/login` redirects on unrelated
+  protected routes. Auth was refreshed with the project-supported
+  `pnpm.cmd e2e:auth:setup` path against the same local origin used for smoke
+  checks.
+- Rerun `pnpm.cmd e2e:smoke:auth` passed 11/11.
+- Browser matrix at `1366px` and `390px` passed for `/leads`, a real
+  Opportunity Workspace, `/dashboard`, `/projects`, a real Project Workspace,
+  `/settings`, `/portal`, `/schedule`, `/daily-logs`, and
+  `/dashboard?capture=1#universal-capture`.
+- The obsolete `Vercel - v0-floor-connector` / `tfc-saas` check was ignored
+  under the permanent Vercel rule; active `Vercel - lkjlkjlsdf` was the
+  relevant Vercel context.
 
 Final git status, ahead/behind count, and commit SHA:
 

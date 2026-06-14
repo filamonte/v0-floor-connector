@@ -1,10 +1,13 @@
 # Figma Fidelity Refactor V1
 
-Status: Review gate complete
+Status: Merged via PR #42 as `ddf9e2bdfd97c0809c81743e7e50c8f1eecfdaeb`
 Date: 2026-06-13
 Branch: `stream/figma-fidelity-refactor-v1`
 Worktree: `C:\FC-worktrees\figma-fidelity-refactor-v1`
 Base: `origin/main` at `377e18e2`
+
+Merge: PR #42, `style: refactor app toward figma industrial os`, squash
+merged to `main` as `ddf9e2bdfd97c0809c81743e7e50c8f1eecfdaeb`.
 
 ## Purpose
 
