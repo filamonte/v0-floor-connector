@@ -198,6 +198,48 @@ export default async function FinancialsHomePage() {
       tone: financialControl.partiallyPaidCount > 0 ? "attention" : "neutral"
     }
   ];
+  const moneyCommandMetrics = [
+    {
+      id: "open-receivables",
+      label: "Open receivables",
+      value: formatMoney(financialControl.openReceivablesAmount),
+      detail:
+        financialControl.openInvoiceCount > 0
+          ? `${financialControl.openInvoiceCount} open invoice${financialControl.openInvoiceCount === 1 ? "" : "s"} need money follow-through.`
+          : "No open invoice balance is currently collectible.",
+      href: "/financials/accounts-receivable"
+    },
+    {
+      id: "overdue",
+      label: "Overdue",
+      value: formatMoney(financialControl.overdueAmount),
+      detail:
+        financialControl.overdueInvoiceCount > 0
+          ? `${financialControl.overdueInvoiceCount} overdue invoice${financialControl.overdueInvoiceCount === 1 ? "" : "s"} need collections review.`
+          : "No overdue invoice balance is visible in the current read model.",
+      href: "/financials/accounts-receivable"
+    },
+    {
+      id: "ready-to-invoice",
+      label: "Ready to invoice",
+      value: String(billingReadiness.readyToInvoice.length),
+      detail:
+        billingReadiness.readyToInvoice.length > 0
+          ? "Completed work is ready for invoice review from canonical jobs."
+          : "No completed work is waiting for invoice creation.",
+      href: billingReadiness.nextMove.href
+    },
+    {
+      id: "payment-exceptions",
+      label: "Payment exceptions",
+      value: String(paymentTrailAttentionCount),
+      detail:
+        paymentTrailAttentionCount > 0
+          ? "Failed, voided, requested, checkout, or stale pending payment evidence needs review."
+          : "No failed or voided Payment Trail attention item is open.",
+      href: "/payments"
+    }
+  ] as const;
   const financialSettingsLinks = [
     {
       href: "/settings/financial",
@@ -235,39 +277,27 @@ export default async function FinancialsHomePage() {
         }
       }}
       summary={
-        <div className="grid gap-px border border-[#d6d6d6] bg-[#d6d6d6] sm:grid-cols-2 xl:grid-cols-4">
-          <div className="bg-white px-3 py-2.5">
-            <p className="text-[11px] uppercase tracking-[0.14em] text-[#666666]">
-              Open receivables
-            </p>
-            <p className="mt-1 text-lg font-semibold tracking-tight text-[#171717]">
-              {formatMoney(financialControl.openReceivablesAmount)}
-            </p>
-          </div>
-          <div className="bg-white px-3 py-2.5">
-            <p className="text-[11px] uppercase tracking-[0.14em] text-[#666666]">
-              Overdue amount
-            </p>
-            <p className="mt-1 text-lg font-semibold tracking-tight text-[#171717]">
-              {formatMoney(financialControl.overdueAmount)}
-            </p>
-          </div>
-          <div className="bg-white px-3 py-2.5">
-            <p className="text-[11px] uppercase tracking-[0.14em] text-[#666666]">
-              Deposits due
-            </p>
-            <p className="mt-1 text-lg font-semibold tracking-tight text-[#171717]">
-              {formatMoney(financialControl.depositReceivablesAmount)}
-            </p>
-          </div>
-          <div className="bg-white px-3 py-2.5">
-            <p className="text-[11px] uppercase tracking-[0.14em] text-[#666666]">
-              Retainage held
-            </p>
-            <p className="mt-1 text-lg font-semibold tracking-tight text-[#171717]">
-              {formatMoney(financialControl.retainageHeldAmount)}
-            </p>
-          </div>
+        <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+          {moneyCommandMetrics.map((metric) => (
+            <Link
+              key={metric.id}
+              href={metric.href}
+              className="border border-[#005EB8]/25 bg-white px-4 py-3 transition hover:bg-[#f4f8fc] hover:shadow-[0_10px_30px_rgba(15,23,42,0.08)]"
+            >
+              <p className="text-[11px] uppercase tracking-[0.14em] text-[#005EB8]">
+                {metric.label}
+              </p>
+              <div className="mt-1 flex items-end justify-between gap-3">
+                <p className="text-2xl font-semibold tracking-tight text-[#171717]">
+                  {metric.value}
+                </p>
+                <span className="text-xs font-medium text-slate-500">Open</span>
+              </div>
+              <p className="mt-1 text-xs leading-5 text-slate-500">
+                {metric.detail}
+              </p>
+            </Link>
+          ))}
         </div>
       }
       commandBar={{
@@ -281,7 +311,7 @@ export default async function FinancialsHomePage() {
           <>
             <Link
               href="/financials/accounts-receivable"
-              className="inline-flex items-center rounded-[4px] border border-[#171717] bg-[#171717] px-3 py-2 text-sm font-medium text-white transition hover:bg-[#2a2a2a]"
+              className="inline-flex items-center rounded-[4px] border border-[#005EB8] bg-[#005EB8] px-3 py-2 text-sm font-medium text-white transition hover:bg-[#004b94]"
             >
               Open AR
             </Link>
@@ -317,11 +347,85 @@ export default async function FinancialsHomePage() {
             </div>
             <Link
               href={financialControl.nextMove.href}
-              className="inline-flex shrink-0 items-center justify-center rounded-[4px] border border-[#171717] bg-[#171717] px-4 py-2.5 text-sm font-medium text-white transition hover:bg-[#2a2a2a]"
+              className="inline-flex shrink-0 items-center justify-center rounded-[4px] border border-[#005EB8] bg-[#005EB8] px-4 py-2.5 text-sm font-medium text-white transition hover:bg-[#004b94]"
             >
               Open next move
             </Link>
           </div>
+        </section>
+
+        <section
+          id="money-command-center"
+          className="border border-[#005EB8]/35 bg-white shadow-sm"
+        >
+          <div className="border-b border-[#005EB8]/20 bg-[#f4f8fc] px-4 py-4 sm:px-5">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+              <div>
+                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#005EB8]">
+                  Money Command
+                </p>
+                <h2 className="mt-1 text-xl font-semibold tracking-tight text-[#171717]">
+                  AR pressure, invoice readiness, and payment exceptions
+                </h2>
+                <p className="mt-1 max-w-[78ch] text-sm leading-6 text-slate-500">
+                  Start with what money needs attention, what is overdue, what
+                  can be invoiced, and what payment evidence should open in the
+                  owning invoice or payment workspace.
+                </p>
+              </div>
+              <Link
+                href="/financials/accounts-receivable"
+                className="inline-flex shrink-0 items-center justify-center rounded-[4px] border border-[#005EB8] bg-[#005EB8] px-4 py-2.5 text-sm font-medium text-white transition hover:bg-[#004b94]"
+              >
+                Open AR cockpit
+              </Link>
+            </div>
+          </div>
+          <div className="grid gap-px bg-[#e5e5e5] md:grid-cols-2 xl:grid-cols-4">
+            {commandCenterActionLanes.map((lane) => (
+              <Link
+                key={lane.id}
+                href={lane.href}
+                className="min-w-0 bg-white px-4 py-4 transition hover:bg-[#f8f8f8]"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#666666]">
+                    {lane.label}
+                  </p>
+                  <span
+                    className={
+                      lane.tone === "warning"
+                        ? "rounded-full border border-red-200 bg-red-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-red-700"
+                        : lane.tone === "attention"
+                          ? "rounded-full border border-[#005EB8]/25 bg-[#f4f8fc] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#005EB8]"
+                          : "rounded-full border border-[#d6d6d6] bg-[#f8f8f8] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-500"
+                    }
+                  >
+                    {lane.tone}
+                  </span>
+                </div>
+                <h3 className="mt-3 text-[17px] font-semibold tracking-tight text-[#171717]">
+                  {lane.title}
+                </h3>
+                <p className="mt-2 text-xl font-semibold tracking-tight text-[#171717]">
+                  {lane.value}
+                </p>
+                <p className="mt-2 text-sm leading-5 text-slate-500">
+                  {lane.detail}
+                </p>
+              </Link>
+            ))}
+          </div>
+          {financialControl.openInvoiceCount === 0 &&
+          paymentTrailAttentionCount === 0 &&
+          Number(financialControl.depositReceivablesAmount) === 0 ? (
+            <div className="border-t border-[#e5e5e5] bg-[#f8f8f8] px-4 py-4 text-sm leading-6 text-slate-500 sm:px-5">
+              No cross-project finance action is active right now. New open
+              balances, deposit invoices, partial payments, overdue invoices,
+              and Payment Trail exceptions will appear here when canonical
+              records carry that pressure.
+            </div>
+          ) : null}
         </section>
 
         <section className="border border-[#d6d6d6] bg-white">
@@ -341,7 +445,7 @@ export default async function FinancialsHomePage() {
             </div>
             <Link
               href={billingReadiness.nextMove.href}
-              className="inline-flex shrink-0 items-center justify-center rounded-[4px] border border-[#171717] bg-[#171717] px-4 py-2.5 text-sm font-medium text-white transition hover:bg-[#2a2a2a]"
+              className="inline-flex shrink-0 items-center justify-center rounded-[4px] border border-[#005EB8] bg-[#005EB8] px-4 py-2.5 text-sm font-medium text-white transition hover:bg-[#004b94]"
             >
               {billingReadiness.nextMove.label}
             </Link>
@@ -453,68 +557,6 @@ export default async function FinancialsHomePage() {
               {billingReadiness.alreadyInBilling.length === 1 ? "" : "s"}{" "}
               already have linked canonical invoice records, so this command
               does not propose duplicate billing.
-            </div>
-          ) : null}
-        </section>
-
-        <section className="border border-[#d6d6d6] bg-white">
-          <div className="border-b border-[#e5e5e5] px-4 py-3 sm:px-5">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#8f5b32]">
-              Financial Command Center
-            </p>
-            <h2 className="mt-1 text-xl font-semibold tracking-tight text-[#171717]">
-              Cross-project finance action lanes
-            </h2>
-            <p className="mt-1 max-w-[78ch] text-sm leading-6 text-slate-500">
-              Dashboard can prioritize and Project Workspace can explain
-              context, but AR, collections, billing follow-through, and cash
-              pressure are worked here against canonical invoices, payments,
-              payment events, projects, and customers.
-            </p>
-          </div>
-          <div className="grid gap-px bg-[#e5e5e5] md:grid-cols-2 xl:grid-cols-4">
-            {commandCenterActionLanes.map((lane) => (
-              <Link
-                key={lane.id}
-                href={lane.href}
-                className="min-w-0 bg-white px-4 py-4 transition hover:bg-[#f8f8f8]"
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#666666]">
-                    {lane.label}
-                  </p>
-                  <span
-                    className={
-                      lane.tone === "warning"
-                        ? "rounded-full border border-red-200 bg-red-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-red-700"
-                        : lane.tone === "attention"
-                          ? "rounded-full border border-[#e4d7ca] bg-[#fffcf7] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#8f5b32]"
-                          : "rounded-full border border-[#d6d6d6] bg-[#f8f8f8] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-500"
-                    }
-                  >
-                    {lane.tone}
-                  </span>
-                </div>
-                <h3 className="mt-3 text-[17px] font-semibold tracking-tight text-[#171717]">
-                  {lane.title}
-                </h3>
-                <p className="mt-2 text-xl font-semibold tracking-tight text-[#171717]">
-                  {lane.value}
-                </p>
-                <p className="mt-2 text-sm leading-5 text-slate-500">
-                  {lane.detail}
-                </p>
-              </Link>
-            ))}
-          </div>
-          {financialControl.openInvoiceCount === 0 &&
-          paymentTrailAttentionCount === 0 &&
-          Number(financialControl.depositReceivablesAmount) === 0 ? (
-            <div className="border-t border-[#e5e5e5] bg-[#f8f8f8] px-4 py-4 text-sm leading-6 text-slate-500 sm:px-5">
-              No cross-project finance action is active right now. New open
-              balances, deposit invoices, partial payments, overdue invoices,
-              and Payment Trail exceptions will appear here when canonical
-              records carry that pressure.
             </div>
           ) : null}
         </section>

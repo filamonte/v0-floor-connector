@@ -77,6 +77,17 @@ and Follow-ups so users can inspect one operating purpose at a time while
 keeping all content backed by existing dashboard widgets and source-record
 links. Invoice Review, Estimate Review, and CrewBoard remain follow-up
 page-family slices rather than completed visual conversions.
+The Communications Financial Command V1 stream now applies the same
+presentation-only Industrial OS command-center direction to `/communications`
+and `/financials`: Communications opens with needs-response, unread, finance
+context, and proof-review command cards plus a compact communication command
+center over existing thread/workspace summary data; Financials opens with open
+receivables, overdue, ready-to-invoice, and payment-exception command cards
+plus a compact money command center over the existing finance action lanes.
+This stream does not change schema, routes, loaders, server actions, auth,
+tenant boundaries, portal visibility, communication sends, invoice/payment
+state, payment events, financial math, providers, storage, or canonical
+workflow behavior.
 The Industrial OS Pattern Extraction V1 pass now adds shared
 `industrial-os-primitives` for hard-border panels, dark command surfaces,
 rails, blue primary/secondary actions, and blue eyebrow labels. Dashboard
