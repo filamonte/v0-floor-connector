@@ -77,6 +77,19 @@ and Follow-ups so users can inspect one operating purpose at a time while
 keeping all content backed by existing dashboard widgets and source-record
 links. Invoice Review, Estimate Review, and CrewBoard remain follow-up
 page-family slices rather than completed visual conversions.
+The Invoice Estimate Review Industrial OS V1 stream now applies the
+presentation-only Industrial OS review-command pattern to contractor Invoice
+Workspace and Estimate Workspace routes. `/invoices/:invoiceId` opens with an
+Invoice Review Command section summarizing existing invoice status, balance,
+Payment Trail signal, revision count, readiness, line-item count, and owning
+workspace handoff. `/estimates/:estimateId` opens with an Estimate Review
+Command section summarizing existing proposal status, total, scope line count,
+revision count, document readiness, contract handoff, downstream record counts,
+and open estimate-work handoff counts. This stream does not change schema,
+routes, loaders, server actions, auth, tenant boundaries, portal visibility,
+invoice/payment state, payment events, financial math, estimate pricing,
+approval logic, contract readiness, revision lineage, providers, storage, or
+canonical workflow behavior.
 The Industrial OS Pattern Extraction V1 pass now adds shared
 `industrial-os-primitives` for hard-border panels, dark command surfaces,
 rails, blue primary/secondary actions, and blue eyebrow labels. Dashboard
