@@ -84,6 +84,7 @@ export type StandardWorkspaceLayoutProps<TView extends string> = {
   variant?: "standard" | "industrial-reference";
   sidebar?: Array<StandardWorkspaceSidebarItem<TView>>;
   currentView?: TView;
+  mobileOpeningDensity?: "default" | "compact";
   summaryBand?: ReactNode;
   commandBar?: ReactNode;
   supportArea?: ReactNode;
@@ -96,6 +97,7 @@ export function StandardWorkspaceLayout<TView extends string>({
   variant = "standard",
   sidebar,
   currentView,
+  mobileOpeningDensity = "default",
   summaryBand,
   commandBar,
   supportArea,
@@ -132,23 +134,42 @@ export function StandardWorkspaceLayout<TView extends string>({
 
   const activeView = currentView ?? hashView;
   const industrialReference = variant === "industrial-reference";
+  const compactMobileOpening =
+    industrialReference && mobileOpeningDensity === "compact";
 
   return (
-    <div className={industrialReference ? "space-y-5" : "space-y-4"}>
+    <div
+      className={
+        industrialReference
+          ? compactMobileOpening
+            ? "space-y-3 sm:space-y-5"
+            : "space-y-5"
+          : "space-y-4"
+      }
+    >
       <section
         className={
           industrialReference
-            ? "border border-[#111827] bg-[#080a0f] px-4 py-5 text-white shadow-none sm:px-6 lg:px-8"
+            ? compactMobileOpening
+              ? "border border-[#111827] bg-[#080a0f] px-3 py-3 text-white shadow-none sm:px-6 sm:py-5 lg:px-8"
+              : "border border-[#111827] bg-[#080a0f] px-4 py-5 text-white shadow-none sm:px-6 lg:px-8"
             : "border border-[#d1d5db] bg-white px-4 py-4 shadow-none sm:px-6"
         }
       >
-        <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(280px,0.34fr)] xl:items-start">
+        <div
+          className={[
+            compactMobileOpening ? "grid gap-3" : "grid gap-4",
+            "xl:grid-cols-[minmax(0,1fr)_minmax(280px,0.34fr)] xl:items-start"
+          ].join(" ")}
+        >
           <div className="min-w-0">
             {header.eyebrow ? (
               <p
                 className={
                   industrialReference
-                    ? "text-[11px] font-semibold uppercase tracking-[0.24em] text-[#8fc7ff]"
+                    ? compactMobileOpening
+                      ? "text-[10px] font-semibold uppercase tracking-[0.18em] text-[#8fc7ff] sm:text-[11px] sm:tracking-[0.24em]"
+                      : "text-[11px] font-semibold uppercase tracking-[0.24em] text-[#8fc7ff]"
                     : "text-[10px] font-semibold uppercase tracking-[0.18em] text-[#005eb8]"
                 }
               >
@@ -158,7 +179,9 @@ export function StandardWorkspaceLayout<TView extends string>({
             <h1
               className={
                 industrialReference
-                  ? "mt-3 whitespace-normal break-words text-[30px] font-semibold leading-tight tracking-tight text-white [overflow-wrap:anywhere] sm:text-[40px]"
+                  ? compactMobileOpening
+                    ? "mt-1.5 whitespace-normal break-words text-[23px] font-semibold leading-[1.12] tracking-tight text-white [overflow-wrap:anywhere] sm:mt-3 sm:text-[40px] sm:leading-tight"
+                    : "mt-3 whitespace-normal break-words text-[30px] font-semibold leading-tight tracking-tight text-white [overflow-wrap:anywhere] sm:text-[40px]"
                   : "mt-2 whitespace-normal break-words text-[26px] font-semibold leading-tight tracking-tight text-[var(--text-primary)] [overflow-wrap:anywhere] sm:text-[30px]"
               }
             >
@@ -168,7 +191,9 @@ export function StandardWorkspaceLayout<TView extends string>({
               <p
                 className={
                   industrialReference
-                    ? "mt-3 max-w-4xl text-sm leading-6 text-white/72 sm:text-base sm:leading-7"
+                    ? compactMobileOpening
+                      ? "mt-2 max-w-4xl text-[13px] leading-5 text-white/72 sm:mt-3 sm:text-base sm:leading-7"
+                      : "mt-3 max-w-4xl text-sm leading-6 text-white/72 sm:text-base sm:leading-7"
                     : "mt-2 max-w-3xl text-sm leading-6 text-[var(--text-secondary)]"
                 }
               >
@@ -209,11 +234,19 @@ export function StandardWorkspaceLayout<TView extends string>({
               aria-label="Workspace sections"
               className={
                 industrialReference
-                  ? "sticky top-0 z-20 border-b border-[#d1d5db] bg-[#f9fafb] px-3 py-3 lg:top-[8.5rem] lg:max-h-[calc(100vh-9.5rem)] lg:self-start lg:overflow-y-auto lg:border-b-0 lg:border-r"
+                  ? compactMobileOpening
+                    ? "sticky top-0 z-20 border-b border-[#d1d5db] bg-[#f9fafb] px-2 py-2 lg:top-[8.5rem] lg:max-h-[calc(100vh-9.5rem)] lg:self-start lg:overflow-y-auto lg:border-b-0 lg:border-r lg:px-3 lg:py-3"
+                    : "sticky top-0 z-20 border-b border-[#d1d5db] bg-[#f9fafb] px-3 py-3 lg:top-[8.5rem] lg:max-h-[calc(100vh-9.5rem)] lg:self-start lg:overflow-y-auto lg:border-b-0 lg:border-r"
                   : "sticky top-0 z-20 border-b border-[#d1d5db] bg-[#f9fafb] px-3 py-3 lg:top-[8.5rem] lg:max-h-[calc(100vh-9.5rem)] lg:self-start lg:overflow-y-auto lg:border-b-0 lg:border-r"
               }
             >
-              <p className="px-2 pb-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-[var(--text-tertiary)] lg:pb-3">
+              <p
+                className={
+                  compactMobileOpening
+                    ? "px-2 pb-1 text-[9px] font-semibold uppercase tracking-[0.18em] text-[var(--text-tertiary)] lg:pb-3 lg:text-[10px] lg:tracking-[0.2em]"
+                    : "px-2 pb-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-[var(--text-tertiary)] lg:pb-3"
+                }
+              >
                 Workspace sections
               </p>
               <div className="flex gap-2 overflow-x-auto pb-1 lg:flex-col lg:overflow-visible lg:pb-0">

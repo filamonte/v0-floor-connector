@@ -5555,6 +5555,7 @@ export default async function ProjectDetailPage({
   return (
     <StandardWorkspaceLayout
       variant="industrial-reference"
+      mobileOpeningDensity="compact"
       header={{
         eyebrow: "Project Workspace",
         title: project.name,
@@ -5628,7 +5629,9 @@ export default async function ProjectDetailPage({
       currentView={currentView}
       summaryBand={
         <WorkspaceSummaryBand
-          className="grid gap-4 xl:grid-cols-[minmax(0,0.85fr)_minmax(0,0.85fr)_minmax(0,1.3fr)]"
+          className="grid gap-2 sm:gap-4 xl:grid-cols-[minmax(0,0.85fr)_minmax(0,0.85fr)_minmax(0,1.3fr)]"
+          itemClassName="rounded-[4px] border border-[#d1d5db] bg-white px-3 py-2.5 shadow-[0_1px_0_rgba(9,9,11,0.035)] sm:px-4 sm:py-3"
+          labelClassName="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#005eb8] sm:text-xs sm:tracking-[0.18em]"
           items={[
             {
               key: "readiness",
