@@ -120,6 +120,22 @@ Permanent Vercel review rule: ignore `Vercel - v0-floor-connector` and any
 deployment/check under the obsolete `tfc-saas` scope. The active FloorConnector
 Vercel project/check for PR review is `Vercel - lkjlkjlsdf`.
 
+Industrial OS Operating Surfaces V2 Stream 4 is implemented on
+`stream/assessment-estimate-workspace-industrial-os-v1` in
+`C:\FC-worktrees\assessment-estimate-workspace-industrial-os-v1`. The slice is
+presentation-only: Assessment Package detail now has an
+`#assessment-workspace-command` summary for captured context, area/space
+coverage, measurement totals, missing context, and estimator handoff over
+existing package/space data; Estimate Editor now has an
+`#estimate-workspace-command` band for current editor state, catalog-backed
+items, source assessment measurements, scope content, reusable content,
+attachments, project/opportunity continuity, and pricing preview labels. It did
+not touch invoice detail or Stream 3 estimate detail/review files, and it adds
+no schema, migration, route, loader, server action, auth/tenant, portal,
+area/space calculation, estimate pricing, catalog/template, proposal,
+work-item, revision, readiness, payment/signature/scheduling, or business-logic
+change.
+
 Current automation readiness is Ready With Human Review Gate. Future planning
 must follow the loop Strategic Research / Product Council -> Capability, then
 Program, Wave, Stream, PR, Verification, and Merge. Future waves still require

@@ -44,6 +44,10 @@ function formatDateTime(value: string | null) {
   return value ? new Date(value).toLocaleString() : "Not captured";
 }
 
+function hasText(value: string | null | undefined) {
+  return Boolean(value?.trim());
+}
+
 function TextField({
   name,
   label,
@@ -211,6 +215,72 @@ export default async function AssessmentPackageDetailPage({
 
   const assessmentSpaceSummary =
     deriveAssessmentSpacePackageSummary(assessmentSpaces);
+  const capturedContextRows = [
+    {
+      label: "Assessment date",
+      captured: hasText(assessmentPackage.assessmentDate),
+      detail: assessmentPackage.assessmentDate ?? "Not captured"
+    },
+    {
+      label: "Site contact",
+      captured:
+        hasText(assessmentPackage.siteContactName) ||
+        hasText(assessmentPackage.siteContactPhone),
+      detail:
+        [assessmentPackage.siteContactName, assessmentPackage.siteContactPhone]
+          .filter(hasText)
+          .join(" / ") || "Not captured"
+    },
+    {
+      label: "Access and parking",
+      captured:
+        hasText(assessmentPackage.accessNotes) ||
+        hasText(assessmentPackage.parkingNotes),
+      detail:
+        hasText(assessmentPackage.accessNotes) ||
+        hasText(assessmentPackage.parkingNotes)
+          ? "Captured"
+          : "Not captured"
+    },
+    {
+      label: "Customer goals",
+      captured: hasText(assessmentPackage.customerGoals),
+      detail: assessmentPackage.customerGoals ?? "Not captured"
+    },
+    {
+      label: "Current conditions",
+      captured: hasText(assessmentPackage.currentConditionsSummary),
+      detail: assessmentPackage.currentConditionsSummary ?? "Not captured"
+    },
+    {
+      label: "Recommended system",
+      captured: hasText(assessmentPackage.recommendedSystemSummary),
+      detail: assessmentPackage.recommendedSystemSummary ?? "Not captured"
+    },
+    {
+      label: "Estimate handoff",
+      captured: hasText(assessmentPackage.estimateHandoffSummary),
+      detail: assessmentPackage.estimateHandoffSummary ?? "Not captured"
+    }
+  ];
+  const capturedContextCount = capturedContextRows.filter(
+    (row) => row.captured
+  ).length;
+  const assessmentMissingRows = [
+    ...capturedContextRows
+      .filter((row) => !row.captured)
+      .map((row) => row.label),
+    ...(assessmentSpaceSummary.total === 0 ? ["Areas / spaces"] : []),
+    ...(assessmentSpaceSummary.measuredCount === 0 ? ["Measured spaces"] : [])
+  ];
+  const nextAssessmentAction =
+    assessmentPackage.status === "ready_for_estimate"
+      ? "Open estimate workspace or keep project handoff context current."
+      : assessmentSpaceSummary.total === 0
+        ? "Add the first area or space before estimator handoff."
+        : assessmentMissingRows.length > 0
+          ? "Complete missing assessment context before estimator handoff."
+          : "Move package toward ready for estimate when estimator review is complete.";
 
   return (
     <div className="space-y-8">
@@ -241,6 +311,146 @@ export default async function AssessmentPackageDetailPage({
           {resolvedSearchParams.message}
         </div>
       ) : null}
+
+      <section
+        id="assessment-workspace-command"
+        className="border border-[#d1d6de] bg-white"
+      >
+        <div className="border-b border-[#d1d6de] bg-[#f7f8fa] px-5 py-4">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#005EB8]">
+                Assessment Workspace
+              </p>
+              <h2 className="mt-2 text-[22px] font-semibold leading-7 text-slate-950">
+                Captured context, measurement coverage, and estimator handoff.
+              </h2>
+              <p className="mt-2 max-w-4xl text-sm leading-6 text-slate-600">
+                This command view summarizes the package without changing the
+                underlying assessment, area/space, measurement, or estimate
+                handoff records.
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Link
+                href={`/projects/${project.id}`}
+                className={secondaryActionClassName}
+              >
+                Open Project Workspace
+              </Link>
+            </div>
+          </div>
+        </div>
+
+        <div className="grid gap-3 border-b border-[#d1d6de] px-5 py-4 md:grid-cols-2 xl:grid-cols-4">
+          {[
+            {
+              label: "Package status",
+              value: formatAssessmentPackageStatusLabel(
+                assessmentPackage.status
+              ),
+              detail: "Stored assessment package status"
+            },
+            {
+              label: "Captured fields",
+              value: `${capturedContextCount}/${capturedContextRows.length}`,
+              detail: "Notes, contacts, context, and handoff fields"
+            },
+            {
+              label: "Areas / spaces",
+              value: String(assessmentSpaceSummary.total),
+              detail: `${assessmentSpaceSummary.measuredCount} measured`
+            },
+            {
+              label: "Measured quantity",
+              value: `${assessmentSpaceSummary.totalSquareFeet.toFixed(2)} sq ft`,
+              detail: `${assessmentSpaceSummary.totalPerimeterFeet.toFixed(
+                2
+              )} perimeter ft`
+            }
+          ].map((item) => (
+            <div
+              key={item.label}
+              className="border border-[#d1d6de] bg-white px-4 py-3"
+            >
+              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                {item.label}
+              </p>
+              <p className="mt-2 break-words text-[20px] font-semibold leading-6 text-slate-950">
+                {item.value}
+              </p>
+              <p className="mt-1 text-[12px] leading-5 text-slate-600">
+                {item.detail}
+              </p>
+            </div>
+          ))}
+        </div>
+
+        <div className="grid gap-4 px-5 py-5 lg:grid-cols-[minmax(0,1.2fr)_minmax(280px,0.8fr)]">
+          <div className="border border-[#d1d6de] bg-[#f7f8fa] px-4 py-4">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+              Captured information
+            </p>
+            <div className="mt-3 grid gap-2 sm:grid-cols-2">
+              {capturedContextRows.map((row) => (
+                <div
+                  key={row.label}
+                  className="border border-[#d1d6de] bg-white px-3 py-3"
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="text-sm font-semibold text-slate-950">
+                      {row.label}
+                    </p>
+                    <span
+                      className={[
+                        "shrink-0 border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em]",
+                        row.captured
+                          ? "border-emerald-200 bg-emerald-50 text-emerald-800"
+                          : "border-amber-200 bg-amber-50 text-amber-900"
+                      ].join(" ")}
+                    >
+                      {row.captured ? "Captured" : "Missing"}
+                    </span>
+                  </div>
+                  <p className="mt-2 line-clamp-2 text-xs leading-5 text-slate-600">
+                    {row.detail}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="border border-[#d1d6de] bg-white px-4 py-4">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#005EB8]">
+              Next handoff action
+            </p>
+            <h3 className="mt-2 text-lg font-semibold leading-6 text-slate-950">
+              {nextAssessmentAction}
+            </h3>
+            <div className="mt-4 border border-[#d1d6de] bg-[#f7f8fa] px-3 py-3">
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
+                Missing before estimator confidence
+              </p>
+              {assessmentMissingRows.length > 0 ? (
+                <ul className="mt-3 space-y-2 text-sm leading-5 text-slate-700">
+                  {assessmentMissingRows.slice(0, 6).map((item) => (
+                    <li key={item} className="flex gap-2">
+                      <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-amber-500" />
+                      <span>{item}</span>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="mt-3 text-sm leading-6 text-slate-700">
+                  No missing context is visible from this package summary.
+                  Estimator review still happens in the owning estimate
+                  workspace.
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
+      </section>
 
       <div className="grid gap-8 xl:grid-cols-[minmax(0,1fr)_320px]">
         <DetailPanel

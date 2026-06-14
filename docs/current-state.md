@@ -97,6 +97,19 @@ keeps Settings organization defaults aligned to `#005EB8`. It remains
 presentation-only and does not change canonical records, schema, routes,
 loaders, server actions, auth, tenant boundaries, portal access, payments,
 signatures, scheduling, providers, or workflow state.
+Industrial OS Operating Surfaces V2 Stream 4 applies the same presentation-only
+command pattern to the implemented Assessment Package detail workspace and
+Estimate Editor workspace. Assessment Package now opens with captured-context,
+area/space, measurement, missing-context, and estimator-handoff summary over
+existing package fields and assessment-space summaries. Estimate Editor now opens
+with a workspace command band summarizing existing editor state, catalog-backed
+line items, scope content, source assessment measurement groups, reusable
+content, attachments, project/opportunity continuity, and current pricing
+preview labels. This does not change assessment package ownership, area/space
+calculation logic, estimate pricing, catalog/template behavior, proposal
+review, work-item behavior, schema, migrations, routes, loaders, server
+actions, auth, tenant boundaries, portal visibility, revisions, readiness gates,
+payment/signature/scheduling behavior, or business logic.
 
 If this document conflicts with a planning, target-design, or historical document, trust this document for implemented status.
 

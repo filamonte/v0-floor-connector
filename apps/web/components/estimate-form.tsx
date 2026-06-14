@@ -2,12 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
-import {
-  CheckCircle2,
-  Circle,
-  FilePlus2,
-  MoreVertical,
-} from "lucide-react";
+import { CheckCircle2, Circle, FilePlus2, MoreVertical } from "lucide-react";
 import type {
   CatalogItem,
   Estimate,
@@ -27,7 +22,10 @@ import {
   type EstimateWorkspaceSectionId
 } from "@/components/estimates/estimate-workspace-shell";
 import { FilesSection } from "@/components/estimates/files-section";
-import { ItemsSection, type EstimateItemsDraft } from "@/components/estimates/items-section";
+import {
+  ItemsSection,
+  type EstimateItemsDraft
+} from "@/components/estimates/items-section";
 import { NotesSection } from "@/components/estimates/notes-section";
 import { ScopeOfWork } from "@/components/estimates/scope-of-work";
 import { ReusableContentInserter } from "@/components/estimates/reusable-content-inserter";
@@ -89,7 +87,9 @@ type EstimateFormProps = {
   >;
   contentBlocks?: EstimateContentBlock[];
   saveEstimateAction: (formData: FormData) => Promise<EstimateSaveResult>;
-  updateStatusAction: (formData: FormData) => Promise<EstimateStatusTransitionResult>;
+  updateStatusAction: (
+    formData: FormData
+  ) => Promise<EstimateStatusTransitionResult>;
   previewExpandedSystemAction: (input: {
     systemCatalogItemId: string;
     inputMode: "dimensions" | "direct";
@@ -121,9 +121,10 @@ type EstimateFormProps = {
     sourceEstimateId: string;
     section: "scope" | "terms" | "inclusions" | "exclusions";
   }) => Promise<EstimateReusableContentImportResult>;
-  quickCreateCatalogItemAction: (formData: FormData) => Promise<
-    | { ok: true; item: CatalogItem }
-    | { ok: false; message: string }
+  quickCreateCatalogItemAction: (
+    formData: FormData
+  ) => Promise<
+    { ok: true; item: CatalogItem } | { ok: false; message: string }
   >;
   updateCatalogItemFromEstimateAction: (input: {
     estimateId: string;
@@ -188,6 +189,10 @@ function formatMoney(value: number) {
   return `$${value.toFixed(2)}`;
 }
 
+function hasPlainText(value: string | null | undefined) {
+  return Boolean(stripHtmlToPlainText(value)?.trim());
+}
+
 function formatPercent(value: number) {
   return value.toFixed(2).replace(/\.00$/, "");
 }
@@ -223,16 +228,23 @@ function applyDraftPricing(
     options.preserveUnitPriceOverride && lineItem.unitPrice.trim().length > 0
       ? parseNumericInput(lineItem.unitPrice)
       : pricing.finalUnitPrice;
-  const computedLineTotal = calculateLineTotal(lineItem.quantity, resolvedUnitPrice);
+  const computedLineTotal = calculateLineTotal(
+    lineItem.quantity,
+    resolvedUnitPrice
+  );
 
   return {
     ...lineItem,
     baseUnitCost: formatMoneyValue(pricing.baseUnitCost),
     baseUnitPrice:
-      pricing.baseUnitPrice == null ? "" : formatMoneyValue(pricing.baseUnitPrice),
+      pricing.baseUnitPrice == null
+        ? ""
+        : formatMoneyValue(pricing.baseUnitPrice),
     markupPercent: formatPercent(pricing.markupPercent),
     hiddenMarkupPercent: formatMoneyValue(pricing.hiddenMarkupPercent),
-    unitPriceBeforeHiddenMarkup: formatMoneyValue(pricing.unitPriceBeforeHiddenMarkup),
+    unitPriceBeforeHiddenMarkup: formatMoneyValue(
+      pricing.unitPriceBeforeHiddenMarkup
+    ),
     visibleMarkupAmount: formatMoneyValue(pricing.visibleMarkupAmount),
     hiddenMarkupAmount: formatMoneyValue(pricing.hiddenMarkupAmount),
     unitPrice: formatMoney(resolvedUnitPrice),
@@ -240,10 +252,14 @@ function applyDraftPricing(
   };
 }
 
-function buildItemGroups(estimate?: EditableEstimate | null): EstimateItemGroup[] {
+function buildItemGroups(
+  estimate?: EditableEstimate | null
+): EstimateItemGroup[] {
   const existingGroups = [...(estimate?.content.itemGroups ?? [])];
   const labels = new Set(
-    existingGroups.map((group) => group.label.trim().toLowerCase()).filter(Boolean)
+    existingGroups
+      .map((group) => group.label.trim().toLowerCase())
+      .filter(Boolean)
   );
 
   for (const lineItem of estimate?.lineItems ?? []) {
@@ -302,53 +318,69 @@ function buildLineItemDrafts(
   itemGroups: EstimateItemGroup[]
 ): EstimateItemsDraft[] {
   const groupIdByLabel = new Map(
-    itemGroups.map((group) => [group.label.trim().toLowerCase(), group.id] as const)
+    itemGroups.map(
+      (group) => [group.label.trim().toLowerCase(), group.id] as const
+    )
   );
 
   if (estimate?.lineItems?.length) {
     return estimate.lineItems.map((lineItem, index) => {
       const legacyRow = estimate.content.itemRows[index];
-      const resolvedMarkupPercent =
-        Number(lineItem.markupPercent ?? legacyRow?.markupPercent ?? "0").toFixed(2);
+      const resolvedMarkupPercent = Number(
+        lineItem.markupPercent ?? legacyRow?.markupPercent ?? "0"
+      ).toFixed(2);
       const resolvedBaseUnitPrice = Number(
         lineItem.baseUnitPrice ?? legacyRow?.baseUnitPrice ?? lineItem.unitPrice
       ).toFixed(2);
-      const resolvedBaseUnitCost = Number(lineItem.baseUnitCost ?? "0").toFixed(2);
+      const resolvedBaseUnitCost = Number(lineItem.baseUnitCost ?? "0").toFixed(
+        2
+      );
       const groupId = lineItem.groupName
-        ? groupIdByLabel.get(lineItem.groupName.trim().toLowerCase()) ?? null
-        : legacyRow?.groupId ?? null;
+        ? (groupIdByLabel.get(lineItem.groupName.trim().toLowerCase()) ?? null)
+        : (legacyRow?.groupId ?? null);
 
-      return applyDraftPricing({
-        id: lineItem.id,
-        rowKey: legacyRow?.rowKey ?? createRowKey("row", index + 1),
-        catalogItemId: lineItem.catalogItemId,
-        sourceType:
-          lineItem.sourceType === "system_component"
-            ? "system_component"
-            : "catalog_item",
-        sourceSystemId: lineItem.sourceSystemId,
-        sourceComponentId: lineItem.sourceComponentId,
-        itemType: lineItem.itemType ?? "service",
-        groupId,
-        name: lineItem.name,
-        description: lineItem.description ?? "",
-        quantity: Number(lineItem.quantity).toFixed(2),
-        unit: lineItem.unit || "each",
-        baseUnitCost: resolvedBaseUnitCost,
-        baseUnitPrice: resolvedBaseUnitPrice,
-        markupPercent: formatPercent(parseNumericInput(resolvedMarkupPercent)),
-        hiddenMarkupPercent: Number(lineItem.hiddenMarkupPercent ?? "0").toFixed(2),
-        unitPriceBeforeHiddenMarkup: Number(
-          lineItem.unitPriceBeforeHiddenMarkup ?? lineItem.unitPrice
-        ).toFixed(2),
-        visibleMarkupAmount: Number(lineItem.visibleMarkupAmount ?? "0").toFixed(2),
-        hiddenMarkupAmount: Number(lineItem.hiddenMarkupAmount ?? "0").toFixed(2),
-        unitPrice: formatMoney(parseNumericInput(lineItem.unitPrice)),
-        costCode: lineItem.costCode ?? "",
-        taxCode: lineItem.taxable ? "taxable" : "non-taxable",
-        assignedTo: lineItem.assignedTo ?? legacyRow?.assignedTo ?? "",
-        lineTotal: formatMoney(parseNumericInput(lineItem.lineTotal))
-      }, { preserveUnitPriceOverride: true });
+      return applyDraftPricing(
+        {
+          id: lineItem.id,
+          rowKey: legacyRow?.rowKey ?? createRowKey("row", index + 1),
+          catalogItemId: lineItem.catalogItemId,
+          sourceType:
+            lineItem.sourceType === "system_component"
+              ? "system_component"
+              : "catalog_item",
+          sourceSystemId: lineItem.sourceSystemId,
+          sourceComponentId: lineItem.sourceComponentId,
+          itemType: lineItem.itemType ?? "service",
+          groupId,
+          name: lineItem.name,
+          description: lineItem.description ?? "",
+          quantity: Number(lineItem.quantity).toFixed(2),
+          unit: lineItem.unit || "each",
+          baseUnitCost: resolvedBaseUnitCost,
+          baseUnitPrice: resolvedBaseUnitPrice,
+          markupPercent: formatPercent(
+            parseNumericInput(resolvedMarkupPercent)
+          ),
+          hiddenMarkupPercent: Number(
+            lineItem.hiddenMarkupPercent ?? "0"
+          ).toFixed(2),
+          unitPriceBeforeHiddenMarkup: Number(
+            lineItem.unitPriceBeforeHiddenMarkup ?? lineItem.unitPrice
+          ).toFixed(2),
+          visibleMarkupAmount: Number(
+            lineItem.visibleMarkupAmount ?? "0"
+          ).toFixed(2),
+          hiddenMarkupAmount: Number(
+            lineItem.hiddenMarkupAmount ?? "0"
+          ).toFixed(2),
+          unitPrice: formatMoney(parseNumericInput(lineItem.unitPrice)),
+          costCode: lineItem.costCode ?? "",
+          taxCode: lineItem.taxable ? "taxable" : "non-taxable",
+          assignedTo: lineItem.assignedTo ?? legacyRow?.assignedTo ?? "",
+          lineTotal: formatMoney(parseNumericInput(lineItem.lineTotal))
+        },
+        { preserveUnitPriceOverride: true }
+      );
     });
   }
 
@@ -364,7 +396,9 @@ function createBlankScopeItem(nextIndex: number): EstimateScopeItem {
   };
 }
 
-function buildScopeItems(estimate?: EditableEstimate | null): EstimateScopeItem[] {
+function buildScopeItems(
+  estimate?: EditableEstimate | null
+): EstimateScopeItem[] {
   const existingItems = estimate?.content.scopeItems ?? [];
 
   if (existingItems.length > 0) {
@@ -449,7 +483,9 @@ function appendImportedScopeItems(
   currentItems: EstimateScopeItem[],
   importedItems: EstimateScopeItem[]
 ) {
-  const existingItems = currentItems.filter((item) => item.text.trim().length > 0);
+  const existingItems = currentItems.filter(
+    (item) => item.text.trim().length > 0
+  );
   const nextItems = [
     ...existingItems,
     ...importedItems.map((item, index) => ({
@@ -459,10 +495,12 @@ function appendImportedScopeItems(
     }))
   ];
 
-  return [...nextItems, createBlankScopeItem(nextItems.length + 1)].map((item, index) => ({
-    ...item,
-    sortOrder: index
-  }));
+  return [...nextItems, createBlankScopeItem(nextItems.length + 1)].map(
+    (item, index) => ({
+      ...item,
+      sortOrder: index
+    })
+  );
 }
 
 function renderDetailsSection(input: {
@@ -523,16 +561,18 @@ function renderDetailsSection(input: {
           <span>Project details and estimate context</span>
         </div>
         <p className="mt-2 text-[13px] leading-5 text-[var(--text-secondary)]">
-          This section keeps the project-specific estimate context together. Reusable scope, terms,
-          inclusions, and exclusions live in their own content areas, and project-details import is
-          still coming later.
+          This section keeps the project-specific estimate context together.
+          Reusable scope, terms, inclusions, and exclusions live in their own
+          content areas, and project-details import is still coming later.
         </p>
       </div>
 
       <div className="grid gap-4 p-5 lg:grid-cols-2">
         <div className="space-y-4">
           <div>
-            <label className="text-[12px] font-medium text-[var(--text-secondary)]">Estimate Title</label>
+            <label className="text-[12px] font-medium text-[var(--text-secondary)]">
+              Estimate Title
+            </label>
             <input
               onChange={(event) => onTitleChange(event.target.value)}
               value={title}
@@ -540,7 +580,9 @@ function renderDetailsSection(input: {
             />
           </div>
           <div>
-            <label className="text-[12px] font-medium text-[var(--text-secondary)]">Customer</label>
+            <label className="text-[12px] font-medium text-[var(--text-secondary)]">
+              Customer
+            </label>
             <div className="mt-1.5 min-h-11 border border-[var(--border-warm)] bg-[var(--highlight)] px-3 py-3 text-[14px] text-[var(--text-primary)]">
               {customerName ?? "No customer linked"}
             </div>
@@ -550,7 +592,9 @@ function renderDetailsSection(input: {
               Project / Opportunity
             </label>
             <div className="mt-1.5 min-h-11 border border-[var(--border-warm)] bg-[var(--highlight)] px-3 py-3 text-[14px] text-[var(--text-primary)]">
-              {projectName ?? opportunityTitle ?? "Opportunity continuity linked"}
+              {projectName ??
+                opportunityTitle ??
+                "Opportunity continuity linked"}
             </div>
           </div>
           <div>
@@ -561,12 +605,15 @@ function renderDetailsSection(input: {
               {projectServiceAddressLabel}
             </div>
             <p className="mt-1.5 text-[12px] leading-5 text-[var(--text-tertiary)]">
-              Jobsite/service address, separate from customer billing or contact address.
+              Jobsite/service address, separate from customer billing or contact
+              address.
             </p>
           </div>
           <div className="grid gap-4 md:grid-cols-2">
             <div>
-              <label className="text-[12px] font-medium text-[var(--text-secondary)]">Estimate Date</label>
+              <label className="text-[12px] font-medium text-[var(--text-secondary)]">
+                Estimate Date
+              </label>
               <input
                 type="date"
                 value={estimateDate}
@@ -575,7 +622,9 @@ function renderDetailsSection(input: {
               />
             </div>
             <div>
-              <label className="text-[12px] font-medium text-[var(--text-secondary)]">Expiration Date</label>
+              <label className="text-[12px] font-medium text-[var(--text-secondary)]">
+                Expiration Date
+              </label>
               <input
                 type="date"
                 value={expirationDate}
@@ -588,14 +637,18 @@ function renderDetailsSection(input: {
 
         <div className="space-y-4">
           <div>
-            <label className="text-[12px] font-medium text-[var(--text-secondary)]">Status</label>
+            <label className="text-[12px] font-medium text-[var(--text-secondary)]">
+              Status
+            </label>
             <div className="mt-1.5 min-h-11 border border-[var(--border-warm)] bg-[var(--highlight)] px-3 py-3 text-[14px] capitalize text-[var(--text-primary)]">
               {formatStatusLabel(currentStatus)}
             </div>
           </div>
           <div className="grid gap-4 md:grid-cols-2">
             <div>
-              <label className="text-[12px] font-medium text-[var(--text-secondary)]">Project Type</label>
+              <label className="text-[12px] font-medium text-[var(--text-secondary)]">
+                Project Type
+              </label>
               <input
                 value={projectType}
                 onChange={(event) => onProjectTypeChange(event.target.value)}
@@ -604,7 +657,9 @@ function renderDetailsSection(input: {
               />
             </div>
             <div>
-              <label className="text-[12px] font-medium text-[var(--text-secondary)]">Sector</label>
+              <label className="text-[12px] font-medium text-[var(--text-secondary)]">
+                Sector
+              </label>
               <input
                 value={sector}
                 onChange={(event) => onSectorChange(event.target.value)}
@@ -625,7 +680,9 @@ function renderDetailsSection(input: {
               />
             </div>
             <div>
-              <label className="text-[12px] font-medium text-[var(--text-secondary)]">Tax Rule</label>
+              <label className="text-[12px] font-medium text-[var(--text-secondary)]">
+                Tax Rule
+              </label>
               <div className="mt-1.5 min-h-11 border border-[var(--border-warm)] bg-[var(--highlight)] px-3 py-3 text-[14px] text-[var(--text-primary)]">
                 {taxBehaviorLabel} at {taxRateLabel}
                 {customerTaxExempt ? " | Customer exempt" : ""}
@@ -634,19 +691,25 @@ function renderDetailsSection(input: {
           </div>
           <div className="grid gap-4 md:grid-cols-3">
             <div>
-              <label className="text-[12px] font-medium text-[var(--text-secondary)]">Taxable Sales</label>
+              <label className="text-[12px] font-medium text-[var(--text-secondary)]">
+                Taxable Sales
+              </label>
               <div className="mt-1.5 min-h-11 border border-[var(--border-warm)] bg-[var(--highlight)] px-3 py-3 text-[14px] text-[var(--text-primary)]">
                 {taxableSalesLabel}
               </div>
             </div>
             <div>
-              <label className="text-[12px] font-medium text-[var(--text-secondary)]">Exempt Sales</label>
+              <label className="text-[12px] font-medium text-[var(--text-secondary)]">
+                Exempt Sales
+              </label>
               <div className="mt-1.5 min-h-11 border border-[var(--border-warm)] bg-[var(--highlight)] px-3 py-3 text-[14px] text-[var(--text-primary)]">
                 {exemptSalesLabel}
               </div>
             </div>
             <div>
-              <label className="text-[12px] font-medium text-[var(--text-secondary)]">Derived Tax</label>
+              <label className="text-[12px] font-medium text-[var(--text-secondary)]">
+                Derived Tax
+              </label>
               <div className="mt-1.5 min-h-11 border border-[var(--border-warm)] bg-[var(--highlight)] px-3 py-3 text-[14px] text-[var(--text-primary)]">
                 {derivedTaxLabel}
               </div>
@@ -665,8 +728,9 @@ function renderBiddingStub() {
         Bidding
       </div>
       <div className="px-5 py-6 text-[14px] leading-6 text-[var(--text-secondary)]">
-        Bidding remains limited in this run. The workspace is preserving the section and estimate
-        continuity, but full bid-package behavior is still outside scope.
+        Bidding remains limited in this run. The workspace is preserving the
+        section and estimate continuity, but full bid-package behavior is still
+        outside scope.
       </div>
     </section>
   );
@@ -704,7 +768,9 @@ export function EstimateForm({
   const formRef = useRef<HTMLFormElement | null>(null);
   const statusInputRef = useRef<HTMLInputElement | null>(null);
   const lastSavedSnapshotRef = useRef("");
-  const [status, setStatus] = useState<EstimateStatus>(estimate?.status ?? "draft");
+  const [status, setStatus] = useState<EstimateStatus>(
+    estimate?.status ?? "draft"
+  );
   const [menuOpen, setMenuOpen] = useState(false);
   const [showMarkup, setShowMarkup] = useState(true);
   const [showOnlyZeroItems, setShowOnlyZeroItems] = useState(false);
@@ -715,7 +781,8 @@ export function EstimateForm({
       estimate?.referenceNumber ??
       "Estimate Workspace"
   );
-  const [itemGroups, setItemGroups] = useState<EstimateItemGroup[]>(initialItemGroups);
+  const [itemGroups, setItemGroups] =
+    useState<EstimateItemGroup[]>(initialItemGroups);
   const [lineItems, setLineItems] = useState<EstimateItemsDraft[]>(() =>
     buildLineItemDrafts(estimate, initialItemGroups)
   );
@@ -730,8 +797,12 @@ export function EstimateForm({
   const [scopeSummaryHtml, setScopeSummaryHtml] = useState(
     estimate?.content.scopeSummaryHtml ?? ""
   );
-  const [estimateDate, setEstimateDate] = useState(estimate?.estimateDate ?? "");
-  const [expirationDate, setExpirationDate] = useState(estimate?.expirationDate ?? "");
+  const [estimateDate, setEstimateDate] = useState(
+    estimate?.estimateDate ?? ""
+  );
+  const [expirationDate, setExpirationDate] = useState(
+    estimate?.expirationDate ?? ""
+  );
   const [projectType, setProjectType] = useState(estimate?.projectType ?? "");
   const [sector, setSector] = useState(estimate?.sector ?? "");
   const [discountAmount, setDiscountAmount] = useState(
@@ -743,20 +814,30 @@ export function EstimateForm({
   const [retainedAttachmentIds, setRetainedAttachmentIds] = useState<string[]>(
     estimate?.attachments?.map((attachment) => attachment.id) ?? []
   );
-  const [pendingAttachments, setPendingAttachments] = useState<PendingAttachment[]>([]);
+  const [pendingAttachments, setPendingAttachments] = useState<
+    PendingAttachment[]
+  >([]);
   const [selectedSystemId, setSelectedSystemId] = useState("");
-  const [systemInputMode, setSystemInputMode] = useState<"dimensions" | "direct">("dimensions");
+  const [systemInputMode, setSystemInputMode] = useState<
+    "dimensions" | "direct"
+  >("dimensions");
   const [systemLength, setSystemLength] = useState("");
   const [systemWidth, setSystemWidth] = useState("");
   const [systemSquareFootage, setSystemSquareFootage] = useState("");
   const [systemLinearFootage, setSystemLinearFootage] = useState("");
   const [systemCount, setSystemCount] = useState("1");
-  const [systemSourceLabel, setSystemSourceLabel] = useState<string | null>(null);
+  const [systemSourceLabel, setSystemSourceLabel] = useState<string | null>(
+    null
+  );
   const [systemGroupName, setSystemGroupName] = useState<string | null>(null);
   const [systemPreviewResult, setSystemPreviewResult] =
     useState<ExpandedSystemPreviewResult | null>(null);
-  const [systemPreviewMessage, setSystemPreviewMessage] = useState<string | null>(null);
-  const [expectedUpdatedAt, setExpectedUpdatedAt] = useState(estimate?.updatedAt ?? "");
+  const [systemPreviewMessage, setSystemPreviewMessage] = useState<
+    string | null
+  >(null);
+  const [expectedUpdatedAt, setExpectedUpdatedAt] = useState(
+    estimate?.updatedAt ?? ""
+  );
   const {
     status: saveFeedbackStatus,
     message: saveFeedbackMessage,
@@ -772,15 +853,19 @@ export function EstimateForm({
       : "All changes saved."
   });
   const [titleEditing, setTitleEditing] = useState(false);
-  const [inventoryCreateError, setInventoryCreateError] = useState<string | null>(null);
-  const [catalogPreviewAddMessage, setCatalogPreviewAddMessage] = useState<string | null>(null);
-  const [catalogInventoryItems, setCatalogInventoryItems] = useState<CatalogItem[]>(catalogItems);
+  const [inventoryCreateError, setInventoryCreateError] = useState<
+    string | null
+  >(null);
+  const [catalogPreviewAddMessage, setCatalogPreviewAddMessage] = useState<
+    string | null
+  >(null);
+  const [catalogInventoryItems, setCatalogInventoryItems] =
+    useState<CatalogItem[]>(catalogItems);
   const [approvalPanelInitialOpen, setApprovalPanelInitialOpen] = useState(
     Boolean(approvalOrchestration?.contract.snapshotMissing)
   );
-  const [approvalState, setApprovalState] = useState<EstimateApprovalOrchestrationState | null>(
-    approvalOrchestration
-  );
+  const [approvalState, setApprovalState] =
+    useState<EstimateApprovalOrchestrationState | null>(approvalOrchestration);
   const [isPending, startSaveTransition] = useTransition();
   const [isPreviewPending, startPreviewTransition] = useTransition();
   const projectServiceAddressLabel = useMemo(() => {
@@ -791,16 +876,25 @@ export function EstimateForm({
       projectServiceAddress?.stateRegion,
       projectServiceAddress?.postalCode,
       projectServiceAddress?.countryCode
-    ].filter((value): value is string => Boolean(value && value.trim().length > 0));
+    ].filter((value): value is string =>
+      Boolean(value && value.trim().length > 0)
+    );
 
-    return parts.length > 0 ? parts.join(", ") : "No project service address provided";
+    return parts.length > 0
+      ? parts.join(", ")
+      : "No project service address provided";
   }, [projectServiceAddress]);
 
   const filteredCatalogItems = catalogInventoryItems.filter(
     (item) => item.status === "active"
   );
-  const activeContentBlocks = contentBlocks.filter((block) => block.status === "active");
-  const nextGroupIndex = useMemo(() => itemGroups.length + 1, [itemGroups.length]);
+  const activeContentBlocks = contentBlocks.filter(
+    (block) => block.status === "active"
+  );
+  const nextGroupIndex = useMemo(
+    () => itemGroups.length + 1,
+    [itemGroups.length]
+  );
   const taxBehavior = organizationFinancialSettings.defaultTaxBehavior;
   const taxRate =
     customerTaxExempt || taxBehavior === "none"
@@ -828,12 +922,50 @@ export function EstimateForm({
   const allowedTransitions: readonly EstimateStatus[] = [];
   const taxBehaviorLabel = formatTaxBehaviorLabel(taxBehavior);
   const taxRateLabel = `${(taxRate * 100).toFixed(2)}%`;
+  const filledScopeItemCount = scopeItems.filter((item) =>
+    item.text.trim()
+  ).length;
+  const catalogBackedLineItemCount = lineItems.filter(
+    (lineItem) => lineItem.catalogItemId
+  ).length;
+  const zeroTotalLineItemCount = lineItems.filter(
+    (lineItem) =>
+      lineItem.name.trim().length > 0 &&
+      parseNumericInput(lineItem.lineTotal) === 0
+  ).length;
+  const existingAttachmentCount = retainedAttachmentIds.length;
+  const pendingAttachmentCount = pendingAttachments.length;
+  const sourceMeasurementGroupCount =
+    sourceAssessment?.measurementGroups.length ?? 0;
+  const estimateWorkspaceMissingRows = [
+    ...(lineItems.length === 0 ? ["Estimate line items"] : []),
+    ...(filledScopeItemCount === 0 ? ["Scope items"] : []),
+    ...(!hasPlainText(scopeSummaryHtml) ? ["Scope summary"] : []),
+    ...(!hasPlainText(termsHtml) ? ["Terms"] : []),
+    ...(!hasPlainText(inclusionsHtml) ? ["Inclusions"] : []),
+    ...(!hasPlainText(exclusionsHtml) ? ["Exclusions"] : []),
+    ...(sourceAssessment && sourceMeasurementGroupCount === 0
+      ? ["Reviewed source measurements"]
+      : []),
+    ...(zeroTotalLineItemCount > 0
+      ? [`${zeroTotalLineItemCount} zero-total line item(s)`]
+      : [])
+  ];
+  const estimateWorkspaceNextAction =
+    status === "approved"
+      ? "Use approved-estimate handoff actions without changing the commercial snapshot."
+      : lineItems.length === 0
+        ? "Add catalog-backed items or expand a system before review."
+        : estimateWorkspaceMissingRows.length > 0
+          ? "Resolve missing estimate context before customer review."
+          : "Open Review Estimate and confirm the customer-facing proposal.";
   const scopeBlocks = useMemo(
     () => activeContentBlocks.filter((block) => block.blockType === "scope"),
     [activeContentBlocks]
   );
   const inclusionBlocks = useMemo(
-    () => activeContentBlocks.filter((block) => block.blockType === "inclusion"),
+    () =>
+      activeContentBlocks.filter((block) => block.blockType === "inclusion"),
     [activeContentBlocks]
   );
   const termsBlocks = useMemo(
@@ -841,14 +973,17 @@ export function EstimateForm({
     [activeContentBlocks]
   );
   const exclusionBlocks = useMemo(
-    () => activeContentBlocks.filter((block) => block.blockType === "exclusion"),
+    () =>
+      activeContentBlocks.filter((block) => block.blockType === "exclusion"),
     [activeContentBlocks]
   );
   const selectedSystemPreview =
     systemPreviewResult?.ok &&
     systemPreviewResult.systemCatalogItemId === selectedSystemId &&
-    systemPreviewResult.squareFootage === Number(systemSquareFootage || 0).toFixed(2) &&
-    systemPreviewResult.linearFootage === Number(systemLinearFootage || 0).toFixed(2) &&
+    systemPreviewResult.squareFootage ===
+      Number(systemSquareFootage || 0).toFixed(2) &&
+    systemPreviewResult.linearFootage ===
+      Number(systemLinearFootage || 0).toFixed(2) &&
     systemPreviewResult.count === Number(systemCount || 1).toFixed(2)
       ? systemPreviewResult.preview
       : null;
@@ -912,7 +1047,10 @@ export function EstimateForm({
     return result;
   }
 
-  function syncServerInsertedLineItems(nextLineItems: EstimateLineItem[], updatedAt: string) {
+  function syncServerInsertedLineItems(
+    nextLineItems: EstimateLineItem[],
+    updatedAt: string
+  ) {
     const nextGroups = mergeItemGroupsWithLineItems(itemGroups, nextLineItems);
     const nextDrafts = buildLineItemDrafts(
       {
@@ -948,7 +1086,11 @@ export function EstimateForm({
     field: keyof EstimateItemsDraft,
     value: string
   ) {
-    if (!["quantity", "groupId", "assignedTo", "unitPrice", "taxCode"].includes(field)) {
+    if (
+      !["quantity", "groupId", "assignedTo", "unitPrice", "taxCode"].includes(
+        field
+      )
+    ) {
       return;
     }
 
@@ -959,7 +1101,8 @@ export function EstimateForm({
           return lineItem;
         }
 
-        const nextGroupId = field === "groupId" ? value || null : lineItem.groupId;
+        const nextGroupId =
+          field === "groupId" ? value || null : lineItem.groupId;
         const nextLineItem = {
           ...lineItem,
           [field]: value,
@@ -967,13 +1110,17 @@ export function EstimateForm({
         };
 
         return applyDraftPricing(nextLineItem, {
-          preserveUnitPriceOverride: field === "quantity" || field === "unitPrice"
+          preserveUnitPriceOverride:
+            field === "quantity" || field === "unitPrice"
         });
       })
     );
   }
 
-  async function insertCatalogItem(catalogItem: CatalogItem, targetGroupId?: string | null) {
+  async function insertCatalogItem(
+    catalogItem: CatalogItem,
+    targetGroupId?: string | null
+  ) {
     if (!estimate?.id) {
       return false;
     }
@@ -985,7 +1132,8 @@ export function EstimateForm({
     }
 
     const targetGroupName = targetGroupId
-      ? itemGroups.find((group) => group.id === targetGroupId)?.label.trim() || null
+      ? itemGroups.find((group) => group.id === targetGroupId)?.label.trim() ||
+        null
       : null;
     const result = await insertCatalogItemAction({
       estimateId: estimate.id,
@@ -1002,8 +1150,13 @@ export function EstimateForm({
     return true;
   }
 
-  function handleQuickAddCatalogItem(catalogItemId: string, targetGroupId?: string | null) {
-    const catalogItem = filteredCatalogItems.find((item) => item.id === catalogItemId);
+  function handleQuickAddCatalogItem(
+    catalogItemId: string,
+    targetGroupId?: string | null
+  ) {
+    const catalogItem = filteredCatalogItems.find(
+      (item) => item.id === catalogItemId
+    );
 
     if (!catalogItem) {
       return;
@@ -1014,18 +1167,24 @@ export function EstimateForm({
     });
   }
 
-  function handleAddPreviewCatalogItem(catalogItemId: string, targetGroupId?: string | null) {
+  function handleAddPreviewCatalogItem(
+    catalogItemId: string,
+    targetGroupId?: string | null
+  ) {
     const catalogItem = filteredCatalogItems.find(
       (item) => item.id === catalogItemId && item.itemType !== "system"
     );
 
     if (!catalogItem) {
-      setCatalogPreviewAddMessage("Only active catalog items can be added from this panel.");
+      setCatalogPreviewAddMessage(
+        "Only active catalog items can be added from this panel."
+      );
       return;
     }
 
     const targetGroupName = targetGroupId
-      ? itemGroups.find((group) => group.id === targetGroupId)?.label.trim() || null
+      ? itemGroups.find((group) => group.id === targetGroupId)?.label.trim() ||
+        null
       : null;
 
     setCatalogPreviewAddMessage(
@@ -1093,7 +1252,9 @@ export function EstimateForm({
     taxable: boolean;
   }) {
     if (!estimate?.id) {
-      setInventoryCreateError("Save this estimate before editing catalog items.");
+      setInventoryCreateError(
+        "Save this estimate before editing catalog items."
+      );
       return false;
     }
 
@@ -1130,7 +1291,9 @@ export function EstimateForm({
               name: input.name.trim(),
               description: input.description,
               unit: input.unit.trim(),
-              defaultUnitPrice: Number(input.defaultUnitPrice.replace(/[$,\s]/g, "")).toFixed(2),
+              defaultUnitPrice: Number(
+                input.defaultUnitPrice.replace(/[$,\s]/g, "")
+              ).toFixed(2),
               taxable: input.taxable
             }
           : item
@@ -1159,14 +1322,22 @@ export function EstimateForm({
       setSystemLength(value);
       const length = parseNumericInput(value);
       const width = parseNumericInput(systemWidth);
-      setSystemSquareFootage(length > 0 && width > 0 ? (length * width).toFixed(2) : "");
-      setSystemLinearFootage(length > 0 && width > 0 ? ((length * 2) + (width * 2)).toFixed(2) : "");
+      setSystemSquareFootage(
+        length > 0 && width > 0 ? (length * width).toFixed(2) : ""
+      );
+      setSystemLinearFootage(
+        length > 0 && width > 0 ? (length * 2 + width * 2).toFixed(2) : ""
+      );
     } else if (field === "width") {
       setSystemWidth(value);
       const length = parseNumericInput(systemLength);
       const width = parseNumericInput(value);
-      setSystemSquareFootage(length > 0 && width > 0 ? (length * width).toFixed(2) : "");
-      setSystemLinearFootage(length > 0 && width > 0 ? ((length * 2) + (width * 2)).toFixed(2) : "");
+      setSystemSquareFootage(
+        length > 0 && width > 0 ? (length * width).toFixed(2) : ""
+      );
+      setSystemLinearFootage(
+        length > 0 && width > 0 ? (length * 2 + width * 2).toFixed(2) : ""
+      );
     } else if (field === "area") {
       setSystemSquareFootage(value);
     } else if (field === "linearFootage") {
@@ -1179,11 +1350,16 @@ export function EstimateForm({
   }
 
   function handleUseSourceMeasurement(groupKey: string) {
-    const prefill = getSystemMeasurementPrefillFromAssessment(sourceAssessment, groupKey);
+    const prefill = getSystemMeasurementPrefillFromAssessment(
+      sourceAssessment,
+      groupKey
+    );
 
     if (!prefill) {
       setSystemPreviewResult(null);
-      setSystemPreviewMessage("This source assessment area does not have an area value for system generation.");
+      setSystemPreviewMessage(
+        "This source assessment area does not have an area value for system generation."
+      );
       return;
     }
 
@@ -1196,7 +1372,9 @@ export function EstimateForm({
     setSystemSourceLabel(prefill.sourceLabel);
     setSystemGroupName(prefill.groupLabel);
     setSystemPreviewResult(null);
-    setSystemPreviewMessage(`${prefill.sourceLabel} loaded. Review the values, then preview the system before generating items.`);
+    setSystemPreviewMessage(
+      `${prefill.sourceLabel} loaded. Review the values, then preview the system before generating items.`
+    );
   }
 
   function handlePreviewSystem() {
@@ -1205,7 +1383,9 @@ export function EstimateForm({
     const count = parseNumericInput(systemCount) || 1;
 
     if (!selectedSystemId || squareFootage <= 0) {
-      setSystemPreviewMessage("Select a system and enter area measurements to preview.");
+      setSystemPreviewMessage(
+        "Select a system and enter area measurements to preview."
+      );
       setSystemPreviewResult(null);
       return;
     }
@@ -1236,9 +1416,15 @@ export function EstimateForm({
   }
 
   function handleExpandSystem() {
-    const squareFootage = Number(systemPreviewResult?.ok ? systemPreviewResult.squareFootage : 0);
-    const linearFootage = Number(systemPreviewResult?.ok ? systemPreviewResult.linearFootage : 0);
-    const count = Number(systemPreviewResult?.ok ? systemPreviewResult.count : 1);
+    const squareFootage = Number(
+      systemPreviewResult?.ok ? systemPreviewResult.squareFootage : 0
+    );
+    const linearFootage = Number(
+      systemPreviewResult?.ok ? systemPreviewResult.linearFootage : 0
+    );
+    const count = Number(
+      systemPreviewResult?.ok ? systemPreviewResult.count : 1
+    );
 
     if (!estimate?.id || !systemPreviewResult?.ok) {
       return;
@@ -1291,13 +1477,17 @@ export function EstimateForm({
 
   async function handleImportLineItemsFromEstimate(sourceEstimateId: string) {
     if (!estimate?.id) {
-      return { ok: false as const, message: "Save this estimate before importing line items." };
+      return {
+        ok: false as const,
+        message: "Save this estimate before importing line items."
+      };
     }
 
     if (status !== "draft") {
       return {
         ok: false as const,
-        message: "Only draft estimates can import line items from another estimate."
+        message:
+          "Only draft estimates can import line items from another estimate."
       };
     }
 
@@ -1341,7 +1531,8 @@ export function EstimateForm({
     if (status !== "draft") {
       return {
         ok: false as const,
-        message: "Only draft estimates can import reusable content from another estimate."
+        message:
+          "Only draft estimates can import reusable content from another estimate."
       };
     }
 
@@ -1375,7 +1566,9 @@ export function EstimateForm({
     const importedExclusionsHtml = result.content.exclusionsHtml;
 
     if (section === "terms" && importedTermsHtml) {
-      setTermsHtml((currentValue) => appendHtmlBlock(currentValue, importedTermsHtml));
+      setTermsHtml((currentValue) =>
+        appendHtmlBlock(currentValue, importedTermsHtml)
+      );
     }
 
     if (section === "inclusions" && importedInclusionsHtml) {
@@ -1408,7 +1601,9 @@ export function EstimateForm({
 
   function applyScopeBlock(blockHtml: string) {
     markDirty();
-    setScopeSummaryHtml((currentValue) => appendHtmlBlock(currentValue, blockHtml));
+    setScopeSummaryHtml((currentValue) =>
+      appendHtmlBlock(currentValue, blockHtml)
+    );
   }
 
   function applyTermsBlock(blockHtml: string) {
@@ -1418,12 +1613,16 @@ export function EstimateForm({
 
   function applyInclusionBlock(blockHtml: string) {
     markDirty();
-    setInclusionsHtml((currentValue) => appendHtmlBlock(currentValue, blockHtml));
+    setInclusionsHtml((currentValue) =>
+      appendHtmlBlock(currentValue, blockHtml)
+    );
   }
 
   function applyExclusionBlock(blockHtml: string) {
     markDirty();
-    setExclusionsHtml((currentValue) => appendHtmlBlock(currentValue, blockHtml));
+    setExclusionsHtml((currentValue) =>
+      appendHtmlBlock(currentValue, blockHtml)
+    );
   }
 
   function handleAddGroup() {
@@ -1518,7 +1717,9 @@ export function EstimateForm({
   function handleMoveLineItem(rowKey: string, direction: -1 | 1) {
     markDirty();
     setLineItems((currentLineItems) => {
-      const index = currentLineItems.findIndex((lineItem) => lineItem.rowKey === rowKey);
+      const index = currentLineItems.findIndex(
+        (lineItem) => lineItem.rowKey === rowKey
+      );
 
       if (index < 0) {
         return currentLineItems;
@@ -1573,84 +1774,87 @@ export function EstimateForm({
 
   const statusStrip = (
     <div className="flex items-start gap-4">
-      {(["draft", "sent", "approved", "rejected"] as const).map((candidateStatus, index, statuses) => {
-        const isCurrent = status === candidateStatus;
-        const requiresApprovalEvidence =
-          candidateStatus === "approved" && status !== "approved";
-        const canSelect =
-          allowedTransitions.includes(candidateStatus) && !requiresApprovalEvidence;
-        const label = statusDisplayLabels[candidateStatus];
+      {(["draft", "sent", "approved", "rejected"] as const).map(
+        (candidateStatus, index, statuses) => {
+          const isCurrent = status === candidateStatus;
+          const requiresApprovalEvidence =
+            candidateStatus === "approved" && status !== "approved";
+          const canSelect =
+            allowedTransitions.includes(candidateStatus) &&
+            !requiresApprovalEvidence;
+          const label = statusDisplayLabels[candidateStatus];
 
-        return (
-          <div key={candidateStatus} className="flex items-center gap-3">
-            <button
-              type="button"
-              onClick={() => {
-                void (async () => {
-                  if (canSelect) {
-                    setStatus(candidateStatus);
-                    if (statusInputRef.current) {
-                      statusInputRef.current.value = candidateStatus;
-                    }
-                    const formData = new FormData();
-                    formData.set("estimateId", estimate?.id ?? "");
-                    formData.set("currentStatus", status);
-                    formData.set("nextStatus", candidateStatus);
-                    formData.set("expectedUpdatedAt", expectedUpdatedAt);
-                    const saveVersion = beginSave();
-                    const result = await updateStatusAction(formData);
+          return (
+            <div key={candidateStatus} className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  void (async () => {
+                    if (canSelect) {
+                      setStatus(candidateStatus);
+                      if (statusInputRef.current) {
+                        statusInputRef.current.value = candidateStatus;
+                      }
+                      const formData = new FormData();
+                      formData.set("estimateId", estimate?.id ?? "");
+                      formData.set("currentStatus", status);
+                      formData.set("nextStatus", candidateStatus);
+                      formData.set("expectedUpdatedAt", expectedUpdatedAt);
+                      const saveVersion = beginSave();
+                      const result = await updateStatusAction(formData);
 
-                    if (!result.ok) {
-                      markSaveFailed(result.message);
-                      setStatus(status);
-                      return;
-                    }
+                      if (!result.ok) {
+                        markSaveFailed(result.message);
+                        setStatus(status);
+                        return;
+                      }
 
-                    setExpectedUpdatedAt(result.updatedAt);
-                    setApprovalState(result.orchestration);
-                    if (result.status === "approved") {
-                      setApprovalPanelInitialOpen(true);
+                      setExpectedUpdatedAt(result.updatedAt);
+                      setApprovalState(result.orchestration);
+                      if (result.status === "approved") {
+                        setApprovalPanelInitialOpen(true);
+                      }
+                      markSaved(saveVersion);
                     }
-                    markSaved(saveVersion);
-                  }
-                })();
-              }}
-              className="flex flex-col items-center gap-2"
-              disabled={!canSelect}
-              title={
-                requiresApprovalEvidence
-                  ? "Record approval from Estimate Review so approval evidence is captured."
-                  : canSelect
-                    ? `Set status to ${label}`
-                    : `Cannot move from ${status} to ${candidateStatus}`
-              }
-            >
-              <div
-                className={[
-                  "flex h-9 w-9 items-center justify-center border",
-                  isCurrent
-                    ? "border-[#d8731f] bg-[#d8731f] text-white"
+                  })();
+                }}
+                className="flex flex-col items-center gap-2"
+                disabled={!canSelect}
+                title={
+                  requiresApprovalEvidence
+                    ? "Record approval from Estimate Review so approval evidence is captured."
                     : canSelect
-                      ? "border-[#d6d6d6] bg-white text-[#d8731f]"
-                      : "border-[#d6d6d6] bg-white text-[#d6d6d6]"
-                ].join(" ")}
+                      ? `Set status to ${label}`
+                      : `Cannot move from ${status} to ${candidateStatus}`
+                }
               >
-                {isCurrent ? (
-                  <CheckCircle2 className="h-4 w-4" />
-                ) : (
-                  <Circle className="h-3 w-3 fill-current" />
-                )}
-              </div>
-              <span className="max-w-[92px] truncate text-center text-[12px] text-[#71829c]">
-                {label}
-              </span>
-            </button>
-            {index < statuses.length - 1 ? (
-              <div className="mt-[-14px] h-px w-[34px] bg-[#d6d6d6]" />
-            ) : null}
-          </div>
-        );
-      })}
+                <div
+                  className={[
+                    "flex h-9 w-9 items-center justify-center border",
+                    isCurrent
+                      ? "border-[#d8731f] bg-[#d8731f] text-white"
+                      : canSelect
+                        ? "border-[#d6d6d6] bg-white text-[#d8731f]"
+                        : "border-[#d6d6d6] bg-white text-[#d6d6d6]"
+                  ].join(" ")}
+                >
+                  {isCurrent ? (
+                    <CheckCircle2 className="h-4 w-4" />
+                  ) : (
+                    <Circle className="h-3 w-3 fill-current" />
+                  )}
+                </div>
+                <span className="max-w-[92px] truncate text-center text-[12px] text-[#71829c]">
+                  {label}
+                </span>
+              </button>
+              {index < statuses.length - 1 ? (
+                <div className="mt-[-14px] h-px w-[34px] bg-[#d6d6d6]" />
+              ) : null}
+            </div>
+          );
+        }
+      )}
     </div>
   );
 
@@ -1735,379 +1939,597 @@ export function EstimateForm({
           });
         }}
       >
-      <input type="hidden" name="estimateId" value={estimate?.id ?? ""} />
-      <input type="hidden" name="expectedUpdatedAt" value={expectedUpdatedAt} />
-      <input type="hidden" name="opportunityId" value={estimate?.opportunityId ?? ""} />
-      <input type="hidden" name="projectId" value={estimate?.projectId ?? ""} />
-      <input type="hidden" name="title" value={title} />
-      <input ref={statusInputRef} type="hidden" name="status" value={status} />
-      <input type="hidden" name="estimateDate" value={estimateDate} />
-      <input type="hidden" name="expirationDate" value={expirationDate} />
-      <input type="hidden" name="projectType" value={projectType} />
-      <input type="hidden" name="sector" value={sector} />
-      <input type="hidden" name="discountAmount" value={discountAmount} />
-      <input type="hidden" name="termsHtml" value={termsHtml} />
-      <input type="hidden" name="inclusionsHtml" value={inclusionsHtml} />
-      <input type="hidden" name="exclusionsHtml" value={exclusionsHtml} />
-      <input type="hidden" name="notesHtml" value={notesHtml} />
-      <input type="hidden" name="scopeSummaryHtml" value={scopeSummaryHtml} />
-      <input type="hidden" name="notes" value={stripHtmlToPlainText(notesHtml) ?? ""} />
+        <input type="hidden" name="estimateId" value={estimate?.id ?? ""} />
+        <input
+          type="hidden"
+          name="expectedUpdatedAt"
+          value={expectedUpdatedAt}
+        />
+        <input
+          type="hidden"
+          name="opportunityId"
+          value={estimate?.opportunityId ?? ""}
+        />
+        <input
+          type="hidden"
+          name="projectId"
+          value={estimate?.projectId ?? ""}
+        />
+        <input type="hidden" name="title" value={title} />
+        <input
+          ref={statusInputRef}
+          type="hidden"
+          name="status"
+          value={status}
+        />
+        <input type="hidden" name="estimateDate" value={estimateDate} />
+        <input type="hidden" name="expirationDate" value={expirationDate} />
+        <input type="hidden" name="projectType" value={projectType} />
+        <input type="hidden" name="sector" value={sector} />
+        <input type="hidden" name="discountAmount" value={discountAmount} />
+        <input type="hidden" name="termsHtml" value={termsHtml} />
+        <input type="hidden" name="inclusionsHtml" value={inclusionsHtml} />
+        <input type="hidden" name="exclusionsHtml" value={exclusionsHtml} />
+        <input type="hidden" name="notesHtml" value={notesHtml} />
+        <input type="hidden" name="scopeSummaryHtml" value={scopeSummaryHtml} />
+        <input
+          type="hidden"
+          name="notes"
+          value={stripHtmlToPlainText(notesHtml) ?? ""}
+        />
 
-      {itemGroups.map((group) => (
-        <div key={`group-hidden-${group.id}`}>
-          <input type="hidden" name="itemGroupId" value={group.id} />
-          <input type="hidden" name="itemGroupLabel" value={group.label} />
-        </div>
-      ))}
-
-      {lineItems.map((lineItem) => {
-        const groupName =
-          itemGroups.find((group) => group.id === lineItem.groupId)?.label ?? "";
-
-        return (
-          <div key={`line-item-hidden-${lineItem.rowKey}`}>
-            <input type="hidden" name="lineItemRowKey" value={lineItem.rowKey} />
-            <input type="hidden" name="lineItemCatalogItemId" value={lineItem.catalogItemId ?? ""} />
-            <input type="hidden" name="lineItemSourceType" value={lineItem.sourceType} />
-            <input type="hidden" name="lineItemSourceSystemId" value={lineItem.sourceSystemId ?? ""} />
-            <input
-              type="hidden"
-              name="lineItemSourceComponentId"
-              value={lineItem.sourceComponentId ?? ""}
-            />
-            <input type="hidden" name="lineItemQuantity" value={lineItem.quantity} />
-            <input type="hidden" name="lineItemUnitPriceOverride" value={lineItem.unitPrice} />
-            <input
-              type="hidden"
-              name="lineItemTaxableOverride"
-              value={lineItem.taxCode === "taxable" ? "true" : "false"}
-            />
-            <input type="hidden" name="lineItemAssignedTo" value={lineItem.assignedTo} />
-            <input type="hidden" name="lineItemGroupName" value={groupName} />
-          </div>
-        );
-      })}
-
-      {scopeItems
-        .filter((item) => item.text.trim().length > 0)
-        .map((item) => (
-          <div key={`scope-item-hidden-${item.id}`}>
-            <input type="hidden" name="scopeItemId" value={item.id} />
-            <input type="hidden" name="scopeItemText" value={item.text} />
-            <input
-              type="hidden"
-              name="scopeItemIncludeInOutput"
-              value={item.includeInOutput ? "true" : "false"}
-            />
+        {itemGroups.map((group) => (
+          <div key={`group-hidden-${group.id}`}>
+            <input type="hidden" name="itemGroupId" value={group.id} />
+            <input type="hidden" name="itemGroupLabel" value={group.label} />
           </div>
         ))}
 
-      {retainedAttachmentIds.map((attachmentId) => (
-        <input
-          key={`retained-attachment-${attachmentId}`}
-          type="hidden"
-          name="retainedAttachmentId"
-          value={attachmentId}
-        />
-      ))}
+        {lineItems.map((lineItem) => {
+          const groupName =
+            itemGroups.find((group) => group.id === lineItem.groupId)?.label ??
+            "";
+
+          return (
+            <div key={`line-item-hidden-${lineItem.rowKey}`}>
+              <input
+                type="hidden"
+                name="lineItemRowKey"
+                value={lineItem.rowKey}
+              />
+              <input
+                type="hidden"
+                name="lineItemCatalogItemId"
+                value={lineItem.catalogItemId ?? ""}
+              />
+              <input
+                type="hidden"
+                name="lineItemSourceType"
+                value={lineItem.sourceType}
+              />
+              <input
+                type="hidden"
+                name="lineItemSourceSystemId"
+                value={lineItem.sourceSystemId ?? ""}
+              />
+              <input
+                type="hidden"
+                name="lineItemSourceComponentId"
+                value={lineItem.sourceComponentId ?? ""}
+              />
+              <input
+                type="hidden"
+                name="lineItemQuantity"
+                value={lineItem.quantity}
+              />
+              <input
+                type="hidden"
+                name="lineItemUnitPriceOverride"
+                value={lineItem.unitPrice}
+              />
+              <input
+                type="hidden"
+                name="lineItemTaxableOverride"
+                value={lineItem.taxCode === "taxable" ? "true" : "false"}
+              />
+              <input
+                type="hidden"
+                name="lineItemAssignedTo"
+                value={lineItem.assignedTo}
+              />
+              <input type="hidden" name="lineItemGroupName" value={groupName} />
+            </div>
+          );
+        })}
+
+        {scopeItems
+          .filter((item) => item.text.trim().length > 0)
+          .map((item) => (
+            <div key={`scope-item-hidden-${item.id}`}>
+              <input type="hidden" name="scopeItemId" value={item.id} />
+              <input type="hidden" name="scopeItemText" value={item.text} />
+              <input
+                type="hidden"
+                name="scopeItemIncludeInOutput"
+                value={item.includeInOutput ? "true" : "false"}
+              />
+            </div>
+          ))}
+
+        {retainedAttachmentIds.map((attachmentId) => (
+          <input
+            key={`retained-attachment-${attachmentId}`}
+            type="hidden"
+            name="retainedAttachmentId"
+            value={attachmentId}
+          />
+        ))}
 
         <EstimateWorkspaceShell
-        title={title}
-        subtitle={opportunityTitle ?? "Project/Opportunity"}
-        estimateNumber={estimate?.referenceNumber ?? null}
-        statusLabel={statusDisplayLabels[status]}
-        activeSection={activeSection}
-        onSectionChange={(section) => {
-          if (section === activeSection) {
-            return;
+          title={title}
+          subtitle={opportunityTitle ?? "Project/Opportunity"}
+          estimateNumber={estimate?.referenceNumber ?? null}
+          statusLabel={statusDisplayLabels[status]}
+          activeSection={activeSection}
+          onSectionChange={(section) => {
+            if (section === activeSection) {
+              return;
+            }
+
+            setActiveSection(section);
+          }}
+          statusStrip={statusStrip}
+          headerActions={headerActions}
+          saveAction={
+            <SaveStatusButton
+              type="submit"
+              status={isPending ? "saving" : saveFeedbackStatus}
+              isDirty={isDirty}
+              statusMessage={saveFeedbackMessage}
+            />
           }
-
-          setActiveSection(section);
-        }}
-        statusStrip={statusStrip}
-        headerActions={headerActions}
-        saveAction={
-          <SaveStatusButton
-            type="submit"
-            status={isPending ? "saving" : saveFeedbackStatus}
-            isDirty={isDirty}
-            statusMessage={saveFeedbackMessage}
-          />
-        }
-        titleEditing={titleEditing}
-        onTitleEditToggle={() => setTitleEditing((current) => !current)}
-        onTitleChange={(value) => {
-          setTitle(value);
-          markDirty();
-        }}
-        onTitleBlur={() => {
-          setTitleEditing(false);
-        }}
-      >
-        <div className={activeSection === "items" ? "block" : "hidden"}>
-          <ItemsSection
-            totalLabel={totalLabel}
-            subtotalAmount={subtotalLabel}
-            markupAmount={markupLabel}
-            taxableSubtotal={taxableSubtotalLabel}
-            exemptSubtotal={exemptSubtotalLabel}
-            taxAmount={taxLabel}
-            discountAmount={discountLabel}
-            totalAmount={totalAmountLabel}
-            taxBehaviorLabel={taxBehaviorLabel}
-            taxRateLabel={taxRateLabel}
-            customerTaxExempt={customerTaxExempt}
-            lineItems={lineItems}
-            itemGroups={itemGroups}
-            showMarkup={showMarkup}
-            showOnlyZeroItems={showOnlyZeroItems}
-            visibleCatalogItems={filteredCatalogItems}
-            catalogItemsForReview={catalogInventoryItems}
-            estimateStatus={status}
-            importSourceEstimates={importSourceEstimates}
-            selectedSystemId={selectedSystemId}
-            systemInputMode={systemInputMode}
-            systemLength={systemLength}
-            systemWidth={systemWidth}
-            systemSquareFootage={systemSquareFootage}
-            systemLinearFootage={systemLinearFootage}
-            systemCount={systemCount}
-            systemPreview={selectedSystemPreview}
-            systemPreviewMessage={systemPreviewMessage}
-            systemSourceLabel={systemSourceLabel}
-            isPreviewPending={isPreviewPending}
-            sourceAssessment={sourceAssessment}
-            onSelectedSystemIdChange={handleSelectedSystemIdChange}
-            onSystemMeasurementChange={handleSystemMeasurementChange}
-            onUseSourceMeasurement={handleUseSourceMeasurement}
-            onQuickAddCatalogItem={handleQuickAddCatalogItem}
-            onAddPreviewCatalogItem={handleAddPreviewCatalogItem}
-            onImportLineItemsFromEstimate={handleImportLineItemsFromEstimate}
-            onImportReusableContentFromEstimate={handleImportReusableContentFromEstimate}
-            onPreviewSystem={handlePreviewSystem}
-            onExpandSystem={handleExpandSystem}
-            onToggleMarkup={setShowMarkup}
-            onToggleShowOnlyZeroItems={setShowOnlyZeroItems}
-            onLineItemChange={handleLineItemChange}
-            onAddGroup={handleAddGroup}
-            onGroupLabelChange={handleGroupLabelChange}
-            onDeleteGroup={handleDeleteGroup}
-            onMoveLineItem={handleMoveLineItem}
-            onRemoveLineItem={handleRemoveLineItem}
-            onQuickCreateCatalogItem={handleQuickCreateCatalogItem}
-            onEditCatalogItemFromEstimate={handleEditCatalogItemFromEstimate}
-            inventoryCreateError={inventoryCreateError}
-            catalogPreviewAddMessage={catalogPreviewAddMessage}
-            isCatalogPreviewAddPending={isPending}
-          />
-        </div>
-
-        <div className={activeSection === "details" ? "block" : "hidden"}>
-          {renderDetailsSection({
-            currentStatus: status,
-            title,
-            customerName,
-            projectName,
-            opportunityTitle,
-            projectServiceAddressLabel,
-            estimateDate,
-            expirationDate,
-            projectType,
-            sector,
-            discountAmount,
-            taxBehaviorLabel,
-            taxRateLabel,
-            customerTaxExempt,
-            taxableSalesLabel: taxableSubtotalLabel,
-            exemptSalesLabel: exemptSubtotalLabel,
-            derivedTaxLabel: taxLabel,
-            onExpirationDateChange: (value) => {
-              setExpirationDate(value);
-              markDirty();
-            },
-            onProjectTypeChange: (value) => {
-              setProjectType(value);
-              markDirty();
-            },
-            onSectorChange: (value) => {
-              setSector(value);
-              markDirty();
-            },
-            onDiscountAmountChange: (value) => {
-              setDiscountAmount(value);
-              markDirty();
-            },
-            onEstimateDateChange: (value) => {
-              setEstimateDate(value);
-              markDirty();
-            },
-            onTitleChange: (value) => {
-              setTitle(value);
-              markDirty();
-            }
-          })}
-        </div>
-
-        <div className={activeSection === "terms" ? "block" : "hidden"}>
-          <ReusableContentInserter
-            scopeBlocks={scopeBlocks}
-            termsBlocks={termsBlocks}
-            inclusionBlocks={inclusionBlocks}
-            exclusionBlocks={exclusionBlocks}
-            workspaceDefaultsApplied={estimate?.workspaceDefaultsApplied ?? false}
-            defaultsSource={estimate?.estimateDefaultsSource ?? "organization"}
-            onApplyScopeBlock={applyScopeBlock}
-            onApplyTermsBlock={applyTermsBlock}
-            onApplyInclusionBlock={applyInclusionBlock}
-            onApplyExclusionBlock={applyExclusionBlock}
-          />
-          <TermsEditor
-            termsHtml={termsHtml}
-            inclusionsHtml={inclusionsHtml}
-            exclusionsHtml={exclusionsHtml}
-            onTermsChange={(value) => {
-              setTermsHtml(value);
-              markDirty();
-            }}
-            onInclusionsChange={(value) => {
-              setInclusionsHtml(value);
-              markDirty();
-            }}
-            onExclusionsChange={(value) => {
-              setExclusionsHtml(value);
-              markDirty();
-            }}
-          />
-        </div>
-
-        <div className={activeSection === "scope" ? "block" : "hidden"}>
-          <ReusableContentInserter
-            scopeBlocks={scopeBlocks}
-            termsBlocks={termsBlocks}
-            inclusionBlocks={inclusionBlocks}
-            exclusionBlocks={exclusionBlocks}
-            workspaceDefaultsApplied={estimate?.workspaceDefaultsApplied ?? false}
-            defaultsSource={estimate?.estimateDefaultsSource ?? "organization"}
-            onApplyScopeBlock={applyScopeBlock}
-            onApplyTermsBlock={applyTermsBlock}
-            onApplyInclusionBlock={applyInclusionBlock}
-            onApplyExclusionBlock={applyExclusionBlock}
-          />
-          <ScopeOfWork
-            summaryHtml={scopeSummaryHtml}
-            items={scopeItems}
-            onSummaryChange={(value) => {
-              setScopeSummaryHtml(value);
-              markDirty();
-            }}
-            onItemTextChange={handleScopeItemTextChange}
-            onItemIncludeChange={handleScopeItemIncludeChange}
-          />
-        </div>
-
-        <div className={activeSection === "bidding" ? "block" : "hidden"}>
-          {renderBiddingStub()}
-        </div>
-
-        <div className={activeSection === "files" ? "block" : "hidden"}>
-          <FilesSection
-            existingAttachments={estimate?.attachments ?? []}
-            retainedAttachmentIds={retainedAttachmentIds}
-            pendingAttachments={pendingAttachments}
-            onAddFiles={handleAddFiles}
-            onRemoveExistingAttachment={(attachmentId) =>
-              {
-                markDirty();
-                setRetainedAttachmentIds((currentIds) =>
-                  currentIds.filter((id) => id !== attachmentId)
-                );
-              }
-            }
-            onRemovePendingAttachment={(attachmentId) =>
-              {
-                markDirty();
-                setPendingAttachments((currentAttachments) =>
-                  currentAttachments.filter((attachment) => attachment.id !== attachmentId)
-                );
-              }
-            }
-          />
-        </div>
-
-        <div className={activeSection === "cover-sheet" ? "block" : "hidden"}>
-          <CoverSheet enabled={false} />
-        </div>
-
-        <div className={activeSection === "notes" ? "block" : "hidden"}>
-          <NotesSection
-            value={notesHtml}
-            onChange={(value) => {
-              setNotesHtml(value);
-              markDirty();
-            }}
-          />
-        </div>
-
-        <div className={activeSection === "review-submit" ? "block" : "hidden"}>
-          <div className="border-t border-[#e6e9ef] bg-white px-4 py-4">
-            <div className="border border-[#d6d6d6] bg-[#f7f8fa] px-4 py-4">
-              <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+          titleEditing={titleEditing}
+          onTitleEditToggle={() => setTitleEditing((current) => !current)}
+          onTitleChange={(value) => {
+            setTitle(value);
+            markDirty();
+          }}
+          onTitleBlur={() => {
+            setTitleEditing(false);
+          }}
+        >
+          <section
+            id="estimate-workspace-command"
+            className="border-b border-[#d1d6de] bg-white"
+          >
+            <div className="border-b border-[#d1d6de] bg-[#f7f8fa] px-4 py-4">
+              <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
                 <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
-                    Review Estimate
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#005EB8]">
+                    Estimate Workspace
                   </p>
-                  <h2 className="mt-2 text-[20px] font-semibold text-slate-950">
-                    Open the customer-facing estimate before sending.
+                  <h2 className="mt-2 text-[20px] font-semibold leading-7 text-slate-950">
+                    Build scope from real assessment context, catalog items, and
+                    estimator review.
                   </h2>
-                  <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
-                    Confirm the proposal output, grouped lines, terms, and totals in the same view a
-                    customer will understand.
+                  <p className="mt-2 max-w-4xl text-sm leading-6 text-slate-600">
+                    This command band reads the current editor state only.
+                    Pricing, catalog insertion, tax, snapshot, and approval
+                    behavior stay on the existing Estimate Workspace actions.
                   </p>
                 </div>
                 <div className="flex flex-wrap gap-2">
                   <button
                     type="button"
                     onClick={() => setActiveSection("items")}
-                    className="inline-flex h-10 items-center justify-center border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+                    className="inline-flex h-9 items-center justify-center border border-[#005EB8] bg-[#005EB8] px-3 text-sm font-semibold text-white transition hover:bg-[#004a92]"
                   >
-                    Back to edit
+                    Continue writing
                   </button>
+                  {estimate?.id ? (
+                    <Link
+                      href={`/estimates/${estimate.id}`}
+                      className="inline-flex h-9 items-center justify-center border border-[#d1d6de] bg-white px-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+                    >
+                      Review estimate
+                    </Link>
+                  ) : null}
+                </div>
+              </div>
+            </div>
+
+            <div className="grid gap-3 px-4 py-4 md:grid-cols-2 xl:grid-cols-4">
+              {[
+                {
+                  label: "Estimate status",
+                  value: statusDisplayLabels[status],
+                  detail: estimate?.referenceNumber
+                    ? `Estimate #${estimate.referenceNumber}`
+                    : "No estimate number"
+                },
+                {
+                  label: "Proposal items",
+                  value: String(lineItems.length),
+                  detail: `${catalogBackedLineItemCount} catalog-backed`
+                },
+                {
+                  label: "Scope content",
+                  value: String(filledScopeItemCount),
+                  detail: hasPlainText(scopeSummaryHtml)
+                    ? "Scope summary captured"
+                    : "Scope summary missing"
+                },
+                {
+                  label: "Source measurements",
+                  value: String(sourceMeasurementGroupCount),
+                  detail: sourceAssessment
+                    ? sourceAssessment.opportunityTitle
+                    : "No linked assessment source"
+                }
+              ].map((item) => (
+                <div
+                  key={item.label}
+                  className="border border-[#d1d6de] bg-white px-3 py-3"
+                >
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                    {item.label}
+                  </p>
+                  <p className="mt-2 break-words text-[20px] font-semibold leading-6 text-slate-950">
+                    {item.value}
+                  </p>
+                  <p className="mt-1 line-clamp-2 text-[12px] leading-5 text-slate-600">
+                    {item.detail}
+                  </p>
+                </div>
+              ))}
+            </div>
+
+            <div className="grid gap-4 px-4 pb-4 lg:grid-cols-[minmax(0,1.2fr)_minmax(280px,0.8fr)]">
+              <div className="border border-[#d1d6de] bg-[#f7f8fa] px-4 py-4">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+                  Workspace coverage
+                </p>
+                <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                  {[
+                    {
+                      label: "Financial preview",
+                      detail: `${subtotalLabel} subtotal / ${totalAmountLabel} total`
+                    },
+                    {
+                      label: "Reusable content",
+                      detail: `${scopeBlocks.length} scope, ${termsBlocks.length} terms, ${inclusionBlocks.length} inclusions`
+                    },
+                    {
+                      label: "Attachments",
+                      detail: `${existingAttachmentCount} retained / ${pendingAttachmentCount} pending`
+                    },
+                    {
+                      label: "Project continuity",
+                      detail:
+                        projectName ?? opportunityTitle ?? "Project/Opportunity"
+                    }
+                  ].map((row) => (
+                    <div
+                      key={row.label}
+                      className="border border-[#d1d6de] bg-white px-3 py-3"
+                    >
+                      <p className="text-sm font-semibold text-slate-950">
+                        {row.label}
+                      </p>
+                      <p className="mt-1 text-xs leading-5 text-slate-600">
+                        {row.detail}
+                      </p>
+                    </div>
+                  ))}
                 </div>
               </div>
 
-              <div className="mt-5 grid gap-3 lg:grid-cols-3">
-                <div className="border border-slate-200 bg-white px-3 py-3">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
-                    Save state
+              <div className="border border-[#d1d6de] bg-white px-4 py-4">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#005EB8]">
+                  Next estimator action
+                </p>
+                <h3 className="mt-2 text-lg font-semibold leading-6 text-slate-950">
+                  {estimateWorkspaceNextAction}
+                </h3>
+                <div className="mt-4 border border-[#d1d6de] bg-[#f7f8fa] px-3 py-3">
+                  <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
+                    Missing before proposal confidence
                   </p>
-                  <p className="mt-1 text-sm font-medium text-slate-900">
-                    {isPending ? "Saving..." : saveFeedbackMessage}
-                  </p>
+                  {estimateWorkspaceMissingRows.length > 0 ? (
+                    <ul className="mt-3 space-y-2 text-sm leading-5 text-slate-700">
+                      {estimateWorkspaceMissingRows.slice(0, 6).map((item) => (
+                        <li key={item} className="flex gap-2">
+                          <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-amber-500" />
+                          <span>{item}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="mt-3 text-sm leading-6 text-slate-700">
+                      No missing editor context is visible from this workspace
+                      summary. Customer-facing review still happens in the
+                      estimate review surface.
+                    </p>
+                  )}
                 </div>
-                <div className="border border-slate-200 bg-white px-3 py-3">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
-                    Current status
-                  </p>
-                  <p className="mt-1 text-sm font-medium text-slate-900">
-                    {statusDisplayLabels[status]}
-                  </p>
+              </div>
+            </div>
+          </section>
+
+          <div className={activeSection === "items" ? "block" : "hidden"}>
+            <ItemsSection
+              totalLabel={totalLabel}
+              subtotalAmount={subtotalLabel}
+              markupAmount={markupLabel}
+              taxableSubtotal={taxableSubtotalLabel}
+              exemptSubtotal={exemptSubtotalLabel}
+              taxAmount={taxLabel}
+              discountAmount={discountLabel}
+              totalAmount={totalAmountLabel}
+              taxBehaviorLabel={taxBehaviorLabel}
+              taxRateLabel={taxRateLabel}
+              customerTaxExempt={customerTaxExempt}
+              lineItems={lineItems}
+              itemGroups={itemGroups}
+              showMarkup={showMarkup}
+              showOnlyZeroItems={showOnlyZeroItems}
+              visibleCatalogItems={filteredCatalogItems}
+              catalogItemsForReview={catalogInventoryItems}
+              estimateStatus={status}
+              importSourceEstimates={importSourceEstimates}
+              selectedSystemId={selectedSystemId}
+              systemInputMode={systemInputMode}
+              systemLength={systemLength}
+              systemWidth={systemWidth}
+              systemSquareFootage={systemSquareFootage}
+              systemLinearFootage={systemLinearFootage}
+              systemCount={systemCount}
+              systemPreview={selectedSystemPreview}
+              systemPreviewMessage={systemPreviewMessage}
+              systemSourceLabel={systemSourceLabel}
+              isPreviewPending={isPreviewPending}
+              sourceAssessment={sourceAssessment}
+              onSelectedSystemIdChange={handleSelectedSystemIdChange}
+              onSystemMeasurementChange={handleSystemMeasurementChange}
+              onUseSourceMeasurement={handleUseSourceMeasurement}
+              onQuickAddCatalogItem={handleQuickAddCatalogItem}
+              onAddPreviewCatalogItem={handleAddPreviewCatalogItem}
+              onImportLineItemsFromEstimate={handleImportLineItemsFromEstimate}
+              onImportReusableContentFromEstimate={
+                handleImportReusableContentFromEstimate
+              }
+              onPreviewSystem={handlePreviewSystem}
+              onExpandSystem={handleExpandSystem}
+              onToggleMarkup={setShowMarkup}
+              onToggleShowOnlyZeroItems={setShowOnlyZeroItems}
+              onLineItemChange={handleLineItemChange}
+              onAddGroup={handleAddGroup}
+              onGroupLabelChange={handleGroupLabelChange}
+              onDeleteGroup={handleDeleteGroup}
+              onMoveLineItem={handleMoveLineItem}
+              onRemoveLineItem={handleRemoveLineItem}
+              onQuickCreateCatalogItem={handleQuickCreateCatalogItem}
+              onEditCatalogItemFromEstimate={handleEditCatalogItemFromEstimate}
+              inventoryCreateError={inventoryCreateError}
+              catalogPreviewAddMessage={catalogPreviewAddMessage}
+              isCatalogPreviewAddPending={isPending}
+            />
+          </div>
+
+          <div className={activeSection === "details" ? "block" : "hidden"}>
+            {renderDetailsSection({
+              currentStatus: status,
+              title,
+              customerName,
+              projectName,
+              opportunityTitle,
+              projectServiceAddressLabel,
+              estimateDate,
+              expirationDate,
+              projectType,
+              sector,
+              discountAmount,
+              taxBehaviorLabel,
+              taxRateLabel,
+              customerTaxExempt,
+              taxableSalesLabel: taxableSubtotalLabel,
+              exemptSalesLabel: exemptSubtotalLabel,
+              derivedTaxLabel: taxLabel,
+              onExpirationDateChange: (value) => {
+                setExpirationDate(value);
+                markDirty();
+              },
+              onProjectTypeChange: (value) => {
+                setProjectType(value);
+                markDirty();
+              },
+              onSectorChange: (value) => {
+                setSector(value);
+                markDirty();
+              },
+              onDiscountAmountChange: (value) => {
+                setDiscountAmount(value);
+                markDirty();
+              },
+              onEstimateDateChange: (value) => {
+                setEstimateDate(value);
+                markDirty();
+              },
+              onTitleChange: (value) => {
+                setTitle(value);
+                markDirty();
+              }
+            })}
+          </div>
+
+          <div className={activeSection === "terms" ? "block" : "hidden"}>
+            <ReusableContentInserter
+              scopeBlocks={scopeBlocks}
+              termsBlocks={termsBlocks}
+              inclusionBlocks={inclusionBlocks}
+              exclusionBlocks={exclusionBlocks}
+              workspaceDefaultsApplied={
+                estimate?.workspaceDefaultsApplied ?? false
+              }
+              defaultsSource={
+                estimate?.estimateDefaultsSource ?? "organization"
+              }
+              onApplyScopeBlock={applyScopeBlock}
+              onApplyTermsBlock={applyTermsBlock}
+              onApplyInclusionBlock={applyInclusionBlock}
+              onApplyExclusionBlock={applyExclusionBlock}
+            />
+            <TermsEditor
+              termsHtml={termsHtml}
+              inclusionsHtml={inclusionsHtml}
+              exclusionsHtml={exclusionsHtml}
+              onTermsChange={(value) => {
+                setTermsHtml(value);
+                markDirty();
+              }}
+              onInclusionsChange={(value) => {
+                setInclusionsHtml(value);
+                markDirty();
+              }}
+              onExclusionsChange={(value) => {
+                setExclusionsHtml(value);
+                markDirty();
+              }}
+            />
+          </div>
+
+          <div className={activeSection === "scope" ? "block" : "hidden"}>
+            <ReusableContentInserter
+              scopeBlocks={scopeBlocks}
+              termsBlocks={termsBlocks}
+              inclusionBlocks={inclusionBlocks}
+              exclusionBlocks={exclusionBlocks}
+              workspaceDefaultsApplied={
+                estimate?.workspaceDefaultsApplied ?? false
+              }
+              defaultsSource={
+                estimate?.estimateDefaultsSource ?? "organization"
+              }
+              onApplyScopeBlock={applyScopeBlock}
+              onApplyTermsBlock={applyTermsBlock}
+              onApplyInclusionBlock={applyInclusionBlock}
+              onApplyExclusionBlock={applyExclusionBlock}
+            />
+            <ScopeOfWork
+              summaryHtml={scopeSummaryHtml}
+              items={scopeItems}
+              onSummaryChange={(value) => {
+                setScopeSummaryHtml(value);
+                markDirty();
+              }}
+              onItemTextChange={handleScopeItemTextChange}
+              onItemIncludeChange={handleScopeItemIncludeChange}
+            />
+          </div>
+
+          <div className={activeSection === "bidding" ? "block" : "hidden"}>
+            {renderBiddingStub()}
+          </div>
+
+          <div className={activeSection === "files" ? "block" : "hidden"}>
+            <FilesSection
+              existingAttachments={estimate?.attachments ?? []}
+              retainedAttachmentIds={retainedAttachmentIds}
+              pendingAttachments={pendingAttachments}
+              onAddFiles={handleAddFiles}
+              onRemoveExistingAttachment={(attachmentId) => {
+                markDirty();
+                setRetainedAttachmentIds((currentIds) =>
+                  currentIds.filter((id) => id !== attachmentId)
+                );
+              }}
+              onRemovePendingAttachment={(attachmentId) => {
+                markDirty();
+                setPendingAttachments((currentAttachments) =>
+                  currentAttachments.filter(
+                    (attachment) => attachment.id !== attachmentId
+                  )
+                );
+              }}
+            />
+          </div>
+
+          <div className={activeSection === "cover-sheet" ? "block" : "hidden"}>
+            <CoverSheet enabled={false} />
+          </div>
+
+          <div className={activeSection === "notes" ? "block" : "hidden"}>
+            <NotesSection
+              value={notesHtml}
+              onChange={(value) => {
+                setNotesHtml(value);
+                markDirty();
+              }}
+            />
+          </div>
+
+          <div
+            className={activeSection === "review-submit" ? "block" : "hidden"}
+          >
+            <div className="border-t border-[#e6e9ef] bg-white px-4 py-4">
+              <div className="border border-[#d6d6d6] bg-[#f7f8fa] px-4 py-4">
+                <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                  <div>
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+                      Review Estimate
+                    </p>
+                    <h2 className="mt-2 text-[20px] font-semibold text-slate-950">
+                      Open the customer-facing estimate before sending.
+                    </h2>
+                    <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
+                      Confirm the proposal output, grouped lines, terms, and
+                      totals in the same view a customer will understand.
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setActiveSection("items")}
+                      className="inline-flex h-10 items-center justify-center border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+                    >
+                      Back to edit
+                    </button>
+                  </div>
                 </div>
-                <div className="border border-slate-200 bg-white px-3 py-3">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
-                    Next supported action
-                  </p>
-                  <p className="mt-1 text-sm font-medium text-slate-900">
-                    {status === "approved"
-                      ? "Generate contract or continue project readiness"
-                      : status === "sent"
-                        ? "Wait for portal approval or customer feedback"
-                        : "Review the estimate, then send to a portal-ready contact"}
-                  </p>
+
+                <div className="mt-5 grid gap-3 lg:grid-cols-3">
+                  <div className="border border-slate-200 bg-white px-3 py-3">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                      Save state
+                    </p>
+                    <p className="mt-1 text-sm font-medium text-slate-900">
+                      {isPending ? "Saving..." : saveFeedbackMessage}
+                    </p>
+                  </div>
+                  <div className="border border-slate-200 bg-white px-3 py-3">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                      Current status
+                    </p>
+                    <p className="mt-1 text-sm font-medium text-slate-900">
+                      {statusDisplayLabels[status]}
+                    </p>
+                  </div>
+                  <div className="border border-slate-200 bg-white px-3 py-3">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                      Next supported action
+                    </p>
+                    <p className="mt-1 text-sm font-medium text-slate-900">
+                      {status === "approved"
+                        ? "Generate contract or continue project readiness"
+                        : status === "sent"
+                          ? "Wait for portal approval or customer feedback"
+                          : "Review the estimate, then send to a portal-ready contact"}
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
         </EstimateWorkspaceShell>
       </form>
     </div>
